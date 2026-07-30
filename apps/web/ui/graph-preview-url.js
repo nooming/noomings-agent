@@ -4,6 +4,7 @@
     '电容纪元-静电城邦-20260702-154833': 'capacitor-era',
     'html-samples-capacitor-plate': 'capacitor-era',
   };
+  var STRATEGY_GRAPH_HTML = '图谱.html';
 
   function resolvePackageId(graphId) {
     var id = String(graphId || '').trim();
@@ -18,9 +19,9 @@
     var id = String(graphId || '').trim();
     if (!id) return null;
     if (indexItem && indexItem.url) return indexItem.url;
-    // Browser cannot probe chapter.json; always use graph.html API shell (not CDN index.html).
+    // Browser cannot probe disk; prefer Strategy-first export path (server indexItem.url is authoritative when present).
     var pkg = resolvePackageId(id);
-    return '/graph.html?graphId=' + encodeURIComponent(pkg);
+    return '/static/packages/' + pkg + '/' + encodeURIComponent(STRATEGY_GRAPH_HTML);
   }
 
   global.GraphPreviewUrl = { resolveGraphPreviewUrl };

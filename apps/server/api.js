@@ -1036,30 +1036,33 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'GET' && req.url.startsWith('/api/platform/traces')) {
-    if (req.url.startsWith('/api/platform/traces/stats')) {
+    const tracesPath = new URL(req.url, 'http://localhost').pathname;
+    if (tracesPath === '/api/platform/traces/stats' || tracesPath.startsWith('/api/platform/traces/stats/')) {
       handlePlatformTraceStats(req, res);
       return true;
     }
-    if (req.url.startsWith('/api/platform/traces/classroom')) {
+    if (tracesPath === '/api/platform/traces/classroom' || tracesPath.startsWith('/api/platform/traces/classroom/')) {
       handleClassroomBoard(req, res);
       return true;
     }
-    if (req.url.startsWith('/api/platform/traces/students/')) {
-      const m = req.url.match(/^\/api\/platform\/traces\/students\/([^/?]+)(\/summary)?/);
-      if (m && (m[2] || req.url.includes('/summary'))) {
-        handlePlatformStudentSummary(req, res, m[1]);
-        return true;
-      }
+    if (tracesPath === '/api/platform/traces/students' || tracesPath === '/api/platform/traces/students/') {
       handlePlatformTraceStudents(req, res);
       return true;
     }
-    const detail = req.url.match(/^\/api\/platform\/traces\/([^/?]+)/);
-    if (detail) {
+    const studentSummary = tracesPath.match(/^\/api\/platform\/traces\/students\/([^/]+)\/summary$/);
+    if (studentSummary) {
+      handlePlatformStudentSummary(req, res, studentSummary[1]);
+      return true;
+    }
+    const detail = tracesPath.match(/^\/api\/platform\/traces\/([^/]+)$/);
+    if (detail && detail[1] !== 'students') {
       handlePlatformTraceDetail(req, res, decodeURIComponent(detail[1]));
       return true;
     }
-    handlePlatformTraces(req, res);
-    return true;
+    if (tracesPath === '/api/platform/traces' || tracesPath === '/api/platform/traces/') {
+      handlePlatformTraces(req, res);
+      return true;
+    }
   }
   if (req.method === 'GET' && req.url.startsWith('/api/platform/adapter')) {
     handlePlatformAdapter(req, res);

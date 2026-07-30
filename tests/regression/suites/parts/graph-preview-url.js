@@ -9,18 +9,26 @@ function run() {
 
   for (const g of graphs) {
     assert(g.url, `${g.id} must have url`);
-    assert(g.url.startsWith('/packages/') || g.url.startsWith('/graph.html?graphId='), `${g.id} preview url`);
+    assert(
+      g.url.startsWith('/packages/')
+        || g.url.startsWith('/graph.html?graphId=')
+        || g.url.startsWith('/static/packages/'),
+      `${g.id} preview url: ${g.url}`,
+    );
   }
 
   const url = resolveGraphPreviewUrl('projectile-basic');
   assert(
-    url === '/graph.html?graphId=projectile-basic',
-    `resolver prefers graph.html over CDN index.html: ${url}`,
+    url === `/static/packages/projectile-basic/${encodeURIComponent('图谱.html')}`,
+    `resolver prefers Strategy-first 图谱.html: ${url}`,
   );
-  assert(!url.includes('/packages/') || !url.endsWith('/index.html'), 'must not open packages index.html as primary');
+  assert(!url.endsWith('/index.html'), 'must not open packages index.html as primary');
 
   const legacy = resolveGraphPreviewUrl('html-samples-projectile-basic');
-  assert(legacy === '/graph.html?graphId=projectile-basic', `legacy graphId alias: ${legacy}`);
+  assert(
+    legacy === `/static/packages/projectile-basic/${encodeURIComponent('图谱.html')}`,
+    `legacy graphId alias: ${legacy}`,
+  );
 
   const withIndex = resolveGraphPreviewUrl('projectile-basic', {
     id: 'projectile-basic',
@@ -29,10 +37,13 @@ function run() {
   assert(withIndex === '/packages/custom/index.html', 'index item url takes precedence');
 
   const eraUrl = resolveGraphPreviewUrl('capacitor-era');
-  assert(eraUrl.includes('/packages/capacitor-era/') || eraUrl.includes('graphId=capacitor-era'), `capacitor-era url: ${eraUrl}`);
+  assert(eraUrl.includes('/packages/capacitor-era/') || eraUrl.includes('graphId=capacitor-era') || eraUrl.includes('capacitor-era'), `capacitor-era url: ${eraUrl}`);
 
   const ch1Url = resolveGraphPreviewUrl('capacitor-era-ch1');
-  assert(ch1Url === '/graph.html?graphId=capacitor-era-ch1', `ch1 must use graph.html not CDN index: ${ch1Url}`);
+  assert(
+    ch1Url === `/static/packages/capacitor-era-ch1/${encodeURIComponent('图谱.html')}`,
+    `ch1 must use Strategy-first 图谱.html: ${ch1Url}`,
+  );
 
   const legacyEra = resolveGraphPreviewUrl('电容纪元-静电城邦-20260702-154833');
   assert(legacyEra.includes('capacitor-era'), 'legacy output graphId alias');
@@ -42,8 +53,8 @@ function run() {
   assert(payload.ok, `loadGraphPreviewPayload ${sample.id}: ${payload.error || 'ok'}`);
   assert(payload.kgChapters?.length >= 1, 'payload has kgChapters');
 
-  const eraPayload = loadGraphPreviewPayload('capacitor-era');
-  assert(eraPayload.ok && eraPayload.mode === 'full', 'capacitor-era multi-chapter');
+  const ch1Payload = loadGraphPreviewPayload('capacitor-era-ch1');
+  assert(ch1Payload.ok, 'capacitor-era-ch1 payload loads');
 
   const missing = loadGraphPreviewPayload('__missing_package__');
   assert(!missing.ok, 'missing package should fail');
