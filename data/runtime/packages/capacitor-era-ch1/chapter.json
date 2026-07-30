@@ -320,8 +320,13 @@
           "Win",
           "Fire2",
           "Observe2",
+          "Retry2",
+          "Route_main_s_dist",
+          "Adjust",
+          "Fire",
+          "Observe",
           "Adjust2",
-          "Retry2"
+          "Retry"
         ],
         "highlightEdges": [
           [
@@ -329,8 +334,32 @@
             "StrategySelect"
           ],
           [
-            "Observe2",
+            "StrategySelect",
+            "Route_main_s_dist"
+          ],
+          [
+            "Route_main_s_dist",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
             "Win"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe",
+            "Adjust"
           ],
           [
             "Observe2",
@@ -345,12 +374,16 @@
             "Retry2"
           ],
           [
-            "Dist",
-            "Fire2"
+            "Observe",
+            "Retry"
           ],
           [
-            "Fire2",
-            "Observe2"
+            "Observe2",
+            "Win"
+          ],
+          [
+            "Retry",
+            "Fire"
           ],
           [
             "Retry2",
@@ -380,12 +413,29 @@
           "Fire",
           "Observe",
           "Adjust",
-          "Retry"
+          "Retry",
+          "Route_main_s_area"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Route_main_s_area"
+          ],
+          [
+            "Route_main_s_area",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -396,20 +446,8 @@
             "Adjust"
           ],
           [
-            "Adjust",
-            "Fire"
-          ],
-          [
             "Observe",
             "Retry"
-          ],
-          [
-            "Mat",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ],
           [
             "Retry",
@@ -433,7 +471,8 @@
           "Fire4",
           "Observe4",
           "Adjust4",
-          "Retry4"
+          "Retry4",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -479,14 +518,20 @@
         "label": "试探混淆·音量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -504,7 +549,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

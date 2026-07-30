@@ -373,6 +373,8 @@
           "Observe",
           "Win",
           "Retry",
+          "Route_main",
+          "Adjust",
           "AdjustAngle",
           "AdjustIndex",
           "AdjustWave"
@@ -391,7 +393,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustAngle",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -403,24 +413,28 @@
             "Win"
           ],
           [
-            "AdjustIndex",
-            "Fire"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
             "Observe",
             "AdjustAngle"
+          ],
+          [
+            "AdjustAngle",
+            "Fire"
           ],
           [
             "Observe",
             "AdjustIndex"
           ],
           [
+            "AdjustIndex",
+            "Fire"
+          ],
+          [
             "Observe",
             "AdjustWave"
+          ],
+          [
+            "AdjustWave",
+            "Fire"
           ],
           [
             "Observe",
@@ -452,43 +466,13 @@
           "Fire",
           "Observe",
           "Retry",
-          "AdjustIndex",
+          "Route_main_s_incident_angle",
+          "Adjust",
           "AdjustAngle",
+          "AdjustIndex",
           "AdjustWave"
         ],
         "highlightEdges": [
-          [
-            "AdjustIndex",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustIndex"
-          ],
-          [
-            "Observe",
-            "AdjustAngle"
-          ],
-          [
-            "AdjustAngle",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustWave"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
           [
             "Start",
             "Env"
@@ -502,8 +486,52 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_incident_angle"
+          ],
+          [
+            "Route_main_s_incident_angle",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustAngle"
+          ],
+          [
+            "AdjustAngle",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustIndex"
+          ],
+          [
+            "AdjustIndex",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustWave"
+          ],
+          [
+            "AdjustWave",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
         ],
         "highlightFailureBranches": true
@@ -531,22 +559,44 @@
           "Fire",
           "Observe",
           "Retry",
-          "AdjustWave",
+          "Route_main_s_refractive_index",
+          "Adjust",
           "AdjustAngle",
-          "AdjustIndex"
+          "AdjustIndex",
+          "AdjustWave"
         ],
         "highlightEdges": [
           [
-            "AdjustWave",
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Route_main_s_refractive_index"
+          ],
+          [
+            "Route_main_s_refractive_index",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
             "Win"
-          ],
-          [
-            "Observe",
-            "AdjustWave"
           ],
           [
             "Observe",
@@ -566,23 +616,15 @@
           ],
           [
             "Observe",
+            "AdjustWave"
+          ],
+          [
+            "AdjustWave",
+            "Fire"
+          ],
+          [
+            "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -606,7 +648,8 @@
           "Retry",
           "AdjustAngle",
           "AdjustIndex",
-          "AdjustWave"
+          "AdjustWave",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -672,14 +715,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "Challenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -697,7 +756,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

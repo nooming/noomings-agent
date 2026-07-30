@@ -675,11 +675,14 @@
   function bindEvents() {
     document.getElementById('modeAnalyze')?.addEventListener('change', syncGenModeUi);
     document.getElementById('modeDesign')?.addEventListener('change', syncGenModeUi);
-    document.querySelectorAll('.agent-mode-tab').forEach(tab => {
-      tab.addEventListener('click', () => setGenMode(tab.dataset.mode));
+    // Event delegation: tabs remain clickable even if DOM is re-synced; do not
+    // force analyze here — HTML default + any early user click must be preserved.
+    document.querySelector('#panel-agents .agent-mode-tabs')?.addEventListener('click', e => {
+      const tab = e.target.closest('.agent-mode-tab');
+      if (!tab || tab.disabled) return;
+      setGenMode(tab.dataset.mode);
     });
     syncGenModeUi();
-    setGenMode('analyze');
     loadAnalyzePackageOptions();
 
     global._sources = global._sources || [];
@@ -888,6 +891,7 @@
 
   global.AgentGenerate = {
     init,
+    setMode: setGenMode,
     getLastSavedGraph: () => lastSavedGraph,
   };
 })(typeof window !== 'undefined' ? window : global);

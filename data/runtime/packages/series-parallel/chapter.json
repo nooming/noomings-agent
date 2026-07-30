@@ -315,14 +315,14 @@
           "Start",
           "StrategySelect",
           "ModeSelect",
-          "AdjustR1",
           "Fire",
           "Observe",
           "Win",
-          "AdjustR2",
-          "AdjustMeter",
           "Retry",
-          "Explore"
+          "Explore",
+          "Route_main",
+          "Adjust",
+          "AdjustR1"
         ],
         "highlightEdges": [
           [
@@ -330,11 +330,23 @@
             "ModeSelect"
           ],
           [
-            "RouteR1",
-            "AdjustR1"
+            "ModeSelect",
+            "Explore"
           ],
           [
-            "AdjustR1",
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -346,48 +358,16 @@
             "Win"
           ],
           [
-            "RouteR2",
-            "AdjustR2"
-          ],
-          [
-            "AdjustR2",
-            "Fire"
-          ],
-          [
-            "RouteMeter",
-            "AdjustMeter"
-          ],
-          [
-            "AdjustMeter",
-            "Fire"
-          ],
-          [
             "Observe",
             "AdjustR1"
+          ],
+          [
+            "AdjustR1",
+            "Fire"
           ],
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustMeter"
-          ],
-          [
-            "Retry",
-            "AdjustR1"
-          ],
-          [
-            "Retry",
-            "AdjustR2"
-          ],
-          [
-            "ModeSelect",
-            "Explore"
-          ],
-          [
-            "Explore",
-            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -412,11 +392,12 @@
           "ModeSelect",
           "Explore",
           "Win",
-          "AdjustMeter",
           "Fire",
           "Observe",
-          "AdjustR1",
-          "Retry"
+          "Retry",
+          "Route_main_s_r2",
+          "Adjust",
+          "AdjustR1"
         ],
         "highlightEdges": [
           [
@@ -432,12 +413,20 @@
             "StrategySelect"
           ],
           [
-            "RouteMeter",
-            "AdjustMeter"
+            "StrategySelect",
+            "Route_main_s_r2"
           ],
           [
-            "AdjustMeter",
+            "Route_main_s_r2",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -454,14 +443,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustMeter"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -486,10 +467,12 @@
           "ModeSelect",
           "Explore",
           "Win",
-          "AdjustR1",
           "Fire",
           "Observe",
-          "Retry"
+          "Retry",
+          "Route_main_s_meter_r",
+          "Adjust",
+          "AdjustR1"
         ],
         "highlightEdges": [
           [
@@ -505,7 +488,27 @@
             "StrategySelect"
           ],
           [
-            "RouteR1",
+            "StrategySelect",
+            "Route_main_s_meter_r"
+          ],
+          [
+            "Route_main_s_meter_r",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
             "AdjustR1"
           ],
           [
@@ -514,23 +517,7 @@
           ],
           [
             "Observe",
-            "AdjustR1"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
             "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustR1"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -552,7 +539,8 @@
           "Fire",
           "Observe",
           "Retry",
-          "AdjustR1"
+          "AdjustR1",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -586,6 +574,14 @@
           [
             "AdjustR1",
             "Fire"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -598,14 +594,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "Explore"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -623,7 +635,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

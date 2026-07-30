@@ -399,9 +399,8 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust2",
-          "Adjust3",
-          "Retry"
+          "Retry",
+          "SpeedStrat"
         ],
         "highlightEdges": [
           [
@@ -415,6 +414,10 @@
           [
             "Challenge",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SpeedStrat"
           ],
           [
             "SpeedStrat",
@@ -431,22 +434,6 @@
           [
             "Observe",
             "Win"
-          ],
-          [
-            "HeightStrat",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire"
-          ],
-          [
-            "AngleStrat",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire"
           ],
           [
             "Observe",
@@ -482,10 +469,27 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust1",
-          "Retry"
+          "Retry",
+          "HeightStrat",
+          "Adjust1"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "HeightStrat"
+          ],
           [
             "HeightStrat",
             "Adjust2"
@@ -493,6 +497,10 @@
           [
             "Adjust2",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -509,22 +517,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Mode"
-          ],
-          [
-            "Mode",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -552,10 +544,27 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust1",
-          "Retry"
+          "Retry",
+          "AngleStrat",
+          "Adjust1"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "AngleStrat"
+          ],
           [
             "AngleStrat",
             "Adjust3"
@@ -563,6 +572,10 @@
           [
             "Adjust3",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -579,22 +592,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Mode"
-          ],
-          [
-            "Mode",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -620,7 +617,9 @@
           "Trap",
           "AdjustT",
           "Fire",
-          "Observe"
+          "Observe",
+          "Adjust1",
+          "Retry"
         ],
         "highlightEdges": [
           [
@@ -650,23 +649,51 @@
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
-        ]
+        ],
+        "highlightFailureBranches": true
       },
       {
         "id": "confound_s_mass",
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Mode",
+          "Challenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -684,7 +711,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

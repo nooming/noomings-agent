@@ -312,15 +312,15 @@
           "StrategySelect",
           "Env",
           "Explore",
-          "Adjust1",
           "Fire",
           "Observe",
           "Win",
-          "Adjust2",
-          "Adjust3",
-          "Adjust4",
           "Retry",
-          "Challenge"
+          "Challenge",
+          "Route_main",
+          "Adjust",
+          "Adjust1",
+          "Adjust2"
         ],
         "highlightEdges": [
           [
@@ -329,18 +329,22 @@
           ],
           [
             "Env",
-            "Explore"
+            "Challenge"
           ],
           [
-            "Explore",
+            "Challenge",
             "StrategySelect"
           ],
           [
-            "Route1",
-            "Adjust1"
+            "StrategySelect",
+            "Route_main"
           ],
           [
-            "Adjust1",
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -352,7 +356,23 @@
             "Win"
           ],
           [
-            "Route2",
+            "Env",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
             "Adjust2"
           ],
           [
@@ -360,44 +380,8 @@
             "Fire"
           ],
           [
-            "Route3",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire"
-          ],
-          [
-            "Route4",
-            "Adjust4"
-          ],
-          [
-            "Adjust4",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Adjust2"
-          ],
-          [
-            "Observe",
-            "Adjust1"
-          ],
-          [
             "Observe",
             "Retry"
-          ],
-          [
-            "Retry",
-            "Adjust1"
-          ],
-          [
-            "Env",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -422,45 +406,15 @@
           "Win",
           "Env",
           "Challenge",
-          "Adjust1",
           "Fire",
           "Observe",
-          "Adjust2",
-          "Retry"
+          "Retry",
+          "Route_main_s_n2",
+          "Adjust",
+          "Adjust1",
+          "Adjust2"
         ],
         "highlightEdges": [
-          [
-            "Route1",
-            "Adjust1"
-          ],
-          [
-            "Adjust1",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "Adjust1"
-          ],
-          [
-            "Observe",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "Adjust1"
-          ],
           [
             "Start",
             "Env"
@@ -474,8 +428,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_n2"
+          ],
+          [
+            "Route_main_s_n2",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
         ],
         "highlightFailureBranches": true
@@ -500,41 +490,15 @@
           "Win",
           "Env",
           "Challenge",
-          "Adjust2",
           "Fire",
           "Observe",
+          "Retry",
+          "Route_main_s_U1",
+          "Adjust",
           "Adjust1",
-          "Retry"
+          "Adjust2"
         ],
         "highlightEdges": [
-          [
-            "Route2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "Adjust2"
-          ],
-          [
-            "Observe",
-            "Adjust1"
-          ],
-          [
-            "Adjust1",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
           [
             "Start",
             "Env"
@@ -548,8 +512,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_U1"
+          ],
+          [
+            "Route_main_s_U1",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
         ],
         "highlightFailureBranches": true
@@ -574,21 +574,42 @@
           "Win",
           "Env",
           "Challenge",
-          "Adjust3",
           "Fire",
           "Observe",
+          "Retry",
+          "Route_main_s_winding_temp",
+          "Adjust",
           "Adjust1",
-          "Adjust2",
-          "Retry"
+          "Adjust2"
         ],
         "highlightEdges": [
           [
-            "Route3",
-            "Adjust3"
+            "Start",
+            "Env"
           ],
           [
-            "Adjust3",
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Route_main_s_winding_temp"
+          ],
+          [
+            "Route_main_s_winding_temp",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -613,22 +634,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -652,7 +657,8 @@
           "Observe",
           "Retry",
           "Adjust1",
-          "Adjust2"
+          "Adjust2",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -702,6 +708,14 @@
           [
             "Adjust2",
             "Fire"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -714,14 +728,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.47000000000000003,
-        "weight": 0.47000000000000003,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "Challenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -739,7 +769,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 5
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

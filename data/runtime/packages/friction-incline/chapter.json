@@ -406,7 +406,7 @@
   "strategy": {
     "title": "仓库卸货滑道 · 摩擦探究",
     "sub": "斜面摩擦",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustAngleChallenge --> FireChallenge[测试卸货]\nAdjustFriction --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nFire --> Observe\nFireChallenge --> ObserveChallenge{观察结果}:::stratCond\nModeChallenge --> StrategySelectChallenge{选择调参策略?}:::stratCond\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveChallenge -->|卡住| AdjustAngleChallenge\nObserveChallenge -->|冲过| AdjustAngleChallenge\nObserveChallenge -->|次数耗尽| Fail[失败重试]:::stratRetry\nObserveChallenge -->|停在接货区| WinChallenge[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nAngleRouteChallenge --> AdjustAngleChallenge[调整角度]\nFail --> AdjustAngleChallenge\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nTrapRoute --> AdjustMulti[固定其余，只调s-friction]\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustAngleChallenge --> FireChallenge[测试卸货]\nAdjustFriction --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nFire --> Observe\nFireChallenge --> ObserveChallenge{观察结果}:::stratCond\nModeChallenge --> StrategySelectChallenge{选择调参策略?}:::stratCond\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveChallenge -->|卡住| AdjustAngleChallenge\nObserveChallenge -->|冲过| AdjustAngleChallenge\nObserveChallenge -->|次数耗尽| Fail[失败重试]:::stratRetry\nObserveChallenge -->|停在接货区| WinChallenge[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nAngleRouteChallenge --> AdjustAngleChallenge[调整角度]\nFail --> AdjustAngleChallenge\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nTrapRoute --> AdjustMulti[固定其余，只调s-friction]\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -431,11 +431,11 @@
           "Fire",
           "Observe",
           "Win",
-          "AdjustFriction",
           "Retry",
-          "Adjust",
           "WinChallenge",
-          "ModeChallenge"
+          "ModeChallenge",
+          "AngleRoute",
+          "Adjust"
         ],
         "highlightEdges": [
           [
@@ -449,6 +449,10 @@
           [
             "ModeExplore",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "AngleRoute"
           ],
           [
             "AngleRoute",
@@ -467,32 +471,24 @@
             "Win"
           ],
           [
-            "FrictionRoute",
-            "AdjustFriction"
-          ],
-          [
-            "AdjustFriction",
-            "Fire"
-          ],
-          [
             "Observe",
             "AdjustAngle"
-          ],
-          [
-            "Observe",
-            "Retry"
           ],
           [
             "Observe",
             "Adjust"
           ],
           [
-            "Retry",
-            "AdjustAngle"
-          ],
-          [
             "Adjust",
             "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustAngle"
           ]
         ],
         "highlightFailureBranches": true
@@ -520,13 +516,30 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust",
-          "AdjustAngle",
           "Retry",
           "WinChallenge",
-          "ModeChallenge"
+          "ModeChallenge",
+          "FrictionRoute",
+          "Adjust",
+          "AdjustAngle"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "FrictionRoute"
+          ],
           [
             "FrictionRoute",
             "AdjustFriction"
@@ -534,6 +547,10 @@
           [
             "AdjustFriction",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -558,26 +575,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "ModeExplore"
-          ],
-          [
-            "ModeExplore",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Retry",
-            "AdjustAngle"
           ]
         ],
         "highlightFailureBranches": true
@@ -596,12 +593,12 @@
           "Env",
           "ModeExplore",
           "StrategySelect",
-          "AdjustMulti",
           "Fire",
           "Observe",
           "Adjust",
-          "AdjustAngle",
-          "Retry"
+          "Retry",
+          "Trap",
+          "AdjustAngle"
         ],
         "highlightEdges": [
           [
@@ -617,11 +614,15 @@
             "StrategySelect"
           ],
           [
-            "TrapRoute",
-            "AdjustMulti"
+            "StrategySelect",
+            "Trap"
           ],
           [
-            "AdjustMulti",
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -631,10 +632,6 @@
           [
             "Observe",
             "Adjust"
-          ],
-          [
-            "Adjust",
-            "Fire"
           ],
           [
             "Observe",
@@ -659,15 +656,30 @@
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.7,
-        "weight": 0.7,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "ModeExplore"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -685,7 +697,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 3
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

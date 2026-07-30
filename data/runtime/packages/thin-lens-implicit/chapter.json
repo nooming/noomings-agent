@@ -362,7 +362,7 @@
   "strategy": {
     "title": "透镜 · 凸透镜成像实验",
     "sub": "探究物距与焦距对成像位置的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire\nAdjustBothC --> FireC\nAdjustF --> Fire\nAdjustFC --> FireC\nAdjustU --> Fire[测试成像]\nAdjustUC --> FireC[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelectC{选择调参策略?}:::stratCond\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveC -->|偏远| AdjustFC\nObserveC -->|偏近| AdjustUC\nObserveC -->|机会耗尽| Fail[竞赛失败]:::stratRetry\nObserveC -->|未对准| RetryC[重试]:::stratRetry\nObserveC -->|达标| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[同时调多个参数]\nAdjustBoth[按观察单变量微调]\nAdjustBothC[按观察单变量微调]\nAdjustF[按观察单变量微调]\nAdjustFC[按观察单变量微调]\nAdjustU[按观察单变量微调]\nAdjustUC[按观察单变量微调]\nRetry --> AdjustU\nRetryC --> AdjustUC\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire\nAdjustBothC --> FireC\nAdjustF --> Fire\nAdjustFC --> FireC\nAdjustU --> Fire[测试成像]\nAdjustUC --> FireC[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelectC{选择调参策略?}:::stratCond\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveC -->|偏远| AdjustFC\nObserveC -->|偏近| AdjustUC\nObserveC -->|机会耗尽| Fail[竞赛失败]:::stratRetry\nObserveC -->|未对准| RetryC[重试]:::stratRetry\nObserveC -->|达标| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[同时调多个参数]\nAdjustBoth[按观察单变量微调]\nAdjustBothC[按观察单变量微调]\nAdjustF[按观察单变量微调]\nAdjustFC[按观察单变量微调]\nAdjustU[按观察单变量微调]\nAdjustUC[按观察单变量微调]\nRetry --> AdjustU\nRetryC --> AdjustUC\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -388,8 +388,10 @@
           "Win",
           "Retry",
           "WinC",
-          "AdjustU",
-          "AdjustF"
+          "Route_main",
+          "Adjust",
+          "AdjustF",
+          "AdjustU"
         ],
         "highlightEdges": [
           [
@@ -405,7 +407,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustU",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -417,6 +427,10 @@
             "Win"
           ],
           [
+            "Observe",
+            "AdjustF"
+          ],
+          [
             "AdjustF",
             "Fire"
           ],
@@ -425,16 +439,12 @@
             "AdjustU"
           ],
           [
-            "Observe",
-            "AdjustF"
+            "AdjustU",
+            "Fire"
           ],
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustU"
           ]
         ],
         "highlightFailureBranches": true
@@ -463,34 +473,12 @@
           "Fire",
           "Observe",
           "Retry",
+          "Route_main_s_focal_length",
+          "Adjust",
           "AdjustF",
           "AdjustU"
         ],
         "highlightEdges": [
-          [
-            "AdjustF",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustF"
-          ],
-          [
-            "Observe",
-            "AdjustU"
-          ],
-          [
-            "AdjustU",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
           [
             "Start",
             "Mode"
@@ -504,8 +492,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_focal_length"
+          ],
+          [
+            "Route_main_s_focal_length",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustF"
+          ],
+          [
+            "AdjustF",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustU"
+          ],
+          [
+            "AdjustU",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
         ],
         "highlightFailureBranches": true
@@ -534,38 +558,12 @@
           "Fire",
           "Observe",
           "Retry",
-          "AdjustU",
-          "AdjustF"
+          "Route_main_s_aperture",
+          "Adjust",
+          "AdjustF",
+          "AdjustU"
         ],
         "highlightEdges": [
-          [
-            "AdjustU",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustU"
-          ],
-          [
-            "Observe",
-            "AdjustF"
-          ],
-          [
-            "AdjustF",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustU"
-          ],
           [
             "Start",
             "Mode"
@@ -579,8 +577,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_aperture"
+          ],
+          [
+            "Route_main_s_aperture",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustF"
+          ],
+          [
+            "AdjustF",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustU"
+          ],
+          [
+            "AdjustU",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
           ]
         ],
         "highlightFailureBranches": true
@@ -602,6 +636,8 @@
           "Fire",
           "Observe",
           "Retry",
+          "Trap",
+          "Adjust",
           "AdjustF",
           "AdjustU"
         ],
@@ -619,16 +655,20 @@
             "StrategySelect"
           ],
           [
-            "AdjustBoth",
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
             "Fire",
             "Observe"
-          ],
-          [
-            "Observe",
-            "Retry"
           ],
           [
             "Observe",
@@ -647,8 +687,8 @@
             "Fire"
           ],
           [
-            "Retry",
-            "AdjustU"
+            "Observe",
+            "Retry"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -662,14 +702,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Mode",
+          "Explore"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -687,7 +743,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

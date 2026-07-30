@@ -317,23 +317,27 @@
           "Env",
           "ModeOn",
           "ModeOff",
-          "Adjust1",
           "Fire1",
           "Observe1",
           "Win",
           "Retry1",
-          "Adjust2",
           "Fire2",
           "Observe2",
           "Retry2",
-          "Adjust3",
           "Fire3",
           "Observe3",
           "Retry3",
-          "Adjust4",
           "Fire4",
           "Observe4",
-          "Retry4"
+          "Retry4",
+          "Route_main",
+          "AdjustFB",
+          "RetestFB",
+          "ObserveFB",
+          "Adjust1",
+          "Adjust2",
+          "Adjust3",
+          "Adjust4"
         ],
         "highlightEdges": [
           [
@@ -345,19 +349,47 @@
             "ModeOn"
           ],
           [
-            "Env",
-            "ModeOff"
-          ],
-          [
             "ModeOn",
             "StrategySelect"
           ],
           [
-            "ModeOff",
-            "StrategySelect"
+            "StrategySelect",
+            "Route_main"
           ],
           [
-            "Route1",
+            "Route_main",
+            "AdjustFB"
+          ],
+          [
+            "AdjustFB",
+            "RetestFB"
+          ],
+          [
+            "RetestFB",
+            "ObserveFB"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ],
+          [
+            "Fire4",
+            "Observe4"
+          ],
+          [
+            "ObserveFB",
+            "AdjustFB"
+          ],
+          [
+            "Observe1",
             "Adjust1"
           ],
           [
@@ -365,27 +397,11 @@
             "Fire1"
           ],
           [
-            "Fire1",
-            "Observe1"
-          ],
-          [
-            "Observe1",
-            "Adjust1"
-          ],
-          [
-            "Observe1",
-            "Win"
-          ],
-          [
             "Observe1",
             "Retry1"
           ],
           [
-            "Retry1",
-            "Adjust1"
-          ],
-          [
-            "Route2",
+            "Observe2",
             "Adjust2"
           ],
           [
@@ -393,27 +409,11 @@
             "Fire2"
           ],
           [
-            "Fire2",
-            "Observe2"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Observe2",
-            "Win"
-          ],
-          [
             "Observe2",
             "Retry2"
           ],
           [
-            "Retry2",
-            "Adjust2"
-          ],
-          [
-            "Route3",
+            "Observe3",
             "Adjust3"
           ],
           [
@@ -421,27 +421,11 @@
             "Fire3"
           ],
           [
-            "Fire3",
-            "Observe3"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
-          ],
-          [
-            "Observe3",
-            "Win"
-          ],
-          [
             "Observe3",
             "Retry3"
           ],
           [
-            "Retry3",
-            "Adjust3"
-          ],
-          [
-            "Route4",
+            "Observe4",
             "Adjust4"
           ],
           [
@@ -449,24 +433,24 @@
             "Fire4"
           ],
           [
-            "Fire4",
-            "Observe4"
-          ],
-          [
-            "Observe4",
-            "Adjust4"
-          ],
-          [
-            "Observe4",
-            "Win"
-          ],
-          [
             "Observe4",
             "Retry4"
           ],
           [
-            "Retry4",
-            "Adjust4"
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe2",
+            "Win"
+          ],
+          [
+            "Observe3",
+            "Win"
+          ],
+          [
+            "Observe4",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -492,36 +476,16 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Adjust1",
           "Fire1",
           "Observe1",
-          "Retry1"
+          "Retry1",
+          "Route_main_s_c2",
+          "AdjustFB",
+          "RetestFB",
+          "ObserveFB",
+          "Adjust1"
         ],
         "highlightEdges": [
-          [
-            "Route1",
-            "Adjust1"
-          ],
-          [
-            "Adjust1",
-            "Fire1"
-          ],
-          [
-            "Observe1",
-            "Win"
-          ],
-          [
-            "Observe1",
-            "Adjust1"
-          ],
-          [
-            "Observe1",
-            "Retry1"
-          ],
-          [
-            "Retry1",
-            "Adjust1"
-          ],
           [
             "Start",
             "Env"
@@ -535,8 +499,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_c2"
+          ],
+          [
+            "Route_main_s_c2",
+            "AdjustFB"
+          ],
+          [
+            "AdjustFB",
+            "RetestFB"
+          ],
+          [
+            "RetestFB",
+            "ObserveFB"
+          ],
+          [
             "Fire1",
             "Observe1"
+          ],
+          [
+            "ObserveFB",
+            "AdjustFB"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Observe1",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -562,36 +562,16 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Adjust2",
           "Fire2",
           "Observe2",
-          "Retry2"
+          "Retry2",
+          "Route_main_s_c3",
+          "AdjustFB",
+          "RetestFB",
+          "ObserveFB",
+          "Adjust2"
         ],
         "highlightEdges": [
-          [
-            "Route2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "Win"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Observe2",
-            "Retry2"
-          ],
-          [
-            "Retry2",
-            "Adjust2"
-          ],
           [
             "Start",
             "Env"
@@ -605,8 +585,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_c3"
+          ],
+          [
+            "Route_main_s_c3",
+            "AdjustFB"
+          ],
+          [
+            "AdjustFB",
+            "RetestFB"
+          ],
+          [
+            "RetestFB",
+            "ObserveFB"
+          ],
+          [
             "Fire2",
             "Observe2"
+          ],
+          [
+            "ObserveFB",
+            "AdjustFB"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Observe2",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -632,36 +648,16 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Adjust3",
           "Fire3",
           "Observe3",
-          "Retry3"
+          "Retry3",
+          "Route_main_s_cable",
+          "AdjustFB",
+          "RetestFB",
+          "ObserveFB",
+          "Adjust3"
         ],
         "highlightEdges": [
-          [
-            "Route3",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire3"
-          ],
-          [
-            "Observe3",
-            "Win"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
-          ],
-          [
-            "Observe3",
-            "Retry3"
-          ],
-          [
-            "Retry3",
-            "Adjust3"
-          ],
           [
             "Start",
             "Env"
@@ -675,8 +671,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_cable"
+          ],
+          [
+            "Route_main_s_cable",
+            "AdjustFB"
+          ],
+          [
+            "AdjustFB",
+            "RetestFB"
+          ],
+          [
+            "RetestFB",
+            "ObserveFB"
+          ],
+          [
             "Fire3",
             "Observe3"
+          ],
+          [
+            "ObserveFB",
+            "AdjustFB"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Observe3",
+            "Retry3"
+          ],
+          [
+            "Observe3",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -698,7 +730,8 @@
           "AdjustT",
           "FireT",
           "ObserveT",
-          "RetryT"
+          "RetryT",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -756,14 +789,30 @@
         "label": "试探混淆·音量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.47000000000000003,
-        "weight": 0.47000000000000003,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "ModeOn"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -781,7 +830,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 5
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

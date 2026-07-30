@@ -199,6 +199,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     const MISCONCEPTION_ROUTE_WARN_RE = /无效|迷思|不影响|invalid|misconception|无关变量|陷阱|trap|误调.*迷思|关态下|关态.*无效/i;
   const MISCONCEPTION_ROUTE_NODE_RE = /Invalid|Misconception|Trap/i;
 
+  function routeLooksLikeTrapFanout(route) {
+    return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
+      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+  }
+
+  function routeLooksLikeConfoundProbe(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
   function routeIsMisconceptionRoute(route, mermaidBody) {
     if (route?.warn === 'irrelevant') return true;
@@ -211,6 +221,12 @@ function isSuccessBranchEdge(edge, resultIds) {
       if (hl.some(id => invalidIds.has(id))) return true;
     }
     return false;
+  }
+
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  function routeIsTrueMisconceptionRoute(route, mermaidBody) {
+    if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
+    return routeIsMisconceptionRoute(route, mermaidBody);
   }
 
   function stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, route) {
@@ -876,9 +892,50 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Sparse 单变量 routes often only declare Start/StrategySelect/Win.
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
+  /**
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   */
+  function resolveSpineWalkEntry(entry, edges, forbidden) {
+    const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));
+    if (directOuts.length) return { walkFrom: entry, bridgePairs: [] };
+    const aliasId = `${entry}Strat`;
+    const aliasOuts = edges.filter(e => e.from === aliasId && !forbidden.has(e.to));
+    if (aliasOuts.length) {
+      return { walkFrom: aliasId, bridgePairs: [[entry, aliasId]] };
+    }
+    // Trap → AdjustBoth style: any Adjust*/Fire* reachable from a *Strat sibling of entry
+    const stratAlias = edges.find(e =>
+      /Strat$/i.test(e.from)
+      && new RegExp(String(entry).replace(/Strat$/i, ''), 'i').test(e.from)
+      && !forbidden.has(e.to)
+      && preferSpineNodeScore(e.to) >= 0);
+    if (stratAlias) {
+      return { walkFrom: stratAlias.from, bridgePairs: [[entry, stratAlias.from]] };
+    }
+    // Dead-end entry: hop to first non-forbidden Adjust*/Fire*/Tune* sharing label fragment
+    const frag = String(entry).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6);
+    if (frag) {
+      const hop = edges.find(e => {
+        if (forbidden.has(e.to)) return false;
+        const toScore = preferSpineNodeScore(e.to);
+        if (toScore < 45) return false;
+        const fromNorm = String(e.from).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const toNorm = String(e.to).toLowerCase().replace(/[^a-z0-9]/g, '');
+        return fromNorm.includes(frag) || toNorm.includes(frag);
+      });
+      if (hop) {
+        return {
+          walkFrom: hop.from === entry ? entry : hop.from,
+          bridgePairs: hop.from === entry ? [] : [[entry, hop.from]],
+        };
+      }
+    }
+    return { walkFrom: entry, bridgePairs: [] };
+  }
+
   function seedSingleVarRouteSpine(route, mermaidBody, edges, startId) {
     const empty = { entry: null, nodes: [], edgePairs: [], keys: [] };
-    if (!route || routeIsMisconceptionRoute(route, mermaidBody)) return empty;
+    if (!route || routeIsTrueMisconceptionRoute(route, mermaidBody)) return empty;
     const selectEdge = findStrategySelectOutEdge(route, edges);
     if (!selectEdge) return empty;
     const entry = selectEdge.to;
@@ -887,14 +944,16 @@ function isSuccessBranchEdge(edge, resultIds) {
       .map(e => e.to)
       .filter(id => id && id !== entry);
     const forbidden = new Set(siblings);
+    // Prefer path avoiding sibling fan-out; if unreachable (floating StrategySelect),
+    // still seed select→entry + greedy walk so sparse AV/trap routes can expand.
     let prefixKeys = startId
       ? shortestPathEdgeKeysAvoiding(startId, entry, edges, forbidden)
       : [];
     if ((!prefixKeys || !prefixKeys.length) && startId && startId !== entry) {
       prefixKeys = shortestPathEdgeKeys(startId, entry, edges);
-      if (!prefixKeys.length) return empty;
     }
-    const walk = greedySpineFromEntry(entry, edges, forbidden);
+    const resolved = resolveSpineWalkEntry(entry, edges, forbidden);
+    const walk = greedySpineFromEntry(resolved.walkFrom, edges, forbidden);
     const nodes = new Set();
     const edgePairs = [];
     const keys = new Set();
@@ -912,6 +971,12 @@ function isSuccessBranchEdge(edge, resultIds) {
     };
     ingestKeys(prefixKeys);
     nodes.add(entry);
+    resolved.bridgePairs.forEach(p => {
+      edgePairs.push(p);
+      keys.add(p[0] + '->' + p[1]);
+      nodes.add(p[0]);
+      nodes.add(p[1]);
+    });
     walk.nodes.forEach(n => nodes.add(n));
     walk.pairs.forEach(p => {
       edgePairs.push(p);
@@ -932,26 +997,58 @@ function isSuccessBranchEdge(edge, resultIds) {
     return (highlightNodes || []).filter(id => !siblings.has(id));
   }
 
+  function selectEdgePairMissing(pairs, entry) {
+    if (!entry || !Array.isArray(pairs)) return true;
+    return !pairs.some(p => Array.isArray(p) && p.length >= 2
+      && /StrategySelect/i.test(String(p[0])) && String(p[1]) === String(entry));
+  }
+
+  function isBranchEntryNodeId(id) {
+    const s = String(id || '');
+    if (/StrategySelect/i.test(s)) return false;
+    return /^(Adjust|Tune|Single|Route|Trap|Height|Speed|Dist|Mat|Area|Path|Angle|Len)/i.test(s)
+      || /Strat$/i.test(s);
+  }
+
+  function routeNeedsSpineSeed(route) {
+    const edges = route?.highlightEdges || [];
+    const nodes = route?.highlightNodes || [];
+    if (!(Array.isArray(edges) && edges.length > 0) || nodes.length < 6) return true;
+    const hasSelectEdge = edges.some(p => Array.isArray(p) && p.length >= 2 && /StrategySelect/i.test(String(p[0])));
+    if (!hasSelectEdge) return true;
+    // Only Start→StrategySelect (or similarly skeletal) — treat as needing full seed
+    const nonSelectPairs = edges.filter(p => Array.isArray(p) && p.length >= 2
+      && !(/^Start$/i.test(p[0]) && /StrategySelect/i.test(p[1])));
+    if (nonSelectPairs.length === 0) return true;
+    return false;
+  }
+
 function expandRouteHighlight(route, mermaidBody, opts) {
     const edges = parseStrategyMermaidEdges(mermaidBody);
     const startId = findStartNode(mermaidBody, edges);
     const spineSeed = seedSingleVarRouteSpine(route, mermaidBody, edges, startId);
-    const sparse = !(Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      || (route.highlightNodes || []).length < 6;
+    const sparse = routeNeedsSpineSeed(route);
     let effectiveNodes = [...(route.highlightNodes || [])];
     if (spineSeed.entry && sparse) {
+      // Full seed only when sparse / missing StrategySelect fan-out — avoids shared-hub
+      // Fire→Observe* fan-out picking the wrong numbered Observe for explicit spines.
       effectiveNodes = [...new Set([...effectiveNodes, ...spineSeed.nodes])];
       effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
     } else if (spineSeed.entry) {
-      // Even with explicit spine, drop sibling StrategySelect targets to avoid bleed.
+      // Even with explicit spine, keep select entry + drop sibling StrategySelect targets.
+      if (!effectiveNodes.includes(spineSeed.entry)) effectiveNodes.push(spineSeed.entry);
+      if (!effectiveNodes.some(id => /StrategySelect/i.test(id))) {
+        effectiveNodes.push(spineSeed.keys?.length
+          ? (spineSeed.nodes.find(id => /StrategySelect/i.test(id)) || 'StrategySelect')
+          : 'StrategySelect');
+      }
       effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
     }
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       effectiveNodes = effectiveNodes.filter(id => {
-        // Drop other-route Adjust*/Route* not on this spine
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id)) return keep.has(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id)) return keep.has(id) || id === spineSeed.entry;
+        // Drop other-route branch entries (Adjust*/Tune*/Route*/Single*/…Strat) not on this spine
+        if (isBranchEntryNodeId(id)) return keep.has(id) || id === spineSeed.entry;
         return true;
       });
     }
@@ -960,15 +1057,27 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== spineSeed.entry),
       )
       : new Set();
-    const rawEdges = (Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      ? route.highlightEdges
-      : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || []));
+    const rawEdges = sparse && spineSeed.edgePairs.length
+      ? spineSeed.edgePairs
+      : ((Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+        ? route.highlightEdges
+        : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || [])));
     const filteredEdges = siblingEntries.size
       ? rawEdges.filter(pair => {
         if (!Array.isArray(pair) || pair.length < 2) return false;
         return !siblingEntries.has(pair[0]) && !siblingEntries.has(pair[1]);
       })
-      : rawEdges;
+      : rawEdges.map(p => (Array.isArray(p) ? [...p] : p)).filter(p => Array.isArray(p) && p.length >= 2);
+    // Always keep StrategySelect→entry even when reusing stored edges
+    if (spineSeed.entry && selectEdgePairMissing(filteredEdges, spineSeed.entry)) {
+      const selectFrom = (spineSeed.keys || [])
+        .map(k => {
+          const j = k.indexOf('->');
+          return j > 0 ? [k.slice(0, j), k.slice(j + 2)] : null;
+        })
+        .find(p => p && /StrategySelect/i.test(p[0]) && p[1] === spineSeed.entry);
+      filteredEdges.push(selectFrom || ['StrategySelect', spineSeed.entry]);
+    }
     const syntheticRoute = {
       ...route,
       highlightNodes: effectiveNodes,
@@ -978,9 +1087,19 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     const nodeSet = new Set(syntheticRoute.highlightNodes || []);
     // 1 seedSpine — highlightNodes + highlightEdges (+ restricted pairwise in buildRouteHighlightEdgeKeys)
     const keySet = buildRouteHighlightEdgeKeys(syntheticRoute, mermaidBody);
-    if (spineSeed.keys && spineSeed.keys.length && sparse) {
-      spineSeed.keys.forEach(k => keySet.add(k));
-      spineSeed.nodes.forEach(n => nodeSet.add(n));
+    if (spineSeed.keys && spineSeed.keys.length) {
+      if (sparse) {
+        spineSeed.keys.forEach(k => keySet.add(k));
+        spineSeed.nodes.forEach(n => nodeSet.add(n));
+      } else {
+        // Non-sparse: only ensure select→entry, do not import greedy Fire hub fan-out
+        const selKey = spineSeed.keys.find(k => {
+          const j = k.indexOf('->');
+          return j > 0 && /StrategySelect/i.test(k.slice(0, j)) && k.slice(j + 2) === spineSeed.entry;
+        });
+        if (selKey) keySet.add(selKey);
+        nodeSet.add(spineSeed.entry);
+      }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
     const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
@@ -1013,7 +1132,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, syntheticRoute);
     stripConfoundBleedFromRoute(nodeSet, keySet, syntheticRoute);
-    // Final pass: drop other-route Adjust*/Route* that feedback loops may reintroduce
+    // Final pass: drop other-route branch entries that feedback loops may reintroduce
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       // Keep Adjust* that are direct feedback from an already-highlighted Observe*
@@ -1025,10 +1144,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         }
       });
       for (const id of [...nodeSet]) {
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id) && !keep.has(id)) nodeSet.delete(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id) && id !== spineSeed.entry && !keep.has(id)) {
-          nodeSet.delete(id);
-        }
+        if (isBranchEntryNodeId(id) && id !== spineSeed.entry && !keep.has(id)) nodeSet.delete(id);
       }
       for (const k of [...keySet]) {
         const j = k.indexOf('->');
@@ -1330,6 +1446,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     routeShouldAppendSuccessOutcomes,
     routeShouldAppendFailureOutcomes,
     routeIsMisconceptionRoute,
+    routeIsTrueMisconceptionRoute,
+    routeLooksLikeTrapFanout,
     sanitizeMisconceptionRouteHighlights,
     stripMisconceptionSuccessHighlights,
     extractStratInvalidNodeIds,
@@ -1350,6 +1468,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     seedSingleVarRouteSpine,
     findStrategySelectOutEdge,
     normalizeRouteLabelKey,
+    routeNeedsSpineSeed,
+    isBranchEntryNodeId,
   };
 
   if (typeof module !== 'undefined' && module.exports) {

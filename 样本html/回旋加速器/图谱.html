@@ -13,7 +13,7 @@
 <style>
 :root{--font-ui:'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;--font-formula:'Noto Serif SC','Songti SC','SimSun',serif;}
 :root {
-  --font-ui: 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-formula: 'Cambria Math', 'Noto Serif SC', 'Times New Roman', serif;
   --bg-body: #f4f7fb;
   --bg-graph: #eef2f8;
@@ -454,6 +454,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     const MISCONCEPTION_ROUTE_WARN_RE = /无效|迷思|不影响|invalid|misconception|无关变量|陷阱|trap|误调.*迷思|关态下|关态.*无效/i;
   const MISCONCEPTION_ROUTE_NODE_RE = /Invalid|Misconception|Trap/i;
 
+  function routeLooksLikeTrapFanout(route) {
+    return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
+      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+  }
+
+  function routeLooksLikeConfoundProbe(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
   function routeIsMisconceptionRoute(route, mermaidBody) {
     if (route?.warn === 'irrelevant') return true;
@@ -466,6 +476,12 @@ function isSuccessBranchEdge(edge, resultIds) {
       if (hl.some(id => invalidIds.has(id))) return true;
     }
     return false;
+  }
+
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  function routeIsTrueMisconceptionRoute(route, mermaidBody) {
+    if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
+    return routeIsMisconceptionRoute(route, mermaidBody);
   }
 
   function stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, route) {
@@ -1131,9 +1147,50 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Sparse 单变量 routes often only declare Start/StrategySelect/Win.
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
+  /**
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   */
+  function resolveSpineWalkEntry(entry, edges, forbidden) {
+    const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));
+    if (directOuts.length) return { walkFrom: entry, bridgePairs: [] };
+    const aliasId = `${entry}Strat`;
+    const aliasOuts = edges.filter(e => e.from === aliasId && !forbidden.has(e.to));
+    if (aliasOuts.length) {
+      return { walkFrom: aliasId, bridgePairs: [[entry, aliasId]] };
+    }
+    // Trap → AdjustBoth style: any Adjust*/Fire* reachable from a *Strat sibling of entry
+    const stratAlias = edges.find(e =>
+      /Strat$/i.test(e.from)
+      && new RegExp(String(entry).replace(/Strat$/i, ''), 'i').test(e.from)
+      && !forbidden.has(e.to)
+      && preferSpineNodeScore(e.to) >= 0);
+    if (stratAlias) {
+      return { walkFrom: stratAlias.from, bridgePairs: [[entry, stratAlias.from]] };
+    }
+    // Dead-end entry: hop to first non-forbidden Adjust*/Fire*/Tune* sharing label fragment
+    const frag = String(entry).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6);
+    if (frag) {
+      const hop = edges.find(e => {
+        if (forbidden.has(e.to)) return false;
+        const toScore = preferSpineNodeScore(e.to);
+        if (toScore < 45) return false;
+        const fromNorm = String(e.from).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const toNorm = String(e.to).toLowerCase().replace(/[^a-z0-9]/g, '');
+        return fromNorm.includes(frag) || toNorm.includes(frag);
+      });
+      if (hop) {
+        return {
+          walkFrom: hop.from === entry ? entry : hop.from,
+          bridgePairs: hop.from === entry ? [] : [[entry, hop.from]],
+        };
+      }
+    }
+    return { walkFrom: entry, bridgePairs: [] };
+  }
+
   function seedSingleVarRouteSpine(route, mermaidBody, edges, startId) {
     const empty = { entry: null, nodes: [], edgePairs: [], keys: [] };
-    if (!route || routeIsMisconceptionRoute(route, mermaidBody)) return empty;
+    if (!route || routeIsTrueMisconceptionRoute(route, mermaidBody)) return empty;
     const selectEdge = findStrategySelectOutEdge(route, edges);
     if (!selectEdge) return empty;
     const entry = selectEdge.to;
@@ -1142,14 +1199,16 @@ function isSuccessBranchEdge(edge, resultIds) {
       .map(e => e.to)
       .filter(id => id && id !== entry);
     const forbidden = new Set(siblings);
+    // Prefer path avoiding sibling fan-out; if unreachable (floating StrategySelect),
+    // still seed select→entry + greedy walk so sparse AV/trap routes can expand.
     let prefixKeys = startId
       ? shortestPathEdgeKeysAvoiding(startId, entry, edges, forbidden)
       : [];
     if ((!prefixKeys || !prefixKeys.length) && startId && startId !== entry) {
       prefixKeys = shortestPathEdgeKeys(startId, entry, edges);
-      if (!prefixKeys.length) return empty;
     }
-    const walk = greedySpineFromEntry(entry, edges, forbidden);
+    const resolved = resolveSpineWalkEntry(entry, edges, forbidden);
+    const walk = greedySpineFromEntry(resolved.walkFrom, edges, forbidden);
     const nodes = new Set();
     const edgePairs = [];
     const keys = new Set();
@@ -1167,6 +1226,12 @@ function isSuccessBranchEdge(edge, resultIds) {
     };
     ingestKeys(prefixKeys);
     nodes.add(entry);
+    resolved.bridgePairs.forEach(p => {
+      edgePairs.push(p);
+      keys.add(p[0] + '->' + p[1]);
+      nodes.add(p[0]);
+      nodes.add(p[1]);
+    });
     walk.nodes.forEach(n => nodes.add(n));
     walk.pairs.forEach(p => {
       edgePairs.push(p);
@@ -1187,26 +1252,49 @@ function isSuccessBranchEdge(edge, resultIds) {
     return (highlightNodes || []).filter(id => !siblings.has(id));
   }
 
+  function selectEdgePairMissing(pairs, entry) {
+    if (!entry || !Array.isArray(pairs)) return true;
+    return !pairs.some(p => Array.isArray(p) && p.length >= 2
+      && /StrategySelect/i.test(String(p[0])) && String(p[1]) === String(entry));
+  }
+
+  function isBranchEntryNodeId(id) {
+    const s = String(id || '');
+    if (/StrategySelect/i.test(s)) return false;
+    return /^(Adjust|Tune|Single|Route|Trap|Height|Speed|Dist|Mat|Area|Path|Angle|Len)/i.test(s)
+      || /Strat$/i.test(s);
+  }
+
+  function routeNeedsSpineSeed(route) {
+    const edges = route?.highlightEdges || [];
+    const nodes = route?.highlightNodes || [];
+    if (!(Array.isArray(edges) && edges.length > 0) || nodes.length < 6) return true;
+    const hasSelectEdge = edges.some(p => Array.isArray(p) && p.length >= 2 && /StrategySelect/i.test(String(p[0])));
+    if (!hasSelectEdge) return true;
+    // Only Start→StrategySelect (or similarly skeletal) — treat as needing full seed
+    const nonSelectPairs = edges.filter(p => Array.isArray(p) && p.length >= 2
+      && !(/^Start$/i.test(p[0]) && /StrategySelect/i.test(p[1])));
+    if (nonSelectPairs.length === 0) return true;
+    return false;
+  }
+
 function expandRouteHighlight(route, mermaidBody, opts) {
     const edges = parseStrategyMermaidEdges(mermaidBody);
     const startId = findStartNode(mermaidBody, edges);
     const spineSeed = seedSingleVarRouteSpine(route, mermaidBody, edges, startId);
-    const sparse = !(Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      || (route.highlightNodes || []).length < 6;
+    const sparse = routeNeedsSpineSeed(route);
     let effectiveNodes = [...(route.highlightNodes || [])];
-    if (spineSeed.entry && sparse) {
+    if (spineSeed.entry) {
+      // Always merge seed entry spine so distinct AV Tune/Route nodes survive even when
+      // stored highlights already have a shared Fire/Observe feedback loop.
       effectiveNodes = [...new Set([...effectiveNodes, ...spineSeed.nodes])];
-      effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
-    } else if (spineSeed.entry) {
-      // Even with explicit spine, drop sibling StrategySelect targets to avoid bleed.
       effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
     }
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       effectiveNodes = effectiveNodes.filter(id => {
-        // Drop other-route Adjust*/Route* not on this spine
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id)) return keep.has(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id)) return keep.has(id) || id === spineSeed.entry;
+        // Drop other-route branch entries (Adjust*/Tune*/Route*/Single*/…Strat) not on this spine
+        if (isBranchEntryNodeId(id)) return keep.has(id) || id === spineSeed.entry;
         return true;
       });
     }
@@ -1215,15 +1303,27 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== spineSeed.entry),
       )
       : new Set();
-    const rawEdges = (Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      ? route.highlightEdges
-      : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || []));
+    const rawEdges = sparse && spineSeed.edgePairs.length
+      ? spineSeed.edgePairs
+      : ((Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+        ? route.highlightEdges
+        : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || [])));
     const filteredEdges = siblingEntries.size
       ? rawEdges.filter(pair => {
         if (!Array.isArray(pair) || pair.length < 2) return false;
         return !siblingEntries.has(pair[0]) && !siblingEntries.has(pair[1]);
       })
-      : rawEdges;
+      : rawEdges.map(p => (Array.isArray(p) ? [...p] : p)).filter(p => Array.isArray(p) && p.length >= 2);
+    // Always keep StrategySelect→entry even when reusing stored edges
+    if (spineSeed.entry && selectEdgePairMissing(filteredEdges, spineSeed.entry)) {
+      const selectFrom = (spineSeed.keys || [])
+        .map(k => {
+          const j = k.indexOf('->');
+          return j > 0 ? [k.slice(0, j), k.slice(j + 2)] : null;
+        })
+        .find(p => p && /StrategySelect/i.test(p[0]) && p[1] === spineSeed.entry);
+      filteredEdges.push(selectFrom || ['StrategySelect', spineSeed.entry]);
+    }
     const syntheticRoute = {
       ...route,
       highlightNodes: effectiveNodes,
@@ -1233,7 +1333,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     const nodeSet = new Set(syntheticRoute.highlightNodes || []);
     // 1 seedSpine — highlightNodes + highlightEdges (+ restricted pairwise in buildRouteHighlightEdgeKeys)
     const keySet = buildRouteHighlightEdgeKeys(syntheticRoute, mermaidBody);
-    if (spineSeed.keys && spineSeed.keys.length && sparse) {
+    if (spineSeed.keys && spineSeed.keys.length) {
       spineSeed.keys.forEach(k => keySet.add(k));
       spineSeed.nodes.forEach(n => nodeSet.add(n));
     }
@@ -1268,7 +1368,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, syntheticRoute);
     stripConfoundBleedFromRoute(nodeSet, keySet, syntheticRoute);
-    // Final pass: drop other-route Adjust*/Route* that feedback loops may reintroduce
+    // Final pass: drop other-route branch entries that feedback loops may reintroduce
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       // Keep Adjust* that are direct feedback from an already-highlighted Observe*
@@ -1280,10 +1380,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         }
       });
       for (const id of [...nodeSet]) {
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id) && !keep.has(id)) nodeSet.delete(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id) && id !== spineSeed.entry && !keep.has(id)) {
-          nodeSet.delete(id);
-        }
+        if (isBranchEntryNodeId(id) && id !== spineSeed.entry && !keep.has(id)) nodeSet.delete(id);
       }
       for (const k of [...keySet]) {
         const j = k.indexOf('->');
@@ -1585,6 +1682,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     routeShouldAppendSuccessOutcomes,
     routeShouldAppendFailureOutcomes,
     routeIsMisconceptionRoute,
+    routeIsTrueMisconceptionRoute,
+    routeLooksLikeTrapFanout,
     sanitizeMisconceptionRouteHighlights,
     stripMisconceptionSuccessHighlights,
     extractStratInvalidNodeIds,
@@ -1605,6 +1704,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     seedSingleVarRouteSpine,
     findStrategySelectOutEdge,
     normalizeRouteLabelKey,
+    routeNeedsSpineSeed,
+    isBranchEntryNodeId,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1717,11 +1818,38 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     }) || null;
   }
 
-  function findSelectOutEdgeTarget(route) {
+  function findSelectOutEdgeTarget(route, mermaidBody) {
     const edges = route?.highlightEdges || [];
     for (const pair of edges) {
       if (!Array.isArray(pair) || pair.length < 2) continue;
       if (/StrategySelect/i.test(String(pair[0]))) return String(pair[1]);
+    }
+    // Fallback: match Mermaid StrategySelect out-edge by route label (prio styles
+    // still work when highlightEdges omit the select fan-out edge).
+    const body = String(mermaidBody || '');
+    if (!body.trim() || !route) return null;
+    const want = normalizeLabelKey(route.label);
+    if (!want) return null;
+    const lines = body.replace(/\r\n/g, '\n').split('\n');
+    let fuzzy = null;
+    for (const line of lines) {
+      const m = String(line).trim().match(
+        /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+      );
+      if (!m) continue;
+      const edgeKey = normalizeLabelKey(m[3]);
+      if (!edgeKey) continue;
+      if (edgeKey === want) return m[4];
+      if (!fuzzy && (edgeKey.includes(want) || want.includes(edgeKey))) fuzzy = m[4];
+    }
+    if (fuzzy) return fuzzy;
+    if (isTrapRoute(route)) {
+      for (const line of lines) {
+        const m = String(line).trim().match(
+          /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+        );
+        if (m && /盲调|多参|trap|多滑/i.test(m[3])) return m[4];
+      }
     }
     return null;
   }
@@ -1795,7 +1923,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const to = m[4];
       let route = matchRouteForEdgeLabel(label, routes);
       if (!route) {
-        route = routes.find(r => findSelectOutEdgeTarget(r) === to) || null;
+        route = routes.find(r => findSelectOutEdgeTarget(r, raw) === to) || null;
       }
       selectEdgeIdx.push(i);
       selectEdges.push({
@@ -1850,11 +1978,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
   /**
    * Map StrategySelect→target edge keys to priority style meta (for SVG post-style).
+   * @param {Array} routes
+   * @param {string} [mermaidBody] optional; used to resolve select targets when highlightEdges omit them
    */
-  function strategySelectPriorityStyles(routes) {
+  function strategySelectPriorityStyles(routes, mermaidBody) {
     const map = new Map();
     for (const route of rankedStrategySelectRoutes(routes)) {
-      const to = findSelectOutEdgeTarget(route);
+      const to = findSelectOutEdgeTarget(route, mermaidBody);
       if (!to) continue;
       const meta = routePriorityMeta(route);
       map.set(`StrategySelect->${to}`, {
@@ -1878,6 +2008,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     rankedStrategySelectRoutes,
     annotateStrategyMermaidPriority,
     strategySelectPriorityStyles,
+    findSelectOutEdgeTarget,
     strokeWidthForMeta,
     strokeColorForMeta,
   };
@@ -1894,7 +2025,7 @@ const GraphViewer = (function () {
   let KG_CHAPTERS = [], DT_CHAPTERS = [], metaChapters = [];
   let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
   let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
-  let mermaidReady = false, strategyRenderId = 0, activeStrategyRouteId = null;
+  let mermaidReady = false, mermaidLoadPromise = null, strategyRenderId = 0, activeStrategyRouteId = null;
   let strategyZoomBeh = null, strategyResizeTimer = null;
   let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
   let lastStrategyDisplayMermaid = '';
@@ -2450,10 +2581,9 @@ function parseGraphHash() {
   if (!raw) return null;
   const params = new URLSearchParams(raw);
   const ch = parseInt(params.get('ch'), 10);
-  const fallbackView = chapterHasStrategy(Number.isFinite(ch) ? ch : 0) ? 'strategy' : 'dt';
   return {
     ch: Number.isFinite(ch) ? ch : 0,
-    view: params.get('view') || fallbackView,
+    view: params.get('view') || 'dt',
     route: params.get('route') || null,
   };
 }
@@ -2597,9 +2727,11 @@ function afterStrategyRender() {
 function applyPriorityEdgeStyles() {
   const svg = document.querySelector('#strategy-mermaid svg');
   const api = priorityApi();
-  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  const meta = metaChapters[currentCh] || {};
+  const routes = meta?.strategy?.routes || [];
+  const mermaidBody = meta?.strategy?.mermaid || '';
   if (!svg || !api?.strategySelectPriorityStyles || !routes.length) return;
-  const styleMap = api.strategySelectPriorityStyles(routes);
+  const styleMap = api.strategySelectPriorityStyles(routes, mermaidBody);
   if (!styleMap.size) return;
 
   const pathGroups = getStrategyEdgePathGroups(svg);
@@ -2780,6 +2912,29 @@ function ensureMermaid() {
   mermaidReady = true;
 }
 
+/** Load Mermaid only when entering strategy view (graph.html / preview-shell omit sync tag). */
+function loadMermaidLib() {
+  if (typeof mermaid !== 'undefined') return Promise.resolve();
+  if (mermaidLoadPromise) return mermaidLoadPromise;
+  const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
+    || '/static/viewer/vendor/mermaid.min.js';
+  mermaidLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mermaid-loader]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Mermaid 加载失败')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.mermaidLoader = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Mermaid 加载失败'));
+    document.head.appendChild(s);
+  });
+  return mermaidLoadPromise;
+}
+
 function renderStrategy() {
   ensureStrategyViewport();
   const mount = document.getElementById('strategy-mermaid');
@@ -2790,29 +2945,32 @@ function renderStrategy() {
     mount.innerHTML = '<div id="strategy-empty">本章暂无策略全景</div>';
     return;
   }
-  ensureMermaid();
-  if (typeof mermaid === 'undefined') {
-    mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
-    return;
-  }
   mount.innerHTML = '<div class="strategy-loading">正在渲染策略图…</div>';
-  const id = 'strategy-diagram-' + currentCh + '-' + rid;
-  const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
-  lastStrategyDisplayMermaid = displayBody;
-  const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
-  mermaid.render(id, src).then(({ svg }) => {
+  loadMermaidLib().then(() => {
     if (rid !== strategyRenderId) return;
-    mount.innerHTML = svg;
-    const svgEl = mount.querySelector('svg');
-    if (svgEl) {
-      svgEl.removeAttribute('width');
-      svgEl.style.width = '';
-      svgEl.style.maxWidth = '';
-      requestAnimationFrame(() => {
-        afterStrategyRender();
-        activatePendingRoute();
-      });
+    ensureMermaid();
+    if (typeof mermaid === 'undefined') {
+      mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
+      return;
     }
+    const id = 'strategy-diagram-' + currentCh + '-' + rid;
+    const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
+    lastStrategyDisplayMermaid = displayBody;
+    const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
+    return mermaid.render(id, src).then(({ svg }) => {
+      if (rid !== strategyRenderId) return;
+      mount.innerHTML = svg;
+      const svgEl = mount.querySelector('svg');
+      if (svgEl) {
+        svgEl.removeAttribute('width');
+        svgEl.style.width = '';
+        svgEl.style.maxWidth = '';
+        requestAnimationFrame(() => {
+          afterStrategyRender();
+          activatePendingRoute();
+        });
+      }
+    });
   }).catch(err => {
     if (rid !== strategyRenderId) return;
     mount.innerHTML = '<div id="strategy-empty">策略图渲染失败：' + (err.message || err) + '</div>';
@@ -2832,9 +2990,19 @@ function showRouteInKg(route) {
   const ids = route?.mapsTo || [];
   if (!ids.length) return;
   switchView('kg');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => kgHighlightIds(ids));
-  });
+  // Wait until KG render finished (nodeG ready). Double-rAF alone races when
+  // switching from strategy view — simulation/DOM may not exist yet.
+  const maxTries = 45;
+  let tries = 0;
+  const tryHighlight = () => {
+    if (nodeG && linkG && lastKgNodes) {
+      kgHighlightIds(ids);
+      return;
+    }
+    if (++tries >= maxTries) return;
+    requestAnimationFrame(tryHighlight);
+  };
+  requestAnimationFrame(tryHighlight);
 }
 
 function kgHighlightIds(ids) {
@@ -3338,11 +3506,14 @@ function clearInfoPanel() {
     metaChapters = opts.metaChapters || [];
     svgEl = document.getElementById('svg');
     d3svg = d3.select(svgEl);
-    const preferStrategy = opts.defaultView === 'strategy'
-      || (opts.defaultView == null && chapterHasStrategy(0));
-    if (preferStrategy && chapterHasStrategy(0)) currentView = 'strategy';
+    // Only explicit defaultView:'strategy' (standalone 图谱.html) opens strategy-first.
+    // graph.html / preview-shell omit defaultView → start on dt (or kg) to avoid mermaid.render on first paint.
+    if (opts.defaultView === 'strategy' && chapterHasStrategy(0)) currentView = 'strategy';
     else if (opts.defaultView === 'kg' || opts.defaultView === 'dt') currentView = opts.defaultView;
-    else currentView = chapterHasStrategy(0) ? 'strategy' : 'dt';
+    else currentView = DT_CHAPTERS[0]?.tree ? 'dt' : 'kg';
+    document.getElementById('vt-kg')?.classList.toggle('active', currentView === 'kg');
+    document.getElementById('vt-dt')?.classList.toggle('active', currentView === 'dt');
+    document.getElementById('vt-strategy')?.classList.toggle('active', currentView === 'strategy');
     bindControls();
     setGraphChrome();
     if (opts.onReady) opts.onReady({ buildTabs, loadChapter, render, switchView, setChapters });
@@ -3377,7 +3548,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 初始状态 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调节B和v | O1 | operation | 调节磁感应强度B和入射速度v |\n| 发射粒子 | O2 | operation | 点击发射按钮 |\n| 观察半径偏大/偏小? | C5 | constraint | 观察反馈 |\n| 否→继续观察 | C4 | constraint | 半径在目标环带? |\n| 是→过关 | R1 | result | 过关 |\n| 否→重试 | retry | retry | skip retry |\n| 探究: 观察半径变化 | S1 | core | 教学节点 |\n| 竞赛: 限次命中环带 | S2 | core | 教学节点 |\n| 验证探究 | verify | verify | 验证边 |\n| 验证竞赛 | verify | verify | 验证边 |\n| 腔室气压p | I1 | irrelevant | 无关控件 |\n| 读数显示 | I2 | irrelevant | 无关控件 |","kg":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始回旋加速器束流提取探究"},{"id":"C1","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式，决定后续判定规则","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由探究模式，无命中要求，观察半径随B、v变化","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛挑战模式，限次将轨道半径调至锁定提取环带内","constraintKind":"physics"},{"id":"O1","label":"调节B和v","group":"operation","layer":"play","level":3,"r":22,"desc":"调节磁感应强度B和入射速度v滑条，改变轨道半径"},{"id":"O2","label":"发射粒子","group":"operation","layer":"play","level":4,"r":22,"desc":"点击发射按钮，观察轨道半径与反馈"},{"id":"C5","label":"观察半径偏大/偏小","group":"constraint","layer":"play","level":5,"r":22,"desc":"发射后观察半径与目标环带的偏差方向，指导调节","constraintKind":"physics"},{"id":"C4","label":"半径在目标环带?","group":"constraint","layer":"play","level":6,"r":22,"desc":"竞赛模式下轨道半径是否在锁定提取环带内","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"竞赛模式下轨道半径命中提取环带，显示过关界面"},{"id":"S1","label":"探究: 观察半径变化","group":"core","layer":"teach","level":0,"r":22,"desc":"自由探究模式下，通过调节B和v观察轨道半径的变化规律"},{"id":"S2","label":"竞赛: 限次命中环带","group":"core","layer":"teach","level":0,"r":22,"desc":"竞赛模式下，在有限次数内将轨道半径调至锁定提取环带内"},{"id":"I1","label":"腔室气压p","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"腔室气压滑条，不影响轨道半径判定"}],"links":[{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"O2","tp":"method"},{"s":"O2","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","tree":{"n":"进入关卡","t":"root","d":"开始回旋加速器束流提取探究","children":[{"n":"选择模式?","t":"decision","d":"选择自由探究或竞赛挑战模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究模式，观察半径随B、v变化","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条","children":[{"n":"发射粒子","t":"step","d":"点击发射按钮，观察轨道半径","children":[{"n":"观察半径偏大/偏小?","t":"decision","d":"发射后观察半径与目标环带的偏差方向","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"半径偏大或偏小，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"继续观察","t":"step","d":"半径在目标环带内或继续探究","children":[{"n":"过关","t":"result","d":"竞赛模式下轨道半径命中提取环带，过关"}]}]}]}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛挑战模式，限次命中锁定提取环","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条","children":[{"n":"发射粒子","t":"step","d":"点击发射按钮，观察轨道半径","children":[{"n":"观察半径偏大/偏小?","t":"decision","d":"发射后观察半径与目标环带的偏差方向","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"半径偏大或偏小，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"半径在目标环带?","t":"decision","d":"竞赛模式下轨道半径是否在锁定提取环带内","children":[{"_e":"否","n":"未命中重试","t":"retry","d":"半径不在环带内，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"竞赛模式下轨道半径命中提取环带，过关"}]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"束流对齐提取环"},"strategy":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","mermaid":"graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[同时调多个参数]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry","routes":[{"id":"main","label":"单变量·速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","ExploreCore","Tune1","Adjust","Retest","ChallengeCore","Win2","Win1"],"highlightEdges":[["Tune1","Adjust"],["Adjust","Retest"],["Observe","Win"],["Observe","Adjust"],["Start","ModeSelect"],["ModeSelect","ExploreCore"],["ExploreCore","Tune1"],["Retest","Observe"],["StrategySelect","Tune1"]],"highlightFailureBranches":true},{"id":"main_s-magnetic","label":"单变量·磁场","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","ChallengeCore","Tune2","Adjust","Retest","Win2","Win1"],"highlightEdges":[["Tune2","Adjust"],["Adjust","Retest"],["Observe","Win"],["Observe","Adjust"],["Start","ModeSelect"],["ModeSelect","ChallengeCore"],["ChallengeCore","Tune2"],["Retest","Observe"],["StrategySelect","Tune2"]],"highlightFailureBranches":true},{"id":"main_s-chamber-p","label":"单变量·腔室气压","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","ChallengeCore","Win2","Win1"],"highlightEdges":[],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","ProbeCV"],"highlightEdges":[],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.55,"weight":0.55,"highlightNodes":["Start","StrategySelect","ProbeCV","ObserveCV","BackFromCV"],"highlightEdges":[],"priorityRank":4}]},"traceMap":{"controls":{"s-magnetic":{"kgId":"O1","role":"operation"},"s-velocity":{"kgId":"O1","role":"operation"},"s-chamber-p":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"val-pressure":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{}},"inquiryScript":{"summary":"回旋加速器 · 探究轨道半径","knowledgePoints":[{"id":"KP1","label":"回旋加速器 · 探究轨道半径","formulas":["E = 1.0","R = r"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-velocity","label":"速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-magnetic","label":"磁场","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-chamber-p","label":"腔室气压","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：探究: 观察半径变化、竞赛: 限次命中环带","steps":[{"order":1,"title":"明确知识点","body":"回顾：探究: 观察半径变化；竞赛: 限次命中环带","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节B和v、调节B和v、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：腔室气压p（腔室气压滑条，不影响轨道半径判定）；腔室气压p（腔室气压滑条，不影响轨道半径判定）","mapsToKg":["I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"circular"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 初始状态 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调节B和v | O1 | operation | 调节磁感应强度B和入射速度v |\n| 发射粒子 | O2 | operation | 点击发射按钮 |\n| 观察半径偏大/偏小? | C5 | constraint | 观察反馈 |\n| 否→继续观察 | C4 | constraint | 半径在目标环带? |\n| 是→过关 | R1 | result | 过关 |\n| 否→重试 | retry | retry | skip retry |\n| 探究: 观察半径变化 | S1 | core | 教学节点 |\n| 竞赛: 限次命中环带 | S2 | core | 教学节点 |\n| 验证探究 | verify | verify | 验证边 |\n| 验证竞赛 | verify | verify | 验证边 |\n| 腔室气压p | I1 | irrelevant | 无关控件 |\n| 读数显示 | I2 | irrelevant | 无关控件 |","kg":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始回旋加速器束流提取探究"},{"id":"C1","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式，决定后续判定规则","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由探究模式，无命中要求，观察半径随B、v变化","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛挑战模式，限次将轨道半径调至锁定提取环带内","constraintKind":"physics"},{"id":"O1","label":"调节B和v","group":"operation","layer":"play","level":3,"r":22,"desc":"调节磁感应强度B和入射速度v滑条，改变轨道半径"},{"id":"O2","label":"发射粒子","group":"operation","layer":"play","level":4,"r":22,"desc":"点击发射按钮，观察轨道半径与反馈"},{"id":"C5","label":"观察半径偏大/偏小","group":"constraint","layer":"play","level":5,"r":22,"desc":"发射后观察半径与目标环带的偏差方向，指导调节","constraintKind":"physics"},{"id":"C4","label":"半径在目标环带?","group":"constraint","layer":"play","level":6,"r":22,"desc":"竞赛模式下轨道半径是否在锁定提取环带内","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"竞赛模式下轨道半径命中提取环带，显示过关界面"},{"id":"S1","label":"探究: 观察半径变化","group":"core","layer":"teach","level":0,"r":22,"desc":"自由探究模式下，通过调节B和v观察轨道半径的变化规律"},{"id":"S2","label":"竞赛: 限次命中环带","group":"core","layer":"teach","level":0,"r":22,"desc":"竞赛模式下，在有限次数内将轨道半径调至锁定提取环带内"},{"id":"I1","label":"腔室气压p","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"腔室气压滑条，不影响轨道半径判定"}],"links":[{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"O2","tp":"method"},{"s":"O2","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","tree":{"n":"进入关卡","t":"root","d":"开始回旋加速器束流提取探究","children":[{"n":"选择模式?","t":"decision","d":"选择自由探究或竞赛挑战模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究模式，观察半径随B、v变化","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条","children":[{"n":"发射粒子","t":"step","d":"点击发射按钮，观察轨道半径","children":[{"n":"观察半径偏大/偏小?","t":"decision","d":"发射后观察半径与目标环带的偏差方向","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"半径偏大或偏小，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"继续观察","t":"step","d":"半径在目标环带内或继续探究","children":[{"n":"过关","t":"result","d":"竞赛模式下轨道半径命中提取环带，过关"}]}]}]}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛挑战模式，限次命中锁定提取环","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条","children":[{"n":"发射粒子","t":"step","d":"点击发射按钮，观察轨道半径","children":[{"n":"观察半径偏大/偏小?","t":"decision","d":"发射后观察半径与目标环带的偏差方向","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"半径偏大或偏小，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"半径在目标环带?","t":"decision","d":"竞赛模式下轨道半径是否在锁定提取环带内","children":[{"_e":"否","n":"未命中重试","t":"retry","d":"半径不在环带内，需重新调节，回到调节B和v后重试","children":[{"n":"调节B和v","t":"step","d":"调节磁感应强度B和入射速度v滑条，改变轨道半径","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"竞赛模式下轨道半径命中提取环带，过关"}]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"束流对齐提取环"},"strategy":{"title":"回旋加速器 · 探究轨道半径","sub":"第1关","mermaid":"graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[同时调多个参数]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Adjust","routes":[{"id":"main","label":"单变量·速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","ExploreCore","Tune1","Adjust","Retest","ChallengeCore","Win2","Win1","Observe"],"highlightEdges":[["Tune1","Adjust"],["Adjust","Retest"],["Observe","Win"],["Observe","Adjust"],["Start","ModeSelect"],["ModeSelect","ExploreCore"],["ExploreCore","Tune1"],["Retest","Observe"],["StrategySelect","Tune1"],["ExploreCore","StrategySelect"]],"highlightFailureBranches":true},{"id":"main_s-magnetic","label":"单变量·磁场","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","ChallengeCore","Tune2","Adjust","Retest","Win2","Win1","Observe"],"highlightEdges":[["Tune2","Adjust"],["Adjust","Retest"],["Observe","Win"],["Observe","Adjust"],["Start","ModeSelect"],["ModeSelect","ChallengeCore"],["ChallengeCore","Tune2"],["Retest","Observe"],["StrategySelect","Tune2"]],"highlightFailureBranches":true},{"id":"main_s-chamber-p","label":"单变量·腔室气压","mapsTo":["P1","O1","C1","C2","R1","I1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","ChallengeCore","Win2","Win1","ModeSelect","ExploreCore","Route_main_s_chamber_p","Adjust","Retest","Observe"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreCore"],["ExploreCore","StrategySelect"],["StrategySelect","Route_main_s_chamber_p"],["Route_main_s_chamber_p","Adjust"],["Adjust","Retest"],["Retest","Observe"],["Observe","Win"],["Observe","Adjust"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","ModeSelect","ExploreCore","Trap","Adjust","Retest","Observe","Win"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreCore"],["ExploreCore","StrategySelect"],["StrategySelect","Trap"],["Trap","Adjust"],["Adjust","Retest"],["Retest","Observe"],["Observe","Win"],["Observe","Adjust"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["Start","StrategySelect","ProbeCV","ObserveCV","BackFromCV","ModeSelect"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ProbeCV"],["ProbeCV","ObserveCV"],["StrategySelect","ProbeCV"],["ObserveCV","BackFromCV"],["BackFromCV","ModeSelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-magnetic":{"kgId":"O1","role":"operation"},"s-velocity":{"kgId":"O1","role":"operation"},"s-chamber-p":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"val-pressure":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{}},"inquiryScript":{"summary":"回旋加速器 · 探究轨道半径","knowledgePoints":[{"id":"KP1","label":"回旋加速器 · 探究轨道半径","formulas":["E = 1.0","R = r"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-velocity","label":"速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-magnetic","label":"磁场","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-chamber-p","label":"腔室气压","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：探究: 观察半径变化、竞赛: 限次命中环带","steps":[{"order":1,"title":"明确知识点","body":"回顾：探究: 观察半径变化；竞赛: 限次命中环带","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节B和v、调节B和v、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：腔室气压p（腔室气压滑条，不影响轨道半径判定）；腔室气压p（腔室气压滑条，不影响轨道半径判定）","mapsToKg":["I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"circular"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

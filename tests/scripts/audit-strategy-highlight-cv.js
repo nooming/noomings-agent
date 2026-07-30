@@ -63,7 +63,7 @@ function auditPackage(entry) {
     const sparse = isSparse(r);
     const expanded = expandRouteHighlight(r, mermaid, {});
     const nodes = expanded.highlightNodes || [];
-    const hasFire = nodes.some(id => /^(Fire|Launch|Tune)/i.test(id));
+    const hasFire = nodes.some(id => /^(Fire|Launch|Tune|Retest)/i.test(id));
     const hasObserve = nodes.some(id => /^Observe/i.test(id));
     const hasEntry = nodes.some(id => /Route|Strat|Dist|Mat|Area|Trap|Path|Tune|Single|Adjust/i.test(id)
       && !/StrategySelect/i.test(id));

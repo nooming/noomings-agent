@@ -280,7 +280,7 @@
   "strategy": {
     "title": "热传导 · 探究",
     "sub": "极地科考站 · 保温墙",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nAdjustMulti --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[同时调多个参数]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nAdjustMulti[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nAdjustMulti --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[同时调多个参数]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nAdjustMulti[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -306,6 +306,8 @@
           "Win",
           "RetryLow",
           "RetryOverheat",
+          "Route_main",
+          "Adjust",
           "AdjustK"
         ],
         "highlightEdges": [
@@ -322,7 +324,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustK",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -334,16 +344,12 @@
             "Win"
           ],
           [
-            "AdjustDT",
-            "Fire"
-          ],
-          [
-            "AdjustA",
-            "Fire"
-          ],
-          [
             "Observe",
             "AdjustK"
+          ],
+          [
+            "AdjustK",
+            "Fire"
           ],
           [
             "Observe",
@@ -352,14 +358,6 @@
           [
             "Observe",
             "RetryOverheat"
-          ],
-          [
-            "RetryLow",
-            "AdjustK"
-          ],
-          [
-            "RetryOverheat",
-            "AdjustK"
           ]
         ],
         "highlightFailureBranches": true
@@ -388,12 +386,38 @@
           "Observe",
           "RetryLow",
           "RetryOverheat",
+          "Route_main_s_thermal_conductiv",
+          "Adjust",
           "AdjustK"
         ],
         "highlightEdges": [
           [
-            "AdjustDT",
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Route_main_s_thermal_conductiv"
+          ],
+          [
+            "Route_main_s_thermal_conductiv",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -414,22 +438,6 @@
           [
             "Observe",
             "RetryOverheat"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -458,37 +466,11 @@
           "Observe",
           "RetryLow",
           "RetryOverheat",
+          "Route_main_s_temperature_diff",
+          "Adjust",
           "AdjustK"
         ],
         "highlightEdges": [
-          [
-            "AdjustK",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustK"
-          ],
-          [
-            "Observe",
-            "RetryLow"
-          ],
-          [
-            "Observe",
-            "RetryOverheat"
-          ],
-          [
-            "RetryLow",
-            "AdjustK"
-          ],
-          [
-            "RetryOverheat",
-            "AdjustK"
-          ],
           [
             "Start",
             "Env"
@@ -502,8 +484,40 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_temperature_diff"
+          ],
+          [
+            "Route_main_s_temperature_diff",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustK"
+          ],
+          [
+            "AdjustK",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "RetryLow"
+          ],
+          [
+            "Observe",
+            "RetryOverheat"
           ]
         ],
         "highlightFailureBranches": true
@@ -526,6 +540,8 @@
           "Observe",
           "RetryLow",
           "RetryOverheat",
+          "Trap",
+          "Adjust",
           "AdjustK"
         ],
         "highlightEdges": [
@@ -542,7 +558,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustMulti",
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -564,14 +588,6 @@
           [
             "Observe",
             "RetryOverheat"
-          ],
-          [
-            "RetryLow",
-            "AdjustK"
-          ],
-          [
-            "RetryOverheat",
-            "AdjustK"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -584,14 +600,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "Challenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -609,7 +641,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

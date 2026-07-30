@@ -470,7 +470,8 @@
           "Fire",
           "Observe",
           "Adjust1",
-          "Retry"
+          "Retry",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -524,16 +525,50 @@
         "label": "试探混淆·外观色调",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.7,
-        "weight": 0.7,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
-          "Start",
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "Explore"
         ],
-        "highlightEdges": [],
-        "priorityRank": 3
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

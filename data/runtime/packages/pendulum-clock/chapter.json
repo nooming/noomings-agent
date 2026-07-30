@@ -531,7 +531,8 @@
           "CheckAngle",
           "Win",
           "AdjustAngle",
-          "Retry"
+          "Retry",
+          "AngleRoute"
         ],
         "highlightEdges": [
           [
@@ -545,14 +546,6 @@
           [
             "Explore",
             "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "LenRoute"
-          ],
-          [
-            "LenRoute",
-            "AdjustLen"
           ],
           [
             "AdjustLen",
@@ -625,13 +618,10 @@
           "Observe",
           "AdjustLen",
           "Retry",
-          "Win"
+          "Win",
+          "LenRoute"
         ],
         "highlightEdges": [
-          [
-            "AngleRoute",
-            "AdjustAngle"
-          ],
           [
             "AdjustAngle",
             "Fire"
@@ -661,16 +651,20 @@
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "AngleRoute"
-          ],
-          [
             "Fire",
             "Observe"
           ],
           [
             "Retry",
             "Fire"
+          ],
+          [
+            "LenRoute",
+            "AdjustLen"
+          ],
+          [
+            "StrategySelect",
+            "LenRoute"
           ]
         ],
         "highlightFailureBranches": true
@@ -693,7 +687,8 @@
           "Fire",
           "Observe",
           "AdjustLen",
-          "Retry"
+          "Retry",
+          "TrapRoute"
         ],
         "highlightEdges": [
           [
@@ -735,6 +730,10 @@
           [
             "Observe",
             "Retry"
+          ],
+          [
+            "Retry",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -747,14 +746,30 @@
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.7,
-        "weight": 0.7,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "Explore"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -772,7 +787,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 3
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

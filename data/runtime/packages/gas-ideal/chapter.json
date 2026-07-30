@@ -307,7 +307,7 @@
   "strategy": {
     "title": "气体 · 玻意耳定律",
     "sub": "深潜器 · 压舱气室",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nAdjust3 --> Fire3\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nFire3 --> Observe3{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大温度]\nObserve2a -->|偏高| Adjust2a2[减小温度]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserve3 -->|未达标| Adjust3[盲目调整]\nObserve3 -->|达标| Win3[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·温度| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nTune2a --> Fire2a[点击测试]\nTune3 --> Fire3[点击测试]\nExploreCore --> Tune[调整压强/体积/温度]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[同时调多个参数]\nChallengeCore --> Tune2[调整压强/体积/温度]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nRoute1 --> Tune1a[调整压强]\nRoute2 --> Tune2a[调整温度]\nRoute3 --> Tune3[固定其余，只调s-pressure]\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nAdjust3 --> Fire3\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nFire3 --> Observe3{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大温度]\nObserve2a -->|偏高| Adjust2a2[减小温度]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserve3 -->|未达标| Adjust3[盲目调整]\nObserve3 -->|达标| Win3[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·温度| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nTune2a --> Fire2a[点击测试]\nTune3 --> Fire3[点击测试]\nExploreCore --> Tune[调整压强/体积/温度]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[同时调多个参数]\nChallengeCore --> Tune2[调整压强/体积/温度]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nRoute1 --> Tune1a[调整压强]\nRoute2 --> Tune2a[调整温度]\nRoute3 --> Tune3[固定其余，只调s-pressure]\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -326,26 +326,27 @@
         "highlightNodes": [
           "Start",
           "StrategySelect",
-          "Tune1a",
           "Fire1a",
           "Observe1a",
-          "Adjust1a",
-          "Adjust1a2",
           "Win1",
-          "Tune2a",
           "Fire2a",
           "Observe2a",
-          "Adjust2a",
-          "Adjust2a2",
           "Win2a",
           "Win",
           "Win2",
           "Win3",
           "ChallengeCore",
-          "Tune3",
           "Fire3",
           "Observe3",
-          "Adjust3"
+          "Tune",
+          "Fire",
+          "Observe",
+          "Adjust3",
+          "Adjust",
+          "Adjust1a",
+          "Adjust1a2",
+          "Adjust2a",
+          "Adjust2a2"
         ],
         "highlightEdges": [
           [
@@ -353,72 +354,32 @@
             "StrategySelect"
           ],
           [
-            "Route1",
-            "Tune1a"
+            "StrategySelect",
+            "Tune"
           ],
           [
-            "Tune1a",
-            "Fire1a"
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
           ],
           [
             "Fire1a",
             "Observe1a"
           ],
           [
-            "Observe1a",
-            "Adjust1a"
-          ],
-          [
-            "Observe1a",
-            "Adjust1a2"
-          ],
-          [
-            "Adjust1a",
-            "Fire1a"
-          ],
-          [
-            "Adjust1a2",
-            "Fire1a"
-          ],
-          [
-            "Observe1a",
-            "Win1"
-          ],
-          [
-            "Route2",
-            "Tune2a"
-          ],
-          [
-            "Tune2a",
-            "Fire2a"
-          ],
-          [
             "Fire2a",
             "Observe2a"
           ],
           [
-            "Observe2a",
-            "Adjust2a"
-          ],
-          [
-            "Observe2a",
-            "Adjust2a2"
-          ],
-          [
-            "Adjust2a",
-            "Fire2a"
-          ],
-          [
-            "Adjust2a2",
-            "Fire2a"
-          ],
-          [
-            "Observe2a",
-            "Win2a"
-          ],
-          [
-            "Observe3",
-            "Win3"
+            "Fire3",
+            "Observe3"
           ],
           [
             "Observe3",
@@ -429,16 +390,40 @@
             "Fire3"
           ],
           [
-            "Route3",
-            "Tune3"
+            "Observe",
+            "Adjust"
           ],
           [
-            "Tune3",
-            "Fire3"
+            "Adjust",
+            "Fire"
           ],
           [
-            "Fire3",
-            "Observe3"
+            "Observe1a",
+            "Win1"
+          ],
+          [
+            "Observe2a",
+            "Win2a"
+          ],
+          [
+            "Observe3",
+            "Win3"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a2"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a2"
           ]
         ],
         "highlightFailureBranches": true
@@ -465,12 +450,45 @@
           "Win2",
           "Win2a",
           "Win3",
-          "ChallengeCore"
+          "ChallengeCore",
+          "Tune2",
+          "Adjust2a",
+          "Fire2a",
+          "Observe2a",
+          "Adjust2a2"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune2"
+          ],
+          [
+            "Tune2",
+            "Adjust2a"
+          ],
+          [
+            "Adjust2a",
+            "Fire2a"
+          ],
+          [
+            "Fire2a",
+            "Observe2a"
+          ],
+          [
+            "Observe2a",
+            "Win2a"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a2"
           ]
         ],
         "highlightFailureBranches": true
@@ -497,12 +515,41 @@
           "Win2",
           "Win2a",
           "Win3",
-          "ChallengeCore"
+          "ChallengeCore",
+          "Tune1a",
+          "Fire1a",
+          "Observe1a",
+          "Adjust1a",
+          "Adjust1a2"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune1a"
+          ],
+          [
+            "Tune1a",
+            "Fire1a"
+          ],
+          [
+            "Fire1a",
+            "Observe1a"
+          ],
+          [
+            "Observe1a",
+            "Win1"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a2"
           ]
         ],
         "highlightFailureBranches": true
@@ -519,9 +566,12 @@
         "highlightNodes": [
           "Start",
           "StrategySelect",
-          "Tune3",
           "Fire3",
           "Observe3",
+          "Trap",
+          "Adjust",
+          "Fire",
+          "Observe",
           "Adjust3"
         ],
         "highlightEdges": [
@@ -530,16 +580,28 @@
             "StrategySelect"
           ],
           [
-            "Route3",
-            "Tune3"
+            "StrategySelect",
+            "Trap"
           ],
           [
-            "Tune3",
-            "Fire3"
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Fire3",
             "Observe3"
+          ],
+          [
+            "Observe",
+            "Adjust"
           ],
           [
             "Observe3",
@@ -548,10 +610,6 @@
           [
             "Adjust3",
             "Fire3"
-          ],
-          [
-            "Observe3",
-            "Win3"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -564,14 +622,20 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -589,7 +653,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

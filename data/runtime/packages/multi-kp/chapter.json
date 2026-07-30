@@ -342,7 +342,7 @@
   "strategy": {
     "title": "机械能 · 过山车环路",
     "sub": "探究过山车翻越环顶的条件",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nTrapStrat --> AdjustBoth[固定其余，只调s-height]",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nTrapStrat --> AdjustBoth[固定其余，只调s-height]\nTrap --> TrapStrat",
     "routes": [
       {
         "id": "main",
@@ -368,12 +368,37 @@
           "Fire",
           "Observe",
           "RetryDrop",
-          "RetryOut"
+          "RetryOut",
+          "SpeedStrat"
         ],
         "highlightEdges": [
           [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SpeedStrat"
+          ],
+          [
+            "SpeedStrat",
+            "AdjustV"
+          ],
+          [
             "AdjustV",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -390,22 +415,6 @@
           [
             "Observe",
             "RetryOut"
-          ],
-          [
-            "Start",
-            "ModeSelect"
-          ],
-          [
-            "ModeSelect",
-            "Explore"
-          ],
-          [
-            "Explore",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -433,14 +442,39 @@
           "AdjustH",
           "Fire",
           "Observe",
-          "AdjustV",
           "RetryDrop",
-          "RetryOut"
+          "RetryOut",
+          "HeightStrat",
+          "AdjustV"
         ],
         "highlightEdges": [
           [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "HeightStrat"
+          ],
+          [
+            "HeightStrat",
+            "AdjustH"
+          ],
+          [
             "AdjustH",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -461,22 +495,6 @@
           [
             "Observe",
             "RetryOut"
-          ],
-          [
-            "Start",
-            "ModeSelect"
-          ],
-          [
-            "ModeSelect",
-            "Explore"
-          ],
-          [
-            "Explore",
-            "StrategySelect"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -493,27 +511,121 @@
         "highlightNodes": [
           "Start",
           "StrategySelect",
-          "ProbeCV"
+          "ModeSelect",
+          "Explore",
+          "Trap",
+          "TrapStrat",
+          "AdjustBoth",
+          "Fire",
+          "Observe",
+          "AdjustV",
+          "RetryDrop",
+          "RetryOut"
         ],
-        "highlightEdges": [],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "TrapStrat"
+          ],
+          [
+            "TrapStrat",
+            "AdjustBoth"
+          ],
+          [
+            "AdjustBoth",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "AdjustV"
+          ],
+          [
+            "AdjustV",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "RetryDrop"
+          ],
+          [
+            "Observe",
+            "RetryOut"
+          ]
+        ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
         "score": 0.2,
-        "weight": 0.2
+        "weight": 0.2,
+        "highlightFailureBranches": true
       },
       {
         "id": "confound_s_mass",
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.7,
-        "weight": 0.7,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
-          "Start",
           "StrategySelect",
-          "ProbeCV"
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "Explore"
         ],
-        "highlightEdges": [],
-        "priorityRank": 3
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

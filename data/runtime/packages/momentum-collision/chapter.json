@@ -373,9 +373,14 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust",
           "RetryCollide",
-          "WinC"
+          "WinC",
+          "SingleVel1C",
+          "FireC",
+          "ObserveC",
+          "Adjust",
+          "AdjustC",
+          "RetryCollideC"
         ],
         "highlightEdges": [
           [
@@ -391,28 +396,24 @@
             "StrategySelect"
           ],
           [
-            "SingleVel1",
-            "Fire"
+            "StrategySelect",
+            "SingleVel1C"
+          ],
+          [
+            "SingleVel1C",
+            "FireC"
+          ],
+          [
+            "FireC",
+            "ObserveC"
+          ],
+          [
+            "ObserveC",
+            "WinC"
           ],
           [
             "Fire",
             "Observe"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "SingleVel2",
-            "Fire"
-          ],
-          [
-            "SingleTemp",
-            "Fire"
-          ],
-          [
-            "SingleMass",
-            "Fire"
           ],
           [
             "Observe",
@@ -429,6 +430,26 @@
           [
             "RetryCollide",
             "Fire"
+          ],
+          [
+            "ObserveC",
+            "AdjustC"
+          ],
+          [
+            "AdjustC",
+            "FireC"
+          ],
+          [
+            "ObserveC",
+            "RetryCollideC"
+          ],
+          [
+            "RetryCollideC",
+            "FireC"
+          ],
+          [
+            "Observe",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -456,13 +477,46 @@
           "ExploreMode",
           "Fire",
           "Observe",
+          "RetryCollide",
+          "SingleVel2C",
+          "FireC",
+          "ObserveC",
           "Adjust",
-          "RetryCollide"
+          "AdjustC",
+          "RetryCollideC"
         ],
         "highlightEdges": [
           [
-            "Observe",
-            "Win"
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SingleVel2C"
+          ],
+          [
+            "SingleVel2C",
+            "FireC"
+          ],
+          [
+            "FireC",
+            "ObserveC"
+          ],
+          [
+            "ObserveC",
+            "WinC"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -481,24 +535,24 @@
             "Fire"
           ],
           [
-            "Start",
-            "ModeSelect"
+            "ObserveC",
+            "AdjustC"
           ],
           [
-            "ModeSelect",
-            "ExploreMode"
+            "AdjustC",
+            "FireC"
           ],
           [
-            "ExploreMode",
-            "StrategySelect"
+            "ObserveC",
+            "RetryCollideC"
           ],
           [
-            "SingleMass",
-            "Fire"
+            "RetryCollideC",
+            "FireC"
           ],
           [
-            "Fire",
-            "Observe"
+            "Observe",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -526,10 +580,35 @@
           "ExploreMode",
           "Fire",
           "Observe",
-          "Adjust",
-          "RetryCollide"
+          "RetryCollide",
+          "SingleMass",
+          "Adjust"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SingleMass"
+          ],
+          [
+            "SingleMass",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
           [
             "Observe",
             "Win"
@@ -549,26 +628,6 @@
           [
             "RetryCollide",
             "Fire"
-          ],
-          [
-            "Start",
-            "ModeSelect"
-          ],
-          [
-            "ModeSelect",
-            "ExploreMode"
-          ],
-          [
-            "ExploreMode",
-            "StrategySelect"
-          ],
-          [
-            "SingleTemp",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -596,13 +655,46 @@
           "ExploreMode",
           "Fire",
           "Observe",
+          "RetryCollide",
+          "SingleMassC",
+          "FireC",
+          "ObserveC",
           "Adjust",
-          "RetryCollide"
+          "AdjustC",
+          "RetryCollideC"
         ],
         "highlightEdges": [
           [
-            "Observe",
-            "Win"
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SingleMassC"
+          ],
+          [
+            "SingleMassC",
+            "FireC"
+          ],
+          [
+            "FireC",
+            "ObserveC"
+          ],
+          [
+            "ObserveC",
+            "WinC"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -621,24 +713,24 @@
             "Fire"
           ],
           [
-            "Start",
-            "ModeSelect"
+            "ObserveC",
+            "AdjustC"
           ],
           [
-            "ModeSelect",
-            "ExploreMode"
+            "AdjustC",
+            "FireC"
           ],
           [
-            "ExploreMode",
-            "StrategySelect"
+            "ObserveC",
+            "RetryCollideC"
           ],
           [
-            "SingleVel1",
-            "Fire"
+            "RetryCollideC",
+            "FireC"
           ],
           [
-            "Fire",
-            "Observe"
+            "Observe",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -666,13 +758,46 @@
           "ExploreMode",
           "Fire",
           "Observe",
+          "RetryCollide",
+          "SingleMassC",
+          "FireC",
+          "ObserveC",
           "Adjust",
-          "RetryCollide"
+          "AdjustC",
+          "RetryCollideC"
         ],
         "highlightEdges": [
           [
-            "Observe",
-            "Win"
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SingleMassC"
+          ],
+          [
+            "SingleMassC",
+            "FireC"
+          ],
+          [
+            "FireC",
+            "ObserveC"
+          ],
+          [
+            "ObserveC",
+            "WinC"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -691,24 +816,24 @@
             "Fire"
           ],
           [
-            "Start",
-            "ModeSelect"
+            "ObserveC",
+            "AdjustC"
           ],
           [
-            "ModeSelect",
-            "ExploreMode"
+            "AdjustC",
+            "FireC"
           ],
           [
-            "ExploreMode",
-            "StrategySelect"
+            "ObserveC",
+            "RetryCollideC"
           ],
           [
-            "SingleVel1",
-            "Fire"
+            "RetryCollideC",
+            "FireC"
           ],
           [
-            "Fire",
-            "Observe"
+            "Observe",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -729,8 +854,9 @@
           "StrategySelect",
           "Fire",
           "Observe",
-          "Adjust",
-          "RetryCollide"
+          "RetryCollide",
+          "Trap",
+          "Adjust"
         ],
         "highlightEdges": [
           [
@@ -744,6 +870,10 @@
           [
             "ExploreMode",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
           ],
           [
             "Trap",
@@ -780,15 +910,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.39,
-        "weight": 0.39,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "ExploreMode"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -806,7 +951,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 6
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

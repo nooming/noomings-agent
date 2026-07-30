@@ -301,7 +301,7 @@ document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('
 
 const tabs = document.querySelectorAll('.teacher-tab');
 const panels = document.querySelectorAll('.teacher-panel');
-let agentTabInitialized = false;
+let agentTabReadyPromise = null;
 
 function activateTab(tabName) {
   tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === tabName));
@@ -313,33 +313,120 @@ tabs.forEach(tab => {
   tab.addEventListener('click', () => activateTab(tab.dataset.tab));
 });
 
+/** Mode tabs must work before AgentGenerate scripts finish lazy-loading. */
+function setGenModeEarly(mode) {
+  if (typeof AgentGenerate !== 'undefined' && AgentGenerate.setMode) {
+    AgentGenerate.setMode(mode);
+    return;
+  }
+  const design = mode === 'design';
+  const modeAnalyze = document.getElementById('modeAnalyze');
+  const modeDesign = document.getElementById('modeDesign');
+  if (design) {
+    if (modeDesign) modeDesign.checked = true;
+  } else if (modeAnalyze) {
+    modeAnalyze.checked = true;
+  }
+  const designPanel = document.getElementById('designPanel');
+  const analyzePanel = document.getElementById('analyzePanel');
+  if (designPanel) designPanel.style.display = design ? 'block' : 'none';
+  if (analyzePanel) analyzePanel.style.display = design ? 'none' : 'block';
+  document.querySelectorAll('.agent-mode-tab').forEach(tab => {
+    const active = tab.dataset.mode === (design ? 'design' : 'analyze');
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  const goFull = document.getElementById('goDesignFull');
+  const go = document.getElementById('go');
+  if (goFull) goFull.style.display = design ? '' : 'none';
+  if (go) {
+    go.classList.toggle('edu-btn-primary', !design);
+    go.classList.toggle('edu-btn-outline', design);
+    go.textContent = design ? '仅生成图谱' : '生成图谱';
+  }
+  const appendPanel = document.getElementById('projectAppendPanel');
+  const saveToProject = document.getElementById('saveToProject');
+  const generateGameHtml = document.getElementById('generateGameHtml');
+  if (appendPanel) appendPanel.style.display = design ? 'none' : '';
+  if (saveToProject) saveToProject.style.display = design ? 'none' : '';
+  if (generateGameHtml) generateGameHtml.style.display = design ? 'none' : '';
+}
+
+document.querySelector('#panel-agents .agent-mode-tabs')?.addEventListener('click', e => {
+  const tab = e.target.closest('.agent-mode-tab');
+  if (!tab || tab.disabled) return;
+  setGenModeEarly(tab.dataset.mode);
+});
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve();
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === '1' || existing.getAttribute('data-loaded') === '1') {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load ' + src)), { once: true });
       return;
     }
     const s = document.createElement('script');
     s.src = src;
-    s.onload = () => resolve();
+    s.onload = () => {
+      s.dataset.loaded = '1';
+      resolve();
+    };
     s.onerror = () => reject(new Error('Failed to load ' + src));
     document.body.appendChild(s);
   });
 }
 
-async function ensureAgentTabReady() {
-  if (agentTabInitialized) return;
-  await loadScript('/static/ui/agent-client.js');
-  await loadScript('/static/ui/agent-ui-init.js');
-  await loadScript('/static/generate/export/export-standalone-template.js');
-  await loadScript('/static/generate/export/export-standalone-html.js');
-  await loadScript('/static/ui/agent-generate.js');
-  AgentUiInit.initAgentPage();
-  AgentGenerate.init({
-    onGraphSaved: () => Promise.all([loadGraphOptions(), loadPublishPairOptions()]),
-    onGoPublish: goPublishTask,
+function setAgentToolsBootstrapping(on) {
+  const st = document.getElementById('status');
+  const actionIds = ['go', 'goDesignFull', 'loadAnalyzePackage', 'pickFolder', 'files'];
+  actionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !!on;
   });
-  agentTabInitialized = true;
+  if (on) {
+    if (st && (!st.textContent || st.dataset.bootMsg === '1')) {
+      st.textContent = '正在加载 Agent 工具…';
+      st.dataset.bootMsg = '1';
+    }
+  } else if (st?.dataset.bootMsg === '1') {
+    st.textContent = '';
+    delete st.dataset.bootMsg;
+  }
+}
+
+function ensureAgentTabReady() {
+  if (agentTabReadyPromise) return agentTabReadyPromise;
+  agentTabReadyPromise = (async () => {
+    setAgentToolsBootstrapping(true);
+    try {
+      await loadScript('/static/ui/agent-client.js');
+      await loadScript('/static/ui/agent-ui-init.js');
+      await loadScript('/static/generate/export/export-standalone-template.js');
+      await loadScript('/static/generate/export/export-standalone-html.js');
+      await loadScript('/static/ui/agent-generate.js');
+      AgentUiInit.initAgentPage();
+      AgentGenerate.init({
+        onGraphSaved: () => Promise.all([loadGraphOptions(), loadPublishPairOptions()]),
+        onGoPublish: goPublishTask,
+      });
+    } catch (e) {
+      agentTabReadyPromise = null;
+      const st = document.getElementById('status');
+      if (st) {
+        st.textContent = 'Agent 工具加载失败，请再点一次「Agent 工具」重试：' + (e.message || e);
+        delete st.dataset.bootMsg;
+      }
+      throw e;
+    } finally {
+      setAgentToolsBootstrapping(false);
+    }
+  })();
+  return agentTabReadyPromise;
 }
 
 function goPublishTask({ graphId, title, playUrl, description }) {

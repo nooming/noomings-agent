@@ -101,11 +101,38 @@
     }) || null;
   }
 
-  function findSelectOutEdgeTarget(route) {
+  function findSelectOutEdgeTarget(route, mermaidBody) {
     const edges = route?.highlightEdges || [];
     for (const pair of edges) {
       if (!Array.isArray(pair) || pair.length < 2) continue;
       if (/StrategySelect/i.test(String(pair[0]))) return String(pair[1]);
+    }
+    // Fallback: match Mermaid StrategySelect out-edge by route label (prio styles
+    // still work when highlightEdges omit the select fan-out edge).
+    const body = String(mermaidBody || '');
+    if (!body.trim() || !route) return null;
+    const want = normalizeLabelKey(route.label);
+    if (!want) return null;
+    const lines = body.replace(/\r\n/g, '\n').split('\n');
+    let fuzzy = null;
+    for (const line of lines) {
+      const m = String(line).trim().match(
+        /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+      );
+      if (!m) continue;
+      const edgeKey = normalizeLabelKey(m[3]);
+      if (!edgeKey) continue;
+      if (edgeKey === want) return m[4];
+      if (!fuzzy && (edgeKey.includes(want) || want.includes(edgeKey))) fuzzy = m[4];
+    }
+    if (fuzzy) return fuzzy;
+    if (isTrapRoute(route)) {
+      for (const line of lines) {
+        const m = String(line).trim().match(
+          /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+        );
+        if (m && /盲调|多参|trap|多滑/i.test(m[3])) return m[4];
+      }
     }
     return null;
   }
@@ -179,7 +206,7 @@
       const to = m[4];
       let route = matchRouteForEdgeLabel(label, routes);
       if (!route) {
-        route = routes.find(r => findSelectOutEdgeTarget(r) === to) || null;
+        route = routes.find(r => findSelectOutEdgeTarget(r, raw) === to) || null;
       }
       selectEdgeIdx.push(i);
       selectEdges.push({
@@ -234,11 +261,13 @@
 
   /**
    * Map StrategySelect→target edge keys to priority style meta (for SVG post-style).
+   * @param {Array} routes
+   * @param {string} [mermaidBody] optional; used to resolve select targets when highlightEdges omit them
    */
-  function strategySelectPriorityStyles(routes) {
+  function strategySelectPriorityStyles(routes, mermaidBody) {
     const map = new Map();
     for (const route of rankedStrategySelectRoutes(routes)) {
-      const to = findSelectOutEdgeTarget(route);
+      const to = findSelectOutEdgeTarget(route, mermaidBody);
       if (!to) continue;
       const meta = routePriorityMeta(route);
       map.set(`StrategySelect->${to}`, {
@@ -262,6 +291,7 @@
     rankedStrategySelectRoutes,
     annotateStrategyMermaidPriority,
     strategySelectPriorityStyles,
+    findSelectOutEdgeTarget,
     strokeWidthForMeta,
     strokeColorForMeta,
   };

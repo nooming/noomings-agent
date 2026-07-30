@@ -308,7 +308,8 @@
           "RetryFar",
           "RetryNear",
           "Challenge",
-          "Adjust"
+          "Adjust",
+          "Len"
         ],
         "highlightEdges": [
           [
@@ -411,13 +412,10 @@
           "Observe",
           "Adjust",
           "RetryFar",
-          "RetryNear"
+          "RetryNear",
+          "Route_main_s_angle"
         ],
         "highlightEdges": [
-          [
-            "Len",
-            "AdjustLen"
-          ],
           [
             "AdjustLen",
             "Fire"
@@ -459,12 +457,16 @@
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "Len"
-          ],
-          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Route_main_s_angle",
+            "Adjust"
+          ],
+          [
+            "StrategySelect",
+            "Route_main_s_angle"
           ]
         ],
         "highlightFailureBranches": true
@@ -488,7 +490,8 @@
           "Observe",
           "Adjust",
           "RetryFar",
-          "RetryNear"
+          "RetryNear",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -534,6 +537,14 @@
           [
             "Observe",
             "RetryNear"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -546,14 +557,30 @@
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.7,
-        "weight": 0.7,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "Challenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -571,7 +598,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 3
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

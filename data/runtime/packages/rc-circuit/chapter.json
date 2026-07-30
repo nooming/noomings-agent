@@ -252,7 +252,7 @@
   "strategy": {
     "title": "RC电路 · 探究",
     "sub": "相机闪光同步",
-    "mermaid": "graph TD\nAdjust1 --> Fire1[点击测试]\nAdjust2 --> Fire2[点击测试]\nAdjust3 --> Fire3[点击测试]\nAdjustT --> FireT[点击测试]\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire1 --> Observe1{观察 τ?}:::stratCond\nFire2 --> Observe2{观察 τ?}:::stratCond\nFire3 --> Observe3{观察 τ?}:::stratCond\nFireT --> ObserveT{观察 τ?}:::stratCond\nObserve1 -->|偏大| Adjust1\nObserve1 -->|偏小| Adjust1\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏大| Adjust2\nObserve2 -->|偏小| Adjust2\nObserve2 -->|达标| Win\nObserve3 -->|偏大| Adjust3\nObserve3 -->|偏小| Adjust3\nObserve3 -->|达标| Win\nObserveT -->|偏大| AdjustT\nObserveT -->|偏小| AdjustT\nObserveT -->|达标| Win\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·电源电压| Route_main\nStrategySelect -->|单变量·电容| Route_main_s_capacitance\nStrategySelect -->|单变量·电阻| Route_main_s_resistance\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改电源电压]\nRoute_main_s_resistance[控制变量：只改电阻]\nRoute_main_s_capacitance[控制变量：只改电容]\nTrap[同时调多个参数]\nAdjust --> Retest\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRoute_main --> Adjust1\nRoute_main_s_capacitance --> Adjust1\nRoute_main_s_resistance --> Adjust1\nRoute1 --> Adjust1[调整 s-supply-v]\nRoute2 --> Adjust2[调整 s-resistance]\nRoute3 --> Adjust3[调整 s-capacitance]\nRouteT --> AdjustT[固定其余，只调s-resistance]",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[点击测试]\nAdjust2 --> Fire2[点击测试]\nAdjust3 --> Fire3[点击测试]\nAdjustT --> FireT[点击测试]\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire1 --> Observe1{观察 τ?}:::stratCond\nFire2 --> Observe2{观察 τ?}:::stratCond\nFire3 --> Observe3{观察 τ?}:::stratCond\nFireT --> ObserveT{观察 τ?}:::stratCond\nObserve1 -->|偏大| Adjust1\nObserve1 -->|偏小| Adjust1\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏大| Adjust2\nObserve2 -->|偏小| Adjust2\nObserve2 -->|达标| Win\nObserve3 -->|偏大| Adjust3\nObserve3 -->|偏小| Adjust3\nObserve3 -->|达标| Win\nObserveT -->|偏大| AdjustT\nObserveT -->|偏小| AdjustT\nObserveT -->|达标| Win\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·电源电压| Route_main\nStrategySelect -->|单变量·电容| Route_main_s_capacitance\nStrategySelect -->|单变量·电阻| Route_main_s_resistance\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改电源电压]\nRoute_main_s_resistance[控制变量：只改电阻]\nRoute_main_s_capacitance[控制变量：只改电容]\nTrap[同时调多个参数]\nAdjust --> Retest\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRoute_main --> Adjust1\nRoute_main_s_capacitance --> Adjust1\nRoute_main_s_resistance --> Adjust1\nRoute1 --> Adjust1[调整 s-supply-v]\nRoute2 --> Adjust2[调整 s-resistance]\nRoute3 --> Adjust3[调整 s-capacitance]\nRouteT --> AdjustT[固定其余，只调s-resistance]\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -277,12 +277,13 @@
           "Fire1",
           "Observe1",
           "Win",
-          "Adjust2",
           "Fire2",
           "Observe2",
-          "Adjust3",
           "Fire3",
-          "Observe3"
+          "Observe3",
+          "Route_main",
+          "Adjust2",
+          "Adjust3"
         ],
         "highlightEdges": [
           [
@@ -298,7 +299,11 @@
             "StrategySelect"
           ],
           [
-            "Route1",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
             "Adjust1"
           ],
           [
@@ -311,14 +316,22 @@
           ],
           [
             "Observe1",
-            "Adjust1"
-          ],
-          [
-            "Observe1",
             "Win"
           ],
           [
-            "Route2",
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ],
+          [
+            "Observe2",
             "Adjust2"
           ],
           [
@@ -326,19 +339,7 @@
             "Fire2"
           ],
           [
-            "Fire2",
-            "Observe2"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Observe2",
-            "Win"
-          ],
-          [
-            "Route3",
+            "Observe3",
             "Adjust3"
           ],
           [
@@ -346,12 +347,8 @@
             "Fire3"
           ],
           [
-            "Fire3",
-            "Observe3"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
+            "Observe2",
+            "Win"
           ],
           [
             "Observe3",
@@ -380,27 +377,15 @@
           "Win",
           "Env",
           "Challenge",
-          "Adjust2",
           "Fire2",
-          "Observe2"
+          "Observe2",
+          "Route_main_s_resistance",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Adjust2"
         ],
         "highlightEdges": [
-          [
-            "Route2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "Win"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
           [
             "Start",
             "Env"
@@ -414,8 +399,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_resistance"
+          ],
+          [
+            "Route_main_s_resistance",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
             "Fire2",
             "Observe2"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Observe2",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -440,27 +461,15 @@
           "Win",
           "Env",
           "Challenge",
-          "Adjust3",
           "Fire3",
-          "Observe3"
+          "Observe3",
+          "Route_main_s_capacitance",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Adjust3"
         ],
         "highlightEdges": [
-          [
-            "Route3",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire3"
-          ],
-          [
-            "Observe3",
-            "Win"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
-          ],
           [
             "Start",
             "Env"
@@ -474,8 +483,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_capacitance"
+          ],
+          [
+            "Route_main_s_capacitance",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
             "Fire3",
             "Observe3"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Observe3",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -494,9 +539,13 @@
           "Env",
           "Challenge",
           "StrategySelect",
-          "AdjustT",
           "FireT",
-          "ObserveT"
+          "ObserveT",
+          "Trap",
+          "Adjust",
+          "Retest",
+          "Observe",
+          "AdjustT"
         ],
         "highlightEdges": [
           [
@@ -512,20 +561,36 @@
             "StrategySelect"
           ],
           [
-            "RouteT",
-            "AdjustT"
+            "StrategySelect",
+            "Trap"
           ],
           [
-            "AdjustT",
-            "FireT"
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Retest"
+          ],
+          [
+            "Retest",
+            "Observe"
           ],
           [
             "FireT",
             "ObserveT"
           ],
           [
+            "Observe",
+            "Adjust"
+          ],
+          [
             "ObserveT",
             "AdjustT"
+          ],
+          [
+            "AdjustT",
+            "FireT"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

@@ -340,7 +340,7 @@
   "strategy": {
     "title": "光电效应 · 探究",
     "sub": "探究频率与逸出功对光电流的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustMulti --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathTrap --> AdjustMulti[固定其余，只调s-frequency]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustMulti --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathTrap --> AdjustMulti[固定其余，只调s-frequency]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -370,7 +370,8 @@
           "Adjust",
           "ModeChallenge",
           "AdjustMulti",
-          "Win"
+          "Win",
+          "PathFreq"
         ],
         "highlightEdges": [
           [
@@ -402,24 +403,8 @@
             "Observe"
           ],
           [
-            "StrategySelect",
-            "PathWork"
-          ],
-          [
-            "PathWork",
-            "AdjustWork"
-          ],
-          [
             "AdjustWork",
             "Fire"
-          ],
-          [
-            "StrategySelect",
-            "PathIntensity"
-          ],
-          [
-            "PathIntensity",
-            "AdjustIntensity"
           ],
           [
             "AdjustIntensity",
@@ -488,7 +473,8 @@
           "Observe",
           "Win",
           "Adjust",
-          "Retry"
+          "Retry",
+          "PathWork"
         ],
         "highlightEdges": [
           [
@@ -562,7 +548,8 @@
           "Observe",
           "Adjust",
           "Retry",
-          "Win"
+          "Win",
+          "PathIntensity"
         ],
         "highlightEdges": [
           [
@@ -626,16 +613,41 @@
           "Env",
           "ModeExplore",
           "StrategySelect",
-          "AdjustMulti",
           "Fire",
           "Observe",
           "Retry",
-          "Adjust"
+          "Adjust",
+          "ModeChallenge",
+          "Trap"
         ],
         "highlightEdges": [
           [
             "Start",
             "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Env",
@@ -646,32 +658,12 @@
             "StrategySelect"
           ],
           [
-            "PathTrap",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustFreq"
-          ],
-          [
             "Observe",
             "Adjust"
           ],
           [
-            "Adjust",
-            "Fire"
+            "Observe",
+            "Retry"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -684,14 +676,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "Env",
+          "ModeChallenge"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -709,7 +717,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

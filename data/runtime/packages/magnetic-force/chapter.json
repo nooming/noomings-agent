@@ -427,7 +427,7 @@
   "strategy": {
     "title": "磁场 · 安培力探究",
     "sub": "电磁吊运 · 磁轨货厢",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustB2 --> Fire2\nAdjustI --> Fire[点击测试]\nAdjustI2 --> Fire2[点击测试]\nAdjustT --> Fire\nAdjustT2 --> Fire2\nBackFromCV --> StrategySelect\nBlind --> Fire\nBlind2 --> Fire2\nChallengeMode --> StrategySelect2{选择调参策略?}:::stratCond\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nFire2 --> Observe2{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏小| AdjustI2\nObserve2 -->|偏大| AdjustI2\nObserve2 -->|未达标| AdjustI2\nObserve2 -->|达标| Win2[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[同时调多个参数]\nAdjustB[按观察单变量微调]\nAdjustB2[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustI2[按观察单变量微调]\nAdjustT[按观察单变量微调]\nAdjustT2[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustB2 --> Fire2\nAdjustI --> Fire[点击测试]\nAdjustI2 --> Fire2[点击测试]\nAdjustT --> Fire\nAdjustT2 --> Fire2\nBackFromCV --> StrategySelect\nBlind --> Fire\nBlind2 --> Fire2\nChallengeMode --> StrategySelect2{选择调参策略?}:::stratCond\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nFire2 --> Observe2{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏小| AdjustI2\nObserve2 -->|偏大| AdjustI2\nObserve2 -->|未达标| AdjustI2\nObserve2 -->|达标| Win2[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[同时调多个参数]\nAdjustB[按观察单变量微调]\nAdjustB2[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustI2[按观察单变量微调]\nAdjustT[按观察单变量微调]\nAdjustT2[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -456,6 +456,8 @@
           "Fire2",
           "Observe2",
           "Win2",
+          "Route_main",
+          "Adjust",
           "AdjustI",
           "AdjustI2"
         ],
@@ -473,7 +475,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustI",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -485,14 +495,6 @@
             "Win"
           ],
           [
-            "AdjustB",
-            "Fire"
-          ],
-          [
-            "AdjustT",
-            "Fire"
-          ],
-          [
             "ModeSelect",
             "ChallengeMode"
           ],
@@ -501,32 +503,28 @@
             "StrategySelect2"
           ],
           [
-            "AdjustI2",
-            "Fire2"
-          ],
-          [
             "Fire2",
             "Observe2"
-          ],
-          [
-            "Observe2",
-            "Win2"
-          ],
-          [
-            "AdjustB2",
-            "Fire2"
-          ],
-          [
-            "AdjustT2",
-            "Fire2"
           ],
           [
             "Observe",
             "AdjustI"
           ],
           [
+            "AdjustI",
+            "Fire"
+          ],
+          [
             "Observe2",
             "AdjustI2"
+          ],
+          [
+            "AdjustI2",
+            "Fire2"
+          ],
+          [
+            "Observe2",
+            "Win2"
           ]
         ],
         "highlightFailureBranches": true
@@ -554,21 +552,11 @@
           "ExploreMode",
           "Fire",
           "Observe",
+          "Route_main_s_magnetic",
+          "Adjust",
           "AdjustI"
         ],
         "highlightEdges": [
-          [
-            "AdjustI",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustI"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -582,8 +570,32 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_magnetic"
+          ],
+          [
+            "Route_main_s_magnetic",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustI"
+          ],
+          [
+            "AdjustI",
+            "Fire"
           ]
         ],
         "highlightFailureBranches": true
@@ -611,25 +623,11 @@
           "ExploreMode",
           "Fire",
           "Observe",
+          "Route_main_s_wire_temp",
+          "Adjust",
           "AdjustI"
         ],
         "highlightEdges": [
-          [
-            "AdjustT",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustI"
-          ],
-          [
-            "AdjustI",
-            "Fire"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -643,8 +641,32 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_wire_temp"
+          ],
+          [
+            "Route_main_s_wire_temp",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustI"
+          ],
+          [
+            "AdjustI",
+            "Fire"
           ]
         ],
         "highlightFailureBranches": true
@@ -665,6 +687,8 @@
           "StrategySelect",
           "Fire",
           "Observe",
+          "Trap",
+          "Adjust",
           "AdjustI"
         ],
         "highlightEdges": [
@@ -681,7 +705,15 @@
             "StrategySelect"
           ],
           [
-            "Blind",
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -707,14 +739,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "ExploreMode"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -732,7 +780,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

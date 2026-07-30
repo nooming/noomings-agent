@@ -282,7 +282,7 @@
   "strategy": {
     "title": "海防炮台 · 野战试射",
     "sub": "试射场",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|偏近| Adjust1[调整参数]\nObserve -->|偏远| Adjust1\nObserve -->|出界| Retry1[出界重试]:::stratRetry\nObserve -->|碰撞| Retry2[碰撞重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry1 --> Fire\nRetry2 --> Fire\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·初速度| Tune1\nStrategySelect -->|单变量·重力加速度| Tune2\nStrategySelect -->|单变量·风速| Tune3\nStrategySelect -->|单变量·发射角度| Tune4\nStrategySelect -->|单变量·空气阻力| Tune5\nTune1 --> Fire[发射炮弹]\nTune2 --> Fire\nTune3 --> Fire\nTune4 --> Fire\nTune5 --> Fire\nTune6 --> Fire\nTune7 --> Fire\nTuneTrap --> Fire\nStart([开始试射]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|偏近| Adjust1[调整参数]\nObserve -->|偏远| Adjust1\nObserve -->|出界| Retry1[出界重试]:::stratRetry\nObserve -->|碰撞| Retry2[碰撞重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry1 --> Fire\nRetry2 --> Fire\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·初速度| Tune1\nStrategySelect -->|单变量·重力加速度| Tune2\nStrategySelect -->|单变量·风速| Tune3\nStrategySelect -->|单变量·发射角度| Tune4\nStrategySelect -->|单变量·空气阻力| Tune5\nTune1 --> Fire[发射炮弹]\nTune2 --> Fire\nTune3 --> Fire\nTune4 --> Fire\nTune5 --> Fire\nTune6 --> Fire\nTune7 --> Fire\nTuneTrap --> Fire\nStart([开始试射]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -303,15 +303,20 @@
           "StrategySelect",
           "Fire",
           "Observe",
-          "Adjust1",
           "Win",
           "Retry1",
-          "Retry2"
+          "Retry2",
+          "Tune1",
+          "Adjust1"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune1"
           ],
           [
             "Tune1",
@@ -323,38 +328,14 @@
           ],
           [
             "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
             "Adjust1"
           ],
           [
             "Adjust1",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Tune2",
-            "Fire"
-          ],
-          [
-            "Tune3",
-            "Fire"
-          ],
-          [
-            "Tune4",
-            "Fire"
-          ],
-          [
-            "Tune5",
-            "Fire"
-          ],
-          [
-            "Tune6",
-            "Fire"
-          ],
-          [
-            "Tune7",
             "Fire"
           ],
           [
@@ -396,14 +377,27 @@
           "Win",
           "Fire",
           "Observe",
-          "Adjust1",
           "Retry1",
-          "Retry2"
+          "Retry2",
+          "Tune2",
+          "Adjust1"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune2"
+          ],
+          [
+            "Tune2",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -424,14 +418,6 @@
           [
             "Observe",
             "Retry2"
-          ],
-          [
-            "Tune1",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ],
           [
             "Retry1",
@@ -464,14 +450,27 @@
           "Win",
           "Fire",
           "Observe",
-          "Adjust1",
           "Retry1",
-          "Retry2"
+          "Retry2",
+          "Tune3",
+          "Adjust1"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune3"
+          ],
+          [
+            "Tune3",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -492,14 +491,6 @@
           [
             "Observe",
             "Retry2"
-          ],
-          [
-            "Tune2",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ],
           [
             "Retry1",
@@ -532,14 +523,27 @@
           "Win",
           "Fire",
           "Observe",
-          "Adjust1",
           "Retry1",
-          "Retry2"
+          "Retry2",
+          "Tune4",
+          "Adjust1"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune4"
+          ],
+          [
+            "Tune4",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -560,14 +564,6 @@
           [
             "Observe",
             "Retry2"
-          ],
-          [
-            "Tune3",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ],
           [
             "Retry1",
@@ -600,14 +596,27 @@
           "Win",
           "Fire",
           "Observe",
-          "Adjust1",
           "Retry1",
-          "Retry2"
+          "Retry2",
+          "Tune5",
+          "Adjust1"
         ],
         "highlightEdges": [
           [
             "Start",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Tune5"
+          ],
+          [
+            "Tune5",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -628,14 +637,6 @@
           [
             "Observe",
             "Retry2"
-          ],
-          [
-            "Tune4",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
           ],
           [
             "Retry1",
@@ -664,6 +665,8 @@
           "Observe",
           "Retry1",
           "Retry2",
+          "Trap",
+          "Adjust",
           "Adjust1"
         ],
         "highlightEdges": [
@@ -672,12 +675,28 @@
             "StrategySelect"
           ],
           [
-            "TuneTrap",
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
           ],
           [
             "Observe",
@@ -688,11 +707,11 @@
             "Retry2"
           ],
           [
-            "Observe",
-            "Adjust1"
+            "Retry1",
+            "Fire"
           ],
           [
-            "Adjust1",
+            "Retry2",
             "Fire"
           ]
         ],
@@ -706,15 +725,20 @@
         "label": "试探混淆·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.39,
-        "weight": 0.39,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -732,7 +756,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 6
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

@@ -705,9 +705,11 @@ function afterStrategyRender() {
 function applyPriorityEdgeStyles() {
   const svg = document.querySelector('#strategy-mermaid svg');
   const api = priorityApi();
-  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  const meta = metaChapters[currentCh] || {};
+  const routes = meta?.strategy?.routes || [];
+  const mermaidBody = meta?.strategy?.mermaid || '';
   if (!svg || !api?.strategySelectPriorityStyles || !routes.length) return;
-  const styleMap = api.strategySelectPriorityStyles(routes);
+  const styleMap = api.strategySelectPriorityStyles(routes, mermaidBody);
   if (!styleMap.size) return;
 
   const pathGroups = getStrategyEdgePathGroups(svg);
@@ -966,9 +968,19 @@ function showRouteInKg(route) {
   const ids = route?.mapsTo || [];
   if (!ids.length) return;
   switchView('kg');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => kgHighlightIds(ids));
-  });
+  // Wait until KG render finished (nodeG ready). Double-rAF alone races when
+  // switching from strategy view — simulation/DOM may not exist yet.
+  const maxTries = 45;
+  let tries = 0;
+  const tryHighlight = () => {
+    if (nodeG && linkG && lastKgNodes) {
+      kgHighlightIds(ids);
+      return;
+    }
+    if (++tries >= maxTries) return;
+    requestAnimationFrame(tryHighlight);
+  };
+  requestAnimationFrame(tryHighlight);
 }
 
 function kgHighlightIds(ids) {

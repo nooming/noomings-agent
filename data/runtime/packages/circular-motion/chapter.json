@@ -396,12 +396,13 @@
           "Observe2",
           "Win2",
           "AdjustDown",
-          "AdjustUp",
-          "Adjust",
-          "AdjustDown2",
-          "AdjustUp2",
           "RetryDrop",
-          "RetryFly"
+          "RetryFly",
+          "Route_main",
+          "Adjust",
+          "AdjustUp",
+          "AdjustDown2",
+          "AdjustUp2"
         ],
         "highlightEdges": [
           [
@@ -417,7 +418,15 @@
             "StrategySelect"
           ],
           [
-            "AdjustOmega",
+            "StrategySelect",
+            "Route_main"
+          ],
+          [
+            "Route_main",
+            "AdjustDown"
+          ],
+          [
+            "AdjustDown",
             "Fire"
           ],
           [
@@ -429,14 +438,6 @@
             "Win"
           ],
           [
-            "AdjustRadius",
-            "Fire"
-          ],
-          [
-            "AdjustTilt",
-            "Fire"
-          ],
-          [
             "ModeSelect",
             "ChallengeCore"
           ],
@@ -445,31 +446,19 @@
             "StrategySelect2"
           ],
           [
-            "AdjustOmega2",
-            "Fire2"
+            "Observe",
+            "AdjustDown"
           ],
           [
             "Fire2",
             "Observe2"
           ],
           [
-            "Observe2",
-            "Win2"
-          ],
-          [
-            "AdjustRadius2",
-            "Fire2"
-          ],
-          [
-            "AdjustTilt2",
-            "Fire2"
-          ],
-          [
             "Observe",
-            "AdjustDown"
+            "Adjust"
           ],
           [
-            "AdjustDown",
+            "Adjust",
             "Fire"
           ],
           [
@@ -479,10 +468,6 @@
           [
             "AdjustUp",
             "Fire"
-          ],
-          [
-            "Observe",
-            "Adjust"
           ],
           [
             "Observe2",
@@ -509,8 +494,16 @@
             "RetryFly"
           ],
           [
-            "Adjust",
-            "Fire"
+            "Observe2",
+            "Win2"
+          ],
+          [
+            "RetryDrop",
+            "Fire2"
+          ],
+          [
+            "RetryFly",
+            "Fire2"
           ]
         ],
         "highlightFailureBranches": true
@@ -537,44 +530,13 @@
           "Fire",
           "Observe",
           "Win",
-          "Adjust",
           "AdjustDown",
-          "AdjustUp",
-          "Win2"
+          "Win2",
+          "Route_main_s_radius",
+          "Adjust",
+          "AdjustUp"
         ],
         "highlightEdges": [
-          [
-            "AdjustRadius",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "Adjust"
-          ],
-          [
-            "Adjust",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustDown"
-          ],
-          [
-            "AdjustDown",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustUp"
-          ],
-          [
-            "AdjustUp",
-            "Fire"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -588,8 +550,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_radius"
+          ],
+          [
+            "Route_main_s_radius",
+            "AdjustDown"
+          ],
+          [
+            "AdjustDown",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustDown"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustUp"
+          ],
+          [
+            "AdjustUp",
+            "Fire"
           ]
         ],
         "highlightFailureBranches": true
@@ -617,43 +615,12 @@
           "ExploreCore",
           "Fire",
           "Observe",
-          "Adjust",
           "AdjustDown",
+          "Route_main_s_base_tilt",
+          "Adjust",
           "AdjustUp"
         ],
         "highlightEdges": [
-          [
-            "AdjustTilt",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "Adjust"
-          ],
-          [
-            "Adjust",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustDown"
-          ],
-          [
-            "AdjustDown",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustUp"
-          ],
-          [
-            "AdjustUp",
-            "Fire"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -667,8 +634,44 @@
             "StrategySelect"
           ],
           [
+            "StrategySelect",
+            "Route_main_s_base_tilt"
+          ],
+          [
+            "Route_main_s_base_tilt",
+            "AdjustDown"
+          ],
+          [
+            "AdjustDown",
+            "Fire"
+          ],
+          [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustDown"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustUp"
+          ],
+          [
+            "AdjustUp",
+            "Fire"
           ]
         ],
         "highlightFailureBranches": true
@@ -691,7 +694,8 @@
           "Observe",
           "Adjust",
           "AdjustDown",
-          "AdjustUp"
+          "AdjustUp",
+          "Trap"
         ],
         "highlightEdges": [
           [
@@ -754,14 +758,30 @@
         "label": "试探混淆·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
-        "score": 0.55,
-        "weight": 0.55,
+        "score": 0.15,
+        "weight": 0.15,
         "highlightNodes": [
           "StrategySelect",
+          "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "ExploreCore"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreCore"
+          ],
+          [
+            "ExploreCore",
+            "StrategySelect"
+          ],
           [
             "StrategySelect",
             "ProbeCV"
@@ -779,7 +799,9 @@
             "StrategySelect"
           ]
         ],
-        "priorityRank": 4
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false
       }
     ]
   },

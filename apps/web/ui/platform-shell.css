@@ -396,9 +396,9 @@ a.teacher-tab {
   color: var(--edu-text);
 }
 
-#panel-agents .agent-mode-tab.is-active {
-  color: var(--edu-primary);
-  border-bottom-color: var(--edu-primary);
+#panel-agents .agent-mode-tab:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 #panel-agents .agent-main-input {

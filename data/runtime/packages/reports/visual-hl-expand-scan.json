@@ -1,0 +1,1275 @@
+[
+  {
+    "id": "capacitor-confound-ui",
+    "topic": "capacitor-confound-ui",
+    "styleCount": 3,
+    "prioAV": 2,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·极板间距",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>Env>Explore>Route_main>Adjust1>Fire>Observe>Retry>WinC"
+      },
+      {
+        "label": "单变量·极板面积",
+        "kind": "sv",
+        "sparse": false,
+        "n": 12,
+        "phys": 7,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Win>Env>Explore>Route_main_s_area>Adjust2>Fire>Observe>Retry>WinC>Adjust1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 11,
+        "phys": 7,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Env>Explore>AdjustT>Fire>Observe>Retry>Trap>Adjust1>Win"
+      },
+      {
+        "label": "试探混淆·外观色调",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "Start>StrategySelect>ObserveCV>BackFromCV>Env>Explore>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "capacitor-era-ch1",
+    "topic": "capacitor-era-ch1",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·极板间距",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>StrategySelect>Win>Fire2>Observe2>Retry2>Adjust2>Dist"
+      },
+      {
+        "label": "单变量·极板面积",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>StrategySelect>Win>Fire>Observe>Adjust>Retry>Mat"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Fire4>Observe4>Retry4>Trap>Adjust4>Win"
+      },
+      {
+        "label": "试探混淆·音量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 5,
+        "phys": 3,
+        "e": 5,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "capacitor-era-ch2",
+    "topic": "capacitor-era-ch2",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·电容C1",
+        "kind": "sv",
+        "sparse": false,
+        "n": 22,
+        "phys": 16,
+        "e": 29,
+        "nodes": "Start>StrategySelect>Env>ModeOn>ModeOff>Fire1>Observe1>Win>Retry1>Fire2>Observe2>Retry2>Fire3>Observe3>Retry3>Fire4>Observe4>Retry4>Adjust1>Adjust2>Adjust3>Adjust4"
+      },
+      {
+        "label": "单变量·电容C2",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 4,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeOff>Env>ModeOn>Fire1>Observe1>Retry1>Adjust1"
+      },
+      {
+        "label": "单变量·电容C3",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 4,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeOff>Env>ModeOn>Fire2>Observe2>Retry2>Adjust2"
+      },
+      {
+        "label": "单变量·馈线长度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 4,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeOff>Env>ModeOn>Fire3>Observe3>Retry3>Adjust3"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 11,
+        "phys": 5,
+        "e": 12,
+        "nodes": "Start>Env>ModeOn>StrategySelect>AdjustT>FireT>ObserveT>RetryT>ModeOff>Trap>Win"
+      },
+      {
+        "label": "试探混淆·音量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>ModeOn>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "capacitor-era-ch4",
+    "topic": "capacitor-era-ch4",
+    "styleCount": 2,
+    "prioAV": 1,
+    "sparse": [
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 5,
+        "phys": 1,
+        "e": 4,
+        "nodes": "Start>StrategySelect>Env>ModeCha>Trap"
+      }
+    ],
+    "all": [
+      {
+        "label": "单变量·馈线长度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 12,
+        "phys": 7,
+        "e": 14,
+        "nodes": "Start>StrategySelect>Win>Env>ModeCha>Route_main>AdjustC>Fire>Observe>Adjust>Retry>AdjustV"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 5,
+        "phys": 1,
+        "e": 4,
+        "nodes": "Start>StrategySelect>Env>ModeCha>Trap"
+      },
+      {
+        "label": "试探混淆·音量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "Start>StrategySelect>ObserveCV>BackFromCV>Env>ModeCha>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "circular-motion",
+    "topic": "circular-motion",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·角速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 19,
+        "phys": 13,
+        "e": 23,
+        "nodes": "Start>StrategySelect>ModeSelect>ExploreCore>Fire>Observe>Win>ChallengeCore>StrategySelect2>Fire2>Observe2>Win2>AdjustDown>Adjust>RetryDrop>RetryFly>AdjustUp>AdjustDown2>AdjustUp2"
+      },
+      {
+        "label": "单变量·半径",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>ModeSelect>ExploreCore>Fire>Observe>Win>Adjust>AdjustDown>Win2>AdjustUp"
+      },
+      {
+        "label": "单变量·倾角",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Win>Win2>ModeSelect>ExploreCore>Fire>Observe>Adjust>AdjustDown>AdjustUp"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 11,
+        "phys": 7,
+        "e": 13,
+        "nodes": "Start>ModeSelect>ExploreCore>StrategySelect>Fire>Observe>Adjust>Trap>AdjustDown>AdjustUp>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ModeSelect>ExploreCore>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "cyclotron-radius",
+    "topic": "cyclotron-radius",
+    "styleCount": 2,
+    "prioAV": 2,
+    "sparse": [
+      {
+        "label": "单变量·腔室气压",
+        "kind": "sv",
+        "sparse": true,
+        "n": 6,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect>Win>ChallengeCore>Win2>Win1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 2,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect"
+      }
+    ],
+    "all": [
+      {
+        "label": "单变量·速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 12,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeSelect>ExploreCore>Tune1>Adjust>Retest>ChallengeCore>Win2>Win1>Observe"
+      },
+      {
+        "label": "单变量·磁场",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 4,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeSelect>ChallengeCore>Tune2>Adjust>Retest>Win2>Win1>Observe"
+      },
+      {
+        "label": "单变量·腔室气压",
+        "kind": "sv",
+        "sparse": true,
+        "n": 6,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect>Win>ChallengeCore>Win2>Win1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 2,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 5,
+        "phys": 3,
+        "e": 3,
+        "nodes": "Start>StrategySelect>ProbeCV>ObserveCV>BackFromCV"
+      }
+    ]
+  },
+  {
+    "id": "efield-charge",
+    "topic": "efield-charge",
+    "styleCount": 2,
+    "prioAV": 2,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·极板间距",
+        "kind": "sv",
+        "sparse": false,
+        "n": 14,
+        "phys": 9,
+        "e": 17,
+        "nodes": "Start>StrategySelect>ModeSelect>ExploreMode>Fire>Observe>Win>AdjustD>Retry>ChallengeMode>AdjustE>AdjustQ>SingleD>AdjustMulti"
+      },
+      {
+        "label": "单变量·场强",
+        "kind": "sv",
+        "sparse": false,
+        "n": 13,
+        "phys": 8,
+        "e": 15,
+        "nodes": "Start>StrategySelect>Win>ChallengeMode>ModeSelect>ExploreMode>Fire>Observe>AdjustE>Retry>AdjustD>AdjustMulti>AdjustQ"
+      },
+      {
+        "label": "单变量·电荷量",
+        "kind": "sv",
+        "sparse": false,
+        "n": 13,
+        "phys": 8,
+        "e": 15,
+        "nodes": "Start>StrategySelect>Win>ChallengeMode>ModeSelect>ExploreMode>Fire>Observe>AdjustQ>Retry>AdjustE>AdjustD>AdjustMulti"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 13,
+        "phys": 9,
+        "e": 15,
+        "nodes": "Start>ModeSelect>ExploreMode>StrategySelect>Fire>Observe>Retry>MultiTrap>AdjustMulti>AdjustD>AdjustE>AdjustQ>Win"
+      }
+    ]
+  },
+  {
+    "id": "friction-incline",
+    "topic": "friction-incline",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·斜面倾角",
+        "kind": "sv",
+        "sparse": false,
+        "n": 13,
+        "phys": 6,
+        "e": 12,
+        "nodes": "Start>StrategySelect>Env>ModeExplore>AdjustAngle>Fire>Observe>Win>Retry>Adjust>WinChallenge>ModeChallenge>AngleRoute"
+      },
+      {
+        "label": "单变量·摩擦系数",
+        "kind": "sv",
+        "sparse": false,
+        "n": 14,
+        "phys": 7,
+        "e": 13,
+        "nodes": "Start>StrategySelect>Env>ModeExplore>AdjustFriction>Fire>Observe>Win>Adjust>Retry>WinChallenge>ModeChallenge>FrictionRoute>AdjustAngle"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 10,
+        "nodes": "Start>Env>ModeExplore>StrategySelect>Fire>Observe>Adjust>Retry>AdjustAngle>Win"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 4,
+        "phys": 3,
+        "e": 4,
+        "nodes": "StrategySelect>ProbeCV>ObserveCV>BackFromCV"
+      }
+    ]
+  },
+  {
+    "id": "gas-ideal",
+    "topic": "gas-ideal",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [
+      {
+        "label": "单变量·温度",
+        "kind": "sv",
+        "sparse": true,
+        "n": 8,
+        "phys": 0,
+        "e": 1,
+        "nodes": "Start>StrategySelect>Win>Win1>Win2>Win2a>Win3>ChallengeCore"
+      },
+      {
+        "label": "单变量·体积",
+        "kind": "sv",
+        "sparse": true,
+        "n": 8,
+        "phys": 0,
+        "e": 1,
+        "nodes": "Start>StrategySelect>Win>Win1>Win2>Win2a>Win3>ChallengeCore"
+      }
+    ],
+    "all": [
+      {
+        "label": "单变量·压强",
+        "kind": "sv",
+        "sparse": false,
+        "n": 21,
+        "phys": 13,
+        "e": 19,
+        "nodes": "Start>StrategySelect>Fire1a>Observe1a>Win1>Tune2a>Fire2a>Observe2a>Win2a>Win>Win2>Win3>ChallengeCore>Tune3>Fire3>Observe3>Adjust1a>Adjust1a2>Adjust2a>Adjust2a2>Adjust3"
+      },
+      {
+        "label": "单变量·温度",
+        "kind": "sv",
+        "sparse": true,
+        "n": 8,
+        "phys": 0,
+        "e": 1,
+        "nodes": "Start>StrategySelect>Win>Win1>Win2>Win2a>Win3>ChallengeCore"
+      },
+      {
+        "label": "单变量·体积",
+        "kind": "sv",
+        "sparse": true,
+        "n": 8,
+        "phys": 0,
+        "e": 1,
+        "nodes": "Start>StrategySelect>Win>Win1>Win2>Win2a>Win3>ChallengeCore"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 6,
+        "nodes": "Start>StrategySelect>Tune3>Fire3>Observe3>Adjust3>Win3"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 5,
+        "phys": 3,
+        "e": 5,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "heat-conduction",
+    "topic": "heat-conduction",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·截面积",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Env>Challenge>Fire>Observe>Win>RetryLow>RetryOverheat>AdjustK"
+      },
+      {
+        "label": "单变量·导热系数",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>RetryLow>RetryOverheat>AdjustK"
+      },
+      {
+        "label": "单变量·温差",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>RetryLow>RetryOverheat>AdjustK"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 11,
+        "nodes": "Start>Env>Challenge>StrategySelect>Fire>Observe>RetryLow>RetryOverheat>AdjustK>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>Challenge>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "magnetic-force",
+    "topic": "magnetic-force",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·电流",
+        "kind": "sv",
+        "sparse": false,
+        "n": 14,
+        "phys": 8,
+        "e": 13,
+        "nodes": "Start>StrategySelect>ModeSelect>ExploreMode>Fire>Observe>Win>ChallengeMode>StrategySelect2>Fire2>Observe2>Win2>AdjustI>AdjustI2"
+      },
+      {
+        "label": "单变量·磁场",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 4,
+        "e": 7,
+        "nodes": "Start>StrategySelect>Win>Win2>ModeSelect>ExploreMode>Fire>Observe>AdjustI"
+      },
+      {
+        "label": "单变量·导线温度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 4,
+        "e": 7,
+        "nodes": "Start>StrategySelect>Win>Win2>ModeSelect>ExploreMode>Fire>Observe>AdjustI"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 9,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>ModeSelect>ExploreMode>StrategySelect>Fire>Observe>Blind>AdjustI>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ModeSelect>ExploreMode>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "momentum-collision",
+    "topic": "momentum-collision",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·速度1",
+        "kind": "sv",
+        "sparse": false,
+        "n": 13,
+        "phys": 8,
+        "e": 12,
+        "nodes": "Start>StrategySelect>ModeSelect>ExploreMode>Fire>Observe>Win>Adjust>RetryCollide>WinC>SingleVel1>SingleVel2>SingleTemp"
+      },
+      {
+        "label": "单变量·速度2",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>WinC>ModeSelect>ExploreMode>Fire>Observe>Adjust>RetryCollide"
+      },
+      {
+        "label": "单变量·导轨温度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>WinC>ModeSelect>ExploreMode>Fire>Observe>Adjust>RetryCollide>SingleTemp"
+      },
+      {
+        "label": "单变量·质量",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>WinC>ModeSelect>ExploreMode>Fire>Observe>Adjust>RetryCollide>SingleVel1"
+      },
+      {
+        "label": "单变量·质量",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>WinC>ModeSelect>ExploreMode>Fire>Observe>Adjust>RetryCollide>SingleVel1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>ModeSelect>ExploreMode>StrategySelect>Fire>Observe>Adjust>RetryCollide>Trap>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 4,
+        "phys": 3,
+        "e": 4,
+        "nodes": "StrategySelect>ProbeCV>ObserveCV>BackFromCV"
+      }
+    ]
+  },
+  {
+    "id": "multi-kp",
+    "topic": "multi-kp",
+    "styleCount": 0,
+    "prioAV": 0,
+    "sparse": [
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 2,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": true,
+        "n": 3,
+        "phys": 1,
+        "e": 1,
+        "nodes": "Start>StrategySelect>ProbeCV"
+      }
+    ],
+    "all": [
+      {
+        "label": "单变量·初速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 6,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>ModeSelect>Explore>AdjustV>Fire>Observe>RetryDrop>RetryOut"
+      },
+      {
+        "label": "单变量·起始高度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 7,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>ModeSelect>Explore>AdjustH>Fire>Observe>RetryDrop>RetryOut>AdjustV"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": true,
+        "n": 2,
+        "phys": 0,
+        "e": 0,
+        "nodes": "Start>StrategySelect"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": true,
+        "n": 3,
+        "phys": 1,
+        "e": 1,
+        "nodes": "Start>StrategySelect>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "pendulum-clock",
+    "topic": "pendulum-clock",
+    "styleCount": 4,
+    "prioAV": 2,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·摆角",
+        "kind": "sv",
+        "sparse": false,
+        "n": 12,
+        "phys": 8,
+        "e": 14,
+        "nodes": "Start>StrategySelect>ModeSelect>Explore>Fire>Observe>CheckAngle>Win>AdjustAngle>Retry>AdjustLen>AngleRoute"
+      },
+      {
+        "label": "单变量·摆长",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>StrategySelect>ModeSelect>Explore>Fire>Observe>AdjustLen>Retry>Win"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 7,
+        "e": 11,
+        "nodes": "Start>ModeSelect>Explore>StrategySelect>AdjustMulti>Fire>Observe>Retry>TrapRoute>AdjustLen"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ModeSelect>Explore>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "pendulum-target",
+    "topic": "pendulum-target",
+    "styleCount": 3,
+    "prioAV": 1,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·摆长",
+        "kind": "sv",
+        "sparse": false,
+        "n": 14,
+        "phys": 9,
+        "e": 15,
+        "nodes": "Start>StrategySelect>Env>Explore>AdjustLen>Fire>Observe>Win>RetryFar>RetryNear>Challenge>Adjust>Len>Ang"
+      },
+      {
+        "label": "单变量·摆角",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Adjust>RetryFar>RetryNear"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 12,
+        "phys": 8,
+        "e": 12,
+        "nodes": "Start>Env>Explore>StrategySelect>AdjustBoth>Fire>Observe>Adjust>RetryFar>RetryNear>Trap>Win"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>Challenge>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "photoelectric",
+    "topic": "photoelectric",
+    "styleCount": 4,
+    "prioAV": 3,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·频率",
+        "kind": "sv",
+        "sparse": false,
+        "n": 13,
+        "phys": 7,
+        "e": 14,
+        "nodes": "Start>StrategySelect>Env>ModeExplore>AdjustFreq>Fire>Observe>Retry>Adjust>ModeChallenge>Win>PathFreq>PathTrap"
+      },
+      {
+        "label": "单变量·逸出功",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Env>ModeChallenge>AdjustWork>Fire>Observe>Win>Adjust>Retry>PathWork"
+      },
+      {
+        "label": "单变量·光强",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Env>ModeChallenge>AdjustIntensity>Fire>Observe>Adjust>Retry>Win>PathIntensity"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>Env>ModeExplore>StrategySelect>Fire>Observe>Retry>Adjust>PathTrap>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>ModeChallenge>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "projectile-basic",
+    "topic": "projectile-basic",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·初速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Mode>Challenge>Adjust1>Fire>Observe>Win>Retry>SpeedStrat"
+      },
+      {
+        "label": "单变量·发射高度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Mode>Challenge>Adjust2>Fire>Observe>Win>Retry>HeightStrat>Adjust1"
+      },
+      {
+        "label": "单变量·发射角度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Mode>Challenge>Adjust3>Fire>Observe>Win>Retry>AngleStrat>Adjust1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>Mode>Challenge>StrategySelect>Trap>AdjustT>Fire>Observe>Adjust1>Retry"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 4,
+        "phys": 3,
+        "e": 4,
+        "nodes": "StrategySelect>ProbeCV>ObserveCV>BackFromCV"
+      }
+    ]
+  },
+  {
+    "id": "projectile-cannon",
+    "topic": "projectile-cannon",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·初速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 8,
+        "e": 12,
+        "nodes": "Start>StrategySelect>Fire>Observe>Win>Retry1>Retry2>Tune1>Adjust1>Tune6>Tune7"
+      },
+      {
+        "label": "单变量·重力加速度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Fire>Observe>Retry1>Retry2>Adjust1"
+      },
+      {
+        "label": "单变量·风速",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Fire>Observe>Retry1>Retry2>Adjust1"
+      },
+      {
+        "label": "单变量·发射角度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Fire>Observe>Retry1>Retry2>Adjust1"
+      },
+      {
+        "label": "单变量·空气阻力",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>Win>Fire>Observe>Retry1>Retry2>Adjust1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 9,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Fire>Observe>Retry1>Retry2>TuneTrap>Adjust1>Win"
+      },
+      {
+        "label": "试探混淆·质量",
+        "kind": "cv",
+        "sparse": false,
+        "n": 4,
+        "phys": 3,
+        "e": 4,
+        "nodes": "StrategySelect>ProbeCV>ObserveCV>BackFromCV"
+      }
+    ]
+  },
+  {
+    "id": "rc-circuit",
+    "topic": "rc-circuit",
+    "styleCount": 0,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·电源电压",
+        "kind": "sv",
+        "sparse": false,
+        "n": 14,
+        "phys": 9,
+        "e": 15,
+        "nodes": "Start>StrategySelect>Env>Challenge>Adjust1>Fire1>Observe1>Win>Fire2>Observe2>Fire3>Observe3>Adjust2>Adjust3"
+      },
+      {
+        "label": "单变量·电阻",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 3,
+        "e": 7,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire2>Observe2>Adjust2"
+      },
+      {
+        "label": "单变量·电容",
+        "kind": "sv",
+        "sparse": false,
+        "n": 8,
+        "phys": 3,
+        "e": 7,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire3>Observe3>Adjust3"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 8,
+        "phys": 3,
+        "e": 7,
+        "nodes": "Start>Env>Challenge>StrategySelect>FireT>ObserveT>AdjustT>Win"
+      }
+    ]
+  },
+  {
+    "id": "refraction-snell",
+    "topic": "refraction-snell",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·波长",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 12,
+        "nodes": "Start>StrategySelect>Env>Challenge>Fire>Observe>Win>Retry>AdjustAngle>AdjustIndex>AdjustWave"
+      },
+      {
+        "label": "单变量·入射角",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 12,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Retry>AdjustIndex>AdjustAngle>AdjustWave"
+      },
+      {
+        "label": "单变量·折射率",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 12,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Retry>AdjustWave>AdjustAngle>AdjustIndex"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 12,
+        "phys": 7,
+        "e": 14,
+        "nodes": "Start>Env>Challenge>StrategySelect>Fire>Observe>Retry>Trap>AdjustAngle>AdjustIndex>AdjustWave>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>Challenge>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "series-parallel",
+    "topic": "series-parallel",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·电阻R1",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>ModeSelect>Fire>Observe>Win>Retry>Explore>AdjustR1"
+      },
+      {
+        "label": "单变量·电阻R2",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 5,
+        "e": 8,
+        "nodes": "Start>StrategySelect>ModeSelect>Explore>Win>Fire>Observe>Retry>AdjustR1"
+      },
+      {
+        "label": "单变量·电表内阻",
+        "kind": "sv",
+        "sparse": false,
+        "n": 9,
+        "phys": 5,
+        "e": 9,
+        "nodes": "Start>StrategySelect>ModeSelect>Explore>Win>Fire>Observe>Retry>AdjustR1"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 6,
+        "e": 9,
+        "nodes": "Start>ModeSelect>StrategySelect>AdjustMulti>Fire>Observe>Retry>Trap>AdjustR1>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>ModeSelect>Explore>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "thin-lens-implicit",
+    "topic": "thin-lens-implicit",
+    "styleCount": 1,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·物距",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Mode>Explore>Fire>Observe>Win>Retry>WinC>AdjustU>AdjustF"
+      },
+      {
+        "label": "单变量·焦距",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>WinC>Mode>Explore>Fire>Observe>Retry>AdjustF>AdjustU"
+      },
+      {
+        "label": "单变量·光圈",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Win>WinC>Mode>Explore>Fire>Observe>Retry>AdjustU>AdjustF"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 10,
+        "phys": 6,
+        "e": 11,
+        "nodes": "Start>Mode>Explore>StrategySelect>Fire>Observe>Retry>AdjustF>AdjustU>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 4,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Mode>Explore>ProbeCV"
+      }
+    ]
+  },
+  {
+    "id": "transformer-turns",
+    "topic": "transformer-turns",
+    "styleCount": 2,
+    "prioAV": 0,
+    "sparse": [],
+    "all": [
+      {
+        "label": "单变量·原边匝数",
+        "kind": "sv",
+        "sparse": false,
+        "n": 11,
+        "phys": 6,
+        "e": 13,
+        "nodes": "Start>StrategySelect>Env>Explore>Fire>Observe>Win>Retry>Challenge>Adjust1>Adjust2"
+      },
+      {
+        "label": "单变量·副边匝数",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 11,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Retry>Adjust1>Adjust2"
+      },
+      {
+        "label": "单变量·原边电压",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Retry>Adjust2>Adjust1"
+      },
+      {
+        "label": "单变量·绕组温度",
+        "kind": "sv",
+        "sparse": false,
+        "n": 10,
+        "phys": 5,
+        "e": 10,
+        "nodes": "Start>StrategySelect>Win>Env>Challenge>Fire>Observe>Retry>Adjust1>Adjust2"
+      },
+      {
+        "label": "多参盲调",
+        "kind": "trap",
+        "sparse": false,
+        "n": 12,
+        "phys": 8,
+        "e": 13,
+        "nodes": "Start>Env>Explore>StrategySelect>AdjustAll>Fire>Observe>Retry>Trap>Adjust1>Adjust2>Win"
+      },
+      {
+        "label": "试探混淆·无关控件",
+        "kind": "cv",
+        "sparse": false,
+        "n": 7,
+        "phys": 3,
+        "e": 7,
+        "nodes": "StrategySelect>ObserveCV>BackFromCV>Start>Env>Challenge>ProbeCV"
+      }
+    ]
+  }
+]

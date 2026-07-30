@@ -1,0 +1,158 @@
+{
+  "generatedAt": "2026-07-30T14:22:22.318Z",
+  "total": 1,
+  "passed": 1,
+  "rows": [
+    {
+      "id": "cyclotron-radius",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 12,
+          "edges": 10
+        },
+        {
+          "id": "main_s-magnetic",
+          "nodes": 11,
+          "edges": 9
+        },
+        {
+          "id": "main_s-chamber-p",
+          "nodes": 12,
+          "edges": 9
+        },
+        {
+          "id": "trap",
+          "nodes": 9,
+          "edges": 9
+        },
+        {
+          "id": "confound_CV1",
+          "nodes": 6,
+          "edges": 6
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·速度",
+          "nodeCount": 12,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "ExploreCore",
+            "Tune1",
+            "Adjust",
+            "Retest",
+            "ChallengeCore",
+            "Win2",
+            "Win1",
+            "Observe"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-magnetic",
+          "label": "单变量·磁场",
+          "nodeCount": 11,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "ChallengeCore",
+            "Tune2",
+            "Adjust",
+            "Retest",
+            "Win2",
+            "Win1",
+            "Observe"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-chamber-p",
+          "label": "单变量·腔室气压",
+          "nodeCount": 12,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ChallengeCore",
+            "Win2",
+            "Win1",
+            "ModeSelect",
+            "ExploreCore",
+            "Route_main_s_chamber_p",
+            "Adjust",
+            "Retest",
+            "Observe"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "ExploreCore",
+            "Trap",
+            "Adjust",
+            "Retest",
+            "Observe",
+            "Win"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_CV1",
+          "label": "试探混淆·无关控件",
+          "nodeCount": 6,
+          "edgeCount": 6,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "ModeSelect"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 154536,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\cyclotron-radius\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\回旋加速器\\图谱.html"
+        ]
+      }
+    }
+  ]
+}

@@ -13,7 +13,7 @@
 <style>
 :root{--font-ui:'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;--font-formula:'Noto Serif SC','Songti SC','SimSun',serif;}
 :root {
-  --font-ui: 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-formula: 'Cambria Math', 'Noto Serif SC', 'Times New Roman', serif;
   --bg-body: #f4f7fb;
   --bg-graph: #eef2f8;
@@ -454,6 +454,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     const MISCONCEPTION_ROUTE_WARN_RE = /无效|迷思|不影响|invalid|misconception|无关变量|陷阱|trap|误调.*迷思|关态下|关态.*无效/i;
   const MISCONCEPTION_ROUTE_NODE_RE = /Invalid|Misconception|Trap/i;
 
+  function routeLooksLikeTrapFanout(route) {
+    return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
+      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+  }
+
+  function routeLooksLikeConfoundProbe(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
   function routeIsMisconceptionRoute(route, mermaidBody) {
     if (route?.warn === 'irrelevant') return true;
@@ -466,6 +476,12 @@ function isSuccessBranchEdge(edge, resultIds) {
       if (hl.some(id => invalidIds.has(id))) return true;
     }
     return false;
+  }
+
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  function routeIsTrueMisconceptionRoute(route, mermaidBody) {
+    if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
+    return routeIsMisconceptionRoute(route, mermaidBody);
   }
 
   function stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, route) {
@@ -1131,9 +1147,50 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Sparse 单变量 routes often only declare Start/StrategySelect/Win.
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
+  /**
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   */
+  function resolveSpineWalkEntry(entry, edges, forbidden) {
+    const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));
+    if (directOuts.length) return { walkFrom: entry, bridgePairs: [] };
+    const aliasId = `${entry}Strat`;
+    const aliasOuts = edges.filter(e => e.from === aliasId && !forbidden.has(e.to));
+    if (aliasOuts.length) {
+      return { walkFrom: aliasId, bridgePairs: [[entry, aliasId]] };
+    }
+    // Trap → AdjustBoth style: any Adjust*/Fire* reachable from a *Strat sibling of entry
+    const stratAlias = edges.find(e =>
+      /Strat$/i.test(e.from)
+      && new RegExp(String(entry).replace(/Strat$/i, ''), 'i').test(e.from)
+      && !forbidden.has(e.to)
+      && preferSpineNodeScore(e.to) >= 0);
+    if (stratAlias) {
+      return { walkFrom: stratAlias.from, bridgePairs: [[entry, stratAlias.from]] };
+    }
+    // Dead-end entry: hop to first non-forbidden Adjust*/Fire*/Tune* sharing label fragment
+    const frag = String(entry).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6);
+    if (frag) {
+      const hop = edges.find(e => {
+        if (forbidden.has(e.to)) return false;
+        const toScore = preferSpineNodeScore(e.to);
+        if (toScore < 45) return false;
+        const fromNorm = String(e.from).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const toNorm = String(e.to).toLowerCase().replace(/[^a-z0-9]/g, '');
+        return fromNorm.includes(frag) || toNorm.includes(frag);
+      });
+      if (hop) {
+        return {
+          walkFrom: hop.from === entry ? entry : hop.from,
+          bridgePairs: hop.from === entry ? [] : [[entry, hop.from]],
+        };
+      }
+    }
+    return { walkFrom: entry, bridgePairs: [] };
+  }
+
   function seedSingleVarRouteSpine(route, mermaidBody, edges, startId) {
     const empty = { entry: null, nodes: [], edgePairs: [], keys: [] };
-    if (!route || routeIsMisconceptionRoute(route, mermaidBody)) return empty;
+    if (!route || routeIsTrueMisconceptionRoute(route, mermaidBody)) return empty;
     const selectEdge = findStrategySelectOutEdge(route, edges);
     if (!selectEdge) return empty;
     const entry = selectEdge.to;
@@ -1142,14 +1199,16 @@ function isSuccessBranchEdge(edge, resultIds) {
       .map(e => e.to)
       .filter(id => id && id !== entry);
     const forbidden = new Set(siblings);
+    // Prefer path avoiding sibling fan-out; if unreachable (floating StrategySelect),
+    // still seed select→entry + greedy walk so sparse AV/trap routes can expand.
     let prefixKeys = startId
       ? shortestPathEdgeKeysAvoiding(startId, entry, edges, forbidden)
       : [];
     if ((!prefixKeys || !prefixKeys.length) && startId && startId !== entry) {
       prefixKeys = shortestPathEdgeKeys(startId, entry, edges);
-      if (!prefixKeys.length) return empty;
     }
-    const walk = greedySpineFromEntry(entry, edges, forbidden);
+    const resolved = resolveSpineWalkEntry(entry, edges, forbidden);
+    const walk = greedySpineFromEntry(resolved.walkFrom, edges, forbidden);
     const nodes = new Set();
     const edgePairs = [];
     const keys = new Set();
@@ -1167,6 +1226,12 @@ function isSuccessBranchEdge(edge, resultIds) {
     };
     ingestKeys(prefixKeys);
     nodes.add(entry);
+    resolved.bridgePairs.forEach(p => {
+      edgePairs.push(p);
+      keys.add(p[0] + '->' + p[1]);
+      nodes.add(p[0]);
+      nodes.add(p[1]);
+    });
     walk.nodes.forEach(n => nodes.add(n));
     walk.pairs.forEach(p => {
       edgePairs.push(p);
@@ -1187,26 +1252,49 @@ function isSuccessBranchEdge(edge, resultIds) {
     return (highlightNodes || []).filter(id => !siblings.has(id));
   }
 
+  function selectEdgePairMissing(pairs, entry) {
+    if (!entry || !Array.isArray(pairs)) return true;
+    return !pairs.some(p => Array.isArray(p) && p.length >= 2
+      && /StrategySelect/i.test(String(p[0])) && String(p[1]) === String(entry));
+  }
+
+  function isBranchEntryNodeId(id) {
+    const s = String(id || '');
+    if (/StrategySelect/i.test(s)) return false;
+    return /^(Adjust|Tune|Single|Route|Trap|Height|Speed|Dist|Mat|Area|Path|Angle|Len)/i.test(s)
+      || /Strat$/i.test(s);
+  }
+
+  function routeNeedsSpineSeed(route) {
+    const edges = route?.highlightEdges || [];
+    const nodes = route?.highlightNodes || [];
+    if (!(Array.isArray(edges) && edges.length > 0) || nodes.length < 6) return true;
+    const hasSelectEdge = edges.some(p => Array.isArray(p) && p.length >= 2 && /StrategySelect/i.test(String(p[0])));
+    if (!hasSelectEdge) return true;
+    // Only Start→StrategySelect (or similarly skeletal) — treat as needing full seed
+    const nonSelectPairs = edges.filter(p => Array.isArray(p) && p.length >= 2
+      && !(/^Start$/i.test(p[0]) && /StrategySelect/i.test(p[1])));
+    if (nonSelectPairs.length === 0) return true;
+    return false;
+  }
+
 function expandRouteHighlight(route, mermaidBody, opts) {
     const edges = parseStrategyMermaidEdges(mermaidBody);
     const startId = findStartNode(mermaidBody, edges);
     const spineSeed = seedSingleVarRouteSpine(route, mermaidBody, edges, startId);
-    const sparse = !(Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      || (route.highlightNodes || []).length < 6;
+    const sparse = routeNeedsSpineSeed(route);
     let effectiveNodes = [...(route.highlightNodes || [])];
-    if (spineSeed.entry && sparse) {
+    if (spineSeed.entry) {
+      // Always merge seed entry spine so distinct AV Tune/Route nodes survive even when
+      // stored highlights already have a shared Fire/Observe feedback loop.
       effectiveNodes = [...new Set([...effectiveNodes, ...spineSeed.nodes])];
-      effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
-    } else if (spineSeed.entry) {
-      // Even with explicit spine, drop sibling StrategySelect targets to avoid bleed.
       effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
     }
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       effectiveNodes = effectiveNodes.filter(id => {
-        // Drop other-route Adjust*/Route* not on this spine
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id)) return keep.has(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id)) return keep.has(id) || id === spineSeed.entry;
+        // Drop other-route branch entries (Adjust*/Tune*/Route*/Single*/…Strat) not on this spine
+        if (isBranchEntryNodeId(id)) return keep.has(id) || id === spineSeed.entry;
         return true;
       });
     }
@@ -1215,15 +1303,27 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== spineSeed.entry),
       )
       : new Set();
-    const rawEdges = (Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      ? route.highlightEdges
-      : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || []));
+    const rawEdges = sparse && spineSeed.edgePairs.length
+      ? spineSeed.edgePairs
+      : ((Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+        ? route.highlightEdges
+        : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || [])));
     const filteredEdges = siblingEntries.size
       ? rawEdges.filter(pair => {
         if (!Array.isArray(pair) || pair.length < 2) return false;
         return !siblingEntries.has(pair[0]) && !siblingEntries.has(pair[1]);
       })
-      : rawEdges;
+      : rawEdges.map(p => (Array.isArray(p) ? [...p] : p)).filter(p => Array.isArray(p) && p.length >= 2);
+    // Always keep StrategySelect→entry even when reusing stored edges
+    if (spineSeed.entry && selectEdgePairMissing(filteredEdges, spineSeed.entry)) {
+      const selectFrom = (spineSeed.keys || [])
+        .map(k => {
+          const j = k.indexOf('->');
+          return j > 0 ? [k.slice(0, j), k.slice(j + 2)] : null;
+        })
+        .find(p => p && /StrategySelect/i.test(p[0]) && p[1] === spineSeed.entry);
+      filteredEdges.push(selectFrom || ['StrategySelect', spineSeed.entry]);
+    }
     const syntheticRoute = {
       ...route,
       highlightNodes: effectiveNodes,
@@ -1233,7 +1333,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     const nodeSet = new Set(syntheticRoute.highlightNodes || []);
     // 1 seedSpine — highlightNodes + highlightEdges (+ restricted pairwise in buildRouteHighlightEdgeKeys)
     const keySet = buildRouteHighlightEdgeKeys(syntheticRoute, mermaidBody);
-    if (spineSeed.keys && spineSeed.keys.length && sparse) {
+    if (spineSeed.keys && spineSeed.keys.length) {
       spineSeed.keys.forEach(k => keySet.add(k));
       spineSeed.nodes.forEach(n => nodeSet.add(n));
     }
@@ -1268,7 +1368,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, syntheticRoute);
     stripConfoundBleedFromRoute(nodeSet, keySet, syntheticRoute);
-    // Final pass: drop other-route Adjust*/Route* that feedback loops may reintroduce
+    // Final pass: drop other-route branch entries that feedback loops may reintroduce
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       // Keep Adjust* that are direct feedback from an already-highlighted Observe*
@@ -1280,10 +1380,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         }
       });
       for (const id of [...nodeSet]) {
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id) && !keep.has(id)) nodeSet.delete(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id) && id !== spineSeed.entry && !keep.has(id)) {
-          nodeSet.delete(id);
-        }
+        if (isBranchEntryNodeId(id) && id !== spineSeed.entry && !keep.has(id)) nodeSet.delete(id);
       }
       for (const k of [...keySet]) {
         const j = k.indexOf('->');
@@ -1585,6 +1682,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     routeShouldAppendSuccessOutcomes,
     routeShouldAppendFailureOutcomes,
     routeIsMisconceptionRoute,
+    routeIsTrueMisconceptionRoute,
+    routeLooksLikeTrapFanout,
     sanitizeMisconceptionRouteHighlights,
     stripMisconceptionSuccessHighlights,
     extractStratInvalidNodeIds,
@@ -1605,6 +1704,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     seedSingleVarRouteSpine,
     findStrategySelectOutEdge,
     normalizeRouteLabelKey,
+    routeNeedsSpineSeed,
+    isBranchEntryNodeId,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1717,11 +1818,38 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     }) || null;
   }
 
-  function findSelectOutEdgeTarget(route) {
+  function findSelectOutEdgeTarget(route, mermaidBody) {
     const edges = route?.highlightEdges || [];
     for (const pair of edges) {
       if (!Array.isArray(pair) || pair.length < 2) continue;
       if (/StrategySelect/i.test(String(pair[0]))) return String(pair[1]);
+    }
+    // Fallback: match Mermaid StrategySelect out-edge by route label (prio styles
+    // still work when highlightEdges omit the select fan-out edge).
+    const body = String(mermaidBody || '');
+    if (!body.trim() || !route) return null;
+    const want = normalizeLabelKey(route.label);
+    if (!want) return null;
+    const lines = body.replace(/\r\n/g, '\n').split('\n');
+    let fuzzy = null;
+    for (const line of lines) {
+      const m = String(line).trim().match(
+        /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+      );
+      if (!m) continue;
+      const edgeKey = normalizeLabelKey(m[3]);
+      if (!edgeKey) continue;
+      if (edgeKey === want) return m[4];
+      if (!fuzzy && (edgeKey.includes(want) || want.includes(edgeKey))) fuzzy = m[4];
+    }
+    if (fuzzy) return fuzzy;
+    if (isTrapRoute(route)) {
+      for (const line of lines) {
+        const m = String(line).trim().match(
+          /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+        );
+        if (m && /盲调|多参|trap|多滑/i.test(m[3])) return m[4];
+      }
     }
     return null;
   }
@@ -1795,7 +1923,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const to = m[4];
       let route = matchRouteForEdgeLabel(label, routes);
       if (!route) {
-        route = routes.find(r => findSelectOutEdgeTarget(r) === to) || null;
+        route = routes.find(r => findSelectOutEdgeTarget(r, raw) === to) || null;
       }
       selectEdgeIdx.push(i);
       selectEdges.push({
@@ -1850,11 +1978,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
   /**
    * Map StrategySelect→target edge keys to priority style meta (for SVG post-style).
+   * @param {Array} routes
+   * @param {string} [mermaidBody] optional; used to resolve select targets when highlightEdges omit them
    */
-  function strategySelectPriorityStyles(routes) {
+  function strategySelectPriorityStyles(routes, mermaidBody) {
     const map = new Map();
     for (const route of rankedStrategySelectRoutes(routes)) {
-      const to = findSelectOutEdgeTarget(route);
+      const to = findSelectOutEdgeTarget(route, mermaidBody);
       if (!to) continue;
       const meta = routePriorityMeta(route);
       map.set(`StrategySelect->${to}`, {
@@ -1878,6 +2008,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     rankedStrategySelectRoutes,
     annotateStrategyMermaidPriority,
     strategySelectPriorityStyles,
+    findSelectOutEdgeTarget,
     strokeWidthForMeta,
     strokeColorForMeta,
   };
@@ -1894,7 +2025,7 @@ const GraphViewer = (function () {
   let KG_CHAPTERS = [], DT_CHAPTERS = [], metaChapters = [];
   let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
   let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
-  let mermaidReady = false, strategyRenderId = 0, activeStrategyRouteId = null;
+  let mermaidReady = false, mermaidLoadPromise = null, strategyRenderId = 0, activeStrategyRouteId = null;
   let strategyZoomBeh = null, strategyResizeTimer = null;
   let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
   let lastStrategyDisplayMermaid = '';
@@ -2450,10 +2581,9 @@ function parseGraphHash() {
   if (!raw) return null;
   const params = new URLSearchParams(raw);
   const ch = parseInt(params.get('ch'), 10);
-  const fallbackView = chapterHasStrategy(Number.isFinite(ch) ? ch : 0) ? 'strategy' : 'dt';
   return {
     ch: Number.isFinite(ch) ? ch : 0,
-    view: params.get('view') || fallbackView,
+    view: params.get('view') || 'dt',
     route: params.get('route') || null,
   };
 }
@@ -2597,9 +2727,11 @@ function afterStrategyRender() {
 function applyPriorityEdgeStyles() {
   const svg = document.querySelector('#strategy-mermaid svg');
   const api = priorityApi();
-  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  const meta = metaChapters[currentCh] || {};
+  const routes = meta?.strategy?.routes || [];
+  const mermaidBody = meta?.strategy?.mermaid || '';
   if (!svg || !api?.strategySelectPriorityStyles || !routes.length) return;
-  const styleMap = api.strategySelectPriorityStyles(routes);
+  const styleMap = api.strategySelectPriorityStyles(routes, mermaidBody);
   if (!styleMap.size) return;
 
   const pathGroups = getStrategyEdgePathGroups(svg);
@@ -2780,6 +2912,29 @@ function ensureMermaid() {
   mermaidReady = true;
 }
 
+/** Load Mermaid only when entering strategy view (graph.html / preview-shell omit sync tag). */
+function loadMermaidLib() {
+  if (typeof mermaid !== 'undefined') return Promise.resolve();
+  if (mermaidLoadPromise) return mermaidLoadPromise;
+  const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
+    || '/static/viewer/vendor/mermaid.min.js';
+  mermaidLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mermaid-loader]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Mermaid 加载失败')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.mermaidLoader = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Mermaid 加载失败'));
+    document.head.appendChild(s);
+  });
+  return mermaidLoadPromise;
+}
+
 function renderStrategy() {
   ensureStrategyViewport();
   const mount = document.getElementById('strategy-mermaid');
@@ -2790,29 +2945,32 @@ function renderStrategy() {
     mount.innerHTML = '<div id="strategy-empty">本章暂无策略全景</div>';
     return;
   }
-  ensureMermaid();
-  if (typeof mermaid === 'undefined') {
-    mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
-    return;
-  }
   mount.innerHTML = '<div class="strategy-loading">正在渲染策略图…</div>';
-  const id = 'strategy-diagram-' + currentCh + '-' + rid;
-  const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
-  lastStrategyDisplayMermaid = displayBody;
-  const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
-  mermaid.render(id, src).then(({ svg }) => {
+  loadMermaidLib().then(() => {
     if (rid !== strategyRenderId) return;
-    mount.innerHTML = svg;
-    const svgEl = mount.querySelector('svg');
-    if (svgEl) {
-      svgEl.removeAttribute('width');
-      svgEl.style.width = '';
-      svgEl.style.maxWidth = '';
-      requestAnimationFrame(() => {
-        afterStrategyRender();
-        activatePendingRoute();
-      });
+    ensureMermaid();
+    if (typeof mermaid === 'undefined') {
+      mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
+      return;
     }
+    const id = 'strategy-diagram-' + currentCh + '-' + rid;
+    const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
+    lastStrategyDisplayMermaid = displayBody;
+    const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
+    return mermaid.render(id, src).then(({ svg }) => {
+      if (rid !== strategyRenderId) return;
+      mount.innerHTML = svg;
+      const svgEl = mount.querySelector('svg');
+      if (svgEl) {
+        svgEl.removeAttribute('width');
+        svgEl.style.width = '';
+        svgEl.style.maxWidth = '';
+        requestAnimationFrame(() => {
+          afterStrategyRender();
+          activatePendingRoute();
+        });
+      }
+    });
   }).catch(err => {
     if (rid !== strategyRenderId) return;
     mount.innerHTML = '<div id="strategy-empty">策略图渲染失败：' + (err.message || err) + '</div>';
@@ -2832,9 +2990,19 @@ function showRouteInKg(route) {
   const ids = route?.mapsTo || [];
   if (!ids.length) return;
   switchView('kg');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => kgHighlightIds(ids));
-  });
+  // Wait until KG render finished (nodeG ready). Double-rAF alone races when
+  // switching from strategy view — simulation/DOM may not exist yet.
+  const maxTries = 45;
+  let tries = 0;
+  const tryHighlight = () => {
+    if (nodeG && linkG && lastKgNodes) {
+      kgHighlightIds(ids);
+      return;
+    }
+    if (++tries >= maxTries) return;
+    requestAnimationFrame(tryHighlight);
+  };
+  requestAnimationFrame(tryHighlight);
 }
 
 function kgHighlightIds(ids) {
@@ -3338,11 +3506,14 @@ function clearInfoPanel() {
     metaChapters = opts.metaChapters || [];
     svgEl = document.getElementById('svg');
     d3svg = d3.select(svgEl);
-    const preferStrategy = opts.defaultView === 'strategy'
-      || (opts.defaultView == null && chapterHasStrategy(0));
-    if (preferStrategy && chapterHasStrategy(0)) currentView = 'strategy';
+    // Only explicit defaultView:'strategy' (standalone 图谱.html) opens strategy-first.
+    // graph.html / preview-shell omit defaultView → start on dt (or kg) to avoid mermaid.render on first paint.
+    if (opts.defaultView === 'strategy' && chapterHasStrategy(0)) currentView = 'strategy';
     else if (opts.defaultView === 'kg' || opts.defaultView === 'dt') currentView = opts.defaultView;
-    else currentView = chapterHasStrategy(0) ? 'strategy' : 'dt';
+    else currentView = DT_CHAPTERS[0]?.tree ? 'dt' : 'kg';
+    document.getElementById('vt-kg')?.classList.toggle('active', currentView === 'kg');
+    document.getElementById('vt-dt')?.classList.toggle('active', currentView === 'dt');
+    document.getElementById('vt-strategy')?.classList.toggle('active', currentView === 'strategy');
     bindControls();
     setGraphChrome();
     if (opts.onReady) opts.onReady({ buildTabs, loadChapter, render, switchView, setChapters });
@@ -3377,7 +3548,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 选择模式? | C0 | constraint | 环境/模式判定 |\n| 探究模式 | C1 | constraint | 探究模式 |\n| 竞赛模式 | C2 | constraint | 竞赛模式 |\n| 调参并测试 | O1 | operation | 调节滑条并点击测试 |\n| 电流在范围? | C3 | constraint | 0~5A |\n| 磁场在范围? | C4 | constraint | 0~2T |\n| 探究观察 | C5 | constraint | 探究模式仅观察 |\n| 托力达标? | C6 | constraint | 竞赛模式判定 |\n| 过关 | R1 | result | 过关！安培力达标 |\n| 电流超范围重试 | retry | skip retry | 提示重试 |\n| 磁场超范围重试 | retry | skip retry | 提示重试 |\n| 探究观察重试 | retry | skip retry | 继续探究 |\n| 托力未达标重试 | retry | skip retry | 提示重试 |\n| 安培力公式 | S1 | core | F = BIL |\n| 控制变量法 | S2 | method | 每次只改一个变量 |\n| 无关控件 | I1 | irrelevant | 装饰按钮 |","kg":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始探究安培力与电流、磁场的关系"},{"id":"C0","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式","constraintKind":"physics"},{"id":"C1","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由调参观察托力变化，无固定目标","constraintKind":"physics"},{"id":"C2","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"限次将托力调至本局锁定目标值","constraintKind":"physics"},{"id":"O1","label":"调参并测试","group":"operation","layer":"play","level":3,"r":22,"desc":"调节电流、磁场滑条并点击测试按钮"},{"id":"C3","label":"命中目标区域?","group":"constraint","layer":"play","level":4,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C4","label":"命中目标区域?","group":"constraint","layer":"play","level":4,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C5","label":"探究观察","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式下观察托力读数，无过关判定","constraintKind":"physics"},{"id":"C6","label":"托力达标?","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下托力与目标值偏差在容差内","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"过关！安培力达标，显示胜利界面"},{"id":"S1","label":"安培力公式","group":"core","layer":"teach","level":0,"r":22,"desc":"安培力 F = BIL，导线长度固定时与电流和磁场成正比"},{"id":"S2","label":"控制变量法","group":"method","layer":"teach","level":0,"r":22,"desc":"每次只改变一个变量（电流或磁场），观察对托力的影响"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"装饰按钮，与过关判定无关"}],"links":[{"s":"P1","t":"C0","tp":"premise"},{"s":"C0","t":"C1","tp":"premise"},{"s":"C0","t":"C2","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"O1","t":"C3","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C3","t":"C5","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"R1","tp":"core"},{"s":"C6","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C0","tp":"premise"},{"s":"C0","t":"R1","tp":"core"}]},"dt":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","tree":{"n":"进入关卡","t":"root","d":"开始探究安培力","children":[{"n":"选择模式?","t":"decision","d":"选择自由探究或竞赛挑战","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调参观察","children":[{"n":"调参并测试","t":"step","d":"调节滑条并点击测试","children":[{"n":"电流在范围?","t":"decision","d":"电流值必须在0~5A","children":[{"_e":"否","n":"电流超范围重试","t":"retry","d":"提示电流超出范围","children":[]},{"_e":"是","n":"磁场在范围?","t":"decision","d":"磁感应强度必须在0~2T","children":[{"_e":"否","n":"磁场超范围重试","t":"retry","d":"提示磁场超出范围","children":[]},{"_e":"是","n":"探究观察","t":"decision","d":"探究模式下观察托力","children":[{"_e":"否","n":"探究观察重试","t":"retry","d":"继续探究"},{"_e":"是","n":"过关","t":"result","d":"过关！安培力达标"}]}]}]}]}]},{"_e":"是","n":"竞赛模式","t":"step","d":"限次挑战","children":[{"n":"调参并测试","t":"step","d":"调节滑条并点击测试","children":[{"n":"电流在范围?","t":"decision","d":"电流值必须在0~5A","children":[{"_e":"否","n":"电流超范围重试","t":"retry","d":"提示电流超出范围","children":[]},{"_e":"是","n":"磁场在范围?","t":"decision","d":"磁感应强度必须在0~2T","children":[{"_e":"否","n":"磁场超范围重试","t":"retry","d":"提示磁场超出范围","children":[]},{"_e":"是","n":"托力达标?","t":"decision","d":"竞赛模式下托力与目标值偏差在容差内","children":[{"_e":"否","n":"托力未达标重试","t":"retry","d":"提示托力偏大或偏小"},{"_e":"是","n":"过关","t":"result","d":"过关！安培力达标"}]}]}]}]}]}]}]}},"winSync":{"title":"过关！安培力达标","sub":"电磁吊运 · 磁轨货厢"},"strategy":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","mermaid":"graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustB2 --> Fire2\nAdjustI --> Fire[点击测试]\nAdjustI2 --> Fire2[点击测试]\nAdjustT --> Fire\nAdjustT2 --> Fire2\nBackFromCV --> StrategySelect\nBlind --> Fire\nBlind2 --> Fire2\nChallengeMode --> StrategySelect2{选择调参策略?}:::stratCond\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nFire2 --> Observe2{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏小| AdjustI2\nObserve2 -->|偏大| AdjustI2\nObserve2 -->|未达标| AdjustI2\nObserve2 -->|达标| Win2[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[同时调多个参数]\nAdjustB[按观察单变量微调]\nAdjustB2[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustI2[按观察单变量微调]\nAdjustT[按观察单变量微调]\nAdjustT2[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust","routes":[{"id":"main","label":"单变量·电流","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","ExploreMode","Fire","Observe","Win","ChallengeMode","StrategySelect2","Fire2","Observe2","Win2","AdjustI","AdjustI2"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["AdjustI","Fire"],["Fire","Observe"],["Observe","Win"],["AdjustB","Fire"],["AdjustT","Fire"],["ModeSelect","ChallengeMode"],["ChallengeMode","StrategySelect2"],["AdjustI2","Fire2"],["Fire2","Observe2"],["Observe2","Win2"],["AdjustB2","Fire2"],["AdjustT2","Fire2"],["Observe","AdjustI"],["Observe2","AdjustI2"]],"highlightFailureBranches":true},{"id":"main_s-magnetic","label":"单变量·磁场","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Win2","ModeSelect","ExploreMode","Fire","Observe","AdjustI"],"highlightEdges":[["AdjustI","Fire"],["Observe","Win"],["Observe","AdjustI"],["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"main_s-wire-temp","label":"单变量·导线温度","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","Win2","ModeSelect","ExploreMode","Fire","Observe","AdjustI"],"highlightEdges":[["AdjustT","Fire"],["Observe","Win"],["Observe","AdjustI"],["AdjustI","Fire"],["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"explore_trap","label":"多参盲调","mapsTo":["P1","O1","C0","C1"],"highlightNodes":["Start","ModeSelect","ExploreMode","StrategySelect","Fire","Observe","AdjustI"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["Blind","Fire"],["Fire","Observe"],["Observe","AdjustI"],["AdjustI","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.55,"weight":0.55,"highlightNodes":["StrategySelect","ObserveCV","BackFromCV"],"highlightEdges":[["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"priorityRank":4}]},"traceMap":{"controls":{"s-current":{"kgId":"O1","role":"operation"},"s-magnetic":{"kgId":"O1","role":"operation"},"s-wire-temp":{"kgId":"O1","role":"operation"},"modeSelect":{"kgId":"C0","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"},"irrMsg":{"kgId":"I1","role":"irrelevant"},"simCanvas":{"kgId":"I1","role":"irrelevant"},"currentVal":{"kgId":"I1","role":"irrelevant"},"magneticVal":{"kgId":"I1","role":"irrelevant"},"wireTempVal":{"kgId":"I1","role":"irrelevant"},"forceDisplay":{"kgId":"I1","role":"irrelevant"},"feedbackArea":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-current"},"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"磁场 · 安培力探究","knowledgePoints":[{"id":"KP1","label":"磁场 · 安培力探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-current","label":"电流","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-magnetic","label":"磁场","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-wire-temp","label":"导线温度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：安培力公式、控制变量法","steps":[{"order":1,"title":"明确知识点","body":"回顾：安培力公式；控制变量法","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调参并测试、调参并测试、调参并测试、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C0"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）","mapsToKg":["I1","I1","I1","I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"magnetic"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 选择模式? | C0 | constraint | 环境/模式判定 |\n| 探究模式 | C1 | constraint | 探究模式 |\n| 竞赛模式 | C2 | constraint | 竞赛模式 |\n| 调参并测试 | O1 | operation | 调节滑条并点击测试 |\n| 电流在范围? | C3 | constraint | 0~5A |\n| 磁场在范围? | C4 | constraint | 0~2T |\n| 探究观察 | C5 | constraint | 探究模式仅观察 |\n| 托力达标? | C6 | constraint | 竞赛模式判定 |\n| 过关 | R1 | result | 过关！安培力达标 |\n| 电流超范围重试 | retry | skip retry | 提示重试 |\n| 磁场超范围重试 | retry | skip retry | 提示重试 |\n| 探究观察重试 | retry | skip retry | 继续探究 |\n| 托力未达标重试 | retry | skip retry | 提示重试 |\n| 安培力公式 | S1 | core | F = BIL |\n| 控制变量法 | S2 | method | 每次只改一个变量 |\n| 无关控件 | I1 | irrelevant | 装饰按钮 |","kg":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始探究安培力与电流、磁场的关系"},{"id":"C0","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式","constraintKind":"physics"},{"id":"C1","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由调参观察托力变化，无固定目标","constraintKind":"physics"},{"id":"C2","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"限次将托力调至本局锁定目标值","constraintKind":"physics"},{"id":"O1","label":"调参并测试","group":"operation","layer":"play","level":3,"r":22,"desc":"调节电流、磁场滑条并点击测试按钮"},{"id":"C3","label":"命中目标区域?","group":"constraint","layer":"play","level":4,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C4","label":"命中目标区域?","group":"constraint","layer":"play","level":4,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C5","label":"探究观察","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式下观察托力读数，无过关判定","constraintKind":"physics"},{"id":"C6","label":"托力达标?","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下托力与目标值偏差在容差内","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"过关！安培力达标，显示胜利界面"},{"id":"S1","label":"安培力公式","group":"core","layer":"teach","level":0,"r":22,"desc":"安培力 F = BIL，导线长度固定时与电流和磁场成正比"},{"id":"S2","label":"控制变量法","group":"method","layer":"teach","level":0,"r":22,"desc":"每次只改变一个变量（电流或磁场），观察对托力的影响"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"装饰按钮，与过关判定无关"}],"links":[{"s":"P1","t":"C0","tp":"premise"},{"s":"C0","t":"C1","tp":"premise"},{"s":"C0","t":"C2","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"O1","t":"C3","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C3","t":"C5","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"R1","tp":"core"},{"s":"C6","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C0","tp":"premise"},{"s":"C0","t":"R1","tp":"core"}]},"dt":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","tree":{"n":"进入关卡","t":"root","d":"开始探究安培力","children":[{"n":"选择模式?","t":"decision","d":"选择自由探究或竞赛挑战","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调参观察","children":[{"n":"调参并测试","t":"step","d":"调节滑条并点击测试","children":[{"n":"电流在范围?","t":"decision","d":"电流值必须在0~5A","children":[{"_e":"否","n":"电流超范围重试","t":"retry","d":"提示电流超出范围","children":[]},{"_e":"是","n":"磁场在范围?","t":"decision","d":"磁感应强度必须在0~2T","children":[{"_e":"否","n":"磁场超范围重试","t":"retry","d":"提示磁场超出范围","children":[]},{"_e":"是","n":"探究观察","t":"decision","d":"探究模式下观察托力","children":[{"_e":"否","n":"探究观察重试","t":"retry","d":"继续探究"},{"_e":"是","n":"过关","t":"result","d":"过关！安培力达标"}]}]}]}]}]},{"_e":"是","n":"竞赛模式","t":"step","d":"限次挑战","children":[{"n":"调参并测试","t":"step","d":"调节滑条并点击测试","children":[{"n":"电流在范围?","t":"decision","d":"电流值必须在0~5A","children":[{"_e":"否","n":"电流超范围重试","t":"retry","d":"提示电流超出范围","children":[]},{"_e":"是","n":"磁场在范围?","t":"decision","d":"磁感应强度必须在0~2T","children":[{"_e":"否","n":"磁场超范围重试","t":"retry","d":"提示磁场超出范围","children":[]},{"_e":"是","n":"托力达标?","t":"decision","d":"竞赛模式下托力与目标值偏差在容差内","children":[{"_e":"否","n":"托力未达标重试","t":"retry","d":"提示托力偏大或偏小"},{"_e":"是","n":"过关","t":"result","d":"过关！安培力达标"}]}]}]}]}]}]}]}},"winSync":{"title":"过关！安培力达标","sub":"电磁吊运 · 磁轨货厢"},"strategy":{"title":"磁场 · 安培力探究","sub":"电磁吊运 · 磁轨货厢","mermaid":"graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustB2 --> Fire2\nAdjustI --> Fire[点击测试]\nAdjustI2 --> Fire2[点击测试]\nAdjustT --> Fire\nAdjustT2 --> Fire2\nBackFromCV --> StrategySelect\nBlind --> Fire\nBlind2 --> Fire2\nChallengeMode --> StrategySelect2{选择调参策略?}:::stratCond\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nFire2 --> Observe2{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏小| AdjustI2\nObserve2 -->|偏大| AdjustI2\nObserve2 -->|未达标| AdjustI2\nObserve2 -->|达标| Win2[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[同时调多个参数]\nAdjustB[按观察单变量微调]\nAdjustB2[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustI2[按观察单变量微调]\nAdjustT[按观察单变量微调]\nAdjustT2[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust\nTrap --> Adjust","routes":[{"id":"main","label":"单变量·电流","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","ExploreMode","Fire","Observe","Win","ChallengeMode","StrategySelect2","Fire2","Observe2","Win2","Route_main","Adjust","AdjustI","AdjustI2"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["StrategySelect","Route_main"],["Route_main","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["ModeSelect","ChallengeMode"],["ChallengeMode","StrategySelect2"],["Fire2","Observe2"],["Observe","AdjustI"],["AdjustI","Fire"],["Observe2","AdjustI2"],["AdjustI2","Fire2"],["Observe2","Win2"]],"highlightFailureBranches":true},{"id":"main_s-magnetic","label":"单变量·磁场","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Win2","ModeSelect","ExploreMode","Fire","Observe","Route_main_s_magnetic","Adjust","AdjustI"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["StrategySelect","Route_main_s_magnetic"],["Route_main_s_magnetic","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustI"],["AdjustI","Fire"]],"highlightFailureBranches":true},{"id":"main_s-wire-temp","label":"单变量·导线温度","mapsTo":["P1","O1","C0","C1","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","Win2","ModeSelect","ExploreMode","Fire","Observe","Route_main_s_wire_temp","Adjust","AdjustI"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["StrategySelect","Route_main_s_wire_temp"],["Route_main_s_wire_temp","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustI"],["AdjustI","Fire"]],"highlightFailureBranches":true},{"id":"explore_trap","label":"多参盲调","mapsTo":["P1","O1","C0","C1"],"highlightNodes":["Start","ModeSelect","ExploreMode","StrategySelect","Fire","Observe","Trap","Adjust","AdjustI"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["StrategySelect","Trap"],["Trap","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","AdjustI"],["AdjustI","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","ExploreMode"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","ExploreMode"],["ExploreMode","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-current":{"kgId":"O1","role":"operation"},"s-magnetic":{"kgId":"O1","role":"operation"},"s-wire-temp":{"kgId":"O1","role":"operation"},"modeSelect":{"kgId":"C0","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"},"irrMsg":{"kgId":"I1","role":"irrelevant"},"simCanvas":{"kgId":"I1","role":"irrelevant"},"currentVal":{"kgId":"I1","role":"irrelevant"},"magneticVal":{"kgId":"I1","role":"irrelevant"},"wireTempVal":{"kgId":"I1","role":"irrelevant"},"forceDisplay":{"kgId":"I1","role":"irrelevant"},"feedbackArea":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-current"},"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"磁场 · 安培力探究","knowledgePoints":[{"id":"KP1","label":"磁场 · 安培力探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-current","label":"电流","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-magnetic","label":"磁场","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-wire-temp","label":"导线温度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：安培力公式、控制变量法","steps":[{"order":1,"title":"明确知识点","body":"回顾：安培力公式；控制变量法","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调参并测试、调参并测试、调参并测试、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C0"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）；无关控件（装饰按钮，与过关判定无关）","mapsToKg":["I1","I1","I1","I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"magnetic"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

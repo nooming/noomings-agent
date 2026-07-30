@@ -13,7 +13,7 @@
 <style>
 :root{--font-ui:'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;--font-formula:'Noto Serif SC','Songti SC','SimSun',serif;}
 :root {
-  --font-ui: 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-formula: 'Cambria Math', 'Noto Serif SC', 'Times New Roman', serif;
   --bg-body: #f4f7fb;
   --bg-graph: #eef2f8;
@@ -454,6 +454,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     const MISCONCEPTION_ROUTE_WARN_RE = /无效|迷思|不影响|invalid|misconception|无关变量|陷阱|trap|误调.*迷思|关态下|关态.*无效/i;
   const MISCONCEPTION_ROUTE_NODE_RE = /Invalid|Misconception|Trap/i;
 
+  function routeLooksLikeTrapFanout(route) {
+    return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
+      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+  }
+
+  function routeLooksLikeConfoundProbe(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
   function routeIsMisconceptionRoute(route, mermaidBody) {
     if (route?.warn === 'irrelevant') return true;
@@ -466,6 +476,12 @@ function isSuccessBranchEdge(edge, resultIds) {
       if (hl.some(id => invalidIds.has(id))) return true;
     }
     return false;
+  }
+
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  function routeIsTrueMisconceptionRoute(route, mermaidBody) {
+    if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
+    return routeIsMisconceptionRoute(route, mermaidBody);
   }
 
   function stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, route) {
@@ -1131,9 +1147,50 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Sparse 单变量 routes often only declare Start/StrategySelect/Win.
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
+  /**
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   */
+  function resolveSpineWalkEntry(entry, edges, forbidden) {
+    const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));
+    if (directOuts.length) return { walkFrom: entry, bridgePairs: [] };
+    const aliasId = `${entry}Strat`;
+    const aliasOuts = edges.filter(e => e.from === aliasId && !forbidden.has(e.to));
+    if (aliasOuts.length) {
+      return { walkFrom: aliasId, bridgePairs: [[entry, aliasId]] };
+    }
+    // Trap → AdjustBoth style: any Adjust*/Fire* reachable from a *Strat sibling of entry
+    const stratAlias = edges.find(e =>
+      /Strat$/i.test(e.from)
+      && new RegExp(String(entry).replace(/Strat$/i, ''), 'i').test(e.from)
+      && !forbidden.has(e.to)
+      && preferSpineNodeScore(e.to) >= 0);
+    if (stratAlias) {
+      return { walkFrom: stratAlias.from, bridgePairs: [[entry, stratAlias.from]] };
+    }
+    // Dead-end entry: hop to first non-forbidden Adjust*/Fire*/Tune* sharing label fragment
+    const frag = String(entry).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 6);
+    if (frag) {
+      const hop = edges.find(e => {
+        if (forbidden.has(e.to)) return false;
+        const toScore = preferSpineNodeScore(e.to);
+        if (toScore < 45) return false;
+        const fromNorm = String(e.from).toLowerCase().replace(/[^a-z0-9]/g, '');
+        const toNorm = String(e.to).toLowerCase().replace(/[^a-z0-9]/g, '');
+        return fromNorm.includes(frag) || toNorm.includes(frag);
+      });
+      if (hop) {
+        return {
+          walkFrom: hop.from === entry ? entry : hop.from,
+          bridgePairs: hop.from === entry ? [] : [[entry, hop.from]],
+        };
+      }
+    }
+    return { walkFrom: entry, bridgePairs: [] };
+  }
+
   function seedSingleVarRouteSpine(route, mermaidBody, edges, startId) {
     const empty = { entry: null, nodes: [], edgePairs: [], keys: [] };
-    if (!route || routeIsMisconceptionRoute(route, mermaidBody)) return empty;
+    if (!route || routeIsTrueMisconceptionRoute(route, mermaidBody)) return empty;
     const selectEdge = findStrategySelectOutEdge(route, edges);
     if (!selectEdge) return empty;
     const entry = selectEdge.to;
@@ -1142,14 +1199,16 @@ function isSuccessBranchEdge(edge, resultIds) {
       .map(e => e.to)
       .filter(id => id && id !== entry);
     const forbidden = new Set(siblings);
+    // Prefer path avoiding sibling fan-out; if unreachable (floating StrategySelect),
+    // still seed select→entry + greedy walk so sparse AV/trap routes can expand.
     let prefixKeys = startId
       ? shortestPathEdgeKeysAvoiding(startId, entry, edges, forbidden)
       : [];
     if ((!prefixKeys || !prefixKeys.length) && startId && startId !== entry) {
       prefixKeys = shortestPathEdgeKeys(startId, entry, edges);
-      if (!prefixKeys.length) return empty;
     }
-    const walk = greedySpineFromEntry(entry, edges, forbidden);
+    const resolved = resolveSpineWalkEntry(entry, edges, forbidden);
+    const walk = greedySpineFromEntry(resolved.walkFrom, edges, forbidden);
     const nodes = new Set();
     const edgePairs = [];
     const keys = new Set();
@@ -1167,6 +1226,12 @@ function isSuccessBranchEdge(edge, resultIds) {
     };
     ingestKeys(prefixKeys);
     nodes.add(entry);
+    resolved.bridgePairs.forEach(p => {
+      edgePairs.push(p);
+      keys.add(p[0] + '->' + p[1]);
+      nodes.add(p[0]);
+      nodes.add(p[1]);
+    });
     walk.nodes.forEach(n => nodes.add(n));
     walk.pairs.forEach(p => {
       edgePairs.push(p);
@@ -1187,26 +1252,49 @@ function isSuccessBranchEdge(edge, resultIds) {
     return (highlightNodes || []).filter(id => !siblings.has(id));
   }
 
+  function selectEdgePairMissing(pairs, entry) {
+    if (!entry || !Array.isArray(pairs)) return true;
+    return !pairs.some(p => Array.isArray(p) && p.length >= 2
+      && /StrategySelect/i.test(String(p[0])) && String(p[1]) === String(entry));
+  }
+
+  function isBranchEntryNodeId(id) {
+    const s = String(id || '');
+    if (/StrategySelect/i.test(s)) return false;
+    return /^(Adjust|Tune|Single|Route|Trap|Height|Speed|Dist|Mat|Area|Path|Angle|Len)/i.test(s)
+      || /Strat$/i.test(s);
+  }
+
+  function routeNeedsSpineSeed(route) {
+    const edges = route?.highlightEdges || [];
+    const nodes = route?.highlightNodes || [];
+    if (!(Array.isArray(edges) && edges.length > 0) || nodes.length < 6) return true;
+    const hasSelectEdge = edges.some(p => Array.isArray(p) && p.length >= 2 && /StrategySelect/i.test(String(p[0])));
+    if (!hasSelectEdge) return true;
+    // Only Start→StrategySelect (or similarly skeletal) — treat as needing full seed
+    const nonSelectPairs = edges.filter(p => Array.isArray(p) && p.length >= 2
+      && !(/^Start$/i.test(p[0]) && /StrategySelect/i.test(p[1])));
+    if (nonSelectPairs.length === 0) return true;
+    return false;
+  }
+
 function expandRouteHighlight(route, mermaidBody, opts) {
     const edges = parseStrategyMermaidEdges(mermaidBody);
     const startId = findStartNode(mermaidBody, edges);
     const spineSeed = seedSingleVarRouteSpine(route, mermaidBody, edges, startId);
-    const sparse = !(Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      || (route.highlightNodes || []).length < 6;
+    const sparse = routeNeedsSpineSeed(route);
     let effectiveNodes = [...(route.highlightNodes || [])];
-    if (spineSeed.entry && sparse) {
+    if (spineSeed.entry) {
+      // Always merge seed entry spine so distinct AV Tune/Route nodes survive even when
+      // stored highlights already have a shared Fire/Observe feedback loop.
       effectiveNodes = [...new Set([...effectiveNodes, ...spineSeed.nodes])];
-      effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
-    } else if (spineSeed.entry) {
-      // Even with explicit spine, drop sibling StrategySelect targets to avoid bleed.
       effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
     }
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       effectiveNodes = effectiveNodes.filter(id => {
-        // Drop other-route Adjust*/Route* not on this spine
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id)) return keep.has(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id)) return keep.has(id) || id === spineSeed.entry;
+        // Drop other-route branch entries (Adjust*/Tune*/Route*/Single*/…Strat) not on this spine
+        if (isBranchEntryNodeId(id)) return keep.has(id) || id === spineSeed.entry;
         return true;
       });
     }
@@ -1215,15 +1303,27 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== spineSeed.entry),
       )
       : new Set();
-    const rawEdges = (Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
-      ? route.highlightEdges
-      : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || []));
+    const rawEdges = sparse && spineSeed.edgePairs.length
+      ? spineSeed.edgePairs
+      : ((Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+        ? route.highlightEdges
+        : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || [])));
     const filteredEdges = siblingEntries.size
       ? rawEdges.filter(pair => {
         if (!Array.isArray(pair) || pair.length < 2) return false;
         return !siblingEntries.has(pair[0]) && !siblingEntries.has(pair[1]);
       })
-      : rawEdges;
+      : rawEdges.map(p => (Array.isArray(p) ? [...p] : p)).filter(p => Array.isArray(p) && p.length >= 2);
+    // Always keep StrategySelect→entry even when reusing stored edges
+    if (spineSeed.entry && selectEdgePairMissing(filteredEdges, spineSeed.entry)) {
+      const selectFrom = (spineSeed.keys || [])
+        .map(k => {
+          const j = k.indexOf('->');
+          return j > 0 ? [k.slice(0, j), k.slice(j + 2)] : null;
+        })
+        .find(p => p && /StrategySelect/i.test(p[0]) && p[1] === spineSeed.entry);
+      filteredEdges.push(selectFrom || ['StrategySelect', spineSeed.entry]);
+    }
     const syntheticRoute = {
       ...route,
       highlightNodes: effectiveNodes,
@@ -1233,7 +1333,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     const nodeSet = new Set(syntheticRoute.highlightNodes || []);
     // 1 seedSpine — highlightNodes + highlightEdges (+ restricted pairwise in buildRouteHighlightEdgeKeys)
     const keySet = buildRouteHighlightEdgeKeys(syntheticRoute, mermaidBody);
-    if (spineSeed.keys && spineSeed.keys.length && sparse) {
+    if (spineSeed.keys && spineSeed.keys.length) {
       spineSeed.keys.forEach(k => keySet.add(k));
       spineSeed.nodes.forEach(n => nodeSet.add(n));
     }
@@ -1268,7 +1368,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, syntheticRoute);
     stripConfoundBleedFromRoute(nodeSet, keySet, syntheticRoute);
-    // Final pass: drop other-route Adjust*/Route* that feedback loops may reintroduce
+    // Final pass: drop other-route branch entries that feedback loops may reintroduce
     if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
       const keep = new Set(spineSeed.nodes);
       // Keep Adjust* that are direct feedback from an already-highlighted Observe*
@@ -1280,10 +1380,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         }
       });
       for (const id of [...nodeSet]) {
-        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id) && !keep.has(id)) nodeSet.delete(id);
-        if (/Route/i.test(id) && !/StrategySelect/i.test(id) && id !== spineSeed.entry && !keep.has(id)) {
-          nodeSet.delete(id);
-        }
+        if (isBranchEntryNodeId(id) && id !== spineSeed.entry && !keep.has(id)) nodeSet.delete(id);
       }
       for (const k of [...keySet]) {
         const j = k.indexOf('->');
@@ -1585,6 +1682,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     routeShouldAppendSuccessOutcomes,
     routeShouldAppendFailureOutcomes,
     routeIsMisconceptionRoute,
+    routeIsTrueMisconceptionRoute,
+    routeLooksLikeTrapFanout,
     sanitizeMisconceptionRouteHighlights,
     stripMisconceptionSuccessHighlights,
     extractStratInvalidNodeIds,
@@ -1605,6 +1704,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     seedSingleVarRouteSpine,
     findStrategySelectOutEdge,
     normalizeRouteLabelKey,
+    routeNeedsSpineSeed,
+    isBranchEntryNodeId,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1717,11 +1818,38 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     }) || null;
   }
 
-  function findSelectOutEdgeTarget(route) {
+  function findSelectOutEdgeTarget(route, mermaidBody) {
     const edges = route?.highlightEdges || [];
     for (const pair of edges) {
       if (!Array.isArray(pair) || pair.length < 2) continue;
       if (/StrategySelect/i.test(String(pair[0]))) return String(pair[1]);
+    }
+    // Fallback: match Mermaid StrategySelect out-edge by route label (prio styles
+    // still work when highlightEdges omit the select fan-out edge).
+    const body = String(mermaidBody || '');
+    if (!body.trim() || !route) return null;
+    const want = normalizeLabelKey(route.label);
+    if (!want) return null;
+    const lines = body.replace(/\r\n/g, '\n').split('\n');
+    let fuzzy = null;
+    for (const line of lines) {
+      const m = String(line).trim().match(
+        /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+      );
+      if (!m) continue;
+      const edgeKey = normalizeLabelKey(m[3]);
+      if (!edgeKey) continue;
+      if (edgeKey === want) return m[4];
+      if (!fuzzy && (edgeKey.includes(want) || want.includes(edgeKey))) fuzzy = m[4];
+    }
+    if (fuzzy) return fuzzy;
+    if (isTrapRoute(route)) {
+      for (const line of lines) {
+        const m = String(line).trim().match(
+          /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+        );
+        if (m && /盲调|多参|trap|多滑/i.test(m[3])) return m[4];
+      }
     }
     return null;
   }
@@ -1795,7 +1923,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const to = m[4];
       let route = matchRouteForEdgeLabel(label, routes);
       if (!route) {
-        route = routes.find(r => findSelectOutEdgeTarget(r) === to) || null;
+        route = routes.find(r => findSelectOutEdgeTarget(r, raw) === to) || null;
       }
       selectEdgeIdx.push(i);
       selectEdges.push({
@@ -1850,11 +1978,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
   /**
    * Map StrategySelect→target edge keys to priority style meta (for SVG post-style).
+   * @param {Array} routes
+   * @param {string} [mermaidBody] optional; used to resolve select targets when highlightEdges omit them
    */
-  function strategySelectPriorityStyles(routes) {
+  function strategySelectPriorityStyles(routes, mermaidBody) {
     const map = new Map();
     for (const route of rankedStrategySelectRoutes(routes)) {
-      const to = findSelectOutEdgeTarget(route);
+      const to = findSelectOutEdgeTarget(route, mermaidBody);
       if (!to) continue;
       const meta = routePriorityMeta(route);
       map.set(`StrategySelect->${to}`, {
@@ -1878,6 +2008,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     rankedStrategySelectRoutes,
     annotateStrategyMermaidPriority,
     strategySelectPriorityStyles,
+    findSelectOutEdgeTarget,
     strokeWidthForMeta,
     strokeColorForMeta,
   };
@@ -1894,7 +2025,7 @@ const GraphViewer = (function () {
   let KG_CHAPTERS = [], DT_CHAPTERS = [], metaChapters = [];
   let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
   let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
-  let mermaidReady = false, strategyRenderId = 0, activeStrategyRouteId = null;
+  let mermaidReady = false, mermaidLoadPromise = null, strategyRenderId = 0, activeStrategyRouteId = null;
   let strategyZoomBeh = null, strategyResizeTimer = null;
   let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
   let lastStrategyDisplayMermaid = '';
@@ -2450,10 +2581,9 @@ function parseGraphHash() {
   if (!raw) return null;
   const params = new URLSearchParams(raw);
   const ch = parseInt(params.get('ch'), 10);
-  const fallbackView = chapterHasStrategy(Number.isFinite(ch) ? ch : 0) ? 'strategy' : 'dt';
   return {
     ch: Number.isFinite(ch) ? ch : 0,
-    view: params.get('view') || fallbackView,
+    view: params.get('view') || 'dt',
     route: params.get('route') || null,
   };
 }
@@ -2597,9 +2727,11 @@ function afterStrategyRender() {
 function applyPriorityEdgeStyles() {
   const svg = document.querySelector('#strategy-mermaid svg');
   const api = priorityApi();
-  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  const meta = metaChapters[currentCh] || {};
+  const routes = meta?.strategy?.routes || [];
+  const mermaidBody = meta?.strategy?.mermaid || '';
   if (!svg || !api?.strategySelectPriorityStyles || !routes.length) return;
-  const styleMap = api.strategySelectPriorityStyles(routes);
+  const styleMap = api.strategySelectPriorityStyles(routes, mermaidBody);
   if (!styleMap.size) return;
 
   const pathGroups = getStrategyEdgePathGroups(svg);
@@ -2780,6 +2912,29 @@ function ensureMermaid() {
   mermaidReady = true;
 }
 
+/** Load Mermaid only when entering strategy view (graph.html / preview-shell omit sync tag). */
+function loadMermaidLib() {
+  if (typeof mermaid !== 'undefined') return Promise.resolve();
+  if (mermaidLoadPromise) return mermaidLoadPromise;
+  const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
+    || '/static/viewer/vendor/mermaid.min.js';
+  mermaidLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mermaid-loader]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Mermaid 加载失败')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.mermaidLoader = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Mermaid 加载失败'));
+    document.head.appendChild(s);
+  });
+  return mermaidLoadPromise;
+}
+
 function renderStrategy() {
   ensureStrategyViewport();
   const mount = document.getElementById('strategy-mermaid');
@@ -2790,29 +2945,32 @@ function renderStrategy() {
     mount.innerHTML = '<div id="strategy-empty">本章暂无策略全景</div>';
     return;
   }
-  ensureMermaid();
-  if (typeof mermaid === 'undefined') {
-    mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
-    return;
-  }
   mount.innerHTML = '<div class="strategy-loading">正在渲染策略图…</div>';
-  const id = 'strategy-diagram-' + currentCh + '-' + rid;
-  const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
-  lastStrategyDisplayMermaid = displayBody;
-  const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
-  mermaid.render(id, src).then(({ svg }) => {
+  loadMermaidLib().then(() => {
     if (rid !== strategyRenderId) return;
-    mount.innerHTML = svg;
-    const svgEl = mount.querySelector('svg');
-    if (svgEl) {
-      svgEl.removeAttribute('width');
-      svgEl.style.width = '';
-      svgEl.style.maxWidth = '';
-      requestAnimationFrame(() => {
-        afterStrategyRender();
-        activatePendingRoute();
-      });
+    ensureMermaid();
+    if (typeof mermaid === 'undefined') {
+      mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
+      return;
     }
+    const id = 'strategy-diagram-' + currentCh + '-' + rid;
+    const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
+    lastStrategyDisplayMermaid = displayBody;
+    const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
+    return mermaid.render(id, src).then(({ svg }) => {
+      if (rid !== strategyRenderId) return;
+      mount.innerHTML = svg;
+      const svgEl = mount.querySelector('svg');
+      if (svgEl) {
+        svgEl.removeAttribute('width');
+        svgEl.style.width = '';
+        svgEl.style.maxWidth = '';
+        requestAnimationFrame(() => {
+          afterStrategyRender();
+          activatePendingRoute();
+        });
+      }
+    });
   }).catch(err => {
     if (rid !== strategyRenderId) return;
     mount.innerHTML = '<div id="strategy-empty">策略图渲染失败：' + (err.message || err) + '</div>';
@@ -2832,9 +2990,19 @@ function showRouteInKg(route) {
   const ids = route?.mapsTo || [];
   if (!ids.length) return;
   switchView('kg');
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => kgHighlightIds(ids));
-  });
+  // Wait until KG render finished (nodeG ready). Double-rAF alone races when
+  // switching from strategy view — simulation/DOM may not exist yet.
+  const maxTries = 45;
+  let tries = 0;
+  const tryHighlight = () => {
+    if (nodeG && linkG && lastKgNodes) {
+      kgHighlightIds(ids);
+      return;
+    }
+    if (++tries >= maxTries) return;
+    requestAnimationFrame(tryHighlight);
+  };
+  requestAnimationFrame(tryHighlight);
 }
 
 function kgHighlightIds(ids) {
@@ -3338,11 +3506,14 @@ function clearInfoPanel() {
     metaChapters = opts.metaChapters || [];
     svgEl = document.getElementById('svg');
     d3svg = d3.select(svgEl);
-    const preferStrategy = opts.defaultView === 'strategy'
-      || (opts.defaultView == null && chapterHasStrategy(0));
-    if (preferStrategy && chapterHasStrategy(0)) currentView = 'strategy';
+    // Only explicit defaultView:'strategy' (standalone 图谱.html) opens strategy-first.
+    // graph.html / preview-shell omit defaultView → start on dt (or kg) to avoid mermaid.render on first paint.
+    if (opts.defaultView === 'strategy' && chapterHasStrategy(0)) currentView = 'strategy';
     else if (opts.defaultView === 'kg' || opts.defaultView === 'dt') currentView = opts.defaultView;
-    else currentView = chapterHasStrategy(0) ? 'strategy' : 'dt';
+    else currentView = DT_CHAPTERS[0]?.tree ? 'dt' : 'kg';
+    document.getElementById('vt-kg')?.classList.toggle('active', currentView === 'kg');
+    document.getElementById('vt-dt')?.classList.toggle('active', currentView === 'dt');
+    document.getElementById('vt-strategy')?.classList.toggle('active', currentView === 'strategy');
     bindControls();
     setGraphChrome();
     if (opts.onReady) opts.onReady({ buildTabs, loadChapter, render, switchView, setChapters });
@@ -3377,7 +3548,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调摆长/摆角/质量 | O1 | operation | 调节摆长/摆角/质量 |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→摆幅≥15°? | C6 | constraint | 擒纵约束 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示摆幅 | retry | skip retry | 重试 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"单摆秒摆","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究单摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调摆长/摆角/质量","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"摆幅≥15°","group":"constraint","layer":"play","level":6,"r":22,"desc":"摆角θ₀是否大于等于15°，擒纵机构才能维持摆动 〔玩法/工程限位〕","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带且摆幅≥15°，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"单摆周期公式 T ≈ 2π√(L/g)·(1+θ²/16)，摆长是主要影响因素"},{"id":"S2","label":"摆长主导","group":"core","layer":"teach","level":0,"r":22,"desc":"T ∝ √L，摆长是周期的主宰，调准秒摆先调摆长"},{"id":"S3","label":"摆角修正","group":"method","layer":"teach","level":0,"r":22,"desc":"摆角带来二阶小修正θ²/16，是精校的最后一颗螺丝"},{"id":"S4","label":"质量无关","group":"core","layer":"teach","level":0,"r":22,"desc":"质量m不出现在周期公式中，换多重的锤周期都不变"},{"id":"S5","label":"擒纵约束","group":"method","layer":"teach","level":0,"r":22,"desc":"摆幅太小(<15°)机构无法补充能量，钟会停摆"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"单摆秒摆","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调摆长/摆角/质量","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"摆幅≥15°?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"摆幅不足，需增大摆角，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"单摆秒摆","mermaid":"graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAdjustMulti --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAdjust[单变量微调]\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nTrapRoute --> AdjustMulti[固定其余，只调s-len]\nCheckAngle -->|是| Win[过关]:::stratResult","routes":[{"id":"main","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustLen","Fire","Observe","CheckAngle","Win","AdjustAngle","Retry"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","LenRoute"],["LenRoute","AdjustLen"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["Observe","CheckAngle"],["CheckAngle","Win"],["StrategySelect","AngleRoute"],["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["CheckAngle","AdjustAngle"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-len","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustAngle","Fire","Observe","AdjustLen","Retry","Win"],"highlightEdges":[["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","AngleRoute"],["Fire","Observe"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AdjustMulti","Fire","Observe","AdjustLen","Retry"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","TrapRoute"],["TrapRoute","AdjustMulti"],["AdjustMulti","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.7,"weight":0.7,"highlightNodes":["StrategySelect","ObserveCV","BackFromCV"],"highlightEdges":[["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"priorityRank":3}]},"traceMap":{"controls":{"s-len":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-len"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(L/g)"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-angle","label":"摆角","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":1},{"id":"AV2","controlId":"s-len","label":"摆长","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要慢上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"先自由调摆，摸清周期与摆长；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则调整摆长，若摆幅不足则增大摆角。","mapsToKg":["C5","C6","O1"]},{"order":4,"title":"过关","body":"周期在目标带且摆幅≥15°，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调摆长/摆角/质量 | O1 | operation | 调节摆长/摆角/质量 |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→摆幅≥15°? | C6 | constraint | 擒纵约束 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示摆幅 | retry | skip retry | 重试 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"单摆秒摆","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究单摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调摆长/摆角/质量","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"摆幅≥15°","group":"constraint","layer":"play","level":6,"r":22,"desc":"摆角θ₀是否大于等于15°，擒纵机构才能维持摆动 〔玩法/工程限位〕","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带且摆幅≥15°，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"单摆周期公式 T ≈ 2π√(L/g)·(1+θ²/16)，摆长是主要影响因素"},{"id":"S2","label":"摆长主导","group":"core","layer":"teach","level":0,"r":22,"desc":"T ∝ √L，摆长是周期的主宰，调准秒摆先调摆长"},{"id":"S3","label":"摆角修正","group":"method","layer":"teach","level":0,"r":22,"desc":"摆角带来二阶小修正θ²/16，是精校的最后一颗螺丝"},{"id":"S4","label":"质量无关","group":"core","layer":"teach","level":0,"r":22,"desc":"质量m不出现在周期公式中，换多重的锤周期都不变"},{"id":"S5","label":"擒纵约束","group":"method","layer":"teach","level":0,"r":22,"desc":"摆幅太小(<15°)机构无法补充能量，钟会停摆"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"单摆秒摆","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调摆长/摆角/质量","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"摆幅≥15°?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"摆幅不足，需增大摆角，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"单摆秒摆","mermaid":"graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAdjustMulti --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAdjust[单变量微调]\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nTrapRoute --> AdjustMulti[固定其余，只调s-len]\nCheckAngle -->|是| Win[过关]:::stratResult","routes":[{"id":"main","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustLen","Fire","Observe","CheckAngle","Win","AdjustAngle","Retry","AngleRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["Observe","CheckAngle"],["CheckAngle","Win"],["StrategySelect","AngleRoute"],["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["CheckAngle","AdjustAngle"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-len","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustAngle","Fire","Observe","AdjustLen","Retry","Win","LenRoute"],"highlightEdges":[["AdjustAngle","Fire"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["Fire","Observe"],["Retry","Fire"],["LenRoute","AdjustLen"],["StrategySelect","LenRoute"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AdjustMulti","Fire","Observe","AdjustLen","Retry","TrapRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","TrapRoute"],["TrapRoute","AdjustMulti"],["AdjustMulti","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Retry","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","Explore"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-len":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-len"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(L/g)"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-angle","label":"摆角","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":1},{"id":"AV2","controlId":"s-len","label":"摆长","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要慢上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"先自由调摆，摸清周期与摆长；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则调整摆长，若摆幅不足则增大摆角。","mapsToKg":["C5","C6","O1"]},{"order":4,"title":"过关","body":"周期在目标带且摆幅≥15°，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

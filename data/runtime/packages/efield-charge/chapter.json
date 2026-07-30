@@ -242,7 +242,7 @@
   "strategy": {
     "title": "电场 · 带电粒子偏转",
     "sub": "探究场强、电荷量对偏转的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustD --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nObserve -->|偏近| AdjustD\nObserve -->|偏远| AdjustD\nObserve -->|偏近| AdjustE\nObserve -->|偏远| AdjustE\nObserve -->|偏近| AdjustMulti\nObserve -->|偏远| AdjustMulti\nObserve -->|偏近| AdjustQ\nObserve -->|偏远| AdjustQ\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·极板间距| SingleD\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nMultiTrap --> AdjustMulti[调整多个参数]\nRetry --> AdjustE\nSingleD --> AdjustD[调整间距]\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustD --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nObserve -->|偏近| AdjustD\nObserve -->|偏远| AdjustD\nObserve -->|偏近| AdjustE\nObserve -->|偏远| AdjustE\nObserve -->|偏近| AdjustMulti\nObserve -->|偏远| AdjustMulti\nObserve -->|偏近| AdjustQ\nObserve -->|偏远| AdjustQ\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·极板间距| SingleD\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nMultiTrap --> AdjustMulti[调整多个参数]\nRetry --> AdjustE\nSingleD --> AdjustD[调整间距]\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nTrap --> Adjust",
     "routes": [
       {
         "id": "main",
@@ -271,7 +271,8 @@
           "AdjustD",
           "AdjustMulti",
           "Retry",
-          "ChallengeMode"
+          "ChallengeMode",
+          "SingleD"
         ],
         "highlightEdges": [
           [
@@ -287,14 +288,6 @@
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "SingleE"
-          ],
-          [
-            "SingleE",
-            "AdjustE"
-          ],
-          [
             "AdjustE",
             "Fire"
           ],
@@ -305,14 +298,6 @@
           [
             "Observe",
             "Win"
-          ],
-          [
-            "StrategySelect",
-            "SingleQ"
-          ],
-          [
-            "SingleQ",
-            "AdjustQ"
           ],
           [
             "AdjustQ",
@@ -388,13 +373,10 @@
           "AdjustE",
           "AdjustMulti",
           "AdjustQ",
-          "Retry"
+          "Retry",
+          "SingleE"
         ],
         "highlightEdges": [
-          [
-            "SingleD",
-            "AdjustD"
-          ],
           [
             "AdjustD",
             "Fire"
@@ -448,16 +430,20 @@
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "SingleD"
-          ],
-          [
             "Fire",
             "Observe"
           ],
           [
             "Retry",
             "AdjustE"
+          ],
+          [
+            "SingleE",
+            "AdjustE"
+          ],
+          [
+            "StrategySelect",
+            "SingleE"
           ]
         ],
         "highlightFailureBranches": true
@@ -489,13 +475,10 @@
           "AdjustD",
           "AdjustMulti",
           "AdjustQ",
-          "Retry"
+          "Retry",
+          "SingleQ"
         ],
         "highlightEdges": [
-          [
-            "SingleE",
-            "AdjustE"
-          ],
           [
             "AdjustE",
             "Fire"
@@ -553,12 +536,16 @@
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "SingleE"
-          ],
-          [
             "Fire",
             "Observe"
+          ],
+          [
+            "SingleQ",
+            "AdjustQ"
+          ],
+          [
+            "StrategySelect",
+            "SingleQ"
           ]
         ],
         "highlightFailureBranches": true
@@ -577,13 +564,15 @@
           "ModeSelect",
           "ExploreMode",
           "StrategySelect",
-          "AdjustMulti",
           "Fire",
           "Observe",
+          "Retry",
+          "Trap",
+          "Adjust",
           "AdjustD",
           "AdjustE",
-          "AdjustQ",
-          "Retry"
+          "AdjustMulti",
+          "AdjustQ"
         ],
         "highlightEdges": [
           [
@@ -599,11 +588,15 @@
             "StrategySelect"
           ],
           [
-            "MultiTrap",
-            "AdjustMulti"
+            "StrategySelect",
+            "Trap"
           ],
           [
-            "AdjustMulti",
+            "Trap",
+            "Adjust"
+          ],
+          [
+            "Adjust",
             "Fire"
           ],
           [
@@ -629,6 +622,10 @@
           [
             "Observe",
             "AdjustMulti"
+          ],
+          [
+            "AdjustMulti",
+            "Fire"
           ],
           [
             "Observe",
