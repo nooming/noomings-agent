@@ -105,9 +105,9 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 10,
-          "storedEdges": 10,
-          "expandNodes": 10,
+          "storedNodes": 9,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
@@ -115,7 +115,7 @@
             "Challenge",
             "StrategySelect",
             "Trap",
-            "AdjustT"
+            "Fire"
           ],
           "expandSample": [
             "Start",
@@ -123,7 +123,6 @@
             "Challenge",
             "StrategySelect",
             "Trap",
-            "AdjustT",
             "Fire",
             "Observe",
             "Retry",
@@ -365,9 +364,9 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 9,
+          "storedNodes": 8,
           "storedEdges": 11,
-          "expandNodes": 9,
+          "expandNodes": 8,
           "expandOk": true,
           "sample": [
             "Start",
@@ -385,7 +384,6 @@
             "Retry1",
             "Retry2",
             "Trap",
-            "Adjust",
             "Adjust1"
           ],
           "selectEdge": "多参盲调→Trap",
@@ -562,9 +560,9 @@
             "StrategySelect",
             "Fire",
             "Observe",
-            "Adjust",
             "Retry",
             "Trap",
+            "Adjust",
             "AdjustAngle"
           ],
           "selectEdge": "多参盲调→Trap",
@@ -708,9 +706,9 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 12,
-          "storedEdges": 12,
-          "expandNodes": 12,
+          "storedNodes": 10,
+          "storedEdges": 10,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -718,7 +716,7 @@
             "ModeSelect",
             "Explore",
             "Trap",
-            "TrapStrat"
+            "Fire"
           ],
           "expandSample": [
             "Start",
@@ -726,11 +724,11 @@
             "ModeSelect",
             "Explore",
             "Trap",
-            "TrapStrat",
-            "AdjustBoth",
             "Fire",
             "Observe",
-            "RetryDrop"
+            "RetryDrop",
+            "RetryOut",
+            "AdjustV"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -810,9 +808,9 @@
           "label": "单变量·角速度",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 20,
-          "storedEdges": 25,
-          "expandNodes": 20,
+          "storedNodes": 13,
+          "storedEdges": 15,
+          "expandNodes": 13,
           "expandOk": true,
           "sample": [
             "Start",
@@ -832,7 +830,7 @@
             "Win",
             "ChallengeCore",
             "StrategySelect2",
-            "Fire2"
+            "AdjustDown"
           ],
           "selectEdge": "单变量·角速度→Route_main",
           "single": true
@@ -842,9 +840,9 @@
           "label": "单变量·半径",
           "priorityRank": 2,
           "sparse": false,
-          "storedNodes": 12,
+          "storedNodes": 11,
           "storedEdges": 13,
-          "expandNodes": 12,
+          "expandNodes": 11,
           "expandOk": true,
           "sample": [
             "Start",
@@ -863,8 +861,8 @@
             "Observe",
             "Win",
             "AdjustDown",
-            "Win2",
-            "Route_main_s_radius"
+            "Route_main_s_radius",
+            "Adjust"
           ],
           "selectEdge": "单变量·半径→Route_main_s_radius",
           "single": true
@@ -874,29 +872,29 @@
           "label": "单变量·倾角",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 12,
+          "storedNodes": 11,
           "storedEdges": 13,
-          "expandNodes": 12,
+          "expandNodes": 11,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
-            "ExploreCore"
+            "ExploreCore",
+            "Fire"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
             "ExploreCore",
             "Fire",
             "Observe",
             "AdjustDown",
-            "Route_main_s_base_tilt"
+            "Route_main_s_base_tilt",
+            "Adjust"
           ],
           "selectEdge": "单变量·倾角→Route_main_s_base_tilt",
           "single": true
@@ -1343,24 +1341,23 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 10,
-          "storedEdges": 11,
-          "expandNodes": 10,
+          "storedNodes": 9,
+          "storedEdges": 10,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
             "ModeSelect",
             "Explore",
             "StrategySelect",
-            "AdjustMulti",
-            "Fire"
+            "Fire",
+            "Observe"
           ],
           "expandSample": [
             "Start",
             "ModeSelect",
             "Explore",
             "StrategySelect",
-            "AdjustMulti",
             "Fire",
             "Observe",
             "Retry",
@@ -1508,29 +1505,29 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 11,
-          "storedEdges": 13,
-          "expandNodes": 12,
+          "storedNodes": 10,
+          "storedEdges": 12,
+          "expandNodes": 11,
           "expandOk": true,
           "sample": [
             "Start",
             "Env",
             "Explore",
             "StrategySelect",
-            "AdjustBoth",
-            "Fire"
+            "Fire",
+            "Observe"
           ],
           "expandSample": [
             "Start",
             "Env",
             "Explore",
             "StrategySelect",
-            "AdjustBoth",
             "Fire",
             "Observe",
             "RetryFar",
             "RetryNear",
-            "Trap"
+            "Trap",
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -1707,7 +1704,7 @@
           "sparse": false,
           "storedNodes": 13,
           "storedEdges": 16,
-          "expandNodes": 13,
+          "expandNodes": 12,
           "expandOk": true,
           "sample": [
             "Start",
@@ -1726,8 +1723,8 @@
             "Observe",
             "Retry",
             "Trap",
-            "Adjust",
-            "AdjustD"
+            "AdjustD",
+            "AdjustE"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -1877,7 +1874,7 @@
             "ModeSelect",
             "ExploreCore",
             "Trap",
-            "Adjust"
+            "Retest"
           ],
           "expandSample": [
             "Start",
@@ -1885,10 +1882,10 @@
             "ModeSelect",
             "ExploreCore",
             "Trap",
-            "Adjust",
             "Retest",
             "Observe",
-            "Win"
+            "Win",
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -2034,24 +2031,23 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 10,
-          "storedEdges": 10,
-          "expandNodes": 10,
+          "storedNodes": 9,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
             "Env",
             "Explore",
-            "AdjustT",
-            "Fire"
+            "Fire",
+            "Observe"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
             "Env",
             "Explore",
-            "AdjustT",
             "Fire",
             "Observe",
             "Retry",
@@ -2231,23 +2227,22 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 9,
-          "storedEdges": 10,
-          "expandNodes": 10,
+          "storedNodes": 8,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
             "ModeSelect",
             "StrategySelect",
-            "AdjustMulti",
             "Fire",
-            "Observe"
+            "Observe",
+            "Retry"
           ],
           "expandSample": [
             "Start",
             "ModeSelect",
             "StrategySelect",
-            "AdjustMulti",
             "Fire",
             "Observe",
             "Retry",
@@ -2337,9 +2332,9 @@
           "label": "单变量·电源电压",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 15,
-          "storedEdges": 17,
-          "expandNodes": 15,
+          "storedNodes": 9,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
@@ -2358,8 +2353,7 @@
             "Fire1",
             "Observe1",
             "Win",
-            "Fire2",
-            "Observe2"
+            "Route_main"
           ],
           "selectEdge": "单变量·电源电压→Route_main",
           "single": true
@@ -2369,9 +2363,9 @@
           "label": "单变量·电阻",
           "priorityRank": 2,
           "sparse": false,
-          "storedNodes": 12,
-          "storedEdges": 13,
-          "expandNodes": 12,
+          "storedNodes": 9,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
@@ -2379,7 +2373,7 @@
             "Win",
             "Env",
             "Challenge",
-            "Fire2"
+            "Route_main_s_resistance"
           ],
           "expandSample": [
             "Start",
@@ -2387,11 +2381,10 @@
             "Win",
             "Env",
             "Challenge",
-            "Fire2",
-            "Observe2",
             "Route_main_s_resistance",
             "Adjust1",
-            "Fire1"
+            "Fire1",
+            "Observe1"
           ],
           "selectEdge": "单变量·电阻→Route_main_s_resistance",
           "single": true
@@ -2401,9 +2394,9 @@
           "label": "单变量·电容",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 12,
-          "storedEdges": 13,
-          "expandNodes": 12,
+          "storedNodes": 9,
+          "storedEdges": 9,
+          "expandNodes": 9,
           "expandOk": true,
           "sample": [
             "Start",
@@ -2411,7 +2404,7 @@
             "Win",
             "Env",
             "Challenge",
-            "Fire3"
+            "Route_main_s_capacitance"
           ],
           "expandSample": [
             "Start",
@@ -2419,11 +2412,10 @@
             "Win",
             "Env",
             "Challenge",
-            "Fire3",
-            "Observe3",
             "Route_main_s_capacitance",
             "Adjust1",
-            "Fire1"
+            "Fire1",
+            "Observe1"
           ],
           "selectEdge": "单变量·电容→Route_main_s_capacitance",
           "single": true
@@ -2452,9 +2444,9 @@
             "FireT",
             "ObserveT",
             "Trap",
-            "Adjust",
             "Retest",
-            "Observe"
+            "Observe",
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -2499,9 +2491,9 @@
           "label": "单变量·电流",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 16,
-          "storedEdges": 16,
-          "expandNodes": 16,
+          "storedNodes": 12,
+          "storedEdges": 12,
+          "expandNodes": 12,
           "expandOk": true,
           "sample": [
             "Start",
@@ -2521,7 +2513,7 @@
             "Win",
             "ChallengeMode",
             "StrategySelect2",
-            "Fire2"
+            "Route_main"
           ],
           "selectEdge": "单变量·电流→Route_main",
           "single": true
@@ -2531,29 +2523,29 @@
           "label": "单变量·磁场",
           "priorityRank": 2,
           "sparse": false,
-          "storedNodes": 11,
+          "storedNodes": 10,
           "storedEdges": 10,
-          "expandNodes": 11,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
-            "ExploreMode"
+            "ExploreMode",
+            "Fire"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
             "ExploreMode",
             "Fire",
             "Observe",
             "Route_main_s_magnetic",
-            "Adjust"
+            "Adjust",
+            "AdjustI"
           ],
           "selectEdge": "单变量·磁场→Route_main_s_magnetic",
           "single": true
@@ -2563,29 +2555,29 @@
           "label": "单变量·导线温度",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 11,
+          "storedNodes": 10,
           "storedEdges": 10,
-          "expandNodes": 11,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
-            "ExploreMode"
+            "ExploreMode",
+            "Fire"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Win2",
             "ModeSelect",
             "ExploreMode",
             "Fire",
             "Observe",
             "Route_main_s_wire_temp",
-            "Adjust"
+            "Adjust",
+            "AdjustI"
           ],
           "selectEdge": "单变量·导线温度→Route_main_s_wire_temp",
           "single": true
@@ -2594,9 +2586,9 @@
           "id": "explore_trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 9,
+          "storedNodes": 8,
           "storedEdges": 9,
-          "expandNodes": 9,
+          "expandNodes": 8,
           "expandOk": true,
           "sample": [
             "Start",
@@ -2614,7 +2606,6 @@
             "Fire",
             "Observe",
             "Trap",
-            "Adjust",
             "AdjustI"
           ],
           "selectEdge": "多参盲调→Trap",
@@ -2826,29 +2817,29 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 11,
-          "storedEdges": 14,
-          "expandNodes": 12,
+          "storedNodes": 10,
+          "storedEdges": 13,
+          "expandNodes": 11,
           "expandOk": true,
           "sample": [
             "Start",
             "Env",
             "Explore",
             "StrategySelect",
-            "AdjustAll",
-            "Fire"
+            "Fire",
+            "Observe"
           ],
           "expandSample": [
             "Start",
             "Env",
             "Explore",
             "StrategySelect",
-            "AdjustAll",
             "Fire",
             "Observe",
             "Retry",
             "Trap",
-            "Adjust1"
+            "Adjust1",
+            "Adjust2"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -2936,29 +2927,27 @@
           "label": "单变量·极板间距",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 12,
-          "storedEdges": 15,
-          "expandNodes": 12,
+          "storedNodes": 8,
+          "storedEdges": 9,
+          "expandNodes": 8,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Fire2",
-            "Observe2",
-            "Retry2"
+            "Route_main_s_dist",
+            "Adjust",
+            "Fire"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
             "Win",
-            "Fire2",
-            "Observe2",
-            "Retry2",
             "Route_main_s_dist",
             "Adjust",
             "Fire",
-            "Observe"
+            "Observe",
+            "Retry"
           ],
           "selectEdge": "单变量·极板间距→Route_main_s_dist",
           "single": true
@@ -3098,9 +3087,9 @@
           "label": "单变量·电容C1",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 26,
-          "storedEdges": 28,
-          "expandNodes": 26,
+          "storedNodes": 10,
+          "storedEdges": 8,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3108,7 +3097,7 @@
             "Env",
             "ModeOn",
             "ModeOff",
-            "Fire1"
+            "Win"
           ],
           "expandSample": [
             "Start",
@@ -3116,11 +3105,11 @@
             "Env",
             "ModeOn",
             "ModeOff",
-            "Fire1",
-            "Observe1",
             "Win",
-            "Retry1",
-            "Fire2"
+            "Route_main",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
           ],
           "selectEdge": "单变量·电容C1→Route_main",
           "single": true
@@ -3130,9 +3119,9 @@
           "label": "单变量·电容C2",
           "priorityRank": 2,
           "sparse": false,
-          "storedNodes": 14,
-          "storedEdges": 13,
-          "expandNodes": 14,
+          "storedNodes": 10,
+          "storedEdges": 8,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3149,10 +3138,10 @@
             "ModeOff",
             "Env",
             "ModeOn",
-            "Fire1",
-            "Observe1",
-            "Retry1",
-            "Route_main_s_c2"
+            "Route_main_s_c2",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
           ],
           "selectEdge": "单变量·电容C2→Route_main_s_c2",
           "single": true
@@ -3162,9 +3151,9 @@
           "label": "单变量·电容C3",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 14,
-          "storedEdges": 13,
-          "expandNodes": 14,
+          "storedNodes": 10,
+          "storedEdges": 8,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3181,10 +3170,10 @@
             "ModeOff",
             "Env",
             "ModeOn",
-            "Fire2",
-            "Observe2",
-            "Retry2",
-            "Route_main_s_c3"
+            "Route_main_s_c3",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
           ],
           "selectEdge": "单变量·电容C3→Route_main_s_c3",
           "single": true
@@ -3194,9 +3183,9 @@
           "label": "单变量·馈线长度",
           "priorityRank": 4,
           "sparse": false,
-          "storedNodes": 14,
-          "storedEdges": 13,
-          "expandNodes": 14,
+          "storedNodes": 10,
+          "storedEdges": 8,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3213,10 +3202,10 @@
             "ModeOff",
             "Env",
             "ModeOn",
-            "Fire3",
-            "Observe3",
-            "Retry3",
-            "Route_main_s_cable"
+            "Route_main_s_cable",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
           ],
           "selectEdge": "单变量·馈线长度→Route_main_s_cable",
           "single": true
@@ -3226,7 +3215,7 @@
           "label": "多参盲调",
           "sparse": false,
           "storedNodes": 9,
-          "storedEdges": 11,
+          "storedEdges": 10,
           "expandNodes": 9,
           "expandOk": true,
           "sample": [
@@ -3234,19 +3223,19 @@
             "Env",
             "ModeOn",
             "StrategySelect",
-            "AdjustT",
-            "FireT"
+            "FireT",
+            "ObserveT"
           ],
           "expandSample": [
             "Start",
             "Env",
             "ModeOn",
             "StrategySelect",
-            "AdjustT",
             "FireT",
             "ObserveT",
             "RetryT",
-            "Trap"
+            "Trap",
+            "AdjustT"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -3365,9 +3354,9 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 11,
+          "storedNodes": 12,
           "storedEdges": 13,
-          "expandNodes": 11,
+          "expandNodes": 12,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3375,7 +3364,7 @@
             "Env",
             "ModeCha",
             "Trap",
-            "Adjust"
+            "Fire"
           ],
           "expandSample": [
             "Start",
@@ -3383,11 +3372,11 @@
             "Env",
             "ModeCha",
             "Trap",
-            "Adjust",
             "Fire",
             "Observe",
             "Retry",
-            "AdjustC"
+            "Fire3",
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -3558,9 +3547,9 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 11,
+          "storedNodes": 10,
           "storedEdges": 11,
-          "expandNodes": 11,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3580,7 +3569,7 @@
             "RetryLow",
             "RetryOverheat",
             "Trap",
-            "Adjust"
+            "AdjustK"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -3664,9 +3653,9 @@
           "label": "单变量·压强",
           "priorityRank": 1,
           "sparse": false,
-          "storedNodes": 23,
-          "storedEdges": 19,
-          "expandNodes": 23,
+          "storedNodes": 19,
+          "storedEdges": 15,
+          "expandNodes": 19,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3696,9 +3685,9 @@
           "label": "单变量·温度",
           "priorityRank": 2,
           "sparse": false,
-          "storedNodes": 13,
+          "storedNodes": 12,
           "storedEdges": 8,
-          "expandNodes": 13,
+          "expandNodes": 12,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3715,10 +3704,10 @@
             "Win1",
             "Win2",
             "Win2a",
-            "Win3",
             "ChallengeCore",
             "Tune2",
-            "Adjust2a"
+            "Adjust2a",
+            "Fire2a"
           ],
           "selectEdge": "单变量·温度→Tune2",
           "single": true
@@ -3728,9 +3717,9 @@
           "label": "单变量·体积",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 13,
+          "storedNodes": 12,
           "storedEdges": 7,
-          "expandNodes": 13,
+          "expandNodes": 12,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3747,10 +3736,10 @@
             "Win1",
             "Win2",
             "Win2a",
-            "Win3",
             "ChallengeCore",
             "Tune1a",
-            "Fire1a"
+            "Fire1a",
+            "Observe1a"
           ],
           "selectEdge": "单变量·体积→Tune1a",
           "single": true
@@ -3759,28 +3748,25 @@
           "id": "trap",
           "label": "多参盲调",
           "sparse": false,
-          "storedNodes": 9,
-          "storedEdges": 9,
-          "expandNodes": 9,
+          "storedNodes": 6,
+          "storedEdges": 6,
+          "expandNodes": 6,
           "expandOk": true,
           "sample": [
             "Start",
             "StrategySelect",
-            "Fire3",
-            "Observe3",
             "Trap",
-            "Adjust"
+            "Adjust",
+            "Fire",
+            "Observe"
           ],
           "expandSample": [
             "Start",
             "StrategySelect",
-            "Fire3",
-            "Observe3",
             "Trap",
-            "Adjust",
             "Fire",
             "Observe",
-            "Adjust3"
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -3957,9 +3943,9 @@
           "label": "多参盲调",
           "priorityRank": 3,
           "sparse": false,
-          "storedNodes": 11,
+          "storedNodes": 10,
           "storedEdges": 12,
-          "expandNodes": 11,
+          "expandNodes": 10,
           "expandOk": true,
           "sample": [
             "Start",
@@ -3978,8 +3964,8 @@
             "Observe",
             "Retry",
             "Trap",
-            "Adjust",
-            "AdjustF"
+            "AdjustF",
+            "AdjustU"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false
@@ -4159,7 +4145,7 @@
           "label": "多参盲调",
           "sparse": false,
           "storedNodes": 11,
-          "storedEdges": 13,
+          "storedEdges": 14,
           "expandNodes": 11,
           "expandOk": true,
           "sample": [
@@ -4379,9 +4365,9 @@
             "Fire",
             "Observe",
             "Retry",
-            "Adjust",
             "ModeChallenge",
-            "Trap"
+            "Trap",
+            "Adjust"
           ],
           "selectEdge": "多参盲调→Trap",
           "single": false

@@ -342,7 +342,7 @@
   "strategy": {
     "title": "机械能 · 过山车环路",
     "sub": "探究过山车翻越环顶的条件",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nTrapStrat --> AdjustBoth[固定其余，只调s-height]\nTrap --> TrapStrat",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nHeightStrat[单变量·起始高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -514,8 +514,6 @@
           "ModeSelect",
           "Explore",
           "Trap",
-          "TrapStrat",
-          "AdjustBoth",
           "Fire",
           "Observe",
           "AdjustV",
@@ -540,18 +538,6 @@
             "Trap"
           ],
           [
-            "Trap",
-            "TrapStrat"
-          ],
-          [
-            "TrapStrat",
-            "AdjustBoth"
-          ],
-          [
-            "AdjustBoth",
-            "Fire"
-          ],
-          [
             "Fire",
             "Observe"
           ],
@@ -570,6 +556,10 @@
           [
             "Observe",
             "RetryOut"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

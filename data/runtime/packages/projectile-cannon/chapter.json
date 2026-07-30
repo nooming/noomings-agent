@@ -282,7 +282,7 @@
   "strategy": {
     "title": "海防炮台 · 野战试射",
     "sub": "试射场",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|偏近| Adjust1[调整参数]\nObserve -->|偏远| Adjust1\nObserve -->|出界| Retry1[出界重试]:::stratRetry\nObserve -->|碰撞| Retry2[碰撞重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry1 --> Fire\nRetry2 --> Fire\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·初速度| Tune1\nStrategySelect -->|单变量·重力加速度| Tune2\nStrategySelect -->|单变量·风速| Tune3\nStrategySelect -->|单变量·发射角度| Tune4\nStrategySelect -->|单变量·空气阻力| Tune5\nTune1 --> Fire[发射炮弹]\nTune2 --> Fire\nTune3 --> Fire\nTune4 --> Fire\nTune5 --> Fire\nTune6 --> Fire\nTune7 --> Fire\nTuneTrap --> Fire\nStart([开始试射]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nTrap --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|偏近| Adjust1[调整参数]\nObserve -->|偏远| Adjust1\nObserve -->|出界| Retry1[出界重试]:::stratRetry\nObserve -->|碰撞| Retry2[碰撞重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry1 --> Fire\nRetry2 --> Fire\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·初速度| Tune1\nStrategySelect -->|单变量·重力加速度| Tune2\nStrategySelect -->|单变量·风速| Tune3\nStrategySelect -->|单变量·发射角度| Tune4\nStrategySelect -->|单变量·空气阻力| Tune5\nTune1 --> Fire[发射炮弹]\nTune2 --> Fire\nTune3 --> Fire\nTune4 --> Fire\nTune5 --> Fire\nStart([开始试射]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nTune1[单变量·初速度]\nTune2[单变量·重力加速度]\nTune3[单变量·风速]\nTune4[单变量·发射角度]\nTune5[单变量·空气阻力]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -666,7 +666,6 @@
           "Retry1",
           "Retry2",
           "Trap",
-          "Adjust",
           "Adjust1"
         ],
         "highlightEdges": [
@@ -677,10 +676,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "Adjust"
           ],
           [
             "Adjust",
@@ -712,6 +707,10 @@
           ],
           [
             "Retry2",
+            "Fire"
+          ],
+          [
+            "Trap",
             "Fire"
           ]
         ],

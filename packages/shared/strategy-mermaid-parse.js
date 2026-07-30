@@ -893,7 +893,8 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
   /**
-   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists (legacy data),
+   * walk from alias. New repair must not create TrapStrat — prefer Trap→Fire.
    */
   function resolveSpineWalkEntry(entry, edges, forbidden) {
     const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));

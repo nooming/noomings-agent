@@ -5,7 +5,8 @@ const MAIN_WARN = '每次只改一个参数，避免多变量混调难归因';
 const MAIN_METHOD_LABEL = '控制变量：每次只改一项';
 const TRAP_METHOD_LABEL = '多参盲调';
 
-const ENTRY_IDS = ['RouteCtrl', 'RouteTrap'];
+/** Canonical mermaid entry ids — prefer Route_main / Route_main_s_* / Trap, never Route1..N parallel stubs. */
+const ENTRY_IDS = ['Route_main', 'Trap'];
 
 const LEGACY_MAIN_LABEL_RE = /控制变量法|固定其余滑条|观察反馈再迭代|单变量·|观察反馈法/i;
 const METHOD_MAIN_RE = /控制变量|每次只改|单变量|迭代调参/i;
@@ -226,9 +227,14 @@ function buildPerAvStrategyRoutes(gameHints, chapter = null) {
     routes,
     mermaidHints: {
       strategySelectLabels: routes.map(r => r.label),
-      perRouteEntryIds: routes.map((_, i) => {
-        if (routes[i]?.kind === 'confoundProbe') return 'ProbeCV';
-        return i === 0 ? 'RouteCtrl' : `RouteAv${i}`;
+      perRouteEntryIds: routes.map((r, i) => {
+        if (r?.kind === 'confoundProbe') return 'ProbeCV';
+        if (r?.id === 'trap' || /盲调|多参/.test(r?.label || '')) return 'Trap';
+        if (i === 0) return 'Route_main';
+        const slug = String(r.id || '')
+          .replace(/^main_?/, '')
+          .replace(/[^A-Za-z0-9_]/g, '_') || `av${i}`;
+        return `Route_main_s_${slug}`;
       }),
       confoundProbeLabels: confoundRoutes.map(r => r.label),
     },
@@ -254,7 +260,7 @@ function buildStrategyRoutePlan(gameHints, chapter = null, analyzeParse = null) 
       routes,
       mermaidHints: {
         strategySelectLabels: [MAIN_METHOD_LABEL],
-        perRouteEntryIds: ['RouteSingle'],
+        perRouteEntryIds: ['Route_main'],
       },
     };
   }
@@ -295,7 +301,8 @@ function formatStrategyRoutePlanForPrompt(plan) {
       priorityRank: r.priorityRank,
       mapsTo: r.mapsTo,
     })), null, 2),
-    'strategy.mermaid 须有 StrategySelect{选择调参策略?}:::stratCond 与 |途径| 边，标签与上述 label 一致；trap 途径 highlightNodes 勿含 Win。',
+    'strategy.mermaid 须有 StrategySelect{选择调参策略?}:::stratCond 与 |途径| 边，标签与上述 label 一致；trap 途径 highlightNodes 勿含 Win；多参盲调仅 Trap 一盒再进 Fire，勿 TrapStrat/AdjustBoth 近义链。',
+    '入口节点命名须统一：Route_main / Route_main_s_{av} 或 *Strat；禁止同时生成 Route1..N 与 Route_main_* 双骨架；勿留未接 StrategySelect 的 RouteN/TuneN 残桩。',
     '多 AV 时各「单变量·」route 的 score/weight 须按 priorityRank 分档（高优更高，trap 最低），禁止全相同。',
   ].join('\n');
 }
@@ -315,6 +322,8 @@ function buildStrategySelectPromptSection(gameHints, analyzeParse = null) {
     `- |途径| 边须覆盖：${labels}（控制变量 + 多参盲调${plan.mermaidHints?.confoundProbeLabels?.length ? ' + 试探混淆旁路' : ''}）${perAvHint}`,
     '- 若有 confoundingVariables：须加 StrategySelect -.->|试探混淆·{label}| ProbeCV:::stratInvalid → 观察无增益 → 回到 StrategySelect；routes 增加 kind=confoundProbe 低分（≤0.15），禁止 priorityRank',
     '- 每条途径独立 Adjust↔Fire↔Observe 子链，禁止多途径共用 Fire/Observe hub',
+    '- 多参盲调扇出须为单节点：StrategySelect -->|多参盲调| Trap[多参盲调] --> Fire（或 Observe 环入口）；禁止 Trap→TrapStrat→AdjustBoth / Trap→AdjustMulti 近义多跳',
+    '- 单变量入口统一用 Route_main / Route_main_s_*（或 HeightStrat 等 *Strat）；禁止再画一套 Route1→Adjust1…RouteN 平行残桩',
     '- Observe→Adjust：边上只写观察结论；Adjust 禁止「A 或 B」「同时调 A 和 B」',
     '- routes[] 的 id/label/warn 与 routes 草案一致；多参盲调须填 warn',
     '- mapsTo[] 顺序须与 KG play 链一致（P1→环境约束→O1→结果约束→R1），供「在事理图谱中查看」',

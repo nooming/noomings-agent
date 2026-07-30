@@ -295,7 +295,7 @@
   "strategy": {
     "title": "电容实验二：串并联配置",
     "sub": "第二章 · 储能电站重启",
-    "mermaid": "graph TD\nAdjust1 --> Fire1[确认配置]\nAdjust2 --> Fire2[确认配置]\nAdjust3 --> Fire3[确认配置]\nAdjust4 --> Fire4[确认配置]\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFire1 --> Observe1{观察总电容?}:::stratCond\nFire2 --> Observe2{观察总电容?}:::stratCond\nFire3 --> Observe3{观察总电容?}:::stratCond\nFire4 --> Observe4{观察总电容?}:::stratCond\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|未达标| Adjust\nObserve1 -->|偏低| Adjust1\nObserve1 -->|偏高| Adjust1\nObserve1 -->|观察| Retry1[重试]:::stratRetry\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏低| Adjust2\nObserve2 -->|偏高| Adjust2\nObserve2 -->|观察| Retry2[重试]:::stratRetry\nObserve2 -->|达标| Win\nObserve3 -->|偏低| Adjust3\nObserve3 -->|偏高| Adjust3\nObserve3 -->|观察| Retry3[重试]:::stratRetry\nObserve3 -->|达标| Win\nObserve4 -->|偏低| Adjust4\nObserve4 -->|偏高| Adjust4\nObserve4 -->|观察| Retry4[重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetest --> Observe\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nObserve{观察偏高/偏低/达标?}:::stratCond\nAdjust[单变量微调]\nRetest[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjust --> Retest\nAdjustFB --> RetestFB\nRetry1 --> Adjust1\nRetry2 --> Adjust2\nRetry3 --> Adjust3\nRetry4 --> Adjust4\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nRoute1 --> Adjust1[调整C₁]\nRoute2 --> Adjust2[调整C₂]\nRoute3 --> Adjust3[调整C₃]\nRoute4 --> Adjust4[调整L]\nTrap --> AdjustT[固定其余，只调audio-volume]\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult",
+    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|未达标| Adjust\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetest --> Observe\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nObserve{观察偏高/偏低/达标?}:::stratCond\nAdjust[单变量微调]\nRetest[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjust --> Retest\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
     "routes": [
       {
         "id": "main",
@@ -317,27 +317,11 @@
           "Env",
           "ModeOn",
           "ModeOff",
-          "Fire1",
-          "Observe1",
           "Win",
-          "Retry1",
-          "Fire2",
-          "Observe2",
-          "Retry2",
-          "Fire3",
-          "Observe3",
-          "Retry3",
-          "Fire4",
-          "Observe4",
-          "Retry4",
           "Route_main",
           "AdjustFB",
           "RetestFB",
-          "ObserveFB",
-          "Adjust1",
-          "Adjust2",
-          "Adjust3",
-          "Adjust4"
+          "ObserveFB"
         ],
         "highlightEdges": [
           [
@@ -369,88 +353,8 @@
             "ObserveFB"
           ],
           [
-            "Fire1",
-            "Observe1"
-          ],
-          [
-            "Fire2",
-            "Observe2"
-          ],
-          [
-            "Fire3",
-            "Observe3"
-          ],
-          [
-            "Fire4",
-            "Observe4"
-          ],
-          [
             "ObserveFB",
             "AdjustFB"
-          ],
-          [
-            "Observe1",
-            "Adjust1"
-          ],
-          [
-            "Adjust1",
-            "Fire1"
-          ],
-          [
-            "Observe1",
-            "Retry1"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "Retry2"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire3"
-          ],
-          [
-            "Observe3",
-            "Retry3"
-          ],
-          [
-            "Observe4",
-            "Adjust4"
-          ],
-          [
-            "Adjust4",
-            "Fire4"
-          ],
-          [
-            "Observe4",
-            "Retry4"
-          ],
-          [
-            "Observe1",
-            "Win"
-          ],
-          [
-            "Observe2",
-            "Win"
-          ],
-          [
-            "Observe3",
-            "Win"
-          ],
-          [
-            "Observe4",
-            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -476,14 +380,10 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Fire1",
-          "Observe1",
-          "Retry1",
           "Route_main_s_c2",
           "AdjustFB",
           "RetestFB",
-          "ObserveFB",
-          "Adjust1"
+          "ObserveFB"
         ],
         "highlightEdges": [
           [
@@ -515,28 +415,8 @@
             "ObserveFB"
           ],
           [
-            "Fire1",
-            "Observe1"
-          ],
-          [
             "ObserveFB",
             "AdjustFB"
-          ],
-          [
-            "Observe1",
-            "Adjust1"
-          ],
-          [
-            "Adjust1",
-            "Fire1"
-          ],
-          [
-            "Observe1",
-            "Retry1"
-          ],
-          [
-            "Observe1",
-            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -562,14 +442,10 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Fire2",
-          "Observe2",
-          "Retry2",
           "Route_main_s_c3",
           "AdjustFB",
           "RetestFB",
-          "ObserveFB",
-          "Adjust2"
+          "ObserveFB"
         ],
         "highlightEdges": [
           [
@@ -601,28 +477,8 @@
             "ObserveFB"
           ],
           [
-            "Fire2",
-            "Observe2"
-          ],
-          [
             "ObserveFB",
             "AdjustFB"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "Retry2"
-          ],
-          [
-            "Observe2",
-            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -648,14 +504,10 @@
           "ModeOff",
           "Env",
           "ModeOn",
-          "Fire3",
-          "Observe3",
-          "Retry3",
           "Route_main_s_cable",
           "AdjustFB",
           "RetestFB",
-          "ObserveFB",
-          "Adjust3"
+          "ObserveFB"
         ],
         "highlightEdges": [
           [
@@ -687,28 +539,8 @@
             "ObserveFB"
           ],
           [
-            "Fire3",
-            "Observe3"
-          ],
-          [
             "ObserveFB",
             "AdjustFB"
-          ],
-          [
-            "Observe3",
-            "Adjust3"
-          ],
-          [
-            "Adjust3",
-            "Fire3"
-          ],
-          [
-            "Observe3",
-            "Retry3"
-          ],
-          [
-            "Observe3",
-            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -727,7 +559,6 @@
           "Env",
           "ModeOn",
           "StrategySelect",
-          "AdjustT",
           "FireT",
           "ObserveT",
           "RetryT",
@@ -755,28 +586,16 @@
             "Trap"
           ],
           [
-            "Trap",
-            "AdjustT"
-          ],
-          [
-            "AdjustT",
-            "FireT"
-          ],
-          [
             "FireT",
             "ObserveT"
-          ],
-          [
-            "ObserveT",
-            "AdjustT"
           ],
           [
             "ObserveT",
             "RetryT"
           ],
           [
-            "RetryT",
-            "AdjustT"
+            "Trap",
+            "FireT"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

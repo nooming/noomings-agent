@@ -242,7 +242,7 @@
   "strategy": {
     "title": "电场 · 带电粒子偏转",
     "sub": "探究场强、电荷量对偏转的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustD --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nObserve -->|偏近| AdjustD\nObserve -->|偏远| AdjustD\nObserve -->|偏近| AdjustE\nObserve -->|偏远| AdjustE\nObserve -->|偏近| AdjustMulti\nObserve -->|偏远| AdjustMulti\nObserve -->|偏近| AdjustQ\nObserve -->|偏远| AdjustQ\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·极板间距| SingleD\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[同时调多个参数]\nMultiTrap --> AdjustMulti[调整多个参数]\nRetry --> AdjustE\nSingleD --> AdjustD[调整间距]\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nTrap --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustD --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nObserve -->|偏近| AdjustD\nObserve -->|偏远| AdjustD\nObserve -->|偏近| AdjustE\nObserve -->|偏远| AdjustE\nObserve -->|偏近| AdjustMulti\nObserve -->|偏远| AdjustMulti\nObserve -->|偏近| AdjustQ\nObserve -->|偏远| AdjustQ\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·极板间距| SingleD\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nRetry --> AdjustE\nSingleD --> AdjustD[调整间距]\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nSingleD[单变量·极板间距]\nSingleE[单变量·场强]\nSingleQ[单变量·电荷量]\nTrap --> Fire\nAdjustMulti[同时调多个参数]\n",
     "routes": [
       {
         "id": "main",
@@ -571,7 +571,6 @@
           "Adjust",
           "AdjustD",
           "AdjustE",
-          "AdjustMulti",
           "AdjustQ"
         ],
         "highlightEdges": [
@@ -590,10 +589,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "Adjust"
           ],
           [
             "Adjust",
@@ -621,14 +616,6 @@
           ],
           [
             "Observe",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
-            "Observe",
             "AdjustQ"
           ],
           [
@@ -638,6 +625,10 @@
           [
             "Observe",
             "Retry"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

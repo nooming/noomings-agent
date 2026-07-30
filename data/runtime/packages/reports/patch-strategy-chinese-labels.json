@@ -1,0 +1,50 @@
+{
+  "script": "tests/scripts/patch-strategy-chinese-labels.js",
+  "appliedAt": "2026-07-30T14:47:23Z",
+  "approach": "programmatic label patch (id→Chinese maps + contradiction rewrites + safe B3 redirect)",
+  "packageCount": 23,
+  "bareHubInstances": { "before": 96, "after": 0 },
+  "bareHubPackages": { "before": 22, "after": 0 },
+  "contradictionInstances": { "before": 29, "after": 0 },
+  "contradictionPackages": { "before": 16, "after": 0 },
+  "b3TrapToAdjustRemaining": 0,
+  "graphsExported": true,
+  "yangbenSynced": true,
+  "highlightAudit": {
+    "sparseRoutes": 0,
+    "singleSparse": 0,
+    "expandFail": 0,
+    "cvVisible": 21
+  },
+  "touched": [
+    "capacitor-confound-ui",
+    "capacitor-era-ch1",
+    "capacitor-era-ch2",
+    "capacitor-era-ch4",
+    "circular-motion",
+    "cyclotron-radius",
+    "efield-charge",
+    "friction-incline",
+    "gas-ideal",
+    "heat-conduction",
+    "magnetic-force",
+    "momentum-collision",
+    "multi-kp",
+    "pendulum-clock",
+    "pendulum-target",
+    "photoelectric",
+    "projectile-basic",
+    "projectile-cannon",
+    "rc-circuit",
+    "refraction-snell",
+    "series-parallel",
+    "thin-lens-implicit",
+    "transformer-turns"
+  ],
+  "remainingKnownIssues": [
+    "momentum-collision: StrategySelect maps 单变量·导轨温度 → SingleMass (pre-existing edge/id mismatch; label follows edge)",
+    "Orphan Route1–N / TuneN nodes without select edges get generic 路径N / 调参路径N labels",
+    "ProbeCV display text varies: 拧混淆控件 vs 试探混淆·{name} depending on prior def / edge label",
+    "multi-kp keeps Trap→TrapStrat repair bridge (labeled only; IDs unchanged by design)"
+  ]
+}

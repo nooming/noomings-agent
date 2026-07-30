@@ -406,7 +406,7 @@
   "strategy": {
     "title": "仓库卸货滑道 · 摩擦探究",
     "sub": "斜面摩擦",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustAngleChallenge --> FireChallenge[测试卸货]\nAdjustFriction --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nFire --> Observe\nFireChallenge --> ObserveChallenge{观察结果}:::stratCond\nModeChallenge --> StrategySelectChallenge{选择调参策略?}:::stratCond\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveChallenge -->|卡住| AdjustAngleChallenge\nObserveChallenge -->|冲过| AdjustAngleChallenge\nObserveChallenge -->|次数耗尽| Fail[失败重试]:::stratRetry\nObserveChallenge -->|停在接货区| WinChallenge[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nAngleRouteChallenge --> AdjustAngleChallenge[调整角度]\nFail --> AdjustAngleChallenge\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nTrapRoute --> AdjustMulti[固定其余，只调s-friction]\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nTrap --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustAngleChallenge --> FireChallenge[测试卸货]\nAdjustFriction --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nFire --> Observe\nFireChallenge --> ObserveChallenge{观察结果}:::stratCond\nModeChallenge --> StrategySelectChallenge{选择调参策略?}:::stratCond\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveChallenge -->|卡住| AdjustAngleChallenge\nObserveChallenge -->|冲过| AdjustAngleChallenge\nObserveChallenge -->|次数耗尽| Fail[失败重试]:::stratRetry\nObserveChallenge -->|停在接货区| WinChallenge[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nAngleRouteChallenge --> AdjustAngleChallenge[调整角度]\nFail --> AdjustAngleChallenge\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nAngleRoute[单变量·斜面倾角]\nFrictionRoute[单变量·摩擦系数]\nAngleRouteChallenge[单变量·倾角]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -595,10 +595,10 @@
           "StrategySelect",
           "Fire",
           "Observe",
-          "Adjust",
           "Retry",
           "Trap",
-          "AdjustAngle"
+          "AdjustAngle",
+          "Adjust"
         ],
         "highlightEdges": [
           [
@@ -616,10 +616,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "Adjust"
           ],
           [
             "Adjust",
@@ -644,6 +640,10 @@
           [
             "Observe",
             "Retry"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

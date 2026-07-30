@@ -295,7 +295,7 @@
   "strategy": {
     "title": "串联与并联电路 · 调节电阻使电流达标",
     "sub": "舞台灯电源板",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustMeter --> Fire\nAdjustMulti --> Fire\nAdjustR1 --> Fire[测试/发射]\nAdjustR2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察电流?}:::stratCond\nModeSelect -->|探究模式| Explore[自由探究]:::stratCore\nObserve -->|偏大| AdjustR1\nObserve -->|偏小| AdjustR1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电阻R1| Route_main\nStrategySelect -->|单变量·电表内阻| Route_main_s_meter_r\nStrategySelect -->|单变量·电阻R2| Route_main_s_r2\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电阻R1]\nRoute_main_s_r2[控制变量：只改电阻R2]\nRoute_main_s_meter_r[控制变量：只改电表内阻]\nRetry --> AdjustMeter\nRetry --> AdjustR1\nRetry --> AdjustR2\nRoute_main --> Adjust\nRoute_main_s_meter_r --> Adjust\nRoute_main_s_r2 --> Adjust\nRouteMeter --> AdjustMeter[调整仪表内阻]\nRouteR1 --> AdjustR1[调整 R₁]\nRouteR2 --> AdjustR2[调整 R₂]\nTrap --> AdjustMulti[固定其余，只调s-r1]",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustMeter --> Fire\nAdjustR1 --> Fire[测试/发射]\nAdjustR2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察电流?}:::stratCond\nModeSelect -->|探究模式| Explore[自由探究]:::stratCore\nObserve -->|偏大| AdjustR1\nObserve -->|偏小| AdjustR1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电阻R1| Route_main\nStrategySelect -->|单变量·电表内阻| Route_main_s_meter_r\nStrategySelect -->|单变量·电阻R2| Route_main_s_r2\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电阻R1]\nRoute_main_s_r2[控制变量：只改电阻R2]\nRoute_main_s_meter_r[控制变量：只改电表内阻]\nRetry --> AdjustMeter\nRetry --> AdjustR1\nRetry --> AdjustR2\nRoute_main --> Adjust\nRoute_main_s_meter_r --> Adjust\nRoute_main_s_r2 --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -535,7 +535,6 @@
           "Start",
           "ModeSelect",
           "StrategySelect",
-          "AdjustMulti",
           "Fire",
           "Observe",
           "Retry",
@@ -550,14 +549,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
           ],
           [
             "Fire",
@@ -582,6 +573,10 @@
           [
             "Explore",
             "StrategySelect"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

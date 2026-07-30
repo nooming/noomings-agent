@@ -298,7 +298,7 @@
   "strategy": {
     "title": "电容实验一：介质与击穿",
     "sub": "第一章 · 信号塔危机",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust2 --> Fire2\nAdjust3 --> Fire3\nAdjust4 --> Fire4\nArea --> Fire3[调节并读取电容]\nBackFromCV --> StrategySelect\nDist --> Fire2[调节并读取电容]\nFire --> Observe{观察结果?}:::stratCond\nFire2 --> Observe2{观察结果?}:::stratCond\nFire3 --> Observe3{观察结果?}:::stratCond\nFire4 --> Observe4{观察结果?}:::stratCond\nMat --> Fire[调节并读取电容]\nObserve -->|未达标| Adjust[调整介质]\nObserve -->|击穿| Retry[击穿重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|未达标| Adjust2[调整间距]\nObserve2 -->|击穿| Retry2[击穿重试]:::stratRetry\nObserve2 -->|达标| Win\nObserve3 -->|未达标| Adjust3[调整面积]\nObserve3 -->|击穿| Retry3[击穿重试]:::stratRetry\nObserve3 -->|达标| Win\nObserve4 -->|未达标| Adjust4[盲目调整]\nObserve4 -->|击穿| Retry4[击穿重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nRetry2 --> Fire2\nRetry3 --> Fire3\nRetry4 --> Fire4\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|单变量·极板间距| Route_main_s_dist\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire4[调节并读取电容]\nStart([开始]):::stratStart\nRoute_main_s_dist[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main_s_area --> Adjust\nRoute_main_s_dist --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust4 --> Fire4\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果?}:::stratCond\nFire4 --> Observe4{观察结果?}:::stratCond\nMat --> Fire[调节并读取电容]\nObserve -->|未达标| Adjust[调整介质]\nObserve -->|击穿| Retry[击穿重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve4 -->|未达标| Adjust4[盲目调整]\nObserve4 -->|击穿| Retry4[击穿重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nRetry4 --> Fire4\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|单变量·极板间距| Route_main_s_dist\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire4[调节并读取电容]\nStart([开始]):::stratStart\nRoute_main_s_dist[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main_s_area --> Adjust\nRoute_main_s_dist --> Adjust\nArea[单变量·面积]\nDist[单变量·间距]\nMat[单变量·介质]\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main_s-dist",
@@ -318,14 +318,10 @@
           "Start",
           "StrategySelect",
           "Win",
-          "Fire2",
-          "Observe2",
-          "Retry2",
           "Route_main_s_dist",
           "Adjust",
           "Fire",
           "Observe",
-          "Adjust2",
           "Retry"
         ],
         "highlightEdges": [
@@ -354,40 +350,16 @@
             "Win"
           ],
           [
-            "Fire2",
-            "Observe2"
-          ],
-          [
             "Observe",
             "Adjust"
-          ],
-          [
-            "Observe2",
-            "Adjust2"
-          ],
-          [
-            "Adjust2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "Retry2"
           ],
           [
             "Observe",
             "Retry"
           ],
           [
-            "Observe2",
-            "Win"
-          ],
-          [
             "Retry",
             "Fire"
-          ],
-          [
-            "Retry2",
-            "Fire2"
           ]
         ],
         "highlightFailureBranches": true

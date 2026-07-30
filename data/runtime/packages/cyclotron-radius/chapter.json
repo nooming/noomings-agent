@@ -353,7 +353,7 @@
   "strategy": {
     "title": "回旋加速器 · 探究轨道半径",
     "sub": "第1关",
-    "mermaid": "graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[同时调多个参数]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Adjust",
+    "mermaid": "graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[多参盲调]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Retest\n",
     "routes": [
       {
         "id": "main",
@@ -578,10 +578,10 @@
           "ModeSelect",
           "ExploreCore",
           "Trap",
-          "Adjust",
           "Retest",
           "Observe",
-          "Win"
+          "Win",
+          "Adjust"
         ],
         "highlightEdges": [
           [
@@ -601,10 +601,6 @@
             "Trap"
           ],
           [
-            "Trap",
-            "Adjust"
-          ],
-          [
             "Adjust",
             "Retest"
           ],
@@ -619,6 +615,10 @@
           [
             "Observe",
             "Adjust"
+          ],
+          [
+            "Trap",
+            "Retest"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

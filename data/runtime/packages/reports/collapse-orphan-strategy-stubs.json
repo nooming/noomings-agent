@@ -1,0 +1,428 @@
+{
+  "dry": false,
+  "packageCount": 23,
+  "touched": [
+    "capacitor-era-ch1",
+    "capacitor-era-ch2",
+    "capacitor-era-ch4",
+    "circular-motion",
+    "gas-ideal",
+    "magnetic-force",
+    "rc-circuit",
+    "series-parallel"
+  ],
+  "removedByPkg": {
+    "capacitor-era-ch1": [
+      "Adjust2",
+      "Fire2",
+      "Adjust3",
+      "Fire3",
+      "Observe2",
+      "Observe3",
+      "Retry2",
+      "Retry3"
+    ],
+    "capacitor-era-ch2": [
+      "Adjust1",
+      "Fire1",
+      "Adjust2",
+      "Fire2",
+      "Adjust3",
+      "Fire3",
+      "Adjust4",
+      "Fire4",
+      "Observe1",
+      "Observe2",
+      "Observe3",
+      "Observe4",
+      "Retry1",
+      "Retry2",
+      "Retry3",
+      "Retry4"
+    ],
+    "capacitor-era-ch4": [
+      "Fire2",
+      "Observe2",
+      "AdjustC2",
+      "AdjustV2"
+    ],
+    "circular-motion": [
+      "Trap2",
+      "Fire2",
+      "Observe2",
+      "Win2",
+      "AdjustDown2",
+      "AdjustUp2",
+      "RetryDrop",
+      "RetryFly",
+      "AdjustOmega2",
+      "AdjustRadius2",
+      "AdjustTilt2"
+    ],
+    "gas-ideal": [
+      "Adjust3",
+      "Fire3",
+      "Observe3",
+      "Win3"
+    ],
+    "magnetic-force": [
+      "Fire2",
+      "Observe2",
+      "Win2",
+      "AdjustI2",
+      "AdjustB2",
+      "AdjustT2",
+      "Blind2"
+    ],
+    "rc-circuit": [
+      "Adjust2",
+      "Fire2",
+      "Adjust3",
+      "Fire3",
+      "Observe2",
+      "Observe3"
+    ],
+    "series-parallel": [
+      "RouteMeter",
+      "RouteR1",
+      "RouteR2"
+    ]
+  },
+  "residualOrphans": [],
+  "rows": [
+    {
+      "id": "capacitor-confound-ui",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Adjust2",
+        "Fire2",
+        "Adjust3",
+        "Fire3",
+        "Observe2",
+        "Observe3",
+        "Retry2",
+        "Retry3"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 154184
+      }
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Adjust1",
+        "Fire1",
+        "Adjust2",
+        "Fire2",
+        "Adjust3",
+        "Fire3",
+        "Adjust4",
+        "Fire4",
+        "Observe1",
+        "Observe2",
+        "Observe3",
+        "Observe4",
+        "Retry1",
+        "Retry2",
+        "Retry3",
+        "Retry4"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 155664
+      }
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Fire2",
+        "Observe2",
+        "AdjustC2",
+        "AdjustV2"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 153454
+      }
+    },
+    {
+      "id": "circular-motion",
+      "changed": true,
+      "orphanHubs": [
+        "Trap2"
+      ],
+      "removedNodes": [
+        "Trap2",
+        "Fire2",
+        "Observe2",
+        "Win2",
+        "AdjustDown2",
+        "AdjustUp2",
+        "RetryDrop",
+        "RetryFly",
+        "AdjustOmega2",
+        "AdjustRadius2",
+        "AdjustTilt2"
+      ],
+      "before": [
+        {
+          "id": "Trap2",
+          "label": "多参盲调",
+          "outs": [
+            "Fire2"
+          ]
+        }
+      ],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 156065
+      }
+    },
+    {
+      "id": "cyclotron-radius",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "efield-charge",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "friction-incline",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "gas-ideal",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Adjust3",
+        "Fire3",
+        "Observe3",
+        "Win3"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 154855
+      }
+    },
+    {
+      "id": "heat-conduction",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "magnetic-force",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Fire2",
+        "Observe2",
+        "Win2",
+        "AdjustI2",
+        "AdjustB2",
+        "AdjustT2",
+        "Blind2"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 156212
+      }
+    },
+    {
+      "id": "momentum-collision",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "multi-kp",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "pendulum-clock",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "pendulum-target",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "photoelectric",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "projectile-basic",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "projectile-cannon",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "rc-circuit",
+      "changed": true,
+      "orphanHubs": [],
+      "removedNodes": [
+        "Adjust2",
+        "Fire2",
+        "Adjust3",
+        "Fire3",
+        "Observe2",
+        "Observe3"
+      ],
+      "before": [],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 153533
+      }
+    },
+    {
+      "id": "refraction-snell",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "series-parallel",
+      "changed": true,
+      "orphanHubs": [
+        "RouteMeter",
+        "RouteR1",
+        "RouteR2"
+      ],
+      "removedNodes": [
+        "RouteMeter",
+        "RouteR1",
+        "RouteR2"
+      ],
+      "before": [
+        {
+          "id": "RouteMeter",
+          "label": "单变量·电表内阻",
+          "outs": [
+            "AdjustMeter"
+          ]
+        },
+        {
+          "id": "RouteR1",
+          "label": "单变量·电阻R1",
+          "outs": [
+            "AdjustR1"
+          ]
+        },
+        {
+          "id": "RouteR2",
+          "label": "单变量·电阻R2",
+          "outs": [
+            "AdjustR2"
+          ]
+        }
+      ],
+      "after": [],
+      "exported": {
+        "ok": true,
+        "bytes": 154772
+      }
+    },
+    {
+      "id": "thin-lens-implicit",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    },
+    {
+      "id": "transformer-turns",
+      "changed": false,
+      "orphanHubs": [],
+      "removedNodes": [],
+      "before": [],
+      "after": [],
+      "exported": null
+    }
+  ]
+}

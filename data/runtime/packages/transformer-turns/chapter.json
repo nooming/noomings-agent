@@ -291,7 +291,7 @@
   "strategy": {
     "title": "变压器 · 探究",
     "sub": "营地供电 · 变压器柜",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nAdjust3 --> Fire\nAdjust4 --> Fire\nAdjustAll --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察U₂?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust2\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·原边匝数| Route_main\nStrategySelect -->|单变量·副边匝数| Route_main_s_n2\nStrategySelect -->|单变量·原边电压| Route_main_s_U1\nStrategySelect -->|单变量·绕组温度| Route_main_s_winding_temp\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式]:::stratCore\nEnv -->|探究| Explore[探究模式]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改原边匝数]\nRoute_main_s_n2[控制变量：只改副边匝数]\nRoute_main_s_U1[控制变量：只改原边电压]\nRoute_main_s_winding_temp[控制变量：只改绕组温度]\nRetry --> Adjust1\nRoute_main --> Adjust\nRoute_main_s_n2 --> Adjust\nRoute_main_s_U1 --> Adjust\nRoute_main_s_winding_temp --> Adjust\nRoute1 --> Adjust1[调整s-n1]\nRoute2 --> Adjust2[调整s-n2]\nRoute3 --> Adjust3[调整s-U1]\nRoute4 --> Adjust4[调整s-winding-temp]\nTrap --> AdjustAll[固定其余，只调s-n1]",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察U₂?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust2\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·原边匝数| Route_main\nStrategySelect -->|单变量·副边匝数| Route_main_s_n2\nStrategySelect -->|单变量·原边电压| Route_main_s_U1\nStrategySelect -->|单变量·绕组温度| Route_main_s_winding_temp\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式]:::stratCore\nEnv -->|探究| Explore[探究模式]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改原边匝数]\nRoute_main_s_n2[控制变量：只改副边匝数]\nRoute_main_s_U1[控制变量：只改原边电压]\nRoute_main_s_winding_temp[控制变量：只改绕组温度]\nRetry --> Adjust1\nRoute_main --> Adjust\nRoute_main_s_n2 --> Adjust\nRoute_main_s_U1 --> Adjust\nRoute_main_s_winding_temp --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -652,7 +652,6 @@
           "Env",
           "Explore",
           "StrategySelect",
-          "AdjustAll",
           "Fire",
           "Observe",
           "Retry",
@@ -676,14 +675,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "AdjustAll"
-          ],
-          [
-            "AdjustAll",
-            "Fire"
           ],
           [
             "Fire",
@@ -716,6 +707,10 @@
           [
             "Challenge",
             "StrategySelect"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

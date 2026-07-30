@@ -366,7 +366,7 @@
   "strategy": {
     "title": "夜市飞椅 · 圆周运动",
     "sub": "探究与竞赛模式",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustDown --> Fire\nAdjustDown2 --> Fire2\nAdjustOmega --> Fire[测试/发射]\nAdjustOmega2 --> Fire2[测试/发射]\nAdjustRadius --> Fire\nAdjustRadius2 --> Fire2\nAdjustTilt --> Fire\nAdjustTilt2 --> Fire2\nAdjustUp --> Fire\nAdjustUp2 --> Fire2\nBackFromCV --> StrategySelect\nChallengeCore --> StrategySelect2{选择调参策略?}:::stratCond\nExploreCore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nFire2 --> Observe2{观察结果?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛模式：限次巡检]:::stratCore\nModeSelect -->|探究模式| ExploreCore[探究模式：自由调参观察]:::stratCore\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|v/F 偏大| AdjustDown[按观察结果单变量微调]\nObserve -->|v/F 偏小| AdjustUp[按观察结果单变量微调]\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve2 -->|v/F 偏大| AdjustDown2[按观察结果单变量微调]\nObserve2 -->|v/F 偏小| AdjustUp2[按观察结果单变量微调]\nObserve2 -->|偏慢掉转| RetryDrop[偏慢掉转重试]:::stratRetry\nObserve2 -->|超速飞出| RetryFly[超速飞出重试]:::stratRetry\nObserve2 -->|达标| Win2[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetryDrop --> Fire2\nRetryFly --> Fire2\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·角速度| Route_main\nStrategySelect -->|单变量·倾角| Route_main_s_base_tilt\nStrategySelect -->|单变量·半径| Route_main_s_radius\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nTrap2 --> Fire2\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改角速度]\nRoute_main_s_radius[控制变量：只改半径]\nRoute_main_s_base_tilt[控制变量：只改倾角]\nAdjustOmega[按观察单变量微调]\nAdjustOmega2[按观察单变量微调]\nAdjustRadius[按观察单变量微调]\nAdjustRadius2[按观察单变量微调]\nAdjustTilt[按观察单变量微调]\nAdjustTilt2[按观察单变量微调]\nRoute_main --> AdjustDown\nRoute_main_s_base_tilt --> AdjustDown\nRoute_main_s_radius --> AdjustDown",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustDown --> Fire\nAdjustOmega --> Fire[测试/发射]\nAdjustRadius --> Fire\nAdjustTilt --> Fire\nAdjustUp --> Fire\nBackFromCV --> StrategySelect\nChallengeCore --> StrategySelect2{选择调参策略?}:::stratCond\nExploreCore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛模式：限次巡检]:::stratCore\nModeSelect -->|探究模式| ExploreCore[探究模式：自由调参观察]:::stratCore\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|v/F 偏大| AdjustDown[按观察结果单变量微调]\nObserve -->|v/F 偏小| AdjustUp[按观察结果单变量微调]\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·角速度| Route_main\nStrategySelect -->|单变量·倾角| Route_main_s_base_tilt\nStrategySelect -->|单变量·半径| Route_main_s_radius\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改角速度]\nRoute_main_s_radius[控制变量：只改半径]\nRoute_main_s_base_tilt[控制变量：只改倾角]\nAdjustOmega[按观察单变量微调]\nAdjustRadius[按观察单变量微调]\nAdjustTilt[按观察单变量微调]\nRoute_main --> AdjustDown\nRoute_main_s_base_tilt --> AdjustDown\nRoute_main_s_radius --> AdjustDown\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -392,17 +392,10 @@
           "Win",
           "ChallengeCore",
           "StrategySelect2",
-          "Fire2",
-          "Observe2",
-          "Win2",
           "AdjustDown",
-          "RetryDrop",
-          "RetryFly",
           "Route_main",
           "Adjust",
-          "AdjustUp",
-          "AdjustDown2",
-          "AdjustUp2"
+          "AdjustUp"
         ],
         "highlightEdges": [
           [
@@ -450,10 +443,6 @@
             "AdjustDown"
           ],
           [
-            "Fire2",
-            "Observe2"
-          ],
-          [
             "Observe",
             "Adjust"
           ],
@@ -468,42 +457,6 @@
           [
             "AdjustUp",
             "Fire"
-          ],
-          [
-            "Observe2",
-            "AdjustDown2"
-          ],
-          [
-            "AdjustDown2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "AdjustUp2"
-          ],
-          [
-            "AdjustUp2",
-            "Fire2"
-          ],
-          [
-            "Observe2",
-            "RetryDrop"
-          ],
-          [
-            "Observe2",
-            "RetryFly"
-          ],
-          [
-            "Observe2",
-            "Win2"
-          ],
-          [
-            "RetryDrop",
-            "Fire2"
-          ],
-          [
-            "RetryFly",
-            "Fire2"
           ]
         ],
         "highlightFailureBranches": true
@@ -531,7 +484,6 @@
           "Observe",
           "Win",
           "AdjustDown",
-          "Win2",
           "Route_main_s_radius",
           "Adjust",
           "AdjustUp"
@@ -610,7 +562,6 @@
           "Start",
           "StrategySelect",
           "Win",
-          "Win2",
           "ModeSelect",
           "ExploreCore",
           "Fire",

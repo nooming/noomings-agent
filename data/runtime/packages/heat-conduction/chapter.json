@@ -280,7 +280,7 @@
   "strategy": {
     "title": "热传导 · 探究",
     "sub": "极地科考站 · 保温墙",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nAdjustMulti --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[同时调多个参数]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nAdjustMulti[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nTrap --> Adjust",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[多参盲调]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -541,7 +541,6 @@
           "RetryLow",
           "RetryOverheat",
           "Trap",
-          "Adjust",
           "AdjustK"
         ],
         "highlightEdges": [
@@ -560,10 +559,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "Adjust"
           ],
           [
             "Adjust",
@@ -588,6 +583,10 @@
           [
             "Observe",
             "RetryOverheat"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

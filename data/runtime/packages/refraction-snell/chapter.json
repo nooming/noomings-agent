@@ -348,7 +348,7 @@
   "strategy": {
     "title": "折射 · 探究",
     "sub": "夜潜探照 · 水下打靶",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nAdjustWave --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| AdjustWave\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·波长| Route_main\nStrategySelect -->|单变量·入射角| Route_main_s_incident_angle\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改波长]\nRoute_main_s_incident_angle[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nAdjustWave[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_incident_angle --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nAdjustWave --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| AdjustWave\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·波长| Route_main\nStrategySelect -->|单变量·入射角| Route_main_s_incident_angle\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改波长]\nRoute_main_s_incident_angle[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nAdjustWave[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_incident_angle --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -703,6 +703,10 @@
           [
             "AdjustWave",
             "Fire"
+          ],
+          [
+            "Trap",
+            "Retry"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",

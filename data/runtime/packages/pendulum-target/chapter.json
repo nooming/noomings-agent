@@ -279,7 +279,7 @@
   "strategy": {
     "title": "单摆投靶 · 第1关",
     "sub": "探究摆长与释放角对落点的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAng --> Fire\nAdjustBoth --> Fire\nAdjustLen --> Fire[释放摆锤]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFail --> Start\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|未达标| Adjust\nObserve -->|机会用尽| Fail[失败]:::stratRetry\nObserve -->|偏远| RetryFar[偏远：按观察结果单变量微调]:::stratRetry\nObserve -->|偏近| RetryNear[偏近：按观察结果单变量微调]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·摆长| Len\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·摆角| Route_main_s_angle\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式：限5次机会]:::stratCore\nEnv -->|探究| Explore[探究模式：不限次数]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main_s_angle[控制变量：只改摆角]\nAng --> AdjustAng[调整角度]\nLen --> AdjustLen[调整摆长]\nRetryFar --> AdjustAng\nRetryNear --> AdjustLen\nRoute_main_s_angle --> Adjust\nTrap --> AdjustBoth[调整摆长和角度]",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAng --> Fire\nAdjustLen --> Fire[释放摆锤]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFail --> Start\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|未达标| Adjust\nObserve -->|机会用尽| Fail[失败]:::stratRetry\nObserve -->|偏远| RetryFar[偏远：按观察结果单变量微调]:::stratRetry\nObserve -->|偏近| RetryNear[偏近：按观察结果单变量微调]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·摆长| Len\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·摆角| Route_main_s_angle\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式：限5次机会]:::stratCore\nEnv -->|探究| Explore[探究模式：不限次数]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main_s_angle[控制变量：只改摆角]\nAng --> AdjustAng[调整角度]\nLen --> AdjustLen[调整摆长]\nRetryFar --> AdjustAng\nRetryNear --> AdjustLen\nRoute_main_s_angle --> Adjust\nProbeCV[试探混淆·质量]\nLen[单变量·摆长]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -485,7 +485,6 @@
           "Env",
           "Explore",
           "StrategySelect",
-          "AdjustBoth",
           "Fire",
           "Observe",
           "Adjust",
@@ -509,14 +508,6 @@
           [
             "StrategySelect",
             "Trap"
-          ],
-          [
-            "Trap",
-            "AdjustBoth"
-          ],
-          [
-            "AdjustBoth",
-            "Fire"
           ],
           [
             "Fire",
@@ -545,6 +536,10 @@
           [
             "Challenge",
             "StrategySelect"
+          ],
+          [
+            "Trap",
+            "Fire"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
