@@ -170,16 +170,9 @@
       </table>
     </details>
     <details class="edu-panel resource-mgmt-details" id="resourcePanelDetails" open>
-      <summary>探究包与资源</summary>
-      <p class="hint">试玩 HTML、图谱预览与删除探究包均在此管理。删除发布任务不会删除磁盘上的图谱或 HTML；样本集资源受保护不可删。</p>
+      <summary>样本及其图谱</summary>
+      <p class="hint">按样本集（<code>样本html</code> ↔ <code>packages</code>）列出各样本的游戏与图谱入口。质检分数见上方一览；自生成探究包与未配对资源见下方「高级」。</p>
       <div class="catalog-toolbar">
-        <label>来源
-          <select id="resourceFilterSource">
-            <option value="">全部</option>
-            <option value="html-sample">样本集</option>
-            <option value="teacher">自生成</option>
-          </select>
-        </label>
         <label>分类
           <select id="resourceFilterCategory">
             <option value="">全部分类</option>
@@ -188,13 +181,29 @@
       </div>
       <table class="edu-table" id="pairResourceTable">
         <thead>
-          <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>游戏 URL</th><th>发布</th><th>操作</th></tr>
+          <tr><th>样本</th><th>图谱包</th><th>分类</th><th>操作</th></tr>
         </thead>
         <tbody id="pairResourceBody"></tbody>
       </table>
       <details class="resource-orphan-details">
-        <summary class="resource-orphan-summary">未配对资源</summary>
-        <p class="hint resource-orphan-hint">仅图谱或仅游戏 HTML，尚未组成可发布的探究包。</p>
+        <summary class="resource-orphan-summary">高级：自生成探究包与未配对资源</summary>
+        <p class="hint resource-orphan-hint">教师 Agent 生成的探究包，以及仅图谱或仅游戏 HTML（尚未配对）。删除发布任务不会删除磁盘上的图谱或 HTML；样本集资源受保护不可删。</p>
+        <div class="catalog-toolbar">
+          <label>来源
+            <select id="resourceFilterSource">
+              <option value="">全部</option>
+              <option value="html-sample">样本集</option>
+              <option value="teacher">自生成</option>
+            </select>
+          </label>
+        </div>
+        <h4 class="resource-orphan-heading">自生成探究包</h4>
+        <table class="edu-table" id="teacherPairResourceTable">
+          <thead>
+            <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>游戏 URL</th><th>发布</th><th>操作</th></tr>
+          </thead>
+          <tbody id="teacherPairResourceBody"></tbody>
+        </table>
         <h4 class="resource-orphan-heading">仅图谱</h4>
         <table class="edu-table" id="orphanGraphResourceTable">
           <thead>
@@ -423,6 +432,7 @@ let searchDebounce = null;
 let graphIndexItems = [];
 let playUrlIndexItems = [];
 let publishPairItems = [];
+let sampleQualityRows = [];
 let detailRequestSeq = 0;
 let judgingSessionId = null;
 
@@ -896,9 +906,54 @@ function resourceGraphBtn(graphId) {
   return `<a class="edu-btn edu-btn-outline edu-btn-sm" href="${esc(viewUrl)}" target="_blank" rel="noopener">图谱预览</a>`;
 }
 
-function filterResourcePairs() {
+function samplePlayBtn(playUrl) {
+  if (!playUrl) return '<span class="hint" style="font-size:0.78rem">无游戏</span>';
+  return `<a class="edu-btn edu-btn-primary edu-btn-sm" href="${esc(playUrl)}" target="_blank" rel="noopener">打开游戏</a>`;
+}
+
+function sampleGraphBtn(graphId, graphUrl) {
+  const viewUrl = graphUrl || graphViewUrl(graphId);
+  if (!viewUrl) return '<span class="hint" style="font-size:0.78rem">无图谱</span>';
+  return `<a class="edu-btn edu-btn-outline edu-btn-sm" href="${esc(viewUrl)}" target="_blank" rel="noopener">打开图谱</a>`;
+}
+
+function filterSampleResourceRows() {
+  const fromOverview = (sampleQualityRows || []).map(row => ({
+    id: row.id,
+    title: row.title || row.dir || row.id,
+    dir: row.dir || '',
+    playUrl: row.playUrl || '',
+    graphUrl: row.graphUrl || '',
+    hasGame: !!row.hasGame,
+    hasGraph: !!row.hasGraph,
+  }));
+  const rows = fromOverview.length
+    ? fromOverview
+    : publishPairItems
+      .filter(p => (p.source || '') === 'html-sample')
+      .map(p => ({
+        id: p.graphId,
+        title: p.title || p.graphId,
+        dir: '',
+        playUrl: p.playUrl || '',
+        graphUrl: graphViewUrl(p.graphId) || '',
+        hasGame: !!p.playUrl,
+        hasGraph: !!p.graphId,
+      }));
+  return rows.filter(row => {
+    const catItem = catalogByGraphId(row.id);
+    if (resourceFilterCategory === '__unpublished') return !catItem;
+    if (resourceFilterCategory) {
+      if (catItem?.categoryId !== resourceFilterCategory) return false;
+    }
+    return true;
+  });
+}
+
+function filterTeacherPairResources() {
   return publishPairItems.filter(p => {
     const src = p.source || 'teacher';
+    if (src === 'html-sample') return false;
     if (resourceFilterSource && src !== resourceFilterSource) return false;
     const catItem = catalogByGraphId(p.graphId);
     if (resourceFilterCategory === '__unpublished') return !catItem;
@@ -938,40 +993,67 @@ function filterResourceHtml() {
 function renderResourceLists() {
   const allPairedGraphIds = new Set(publishPairItems.map(p => p.graphId));
   const allPairedUrls = new Set(publishPairItems.map(p => p.playUrl));
-  const pairs = filterResourcePairs();
+  const samples = filterSampleResourceRows();
+  const teacherPairs = filterTeacherPairResources();
   const orphanGraphs = filterResourceGraphs().filter(g => !allPairedGraphIds.has(g.id));
   const orphanPages = filterResourceHtml().filter(i => !allPairedUrls.has(i.url));
 
   const pairBody = document.getElementById('pairResourceBody');
   if (!pairBody) return;
-  if (!pairs.length) {
-    pairBody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无探究包</td></tr>';
+  if (!samples.length) {
+    pairBody.innerHTML = '<tr><td colspan="4" class="empty-state">暂无样本及其图谱</td></tr>';
   } else {
-    pairBody.innerHTML = pairs.map(pair => {
-      const catItem = catalogByGraphId(pair.graphId);
-      const protectedPair = isProtectedPair(pair);
+    pairBody.innerHTML = samples.map(row => {
+      const catItem = catalogByGraphId(row.id);
+      const play = row.hasGame && row.playUrl
+        ? samplePlayBtn(row.playUrl)
+        : '<span class="hint" style="font-size:0.78rem">无游戏</span>';
+      const graph = row.hasGraph
+        ? sampleGraphBtn(row.id, row.graphUrl)
+        : '<span class="hint" style="font-size:0.78rem">无图谱</span>';
+      const sub = row.dir && row.dir !== row.title
+        ? `<div class="hint" style="margin:0">${esc(row.dir)} · <code>${esc(row.id)}</code></div>`
+        : `<div class="hint" style="margin:0"><code>${esc(row.id)}</code></div>`;
       return `<tr>
-        <td>${esc(pair.title || pair.graphId)}</td>
-        <td>${esc(CatalogBadges.sourceLabel(pair.source || 'teacher'))}</td>
+        <td><strong>${esc(row.title)}</strong>${sub}</td>
+        <td><code class="resource-url-code">${esc(row.id)}</code></td>
         <td>${resourceCategoryCell(catItem)}</td>
-        <td><code class="resource-url-code">${esc(pair.graphId)}</code></td>
-        <td><code class="resource-url-code">${esc(pair.playUrl)}</code></td>
-        <td>${pairPublishCell(catItem)}</td>
-        <td class="tool-link-row" style="gap:6px">
-          ${resourcePlayBtn(pair.playUrl)}
-          ${resourceGraphBtn(pair.graphId)}
-          ${protectedPair
-          ? '<span class="hint" style="font-size:0.78rem">受保护</span>'
-          : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-pair="${esc(pair.graphId)}">删除探究包</button>`}
-        </td>
+        <td class="tool-link-row" style="gap:6px">${play} ${graph}</td>
       </tr>`;
     }).join('');
-    pairBody.querySelectorAll('[data-del-pair]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const pair = publishPairItems.find(p => p.graphId === btn.dataset.delPair);
-        if (pair) deletePairResource(pair);
+  }
+
+  const teacherBody = document.getElementById('teacherPairResourceBody');
+  if (teacherBody) {
+    if (!teacherPairs.length) {
+      teacherBody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无自生成探究包</td></tr>';
+    } else {
+      teacherBody.innerHTML = teacherPairs.map(pair => {
+        const catItem = catalogByGraphId(pair.graphId);
+        const protectedPair = isProtectedPair(pair);
+        return `<tr>
+          <td>${esc(pair.title || pair.graphId)}</td>
+          <td>${esc(CatalogBadges.sourceLabel(pair.source || 'teacher'))}</td>
+          <td>${resourceCategoryCell(catItem)}</td>
+          <td><code class="resource-url-code">${esc(pair.graphId)}</code></td>
+          <td><code class="resource-url-code">${esc(pair.playUrl)}</code></td>
+          <td>${pairPublishCell(catItem)}</td>
+          <td class="tool-link-row" style="gap:6px">
+            ${resourcePlayBtn(pair.playUrl)}
+            ${resourceGraphBtn(pair.graphId)}
+            ${protectedPair
+            ? '<span class="hint" style="font-size:0.78rem">受保护</span>'
+            : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-pair="${esc(pair.graphId)}">删除探究包</button>`}
+          </td>
+        </tr>`;
+      }).join('');
+      teacherBody.querySelectorAll('[data-del-pair]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pair = publishPairItems.find(p => p.graphId === btn.dataset.delPair);
+          if (pair) deletePairResource(pair);
+        });
       });
-    });
+    }
   }
 
   const gBody = document.getElementById('orphanGraphResourceBody');
@@ -1773,12 +1855,14 @@ async function loadSampleQualityOverview() {
     const r = await fetch('/static/ui/data/sample-quality-overview.json', { cache: 'no-store' });
     if (!r.ok) throw new Error('overview missing');
     const data = await r.json();
+    sampleQualityRows = data.rows || [];
     if (stats) {
       stats.textContent = `共 ${data.total || 0} 样本 · 有图谱 ${data.withGraph || 0} · quality 通过 ${data.qualityPassed || 0}`;
     }
-    const rows = data.rows || [];
+    const rows = sampleQualityRows;
     if (!rows.length) {
       body.innerHTML = '<tr><td colspan="5" class="empty-state">暂无数据</td></tr>';
+      renderResourceLists();
       return;
     }
     body.innerHTML = rows.map(row => {
@@ -1803,9 +1887,12 @@ async function loadSampleQualityOverview() {
         <td class="tool-link-row">${play} ${graph}</td>
       </tr>`;
     }).join('');
+    renderResourceLists();
   } catch {
+    sampleQualityRows = [];
     if (stats) stats.textContent = '一览数据未生成，请运行 build-sample-quality-overview.js';
     body.innerHTML = '<tr><td colspan="5" class="empty-state">无法加载 sample-quality-overview.json</td></tr>';
+    renderResourceLists();
   }
 }
 
