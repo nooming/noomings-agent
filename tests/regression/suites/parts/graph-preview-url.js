@@ -14,12 +14,13 @@ function run() {
 
   const url = resolveGraphPreviewUrl('projectile-basic');
   assert(
-    url.includes('/packages/projectile-basic/') || url.includes('graphId=projectile-basic'),
-    `resolver url: ${url}`,
+    url === '/graph.html?graphId=projectile-basic',
+    `resolver prefers graph.html over CDN index.html: ${url}`,
   );
+  assert(!url.includes('/packages/') || !url.endsWith('/index.html'), 'must not open packages index.html as primary');
 
   const legacy = resolveGraphPreviewUrl('html-samples-projectile-basic');
-  assert(legacy.includes('projectile-basic'), `legacy graphId alias: ${legacy}`);
+  assert(legacy === '/graph.html?graphId=projectile-basic', `legacy graphId alias: ${legacy}`);
 
   const withIndex = resolveGraphPreviewUrl('projectile-basic', {
     id: 'projectile-basic',
@@ -28,7 +29,10 @@ function run() {
   assert(withIndex === '/packages/custom/index.html', 'index item url takes precedence');
 
   const eraUrl = resolveGraphPreviewUrl('capacitor-era');
-  assert(eraUrl.includes('/packages/capacitor-era/'), `capacitor-era url: ${eraUrl}`);
+  assert(eraUrl.includes('/packages/capacitor-era/') || eraUrl.includes('graphId=capacitor-era'), `capacitor-era url: ${eraUrl}`);
+
+  const ch1Url = resolveGraphPreviewUrl('capacitor-era-ch1');
+  assert(ch1Url === '/graph.html?graphId=capacitor-era-ch1', `ch1 must use graph.html not CDN index: ${ch1Url}`);
 
   const legacyEra = resolveGraphPreviewUrl('电容纪元-静电城邦-20260702-154833');
   assert(legacyEra.includes('capacitor-era'), 'legacy output graphId alias');

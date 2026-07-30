@@ -11,11 +11,12 @@ function resolveGraphPreviewUrl(graphId, indexItem) {
 
   const packageId = resolvePackageId(id);
   const pkgDir = getPackageDir(packageId);
-  if (fs.existsSync(path.join(pkgDir, 'index.html'))) {
-    return packagePreviewUrl(packageId);
-  }
+  // Prefer local graph.html shell (vendor mermaid) over stale CDN index.html previews.
   if (fs.existsSync(path.join(pkgDir, 'chapter.json')) || fs.existsSync(path.join(pkgDir, 'chapters.json'))) {
     return `/graph.html?graphId=${encodeURIComponent(packageId)}`;
+  }
+  if (fs.existsSync(path.join(pkgDir, 'index.html'))) {
+    return packagePreviewUrl(packageId);
   }
   return packagePreviewUrl(packageId);
 }

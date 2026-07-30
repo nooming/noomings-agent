@@ -3,7 +3,7 @@ const GraphViewer = (function () {
   let KG_CHAPTERS = [], DT_CHAPTERS = [], metaChapters = [];
   let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
   let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
-  let mermaidReady = false, strategyRenderId = 0, activeStrategyRouteId = null;
+  let mermaidReady = false, mermaidLoadPromise = null, strategyRenderId = 0, activeStrategyRouteId = null;
   let strategyZoomBeh = null, strategyResizeTimer = null;
   let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
   let lastStrategyDisplayMermaid = '';
@@ -559,10 +559,9 @@ function parseGraphHash() {
   if (!raw) return null;
   const params = new URLSearchParams(raw);
   const ch = parseInt(params.get('ch'), 10);
-  const fallbackView = chapterHasStrategy(Number.isFinite(ch) ? ch : 0) ? 'strategy' : 'dt';
   return {
     ch: Number.isFinite(ch) ? ch : 0,
-    view: params.get('view') || fallbackView,
+    view: params.get('view') || 'dt',
     route: params.get('route') || null,
   };
 }
@@ -889,6 +888,29 @@ function ensureMermaid() {
   mermaidReady = true;
 }
 
+/** Load Mermaid only when entering strategy view (graph.html / preview-shell omit sync tag). */
+function loadMermaidLib() {
+  if (typeof mermaid !== 'undefined') return Promise.resolve();
+  if (mermaidLoadPromise) return mermaidLoadPromise;
+  const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
+    || '/static/viewer/vendor/mermaid.min.js';
+  mermaidLoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-mermaid-loader]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('Mermaid 加载失败')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.mermaidLoader = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Mermaid 加载失败'));
+    document.head.appendChild(s);
+  });
+  return mermaidLoadPromise;
+}
+
 function renderStrategy() {
   ensureStrategyViewport();
   const mount = document.getElementById('strategy-mermaid');
@@ -899,29 +921,32 @@ function renderStrategy() {
     mount.innerHTML = '<div id="strategy-empty">本章暂无策略全景</div>';
     return;
   }
-  ensureMermaid();
-  if (typeof mermaid === 'undefined') {
-    mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
-    return;
-  }
   mount.innerHTML = '<div class="strategy-loading">正在渲染策略图…</div>';
-  const id = 'strategy-diagram-' + currentCh + '-' + rid;
-  const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
-  lastStrategyDisplayMermaid = displayBody;
-  const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
-  mermaid.render(id, src).then(({ svg }) => {
+  loadMermaidLib().then(() => {
     if (rid !== strategyRenderId) return;
-    mount.innerHTML = svg;
-    const svgEl = mount.querySelector('svg');
-    if (svgEl) {
-      svgEl.removeAttribute('width');
-      svgEl.style.width = '';
-      svgEl.style.maxWidth = '';
-      requestAnimationFrame(() => {
-        afterStrategyRender();
-        activatePendingRoute();
-      });
+    ensureMermaid();
+    if (typeof mermaid === 'undefined') {
+      mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
+      return;
     }
+    const id = 'strategy-diagram-' + currentCh + '-' + rid;
+    const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
+    lastStrategyDisplayMermaid = displayBody;
+    const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
+    return mermaid.render(id, src).then(({ svg }) => {
+      if (rid !== strategyRenderId) return;
+      mount.innerHTML = svg;
+      const svgEl = mount.querySelector('svg');
+      if (svgEl) {
+        svgEl.removeAttribute('width');
+        svgEl.style.width = '';
+        svgEl.style.maxWidth = '';
+        requestAnimationFrame(() => {
+          afterStrategyRender();
+          activatePendingRoute();
+        });
+      }
+    });
   }).catch(err => {
     if (rid !== strategyRenderId) return;
     mount.innerHTML = '<div id="strategy-empty">策略图渲染失败：' + (err.message || err) + '</div>';
@@ -1447,11 +1472,14 @@ function clearInfoPanel() {
     metaChapters = opts.metaChapters || [];
     svgEl = document.getElementById('svg');
     d3svg = d3.select(svgEl);
-    const preferStrategy = opts.defaultView === 'strategy'
-      || (opts.defaultView == null && chapterHasStrategy(0));
-    if (preferStrategy && chapterHasStrategy(0)) currentView = 'strategy';
+    // Only explicit defaultView:'strategy' (standalone 图谱.html) opens strategy-first.
+    // graph.html / preview-shell omit defaultView → start on dt (or kg) to avoid mermaid.render on first paint.
+    if (opts.defaultView === 'strategy' && chapterHasStrategy(0)) currentView = 'strategy';
     else if (opts.defaultView === 'kg' || opts.defaultView === 'dt') currentView = opts.defaultView;
-    else currentView = chapterHasStrategy(0) ? 'strategy' : 'dt';
+    else currentView = DT_CHAPTERS[0]?.tree ? 'dt' : 'kg';
+    document.getElementById('vt-kg')?.classList.toggle('active', currentView === 'kg');
+    document.getElementById('vt-dt')?.classList.toggle('active', currentView === 'dt');
+    document.getElementById('vt-strategy')?.classList.toggle('active', currentView === 'strategy');
     bindControls();
     setGraphChrome();
     if (opts.onReady) opts.onReady({ buildTabs, loadChapter, render, switchView, setChapters });
