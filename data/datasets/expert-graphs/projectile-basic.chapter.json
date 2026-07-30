@@ -1,0 +1,565 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 开始 |\n| 调节角度和速度 | O1 | operation | 调参 |\n| 命中目标? | C3 | constraint | 结果判定 |\n| 过关 | R1 | result | 胜利 |\n| 未命中重试 | - | - | skip retry |\n| 斜抛射程公式 | S1 | core | teach |\n| 控制变量法 | S2 | method | teach |\n| 无关控件 | I1 | irrelevant | 孤立 |",
+  "kg": {
+    "title": "斜抛运动射程探究",
+    "sub": "第1关",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始斜抛射程探究"
+      },
+      {
+        "id": "O1",
+        "label": "调节角度和速度",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节发射角度和初速度"
+      },
+      {
+        "id": "C3",
+        "label": "命中目标?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "抛体必须命中目标区域才算过关"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "成功命中目标区域，完成探究"
+      },
+      {
+        "id": "S1",
+        "label": "斜抛射程公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "射程 R = v0^2 * sin(2θ) / g，理解角度和速度对射程的影响"
+      },
+      {
+        "id": "S2",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "每次只改变一个变量，观察射程变化，便于归因"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中与过关无关的装饰性控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "斜抛运动射程探究",
+    "sub": "第1关",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "—",
+      "children": [
+        {
+          "n": "调节角度和速度",
+          "t": "step",
+          "d": "通过滑条调节发射角度和初速度",
+          "children": []
+        },
+        {
+          "n": "命中目标?",
+          "t": "decision",
+          "d": "抛体必须命中目标区域",
+          "children": [
+            {
+              "_e": "否",
+              "n": "未命中重试",
+              "t": "retry",
+              "d": "调整角度或速度再次尝试"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "成功命中目标"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "命中目标",
+    "sub": "过关"
+  },
+  "traceMap": {
+    "controls": {
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "斜抛运动射程探究",
+    "sub": "第1关",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[发射]\nAdjust2 --> Fire2[发射]\nFire1 --> Observe1{观察命中?}:::stratCond\nFire2 --> Observe2{观察命中?}:::stratCond\nObserve1 -->|未命中| Adjust1\nObserve1 -->|命中| Win[过关]:::stratResult\nObserve2 -->|未命中| Adjust2\nObserve2 -->|命中| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| MainPath[固定其他变量，单变量调节]\nStrategySelect -->|多参盲调| TrapPath[同时调节角度和速度]\nStart([开始探究]):::stratStart\nMainPath --> Adjust1[调整一个参数]\nTrapPath --> Adjust2[固定其余，只调s-angle]",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·初速度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C3",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MainPath",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MainPath"
+          ],
+          [
+            "MainPath",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-speed",
+        "label": "单变量·发射角度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C3",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightNodes": [
+          "Start",
+          "StrategySelect"
+        ],
+        "highlightEdges": []
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C3"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "TrapPath",
+          "Adjust2",
+          "Fire2",
+          "Observe2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "TrapPath"
+          ],
+          [
+            "TrapPath",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究斜抛运动中发射角度和初速度对射程的影响",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "斜抛运动射程公式",
+        "formulas": [
+          "R = (v0^2 * sin(2θ)) / g"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-speed",
+        "label": "初速度",
+        "symbol": "v0",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone",
+        "suggestedRange": {
+          "min": 1,
+          "max": 20,
+          "step": 0.5,
+          "unit": "m/s"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-angle",
+        "label": "发射角度",
+        "symbol": "θ",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "non-monotone",
+        "suggestedRange": {
+          "min": 0,
+          "max": 90,
+          "step": 1,
+          "unit": "°"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "空气阻力",
+        "reason": "理想模型忽略空气阻力，不影响射程判定"
+      },
+      {
+        "id": "CV2",
+        "controlId": null,
+        "label": "重力加速度",
+        "reason": "重力加速度恒定，不影响射程变化趋势"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "CV1",
+      "CV2"
+    ],
+    "narrative": {
+      "intro": "本关通过调节发射角度和初速度，观察抛体是否命中目标区域，探究斜抛射程的影响因素。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "使用滑条调节发射角度和初速度，然后发射抛体。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察结果",
+          "body": "观察抛体是否命中目标区域，记录射程变化。",
+          "mapsToKg": [
+            "C3",
+            "R1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "分析规律",
+          "body": "结合射程公式，分析角度和速度对射程的影响。",
+          "mapsToKg": [
+            "S1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "R = (v0^2 * sin(2θ)) / g"
+    ],
+    "core": {
+      "formulas": [
+        "R = (v0^2 * sin(2θ)) / g"
+      ],
+      "updateLoopSummary": "requestAnimationFrame 逐帧更新抛体位置与碰撞",
+      "winConditionSummary": "抛体命中目标区域触发过关"
+    },
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1",
+      "CV2"
+    ],
+    "dependentVariables": []
+  },
+  "gameSpec": {
+    "title": "斜抛运动射程探究",
+    "subtitle": "第1关",
+    "winCondition": "成功命中目标区域，完成探究",
+    "knowledgeSummary": "斜抛运动射程公式",
+    "controls": [
+      {
+        "id": "s-angle",
+        "type": "range",
+        "label": "发射角度",
+        "symbol": "θ",
+        "unit": "°",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 90,
+          "step": 1,
+          "unit": "°"
+        }
+      },
+      {
+        "id": "s-speed",
+        "type": "range",
+        "label": "初速度",
+        "symbol": "v0",
+        "unit": "m/s",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 20,
+          "step": 0.5,
+          "unit": "m/s"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "空气阻力",
+        "reason": "理想模型忽略空气阻力，不影响射程判定",
+        "uiStrategy": "narrative_only"
+      },
+      {
+        "controlId": null,
+        "label": "重力加速度",
+        "reason": "重力加速度恒定，不影响射程变化趋势",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C3",
+        "label": "命中目标?",
+        "desc": "抛体必须命中目标区域才算过关"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": {
+      "type": "projectile2d",
+      "needsContinuousSim": true
+    },
+    "needsContinuousSim": true,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "发射角度",
+        "symbol": "θ",
+        "unit": "°",
+        "source": "state.s-angle"
+      },
+      {
+        "label": "初速度",
+        "symbol": "v0",
+        "unit": "m/s",
+        "source": "state.s-speed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry",
+      "运动类须实时显示 ≥2 个物理量读数",
+      "须 RAF 驱动连续动画，dt 限幅 ≤50ms"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "运动类须 requestAnimationFrame + update/draw 分离 + dt 限幅，禁止调参即过关"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-angle",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-angle → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-speed",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-speed → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "命中目标?",
+        "type": "decision",
+        "desc": "抛体必须命中目标区域"
+      },
+      {
+        "name": "未命中重试",
+        "type": "retry",
+        "desc": "调整角度或速度再次尝试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功命中目标"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

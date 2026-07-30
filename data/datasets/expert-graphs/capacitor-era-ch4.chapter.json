@@ -1,0 +1,237 @@
+{
+  "_expertMeta": {
+    "id": "capacitor-era-ch4",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.534Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "电容实验三：储能与充电",
+    "sub": "能量之门",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "M1",
+        "label": "选择模式",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "选择电容量 C",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "O2",
+        "label": "选择充电电压 V",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "O3",
+        "label": "调节馈线长度 L",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "O4",
+        "label": "放电操作",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "储能达标判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "剩余充电次数判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关：能量之门开启",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "储能公式 E = ½ C V²",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "电压平方效应",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "音量调节",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "C_OUT",
+        "label": "结果落在目标区?",
+        "group": "constraint",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "M1",
+        "tp": "premise"
+      },
+      {
+        "s": "M1",
+        "t": "O1",
+        "tp": "method"
+      },
+      {
+        "s": "O1",
+        "t": "O2",
+        "tp": "method"
+      },
+      {
+        "s": "O2",
+        "t": "O3",
+        "tp": "method"
+      },
+      {
+        "s": "O3",
+        "t": "O4",
+        "tp": "method"
+      },
+      {
+        "s": "O4",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S1",
+        "t": "O2",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O2",
+        "tp": "verify"
+      },
+      {
+        "s": "O1",
+        "t": "C_OUT",
+        "tp": "premise"
+      },
+      {
+        "s": "C_OUT",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "电容实验三：储能与充电",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容实验三：储能与充电",
+        "formulas": [
+          "E = ½ C V²",
+          "R    = [100, 400]",
+          "R = H * 0.19",
+          "C = [], ch4Choices_V = []"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·馈线长度",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_audio_volume",
+        "label": "试探混淆·音量",
+        "priorityRank": 5,
+        "score": 0.47000000000000003
+      }
+    ]
+  }
+}

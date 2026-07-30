@@ -1,0 +1,585 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节磁感应强度和入射速度 | O1 | operation | 调参操作 |\n| 轨道半径在目标范围? | C1 | constraint | 结果判定 |\n| 过关 | R1 | result | 达标 |\n| 提示重试 | - | - | skip retry 回到 O1 |\n| 飞出边界? | C2 | constraint | 独立失败判定 |\n| 出界重试 | - | - | skip retry 回到 O1 |",
+  "kg": {
+    "title": "回旋加速器",
+    "sub": "探究轨道半径与磁感应强度和入射速度的关系",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入实验",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究带电粒子在匀强磁场中的圆周运动"
+      },
+      {
+        "id": "O1",
+        "label": "调节磁感应强度和入射速度",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节磁感应强度B和入射速度v"
+      },
+      {
+        "id": "C1",
+        "label": "轨道半径在目标范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断粒子轨道半径是否达到预设目标范围"
+      },
+      {
+        "id": "C2",
+        "label": "飞出边界?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断粒子是否飞出磁场边界"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "轨道半径在目标范围内，实验成功"
+      },
+      {
+        "id": "S1",
+        "label": "洛伦兹力公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "qvB = mv^2/r，洛伦兹力提供向心力"
+      },
+      {
+        "id": "S2",
+        "label": "半径公式推导",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "由洛伦兹力公式推导出 r = mv/(qB)"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中与实验无关的装饰性控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "S2",
+        "tp": "core"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "回旋加速器",
+    "sub": "探究轨道半径与磁感应强度和入射速度的关系",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始实验，调节磁感应强度和入射速度",
+      "children": [
+        {
+          "n": "飞出边界?",
+          "t": "decision",
+          "d": "粒子是否飞出磁场边界",
+          "children": [
+            {
+              "_e": "否",
+              "n": "继续",
+              "t": "step",
+              "d": "粒子未出界，继续判定"
+            },
+            {
+              "_e": "是",
+              "n": "出界重试",
+              "t": "retry",
+              "d": "粒子飞出边界，需重新调节参数"
+            }
+          ]
+        },
+        {
+          "n": "轨道半径在目标范围?",
+          "t": "decision",
+          "d": "判断轨道半径是否达到预设目标范围",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示重试",
+              "t": "retry",
+              "d": "轨道半径未达标，需重新调节参数"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "轨道半径在目标范围内，实验成功"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "回旋加速器",
+    "sub": "探究轨道半径与磁感应强度和入射速度的关系"
+  },
+  "traceMap": {
+    "controls": {
+      "s-magnetic-field": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "回旋加速器",
+    "sub": "探究轨道半径与磁感应强度和入射速度的关系",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[发射粒子]\nAdjust2 --> Fire2[发射粒子]\nFire1 --> Observe1{观察轨道半径?}:::stratCond\nFire2 --> Observe2{观察轨道半径?}:::stratCond\nObserve1 -->|观察| Adjust1\nObserve1 -->|飞出边界| Retry1[出界重试]:::stratRetry\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|观察| Adjust2\nObserve2 -->|飞出边界| Retry2[出界重试]:::stratRetry\nObserve2 -->|达标| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| ControlVar[每次只改一个参数]\nStrategySelect -->|多参盲调| MultiBlind[同时调节多个参数]\nStart([开始实验]):::stratStart\nControlVar --> Adjust1[调节一个参数]\nMultiBlind --> Adjust2[固定其余，只调s-magnetic-field]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetry1 --> Adjust1\nRetry2 --> Adjust2",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ControlVar",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ControlVar"
+          ],
+          [
+            "ControlVar",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MultiBlind",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MultiBlind"
+          ],
+          [
+            "MultiBlind",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究带电粒子在匀强磁场中做圆周运动的轨道半径与磁感应强度和入射速度的关系",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "洛伦兹力提供向心力",
+        "formulas": [
+          "qvB = mv^2/r",
+          "r = mv/(qB)"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-magnetic-field",
+        "label": "磁感应强度",
+        "symbol": "B",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1,
+          "unit": "T"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-speed",
+        "label": "入射速度",
+        "symbol": "v",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 10,
+          "step": 0.5,
+          "unit": "m/s"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "粒子质量",
+        "reason": "质量固定，不影响半径与B、v的关系"
+      },
+      {
+        "id": "CV2",
+        "controlId": null,
+        "label": "粒子电荷",
+        "reason": "电荷固定，不影响半径与B、v的关系"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "r",
+        "label": "轨道半径",
+        "unit": "m",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验探究带电粒子在匀强磁场中做圆周运动的轨道半径与磁感应强度和入射速度的关系。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "调节磁感应强度B和入射速度v，观察粒子运动轨迹。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察半径",
+          "body": "观察轨道半径是否在目标范围内，若出界则重试。",
+          "mapsToKg": [
+            "C1",
+            "C2"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "验证公式",
+          "body": "根据公式 r = mv/(qB)，验证半径与v成正比、与B成反比。",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "qvB = mv^2/r",
+      "r = mv/(qB)"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1",
+      "CV2"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "回旋加速器",
+    "subtitle": "探究轨道半径与磁感应强度和入射速度的关系",
+    "winCondition": "轨道半径在目标范围内，实验成功",
+    "knowledgeSummary": "洛伦兹力提供向心力",
+    "controls": [
+      {
+        "id": "s-magnetic-field",
+        "type": "range",
+        "label": "磁感应强度",
+        "symbol": "B",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0.1,
+          "max": 2,
+          "step": 0.1,
+          "unit": "T"
+        }
+      },
+      {
+        "id": "s-speed",
+        "type": "range",
+        "label": "入射速度",
+        "symbol": "v",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 10,
+          "step": 0.5,
+          "unit": "m/s"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "粒子质量",
+        "reason": "质量固定，不影响半径与B、v的关系",
+        "uiStrategy": "narrative_only"
+      },
+      {
+        "controlId": null,
+        "label": "粒子电荷",
+        "reason": "电荷固定，不影响半径与B、v的关系",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "轨道半径在目标范围?",
+        "desc": "判断粒子轨道半径是否达到预设目标范围"
+      },
+      {
+        "kgId": "C2",
+        "label": "飞出边界?",
+        "desc": "判断粒子是否飞出磁场边界"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-magnetic-field": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "轨道半径",
+        "symbol": "r",
+        "unit": "m"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-magnetic-field",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-magnetic-field → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-speed",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-speed → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "飞出边界?",
+        "type": "decision",
+        "desc": "粒子是否飞出磁场边界"
+      },
+      {
+        "name": "出界重试",
+        "type": "retry",
+        "desc": "粒子飞出边界，需重新调节参数"
+      },
+      {
+        "name": "轨道半径在目标范围?",
+        "type": "decision",
+        "desc": "判断轨道半径是否达到预设目标范围"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "轨道半径未达标，需重新调节参数"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "轨道半径在目标范围内，实验成功"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "_expertMeta": {
+    "id": "capacitor-era-ch1",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.531Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "电容实验一：介质与击穿",
+    "sub": "第一章 · 信号塔危机",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节介质/间距/面积并读取电容",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "介质选择判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "间距下限判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "面积上限判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "击穿判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "电容目标带判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "电容公式与击穿条件",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "介质材料影响",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "音量滑块",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "C5",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "电容实验一：介质与击穿",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容实验一：介质与击穿",
+        "formulas": [
+          "C = ε₀εᵣA / d；击穿：E = V/d 超过材料极限",
+          "R=82+nA*78",
+          "R=28",
+          "C=calcC(areaCm2,distMm,er), tgt=TARGETS[ch]"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV2",
+        "controlId": "s-dist",
+        "label": "极板间距",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-area",
+        "label": "极板面积",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-thickness",
+        "label": "厚度",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main_s-dist",
+        "label": "单变量·极板间距",
+        "priorityRank": 1,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-area",
+        "label": "单变量·极板面积",
+        "priorityRank": 2,
+        "score": 0.7
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_audio_volume",
+        "label": "试探混淆·音量",
+        "priorityRank": 4,
+        "score": 0.55
+      }
+    ]
+  }
+}

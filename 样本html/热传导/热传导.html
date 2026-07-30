@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>热传导 · 探究</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+        .app { max-width: 720px; width: 100%; background: white; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.4rem; font-weight: 600; margin-bottom: 4px; }
+        .sub { color: #4a5568; font-size: 0.9rem; margin-bottom: 20px; }
+        .canvas-wrap { background: #eef2f5; border-radius: 12px; padding: 12px 0; text-align: center; margin-bottom: 20px; }
+        canvas { display: block; margin: 0 auto; width: 100%; max-width: 600px; height: auto; background: #dce3ea; border-radius: 8px; }
+        .slider-group { margin-bottom: 18px; }
+        .slider-group label { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 500; color: #1a202c; }
+        .slider-group input { width: 100%; margin-top: 4px; }
+        .slider-group .value { font-weight: 600; color: #2b6cb0; }
+        .confound-note { background: #f0f4f8; border-left: 3px solid #a0aec0; padding: 8px 12px; font-size: 0.8rem; color: #2d3748; border-radius: 6px; margin: 12px 0; }
+        .confound-note span { font-weight: 500; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0 8px; }
+        .btn { background: #3182ce; color: white; border: none; padding: 10px 24px; border-radius: 40px; font-weight: 500; font-size: 0.95rem; cursor: pointer; transition: 0.15s; flex: 1 0 auto; }
+        .btn:hover { background: #2b6cb0; }
+        .btn-outline { background: transparent; border: 1px solid #3182ce; color: #3182ce; }
+        .btn-outline:hover { background: #ebf4ff; }
+        .observe-box { background: #f7fafc; border-radius: 12px; padding: 14px 16px; margin: 16px 0; border: 1px solid #e2e8f0; }
+        .observe-box .label { font-size: 0.8rem; color: #4a5568; }
+        .observe-box .big { font-size: 1.8rem; font-weight: 700; color: #1a202c; }
+        .observe-box .unit { font-size: 1rem; font-weight: 400; color: #718096; margin-left: 4px; }
+        .feedback { min-height: 2.2rem; font-size: 0.9rem; color: #2d3748; margin: 6px 0 10px; padding: 6px 0; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+        #feedbackMsg, #feedbackArea { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+        .win-badge { background: #38a169; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; }
+        .irrel-btn { background: #edf2f7; border: 1px solid #cbd5e0; color: #2d3748; padding: 4px 14px; border-radius: 30px; font-size: 0.75rem; cursor: pointer; margin-left: 8px; }
+        .irrel-btn:hover { background: #e2e8f0; }
+        .flex-row { display: flex; align-items: center; justify-content: space-between; }
+        .mt-1 { margin-top: 6px; }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#fb7185;--craft-bg:#1a0a10;--craft-panel:#2a1520;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-text)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#essence-bench .btn-outline{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench .observe-box{background:rgba(0,0,0,.32)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench .observe-box .label{color:var(--craft-muted)!important;}
+#essence-bench .observe-box .big{color:#ffe0c2!important;}
+#essence-bench .feedback{color:var(--craft-text)!important;}
+#essence-bench .value{color:var(--craft-accent)!important;}
+#essence-hud{top:56px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+.confound-note,.irrel-btn{display:none!important;}
+#dual-mode-hud .dual-chip,#challengeStats,
+#essence-stage > #dual-mode-hud .dual-chip,#essence-stage > #dual-mode-hud #challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel,#essence-stage > #dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay,#essence-stage > #dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#ffe0c2!important;letter-spacing:.5px;
+}
+#dual-timer-chip span[style*="background"]{background:rgba(255,224,194,.45)!important;}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>极地科考站 · 保温墙</h2>
+    <p>暴风雪夜里，炉膛侧偏热、值班舱偏凉。试着弄清导热与温差如何改变穿墙热流；再接限次急单——安全带本局固定，不足或过热都不合格。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后热流安全带本局固定，未达标只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">Q/t = κAΔT / d</div>
+    <p id="craftWinText">热流随导热与温差增大；太小供暖不足，太大则炉墙过热——合适区间才稳妥。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="heatCanvas" width="600" height="200"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">极地科考站 · 保温墙</div>
+      <div class="essence-sub" id="goalMission">探究：自由调导热与温差，观察穿墙热流</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="app">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：导热与温差怎样改变穿墙热流。竞赛另有限次急单。</p>
+
+    <!-- canvas 示意热流 -->
+    <!-- 调节变量：导热系数 -->
+    <div class="slider-group">
+        <label>导热系数 k <span class="value" id="k-value">25.0</span> W/(m·K)</label>
+        <input type="range" id="s-thermal-conductivity" min="0.1" max="400" step="0.1" value="25">
+    </div>
+
+    <!-- 调节变量：温差 -->
+    <div class="slider-group">
+        <label>温差 ΔT <span class="value" id="dt-value">20</span> K</label>
+        <input type="range" id="s-temperature-diff" min="10" max="100" step="1" value="20">
+    </div>
+
+    <div class="slider-group">
+        <label>截面积 A <span class="value" id="a-value">0.05</span> m²</label>
+        <input type="range" id="s-area" min="0.01" max="0.10" step="0.01" value="0.05">
+    </div>
+
+    <!-- 操作按钮 -->
+    <!-- 观测区：热流速率 -->
+    <div class="observe-box">
+        <div class="label">穿墙热流速率</div>
+        <div><span class="big" id="heat-rate-display">—</span><span class="unit">W</span></div>
+        <div class="feedback" id="feedback-message">调节参数后点击「测试热流」，观察值班室是否够暖。</div>
+    </div>
+
+    <!-- 过关提示区 -->
+    <div id="win-area" style="margin-top:6px;"></div>
+
+    <!-- 埋点 hook (仅一次) -->
+    <!-- trace-adapter-hook -->
+    
+
+    
+</div>
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+        <button type="button" class="btn" id="btn-test">▶ 测试热流</button>
+        <button type="button" class="btn btn-outline" id="btn-reset">↺ 重置</button>
+    </div>
+    </div>
+  </aside>
+</div>
+<script>
+    (function(){
+        function emit(type, payload) {
+            try {
+                if (window.PlatformTraceAdapter) {
+                    window.PlatformTraceAdapter.record(type, payload || {});
+                    return;
+                }
+            } catch (e) {}
+            try {
+                if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+                    window.parent.PlatformTraceAdapter.record(type, payload || {});
+                }
+            } catch (e) {}
+        }
+        function snapControls() {
+            var o = {};
+            document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+                var id = el.id || el.name; if (id) o[id] = el.value;
+            });
+            return o;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            emit('puzzle_open', {});
+            // tuning 绑定：所有 range / number
+            document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+                el.addEventListener('input', function() {
+                    emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+                });
+            });
+            // irrelevant_touch 绑定：s-area
+            var areaBtn = document.getElementById('s-area');
+            if (areaBtn) {
+                areaBtn.addEventListener('click', function() {
+                    emit('irrelevant_touch', { control: 's-area', value: 'click' });
+                });
+            }
+            // 全局暴露 emit 以便业务调用
+            window.__emit = emit;
+            window.__snapControls = snapControls;
+        });
+    })();
+    </script>
+<script>
+    (function() {
+        const A_PHYS = 0.05;   // 真正进入热流计算的截面积（学生可调的 A 为对照量）
+        const d = 0.02;
+        let TARGET_Q = 2000;
+        let TARGET_Q_HI = 3200;
+        let playMode = 'explore';
+        let lockedQ = null;
+        let lockedQHi = null;
+        let challengeWon = false;
+
+        const kSlider = document.getElementById('s-thermal-conductivity');
+        const dtSlider = document.getElementById('s-temperature-diff');
+        const aSlider = document.getElementById('s-area');
+        const kVal = document.getElementById('k-value');
+        const dtVal = document.getElementById('dt-value');
+        const aVal = document.getElementById('a-value');
+        const heatDisplay = document.getElementById('heat-rate-display');
+        const feedback = document.getElementById('feedback-message');
+        const winArea = document.getElementById('win-area');
+        const canvas = document.getElementById('heatCanvas');
+        const ctx = canvas.getContext('2d');
+        const testBtn = document.getElementById('btn-test');
+        const resetBtn = document.getElementById('btn-reset');
+
+        let W = 600, H = 320, animT = 0, flowPulse = 0;
+        /** 仅「测试热流」后揭示精确 Q；调参中显示待测 */
+        let measuredQ = null;
+
+        const MODE_GOALS = {
+          explore: {
+            hud: '探究：自由调导热与温差，观察穿墙热流',
+            side: '探究·守夜试调：试着弄清导热系数与温差如何改变热流；不必先盯固定瓦数。'
+          },
+          challenge: {
+            hud: '竞赛：限次把穿墙热流调进本局锁定安全带（过低/过热均不合格）',
+            side: '竞赛·暴风雪急单：限次把穿墙热流调进本局锁定安全带；不足或过热都不换标。'
+          }
+        };
+
+        function refreshHeatGoals() {
+          const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+          const mission = document.getElementById('goalMission');
+          const side = document.getElementById('sideGoal');
+          if (playMode === 'challenge' && lockedQ != null) {
+            if (mission) mission.textContent = '急单安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W · 本局固定';
+            if (side) side.textContent = '竞赛急单：限次把穿墙热流调进 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W（本局固定；不足或过热都不换标）。';
+          } else {
+            if (mission) mission.textContent = g.hud;
+            if (side) side.textContent = g.side;
+          }
+        }
+
+        /** FixedChallenge：仅进入竞赛时锁定一次热流安全带（含上界，避免拉满稳赢） */
+        function lockChallengeQ() {
+          lockedQ = 1600 + Math.round(Math.random() * 12) * 100; // 1600–2800
+          TARGET_Q = lockedQ;
+          // 带宽约 500–800，明显窄于探究 1200，同参未必两边同结论
+          lockedQHi = TARGET_Q + 500 + Math.round(Math.random() * 3) * 100;
+          TARGET_Q_HI = lockedQHi;
+          challengeWon = false;
+          measuredQ = null;
+          kSlider.value = '25';
+          dtSlider.value = '20';
+          aSlider.value = '0.05';
+          refreshHeatGoals();
+          updateReadings();
+          feedback.innerHTML = '急单已锁定热流安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W（本局不变）· 调参后点测试';
+          winArea.innerHTML = '';
+        }
+
+        function applyExploreQ() {
+          lockedQ = null;
+          lockedQHi = null;
+          challengeWon = false;
+          measuredQ = null;
+          TARGET_Q = 2000;
+          TARGET_Q_HI = 3200;
+          kSlider.value = '25';
+          dtSlider.value = '20';
+          aSlider.value = '0.05';
+          refreshHeatGoals();
+          updateReadings();
+          feedback.innerHTML = '自由试调 · 改导热或温差后点「测试热流」对比（不剧透瓦数）';
+          winArea.innerHTML = '';
+        }
+
+        window.__heatApplyMode = function(mode) {
+          playMode = mode === 'challenge' ? 'challenge' : 'explore';
+          if (playMode === 'challenge') lockChallengeQ();
+          else applyExploreQ();
+        };
+/* BATCH6-FIXED-20260724 FixedChallenge */
+
+        function syncCanvasSize() {
+            var stage = document.getElementById('essence-stage') || canvas.parentElement;
+            var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 600);
+            var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 320);
+            var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            var bw = Math.round(cssW * dpr), bh = Math.round(cssH * dpr);
+            if (canvas.width !== bw || canvas.height !== bh) {
+                canvas.width = bw; canvas.height = bh;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            W = cssW; H = cssH;
+        }
+
+        function computeHeatRate(k, deltaT) {
+            return (k * A_PHYS * deltaT) / d;
+        }
+
+        function updateReadings() {
+            const k = parseFloat(kSlider.value);
+            const dt = parseFloat(dtSlider.value);
+            const aUi = parseFloat(aSlider.value);
+            kVal.textContent = k.toFixed(1);
+            dtVal.textContent = dt;
+            if (aVal) aVal.textContent = aUi.toFixed(2);
+            const Qlive = computeHeatRate(k, dt);
+            if (measuredQ == null) {
+                heatDisplay.textContent = '—';
+            } else {
+                heatDisplay.textContent = measuredQ.toFixed(2);
+            }
+            // 舞台粒子强度可随参定性变化，精确瓦数仅测后揭示
+            drawCanvas(k, dt, Qlive, aUi, measuredQ);
+        }
+
+        function drawCanvas(k, dt, Qlive, aUi, Qshown) {
+            syncCanvasSize();
+            ctx.clearRect(0, 0, W, H);
+            const intensity = Math.min(Qlive / 5000, 1);
+            const g = ctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, '#1a0a12');
+            g.addColorStop(1, '#0f172a');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, W, H);
+
+            // 地面与墙
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, H * 0.78, W, H * 0.22);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, H * 0.78, W, 8);
+
+            const wallX = W * 0.46, wallW = Math.max(36, W * 0.08 + (aUi - 0.05) * 120);
+            const wallTop = H * 0.18, wallH = H * 0.6;
+
+            // 炉膛侧
+            const hot = ctx.createLinearGradient(0, 0, wallX, 0);
+            hot.addColorStop(0, 'rgba(251,113,133,0.55)');
+            hot.addColorStop(1, 'rgba(251,113,133,0.12)');
+            ctx.fillStyle = hot;
+            ctx.fillRect(0, wallTop, wallX, wallH);
+            ctx.fillStyle = '#fb7185';
+            ctx.fillRect(W * 0.08, H * 0.55, W * 0.16, H * 0.23);
+            ctx.fillStyle = '#fda4af';
+            ctx.fillRect(W * 0.11, H * 0.48, W * 0.1, H * 0.07);
+            ctx.fillStyle = '#fecdd3';
+            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+            ctx.fillText('炉膛', W * 0.12, H * 0.45);
+
+            // 值班室侧
+            const cold = ctx.createLinearGradient(wallX + wallW, 0, W, 0);
+            cold.addColorStop(0, 'rgba(56,189,248,0.08)');
+            cold.addColorStop(1, 'rgba(56,189,248,0.28)');
+            ctx.fillStyle = cold;
+            ctx.fillRect(wallX + wallW, wallTop, W - wallX - wallW, wallH);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(W * 0.72, H * 0.52, W * 0.18, H * 0.26);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(W * 0.76, H * 0.58, W * 0.1, H * 0.08);
+            ctx.fillStyle = '#bae6fd';
+            ctx.fillText('值班室', W * 0.74, H * 0.48);
+
+            // 保温墙
+            ctx.fillStyle = '#78716c';
+            ctx.fillRect(wallX, wallTop, wallW, wallH);
+            ctx.strokeStyle = '#a8a29e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(wallX, wallTop, wallW, wallH);
+            for (let i = 1; i < 4; i++) {
+                const y = wallTop + (i / 4) * wallH;
+                ctx.beginPath(); ctx.moveTo(wallX, y); ctx.lineTo(wallX + wallW, y); ctx.stroke();
+            }
+            ctx.fillStyle = 'rgba(15,23,42,0.75)';
+            ctx.fillRect(wallX + 2, wallTop - 22, 48, 16);
+            ctx.fillStyle = '#ffe0c2';
+            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('保温墙', wallX + 6, wallTop - 10);
+            ctx.fillStyle = 'rgba(226,232,240,0.75)';
+            ctx.font = '10px "Microsoft YaHei",sans-serif';
+            ctx.fillText('热流粒子·示意（快慢随热流变）', wallX - 36, wallTop + wallH + 16);
+
+            // 热流粒子（速度随 intensity，非守恒动力学）
+            const n = 6 + Math.floor(intensity * 10);
+            for (let i = 0; i < n; i++) {
+                const t = (animT * (0.35 + intensity * 0.6) + i / n) % 1;
+                const x = wallX - 40 + t * (wallW + 80);
+                const y = wallTop + 24 + (i % 5) * (wallH / 6) + Math.sin(animT * 2 + i) * 4;
+                const alpha = 0.25 + intensity * 0.65;
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(251,146,60,' + alpha + ')';
+                ctx.arc(x, y, 3 + intensity * 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 读数右下，避开顶栏 HUD
+            const boxW = 230, boxH = 52, boxX = W - boxW - 16, boxY = H - boxH - 28;
+            ctx.fillStyle = 'rgba(15,23,42,0.82)';
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeStyle = intensity >= 0.4 ? 'rgba(251,113,133,0.55)' : 'rgba(148,163,184,0.4)';
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+            ctx.fillStyle = '#fecdd3';
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('暴风雪夜 · ΔT ' + dt + ' K', boxX + 10, boxY + 22);
+            if (Qshown == null) {
+              ctx.fillStyle = '#f8fafc';
+              if (playMode === 'challenge') {
+                ctx.fillText('穿墙热流 待测 · 急单 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W', boxX + 10, boxY + 42);
+              } else {
+                ctx.fillText('穿墙热流 待测 · 点测试后显示', boxX + 10, boxY + 42);
+              }
+            } else if (playMode === 'challenge') {
+              ctx.fillStyle = (Qshown >= TARGET_Q && Qshown <= TARGET_Q_HI) ? '#86efac' : (Qshown > TARGET_Q_HI ? '#fb7185' : '#fda4af');
+              ctx.fillText('穿墙热流 ' + Qshown.toFixed(0) + ' W / 急单 ' + TARGET_Q + '–' + TARGET_Q_HI, boxX + 10, boxY + 42);
+            } else {
+              ctx.fillStyle = '#7dd3fc';
+              ctx.fillText('穿墙热流 ' + Qshown.toFixed(0) + ' W · 本次测量', boxX + 10, boxY + 42);
+            }
+
+            // 脉冲提示
+            if (flowPulse > 0) {
+                ctx.globalAlpha = Math.min(1, flowPulse);
+                ctx.strokeStyle = '#fb7185';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(wallX - 20, H * 0.5);
+                ctx.lineTo(wallX + wallW + 20, H * 0.5);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function fireTest() {
+            const k = parseFloat(kSlider.value);
+            const dt = parseFloat(dtSlider.value);
+            const Q = computeHeatRate(k, dt);
+            measuredQ = Q;
+            flowPulse = 1;
+            heatDisplay.textContent = Q.toFixed(2);
+            const controls = {
+                's-thermal-conductivity': k.toString(),
+                's-temperature-diff': dt.toString(),
+                's-area': aSlider.value
+            };
+            if (playMode === 'explore') {
+                feedback.innerHTML = '本次测量 ' + Q.toFixed(0) + ' W · 继续对比导热与温差';
+                winArea.innerHTML = '';
+                drawCanvas(k, dt, Q, parseFloat(aSlider.value), measuredQ);
+                if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+                return;
+            }
+            const winOk = Q >= TARGET_Q && Q <= TARGET_Q_HI;
+            const tooHot = Q > TARGET_Q_HI;
+            if (winOk) {
+                feedback.innerHTML = '急单完成：热流落在安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W。';
+                if (!challengeWon) {
+                  challengeWon = true;
+                  if (typeof window.__craftShowWin === 'function') {
+                    window.__craftShowWin('急单安全带本局锁定。热流随导热与温差增大；太小供暖不足，太大则炉墙过热。');
+                  }
+                }
+                winArea.innerHTML = '<span class="win-badge">🏆 过关！</span>';
+            } else if (tooHot) {
+                // FixedChallenge：失败不换阈值；过热与不足可区分
+                feedback.innerHTML = '<strong>炉墙过热</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 上限 ' + TARGET_Q_HI + ' W</span>';
+                winArea.innerHTML = '<span class="fail-badge" style="color:#fb7185;">未过关·过热</span>';
+            } else {
+                // FixedChallenge：失败不换阈值
+                feedback.innerHTML = '<strong>供暖不足</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 下限 ' + TARGET_Q + ' W</span>';
+                winArea.innerHTML = '<span class="fail-badge" style="color:#fda4af;">未过关·不足</span>';
+            }
+            drawCanvas(k, dt, Q, parseFloat(aSlider.value), measuredQ);
+            if (window.__emit) {
+                window.__emit('snapshot', { controls: controls, winOk: winOk, hintKey: winOk ? 'win_ok' : (tooHot ? 'retry_overheat' : 'retry_low_heat') });
+                if (winOk) window.__emit('win', { winOk: true });
+            }
+        }
+
+        function resetSim() {
+            kSlider.value = '25';
+            dtSlider.value = '20';
+            aSlider.value = '0.05';
+            measuredQ = null;
+            updateReadings();
+            if (playMode === 'challenge' && lockedQ != null) {
+              feedback.innerHTML = '已重置滑条 · 急单安全带仍锁定 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W · 点测试查看热流';
+            } else {
+              feedback.innerHTML = '已重置。调参后点「测试热流」再看瓦数。';
+            }
+            winArea.innerHTML = '';
+        }
+
+        testBtn.addEventListener('click', fireTest);
+        resetBtn.addEventListener('click', resetSim);
+        [kSlider, dtSlider, aSlider].forEach(function(el) {
+            el.addEventListener('input', function() {
+                measuredQ = null;
+                updateReadings();
+                feedback.innerHTML = '调节中… 点击「测试热流」查看结果。';
+                winArea.innerHTML = '';
+            });
+        });
+
+        function tick() {
+            animT += 0.016;
+            if (flowPulse > 0) flowPulse = Math.max(0, flowPulse - 0.02);
+            updateReadings();
+            requestAnimationFrame(tick);
+        }
+        window.addEventListener('resize', updateReadings);
+        if (typeof ResizeObserver !== 'undefined') {
+            var st = document.getElementById('essence-stage');
+            if (st) new ResizeObserver(updateReadings).observe(st);
+        }
+        refreshHeatGoals();
+        feedback.innerHTML = '暴风雪夜里炉膛已偏热，穿墙热流仍不足。调节后点击「测试热流」。';
+        requestAnimationFrame(tick);
+    })();
+    </script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__heatApplyMode === 'function') {
+      try { window.__heatApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1196 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 调节s-n1、s-n2、s-U1 | O1 | operation | 调节滑条 |\n| 测试按钮 | O1 | operation | 点击测试 |\n| U₂在目标区间? | C2 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 次数耗尽? | C3 | constraint | 竞赛模式次数判定 |\n| 是 | — | — | skip retry |\n| 否 | — | — | skip retry |\n| 探究观察 | S1 | core | teach 节点 |\n| 验证公式 | S2 | method | teach 节点 |",
+  "kg": {
+    "title": "变压器 · 探究",
+    "sub": "营地供电 · 变压器柜",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始变压器探究实验"
+      },
+      {
+        "id": "O1",
+        "label": "调参与测试",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "调节原副线圈匝数、输入电压、绕组温度，点击测试观察输出电压"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究模式或竞赛模式，竞赛模式有次数限制",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C2",
+        "label": "U₂在目标区间",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "输出电压U₂是否落在目标电压带内（探究8.0-12.0V，竞赛随机锁定）",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "竞赛次数未耗尽",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "竞赛模式下剩余测试次数大于0",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "成功将输出电压U₂调至目标区间内，完成挑战"
+      },
+      {
+        "id": "S1",
+        "label": "探究观察",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "通过调参观察U₂随匝比和U₁的变化规律"
+      },
+      {
+        "id": "S2",
+        "label": "验证公式",
+        "group": "method",
+        "layer": "teach",
+        "level": 2,
+        "r": 22,
+        "desc": "验证理想变压器公式U₁/U₂ ≈ N₁/N₂"
+      },
+      {
+        "id": "I1",
+        "label": "无关按钮",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面上的无关控件，不影响实验"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "desc": "每次只改一个调节量",
+        "level": 0,
+        "r": 18
+      },
+      {
+        "id": "C_OUTCOME_1",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "结果/边界类过关约束"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "变压器 · 探究",
+    "sub": "营地供电 · 变压器柜",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始变压器探究实验",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择探究模式或竞赛模式",
+          "children": [
+            {
+              "_e": "否",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究，无次数限制"
+            },
+            {
+              "_e": "是",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次挑战，目标电压带本局固定"
+            }
+          ]
+        },
+        {
+          "n": "调节s-n1、s-n2、s-U1",
+          "t": "step",
+          "d": "调节滑条并点击测试",
+          "children": [
+            {
+              "n": "调参与测试",
+              "t": "step",
+              "d": "调节原副线圈匝数、输入电压、绕组温度，点击测试观察输出电压"
+            },
+            {
+              "n": "U₂在目标区间?",
+              "t": "decision",
+              "d": "检查输出电压是否落入目标电压带",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "未达标重试",
+                  "t": "retry",
+                  "d": "调整参数后重新测试",
+                  "children": []
+                },
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "成功将U₂调至目标区间"
+                }
+              ]
+            },
+            {
+              "n": "竞赛次数耗尽?",
+              "t": "decision",
+              "d": "竞赛模式下检查剩余次数",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "继续",
+                  "t": "step",
+                  "d": "次数未用完，可继续测试"
+                },
+                {
+                  "_e": "是",
+                  "n": "次数耗尽重试",
+                  "t": "retry",
+                  "d": "竞赛次数用完，需重置或切换模式"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关",
+    "sub": "成功将输出电压U₂调至目标区间"
+  },
+  "traceMap": {
+    "controls": {
+      "s-n1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-n2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-U1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-winding-temp": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-n1"
+      },
+      "irrelevant_touch": {
+        "canonical": "irrelevant_touch",
+        "control": "I1"
+      }
+    }
+  },
+  "strategy": {
+    "title": "变压器 · 探究",
+    "sub": "营地供电 · 变压器柜",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nAdjust3 --> Fire\nAdjust4 --> Fire\nAdjustAll --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察U₂?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust2\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·原边匝数| Route_main\nStrategySelect -->|单变量·副边匝数| Route_main_s_n2\nStrategySelect -->|单变量·原边电压| Route_main_s_U1\nStrategySelect -->|单变量·绕组温度| Route_main_s_winding_temp\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式]:::stratCore\nEnv -->|探究| Explore[探究模式]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改原边匝数]\nRoute_main_s_n2[控制变量：只改副边匝数]\nRoute_main_s_U1[控制变量：只改原边电压]\nRoute_main_s_winding_temp[控制变量：只改绕组温度]\nRetry --> Adjust1\nRoute_main --> Adjust\nRoute_main_s_n2 --> Adjust\nRoute_main_s_U1 --> Adjust\nRoute_main_s_winding_temp --> Adjust\nRoute1 --> Adjust1[调整s-n1]\nRoute2 --> Adjust2[调整s-n2]\nRoute3 --> Adjust3[调整s-U1]\nRoute4 --> Adjust4[调整s-winding-temp]\nTrap --> AdjustAll[固定其余，只调s-n1]",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·原边匝数",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "Explore",
+          "Adjust1",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust2",
+          "Adjust3",
+          "Adjust4",
+          "Retry",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Route1",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Route2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Route3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire"
+          ],
+          [
+            "Route4",
+            "Adjust4"
+          ],
+          [
+            "Adjust4",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "Adjust1"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-n2",
+        "label": "单变量·副边匝数",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Env",
+          "Challenge",
+          "Adjust1",
+          "Fire",
+          "Observe",
+          "Adjust2",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Route1",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "Adjust1"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-U1",
+        "label": "单变量·原边电压",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Env",
+          "Challenge",
+          "Adjust2",
+          "Fire",
+          "Observe",
+          "Adjust1",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Route2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-winding-temp",
+        "label": "单变量·绕组温度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.55,
+        "weight": 0.55,
+        "priorityRank": 4,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Env",
+          "Challenge",
+          "Adjust3",
+          "Fire",
+          "Observe",
+          "Adjust1",
+          "Adjust2",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Route3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "Explore",
+          "StrategySelect",
+          "AdjustAll",
+          "Fire",
+          "Observe",
+          "Retry",
+          "Adjust1",
+          "Adjust2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "AdjustAll"
+          ],
+          [
+            "AdjustAll",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Observe",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.47000000000000003,
+        "weight": 0.47000000000000003,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 5
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "变压器 · 探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "变压器 · 探究",
+        "formulas": [
+          "U1/U2 ≈ N1/N2"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-n1",
+        "label": "原边匝数",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-n2",
+        "label": "副边匝数",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-U1",
+        "label": "原边电压",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-winding-temp",
+        "label": "绕组温度",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 4
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：探究观察、验证公式",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：探究观察；验证公式",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调参与测试、调参与测试、调参与测试、调参与测试、模式选择；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1",
+            "O1",
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：无关按钮（界面上的无关控件，不影响实验）",
+          "mapsToKg": [
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "过关结果",
+        "symbol": "",
+        "unit": "",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "transformer"
+  },
+  "physicsModel": {
+    "formulas": [
+      "U1/U2 ≈ N1/N2"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "U1/U2 ≈ N1/N2"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "命中/过关判定函数驱动 win 事件",
+      "domain": "transformer"
+    }
+  },
+  "gameSpec": {
+    "title": "变压器 · 探究",
+    "subtitle": "营地供电 · 变压器柜",
+    "winCondition": "成功将输出电压U₂调至目标区间内，完成挑战",
+    "knowledgeSummary": "变压器 · 探究",
+    "controls": [
+      {
+        "id": "s-n1",
+        "type": "range",
+        "label": "原边匝数",
+        "symbol": "原边匝数",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-n2",
+        "type": "range",
+        "label": "副边匝数",
+        "symbol": "副边匝数",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-U1",
+        "type": "range",
+        "label": "原边电压",
+        "symbol": "原边电压",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-winding-temp",
+        "type": "range",
+        "label": "绕组温度",
+        "symbol": "绕组温度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "选择探究模式或竞赛模式，竞赛模式有次数限制"
+      },
+      {
+        "kgId": "C2",
+        "label": "U₂在目标区间",
+        "desc": "输出电压U₂是否落在目标电压带内（探究8.0-12.0V，竞赛随机锁定）"
+      },
+      {
+        "kgId": "C3",
+        "label": "竞赛次数未耗尽",
+        "desc": "竞赛模式下剩余测试次数大于0"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-n1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-n2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-U1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-winding-temp": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "原边匝数",
+        "symbol": "原边匝数",
+        "unit": "",
+        "source": "state.s-n1"
+      },
+      {
+        "label": "副边匝数",
+        "symbol": "副边匝数",
+        "unit": "",
+        "source": "state.s-n2"
+      },
+      {
+        "label": "原边电压",
+        "symbol": "原边电压",
+        "unit": "",
+        "source": "state.s-U1"
+      },
+      {
+        "label": "绕组温度",
+        "symbol": "绕组温度",
+        "unit": "",
+        "source": "state.s-winding-temp"
+      },
+      {
+        "label": "过关结果",
+        "symbol": "过关结果",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-n1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-n1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-n2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-n2 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-U1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-U1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-winding-temp",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-winding-temp → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      },
+      {
+        "type": "tuning",
+        "canonical": "tuning",
+        "control": "s-n1",
+        "required": true
+      },
+      {
+        "type": "irrelevant_touch",
+        "canonical": "irrelevant_touch",
+        "control": "I1",
+        "required": false
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "选择探究模式或竞赛模式"
+      },
+      {
+        "name": "U₂在目标区间?",
+        "type": "decision",
+        "desc": "检查输出电压是否落入目标电压带"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "调整参数后重新测试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功将U₂调至目标区间"
+      },
+      {
+        "name": "竞赛次数耗尽?",
+        "type": "decision",
+        "desc": "竞赛模式下检查剩余次数"
+      },
+      {
+        "name": "次数耗尽重试",
+        "type": "retry",
+        "desc": "竞赛次数用完，需重置或切换模式"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

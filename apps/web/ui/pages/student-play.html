@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>探究中…</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+</head>
+<body class="platform-page play-page">
+
+<div class="play-shell">
+  <div id="playIdleHint" class="play-idle-hint" hidden>💡 请先调节参数，再点击页面内的<strong>发射</strong>或<strong>测试</strong>按钮开始模拟</div>
+  <div id="pathTypeChip" class="play-path-type-chip" hidden></div>
+  <div id="pathAdviceChip" class="play-path-advice-chip" hidden></div>
+  <div class="play-frame-wrap">
+    <iframe id="gameFrame" title="探究游戏" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  </div>
+  <div class="play-fab" id="playFab">
+    <div class="play-fab-menu" id="fabMenu" hidden>
+      <div class="play-fab-menu-title" id="playTitle">探究游戏</div>
+      <a href="/student.html" class="play-fab-item">← 返回列表</a>
+      <div class="play-fab-item play-fab-status" id="playStatus" aria-live="polite">操作已记录</div>
+      <label class="play-fab-item play-fab-toggle" id="pathTypeToggleWrap">
+        <input type="checkbox" id="pathTypeToggle"> 显示探究路径类型
+      </label>
+      <button type="button" class="play-fab-item play-fab-item-btn" id="exportTraceBtn">导出会话信息（可选）</button>
+    </div>
+    <button type="button" class="play-fab-btn" id="fabToggle" aria-label="打开菜单" aria-expanded="false" aria-controls="fabMenu">⋯</button>
+  </div>
+</div>
+
+<script src="/static/ui/trace-adapter-platform.js"></script>
+<script src="/static/ui/strategy-path-summary.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const catalogId = params.get('id');
+const studentLabel = localStorage.getItem('platform-student-name') || '匿名学生';
+const studentId = localStorage.getItem('platform-student-id') || params.get('studentId') || '';
+const taskCode = localStorage.getItem('platform-task-code') || params.get('taskCode') || catalogId || '';
+const pathTypeEnabled = params.get('showPathType') === '1'
+  || localStorage.getItem('platform-show-path-type') === '1';
+
+const fabToggle = document.getElementById('fabToggle');
+const fabMenu = document.getElementById('fabMenu');
+const playFab = document.getElementById('playFab');
+let fabDimTimer = null;
+
+function setFabMenuOpen(open) {
+  fabMenu.hidden = !open;
+  fabToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  fabToggle.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+  playFab.classList.toggle('is-menu-open', open);
+  if (fabDimTimer) clearTimeout(fabDimTimer);
+  playFab.classList.remove('is-dimmed');
+  if (!open) {
+    fabDimTimer = setTimeout(() => playFab.classList.add('is-dimmed'), 3000);
+  }
+}
+
+fabToggle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  setFabMenuOpen(fabMenu.hidden);
+});
+
+document.addEventListener('click', (e) => {
+  if (!playFab.contains(e.target)) setFabMenuOpen(false);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') setFabMenuOpen(false);
+});
+
+playFab.addEventListener('mouseenter', () => playFab.classList.remove('is-dimmed'));
+
+async function boot() {
+  const titleEl = document.getElementById('playTitle');
+  const statusEl = document.getElementById('playStatus');
+
+  if (!catalogId) {
+    titleEl.textContent = '缺少任务';
+    statusEl.textContent = '请从学生端列表进入游戏';
+    return;
+  }
+
+  const r = await fetch('/api/platform/catalog');
+  const data = await r.json();
+  const item = (data.items || []).find(i => i.id === catalogId);
+  if (!item) {
+    titleEl.textContent = '任务不可用';
+    statusEl.textContent = '任务不存在或未发布';
+    return;
+  }
+
+  titleEl.textContent = item.title;
+  document.title = item.title + ' · 探究';
+
+  const traceCfg = {
+    catalogId: item.id,
+    graphId: item.graphId,
+    studentLabel,
+    studentId: studentId || undefined,
+    taskCode: taskCode || item.id,
+    ch: 0,
+  };
+  const traceSessionId = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  let sawInteraction = false;
+  const idleHintEl = document.getElementById('playIdleHint');
+  const idleHintTimer = setTimeout(() => {
+    if (!sawInteraction && idleHintEl) idleHintEl.hidden = false;
+  }, 5000);
+
+  await PlatformTraceAdapter.start({
+    ...traceCfg,
+    sessionId: traceSessionId,
+    skipBindControls: true,
+  });
+
+  const frame = document.getElementById('gameFrame');
+  let currentPhase = 'explore';
+  const pathChip = document.getElementById('pathTypeChip');
+  const pathToggle = document.getElementById('pathTypeToggle');
+  let showPathType = pathTypeEnabled;
+  if (pathToggle) {
+    pathToggle.checked = showPathType;
+    pathToggle.addEventListener('change', () => {
+      showPathType = pathToggle.checked;
+      localStorage.setItem('platform-show-path-type', showPathType ? '1' : '0');
+      if (!showPathType && pathChip) pathChip.hidden = true;
+      const adviceChip = document.getElementById('pathAdviceChip');
+      if (!showPathType && adviceChip) adviceChip.hidden = true;
+    });
+  }
+
+  function noteInteraction(type) {
+    if (type === 'win' || type === 'action' || type === 'tuning' || type === 'snapshot') {
+      sawInteraction = true;
+      if (idleHintEl) idleHintEl.hidden = true;
+    }
+    if (type === 'win' && showPathType) {
+      const pkgGuess = (item.graphId || item.playUrl || '').match(/packages\/([^/]+)/)?.[1]
+        || item.graphId
+        || null;
+      const sid = PlatformTraceAdapter.getSessionId?.() || traceSessionId;
+      const adviceChip = document.getElementById('pathAdviceChip');
+      // Prefer real session events; fall back to synthetic demo only if session score fails
+      fetch('/api/platform/strategy-path-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sid,
+          graphId: item.graphId,
+          packageId: pkgGuess,
+          mode: currentPhase === 'challenge' ? 'compete' : 'explore',
+          showScore: false,
+          audience: 'student',
+        }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (!showPathType || !pathChip) return;
+          if (data.ok && data.summary?.text) {
+            pathChip.textContent = data.summary.text;
+            pathChip.hidden = false;
+            if (adviceChip && data.summary.advice) {
+              adviceChip.textContent = '建议：' + data.summary.advice;
+              adviceChip.hidden = false;
+            }
+            return;
+          }
+          return fetch('/api/demo/strategy-path-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              packageId: pkgGuess || 'capacitor-confound-ui',
+              showScore: false,
+              audience: 'student',
+            }),
+          }).then(r => r.json()).then(demo => {
+            if (!showPathType || !pathChip) return;
+            if (demo.ok && demo.summary?.text) {
+              pathChip.textContent = demo.summary.text + ' · 演示';
+              pathChip.hidden = false;
+              if (adviceChip && demo.summary.advice) {
+                adviceChip.textContent = '建议：' + demo.summary.advice;
+                adviceChip.hidden = false;
+              }
+            }
+          });
+        })
+        .catch(() => {});
+    }
+  }
+
+  function notePhaseFromGame(phase) {
+    currentPhase = phase === 'challenge' ? 'challenge' : 'explore';
+    document.body.dataset.playPhase = currentPhase;
+    PlatformTraceAdapter.setPhase(currentPhase);
+  }
+
+  // Default explore until game modeSelect syncs
+  PlatformTraceAdapter.setPhase('explore');
+  document.body.dataset.playPhase = 'explore';
+
+  const shellOrigRecord = PlatformTraceAdapter.record.bind(PlatformTraceAdapter);
+  PlatformTraceAdapter.record = (type, payload) => {
+    noteInteraction(type);
+    if (type === 'phase_change' && payload?.phase) {
+      currentPhase = payload.phase === 'challenge' ? 'challenge' : 'explore';
+      document.body.dataset.playPhase = currentPhase;
+    }
+    return shellOrigRecord(type, payload);
+  };
+
+  window.PlatformTraceOnFlush = (data) => {
+    const ready = window.__gameTraceReady ? '轨迹采集中 · ' : '';
+    const phaseLabel = currentPhase === 'challenge' ? '竞赛' : '探究';
+    statusEl.textContent = `${ready}${phaseLabel} · 操作已记录 · ${data.eventCount || '—'} 条`;
+  };
+
+  function gateShellIdleHint(doc) {
+    if (!doc) return;
+    const hasNative = doc.querySelector('.top-hint, .observe-msg, #observeMsg, [class*="op-hint"], #modeSelect')
+      || /调节参数|点击.*发射|点击.*测试/.test((doc.body?.innerText || '').slice(0, 800));
+    if (hasNative) {
+      clearTimeout(idleHintTimer);
+      if (idleHintEl) idleHintEl.hidden = true;
+    }
+  }
+
+  function injectGameTrace() {
+    if (item.description && idleHintEl) {
+      idleHintEl.title = item.description;
+    }
+    try {
+      const doc = frame.contentDocument;
+      if (!doc) {
+        statusEl.textContent = '无法注入轨迹采集（iframe 不可访问）';
+        return;
+      }
+      gateShellIdleHint(doc);
+      if (frame.contentWindow?.__gameTraceInjected) return;
+      const script = doc.createElement('script');
+      script.src = '/static/ui/trace-adapter-platform.js';
+      script.onload = () => {
+        frame.contentWindow.__gameTraceInjected = true;
+        const childAdapter = frame.contentWindow.PlatformTraceAdapter;
+        const childRecord = childAdapter.record.bind(childAdapter);
+        childAdapter.record = (type, payload) => {
+          noteInteraction(type);
+          return childRecord(type, payload);
+        };
+        frame.contentWindow.__platformTraceSetPhase = (phase) => {
+          notePhaseFromGame(phase);
+        };
+        childAdapter.setPhase = (phase) => notePhaseFromGame(phase);
+        childAdapter.start({
+          ...traceCfg,
+          sessionId: PlatformTraceAdapter.getSessionId() || traceSessionId,
+          skipPuzzleOpen: true,
+        }).then(() => {
+          window.__gameTraceReady = true;
+          statusEl.textContent = '轨迹采集中 · 操作已记录 · 1 条';
+          // Ask game to sync its current modeSelect if present
+          try {
+            const sel = doc.getElementById('modeSelect');
+            if (sel) notePhaseFromGame(sel.value);
+          } catch { /* ignore */ }
+        });
+      };
+      script.onerror = () => {
+        statusEl.textContent = '无法加载轨迹采集脚本';
+      };
+      (doc.head || doc.documentElement).appendChild(script);
+    } catch {
+      statusEl.textContent = '无法注入轨迹采集（跨域限制）';
+    }
+  }
+
+  frame.addEventListener('load', injectGameTrace);
+  frame.src = item.playUrl;
+  if (frame.contentDocument?.readyState === 'complete') {
+    injectGameTrace();
+  }
+
+  document.getElementById('exportTraceBtn')?.addEventListener('click', () => {
+    const iframeAdapter = frame.contentWindow?.PlatformTraceAdapter;
+    const meta = iframeAdapter?.exportSessionJson?.() || {};
+    const blob = new Blob([JSON.stringify(meta, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `trace-${catalogId}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    statusEl.textContent = '已导出会话信息（完整轨迹已由平台自动记录，教师可在学情中心查看）';
+  });
+
+  setFabMenuOpen(false);
+  window.addEventListener('beforeunload', () => clearTimeout(idleHintTimer));
+}
+
+boot();
+</script>
+</body>
+</html>

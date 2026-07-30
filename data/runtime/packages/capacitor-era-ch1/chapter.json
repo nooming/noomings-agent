@@ -1,0 +1,993 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节介质/间距/面积并读取电容 | O1 | operation | 调参+读取 |\n| 介质选择判定 | C1 | constraint | 非空气介质 |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 间距下限判定 | C2 | constraint | d≥3.5mm |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 面积上限判定 | C3 | constraint | A≤100cm² |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 击穿判定 | C4 | constraint | E>Ebd击穿 |\n| 是→击穿重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 电容目标带判定 | C5 | constraint | 49-52pF |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | - | - | skip retry |",
+  "kg": {
+    "title": "电容实验一：介质与击穿",
+    "sub": "第一章 · 信号塔危机",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始第一章：信号塔危机"
+      },
+      {
+        "id": "O1",
+        "label": "调节介质/间距/面积并读取电容",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择介质材料，拖动滑条调节极板间距和面积，点击读取电容按钮"
+      },
+      {
+        "id": "C1",
+        "label": "介质选择判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "必须选用非空气介质（空气无法承载信号塔）",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "C2",
+        "label": "间距下限判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "极板间距 d ≥ 3.5 mm（塔体限位）",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "C3",
+        "label": "面积上限判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "极板面积 A ≤ 100 cm²（塔体限位）",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "C4",
+        "label": "击穿判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "场强 E = V/d 超过材料击穿场强 Ebd 则击穿",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C5",
+        "label": "电容目标带判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "电容达标且未击穿，信号塔重建完成"
+      },
+      {
+        "id": "S1",
+        "label": "电容公式与击穿条件",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "C = ε₀εᵣA/d；击穿条件 E = V/d > Ebd"
+      },
+      {
+        "id": "S2",
+        "label": "介质材料影响",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "不同介质具有不同的相对介电常数 εᵣ 和击穿场强 Ebd"
+      },
+      {
+        "id": "I1",
+        "label": "音量滑块",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "调节主音量，与过关无关"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "C5",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "电容实验一：介质与击穿",
+    "sub": "第一章 · 信号塔危机",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始第一章：信号塔危机",
+      "children": [
+        {
+          "n": "调节介质/间距/面积并读取电容",
+          "t": "step",
+          "d": "选择介质材料，拖动滑条调节极板间距和面积，点击读取电容按钮",
+          "children": [
+            {
+              "n": "介质选择判定",
+              "t": "decision",
+              "d": "必须选用非空气介质",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示重试",
+                  "t": "retry",
+                  "d": "请更换介质，回到调节介质/间距/面积并读取电容后重试"
+                },
+                {
+                  "_e": "是",
+                  "n": "间距下限判定",
+                  "t": "decision",
+                  "d": "极板间距 d ≥ 3.5 mm",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "提示重试",
+                      "t": "retry",
+                      "d": "间距过小，请增大间距，回到调节介质/间距/面积并读取电容后重试",
+                      "children": []
+                    },
+                    {
+                      "_e": "是",
+                      "n": "面积上限判定",
+                      "t": "decision",
+                      "d": "极板面积 A ≤ 100 cm²",
+                      "children": [
+                        {
+                          "_e": "否",
+                          "n": "提示重试",
+                          "t": "retry",
+                          "d": "面积过大，请减小面积，回到调节介质/间距/面积并读取电容后重试",
+                          "children": []
+                        },
+                        {
+                          "_e": "是",
+                          "n": "击穿判定",
+                          "t": "decision",
+                          "d": "场强 E = V/d 超过材料击穿场强 Ebd 则击穿",
+                          "children": [
+                            {
+                              "_e": "是",
+                              "n": "击穿重试",
+                              "t": "retry",
+                              "d": "介质击穿，请增大间距或更换介质，回到调节介质/间距/面积并读取电容后重试"
+                            },
+                            {
+                              "_e": "否",
+                              "n": "电容目标带判定",
+                              "t": "decision",
+                              "d": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）",
+                              "children": [
+                                {
+                                  "_e": "否",
+                                  "n": "重试",
+                                  "t": "retry",
+                                  "d": "电容未达标，请调整参数，回到调节介质/间距/面积并读取电容后重试",
+                                  "children": []
+                                },
+                                {
+                                  "_e": "是",
+                                  "n": "过关",
+                                  "t": "result",
+                                  "d": "电容达标且未击穿，信号塔重建完成"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关",
+    "sub": "信号塔重建完成"
+  },
+  "traceMap": {
+    "controls": {
+      "s-area": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-dist": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-thickness": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "audio-volume": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "mat-grid": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "sfx-btn": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "电容实验一：介质与击穿",
+    "sub": "第一章 · 信号塔危机",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust2 --> Fire2\nAdjust3 --> Fire3\nAdjust4 --> Fire4\nArea --> Fire3[调节并读取电容]\nBackFromCV --> StrategySelect\nDist --> Fire2[调节并读取电容]\nFire --> Observe{观察结果?}:::stratCond\nFire2 --> Observe2{观察结果?}:::stratCond\nFire3 --> Observe3{观察结果?}:::stratCond\nFire4 --> Observe4{观察结果?}:::stratCond\nMat --> Fire[调节并读取电容]\nObserve -->|未达标| Adjust[调整介质]\nObserve -->|击穿| Retry[击穿重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|未达标| Adjust2[调整间距]\nObserve2 -->|击穿| Retry2[击穿重试]:::stratRetry\nObserve2 -->|达标| Win\nObserve3 -->|未达标| Adjust3[调整面积]\nObserve3 -->|击穿| Retry3[击穿重试]:::stratRetry\nObserve3 -->|达标| Win\nObserve4 -->|未达标| Adjust4[盲目调整]\nObserve4 -->|击穿| Retry4[击穿重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nRetry2 --> Fire2\nRetry3 --> Fire3\nRetry4 --> Fire4\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|单变量·极板间距| Route_main_s_dist\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire4[调节并读取电容]\nStart([开始]):::stratStart\nRoute_main_s_dist[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main_s_area --> Adjust\nRoute_main_s_dist --> Adjust",
+    "routes": [
+      {
+        "id": "main_s-dist",
+        "label": "单变量·极板间距",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Fire2",
+          "Observe2",
+          "Adjust2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "Observe2",
+            "Win"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Dist",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Retry2",
+            "Fire2"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-area",
+        "label": "单变量·极板面积",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Fire",
+          "Observe",
+          "Adjust",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Mat",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Retry",
+            "Fire"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Fire4",
+          "Observe4",
+          "Adjust4",
+          "Retry4"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Fire4"
+          ],
+          [
+            "Fire4",
+            "Observe4"
+          ],
+          [
+            "Observe4",
+            "Adjust4"
+          ],
+          [
+            "Adjust4",
+            "Fire4"
+          ],
+          [
+            "Observe4",
+            "Retry4"
+          ],
+          [
+            "Retry4",
+            "Fire4"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_audio_volume",
+        "label": "试探混淆·音量",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.55,
+        "weight": 0.55,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 4
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "电容实验一：介质与击穿",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容实验一：介质与击穿",
+        "formulas": [
+          "C = ε₀εᵣA / d；击穿：E = V/d 超过材料极限",
+          "R=82+nA*78",
+          "R=28",
+          "C=calcC(areaCm2,distMm,er), tgt=TARGETS[ch]"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV2",
+        "controlId": "s-dist",
+        "label": "极板间距",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "C",
+          "E"
+        ],
+        "notes": "d 双作用：抬高 C（∝1/d）同时改 E=V/d 击穿风险",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-area",
+        "label": "极板面积",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "C"
+        ],
+        "notes": "A 单调改 C，不直接改击穿场强",
+        "priorityRank": 2
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-thickness",
+        "label": "厚度",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：电容公式与击穿条件、介质材料影响",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：电容公式与击穿条件；介质材料影响",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节介质/间距/面积并读取电容、调节介质/间距/面积并读取电容、调节介质/间距/面积并读取电容、调节介质/间距/面积并读取电容；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1",
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：音量滑块（调节主音量，与过关无关）；音量滑块（调节主音量，与过关无关）；音量滑块（调节主音量，与过关无关）",
+          "mapsToKg": [
+            "I1",
+            "I1",
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "电容读数",
+        "symbol": "C",
+        "unit": "pF",
+        "role": "primary",
+        "source": "observe"
+      },
+      {
+        "id": "OV2",
+        "label": "是否击穿",
+        "symbol": "E>Ebd",
+        "unit": "",
+        "role": "secondary",
+        "source": "constraint"
+      }
+    ],
+    "domain": "capacitor"
+  },
+  "physicsModel": {
+    "formulas": [
+      "C = ε₀εᵣA / d；击穿：E = V/d 超过材料极限",
+      "R=82+nA*78",
+      "R=28",
+      "C=calcC(areaCm2,distMm,er), tgt=TARGETS[ch]"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1",
+      "CV2"
+    ],
+    "dependentVariables": [
+      "OV1",
+      "OV2"
+    ],
+    "core": {
+      "formulas": [
+        "C = ε₀εᵣA / d；击穿：E = V/d 超过材料极限",
+        "R=82+nA*78",
+        "R=28",
+        "C=calcC(areaCm2,distMm,er), tgt=TARGETS[ch]"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "电容读数进入目标带且未击穿",
+      "domain": "capacitor"
+    }
+  },
+  "gameSpec": {
+    "title": "电容实验一：介质与击穿",
+    "subtitle": "第一章 · 信号塔危机",
+    "winCondition": "电容达标且未击穿，信号塔重建完成",
+    "knowledgeSummary": "电容实验一：介质与击穿",
+    "controls": [
+      {
+        "id": "mat-grid",
+        "type": "discrete",
+        "label": "介质材料",
+        "symbol": "介质材料",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      },
+      {
+        "id": "s-dist",
+        "type": "range",
+        "label": "极板间距",
+        "symbol": "极板间距",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-area",
+        "type": "range",
+        "label": "极板面积",
+        "symbol": "极板面积",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "调节介质/间距/面积并读取电容",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因",
+        "uiStrategy": "teach_only"
+      },
+      {
+        "controlId": "s-thickness",
+        "label": "厚度",
+        "reason": "混淆/装饰控件：不参与核心过关归因",
+        "uiStrategy": "teach_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "介质选择判定",
+        "desc": "必须选用非空气介质（空气无法承载信号塔）"
+      },
+      {
+        "kgId": "C2",
+        "label": "间距下限判定",
+        "desc": "极板间距 d ≥ 3.5 mm（塔体限位）"
+      },
+      {
+        "kgId": "C3",
+        "label": "面积上限判定",
+        "desc": "极板面积 A ≤ 100 cm²（塔体限位）"
+      },
+      {
+        "kgId": "C4",
+        "label": "击穿判定",
+        "desc": "场强 E = V/d 超过材料击穿场强 Ebd 则击穿"
+      },
+      {
+        "kgId": "C5",
+        "label": "电容目标带判定",
+        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-area": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-dist": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-thickness": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "audio-volume": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "mat-grid": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "sfx-btn": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "介质材料",
+        "symbol": "介质材料",
+        "unit": "",
+        "source": "state.mat-grid"
+      },
+      {
+        "label": "极板间距",
+        "symbol": "极板间距",
+        "unit": "",
+        "source": "state.s-dist"
+      },
+      {
+        "label": "极板面积",
+        "symbol": "极板面积",
+        "unit": "",
+        "source": "state.s-area"
+      },
+      {
+        "label": "电容读数",
+        "symbol": "C",
+        "unit": "pF",
+        "source": "computed"
+      },
+      {
+        "label": "是否击穿",
+        "symbol": "E>Ebd",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-area",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-area → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-dist",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-dist → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-thickness",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 s-thickness"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "audio-volume",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 audio-volume"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "mat-grid",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 mat-grid → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "sfx-btn",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 sfx-btn"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "介质选择判定",
+        "type": "decision",
+        "desc": "必须选用非空气介质"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "请更换介质，回到调节介质/间距/面积并读取电容后重试"
+      },
+      {
+        "name": "间距下限判定",
+        "type": "decision",
+        "desc": "极板间距 d ≥ 3.5 mm"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "间距过小，请增大间距，回到调节介质/间距/面积并读取电容后重试"
+      },
+      {
+        "name": "面积上限判定",
+        "type": "decision",
+        "desc": "极板面积 A ≤ 100 cm²"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "面积过大，请减小面积，回到调节介质/间距/面积并读取电容后重试"
+      },
+      {
+        "name": "击穿判定",
+        "type": "decision",
+        "desc": "场强 E = V/d 超过材料击穿场强 Ebd 则击穿"
+      },
+      {
+        "name": "击穿重试",
+        "type": "retry",
+        "desc": "介质击穿，请增大间距或更换介质，回到调节介质/间距/面积并读取电容后重试"
+      },
+      {
+        "name": "电容目标带判定",
+        "type": "decision",
+        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）"
+      },
+      {
+        "name": "重试",
+        "type": "retry",
+        "desc": "电容未达标，请调整参数，回到调节介质/间距/面积并读取电容后重试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "电容达标且未击穿，信号塔重建完成"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  },
+  "_alignmentFix": {
+    "at": "2026-07-30T10:27:34.046Z",
+    "removedAvControlIds": [
+      "mat-grid"
+    ],
+    "note": "Removed synthetic AVs not present in game HTML; routes re-ranked."
+  }
+}

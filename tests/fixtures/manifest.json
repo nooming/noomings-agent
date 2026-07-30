@@ -1,0 +1,42 @@
+{
+  "bundles": {
+    "judge": "judge.bundle.json",
+    "strategy": "strategy.bundle.json",
+    "traces": "traces.bundle.json"
+  },
+  "hints": {
+    "genericQuality": {
+      "tier": "generic",
+      "minConstraints": 1,
+      "minTeachNodes": 2,
+      "minVerifyLinks": 1,
+      "minDecisions": 1,
+      "minNodes": 6,
+      "maxNodes": 30,
+      "minStrategyRoutes": 2
+    },
+    "coupledMode": {
+      "tier": "generic",
+      "chLabel": "通用调参挑战",
+      "projectTitle": "通用调参挑战",
+      "winTitle": "目标得分达成",
+      "hintKeys": ["retry"],
+      "hasIrrelevant": true,
+      "modeToggleCount": 1,
+      "tunableInputCount": 12,
+      "hasCoupledControls": true,
+      "hasConditionalParamProfile": true,
+      "inferredControlIds": ["modeToggle", "paramA", "paramB", "paramC", "submitBtn", "message"],
+      "sliderControlIds": ["paramA", "paramB", "paramC", "decoyCtrl"],
+      "sourceComplexity": "rich",
+      "minStrategyRoutes": 5,
+      "minConstraints": 3,
+      "minDecisions": 3,
+      "minTeachNodes": 2,
+      "minVerifyLinks": 1,
+      "minNodes": 9,
+      "maxNodes": 36,
+      "skipWinTitleSync": false
+    }
+  }
+}

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电容 · 平行板探究</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+    .container { max-width: 720px; width: 100%; background: white; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.01em; }
+    .subtitle { color: #4a5568; font-size: 0.95rem; margin-bottom: 20px; border-left: 3px solid #3182ce; padding-left: 12px; }
+    .canvas-wrap { background: #edf2f7; border-radius: 12px; padding: 8px; margin-bottom: 20px; }
+    canvas { display: block; width: 100%; height: auto; background: #f0f4f8; border-radius: 8px; }
+    .control-panel { display: flex; flex-direction: column; gap: 18px; margin: 18px 0 12px; }
+    .slider-group { display: flex; flex-direction: column; gap: 4px; }
+    .slider-group label { font-weight: 500; font-size: 0.9rem; display: flex; justify-content: space-between; }
+    .slider-group input { width: 100%; cursor: pointer; }
+    .value-badge { background: #e2e8f0; padding: 2px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
+    .confound-note { background: #fef9e7; border-left: 4px solid #f6c23e; padding: 8px 14px; font-size: 0.85rem; border-radius: 6px; color: #5d4b2e; margin: 6px 0 12px; }
+    .confound-note span { font-weight: 600; }
+    .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 10px 0 16px; }
+    .btn { background: #3182ce; border: none; color: white; font-weight: 500; padding: 8px 22px; border-radius: 40px; font-size: 0.95rem; cursor: pointer; transition: background 0.15s; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+    .btn:hover { background: #2b6cb0; }
+    .btn:active { transform: scale(0.97); }
+    .btn.secondary { background: #a0aec0; }
+    .btn.secondary:hover { background: #718096; }
+    .observe-box { background: rgba(0,0,0,.22); border: 1px solid rgba(245,158,11,.35); border-radius: 12px; padding: 14px 18px; margin: 12px 0 8px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .observe-label { font-weight: 600; color: #fbbf24; font-size: 0.9rem; }
+    .observe-value { font-size: 1.5rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em; }
+    .observe-unit { font-size: 0.9rem; color: #cbd5e1; margin-left: 2px; }
+    .hint-msg { font-size: 0.9rem; padding: 6px 0 2px; color: #e2e8f0; min-height: 1.6em; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    #hintMsg { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .value-badge { background: rgba(245,158,11,.18)!important; color:#fde68a!important; }
+    .win-banner { background: #c6f6d5; border: 1px solid #9ae6b4; border-radius: 40px; padding: 8px 18px; font-weight: 600; color: #22543d; display: inline-block; margin-top: 6px; }
+    .irrelevant-touch { background: #f7fafc; border: 1px dashed #cbd5e0; border-radius: 30px; padding: 6px 16px; font-size: 0.8rem; color: #4a5568; cursor: default; display: inline-block; margin-left: 8px; user-select: none; }
+    .irrelevant-touch:active { background: #e2e8f0; }
+    .flex-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .mt-1 { margin-top: 6px; }
+    .text-sm { font-size: 0.85rem; color: #4a5568; }
+  
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:auto; right:12px; z-index:6; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(220px, 40%);
+  align-items:flex-end;
+}
+#essence-hud .essence-sub{display:none!important;}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#f59e0b;--craft-bg:#1a1408;--craft-panel:#2a2010;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>收音机电容标定</h2>
+    <p>老式收音机调谐电容读数飘了。试着弄清面积与间距如何改变读数；再接限次急单——打偏换新目标。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛打偏换新目标。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">C = ε₀εᵣA / d</div>
+    <p id="craftWinText">通过调参与观察，你验证了本实验的核心关系。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+    <canvas id="capCanvas" width="600" height="240"></canvas>
+  </div>
+
+  
+    <div id="essence-hud">
+      <div class="essence-title">收音机调谐台</div>
+      <div class="essence-sub" id="goalMission">探究：自由调 A、d，观察电容读数变化</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：A、d 怎样改变电容读数。竞赛另有限次急单（打偏换新目标）。</p>
+      <!-- canvas 示意平行板 -->
+  <!-- 调节变量 -->
+  <div class="control-panel">
+    <div class="slider-group">
+      <label for="s-area">极板面积 A <span class="value-badge" id="areaDisplay">0.05 m²</span></label>
+      <input type="range" id="s-area" min="0.01" max="0.10" step="0.01" value="0.05">
+    </div>
+    <div class="slider-group">
+      <label for="s-distance">极板间距 d <span class="value-badge" id="distDisplay">0.005 m</span></label>
+      <input type="range" id="s-distance" min="0.001" max="0.010" step="0.001" value="0.005">
+    </div>
+    <div class="slider-group">
+      <label for="s-plateTone">极板色调 <span class="value-badge" id="toneDisplay">暖铜</span></label>
+      <input type="range" id="s-plateTone" min="0" max="2" step="1" value="0">
+    </div>
+  </div>
+
+  <!-- 混淆变量 (teach_only) -->
+  <!-- 操作行 + 无关按钮 (I1) -->
+  <!-- Observe 读数 -->
+  <div class="observe-box">
+    <span class="observe-label">电容读数 C</span>
+    <span class="observe-value" id="capacitanceDisplay">0.00</span>
+    <span class="observe-unit">pF</span>
+  </div>
+  <div class="observe-box" style="margin-top:8px;background:rgba(0,0,0,.18);border-color:rgba(245,158,11,.35)">
+    <span class="observe-label">目标区间</span>
+    <span class="observe-value" id="targetBandDisplay" style="font-size:1.05rem">140–180</span>
+    <span class="observe-unit">pF</span>
+  </div>
+  <div class="hint-msg" id="hintMsg">读数未入区间 · 改面积或间距后再测</div>
+  <div id="winContainer"></div>
+
+  <!-- 埋点 hook (只嵌入一次) -->
+  <!-- trace-adapter-hook -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+    <button class="btn" id="testBtn">▶ 测试 / 发射</button>
+    <button class="btn secondary" id="resetBtn">↺ 重置</button>
+    <input type="hidden" id="I1" value="irrelevant">
+  </div>
+    </div>
+  </aside>
+</div>
+<script>
+    (function(){
+      function emit(type, payload) {
+        try {
+          if (window.PlatformTraceAdapter) {
+            window.PlatformTraceAdapter.record(type, payload || {});
+            return;
+          }
+        } catch (e) {}
+        try {
+          if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+            window.parent.PlatformTraceAdapter.record(type, payload || {});
+          }
+        } catch (e) {}
+      }
+      function snapControls() {
+        var o = {};
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+          var id = el.id || el.name; if (id) o[id] = el.value;
+        });
+        return o;
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        emit('puzzle_open', {});
+        // tuning 绑定 (range)
+        document.querySelectorAll('input[type="range"]').forEach(function(el) {
+          el.addEventListener('input', function() {
+            emit('tuning', { control: el.id || 'slider', value: el.value });
+          });
+        });
+        // irrelevant_touch 绑定 I1
+        var i1 = document.getElementById('I1');
+        if (i1) {
+          i1.addEventListener('click', function() {
+            emit('irrelevant_touch', { control: 'I1', value: 'touched' });
+          });
+        }
+      });
+    })();
+  </script>
+<script>
+  (function() {
+    const EPS0 = 8.854187817e-12;
+    let TARGET_LO = 140;
+    let TARGET_HI = 180;
+    const canvas = document.getElementById('capCanvas');
+    const ctx = canvas.getContext('2d');
+    const wrap = canvas.parentElement;
+
+    const areaSlider = document.getElementById('s-area');
+    const distSlider = document.getElementById('s-distance');
+    const toneSlider = document.getElementById('s-plateTone');
+    const areaDisplay = document.getElementById('areaDisplay');
+    const distDisplay = document.getElementById('distDisplay');
+    const toneDisplay = document.getElementById('toneDisplay');
+    const capDisplay = document.getElementById('capacitanceDisplay');
+    const hintMsg = document.getElementById('hintMsg');
+    const winContainer = document.getElementById('winContainer');
+    const testBtn = document.getElementById('testBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const targetBandDisplay = document.getElementById('targetBandDisplay');
+
+    let W = 600, H = 400, dpr = 1;
+    let glowPulse = 0;
+    let meterNeedle = 0;
+    let playMode = 'explore';
+    let lockedBand = null;
+    let challengeWon = false;
+    /** 仅测试后揭示 C */
+    let measuredC = null;
+
+    const MODE_GOALS = {
+      explore: {
+        hud: '探究：自由调 A、d，观察读数如何变化',
+        side: '探究·夜修试调：试着弄清面积与间距如何改变读数；不必先盯固定区间。'
+      },
+      challenge: {
+        hud: '竞赛：限次把读数打进当前急单区间（打偏换新目标）',
+        side: '竞赛·夜修急单：限次把读数打进当前急单区间；打偏换新目标。'
+      }
+    };
+
+    function refreshCapGoals() {
+      const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      if (playMode === 'challenge' && lockedBand) {
+        if (mission) mission.textContent = '急单区间：' + TARGET_LO + '–' + TARGET_HI + ' pF · 打偏换新目标';
+        if (side) side.textContent = '竞赛急单：限次把读数调进 ' + TARGET_LO + '–' + TARGET_HI + ' pF；打偏换新目标。';
+      } else {
+        if (mission) mission.textContent = g.hud;
+        if (side) side.textContent = g.side;
+      }
+      if (targetBandDisplay) {
+        targetBandDisplay.textContent = playMode === 'challenge'
+          ? (TARGET_LO + '–' + TARGET_HI)
+          : '探究观察';
+      }
+    }
+
+    function rollChallengeBand() {
+      const mid = 90 + Math.random() * 140; // 90–230
+      // 带宽 ~16–28，明显窄于探究 40，同参未必两边同结论
+      const half = 8 + Math.random() * 6;
+      TARGET_LO = Math.round(mid - half);
+      TARGET_HI = Math.round(mid + half);
+      lockedBand = { lo: TARGET_LO, hi: TARGET_HI };
+    }
+    /** RerollChallenge：进入竞赛抽一次；失败再换目标 C */
+    function lockChallengeBand() {
+      rollChallengeBand();
+      challengeWon = false;
+      areaSlider.value = '0.03';
+      distSlider.value = '0.008';
+      toneSlider.value = '0';
+      refreshCapGoals();
+      updateUI(false);
+      hintMsg.textContent = '急单已下发 · ' + TARGET_LO + '–' + TARGET_HI + ' pF（打偏换新目标）';
+      winContainer.innerHTML = '';
+    }
+    function rerollChallengeBand() {
+      rollChallengeBand();
+      // 打乱滑条，避免贴旧解背题
+      areaSlider.value = String((0.02 + Math.random() * 0.06).toFixed(2));
+      distSlider.value = String((0.002 + Math.random() * 0.006).toFixed(3));
+      challengeWon = false;
+      refreshCapGoals();
+      updateUI(false);
+      hintMsg.textContent = '未命中 · 已换新目标 ' + TARGET_LO + '–' + TARGET_HI + ' pF';
+      winContainer.innerHTML = '';
+    }
+
+    function applyExploreBand() {
+      lockedBand = null;
+      challengeWon = false;
+      TARGET_LO = 140;
+      TARGET_HI = 180;
+      areaSlider.value = '0.05';
+      distSlider.value = '0.005';
+      toneSlider.value = '0';
+      refreshCapGoals();
+      updateUI(false);
+      hintMsg.textContent = '自由试调 · 改面积或间距后观察读数';
+      winContainer.innerHTML = '';
+    }
+
+    window.__capApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      if (playMode === 'challenge') lockChallengeBand();
+      else applyExploreBand();
+    };
+
+    const TONE_NAMES = ['暖铜', '银灰', '冷蓝'];
+    const TONE_COLORS = [
+      { top: '#b45309', topHi: '#f59e0b', bot: '#92400e', botHi: '#d97706' },
+      { top: '#64748b', topHi: '#94a3b8', bot: '#475569', botHi: '#64748b' },
+      { top: '#1d4ed8', topHi: '#60a5fa', bot: '#1e3a8a', botHi: '#3b82f6' }
+    ];
+
+    function computeCapacitance(A, d) {
+      if (d <= 0) return 0;
+      return EPS0 * A / d;
+    }
+    function pF(valFarad) { return valFarad * 1e12; }
+    function getA() { return parseFloat(areaSlider.value); }
+    function getD() { return parseFloat(distSlider.value); }
+    function getTone() { return parseInt(toneSlider.value, 10) || 0; }
+
+    function resizeCanvas() {
+      const rect = wrap.getBoundingClientRect();
+      dpr = window.devicePixelRatio || 1;
+      W = Math.max(320, rect.width);
+      H = Math.max(240, rect.height);
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(getA(), getD(), getTone(), pF(computeCapacitance(getA(), getD())));
+    }
+
+    function updateUI(emitSnapshot) {
+      const A = getA();
+      const d = getD();
+      const tone = getTone();
+      areaDisplay.textContent = A.toFixed(2) + ' m²';
+      distDisplay.textContent = d.toFixed(3) + ' m';
+      toneDisplay.textContent = TONE_NAMES[tone] || TONE_NAMES[0];
+
+      const C_pF = pF(computeCapacitance(A, d));
+      if (measuredC != null) {
+        capDisplay.textContent = measuredC.toFixed(2);
+        meterNeedle += (measuredC - meterNeedle) * 0.35;
+      } else {
+        capDisplay.textContent = '—';
+        meterNeedle += (0 - meterNeedle) * 0.2;
+      }
+
+      const inBand = C_pF >= TARGET_LO && C_pF <= TARGET_HI;
+      const winOk = playMode === 'challenge' ? inBand : false;
+      drawScene(A, d, tone, C_pF);
+
+      if (emitSnapshot) {
+        measuredC = C_pF;
+        capDisplay.textContent = measuredC.toFixed(2);
+        const controls = {
+          's-area': A.toString(),
+          's-distance': d.toString(),
+          's-plateTone': String(tone)
+        };
+        if (playMode === 'explore') {
+          hintMsg.textContent = '当前读数 · 继续对比 A、d';
+          winContainer.innerHTML = '';
+          try {
+            if (window.PlatformTraceAdapter) {
+              window.PlatformTraceAdapter.record('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+            } else if (window.parent && window.parent.PlatformTraceAdapter) {
+              window.parent.PlatformTraceAdapter.record('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+            }
+          } catch (e) {}
+          return;
+        }
+        const hintKey = winOk ? 'win' : (C_pF < TARGET_LO ? 'cap_low' : 'cap_high');
+        try {
+          if (window.PlatformTraceAdapter) {
+            window.PlatformTraceAdapter.record('snapshot', { controls: controls, winOk: winOk, hintKey: hintKey });
+          } else if (window.parent && window.parent.PlatformTraceAdapter) {
+            window.parent.PlatformTraceAdapter.record('snapshot', { controls: controls, winOk: winOk, hintKey: hintKey });
+          }
+        } catch (e) {}
+        if (winOk) {
+          if (!challengeWon) {
+            challengeWon = true;
+            try {
+              if (window.PlatformTraceAdapter) window.PlatformTraceAdapter.record('win', { winOk: true });
+              else if (window.parent && window.parent.PlatformTraceAdapter) window.parent.PlatformTraceAdapter.record('win', { winOk: true });
+            } catch (e) {}
+            if (typeof window.__craftShowWin === 'function') {
+              window.__craftShowWin('换目标后仍能命中：说明你掌握了读数随面积、间距的变化，而不是背滑条。');
+            }
+          }
+          hintMsg.textContent = '急单完成 · 读数已入区间';
+          winContainer.innerHTML = '<div class="win-banner">过关 · 夜修完成</div>';
+        } else {
+          // RerollChallenge：失败换目标 C；先标明偏高/偏低
+          const sideTxt = C_pF < TARGET_LO ? '读数偏低' : '读数偏高';
+          const oldLo = TARGET_LO, oldHi = TARGET_HI;
+          rerollChallengeBand();
+          hintMsg.innerHTML = '<strong>' + sideTxt + '</strong><br><span style="font-size:0.82em;opacity:.92">原 ' + oldLo + '–' + oldHi + ' · 新目标 ' + TARGET_LO + '–' + TARGET_HI + ' pF</span>';
+        }
+      } else if (playMode === 'challenge') {
+        hintMsg.textContent = '调节中… 点「测试」查看读数（打偏换新目标）';
+        winContainer.innerHTML = '';
+      } else {
+        hintMsg.textContent = '读数待测 · 调 A、d 后点测试';
+        winContainer.innerHTML = '';
+      }
+    }
+
+    function drawScene(A, d, tone, C_pF) {
+      ctx.clearRect(0, 0, W, H);
+      // 实验室墙与地面
+      const wall = ctx.createLinearGradient(0, 0, 0, H);
+      wall.addColorStop(0, '#1c140c');
+      wall.addColorStop(0.55, '#24180f');
+      wall.addColorStop(1, '#120e0a');
+      ctx.fillStyle = wall;
+      ctx.fillRect(0, 0, W, H);
+      // 墙面瓷砖线
+      ctx.strokeStyle = 'rgba(245,158,11,0.06)';
+      ctx.lineWidth = 1;
+      for (let y = 40; y < H - 90; y += 36) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+      // 后墙货架与吊灯
+      ctx.fillStyle = '#2a2018';
+      ctx.fillRect(W * 0.05, 48, W * 0.22, 110);
+      ctx.strokeStyle = '#78350f';
+      ctx.strokeRect(W * 0.05, 48, W * 0.22, 110);
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = i % 2 ? '#854d0e' : '#a16207';
+        ctx.fillRect(W * 0.07 + i * 42, 70, 28, 70);
+      }
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.arc(W * 0.5, 28, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(253,230,138,0.12)';
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5 - 80, 120);
+      ctx.lineTo(W * 0.5, 28);
+      ctx.lineTo(W * 0.5 + 80, 120);
+      ctx.fill();
+
+      // 窗户
+      const wx = W * 0.78, wy = 42, ww = Math.min(150, W * 0.18), wh = 100;
+      const sky = ctx.createLinearGradient(wx, wy, wx, wy + wh);
+      sky.addColorStop(0, '#38bdf8');
+      sky.addColorStop(1, '#0c4a6e');
+      ctx.fillStyle = sky;
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(wx, wy, ww, wh);
+      ctx.beginPath();
+      ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh);
+      ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2);
+      ctx.stroke();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('收音机修理铺', wx - 4, wy - 10);
+
+      // 实验台满幅
+      const benchY = H - 70;
+      ctx.fillStyle = '#3f2a1a';
+      ctx.fillRect(0, benchY, W, 70);
+      ctx.fillStyle = '#6b4423';
+      ctx.fillRect(0, benchY, W, 14);
+      ctx.fillStyle = 'rgba(251,191,36,0.08)';
+      ctx.fillRect(0, benchY, W, 14);
+      ctx.fillStyle = '#2a1c12';
+      for (let i = 0; i < 5; i++) ctx.fillRect(30 + i * (W / 5), benchY + 20, 12, 44);
+
+      // 电容计主机（右侧，更大）
+      const meterW = Math.min(168, W * 0.22);
+      const meterH = Math.min(200, H * 0.42);
+      const meterX = W - meterW - 28;
+      const meterY = benchY - meterH - 8;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(meterX - 6, meterY - 6, meterW + 12, meterH + 12);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(meterX, meterY, meterW, meterH);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(meterX, meterY, meterW, meterH);
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(meterX + 14, meterY + 18, meterW - 28, 64);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 26px ui-monospace,monospace';
+      if (measuredC != null) {
+        ctx.fillText(measuredC.toFixed(1), meterX + 22, meterY + 56);
+      } else {
+        ctx.font = 'bold 22px ui-monospace,monospace';
+        ctx.fillText('—', meterX + 36, meterY + 56);
+      }
+      ctx.font = '13px "Microsoft YaHei",sans-serif';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('pF', meterX + meterW - 42, meterY + 56);
+      ctx.fillStyle = measuredC != null ? (winOkColor(measuredC) ? '#4ade80' : '#f87171') : '#94a3b8';
+      ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
+      ctx.fillText(measuredC != null ? (winOkColor(measuredC) ? '区间内' : '偏离目标') : '待测', meterX + 22, meterY + 74);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(meterX + meterW / 2, meterY + meterH - 48, 42, Math.PI, 0);
+      ctx.stroke();
+      const ang = Math.PI + Math.min(1, Math.max(0, meterNeedle / 300)) * Math.PI;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(meterX + meterW / 2, meterY + meterH - 48);
+      ctx.lineTo(meterX + meterW / 2 + Math.cos(ang) * 36, meterY + meterH - 48 + Math.sin(ang) * 36);
+      ctx.stroke();
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+      ctx.fillText('精密电容计', meterX + 28, meterY + meterH - 12);
+
+      // 平行板夹具（视觉中心，满幅）
+      const plateW = Math.min(W * 0.48, 120 + (A - 0.01) / 0.09 * W * 0.32);
+      const gap = Math.min(H * 0.34, 36 + (d - 0.001) / 0.009 * H * 0.26);
+      const cx = W * 0.40;
+      const midY = (benchY - 24 + 90) / 2;
+      const leftX = cx - plateW / 2;
+      const colors = TONE_COLORS[tone] || TONE_COLORS[0];
+      const plateT = Math.max(14, Math.min(22, H * 0.03));
+
+      // 底座与立柱
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(leftX - 36, midY - gap / 2 - 56, plateW + 72, 14);
+      ctx.fillRect(leftX - 36, midY + gap / 2 + 42, plateW + 72, 14);
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(leftX - 26, midY - gap / 2 - 56, 16, gap + 112);
+      ctx.fillRect(leftX + plateW + 10, midY - gap / 2 - 56, 16, gap + 112);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(leftX - 48, benchY - 18, plateW + 96, 18);
+
+      // 电场线
+      glowPulse = (glowPulse + 0.02) % 1;
+      ctx.strokeStyle = 'rgba(251,191,36,' + (0.22 + 0.14 * Math.sin(glowPulse * Math.PI * 2)) + ')';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 9; i++) {
+        const x = leftX + 20 + i * (plateW - 40) / 8;
+        ctx.beginPath();
+        ctx.moveTo(x, midY - gap / 2 + plateT + 2);
+        ctx.lineTo(x, midY + gap / 2 - 2);
+        ctx.stroke();
+      }
+
+      // 上/下极板
+      ctx.fillStyle = colors.top;
+      ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT);
+      ctx.fillStyle = colors.topHi;
+      ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT * 0.4);
+      ctx.fillStyle = colors.bot;
+      ctx.fillRect(leftX, midY + gap / 2, plateW, plateT);
+      ctx.fillStyle = colors.botHi;
+      ctx.fillRect(leftX, midY + gap / 2, plateW, plateT * 0.4);
+
+      // 引线
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(leftX + plateW + 26, midY - gap / 2 - plateT / 2);
+      ctx.bezierCurveTo(leftX + plateW + 80, midY - gap / 2 - 40, meterX - 20, meterY + 40, meterX, meterY + 40);
+      ctx.moveTo(leftX + plateW + 26, midY + gap / 2 + plateT / 2);
+      ctx.bezierCurveTo(leftX + plateW + 80, midY + gap / 2 + 40, meterX - 20, meterY + 70, meterX, meterY + 70);
+      ctx.stroke();
+
+      // 间距标注
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(leftX + plateW + 40, midY - gap / 2);
+      ctx.lineTo(leftX + plateW + 40, midY + gap / 2);
+      ctx.stroke();
+      ctx.fillStyle = '#fde68a';
+      ctx.font = 'bold 16px "Microsoft YaHei",sans-serif';
+      ctx.fillText('d', leftX + plateW + 48, midY + 6);
+
+      // 底部读数条（避开 dual-mode HUD）
+      ctx.fillStyle = 'rgba(15,23,42,0.82)';
+      ctx.fillRect(18, benchY - 46, 240, 36);
+      ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+      ctx.strokeRect(18, benchY - 46, 240, 36);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+      if (playMode === 'challenge') {
+        ctx.fillText('急单(可换) ' + TARGET_LO + '–' + TARGET_HI + ' pF', 28, benchY - 24);
+      } else {
+        ctx.fillText('探究观察读数', 28, benchY - 24);
+      }
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = '12px "Microsoft YaHei",sans-serif';
+      if (measuredC != null) {
+        ctx.fillText('当前 ' + measuredC.toFixed(1) + ' · A=' + A.toFixed(2), 150, benchY - 24);
+      } else {
+        ctx.fillText('当前 待测 · A=' + A.toFixed(2), 150, benchY - 24);
+      }
+    }
+
+    function winOkColor(C_pF) {
+      if (playMode !== 'challenge') return false;
+      return C_pF >= TARGET_LO && C_pF <= TARGET_HI;
+    }
+
+    function onTest() { updateUI(true); }
+    function onReset() {
+      measuredC = null;
+      areaSlider.value = '0.05';
+      distSlider.value = '0.005';
+      toneSlider.value = '0';
+      updateUI(false);
+      hintMsg.textContent = '已重置 · 读数待测 · 调参后再测';
+      winContainer.innerHTML = '';
+    }
+
+    areaSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
+    distSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
+    toneSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
+    testBtn.addEventListener('click', onTest);
+    resetBtn.addEventListener('click', onReset);
+    document.getElementById('I1').addEventListener('click', function() {
+      hintMsg.textContent = '已记录一次工作台操作';
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    if (typeof ResizeObserver !== 'undefined' && wrap) {
+      new ResizeObserver(resizeCanvas).observe(wrap);
+    }
+    resizeCanvas();
+    updateUI(false);
+
+    (function loop() {
+      glowPulse += 0.015;
+      drawScene(getA(), getD(), getTone(), pF(computeCapacitance(getA(), getD())));
+      requestAnimationFrame(loop);
+    })();
+  })();
+</script>
+
+<!-- 确保 trace-adapter-hook 只出现一次，已内嵌于上方 -->
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__capApplyMode === 'function') {
+      try { window.__capApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+<!-- BATCH4-REROLL-CAP-20260724 RerollChallenge -->
+</html>

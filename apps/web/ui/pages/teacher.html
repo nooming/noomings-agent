@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#007baa">
+<title>教师工作台 · 物理探究教学平台</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+<link rel="stylesheet" href="/static/ui/agent-shell.css">
+</head>
+<body class="platform-page">
+
+<div id="platformHeader"></div>
+
+<main class="platform-main">
+  <nav class="teacher-tabs" id="teacherTabs">
+    <button type="button" class="teacher-tab is-active" data-tab="sessions">学情数据中心</button>
+    <button type="button" class="teacher-tab" data-tab="catalog">探究任务发布</button>
+    <button type="button" class="teacher-tab" data-tab="resources">资源管理</button>
+    <button type="button" class="teacher-tab" data-tab="agents">Agent 工具</button>
+  </nav>
+
+  <section class="teacher-panel is-active" id="panel-sessions">
+    <div class="edu-panel">
+      <h3>学生操作轨迹</h3>
+      <p class="hint">学生游玩时自动上报操作事件。左侧选学生，右侧查看会话详情并用 Agent B 评判。</p>
+
+      <div class="sessions-stats" id="sessionsStats">
+        <div class="stat-card"><span class="stat-value" id="statStudents">—</span><span class="stat-label">学生</span></div>
+        <div class="stat-card stat-judged"><span class="stat-value" id="statJudged">—</span><span class="stat-label">已评判</span></div>
+        <div class="stat-card stat-pending"><span class="stat-value" id="statPending">—</span><span class="stat-label">待评判</span></div>
+      </div>
+      <p class="sessions-stats-sub" id="statsSub"></p>
+
+      <div class="edu-panel classroom-board" id="classroomBoard">
+        <div class="classroom-board-head">
+          <h4>课堂探究一页看板</h4>
+          <div class="tool-link-row">
+            <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomRefresh">刷新看板</button>
+            <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomExportJson">导出 JSON</button>
+            <button type="button" class="edu-btn edu-btn-sm" id="btnClassroomExportCsv">导出 CSV</button>
+          </div>
+        </div>
+        <p class="hint">按当前筛选的探究任务汇总：变量调节次数、混淆试探倾向、路径类型分布与策略分。学号/任务码随 session 上报（studentId / taskCode）。</p>
+        <div class="classroom-summary" id="classroomSummary">加载中…</div>
+        <div class="classroom-table-wrap">
+          <table class="classroom-table" id="classroomTable">
+            <thead>
+              <tr>
+                <th>学号</th><th>姓名</th><th>任务码</th><th>游戏</th>
+                <th>AV调节</th><th>CV试探</th><th>路径类型</th><th>策略分</th><th>更新</th>
+              </tr>
+            </thead>
+            <tbody id="classroomTbody"><tr><td colspan="9">暂无数据</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="judged-overview" id="judgedOverview" hidden>
+        <div class="judged-overview-head">
+          <span class="judged-overview-title">已评判概览</span>
+          <div class="verdict-pills" id="verdictPills"></div>
+        </div>
+        <ul class="judged-student-chips" id="judgedStudentChips"></ul>
+      </div>
+
+      <div class="tool-link-row sessions-toolbar">
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshTraces">刷新</button>
+        <select id="filterGraph" class="sessions-select">
+          <option value="">全部探究任务</option>
+        </select>
+        <select id="filterStatus" class="sessions-select">
+          <option value="">全部状态</option>
+          <option value="pending">有待评判</option>
+          <option value="judged">全部已评判</option>
+        </select>
+        <input type="search" id="filterStudent" class="sessions-search" placeholder="搜索学生姓名/组号…">
+      </div>
+
+      <div class="sessions-split">
+        <div class="student-list-panel">
+          <div class="student-list-header">学生</div>
+          <ul class="student-list" id="studentList">
+            <li class="empty-state" style="padding:24px">加载中…</li>
+          </ul>
+        </div>
+        <div class="session-detail-panel" id="sessionDetail">
+          <div class="session-detail-empty">请从左侧选择学生</div>
+        </div>
+      </div>
+      <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
+        <h4>跨游戏学情对比</h4>
+        <p class="hint">同一学生在多个探究任务上的参数调节次数与评判摘要。</p>
+        <div id="crossGameSummary"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="teacher-panel" id="panel-catalog">
+    <details class="edu-panel catalog-panel-details" id="catalogPanelDetails" open>
+      <summary class="catalog-panel-summary">探究任务</summary>
+      <p class="hint">每个任务关联 Agent A 生成的事理图谱（graphId）与学生游玩的 HTML。可上/下架任务；试玩 HTML 与图谱预览请至「资源管理」Tab。样本集默认已上架。</p>
+      <div class="catalog-toolbar">
+        <label>来源
+          <select id="catalogFilterSource">
+            <option value="">全部</option>
+            <option value="html-sample">样本集</option>
+            <option value="teacher">自生成</option>
+          </select>
+        </label>
+        <label>分类
+          <select id="catalogFilterCategory">
+            <option value="">全部分类</option>
+          </select>
+        </label>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="toggleCategoryMgmt">管理分类</button>
+      </div>
+      <div id="categoryMgmtPanel" class="category-mgmt-panel" hidden>
+        <p class="hint" style="margin-bottom:10px">分类为 5 个内置大章，在发布表单或任务列表中指定；细 topic 标签由标题自动推断。</p>
+        <ul class="category-mgmt-list" id="categoryMgmtList"></ul>
+      </div>
+      <table class="edu-table" id="catalogTable">
+        <thead>
+          <tr><th>标题</th><th>分类</th><th>章节</th><th>图谱 ID</th><th>状态</th><th>操作</th></tr>
+        </thead>
+        <tbody id="catalogBody"></tbody>
+      </table>
+    </details>
+    <div class="edu-panel">
+      <h3>发布新任务</h3>
+      <div class="form-row">
+        <label for="pubTitle">任务标题</label>
+        <input type="text" id="pubTitle" placeholder="例如：斜抛射程探究">
+      </div>
+      <div class="form-row">
+        <label for="pubCategory">分类</label>
+        <select id="pubCategory"><option value="">— 未分类 —</option></select>
+      </div>
+      <div class="form-row">
+        <label for="pubPair">探究包（图谱 + 游戏）</label>
+        <select id="pubPair"><option value="">— 请选择探究包 —</option></select>
+        <p class="hint" style="margin-top:0.35rem">仅显示已配对且未上架的探究包；请先完成 Agent「一键：图谱 + 游戏 + 发布准备」。已上架的探究包不会出现在列表中，需重新发布请先下架原任务。</p>
+      </div>
+      <div class="form-row">
+        <label for="pubDesc">简介（可选）</label>
+        <textarea id="pubDesc" rows="2"></textarea>
+      </div>
+      <button type="button" class="edu-btn edu-btn-primary" id="publishBtn">发布到学生端</button>
+    </div>
+  </section>
+
+  <section class="teacher-panel" id="panel-resources">
+    <details class="edu-panel sample-quality-overview" id="sampleQualityOverview" open>
+      <summary>样本 × 图谱 × quality 一览</summary>
+      <p class="hint">来自 <code>样本html/清单.md</code> 与 <code>data/runtime/packages/*/meta.json</code>。刷新数据：<code>node tests/scripts/build-sample-quality-overview.js</code></p>
+      <p class="sessions-stats-sub" id="sampleQualityStats">加载中…</p>
+      <table class="edu-table" id="sampleQualityTable">
+        <thead>
+          <tr>
+            <th>样本</th>
+            <th>图谱</th>
+            <th>quality</th>
+            <th>分数</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="sampleQualityBody">
+          <tr><td colspan="5" class="empty-state">加载中…</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details class="edu-panel resource-mgmt-details" id="resourcePanelDetails" open>
+      <summary>探究包与资源</summary>
+      <p class="hint">试玩 HTML、图谱预览与删除探究包均在此管理。删除发布任务不会删除磁盘上的图谱或 HTML；样本集资源受保护不可删。</p>
+      <div class="catalog-toolbar">
+        <label>来源
+          <select id="resourceFilterSource">
+            <option value="">全部</option>
+            <option value="html-sample">样本集</option>
+            <option value="teacher">自生成</option>
+          </select>
+        </label>
+        <label>分类
+          <select id="resourceFilterCategory">
+            <option value="">全部分类</option>
+          </select>
+        </label>
+      </div>
+      <table class="edu-table" id="pairResourceTable">
+        <thead>
+          <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>游戏 URL</th><th>发布</th><th>操作</th></tr>
+        </thead>
+        <tbody id="pairResourceBody"></tbody>
+      </table>
+      <details class="resource-orphan-details">
+        <summary class="resource-orphan-summary">未配对资源</summary>
+        <p class="hint resource-orphan-hint">仅图谱或仅游戏 HTML，尚未组成可发布的探究包。</p>
+        <h4 class="resource-orphan-heading">仅图谱</h4>
+        <table class="edu-table" id="orphanGraphResourceTable">
+          <thead>
+            <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>操作</th></tr>
+          </thead>
+          <tbody id="orphanGraphResourceBody"></tbody>
+        </table>
+        <h4 class="resource-orphan-heading">仅游戏 HTML</h4>
+        <table class="edu-table" id="orphanHtmlResourceTable">
+          <thead>
+            <tr><th>名称</th><th>来源</th><th>分类</th><th>URL</th><th>操作</th></tr>
+          </thead>
+          <tbody id="orphanHtmlResourceBody"></tbody>
+        </table>
+      </details>
+    </details>
+  </section>
+
+  <section class="teacher-panel" id="panel-agents">
+    <div class="edu-panel agent-tool-shell" id="upload-panel">
+      <h3>Agent A · 分析源码</h3>
+      <p class="hint">主路径：同学交付 HTML → 上传或从探究包一键分析 → 三步解析（物理模型 / 变量 / 优先级）→ 生成事理图谱。设计轨为辅，用于口语快速 demo。</p>
+
+      <div class="agent-mode-radios" hidden aria-hidden="true">
+        <input type="radio" name="genMode" id="modeAnalyze" value="analyze" checked>
+        <input type="radio" name="genMode" id="modeDesign" value="design">
+      </div>
+      <div class="agent-mode-tabs" role="tablist" aria-label="生成模式">
+        <button type="button" class="agent-mode-tab is-active" data-mode="analyze" role="tab" aria-selected="true">分析源码</button>
+        <button type="button" class="agent-mode-tab" data-mode="design" role="tab" aria-selected="false">设计图谱</button>
+      </div>
+
+      <div id="agentMainInput" class="agent-main-input agent-panel-inner">
+        <div id="designPanel" class="agent-section" style="display:none">
+          <label for="knowledgePoints">实验知识点（口语描述，必填）</label>
+          <textarea id="knowledgePoints" rows="5" placeholder="例如：平抛运动，可调节发射角度和初速度，目标让小球落入筐中；忽略空气阻力…"></textarea>
+          <p class="agent-hint">推荐：点「一键：图谱 + 游戏 + 发布准备」自动完成全流程；仅需图谱时用「仅生成图谱」。</p>
+        </div>
+
+        <div id="analyzePanel" class="agent-section">
+          <label for="analyzePackageSelect">从探究包一键分析（可选）</label>
+          <div class="upload-row">
+            <select id="analyzePackageSelect"><option value="">— 或手动上传下方 —</option></select>
+            <button type="button" id="loadAnalyzePackage" class="edu-btn edu-btn-outline edu-btn-sm">加载 game.html</button>
+          </div>
+          <label>本关源码（可多选 / 文件夹）</label>
+          <div class="upload-row">
+            <input type="file" id="files" multiple>
+            <input type="file" id="folder" webkitdirectory multiple hidden>
+            <button type="button" id="pickFolder" class="edu-btn edu-btn-outline edu-btn-sm">选择文件夹</button>
+          </div>
+          <div id="fileList" class="agent-hint"></div>
+          <div id="tierPreview" class="agent-hint agent-preview-line" style="display:none"></div>
+          <div id="hintsPreview" class="agent-hint agent-preview-line" style="display:none"></div>
+          <div id="analyzeStepsPanel" class="analyze-steps-panel" hidden>
+            <div class="analyze-steps-title">分析进度</div>
+            <ol id="analyzeStepsList" class="analyze-steps-list"></ol>
+          </div>
+          <div id="multiLevelBanner" class="agent-multi-banner" style="display:none" role="status">
+            <span id="multiLevelBannerText"></span>
+            <button type="button" id="toggleSingleLevel" class="agent-banner-link">改为仅生成单章</button>
+          </div>
+          <input type="checkbox" id="singleLevel" hidden aria-hidden="true">
+        </div>
+      </div>
+
+      <details class="agent-advanced">
+        <summary>补充信息（可选）</summary>
+        <div class="agent-advanced-body">
+          <p class="agent-hint" id="advancedHint">留空将由 Agent A 根据知识点自动补全。</p>
+          <label for="title">本章标题（可选）</label>
+          <input type="text" id="title" placeholder="留空则从源码命名">
+
+          <label for="hint">补充说明（可选）</label>
+          <textarea id="hint" rows="2" placeholder="留空则自动聚焦过关链与重试"></textarea>
+
+          <label for="teachingObjectives">教学目标（可选）</label>
+          <textarea id="teachingObjectives" rows="2" placeholder="留空则写入教案层要点"></textarea>
+        </div>
+      </details>
+
+      <details id="projectAppendPanel" class="agent-advanced">
+        <summary>追加到多关图谱（可选）</summary>
+        <div class="agent-advanced-body">
+          <p class="agent-hint">将当前章节追加到已有多关图谱；同名关卡会覆盖。留空关卡名则用「本章标题」或生成结果标题。发布请至「探究任务发布」。</p>
+          <label for="projectSelect">目标多关图谱</label>
+          <div class="upload-row">
+            <select id="projectSelect"><option value="">— 请选择或新建 —</option></select>
+            <button type="button" id="newProject" class="edu-btn edu-btn-outline edu-btn-sm">新建多关图谱</button>
+            <button type="button" id="refreshProjects" class="edu-btn edu-btn-outline edu-btn-sm">刷新列表</button>
+          </div>
+          <label for="slotName">关卡名称</label>
+          <input type="text" id="slotName" list="slotNameList" placeholder="例如：第一关、序章、Boss" maxlength="48">
+          <datalist id="slotNameList"></datalist>
+        </div>
+      </details>
+
+      <div class="agent-action-bar">
+        <button type="button" id="goDesignFull" class="edu-btn edu-btn-primary" style="display:none">一键：图谱 + 游戏 + 发布准备</button>
+        <button type="button" id="go" class="edu-btn edu-btn-primary">生成图谱</button>
+        <button type="button" id="saveToProject" class="edu-btn edu-btn-outline edu-btn-sm" disabled>追加到多关图谱</button>
+        <details id="exportMenu" class="agent-menu is-disabled">
+          <summary class="edu-btn edu-btn-outline edu-btn-sm">导出</summary>
+          <div class="agent-menu-panel">
+            <button type="button" id="downloadHtml" class="edu-btn edu-btn-outline edu-btn-sm" disabled>下载预览 HTML</button>
+            <button type="button" id="copyPromptBundle" class="edu-btn edu-btn-outline edu-btn-sm" disabled>复制 LLM prompt 包</button>
+            <button type="button" id="generateGameHtml" class="edu-btn edu-btn-outline edu-btn-sm" disabled>DeepSeek 生成 HTML</button>
+          </div>
+        </details>
+        <button type="button" id="goPublishTask" class="edu-btn edu-btn-primary edu-btn-sm" hidden>去发布任务</button>
+        <a id="openSaved" class="agent-link" href="#" target="_blank" rel="noopener" style="display:none">打开独立预览</a>
+      </div>
+
+      <p id="previewHint" class="agent-hint" style="display:none">生成后可「打开独立预览」；离线包请用「导出」。多关卡将自动拼合为多关图谱；单章追加请用「追加到多关图谱」。</p>
+      <div id="status" class="agent-status"></div>
+      <div id="report" class="agent-report" style="display:none"></div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/ui/platform-nav.js"></script>
+<script src="/static/ui/catalog-badges.js"></script>
+<script src="/static/ui/graph-preview-url.js"></script>
+<script>
+document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('teacher');
+
+const tabs = document.querySelectorAll('.teacher-tab');
+const panels = document.querySelectorAll('.teacher-panel');
+let agentTabInitialized = false;
+
+function activateTab(tabName) {
+  tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === tabName));
+  panels.forEach(p => p.classList.toggle('is-active', p.id === 'panel-' + tabName));
+  if (tabName === 'agents') ensureAgentTabReady();
+}
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => activateTab(tab.dataset.tab));
+});
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Failed to load ' + src));
+    document.body.appendChild(s);
+  });
+}
+
+async function ensureAgentTabReady() {
+  if (agentTabInitialized) return;
+  await loadScript('/static/ui/agent-client.js');
+  await loadScript('/static/ui/agent-ui-init.js');
+  await loadScript('/static/generate/export/export-standalone-template.js');
+  await loadScript('/static/generate/export/export-standalone-html.js');
+  await loadScript('/static/ui/agent-generate.js');
+  AgentUiInit.initAgentPage();
+  AgentGenerate.init({
+    onGraphSaved: () => Promise.all([loadGraphOptions(), loadPublishPairOptions()]),
+    onGoPublish: goPublishTask,
+  });
+  agentTabInitialized = true;
+}
+
+function goPublishTask({ graphId, title, playUrl, description }) {
+  activateTab('catalog');
+  const sel = document.getElementById('pubPair');
+  if (sel && graphId) {
+    const ensurePair = () => {
+      let opt = [...sel.options].find(o => o.value === graphId);
+      if (!opt && playUrl) {
+        opt = document.createElement('option');
+        opt.value = graphId;
+        opt.textContent = title || graphId;
+        opt.dataset.playUrl = playUrl;
+        if (title) opt.dataset.title = title;
+        sel.appendChild(opt);
+      }
+      if (opt || [...sel.options].some(o => o.value === graphId)) {
+        sel.value = graphId;
+        fillPubTitleFromPair();
+      }
+    };
+    loadPublishPairOptions().then(ensurePair);
+  }
+  const pubTitle = document.getElementById('pubTitle');
+  if (title && pubTitle) {
+    pubTitle.value = title;
+    pubTitle.dataset.userEdited = '';
+  }
+  const pubDesc = document.getElementById('pubDesc');
+  if (description && pubDesc) pubDesc.value = description;
+  const macroId = inferMacroFromTitle(title);
+  const pubCategory = document.getElementById('pubCategory');
+  if (macroId && pubCategory) pubCategory.value = macroId;
+  document.getElementById('panel-catalog')?.scrollIntoView({ behavior: 'smooth' });
+  pubTitle?.focus();
+}
+
+function resolveInitialTab() {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab') || (location.hash || '').replace(/^#/, '');
+  if (tab === 'agents' || tab === 'catalog' || tab === 'sessions' || tab === 'resources') {
+    activateTab(tab);
+  }
+}
+
+resolveInitialTab();
+
+let catalogItems = [];
+let categoryItems = [];
+let catalogFilterSource = '';
+let catalogFilterCategory = '';
+let resourceFilterSource = '';
+let resourceFilterCategory = '';
+let studentItems = [];
+let selectedStudentKey = null;
+let selectedSessionId = null;
+let selectedSessionIds = new Set();
+let searchDebounce = null;
+let graphIndexItems = [];
+let playUrlIndexItems = [];
+let publishPairItems = [];
+let detailRequestSeq = 0;
+let judgingSessionId = null;
+
+const JUDGE_LEVEL_LABELS = {
+  1: '明显误区 L1',
+  2: '探索中 L2',
+  3: '接近收敛 L3',
+  4: '路径清晰 L4',
+};
+
+function currentStudent() {
+  return studentItems.find(s => s.studentKey === selectedStudentKey) || null;
+}
+
+function visibleSessionIdsForStudent(student) {
+  return (student?.sessions || []).map(s => s.sessionId);
+}
+
+function selectedSessionIdsForCurrentStudent() {
+  return visibleSessionIdsForStudent(currentStudent()).filter(id => selectedSessionIds.has(id));
+}
+
+function updateSelectionUi() {
+  const visible = visibleSessionIdsForStudent(currentStudent());
+  const selectedVisible = visible.filter(id => selectedSessionIds.has(id));
+  const selectAllEl = document.getElementById('selectAllSessionsLocal');
+  const deleteBtn = document.getElementById('deleteSelectedSessionsLocal');
+  const countEl = document.getElementById('selectedSessionCountLocal');
+  if (selectAllEl) {
+    selectAllEl.checked = visible.length > 0 && selectedVisible.length === visible.length;
+    selectAllEl.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visible.length;
+    selectAllEl.disabled = !visible.length;
+  }
+  if (deleteBtn) deleteBtn.disabled = selectedVisible.length === 0;
+  if (countEl) {
+    countEl.textContent = selectedVisible.length
+      ? `已选 ${selectedVisible.length} 条`
+      : '';
+  }
+}
+
+function setSessionSelected(sessionId, checked) {
+  if (!sessionId) return;
+  if (checked) selectedSessionIds.add(sessionId);
+  else selectedSessionIds.delete(sessionId);
+  updateSelectionUi();
+  syncSessionCheckboxes();
+}
+
+function syncSessionCheckboxes() {
+  document.querySelectorAll('.session-pick-cb').forEach(cb => {
+    cb.checked = selectedSessionIds.has(cb.dataset.sid);
+  });
+}
+
+function setSelectAllForCurrentStudent(checked) {
+  const ids = visibleSessionIdsForStudent(currentStudent());
+  if (checked) ids.forEach(id => selectedSessionIds.add(id));
+  else ids.forEach(id => selectedSessionIds.delete(id));
+  updateSelectionUi();
+  syncSessionCheckboxes();
+}
+
+async function deleteTraceSessions(sessionIds) {
+  const ids = [...new Set(sessionIds)];
+  if (!ids.length) return;
+  const r = await fetch('/api/platform/traces/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionIds: ids }),
+  });
+  const text = await r.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    if (r.status === 404) {
+      throw new Error('删除接口不可用，请重启 Agent 服务（关闭 Agent Server 窗口后重新 npm start）');
+    }
+    throw new Error(text || `删除失败（HTTP ${r.status}）`);
+  }
+  if (!data.ok) throw new Error(data.error || '删除失败');
+  ids.forEach(id => selectedSessionIds.delete(id));
+  if (selectedSessionId && ids.includes(selectedSessionId)) {
+    selectedSessionId = null;
+    selectedStudentKey = null;
+  }
+  return data;
+}
+
+async function deleteSelectedTraces() {
+  const ids = selectedSessionIdsForCurrentStudent();
+  if (!ids.length) return;
+  if (!confirm(`确定删除该学生的 ${ids.length} 条轨迹？删除后不可恢复。`)) return;
+  try {
+    const data = await deleteTraceSessions(ids);
+    if (data.notFound?.length) {
+      alert(`已删除 ${data.count} 条${data.notFound.length ? `，${data.notFound.length} 条未找到` : ''}`);
+    }
+    await loadSessionsData();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function categoryName(categoryId) {
+  if (!categoryId) return '—';
+  const c = categoryItems.find(x => x.id === categoryId);
+  if (c) return c.name;
+  const fallback = MACRO_ORDER.find(m => m.id === categoryId);
+  return fallback ? fallback.name : '—';
+}
+
+const MACRO_ORDER = [
+  { id: 'macro-mechanics', name: '力学' },
+  { id: 'macro-em', name: '电磁学' },
+  { id: 'macro-optics', name: '光学' },
+  { id: 'macro-thermal', name: '热学' },
+  { id: 'macro-other', name: '近代与其它' },
+];
+
+const MACRO_TOPIC_KEYWORDS = {
+  'macro-mechanics': ['平抛', '斜抛', '斜面摩擦', '机械能', '动量', '圆周运动', '简谐', '简谐振动'],
+  'macro-em': ['电场', '电容', '电路', '欧姆定律', 'RC电路', '回旋加速器', '安培力', '变压器'],
+  'macro-optics': ['透镜', '折射'],
+  'macro-thermal': ['热传导', '理想气体'],
+  'macro-other': ['流体力学', '放射性', '光电效应'],
+};
+
+function inferMacroFromTitle(title) {
+  const t = String(title || '');
+  for (const [macroId, topics] of Object.entries(MACRO_TOPIC_KEYWORDS)) {
+    for (const topic of topics) {
+      if (t.includes(topic)) return macroId;
+    }
+  }
+  return '';
+}
+
+function resourceCategoryCell(catItem) {
+  if (!catItem) {
+    return '<span class="hint" style="font-size:0.82rem">未发布</span>';
+  }
+  return esc(categoryName(catItem.categoryId));
+}
+
+function pairPublishCell(catItem) {
+  if (!catItem) {
+    return '<span class="hint" style="font-size:0.82rem">未发布</span>';
+  }
+  return catItem.published
+    ? '<span class="badge badge-ok">已发布</span>'
+    : '<span class="badge badge-pending">草稿</span>';
+}
+
+function isProtectedHtmlUrl(url, protectedFlag) {
+  return !!protectedFlag || String(url || '').includes('/static/packages/') || String(url || '').includes('/static/html-samples/') || String(url || '').includes('capacitor-era');
+}
+
+function isProtectedPair(pair) {
+  const graphMeta = graphIndexItems.find(g => g.id === pair.graphId);
+  const htmlMeta = playUrlIndexItems.find(i => i.url === pair.playUrl);
+  return !!graphMeta?.protected || isProtectedHtmlUrl(pair.playUrl, htmlMeta?.protected);
+}
+
+function catalogByGraphId(graphId) {
+  return catalogItems.find(i => i.graphId === graphId) || null;
+}
+
+function catalogByPlayUrl(url) {
+  return catalogItems.find(i => i.playUrl === url) || null;
+}
+
+function isPairPublishedInCatalog(pair) {
+  return catalogItems.some(i =>
+    i.graphId === pair.graphId
+    && i.playUrl === pair.playUrl
+    && i.published
+  );
+}
+
+function publishablePairItems() {
+  return publishPairItems.filter(p => !isPairPublishedInCatalog(p));
+}
+
+function filteredCatalogItems() {
+  return catalogItems.filter(item => {
+    if (catalogFilterSource && (item.source || 'teacher') !== catalogFilterSource) return false;
+    if (catalogFilterCategory && item.categoryId !== catalogFilterCategory) return false;
+    return true;
+  });
+}
+
+function normalizeCategoryFilterValue(value, { resetEl, allowUnpublished = false } = {}) {
+  const id = String(value || '').trim();
+  if (!id) return '';
+  if (allowUnpublished && id === '__unpublished') return id;
+  if (categoryItems.some(c => c.id === id)) return id;
+  if (resetEl) resetEl.value = '';
+  return '';
+}
+
+function syncCatalogFiltersFromDom() {
+  const srcEl = document.getElementById('catalogFilterSource');
+  const catEl = document.getElementById('catalogFilterCategory');
+  if (srcEl) catalogFilterSource = srcEl.value;
+  if (catEl) {
+    catalogFilterCategory = normalizeCategoryFilterValue(catEl.value, { resetEl: catEl });
+  }
+}
+
+function setCatalogBodyMessage(message, { isError = false } = {}) {
+  const tbody = document.getElementById('catalogBody');
+  if (!tbody) return;
+  const cls = isError ? 'empty-state' : 'empty-state';
+  tbody.innerHTML = `<tr><td colspan="6" class="${cls}">${esc(message)}</td></tr>`;
+}
+
+function categoryOptionsHtml(selectedId, includeEmpty) {
+  let html = includeEmpty ? '<option value="">— 未分类 —</option>' : '';
+  html += categoryItems.map(c =>
+    `<option value="${esc(c.id)}"${c.id === selectedId ? ' selected' : ''}>${esc(c.name)}</option>`,
+  ).join('');
+  return html;
+}
+
+function populateCategorySelects() {
+  const filterOpts = '<option value="">全部分类</option>' +
+    categoryItems.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const resourceFilterOpts = '<option value="">全部分类</option>' +
+    '<option value="__unpublished">未发布</option>' +
+    categoryItems.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const pub = document.getElementById('pubCategory');
+  const cf = document.getElementById('catalogFilterCategory');
+  const rf = document.getElementById('resourceFilterCategory');
+  if (pub) pub.innerHTML = categoryOptionsHtml(pub.value, true);
+  if (cf) {
+    cf.innerHTML = filterOpts;
+    catalogFilterCategory = normalizeCategoryFilterValue(catalogFilterCategory, { resetEl: cf });
+    cf.value = catalogFilterCategory;
+  }
+  if (rf) {
+    rf.innerHTML = resourceFilterOpts;
+    resourceFilterCategory = normalizeCategoryFilterValue(resourceFilterCategory, {
+      resetEl: rf,
+      allowUnpublished: true,
+    });
+    rf.value = resourceFilterCategory;
+  }
+}
+
+function applyMacroCategoryFallback() {
+  if (categoryItems.length) return;
+  categoryItems = MACRO_ORDER.map(m => ({ id: m.id, name: m.name, builtin: true, kind: 'macro' }));
+  populateCategorySelects();
+  renderCategoryMgmtList();
+}
+
+async function loadCategories() {
+  try {
+    const r = await fetch('/api/platform/categories?kind=macro');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    categoryItems = data.items || [];
+    if (!categoryItems.length) applyMacroCategoryFallback();
+    else {
+      populateCategorySelects();
+      renderCategoryMgmtList();
+    }
+  } catch (err) {
+    console.error('loadCategories failed', err);
+    applyMacroCategoryFallback();
+  }
+}
+
+function renderCategoryMgmtList() {
+  const list = document.getElementById('categoryMgmtList');
+  if (!list) return;
+  if (!categoryItems.length) {
+    list.innerHTML = '<li class="hint">暂无分类</li>';
+    return;
+  }
+  list.innerHTML = categoryItems.map(c => `<li>
+    <span>${esc(c.name)} <span class="catalog-badge badge-legacy">内置大章</span></span>
+  </li>`).join('');
+}
+
+async function deleteCategoryById(id) {
+  const cat = categoryItems.find(c => c.id === id);
+  if (!cat || cat.builtin) return;
+  if (!confirm(`确定删除分类「${cat.name}」？`)) return;
+  const r = await fetch('/api/platform/categories/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  });
+  const data = await r.json();
+  if (!data.ok && data.error === 'category_in_use') {
+    const reassignTo = prompt(`该分类下有 ${data.count} 个任务。请输入要迁移到的分类 ID，或取消：`);
+    if (!reassignTo) return;
+    const r2 = await fetch('/api/platform/categories/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, reassignTo }),
+    });
+    const d2 = await r2.json();
+    if (!d2.ok) { alert(d2.error || '删除失败'); return; }
+  } else if (!data.ok) {
+    alert(data.error || '删除失败');
+    return;
+  }
+  if (catalogFilterCategory === id) catalogFilterCategory = '';
+  if (resourceFilterCategory === id) resourceFilterCategory = '';
+  await Promise.all([loadCategories(), loadCatalog()]);
+}
+
+async function setCatalogItemCategory(catalogId, categoryId) {
+  const r = await fetch('/api/platform/catalog/set-category', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ catalogId, categoryId: categoryId || null }),
+  });
+  const data = await r.json();
+  if (!data.ok) alert(data.error || '更新分类失败');
+  else await loadCatalog();
+}
+
+function graphChapterLabel(graphId) {
+  const meta = graphIndexItems.find(g => g.id === graphId);
+  if (meta?.stats?.total > 1) return `${meta.stats.total} 章`;
+  if (meta?.type === 'full') return '多章';
+  return '单章';
+}
+
+function formatRefsConfirm(refs) {
+  const lines = refs.map(r => `· ${r.title} (${r.id})`).join('\n');
+  return `以下发布任务仍引用此项：\n${lines}\n\n仍要删除磁盘文件吗？（不会自动删除上述任务）`;
+}
+
+async function deleteCatalogEntry(item) {
+  if (item.featured) {
+    if (!confirm('该任务为预设旗舰任务，确定要从列表中移除？')) return;
+    if (!confirm('再次确认：移除后学生端将不再显示此任务。')) return;
+  } else if (!confirm(`确定删除任务「${item.title}」？\n（仅移除发布条目，不删除图谱与 HTML）`)) {
+    return;
+  }
+  const r = await fetch('/api/platform/catalog/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: item.id, forceFeatured: !!item.featured }),
+  });
+  const data = await r.json();
+  if (!data.ok) { alert(data.error || '删除失败'); return; }
+  await Promise.all([loadGraphOptions(), loadPlayUrlOptions(), loadPublishPairOptions(), loadCatalog()]);
+}
+
+async function deleteGraphResource(graphId, title, protectedRes) {
+  if (protectedRes) {
+    alert('样本集图谱不可删除');
+    return;
+  }
+  if (!confirm(`确定删除图谱「${title || graphId}」？\n将删除 output 目录及 index 条目，不可恢复。`)) return;
+  let r = await fetch('/api/generated-graphs/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ graphId }),
+  });
+  let data = await r.json();
+  if (!data.ok && data.error === 'referenced_by_catalog') {
+    if (!confirm(formatRefsConfirm(data.referencedBy))) return;
+    r = await fetch('/api/generated-graphs/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ graphId, force: true }),
+    });
+    data = await r.json();
+  }
+  if (!data.ok) { alert(data.error || '删除失败'); return; }
+  await Promise.all([loadGraphOptions(), loadPlayUrlOptions(), loadPublishPairOptions(), loadCatalog()]);
+}
+
+async function deleteHtmlResource(url, label, protectedRes) {
+  if (protectedRes || url.includes('/static/html-samples/') || url.includes('/static/packages/capacitor-era/')) {
+    alert('样本集页面不可删除');
+    return;
+  }
+  if (url.includes('/static/packages/capacitor-era/') || url.includes('电容纪元.html')) {
+    alert('预设页面不可删除');
+    return;
+  }
+  if (!confirm(`确定删除游戏页面「${label || url}」？\n不可恢复。`)) return;
+  let r = await fetch('/api/game-pages/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  let data = await r.json();
+  if (!data.ok && data.error === 'referenced_by_catalog') {
+    if (!confirm(formatRefsConfirm(data.referencedBy))) return;
+    r = await fetch('/api/game-pages/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, force: true }),
+    });
+    data = await r.json();
+  }
+  if (!data.ok) { alert(data.error || '删除失败'); return; }
+  await Promise.all([loadGraphOptions(), loadPlayUrlOptions(), loadPublishPairOptions(), loadCatalog()]);
+}
+
+async function deleteGraphResourceApi(graphId, { force = false } = {}) {
+  const r = await fetch('/api/generated-graphs/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ graphId, ...(force ? { force: true } : {}) }),
+  });
+  return r.json();
+}
+
+async function deleteHtmlResourceApi(url, { force = false } = {}) {
+  const r = await fetch('/api/game-pages/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, ...(force ? { force: true } : {}) }),
+  });
+  return r.json();
+}
+
+async function deletePairResource(pair) {
+  if (isProtectedPair(pair)) {
+    alert('样本集或受保护资源不可删除');
+    return;
+  }
+  const title = pair.title || pair.graphId;
+  if (!confirm(`确定删除探究包「${title}」？\n将同时删除图谱与游戏 HTML，不可恢复。`)) return;
+
+  let data = await deleteGraphResourceApi(pair.graphId);
+  if (!data.ok && data.error === 'referenced_by_catalog') {
+    if (!confirm(formatRefsConfirm(data.referencedBy))) return;
+    data = await deleteGraphResourceApi(pair.graphId, { force: true });
+  }
+  if (!data.ok) { alert(data.error || '删除图谱失败'); return; }
+
+  data = await deleteHtmlResourceApi(pair.playUrl);
+  if (!data.ok && data.error === 'referenced_by_catalog') {
+    if (!confirm(formatRefsConfirm(data.referencedBy))) return;
+    data = await deleteHtmlResourceApi(pair.playUrl, { force: true });
+  }
+  if (!data.ok) { alert(data.error || '删除游戏 HTML 失败'); return; }
+
+  await Promise.all([loadGraphOptions(), loadPlayUrlOptions(), loadPublishPairOptions(), loadCatalog()]);
+}
+
+function graphViewUrl(graphId) {
+  if (!graphId) return null;
+  const hit = graphIndexItems.find(g => g.id === graphId);
+  if (typeof GraphPreviewUrl !== 'undefined') {
+    return GraphPreviewUrl.resolveGraphPreviewUrl(graphId, hit);
+  }
+  return hit?.url || `/output/${encodeURIComponent(graphId)}/index.html`;
+}
+
+function resourcePlayBtn(playUrl) {
+  if (!playUrl) return '<span class="hint" style="font-size:0.78rem">—</span>';
+  return `<a class="edu-btn edu-btn-primary edu-btn-sm" href="${esc(playUrl)}" target="_blank" rel="noopener">试玩 HTML</a>`;
+}
+
+function resourceGraphBtn(graphId) {
+  const viewUrl = graphViewUrl(graphId);
+  if (!viewUrl) return '<span class="hint" style="font-size:0.78rem">—</span>';
+  return `<a class="edu-btn edu-btn-outline edu-btn-sm" href="${esc(viewUrl)}" target="_blank" rel="noopener">图谱预览</a>`;
+}
+
+function filterResourcePairs() {
+  return publishPairItems.filter(p => {
+    const src = p.source || 'teacher';
+    if (resourceFilterSource && src !== resourceFilterSource) return false;
+    const catItem = catalogByGraphId(p.graphId);
+    if (resourceFilterCategory === '__unpublished') return !catItem;
+    if (resourceFilterCategory) {
+      if (catItem?.categoryId !== resourceFilterCategory) return false;
+    }
+    return true;
+  });
+}
+
+function filterResourceGraphs() {
+  return graphIndexItems.filter(g => {
+    const src = g.source || 'teacher';
+    if (resourceFilterSource && src !== resourceFilterSource) return false;
+    const catItem = catalogByGraphId(g.id);
+    if (resourceFilterCategory === '__unpublished') return !catItem;
+    if (resourceFilterCategory) {
+      if (catItem?.categoryId !== resourceFilterCategory) return false;
+    }
+    return true;
+  });
+}
+
+function filterResourceHtml() {
+  return playUrlIndexItems.filter(i => {
+    const src = i.source || 'teacher';
+    if (resourceFilterSource && src !== resourceFilterSource) return false;
+    const catItem = catalogByPlayUrl(i.url);
+    if (resourceFilterCategory === '__unpublished') return !catItem;
+    if (resourceFilterCategory) {
+      if (catItem?.categoryId !== resourceFilterCategory) return false;
+    }
+    return true;
+  });
+}
+
+function renderResourceLists() {
+  const allPairedGraphIds = new Set(publishPairItems.map(p => p.graphId));
+  const allPairedUrls = new Set(publishPairItems.map(p => p.playUrl));
+  const pairs = filterResourcePairs();
+  const orphanGraphs = filterResourceGraphs().filter(g => !allPairedGraphIds.has(g.id));
+  const orphanPages = filterResourceHtml().filter(i => !allPairedUrls.has(i.url));
+
+  const pairBody = document.getElementById('pairResourceBody');
+  if (!pairBody) return;
+  if (!pairs.length) {
+    pairBody.innerHTML = '<tr><td colspan="7" class="empty-state">暂无探究包</td></tr>';
+  } else {
+    pairBody.innerHTML = pairs.map(pair => {
+      const catItem = catalogByGraphId(pair.graphId);
+      const protectedPair = isProtectedPair(pair);
+      return `<tr>
+        <td>${esc(pair.title || pair.graphId)}</td>
+        <td>${esc(CatalogBadges.sourceLabel(pair.source || 'teacher'))}</td>
+        <td>${resourceCategoryCell(catItem)}</td>
+        <td><code class="resource-url-code">${esc(pair.graphId)}</code></td>
+        <td><code class="resource-url-code">${esc(pair.playUrl)}</code></td>
+        <td>${pairPublishCell(catItem)}</td>
+        <td class="tool-link-row" style="gap:6px">
+          ${resourcePlayBtn(pair.playUrl)}
+          ${resourceGraphBtn(pair.graphId)}
+          ${protectedPair
+          ? '<span class="hint" style="font-size:0.78rem">受保护</span>'
+          : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-pair="${esc(pair.graphId)}">删除探究包</button>`}
+        </td>
+      </tr>`;
+    }).join('');
+    pairBody.querySelectorAll('[data-del-pair]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pair = publishPairItems.find(p => p.graphId === btn.dataset.delPair);
+        if (pair) deletePairResource(pair);
+      });
+    });
+  }
+
+  const gBody = document.getElementById('orphanGraphResourceBody');
+  if (gBody) {
+    if (!orphanGraphs.length) {
+      gBody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无未配对图谱</td></tr>';
+    } else {
+      gBody.innerHTML = orphanGraphs.map(g => {
+        const catItem = catalogByGraphId(g.id);
+        const protectedRes = !!g.protected;
+        return `<tr>
+          <td>${esc(g.title || g.id)}</td>
+          <td>${esc(CatalogBadges.sourceLabel(g.source || 'teacher'))}</td>
+          <td>${resourceCategoryCell(catItem)}</td>
+          <td><code class="resource-url-code">${esc(g.id)}</code></td>
+          <td class="tool-link-row" style="gap:6px">
+            ${resourceGraphBtn(g.id)}
+            ${protectedRes
+            ? '<span class="hint" style="font-size:0.78rem">受保护</span>'
+            : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-graph="${esc(g.id)}">删除</button>`}
+          </td>
+        </tr>`;
+      }).join('');
+      gBody.querySelectorAll('[data-del-graph]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const g = graphIndexItems.find(x => x.id === btn.dataset.delGraph);
+          deleteGraphResource(g.id, g.title || g.id, g.protected);
+        });
+      });
+    }
+  }
+
+  const hBody = document.getElementById('orphanHtmlResourceBody');
+  if (hBody) {
+    if (!orphanPages.length) {
+      hBody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无未配对游戏页面</td></tr>';
+    } else {
+      hBody.innerHTML = orphanPages.map(i => {
+        const catItem = catalogByPlayUrl(i.url);
+        const protectedPage = isProtectedHtmlUrl(i.url, i.protected);
+        return `<tr>
+          <td>${esc(i.label)}${protectedPage ? ' <span class="badge badge-pending">不可删</span>' : ''}</td>
+          <td>${esc(CatalogBadges.sourceLabel(i.source || 'teacher'))}</td>
+          <td>${resourceCategoryCell(catItem)}</td>
+          <td><code class="resource-url-code">${esc(i.url)}</code></td>
+          <td class="tool-link-row" style="gap:6px">
+            ${resourcePlayBtn(i.url)}
+            ${protectedPage
+            ? '<span class="hint" style="font-size:0.78rem">受保护</span>'
+            : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-html="${esc(i.url)}">删除</button>`}
+          </td>
+        </tr>`;
+      }).join('');
+      hBody.querySelectorAll('[data-del-html]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const hit = playUrlIndexItems.find(x => x.url === btn.dataset.delHtml);
+          deleteHtmlResource(hit.url, hit.label, hit.protected);
+        });
+      });
+    }
+  }
+}
+
+async function loadCatalog() {
+  syncCatalogFiltersFromDom();
+  const tbody = document.getElementById('catalogBody');
+  try {
+    const r = await fetch('/api/platform/catalog/all');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    catalogItems = data.items || [];
+    if (!tbody) return;
+    const visible = filteredCatalogItems();
+    if (!visible.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无任务，请先发布或调整筛选</td></tr>';
+    } else {
+      tbody.innerHTML = visible.map(item => {
+      const chLabel = graphChapterLabel(item.graphId);
+      const badges = typeof CatalogBadges !== 'undefined' ? CatalogBadges.renderBadges(item) : '';
+      return `<tr>
+      <td>${esc(item.title)}<div>${badges}</div></td>
+      <td><div class="catalog-category-cell"><select class="catalog-category-select" data-cid="${esc(item.id)}" style="max-width:140px;font-size:0.85rem">${categoryOptionsHtml(item.categoryId, true)}</select>${item.topicKey ? `<span class="game-card-topic">${esc(item.topicKey)}</span>` : ''}</div></td>
+      <td>${esc(chLabel)}</td>
+      <td><code style="font-size:0.78rem">${esc(item.graphId)}</code></td>
+      <td>${item.published ? '<span class="badge badge-ok">已发布</span>' : '<span class="badge badge-pending">草稿</span>'}</td>
+      <td class="tool-link-row" style="gap:6px">
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-toggle="${esc(item.id)}">${item.published ? '下架' : '上架'}</button>
+        ${item.featured
+          ? `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-catalog="${esc(item.id)}" title="预设任务，删除需二次确认">删除</button>`
+          : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-catalog="${esc(item.id)}">删除</button>`}
+      </td>
+    </tr>`;
+    }).join('');
+    tbody.querySelectorAll('.catalog-category-select').forEach(sel => {
+      sel.addEventListener('change', () => setCatalogItemCategory(sel.dataset.cid, sel.value || null));
+    });
+    tbody.querySelectorAll('[data-toggle]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const item = catalogItems.find(i => i.id === btn.dataset.toggle);
+        await fetch('/api/platform/set-published', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.id, published: !item.published }),
+        });
+        loadCatalog();
+      });
+    });
+    tbody.querySelectorAll('[data-del-catalog]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = catalogItems.find(i => i.id === btn.dataset.delCatalog);
+        if (item) deleteCatalogEntry(item);
+      });
+    });
+  }
+  const filter = document.getElementById('filterGraph');
+  if (filter) {
+    const opts = catalogItems.map(i => `<option value="${esc(i.graphId)}">${esc(i.title)}</option>`).join('');
+    filter.innerHTML = '<option value="">全部探究任务</option>' + opts;
+  }
+  await loadPublishPairOptions();
+  renderResourceLists();
+  } catch (err) {
+    setCatalogBodyMessage('加载探究任务失败，请刷新页面重试', { isError: true });
+    console.error('loadCatalog failed', err);
+  }
+}
+
+async function loadPublishPairOptions() {
+  const r = await fetch('/api/platform/publish-pairs');
+  const data = await r.json();
+  publishPairItems = data.items || [];
+  const sel = document.getElementById('pubPair');
+  if (sel) {
+    const available = publishablePairItems();
+    const optionHtml = available.map(p => {
+      const label = p.title || p.graphId;
+      const cat = p.categoryId ? ` · ${esc(categoryName(p.categoryId))}` : '';
+      return `<option value="${esc(p.graphId)}" data-play-url="${esc(p.playUrl)}"`
+        + ` data-title="${esc(p.title || '')}"`
+        + (p.categoryId ? ` data-category-id="${esc(p.categoryId)}"` : '')
+        + `>${esc(label)}${cat}</option>`;
+    }).join('');
+    sel.innerHTML = '<option value="">— 请选择探究包 —</option>'
+      + (optionHtml || '<option value="" disabled>暂无可发布的探究包</option>');
+  }
+  renderResourceLists();
+}
+
+function fillPubTitleFromPair() {
+  const sel = document.getElementById('pubPair');
+  const pubTitle = document.getElementById('pubTitle');
+  if (!sel || !pubTitle || !sel.value) return;
+  const opt = sel.selectedOptions[0];
+  const title = opt?.dataset?.title;
+  if (title && !pubTitle.dataset.userEdited) pubTitle.value = title;
+  const catSel = document.getElementById('pubCategory');
+  if (catSel && opt?.dataset?.categoryId && !catSel.value) {
+    catSel.value = opt.dataset.categoryId;
+  }
+}
+
+async function loadPlayUrlOptions() {
+  const r = await fetch('/api/game-pages');
+  const data = await r.json();
+  playUrlIndexItems = data.items || [];
+  const sel = document.getElementById('pubPlayUrl');
+  if (sel) {
+    sel.innerHTML = '<option value="">— 请选择游戏页面 —</option>' +
+      playUrlIndexItems.map(i => `<option value="${esc(i.url)}">${esc(i.label)}</option>`).join('');
+  }
+}
+
+async function loadGraphOptions() {
+  const r = await fetch('/api/generated-graphs');
+  const data = await r.json();
+  graphIndexItems = data.items || [];
+  const sel = document.getElementById('pubGraphId');
+  if (sel) {
+    sel.innerHTML = '<option value="">— 从已生成图谱选择 —</option>' +
+      graphIndexItems.map(i => `<option value="${esc(i.id)}">${esc(i.title || i.id)}</option>`).join('');
+  }
+}
+
+function filterParams() {
+  const graphId = document.getElementById('filterGraph').value;
+  const status = document.getElementById('filterStatus').value;
+  const q = document.getElementById('filterStudent').value.trim();
+  const params = new URLSearchParams();
+  if (graphId) params.set('graphId', graphId);
+  if (status) params.set('status', status);
+  if (q) params.set('q', q);
+  return params;
+}
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} `
+    + `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+const VERDICT_LABELS = {
+  pass: '达标',
+  in_progress: '探索中',
+  learning: '需改进',
+  other: '已评',
+};
+
+function verdictLabel(v) {
+  return VERDICT_LABELS[v] || VERDICT_LABELS.other;
+}
+
+function verdictClass(v) {
+  if (v === 'pass') return 'verdict-pass';
+  if (v === 'learning') return 'verdict-learning';
+  if (v === 'in_progress') return 'verdict-progress';
+  return 'verdict-other';
+}
+
+function buildJudgeBlock(jr) {
+  if (!jr) return '';
+  const ts = jr.teacherSummary || {};
+  const level = ts.level ?? null;
+  let summary = ts.summary || '';
+  if (!summary && jr.mode === 'rule' && jr.comment?.startsWith('[规则模式]')) {
+    summary = jr.comment.replace(/^\[规则模式\]\s*/, '').split('；待改进：')[0].trim();
+  }
+  if (!summary && jr.comment && jr.comment.length <= 120) summary = jr.comment;
+  const strengths = (ts.strengths?.length ? ts.strengths : jr.strengths || []).slice(0, 2);
+  const gaps = (ts.gaps?.length ? ts.gaps : jr.gaps || []).slice(0, 2);
+  const suggestion = ts.suggestion || '';
+  const pathHint = jr.inquiryPath?.pathSteps?.length
+    ? `探究路径：${jr.inquiryPath.pathSteps.join(' → ')}`
+    : '';
+  const mainRouteHint = jr.inquiryPath?.strategyRouteGuess === 'main'
+    ? '<p class="judge-route-hint">本关推荐控制变量：每次只改一项参数（优于同时调节多参）。</p>'
+    : '';
+  const showLegacy = jr.comment && jr.comment.length > 120
+    && jr.comment !== summary
+    && !jr.comment.startsWith(summary);
+  const levelBadge = level
+    ? `<span class="judge-level-badge">${esc(JUDGE_LEVEL_LABELS[level] || ('L' + level))}</span>`
+    : '';
+
+  let bullets = '';
+  if (strengths.length) {
+    bullets += `<div class="judge-list-block"><span class="judge-list-label">亮点</span><ul class="judge-list">${strengths.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>`;
+  }
+  if (gaps.length) {
+    bullets += `<div class="judge-list-block"><span class="judge-list-label judge-list-label-gap">待改进</span><ul class="judge-list">${gaps.map(g => `<li>${esc(g)}</li>`).join('')}</ul></div>`;
+  }
+
+  const legacyDetails = showLegacy
+    ? `<details class="judge-legacy-details"><summary>完整评语</summary><div class="judge-comment">${esc(jr.comment)}</div></details>`
+    : '';
+
+  return `<div class="judge-result-box">
+    <div class="judge-result-head">
+      <span class="judge-verdict badge-verdict ${verdictClass(jr.verdict)}">${esc(verdictLabel(jr.verdict))}</span>
+      ${levelBadge}
+      ${jr.judgedAt ? `<span class="judge-time">${fmtTime(jr.judgedAt)}</span>` : ''}
+    </div>
+    ${pathHint ? `<p class="judge-path-hint">${esc(pathHint)}</p>` : ''}
+    ${mainRouteHint}
+    ${summary ? `<p class="judge-summary">${esc(summary)}</p>` : ''}
+    ${bullets}
+    ${suggestion ? `<p class="judge-suggestion"><strong>建议：</strong>${esc(suggestion)}</p>` : ''}
+    ${legacyDetails}
+  </div>`;
+}
+
+function renderJudgeResult(jr) {
+  const box = document.getElementById('judgeResult');
+  if (box) box.innerHTML = buildJudgeBlock(jr);
+  const btn = document.getElementById('judgeBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = jr ? '重新评判' : 'Agent B 评判';
+  }
+}
+
+function syncSessionTimelineVerdict(sessionId, verdict) {
+  document.querySelectorAll('.session-timeline-item').forEach(row => {
+    if (row.dataset.sid !== sessionId) return;
+    const body = row.querySelector('.session-timeline-body');
+    if (!body) return;
+    body.querySelectorAll('.badge-pending, .badge-verdict').forEach(el => el.remove());
+    const meta = body.querySelector('.session-timeline-meta');
+    const badge = document.createElement('span');
+    badge.className = `badge badge-verdict ${verdictClass(verdict)}`;
+    badge.textContent = verdictLabel(verdict);
+    if (meta) meta.after(badge);
+    else body.appendChild(badge);
+  });
+}
+
+function displayStudentName(key, label) {
+  if (label && label !== '匿名学生') return label;
+  if (key.startsWith('匿名 · ')) return '匿名 ' + key.slice(-4);
+  return key;
+}
+
+function renderJudgedOverview(stats) {
+  const panel = document.getElementById('judgedOverview');
+  const pills = document.getElementById('verdictPills');
+  const chips = document.getElementById('judgedStudentChips');
+  const judged = stats.judgedStudents || [];
+  const summary = stats.verdictSummary || {};
+  if (!judged.length) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  const pillOrder = [
+    ['pass', '达标'],
+    ['in_progress', '探索中'],
+    ['learning', '需改进'],
+  ];
+  pills.innerHTML = pillOrder
+    .filter(([k]) => (summary[k] || 0) > 0)
+    .map(([k, label]) => `<span class="verdict-pill ${verdictClass(k)}">${label} ${summary[k]}</span>`)
+    .join('') || '<span class="hint" style="font-size:0.82rem">暂无分类统计</span>';
+  chips.innerHTML = judged.map(j => `
+    <li>
+      <button type="button" class="judged-chip ${verdictClass(j.verdict)}" data-key="${esc(j.studentKey)}" data-sid="${esc(j.sessionId)}">
+        <span class="judged-chip-name">${esc(displayStudentName(j.studentKey, j.studentLabel))}</span>
+        <span class="judged-chip-verdict">${esc(verdictLabel(j.verdict))}</span>
+      </button>
+    </li>`).join('');
+  chips.querySelectorAll('.judged-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedStudentKey = btn.dataset.key;
+      selectedSessionId = btn.dataset.sid;
+      loadStudents();
+    });
+  });
+}
+
+async function loadStats() {
+  const params = filterParams();
+  params.delete('status');
+  params.delete('q');
+  const r = await fetch('/api/platform/traces/stats?' + params.toString());
+  const data = await r.json();
+  const s = data.stats || {};
+  document.getElementById('statStudents').textContent = s.uniqueStudents ?? '—';
+  document.getElementById('statJudged').textContent = s.judgedCount ?? '—';
+  document.getElementById('statPending').textContent = s.pendingJudge ?? '—';
+  const sub = [];
+  if (s.lastActivityAt) sub.push(`最近活动 ${fmtTime(s.lastActivityAt)}`);
+  document.getElementById('statsSub').textContent = sub.join('');
+  renderJudgedOverview(s);
+}
+
+let lastClassroomBoard = null;
+
+async function loadClassroomBoard() {
+  const params = new URLSearchParams();
+  const graphId = document.getElementById('filterGraph')?.value;
+  if (graphId) params.set('graphId', graphId);
+  const r = await fetch('/api/platform/traces/classroom?' + params.toString());
+  const board = await r.json();
+  lastClassroomBoard = board;
+  const sumEl = document.getElementById('classroomSummary');
+  const tbody = document.getElementById('classroomTbody');
+  if (!board?.ok) {
+    if (sumEl) sumEl.textContent = '看板加载失败';
+    return;
+  }
+  const s = board.summary || {};
+  const dist = Object.entries(s.pathTypeDist || {})
+    .map(([k, v]) => `${esc(k)} ${v}`)
+    .join(' · ') || '暂无路径类型';
+  if (sumEl) {
+    sumEl.innerHTML = `
+      <span>会话 <strong>${s.sessionCount ?? 0}</strong></span>
+      <span>学生 <strong>${s.uniqueStudents ?? 0}</strong></span>
+      <span>混淆倾向会话 <strong>${s.cvProbeSessions ?? 0}</strong></span>
+      <span>均 AV 调节 <strong>${s.avgAvAdjusts ?? 0}</strong></span>
+      <span>均 CV 试探 <strong>${s.avgCvAdjusts ?? 0}</strong></span>
+      <span>均策略分 <strong>${s.meanPathScore ?? '—'}</strong></span>
+      <div class="classroom-dist">路径类型：${dist}</div>`;
+  }
+  const rows = board.sessions || [];
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9">暂无会话；学生游玩并上报后会出现在此</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 80).map(row => `
+    <tr data-sid="${esc(row.sessionId)}">
+      <td>${esc(row.studentId || '—')}</td>
+      <td>${esc(row.studentLabel || '—')}</td>
+      <td>${esc(row.taskCode || '—')}</td>
+      <td>${esc(row.graphId || row.catalogId || '—')}</td>
+      <td>${row.avAdjustCount ?? 0}</td>
+      <td>${row.cvAdjustCount ?? 0}${row.cvTendency >= 0.35 ? ' ⚠' : ''}</td>
+      <td>${esc(row.pathType || '未评分')}</td>
+      <td>${row.pathScore != null ? Number(row.pathScore).toFixed(2) : '—'}</td>
+      <td>${esc(fmtTime(row.updatedAt))}</td>
+    </tr>`).join('');
+}
+
+function downloadBlob(filename, text, mime) {
+  const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function loadStudents(options = {}) {
+  const r = await fetch('/api/platform/traces/students?' + filterParams().toString());
+  const data = await r.json();
+  studentItems = data.items || [];
+  const list = document.getElementById('studentList');
+  if (!studentItems.length) {
+    list.innerHTML = '<li class="empty-state" style="padding:24px">暂无学情 — 请让学生从学生端进入游戏</li>';
+    selectedStudentKey = null;
+    selectedSessionId = null;
+    selectedSessionIds.clear();
+    document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
+    return;
+  }
+  if (!selectedStudentKey || !studentItems.find(s => s.studentKey === selectedStudentKey)) {
+    selectedSessionIds.clear();
+    selectedStudentKey = studentItems[0].studentKey;
+    selectedSessionId = studentItems[0].sessions?.[0]?.sessionId || null;
+  }
+  list.innerHTML = studentItems.map(item => {
+    const name = displayStudentName(item.studentKey, item.studentLabel);
+    const statusBadge = item.pendingCount
+      ? `<span class="badge badge-pending">待评</span>`
+      : `<span class="badge badge-verdict ${verdictClass(item.latestVerdict)}">${esc(verdictLabel(item.latestVerdict))}</span>`;
+    const multi = item.sessionCount > 1 ? `<span class="student-list-count">${item.sessionCount}次</span>` : '';
+    return `
+    <li class="student-list-item${item.studentKey === selectedStudentKey ? ' is-active' : ''}" data-key="${esc(item.studentKey)}">
+      <div class="student-list-row">
+        <span class="student-list-name">${esc(name)}</span>
+        ${multi}${statusBadge}
+      </div>
+    </li>`;
+  }).join('');
+  list.querySelectorAll('.student-list-item').forEach(el => {
+    el.addEventListener('click', () => {
+      if (selectedStudentKey !== el.dataset.key) selectedSessionIds.clear();
+      selectedStudentKey = el.dataset.key;
+      const student = studentItems.find(s => s.studentKey === selectedStudentKey);
+      selectedSessionId = student?.sessions?.[0]?.sessionId || null;
+      loadStudents();
+      if (selectedSessionId) loadSessionDetail(selectedSessionId);
+      else document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">该学生暂无会话</div>';
+      loadCrossGameSummary(student);
+    });
+  });
+  if (selectedSessionId && !options.skipDetail && !judgingSessionId) {
+    loadSessionDetail(selectedSessionId);
+  }
+  const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
+  for (const id of [...selectedSessionIds]) {
+    if (!studentSessionIds.has(id)) selectedSessionIds.delete(id);
+  }
+  updateSelectionUi();
+}
+
+async function loadCrossGameSummary(student) {
+  const panel = document.getElementById('crossGamePanel');
+  const box = document.getElementById('crossGameSummary');
+  if (!panel || !box || !student?.studentLabel) {
+    if (panel) panel.hidden = true;
+    return;
+  }
+  const r = await fetch('/api/platform/traces/students/' + encodeURIComponent(student.studentLabel) + '/summary');
+  const data = await r.json();
+  if (!data.ok || !data.games?.length) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  const rows = data.games.map(g => {
+    const fromVars = g.variableAdjustCounts
+      ? Object.entries(g.variableAdjustCounts).map(([k, v]) => `${esc(k)}×${v}`).join('、')
+      : '';
+    const tuning = fromVars
+      || Object.entries(g.controlTuningCounts || {}).map(([k, v]) => `${esc(k)}×${v}`).join('、')
+      || '—';
+    const verdicts = [...new Set(g.verdicts || [])].map(v => verdictLabel(v)).join('、') || '—';
+    const cat = catalogItems.find(c => c.id === g.catalogId);
+    const title = cat?.title || g.catalogId || g.graphId || '—';
+    return `<tr><td>${esc(title)}</td><td>${g.sessionCount}</td><td>${tuning}</td><td>${esc(verdicts)}</td></tr>`;
+  }).join('');
+  box.innerHTML = `<table class="edu-table edu-table-compact"><thead><tr><th>任务</th><th>会话</th><th>变量调节次数</th><th>评判</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function loadSessionDetail(sessionId) {
+  selectedSessionId = sessionId;
+  const reqId = ++detailRequestSeq;
+  const student = studentItems.find(s => s.studentKey === selectedStudentKey);
+  const panel = document.getElementById('sessionDetail');
+  if (!student) {
+    panel.innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
+    return;
+  }
+  if (!judgingSessionId) {
+    panel.innerHTML = '<div class="session-detail-empty">加载会话详情…</div>';
+  }
+  const r = await fetch('/api/platform/traces/' + encodeURIComponent(sessionId));
+  if (reqId !== detailRequestSeq) return;
+  const data = await r.json();
+  if (!data.ok) {
+    if (reqId !== detailRequestSeq) return;
+    panel.innerHTML = '<div class="session-detail-empty">会话不存在</div>';
+    return;
+  }
+  const session = data.session;
+  const summary = data.summary || {};
+  const cat = catalogItems.find(c => c.id === session.catalogId);
+  const taskTitle = cat?.title || session.catalogId || '—';
+  const graphFilter = document.getElementById('filterGraph').value;
+
+  const sessionRows = student.sessions.map(s => `
+    <div class="session-timeline-item${s.sessionId === sessionId ? ' is-active' : ''}" data-sid="${esc(s.sessionId)}">
+      <input type="checkbox" class="session-pick-cb" data-sid="${esc(s.sessionId)}"${selectedSessionIds.has(s.sessionId) ? ' checked' : ''} aria-label="选择会话">
+      <span class="session-timeline-body">
+        <span>${fmtTime(s.startedAt || s.updatedAt)}</span>
+        <span class="session-timeline-meta">${s.eventCount || 0} 事件</span>
+        ${s.judged
+          ? `<span class="badge badge-verdict ${verdictClass(s.verdict)}">${esc(verdictLabel(s.verdict))}</span>`
+          : '<span class="badge badge-pending">待评</span>'}
+      </span>
+      <button type="button" class="edu-btn edu-btn-outline edu-btn-sm session-row-delete" data-sid="${esc(s.sessionId)}">删除</button>
+    </div>`).join('');
+
+  const jr = session.judgeResult;
+  const judgeBlock = jr ? buildJudgeBlock(jr) : '';
+  const taskLine = graphFilter ? '' : `<p class="hint session-task-line">任务：${esc(taskTitle)}</p>`;
+  const phaseLine = summary.currentPhase
+    ? `<p class="hint">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
+    : '';
+  const tuningRows = (summary.variableAdjustCounts || []).length
+    ? summary.variableAdjustCounts.map(row =>
+      `<tr><td>${esc(row.label || row.controlId)}</td><td><code>${esc(row.controlId)}</code></td><td>${row.adjustCount}</td><td>${esc(row.role || '—')}</td></tr>`).join('')
+    : Object.entries(summary.controlTuningCounts || summary.topControls?.reduce((m, t) => ({ ...m, [t.control]: t.count }), {}) || {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([ctrl, n]) => `<tr><td>${esc(ctrl)}</td><td><code>${esc(ctrl)}</code></td><td>${n}</td><td>—</td></tr>`).join('');
+  const pathLine = session.strategyPathSummary?.text
+    ? `<p class="hint">探究路径：<strong>${esc(session.strategyPathSummary.text)}</strong>
+       ${session.strategyPathSummary.advice ? `<br>建议：${esc(session.strategyPathSummary.advice)}` : ''}
+       ${session.strategyPathSummary.score != null ? `<br>策略分（教师）：<strong>${Number(session.strategyPathSummary.score).toFixed(2)}</strong>` : ''}
+       </p>`
+    : '';
+  const tuningBlock = tuningRows
+    ? `<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数</h4><table class="edu-table edu-table-compact"><thead><tr><th>变量</th><th>控件 id</th><th>次数</th><th>角色</th></tr></thead><tbody>${tuningRows}</tbody></table></div>`
+    : '';
+
+  if (reqId !== detailRequestSeq) return;
+  loadCrossGameSummary(student);
+  panel.innerHTML = `
+    <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel))}</h3>
+    ${taskLine}
+    ${phaseLine}
+    ${pathLine}
+    ${tuningBlock}
+    <div class="session-list-head">
+      <h4 class="session-section-label">游玩会话</h4>
+      <div class="session-list-head-actions">
+        <span class="hint sessions-select-count" id="selectedSessionCountLocal"></span>
+        <label class="sessions-select-all">
+          <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
+          <span>全选</span>
+        </label>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
+      </div>
+    </div>
+    <div class="session-timeline">${sessionRows}</div>
+    <div class="session-actions">
+      <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新评判' : 'Agent B 评判'}</button>
+    </div>
+    <div id="judgeResult">${judgeBlock}</div>`;
+
+  syncSessionCheckboxes();
+  updateSelectionUi();
+}
+
+async function loadSessionsData(options = {}) {
+  await loadStats();
+  await loadStudents(options);
+  await loadClassroomBoard();
+}
+
+async function judgeSession(sessionId) {
+  judgingSessionId = sessionId;
+  const btn = document.getElementById('judgeBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '评判中…'; }
+  const box = document.getElementById('judgeResult');
+  if (box) box.innerHTML = '<div class="judge-result-box judge-result-loading">Agent B 正在分析轨迹…</div>';
+  try {
+    const r = await fetch('/api/platform/judge-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || '评判失败');
+    const jr = {
+      mode: data.mode,
+      verdict: data.verdict,
+      comment: data.comment,
+      strengths: data.strengths,
+      gaps: data.gaps,
+      inquiryPath: data.inquiryPath,
+      teacherSummary: data.teacherSummary,
+      judgedAt: data.judgedAt || new Date().toISOString(),
+    };
+    renderJudgeResult(jr);
+    const student = studentItems.find(s => s.studentKey === selectedStudentKey);
+    if (student) {
+      const sess = student.sessions.find(s => s.sessionId === sessionId);
+      if (sess) {
+        sess.judged = true;
+        sess.verdict = data.verdict;
+      }
+    }
+    syncSessionTimelineVerdict(sessionId, data.verdict);
+    await loadSessionsData({ skipDetail: true });
+  } catch (e) {
+    const errBox = document.getElementById('judgeResult');
+    if (errBox) errBox.innerHTML = `<div class="judge-result-box">错误: ${esc(e.message)}</div>`;
+    const errBtn = document.getElementById('judgeBtn');
+    if (errBtn) { errBtn.disabled = false; errBtn.textContent = 'Agent B 评判'; }
+  } finally {
+    judgingSessionId = null;
+  }
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+function bindSessionDetailDelegation() {
+  const panel = document.getElementById('sessionDetail');
+  if (!panel || panel.dataset.delegationBound) return;
+  panel.dataset.delegationBound = '1';
+
+  panel.addEventListener('click', async e => {
+    if (e.target.closest('#deleteSelectedSessionsLocal')) {
+      e.preventDefault();
+      deleteSelectedTraces();
+      return;
+    }
+    const rowDelete = e.target.closest('.session-row-delete');
+    if (rowDelete) {
+      e.stopPropagation();
+      const sid = rowDelete.dataset.sid;
+      if (!sid || !confirm('确定删除此条游玩轨迹？删除后不可恢复。')) return;
+      try {
+        await deleteTraceSessions([sid]);
+        await loadSessionsData();
+      } catch (err) {
+        alert(err.message);
+      }
+      return;
+    }
+    if (e.target.closest('#judgeBtn')) {
+      if (selectedSessionId) judgeSession(selectedSessionId);
+      return;
+    }
+    const row = e.target.closest('.session-timeline-item');
+    if (row && !e.target.closest('.session-pick-cb')) {
+      loadSessionDetail(row.dataset.sid);
+    }
+  });
+
+  panel.addEventListener('change', e => {
+    if (e.target.id === 'selectAllSessionsLocal') {
+      setSelectAllForCurrentStudent(e.target.checked);
+      return;
+    }
+    if (e.target.classList.contains('session-pick-cb')) {
+      setSessionSelected(e.target.dataset.sid, e.target.checked);
+    }
+  });
+}
+
+document.getElementById('refreshTraces').addEventListener('click', loadSessionsData);
+document.getElementById('btnClassroomRefresh')?.addEventListener('click', loadClassroomBoard);
+document.getElementById('btnClassroomExportJson')?.addEventListener('click', () => {
+  const payload = lastClassroomBoard || { ok: false, note: 'empty' };
+  downloadBlob(`classroom-board-${Date.now()}.json`, JSON.stringify(payload, null, 2), 'application/json');
+});
+document.getElementById('btnClassroomExportCsv')?.addEventListener('click', async () => {
+  const params = new URLSearchParams();
+  const graphId = document.getElementById('filterGraph')?.value;
+  if (graphId) params.set('graphId', graphId);
+  params.set('format', 'csv');
+  const r = await fetch('/api/platform/traces/classroom?' + params.toString());
+  const text = await r.text();
+  downloadBlob(`classroom-board-${Date.now()}.csv`, text, 'text/csv;charset=utf-8');
+});
+bindSessionDetailDelegation();
+document.getElementById('filterGraph').addEventListener('change', () => {
+  selectedStudentKey = null;
+  selectedSessionId = null;
+  selectedSessionIds.clear();
+  loadSessionsData();
+});
+document.getElementById('filterStatus').addEventListener('change', () => {
+  selectedStudentKey = null;
+  selectedSessionId = null;
+  selectedSessionIds.clear();
+  loadSessionsData();
+});
+document.getElementById('filterStudent').addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    selectedStudentKey = null;
+    selectedSessionId = null;
+    selectedSessionIds.clear();
+    loadSessionsData();
+  }, 300);
+});
+
+document.getElementById('publishBtn').addEventListener('click', async () => {
+  const title = document.getElementById('pubTitle').value.trim();
+  const pairSel = document.getElementById('pubPair');
+  const graphId = pairSel?.value;
+  const playUrl = pairSel?.selectedOptions[0]?.dataset?.playUrl;
+  if (!graphId || !playUrl) { alert('请选择探究包'); return; }
+  const r = await fetch('/api/platform/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: 'game-' + Date.now(),
+      title: title || graphId,
+      graphId,
+      playUrl,
+      description: document.getElementById('pubDesc').value.trim(),
+      published: true,
+      source: 'teacher',
+      categoryId: document.getElementById('pubCategory')?.value || undefined,
+    }),
+  });
+  const data = await r.json();
+  if (!data.ok) { alert(data.error || '发布失败'); return; }
+  alert('已发布: ' + data.item.title);
+  await loadCatalog();
+});
+
+const CATALOG_PANEL_OPEN_KEY = 'platform-teacher-catalog-panel-open';
+const RESOURCE_PANEL_OPEN_KEY = 'platform-teacher-resource-panel-open';
+
+function initCatalogPanelOpenState() {
+  const el = document.getElementById('catalogPanelDetails');
+  if (!el || el.dataset.openBound) return;
+  el.dataset.openBound = '1';
+  try {
+    const raw = localStorage.getItem(CATALOG_PANEL_OPEN_KEY);
+    if (raw === '0') el.open = false;
+    else if (raw === '1') el.open = true;
+  } catch {
+    el.open = true;
+  }
+  el.addEventListener('toggle', () => {
+    try {
+      localStorage.setItem(CATALOG_PANEL_OPEN_KEY, el.open ? '1' : '0');
+    } catch { /* ignore */ }
+  });
+}
+
+function initResourcePanelOpenState() {
+  const el = document.getElementById('resourcePanelDetails');
+  if (!el || el.dataset.openBound) return;
+  el.dataset.openBound = '1';
+  try {
+    const raw = localStorage.getItem(RESOURCE_PANEL_OPEN_KEY);
+    if (raw === '0') el.open = false;
+    else if (raw === '1') el.open = true;
+  } catch {
+    el.open = true;
+  }
+  el.addEventListener('toggle', () => {
+    try {
+      localStorage.setItem(RESOURCE_PANEL_OPEN_KEY, el.open ? '1' : '0');
+    } catch { /* ignore */ }
+  });
+}
+
+initCatalogPanelOpenState();
+initResourcePanelOpenState();
+
+async function loadSampleQualityOverview() {
+  const body = document.getElementById('sampleQualityBody');
+  const stats = document.getElementById('sampleQualityStats');
+  if (!body) return;
+  try {
+    const r = await fetch('/static/ui/data/sample-quality-overview.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error('overview missing');
+    const data = await r.json();
+    if (stats) {
+      stats.textContent = `共 ${data.total || 0} 样本 · 有图谱 ${data.withGraph || 0} · quality 通过 ${data.qualityPassed || 0}`;
+    }
+    const rows = data.rows || [];
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">暂无数据</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(row => {
+      const graphBadge = row.hasGraph
+        ? '<span class="badge badge-ok">有</span>'
+        : '<span class="badge">无</span>';
+      const qBadge = row.qualityOk
+        ? '<span class="badge badge-ok">通过</span>'
+        : '<span class="badge badge-warn">未过</span>';
+      const score = row.qualityScore != null ? Number(row.qualityScore).toFixed(2) : '—';
+      const play = row.hasGame
+        ? `<a class="edu-btn edu-btn-outline edu-btn-sm" href="${esc(row.playUrl)}" target="_blank" rel="noopener">游戏</a>`
+        : '';
+      const graph = row.hasGraph
+        ? `<a class="edu-btn edu-btn-outline edu-btn-sm" href="${esc(row.graphUrl)}" target="_blank" rel="noopener">图谱</a>`
+        : '';
+      return `<tr>
+        <td><strong>${esc(row.title || row.dir)}</strong><div class="hint" style="margin:0">${esc(row.id)}</div></td>
+        <td>${graphBadge}</td>
+        <td>${qBadge}</td>
+        <td>${esc(score)}</td>
+        <td class="tool-link-row">${play} ${graph}</td>
+      </tr>`;
+    }).join('');
+  } catch {
+    if (stats) stats.textContent = '一览数据未生成，请运行 build-sample-quality-overview.js';
+    body.innerHTML = '<tr><td colspan="5" class="empty-state">无法加载 sample-quality-overview.json</td></tr>';
+  }
+}
+
+async function bootstrapTeacherPage() {
+  setCatalogBodyMessage('加载中…');
+  await Promise.allSettled([
+    loadCategories(),
+    loadGraphOptions(),
+    loadPlayUrlOptions(),
+    loadSampleQualityOverview(),
+  ]);
+  await loadCatalog();
+  await loadSessionsData();
+}
+bootstrapTeacherPage();
+
+document.getElementById('pubPair')?.addEventListener('change', fillPubTitleFromPair);
+document.getElementById('pubTitle')?.addEventListener('input', () => {
+  const pubTitle = document.getElementById('pubTitle');
+  if (pubTitle) pubTitle.dataset.userEdited = pubTitle.value.trim() ? '1' : '';
+});
+
+document.getElementById('catalogFilterSource')?.addEventListener('change', e => {
+  catalogFilterSource = e.target.value;
+  loadCatalog();
+});
+document.getElementById('catalogFilterCategory')?.addEventListener('change', e => {
+  catalogFilterCategory = e.target.value;
+  loadCatalog();
+});
+document.getElementById('resourceFilterSource')?.addEventListener('change', e => {
+  resourceFilterSource = e.target.value;
+  renderResourceLists();
+});
+document.getElementById('resourceFilterCategory')?.addEventListener('change', e => {
+  resourceFilterCategory = e.target.value;
+  renderResourceLists();
+});
+document.getElementById('toggleCategoryMgmt')?.addEventListener('click', () => {
+  const panel = document.getElementById('categoryMgmtPanel');
+  if (panel) panel.hidden = !panel.hidden;
+});
+setInterval(() => {
+  if (!judgingSessionId) loadSessionsData({ skipDetail: !!selectedSessionId });
+}, 15000);
+</script>
+</body>
+</html>

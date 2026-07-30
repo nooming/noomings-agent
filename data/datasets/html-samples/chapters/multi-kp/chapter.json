@@ -1,0 +1,680 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节起始高度和释放速度 | O1 | operation | 调参+发射 |\n| 起始高度在范围? | C1 | constraint | 参数范围约束 |\n| 释放速度在范围? | C2 | constraint | 参数范围约束 |\n| 通过环路最高点? | C3 | constraint | 结果判定 |\n| 过关 | R1 | result | 胜利 |\n| 提示重试 | - | - | skip retry |\n| 提示重试 | - | - | skip retry |\n| 未达标重试 | - | - | skip retry |",
+  "kg": {
+    "title": "机械能",
+    "sub": "探究过山车通过环路最高点的条件",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究过山车通过环路最高点的条件"
+      },
+      {
+        "id": "O1",
+        "label": "调节起始高度和释放速度",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节起始高度和释放速度，点击发射按钮"
+      },
+      {
+        "id": "C1",
+        "label": "起始高度在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "起始高度必须在0到10米之间"
+      },
+      {
+        "id": "C2",
+        "label": "释放速度在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "释放速度必须在0到10米/秒之间"
+      },
+      {
+        "id": "C3",
+        "label": "通过环路最高点?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "过山车能否成功通过环路最高点，需要足够的机械能"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "成功通过环路最高点，探究完成"
+      },
+      {
+        "id": "S1",
+        "label": "重力势能公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "重力势能 Ep = mgh，其中 m 为质量，g 为重力加速度，h 为高度"
+      },
+      {
+        "id": "S2",
+        "label": "动能公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "动能 Ek = ½mv²，其中 m 为质量，v 为速度"
+      },
+      {
+        "id": "S3",
+        "label": "机械能守恒",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "无摩擦时，机械能守恒：Ep + Ek = 常数"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件信号",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "源码中存在无关控件信号，不影响过关判定"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "method"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "机械能",
+    "sub": "探究过山车通过环路最高点的条件",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究过山车通过环路最高点的条件",
+      "children": [
+        {
+          "n": "调节起始高度和释放速度",
+          "t": "step",
+          "d": "通过滑条调节起始高度和释放速度，点击发射按钮",
+          "children": []
+        },
+        {
+          "n": "起始高度在范围?",
+          "t": "decision",
+          "d": "起始高度必须在0到10米之间",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示重试",
+              "t": "retry",
+              "d": "起始高度超出范围，请重新调节"
+            },
+            {
+              "_e": "是",
+              "n": "释放速度在范围?",
+              "t": "decision",
+              "d": "释放速度必须在0到10米/秒之间",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示重试",
+                  "t": "retry",
+                  "d": "释放速度超出范围，请重新调节"
+                },
+                {
+                  "_e": "是",
+                  "n": "通过环路最高点?",
+                  "t": "decision",
+                  "d": "过山车能否成功通过环路最高点",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "未能通过环路最高点，请调整参数后重试"
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "成功通过环路最高点，探究完成"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "机械能",
+    "sub": "探究过山车通过环路最高点的条件"
+  },
+  "traceMap": {
+    "controls": {
+      "s-height": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "机械能",
+    "sub": "探究过山车通过环路最高点的条件",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[点击发射]\nAdjust2 --> Fire2[点击发射]\nFire1 --> Observe1{观察过山车是否通过?}:::stratCond\nFire2 --> Observe2{观察过山车是否通过?}:::stratCond\nObserve1 -->|未通过| Adjust1\nObserve1 -->|出界| Retry1[重试]:::stratRetry\nObserve1 -->|通过| Win[过关]:::stratResult\nObserve2 -->|未通过| Adjust2\nObserve2 -->|出界| Retry2[重试]:::stratRetry\nObserve2 -->|通过| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| ControlVar[控制变量：每次只改一项]\nStrategySelect -->|多参盲调| MultiParam[多参盲调]\nStart([开始探究]):::stratStart\nControlVar --> Adjust1[调整起始高度或释放速度]\nMultiParam --> Adjust2[固定其余，只调s-height]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetry1 --> Adjust1\nRetry2 --> Adjust2",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ControlVar",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ControlVar"
+          ],
+          [
+            "ControlVar",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MultiParam",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MultiParam"
+          ],
+          [
+            "MultiParam",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究过山车通过环路最高点的条件，涉及重力势能与动能转换",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "重力势能",
+        "formulas": [
+          "Ep = mgh"
+        ],
+        "mapsToKg": []
+      },
+      {
+        "id": "KP2",
+        "label": "动能",
+        "formulas": [
+          "Ek = ½mv²"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-height",
+        "label": "起始高度",
+        "symbol": "h",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "unit": "m"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-speed",
+        "label": "释放速度",
+        "symbol": "v",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "unit": "m/s"
+        }
+      },
+      {
+        "id": "AV3",
+        "controlId": "btn-fire",
+        "label": "发射",
+        "symbol": null,
+        "type": "button",
+        "role": "secondary",
+        "suggestedRange": null
+      },
+      {
+        "id": "AV4",
+        "controlId": "btn-reset",
+        "label": "重置",
+        "symbol": null,
+        "type": "button",
+        "role": "secondary",
+        "suggestedRange": null
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "轨道摩擦",
+        "reason": "实际有摩擦，但本探究假设无摩擦，不影响机械能守恒结论"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "能否通过",
+        "label": "能否通过环路最高点",
+        "unit": "布尔值",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "observation"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "KP2",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本关探究过山车通过环路最高点的条件，通过调节起始高度和释放速度，观察过山车能否通过环路最高点。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "调节起始高度和释放速度滑条，点击发射按钮。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察结果",
+          "body": "观察过山车是否通过环路最高点。",
+          "mapsToKg": [
+            "C3"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "分析原因",
+          "body": "根据机械能守恒，分析通过条件。",
+          "mapsToKg": [
+            "S1",
+            "S2",
+            "S3"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "Ep = mgh",
+      "Ek = ½mv²"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "机械能",
+    "subtitle": "探究过山车通过环路最高点的条件",
+    "winCondition": "成功通过环路最高点，探究完成",
+    "knowledgeSummary": "重力势能；动能",
+    "controls": [
+      {
+        "id": "s-height",
+        "type": "range",
+        "label": "起始高度",
+        "symbol": "h",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "unit": "m"
+        }
+      },
+      {
+        "id": "s-speed",
+        "type": "range",
+        "label": "释放速度",
+        "symbol": "v",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 10,
+          "step": 0.1,
+          "unit": "m/s"
+        }
+      },
+      {
+        "id": "btn-fire",
+        "type": "button",
+        "label": "发射",
+        "symbol": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      },
+      {
+        "id": "btn-reset",
+        "type": "button",
+        "label": "重置",
+        "symbol": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "轨道摩擦",
+        "reason": "实际有摩擦，但本探究假设无摩擦，不影响机械能守恒结论",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "起始高度在范围?",
+        "desc": "起始高度必须在0到10米之间"
+      },
+      {
+        "kgId": "C2",
+        "label": "释放速度在范围?",
+        "desc": "释放速度必须在0到10米/秒之间"
+      },
+      {
+        "kgId": "C3",
+        "label": "通过环路最高点?",
+        "desc": "过山车能否成功通过环路最高点，需要足够的机械能"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-height": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "能否通过环路最高点",
+        "symbol": "能否通过",
+        "unit": "布尔值"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-height",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-height → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-speed",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-speed → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "起始高度在范围?",
+        "type": "decision",
+        "desc": "起始高度必须在0到10米之间"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "起始高度超出范围，请重新调节"
+      },
+      {
+        "name": "释放速度在范围?",
+        "type": "decision",
+        "desc": "释放速度必须在0到10米/秒之间"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "释放速度超出范围，请重新调节"
+      },
+      {
+        "name": "通过环路最高点?",
+        "type": "decision",
+        "desc": "过山车能否成功通过环路最高点"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "未能通过环路最高点，请调整参数后重试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功通过环路最高点，探究完成"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

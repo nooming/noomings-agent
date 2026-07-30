@@ -1,0 +1,212 @@
+{
+  "_expertMeta": {
+    "id": "rc-circuit",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.525Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "RC电路 · 探究",
+    "sub": "相机闪光同步",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "选择模式",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节 R/C/U 并测试",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "τ 达标?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "τ 偏大?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "τ 偏小?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "探究充电快慢",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "验证 τ=RC",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "RC电路 · 探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "RC电路 · 探究",
+        "formulas": [
+          "C = 2.0",
+          "R = parseFloat(sR.value) || 1",
+          "C = parseFloat(sC.value) || 1",
+          "R = ox + ow - 16, plotT = oy + 34, plotB = oy + oh - 20"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-supply-v",
+        "label": "电源电压",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-resistance",
+        "label": "电阻",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-capacitance",
+        "label": "电容",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·电源电压",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-resistance",
+        "label": "单变量·电阻",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-capacitance",
+        "label": "单变量·电容",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      }
+    ]
+  }
+}

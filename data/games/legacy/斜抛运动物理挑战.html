@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>斜抛运动物理挑战</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #4b5563;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .value-display {
+            font-size: 14px;
+            color: #2563eb;
+            font-weight: bold;
+            align-self: flex-end;
+        }
+        .checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button.reset-btn {
+            background-color: #10b981;
+        }
+        button.reset-btn:hover {
+            background-color: #059669;
+        }
+        canvas {
+            background-color: #eef2ff;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        #message {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            height: 30px;
+            margin-top: 10px;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 斜抛运动物理挑战</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>抛射角度 (度)</label>
+                <input type="range" id="angle" min="0" max="90" value="45">
+                <span class="value-display" id="angleVal">45 °</span>
+            </div>
+            
+            <div class="control-group">
+                <label>初速度 (m/s)</label>
+                <input type="range" id="velocity" min="10" max="80" value="40">
+                <span class="value-display" id="velocityVal">40 m/s</span>
+            </div>
+            
+            <div class="control-group">
+                <label>初始高度 (m)</label>
+                <input type="range" id="height" min="0" max="100" value="20">
+                <span class="value-display" id="heightVal">20 m</span>
+            </div>
+            
+            <div class="control-group">
+                <label>炮弹质量 (kg)</label>
+                <input type="range" id="mass" min="1" max="100" value="10">
+                <span class="value-display" id="massVal">10 kg</span>
+            </div>
+
+            <div class="control-group checkbox-group">
+                <input type="checkbox" id="airResistance">
+                <label for="airResistance">开启空气阻力 (体验质量的影响)</label>
+            </div>
+
+            <button onclick="launch()">💥 发射!</button>
+            <button class="reset-btn" onclick="generateTarget()">🎯 重新生成靶子</button>
+        </div>
+
+        <div>
+            <canvas id="gameCanvas" width="800" height="400"></canvas>
+            <div id="message">调整参数，击中红心！</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const msgEl = document.getElementById('message');
+
+        // Physics Constants & Scale
+        const g = 9.8; // Gravity m/s^2
+        const dragCoeff = 0.05; // Air resistance coefficient
+        const scale = 4; // 1 meter = 4 pixels for drawing
+
+        // Game State
+        let animationId;
+        let isFlying = false;
+        let projectile = { x: 0, y: 0, vx: 0, vy: 0, trail: [] };
+        let target = { x: 0, y: 0, radius: 15 };
+        
+        // UI Updates
+        const inputs = ['angle', 'velocity', 'height', 'mass'];
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            const valEl = document.getElementById(id + 'Val');
+            let unit = id === 'angle' ? ' °' : id === 'velocity' ? ' m/s' : id === 'height' ? ' m' : ' kg';
+            el.addEventListener('input', () => {
+                valEl.innerText = el.value + unit;
+                if(!isFlying) drawScene(); // Update preview
+            });
+        });
+
+        function getParams() {
+            return {
+                angle: parseFloat(document.getElementById('angle').value) * Math.PI / 180,
+                v0: parseFloat(document.getElementById('velocity').value),
+                h0: parseFloat(document.getElementById('height').value),
+                m: parseFloat(document.getElementById('mass').value),
+                hasDrag: document.getElementById('airResistance').checked
+            };
+        }
+
+        function generateTarget() {
+            cancelAnimationFrame(animationId);
+            isFlying = false;
+            projectile.trail = [];
+            msgEl.innerText = "调整参数，击中红心！";
+            msgEl.style.color = "#333";
+            
+            // Random target placement (in meters)
+            target.x = 80 + Math.random() * 100; // Between 80m and 180m away
+            target.y = 0; // Ground level target
+            
+            drawScene();
+        }
+
+        function launch() {
+            if (isFlying) return;
+            
+            const p = getParams();
+            projectile.x = 0;
+            projectile.y = p.h0;
+            projectile.vx = p.v0 * Math.cos(p.angle);
+            projectile.vy = p.v0 * Math.sin(p.angle); // Positive is up in physics coords
+            projectile.trail = [];
+            isFlying = true;
+            msgEl.innerText = "飞行中...";
+            msgEl.style.color = "#2563eb";
+
+            let lastTime = performance.now();
+
+            function update(time) {
+                if (!isFlying) return;
+                let dt = (time - lastTime) / 1000; // Delta time in seconds
+                lastTime = time;
+                
+                // Speed up simulation slightly for better UX
+                dt *= 2.5; 
+                
+                if (dt > 0.1) dt = 0.1; // Cap dt for physics stability
+
+                const p = getParams();
+                
+                // Physics Integration (Euler method)
+                let ax = 0;
+                let ay = -g; // Gravity pulls down
+
+                if (p.hasDrag) {
+                    // F_drag = -c * v^2 * direction
+                    const speed = Math.sqrt(projectile.vx**2 + projectile.vy**2);
+                    const dragForceX = -dragCoeff * speed * projectile.vx;
+                    const dragForceY = -dragCoeff * speed * projectile.vy;
+                    
+                    ax += dragForceX / p.m;
+                    ay += dragForceY / p.m;
+                }
+
+                projectile.vx += ax * dt;
+                projectile.vy += ay * dt;
+                projectile.x += projectile.vx * dt;
+                projectile.y += projectile.vy * dt;
+
+                // Record trail
+                if (projectile.trail.length === 0 || 
+                    Math.abs(projectile.trail[projectile.trail.length-1].x - projectile.x) > 1) {
+                    projectile.trail.push({x: projectile.x, y: projectile.y});
+                }
+
+                drawScene();
+
+                // Collision Detection (Physics coords converted to pixels)
+                const screenPx = 50 + projectile.x * scale;
+                const screenPy = canvas.height - 20 - projectile.y * scale;
+                const screenTx = 50 + target.x * scale;
+                const screenTy = canvas.height - 20 - target.y * scale;
+
+                const dist = Math.hypot(screenPx - screenTx, screenPy - screenTy);
+                
+                if (dist < target.radius + 5) { // 5 is projectile radius
+                    isFlying = false;
+                    msgEl.innerText = "🎉 完美命中！太棒了！";
+                    msgEl.style.color = "#10b981";
+                    drawExplosion(screenPx, screenPy);
+                    return;
+                }
+
+                // Check out of bounds / hit ground
+                if (projectile.y < 0 || screenPx > canvas.width) {
+                    isFlying = false;
+                    projectile.y = 0; // Snap to ground
+                    drawScene();
+                    msgEl.innerText = "❌ 偏出了靶子，调整参数再试一次！";
+                    msgEl.style.color = "#dc2626";
+                    return;
+                }
+
+                animationId = requestAnimationFrame(update);
+            }
+            animationId = requestAnimationFrame(update);
+        }
+
+        function drawScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Ground
+            ctx.fillStyle = "#84cc16";
+            ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+
+            // Origin offset
+            const originX = 50;
+            const groundY = canvas.height - 20;
+
+            const p = getParams();
+
+            // Draw Target
+            const tx = originX + target.x * scale;
+            const ty = groundY - target.y * scale;
+            ctx.beginPath();
+            ctx.arc(tx, ty, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "red";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tx, ty, target.radius * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tx, ty, target.radius * 0.2, 0, Math.PI * 2);
+            ctx.fillStyle = "red";
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw Launcher Platform (Height)
+            const hPx = p.h0 * scale;
+            ctx.fillStyle = "#475569";
+            ctx.fillRect(originX - 15, groundY - hPx, 30, hPx);
+
+            // Draw Cannon (Angle)
+            ctx.save();
+            ctx.translate(originX, groundY - hPx);
+            ctx.rotate(-p.angle); // Negative because canvas Y goes down
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(0, -5, 30, 10);
+            ctx.restore();
+
+            // Draw Trail
+            if (projectile.trail.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(37, 99, 235, 0.4)";
+                ctx.lineWidth = 2;
+                ctx.moveTo(originX + projectile.trail[0].x * scale, groundY - projectile.trail[0].y * scale);
+                for (let i = 1; i < projectile.trail.length; i++) {
+                    ctx.lineTo(originX + projectile.trail[i].x * scale, groundY - projectile.trail[i].y * scale);
+                }
+                ctx.stroke();
+            }
+
+            // Draw Projectile
+            if (isFlying || projectile.trail.length > 0) {
+                const px = originX + projectile.x * scale;
+                const py = groundY - projectile.y * scale;
+                ctx.beginPath();
+                ctx.arc(px, py, 6 + (p.m / 20), 0, Math.PI * 2); // Size slightly scales with mass
+                ctx.fillStyle = "#2563eb";
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        function drawExplosion(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 165, 0, 0.7)";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 69, 0, 0.9)";
+            ctx.fill();
+        }
+
+        // Initialize
+        generateTarget();
+    </script>
+</body>
+</html>

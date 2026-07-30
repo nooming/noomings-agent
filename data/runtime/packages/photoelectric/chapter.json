@@ -1,0 +1,1192 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 频率在范围? | C2 | constraint | 频率 1e14~1e15 Hz |\n| 逸出功在范围? | C3 | constraint | 逸出功 1~5 eV |\n| 调节参数 | O1 | operation | 调节s-frequency、s-workfunction、s-intensity |\n| 发射光 | O1 | operation | 发射动作 |\n| 光电流>0? | C4 | constraint | 结果判定 |\n| 过关 | R1 | result | — |\n| 提示重试 | — | — | skip retry |\n| 再试 | — | — | skip retry |\n| 未达标重试 | — | — | skip retry |\n| 提示频率范围 | — | — | skip retry |\n| 提示逸出功范围 | — | — | skip retry |\n| 探究模式 | S1 | core | teach |\n| 竞赛模式 | S2 | core | teach |\n| 光电效应公式 | S3 | core | teach |\n| 无关控件 | I1 | irrelevant | — |",
+  "kg": {
+    "title": "光电效应 · 探究",
+    "sub": "探究频率与逸出功对光电流的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始光电效应探究实验"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择自由探究或竞赛挑战模式 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节参数并发射光",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节频率、逸出功、光强滑条，点击发射光按钮"
+      },
+      {
+        "id": "C2",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "结果落入目标/边界约束带",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "结果落入目标/边界约束带",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C4",
+        "label": "光电流>0?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "光子能量大于逸出功时产生光电流 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 5,
+        "r": 22,
+        "desc": "成功观察到光电流，满足过关条件"
+      },
+      {
+        "id": "S1",
+        "label": "探究模式",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "自由调节参数，观察光电流阈值条件"
+      },
+      {
+        "id": "S2",
+        "label": "竞赛模式",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "限次挑战，随机材料逸出功固定，需调频率达标"
+      },
+      {
+        "id": "S3",
+        "label": "光电效应公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 2,
+        "r": 22,
+        "desc": "Eₖ = hν − W，光子能量大于逸出功才产生光电流"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "隐藏输入框 I1，点击触发 irrelevant_touch 事件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "光电效应 · 探究",
+    "sub": "探究频率与逸出功对光电流的影响",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始光电效应探究",
+      "children": [
+        {
+          "n": "调节参数并发射光",
+          "t": "step",
+          "d": "调节频率、逸出功、光强滑条，点击发射光按钮",
+          "children": []
+        },
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择自由探究或竞赛挑战模式",
+          "children": [
+            {
+              "_e": "否",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由调节参数"
+            },
+            {
+              "_e": "是",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次挑战，逸出功固定"
+            }
+          ]
+        },
+        {
+          "n": "频率在范围?",
+          "t": "decision",
+          "d": "入射光频率须在 1e14~1e15 Hz",
+          "children": [
+            {
+              "_e": "否",
+              "n": "未达标重试",
+              "t": "retry",
+              "d": "频率超出范围，回到调节参数并发射光后重试",
+              "children": [
+                {
+                  "n": "调节参数并发射光",
+                  "t": "step",
+                  "d": "调节频率、逸出功、光强滑条，点击发射光按钮",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "_e": "是",
+              "n": "逸出功在范围?",
+              "t": "decision",
+              "d": "逸出功须在 1~5 eV",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "未达标重试",
+                  "t": "retry",
+                  "d": "逸出功超出范围，回到调节参数并发射光后重试",
+                  "children": [
+                    {
+                      "n": "调节参数并发射光",
+                      "t": "step",
+                      "d": "调节频率、逸出功、光强滑条，点击发射光按钮",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "_e": "是",
+                  "n": "光电流>0?",
+                  "t": "decision",
+                  "d": "光子能量大于逸出功则产生光电流",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "未产生光电流，尝试增大频率或减小逸出功，回到调节参数并发射光后重试",
+                      "children": [
+                        {
+                          "n": "调节参数并发射光",
+                          "t": "step",
+                          "d": "调节频率、逸出功、光强滑条，点击发射光按钮",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "成功观察到光电流"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关",
+    "sub": "成功观察到光电流"
+  },
+  "traceMap": {
+    "controls": {
+      "s-frequency": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-workfunction": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-intensity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "physicsCanvas": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "freqDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "workDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "intensityDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "currentDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "hintMessage": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      }
+    },
+    "legacyTypes": {
+      "irrelevant_touch": {
+        "canonical": "irrelevant_touch",
+        "control": "I1"
+      }
+    }
+  },
+  "strategy": {
+    "title": "光电效应 · 探究",
+    "sub": "探究频率与逸出功对光电流的影响",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustMulti --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[同时调多个参数]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathTrap --> AdjustMulti[固定其余，只调s-frequency]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·频率",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeExplore",
+          "AdjustFreq",
+          "Fire",
+          "Observe",
+          "AdjustWork",
+          "AdjustIntensity",
+          "Retry",
+          "Adjust",
+          "ModeChallenge",
+          "AdjustMulti",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "PathFreq"
+          ],
+          [
+            "PathFreq",
+            "AdjustFreq"
+          ],
+          [
+            "AdjustFreq",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "StrategySelect",
+            "PathWork"
+          ],
+          [
+            "PathWork",
+            "AdjustWork"
+          ],
+          [
+            "AdjustWork",
+            "Fire"
+          ],
+          [
+            "StrategySelect",
+            "PathIntensity"
+          ],
+          [
+            "PathIntensity",
+            "AdjustIntensity"
+          ],
+          [
+            "AdjustIntensity",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Retry",
+            "AdjustFreq"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "PathTrap",
+            "AdjustMulti"
+          ],
+          [
+            "AdjustMulti",
+            "Fire"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-workfunction",
+        "label": "单变量·逸出功",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeChallenge",
+          "AdjustWork",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "PathWork",
+            "AdjustWork"
+          ],
+          [
+            "AdjustWork",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "PathWork"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-intensity",
+        "label": "单变量·光强",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeChallenge",
+          "AdjustIntensity",
+          "Fire",
+          "Observe",
+          "Adjust",
+          "Retry",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "PathIntensity",
+            "AdjustIntensity"
+          ],
+          [
+            "AdjustIntensity",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "PathIntensity"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExplore",
+          "StrategySelect",
+          "AdjustMulti",
+          "Fire",
+          "Observe",
+          "Retry",
+          "Adjust"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "PathTrap",
+            "AdjustMulti"
+          ],
+          [
+            "AdjustMulti",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustFreq"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.55,
+        "weight": 0.55,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 4
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "光电效应 · 探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "光电效应 · 探究",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-frequency",
+        "label": "频率",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-workfunction",
+        "label": "逸出功",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-intensity",
+        "label": "光强",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：探究模式、竞赛模式、光电效应公式",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：探究模式；竞赛模式；光电效应公式",
+          "mapsToKg": [
+            "S1",
+            "S2",
+            "S3"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节参数并发射光、调节参数并发射光、调节参数并发射光、模式选择；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1",
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）",
+          "mapsToKg": [
+            "I1",
+            "I1",
+            "I1",
+            "I1",
+            "I1",
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "过关结果",
+        "symbol": "",
+        "unit": "",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "optics"
+  },
+  "physicsModel": {
+    "formulas": [
+      "C = ε₀εᵣA / d",
+      "E = V/d（击穿：E > Ebd）"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "C = ε₀εᵣA / d",
+        "E = V/d（击穿：E > Ebd）"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "过关",
+      "domain": "optics"
+    }
+  },
+  "gameSpec": {
+    "title": "光电效应 · 探究",
+    "subtitle": "探究频率与逸出功对光电流的影响",
+    "winCondition": "成功观察到光电流，满足过关条件",
+    "knowledgeSummary": "光电效应 · 探究",
+    "controls": [
+      {
+        "id": "s-frequency",
+        "type": "range",
+        "label": "频率",
+        "symbol": "频率",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-workfunction",
+        "type": "range",
+        "label": "逸出功",
+        "symbol": "逸出功",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-intensity",
+        "type": "range",
+        "label": "光强",
+        "symbol": "光强",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "选择自由探究或竞赛挑战模式 〔物理核心〕"
+      },
+      {
+        "kgId": "C2",
+        "label": "频率在范围?",
+        "desc": "入射光频率须在 1e14~1e15 Hz 范围内 〔物理核心〕"
+      },
+      {
+        "kgId": "C3",
+        "label": "逸出功在范围?",
+        "desc": "金属逸出功须在 1~5 eV 范围内 〔物理核心〕"
+      },
+      {
+        "kgId": "C4",
+        "label": "光电流>0?",
+        "desc": "光子能量大于逸出功时产生光电流 〔物理核心〕"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-frequency": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-workfunction": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-intensity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "physicsCanvas": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "freqDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "workDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "intensityDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "currentDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "hintMessage": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "频率",
+        "symbol": "频率",
+        "unit": "",
+        "source": "state.s-frequency"
+      },
+      {
+        "label": "逸出功",
+        "symbol": "逸出功",
+        "unit": "",
+        "source": "state.s-workfunction"
+      },
+      {
+        "label": "光强",
+        "symbol": "光强",
+        "unit": "",
+        "source": "state.s-intensity"
+      },
+      {
+        "label": "过关结果",
+        "symbol": "过关结果",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-frequency",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-frequency → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-workfunction",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-workfunction → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-intensity",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-intensity → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "physicsCanvas",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 physicsCanvas"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "freqDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 freqDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "workDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 workDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "intensityDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 intensityDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "currentDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 currentDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "hintMessage",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 hintMessage"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "canonical": "irrelevant_touch",
+        "control": "I1",
+        "required": false
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "选择自由探究或竞赛挑战模式"
+      },
+      {
+        "name": "频率在范围?",
+        "type": "decision",
+        "desc": "入射光频率须在 1e14~1e15 Hz"
+      },
+      {
+        "name": "提示频率范围",
+        "type": "retry",
+        "desc": "频率超出范围，回到调节参数并发射光后重试"
+      },
+      {
+        "name": "逸出功在范围?",
+        "type": "decision",
+        "desc": "逸出功须在 1~5 eV"
+      },
+      {
+        "name": "提示逸出功范围",
+        "type": "retry",
+        "desc": "逸出功超出范围，回到调节参数并发射光后重试"
+      },
+      {
+        "name": "光电流>0?",
+        "type": "decision",
+        "desc": "光子能量大于逸出功则产生光电流"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "未产生光电流，尝试增大频率或减小逸出功，回到调节参数并发射光后重试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功观察到光电流"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

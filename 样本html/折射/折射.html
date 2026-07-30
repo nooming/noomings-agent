@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>折射 · 探究</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        .subtitle { color: #555; margin-bottom: 16px; font-size: 0.95rem; }
+        .canvas-wrap { background: #eef1f5; border-radius: 10px; padding: 8px; margin-bottom: 20px; }
+        canvas { display: block; width: 100%; height: auto; background: white; border-radius: 6px; }
+        .controls-grid { display: flex; flex-wrap: wrap; gap: 20px 30px; margin-bottom: 20px; }
+        .slider-group { flex: 1 1 180px; }
+        .slider-group label { display: block; font-weight: 500; margin-bottom: 4px; font-size: 0.9rem; }
+        .slider-group input { width: 100%; }
+        .slider-group .value { font-size: 0.85rem; color: #2c3e50; margin-top: 2px; }
+        .action-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        button { background: #2c7be5; color: white; border: none; padding: 8px 22px; border-radius: 30px; font-size: 1rem; cursor: pointer; }
+        button:active { background: #1a5bb5; }
+        .observe-box { background: #f0f4f8; border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px; border-left: 4px solid #2c7be5; }
+        .observe-box strong { font-size: 0.95rem; }
+        .observe-box .reading { font-size: 1.2rem; font-weight: 600; color: #1a3a5c; margin-left: 8px; }
+        .feedback { min-height: 28px; font-weight: 500; color: #1e3c5a; margin: 6px 0 10px; }
+        .win-badge { background: #27ae60; color: white; padding: 6px 18px; border-radius: 40px; display: inline-block; font-weight: 600; }
+        .irrelevant-area { margin-top: 20px; padding-top: 12px; border-top: 1px dashed #ccc; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .irrelevant-area button { background: #b0b8c5; color: #1f2a3f; font-size: 0.8rem; padding: 4px 14px; }
+        .irrelevant-area button:active { background: #8f98a8; }
+        .formula-note { background: #f8f9fc; padding: 8px 14px; border-radius: 20px; font-size: 0.9rem; color: #2c3e50; margin-bottom: 10px; display: inline-block; }
+        .flex { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#2dd4bf;--craft-bg:#061816;--craft-panel:#0f2a28;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-text)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-fire{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#essence-bench .observe-box{background:rgba(0,0,0,.32)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench .value,.observe-box .reading{color:#ffe0c2!important;}
+#essence-bench .formula-note,.irrelevant-area{display:none!important;}
+#essence-bench .feedback{color:var(--craft-text)!important;}
+#essence-hud{top:56px!important;max-width:min(360px,calc(100% - 24px))!important;}
+#essence-hud .essence-title,#essence-hud .essence-sub{text-shadow:none!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#dual-mode-hud .dual-chip,#challengeStats,
+#essence-stage > #dual-mode-hud .dual-chip,#essence-stage > #dual-mode-hud #challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#ffe0c2!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>夜潜探照 · 水下打靶</h2>
+    <p>码头夜潜要照亮水下浮标。试着弄清入射角与折射率如何改变折射光路；再接限次急单——靶位本局固定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后靶位本局固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">n₁ sinθ₁ = n₂ sinθ₂</div>
+    <p id="craftWinText">光进入不同介质时方向改变；入射角、折射率共同决定折射角，从而决定能否命中水下靶。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="refractionCanvas" width="700" height="400"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">夜潜探照 · 水下打靶</div>
+      <div class="essence-sub" id="goalMission">探究：自由调 θ₁、n₂，观察折射光路</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="container">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：入射角与折射率怎样改变折射光路。竞赛另有限次急单。</p>
+    <div class="controls-grid">
+        <div class="slider-group">
+            <label for="s-incident-angle">入射角 θ₁ <span id="angleValue" class="value">45°</span></label>
+            <input type="range" id="s-incident-angle" min="0" max="89" step="1" value="45">
+        </div>
+        <div class="slider-group">
+            <label for="s-refractive-index">折射率 n₂ <span id="indexValue" class="value">1.3</span></label>
+            <input type="range" id="s-refractive-index" min="1.0" max="2.5" step="0.1" value="1.3">
+        </div>
+        <div class="slider-group">
+            <label for="s-wavelength">入射光波长 λ <span id="waveValue" class="value">550 nm</span></label>
+            <input type="range" id="s-wavelength" min="400" max="700" step="10" value="550">
+        </div>
+    </div>
+
+    <div class="observe-box">
+        <strong>折射角 θ₂</strong>
+        <span class="reading" id="refractionAngleDisplay">—</span>
+    </div>
+
+    <!-- 过关提示区 -->
+    <div id="winMessage" style="margin: 8px 0 4px;"></div>
+
+    <input type="hidden" id="I1" value="irrelevant">
+</div>
+
+<!-- trace-adapter-hook (埋点) -->
+
+
+
+<!-- trace-adapter-hook -->
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+        <button type="button" id="btn-fire">发射光线</button>
+        <span class="feedback" id="feedbackMsg">待发射 · 调参后点发射</span>
+    </div>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // puzzle_open
+    emit('puzzle_open', {});
+
+    // tuning 绑定 (所有 range)
+    document.querySelectorAll('input[type="range"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || 'slider', value: el.value });
+      });
+    });
+
+    // irrelevant_touch 绑定 I1
+    var i1 = document.getElementById('I1');
+    if (i1) {
+      i1.addEventListener('click', function() {
+        emit('irrelevant_touch', { control: 'I1' });
+      });
+    }
+  });
+})();
+</script>
+<script>
+(function() {
+  const canvas = document.getElementById('refractionCanvas');
+  const ctx = canvas.getContext('2d');
+  const angleSlider = document.getElementById('s-incident-angle');
+  const indexSlider = document.getElementById('s-refractive-index');
+  const waveSlider = document.getElementById('s-wavelength');
+  const angleValueSpan = document.getElementById('angleValue');
+  const indexValueSpan = document.getElementById('indexValue');
+  const waveValueSpan = document.getElementById('waveValue');
+  const refractionDisplay = document.getElementById('refractionAngleDisplay');
+  const feedback = document.getElementById('feedbackMsg');
+  const winMessageDiv = document.getElementById('winMessage');
+  const fireBtn = document.getElementById('btn-fire');
+
+  const n1 = 1.0;
+  let W = 700, H = 400;
+  let layout = { groundY: 240, launchX: 100, launchY: 70, target: { x: 520, y: 310, radius: 18 } };
+  let playMode = 'explore';
+  let lockedTargetFrac = null; // FixedChallenge：横向比例
+  let challengeWon = false;
+  let measuredTheta2 = null; // 测后门控：发射后才揭示 θ₂
+  const MODE_GOALS = {
+    explore: {
+      hud: '探究：自由试照，观察折射光如何随 θ₁、n₂ 变化',
+      side: '探究·码头试照：试着弄清入射角与折射率如何改变光路；不必先盯固定靶。'
+    },
+    challenge: {
+      hud: '竞赛：限次命中本局锁定水下靶（本局固定）',
+      side: '竞赛·夜潜急单：限次命中本局锁定水下靶；打偏不换靶。'
+    }
+  };
+  function refreshRefractGoals() {
+    const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+    const mission = document.getElementById('goalMission');
+    const side = document.getElementById('sideGoal');
+    if (playMode === 'challenge' && lockedTargetFrac != null) {
+      if (mission) mission.textContent = '急单靶位已锁定 · 本局固定';
+      if (side) side.textContent = '竞赛急单：限次命中锁定水下靶（本局固定，打偏不换靶）。';
+    } else {
+      if (mission) mission.textContent = g.hud;
+      if (side) side.textContent = g.side;
+    }
+  }
+  /** FixedChallenge：仅进入竞赛时锁定一次靶位 */
+  function lockChallengeTarget() {
+    lockedTargetFrac = 0.55 + Math.random() * 0.28; // 0.55–0.83
+    challengeWon = false;
+    angleSlider.value = '45';
+    indexSlider.value = '1.3';
+    refreshRefractGoals();
+    updateExperiment(false);
+    feedback.textContent = '急单已锁定 · 水下靶位本局固定';
+    winMessageDiv.innerHTML = '';
+  }
+  function applyExploreTarget() {
+    lockedTargetFrac = null;
+    challengeWon = false;
+    refreshRefractGoals();
+    updateExperiment(false);
+    feedback.textContent = '自由试照 · 观察折射光路';
+    winMessageDiv.innerHTML = '';
+  }
+  window.__refractApplyMode = function(mode) {
+    playMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (playMode === 'challenge') lockChallengeTarget();
+    else applyExploreTarget();
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    var m = ev && ev.detail && ev.detail.mode;
+    if (typeof window.__refractApplyMode === 'function') window.__refractApplyMode(m);
+  });
+  /* BATCH6-FIXED-20260724 FixedChallenge */
+
+  function syncCanvasSize() {
+    var stage = document.getElementById('essence-stage') || canvas.parentElement;
+    var cssW = Math.max(2, (stage && stage.clientWidth) || 700);
+    var cssH = Math.max(2, (stage && stage.clientHeight) || 400);
+    var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    var bw = Math.round(cssW * dpr), bh = Math.round(cssH * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = cssW; H = cssH;
+    layout.groundY = Math.round(H * 0.52);
+    layout.launchX = Math.round(W * 0.16);
+    layout.launchY = Math.round(H * 0.18);
+    var txFrac = (playMode === 'challenge' && lockedTargetFrac != null) ? lockedTargetFrac : 0.72;
+    // 探究靶较大；竞赛靶更小，目视可辨且同参未必两边同命中
+    var rFrac = playMode === 'challenge' ? 0.022 : 0.042;
+    layout.target = {
+      x: Math.round(W * txFrac),
+      y: Math.round(H * 0.72),
+      radius: Math.max(playMode === 'challenge' ? 10 : 16, Math.round(Math.min(W, H) * rFrac))
+    };
+    return layout;
+  }
+
+  function calcRefractionAngle(theta1Deg, n2) {
+    const theta1Rad = theta1Deg * Math.PI / 180;
+    const sinTheta2 = (n1 * Math.sin(theta1Rad)) / n2;
+    if (sinTheta2 > 1.0) return NaN;
+    return Math.asin(sinTheta2) * 180 / Math.PI;
+  }
+
+  function wavelengthToRgb(nm) {
+    // 粗略可见光谱映射，仅改光束色相，不改折射角
+    var t = Math.max(0, Math.min(1, (nm - 400) / 300));
+    var r = Math.round(255 * Math.min(1, Math.max(0, t < 0.25 ? (0.25 - t) * 4 : t > 0.55 ? (t - 0.55) / 0.45 : 0)));
+    var g = Math.round(255 * Math.min(1, Math.max(0, t < 0.5 ? t * 2 : (1 - t) * 2)));
+    var b = Math.round(255 * Math.min(1, Math.max(0, t < 0.45 ? 1 : (0.7 - t) / 0.25)));
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function drawScene(theta1Deg, n2, lamNm) {
+    var beamColor = wavelengthToRgb(lamNm != null ? lamNm : 550);
+    const L = syncCanvasSize();
+    const groundY = L.groundY, launchX = L.launchX, launchY = L.launchY, target = L.target;
+    ctx.clearRect(0, 0, W, H);
+
+    // 空气 / 水槽
+    const air = ctx.createLinearGradient(0, 0, 0, groundY);
+    air.addColorStop(0, '#0b1c1a');
+    air.addColorStop(1, '#12302c');
+    ctx.fillStyle = air;
+    ctx.fillRect(0, 0, W, groundY);
+    const water = ctx.createLinearGradient(0, groundY, 0, H);
+    water.addColorStop(0, 'rgba(45,212,191,0.28)');
+    water.addColorStop(1, 'rgba(14,116,144,0.55)');
+    ctx.fillStyle = water;
+    ctx.fillRect(0, groundY, W, H - groundY);
+
+    // 水槽壁
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, groundY, 10, H - groundY);
+    ctx.fillRect(W - 10, groundY, 10, H - groundY);
+    ctx.fillRect(0, H - 16, W, 16);
+
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    ctx.lineTo(W, groundY);
+    ctx.strokeStyle = '#5eead4';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.font = '12px "Microsoft YaHei",sans-serif';
+    ctx.fillStyle = '#99f6e4';
+    ctx.fillText('空气', 18, groundY - 10);
+    ctx.fillText('水槽介质 n₂=' + n2.toFixed(1), 18, groundY + 22);
+
+    // 探照灯
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(launchX - 18, launchY - 10, 28, 20);
+    ctx.beginPath();
+    ctx.arc(launchX, launchY, 7, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fde047';
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fef9c3';
+    ctx.fillText('探照灯', launchX - 18, launchY - 16);
+
+    const theta1Rad = theta1Deg * Math.PI / 180;
+    let ix = launchX + (groundY - launchY) * Math.tan(theta1Rad);
+    if (ix < 16) ix = 16;
+    if (ix > W - 16) ix = W - 16;
+
+    ctx.beginPath();
+    ctx.moveTo(launchX, launchY);
+    ctx.lineTo(ix, groundY);
+    ctx.strokeStyle = beamColor;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.setLineDash([6, 6]);
+    ctx.moveTo(ix, groundY - 56);
+    ctx.lineTo(ix, groundY + 56);
+    ctx.strokeStyle = 'rgba(148,163,184,0.7)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath();
+    ctx.arc(ix, groundY, 28, -Math.PI/2, -Math.PI/2 + theta1Rad, false);
+    ctx.strokeStyle = '#fdba74';
+    ctx.stroke();
+    ctx.fillStyle = '#fdba74';
+    ctx.fillText('θ₁=' + theta1Deg.toFixed(0) + '°', ix + 18, groundY - 26);
+
+    const theta2Deg = calcRefractionAngle(theta1Deg, n2);
+    let valid = !(isNaN(theta2Deg) || theta2Deg < 0 || theta2Deg > 89);
+    let refrEndX = ix, refrEndY = groundY;
+    // 出射光路/折射角几何仅发射后揭示，避免拖滑条即见结论
+    const pathRevealed = measuredTheta2 != null; // 含 NaN（已测但全反射）
+    if (pathRevealed) {
+      if (valid) {
+        const theta2Rad = theta2Deg * Math.PI / 180;
+        const len = Math.min(H - groundY - 20, W * 0.35);
+        refrEndX = ix + len * Math.sin(theta2Rad);
+        refrEndY = groundY + len * Math.cos(theta2Rad);
+        ctx.beginPath();
+        ctx.moveTo(ix, groundY);
+        ctx.lineTo(refrEndX, refrEndY);
+        ctx.strokeStyle = beamColor;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(ix, groundY, 26, Math.PI/2, Math.PI/2 + theta2Rad, false);
+        ctx.strokeStyle = '#7dd3fc';
+        ctx.stroke();
+        ctx.fillStyle = '#7dd3fc';
+        if (!isNaN(measuredTheta2)) {
+          ctx.fillText('θ₂=' + measuredTheta2.toFixed(1) + '°', ix + 18, groundY + 44);
+        }
+      } else {
+        ctx.fillStyle = '#fda4af';
+        ctx.fillText('全反射 / 无效', ix + 16, groundY + 36);
+      }
+    } else {
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('折射光路待测 · 点发射', ix + 16, groundY + 36);
+    }
+
+    // 水下靶
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(248,113,113,0.28)';
+    ctx.strokeStyle = '#f87171';
+    ctx.lineWidth = 2.5;
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fecaca';
+    ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+    ctx.fillText(playMode==='challenge'?'急单靶':'对照靶', target.x - 22, target.y - target.radius - 8);
+
+    let hit = false;
+    let missSide = null; // 'left' | 'right' | null
+    if (pathRevealed && valid) {
+      const dx = refrEndX - ix, dy = refrEndY - groundY;
+      const l2 = dx*dx + dy*dy;
+      if (l2 > 0.0001) {
+        let t = ((target.x - ix)*dx + (target.y - groundY)*dy) / l2;
+        t = Math.max(0, Math.min(1, t));
+        const cx = ix + t * dx, cy = groundY + t * dy;
+        if ((cx - target.x)*(cx - target.x) + (cy - target.y)*(cy - target.y) <= target.radius*target.radius) hit = true;
+        else missSide = cx < target.x ? 'left' : 'right';
+      }
+    }
+
+    const boxW = 210, boxH = 44, boxX = W - boxW - 16, boxY = H - boxH - 28;
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(boxX, boxY, boxW, boxH);
+    ctx.strokeStyle = (pathRevealed && hit) ? 'rgba(45,212,191,0.7)' : 'rgba(148,163,184,0.35)';
+    ctx.strokeRect(boxX, boxY, boxW, boxH);
+    ctx.fillStyle = '#ccfbf1';
+    ctx.font = '12px "Microsoft YaHei",sans-serif';
+    if (!pathRevealed) {
+      ctx.fillText('光路待测 · 点发射后判定', boxX + 10, boxY + 28);
+    } else if (!valid) {
+      ctx.fillText('全反射 · 未见折射光路', boxX + 10, boxY + 28);
+    } else if (playMode === 'challenge') {
+      ctx.fillText(hit ? '光线已命中锁定信标' : '光线尚未命中信标', boxX + 10, boxY + 28);
+    } else {
+      ctx.fillText(hit ? '碰巧扫到参考信标' : '探究观察折射走向', boxX + 10, boxY + 28);
+    }
+
+    return { hit, missSide, theta2Deg: valid ? theta2Deg : NaN, valid };
+  }
+
+  // ----- 更新UI & 判定 -----
+  function updateExperiment(fireAction = false) {
+    const theta1 = parseFloat(angleSlider.value);
+    const n2 = parseFloat(indexSlider.value);
+    const lam = waveSlider ? parseFloat(waveSlider.value) : 550;
+    angleValueSpan.textContent = theta1 + '°';
+    indexValueSpan.textContent = n2.toFixed(1);
+    if (waveValueSpan) waveValueSpan.textContent = lam.toFixed(0) + ' nm';
+
+    // 发射时先揭示，再绘制，使出射光路与读数同帧出现
+    if (fireAction) {
+      const t2pre = calcRefractionAngle(theta1, n2);
+      const validPre = !(isNaN(t2pre) || t2pre < 0 || t2pre > 89);
+      measuredTheta2 = validPre ? t2pre : NaN; // NaN = 已测但无效/全反射
+    }
+
+    const result = drawScene(theta1, n2, lam);
+    const theta2 = result.theta2Deg;
+    const valid = result.valid;
+
+    // 显示折射角（测前待测）
+    if (measuredTheta2 != null && !isNaN(measuredTheta2)) {
+      refractionDisplay.textContent = measuredTheta2.toFixed(1) + '°';
+    } else if (measuredTheta2 != null && isNaN(measuredTheta2)) {
+      refractionDisplay.textContent = '无效';
+    } else {
+      refractionDisplay.textContent = '—';
+    }
+
+    // 约束检查 (C1, C2)
+    let c1ok = (theta1 >= 0 && theta1 <= 89);
+    let c2ok = (n2 >= 1.0 && n2 <= 2.5);
+    if (!c1ok) {
+      feedback.textContent = '入射角超范围 · 调回 0°–89°';
+      winMessageDiv.innerHTML = '';
+      return { winOk: false, hintKey: 'C1' };
+    }
+    if (!c2ok) {
+      feedback.textContent = '折射率超范围 · 调回 1.0–2.5';
+      winMessageDiv.innerHTML = '';
+      return { winOk: false, hintKey: 'C2' };
+    }
+
+    // 如果点击发射 或 自动检测 (fireAction)
+    if (fireAction) {
+      if (!valid || isNaN(theta2)) {
+        feedback.textContent = '光路无效 · 可能全反射';
+        winMessageDiv.innerHTML = '';
+        return { winOk: false, hintKey: 'C3' };
+      }
+      const hit = result.hit;
+      const missSide = result.missSide;
+      if (playMode === 'explore') {
+        feedback.textContent = hit
+          ? '光线掠过对照靶 · 探究对比中'
+          : (missSide === 'left' ? '光路偏左未中靶 · 继续对比' : (missSide === 'right' ? '光路偏右未中靶 · 继续对比' : '未命中对照靶 · 继续对比光路'));
+        winMessageDiv.innerHTML = '';
+        return { winOk: false, hintKey: 'explore_observe' };
+      }
+      if (hit) {
+        feedback.textContent = '急单完成 · 命中锁定水下靶';
+        winMessageDiv.innerHTML = '<span class="win-badge">🎉 过关！命中锁定靶</span>';
+        if (!challengeWon && typeof window.__craftShowWin === 'function') {
+          challengeWon = true;
+          window.__craftShowWin('急单靶位本局锁定。入射角与折射率共同决定折射角，从而决定能否命中。');
+        }
+        return { winOk: true, hintKey: null };
+      } else {
+        // FixedChallenge：失败不换靶
+        const sideTxt = missSide === 'left' ? '光路偏左' : (missSide === 'right' ? '光路偏右' : '未命中');
+        feedback.textContent = sideTxt + ' · 靶位仍锁定，对照光路再调参后发射';
+        winMessageDiv.innerHTML = '';
+        return { winOk: false, hintKey: missSide === 'left' ? 'miss_left' : (missSide === 'right' ? 'miss_right' : 'C3') };
+      }
+    } else {
+      // 非发射：不剧透全反射/命中结论
+      feedback.textContent = '调节参数，点击「发射光线」测试光路';
+      winMessageDiv.innerHTML = '';
+      return { winOk: false, hintKey: null };
+    }
+  }
+
+  // ----- 发射/测试 事件 (含埋点 snapshot & win) -----
+  function fireAndEmit() {
+    const status = updateExperiment(true);
+    const winOk = status.winOk;
+    const hintKey = status.hintKey;
+
+    // 构造 controls 快照
+    const controls = {
+      's-incident-angle': angleSlider.value,
+      's-refractive-index': indexSlider.value
+    };
+
+    // snapshot 事件
+    try {
+      const snapPayload = { controls: controls, winOk: winOk, hintKey: hintKey };
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record('snapshot', snapPayload);
+      } else if (window.parent && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record('snapshot', snapPayload);
+      }
+    } catch (e) {}
+
+    // 如果过关，额外 fire win
+    if (winOk) {
+      try {
+        const winPayload = { winOk: true };
+        if (window.PlatformTraceAdapter) {
+          window.PlatformTraceAdapter.record('win', winPayload);
+        } else if (window.parent && window.parent.PlatformTraceAdapter) {
+          window.parent.PlatformTraceAdapter.record('win', winPayload);
+        }
+      } catch (e) {}
+    }
+  }
+
+  // ----- 绑定事件 -----
+  angleSlider.addEventListener('input', function() {
+    measuredTheta2 = null;
+    updateExperiment(false);
+  });
+  indexSlider.addEventListener('input', function() {
+    measuredTheta2 = null;
+    updateExperiment(false);
+  });
+  if (waveSlider) waveSlider.addEventListener('input', function() {
+    updateExperiment(false);
+  });
+  fireBtn.addEventListener('click', function() {
+    fireAndEmit();
+  });
+
+  // 初始绘制
+  updateExperiment(false);
+  window.addEventListener('resize', function(){ updateExperiment(false); });
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(function(){ updateExperiment(false); }).observe(st);
+  }
+})();
+</script>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__snellApplyMode === 'function') {
+      try { window.__snellApplyMode(state.mode); } catch (e) {}
+    }
+    try {
+      if (typeof window.__refractApplyMode === 'function') window.__refractApplyMode(state.mode);
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode, attempts: state.attempts } }));
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

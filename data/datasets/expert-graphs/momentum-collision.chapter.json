@@ -1,0 +1,276 @@
+{
+  "_expertMeta": {
+    "id": "momentum-collision",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.515Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "动量守恒 · 碰撞实验",
+    "sub": "夜班分拣 · 对撞投递",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调参发射",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "碰撞发生",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "包件2进区",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "探究见过进区与未进",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "竞赛剩余机会>0",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C6",
+        "label": "导轨温度在范围·结果判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "动量守恒定律",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "验证动量守恒",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C4",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C5",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "C6",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "动量守恒 · 碰撞实验",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "动量守恒 · 碰撞实验",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-vel1",
+        "label": "速度1",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-vel2",
+        "label": "速度2",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-rail-temp",
+        "label": "导轨温度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-mass1",
+        "label": "质量",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 4,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV5",
+        "controlId": "s-mass2",
+        "label": "质量",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 5,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·速度1",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-vel2",
+        "label": "单变量·速度2",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-rail-temp",
+        "label": "单变量·导轨温度",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "main_s-mass1",
+        "label": "单变量·质量",
+        "priorityRank": 4,
+        "score": 0.55
+      },
+      {
+        "id": "main_s-mass2",
+        "label": "单变量·质量",
+        "priorityRank": 4,
+        "score": 0.55
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "priorityRank": 6,
+        "score": 0.39
+      }
+    ]
+  }
+}

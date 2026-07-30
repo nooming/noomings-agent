@@ -1,0 +1,252 @@
+{
+  "_expertMeta": {
+    "id": "thin-lens-implicit",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.539Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "透镜 · 凸透镜成像实验",
+    "sub": "探究物距与焦距对成像位置的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节物距与焦距",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "J1",
+        "label": "测试成像",
+        "group": "junction",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "像在光屏上?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "提示重试",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "竞赛机会耗尽?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "透镜成像公式",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "像距与物距关系",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "C_HIT",
+        "label": "命中目标区?",
+        "group": "constraint",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "J1",
+        "tp": "premise"
+      },
+      {
+        "s": "J1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "C5",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "透镜 · 凸透镜成像实验",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "透镜 · 凸透镜成像实验",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-object-distance",
+        "label": "物距",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-focal-length",
+        "label": "焦距",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-aperture",
+        "label": "光圈",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·物距",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-focal-length",
+        "label": "单变量·焦距",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-aperture",
+        "label": "单变量·光圈",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "priorityRank": 3,
+        "score": 0.2
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "priorityRank": 4,
+        "score": 0.55
+      }
+    ]
+  }
+}

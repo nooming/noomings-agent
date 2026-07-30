@@ -1,0 +1,634 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 开始 |\n| 电流在范围? | C1 | constraint | 参数范围约束 |\n| 磁感应强度在范围? | C2 | constraint | 参数范围约束 |\n| 安培力达标? | C3 | constraint | 结果判定 |\n| 过关 | R1 | result | 胜利 |\n| 提示电流范围 | - | - | skip retry 回到 O1 |\n| 提示磁感应强度范围 | - | - | skip retry 回到 O1 |\n| 未达标重试 | - | - | skip retry 回到 O1 |",
+  "kg": {
+    "title": "磁场",
+    "sub": "探究通电导线在磁场中受力与电流、磁感应强度的关系",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入实验",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究通电导线在磁场中受力实验"
+      },
+      {
+        "id": "O1",
+        "label": "调节电流和磁感应强度",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节电流 I 和磁感应强度 B"
+      },
+      {
+        "id": "C1",
+        "label": "电流在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "电流 I 在 0~5A 范围内"
+      },
+      {
+        "id": "C2",
+        "label": "磁感应强度在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "磁感应强度 B 在 0~2T 范围内"
+      },
+      {
+        "id": "C3",
+        "label": "安培力达标?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "安培力 F 达到目标值（验证 F=BIL）"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "成功验证安培力公式，安培力达标"
+      },
+      {
+        "id": "S1",
+        "label": "安培力公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "F = BIL，安培力与电流、磁感应强度、导线长度成正比"
+      },
+      {
+        "id": "S2",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "探究安培力与电流关系时保持磁感应强度不变，反之亦然"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中与实验无关的装饰控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "method"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "磁场",
+    "sub": "探究通电导线在磁场中受力",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究安培力实验",
+      "children": [
+        {
+          "n": "调节电流和磁感应强度",
+          "t": "step",
+          "d": "通过滑条调节电流 I 和磁感应强度 B",
+          "children": []
+        },
+        {
+          "n": "电流在范围?",
+          "t": "decision",
+          "d": "电流 I 是否在 0~5A 范围内",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示电流范围",
+              "t": "retry",
+              "d": "电流超出范围，请重新调节，回到调节电流和磁感应强度后重试",
+              "children": [
+                {
+                  "n": "调节电流和磁感应强度",
+                  "t": "step",
+                  "d": "通过滑条调节电流 I 和磁感应强度 B",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "_e": "是",
+              "n": "磁感应强度在范围?",
+              "t": "decision",
+              "d": "磁感应强度 B 是否在 0~2T 范围内",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示磁感应强度范围",
+                  "t": "retry",
+                  "d": "磁感应强度超出范围，请重新调节，回到调节电流和磁感应强度后重试",
+                  "children": [
+                    {
+                      "n": "调节电流和磁感应强度",
+                      "t": "step",
+                      "d": "通过滑条调节电流 I 和磁感应强度 B",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "_e": "是",
+                  "n": "安培力达标?",
+                  "t": "decision",
+                  "d": "安培力 F 是否达到目标值（验证 F=BIL）",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "安培力未达标，请重新调节参数，回到调节电流和磁感应强度后重试",
+                      "children": [
+                        {
+                          "n": "调节电流和磁感应强度",
+                          "t": "step",
+                          "d": "通过滑条调节电流 I 和磁感应强度 B",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "成功验证安培力公式，安培力达标"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "磁场",
+    "sub": "成功验证安培力公式"
+  },
+  "traceMap": {
+    "controls": {
+      "s-current": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-magnetic": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "磁场",
+    "sub": "探究通电导线在磁场中受力策略",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[发射/操作]\nAdjust2 --> Fire2[发射/操作]\nFire1 --> Observe1{观察安培力?}:::stratCond\nFire2 --> Observe2{观察安培力?}:::stratCond\nObserve1 -->|偏小| Adjust1\nObserve1 -->|未达标| Retry1[重试]:::stratRetry\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏小| Adjust2\nObserve2 -->|未达标| Retry2[重试]:::stratRetry\nObserve2 -->|达标| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| MainPath[控制变量法]\nStrategySelect -->|多参盲调| TrapPath[多参盲调]\nStart([开始实验]):::stratStart\nMainPath --> Adjust1[调整单一参数]\nRetry1 --> Adjust1\nRetry2 --> Adjust2\nTrapPath --> Adjust2[固定其余，只调s-current]",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MainPath",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MainPath"
+          ],
+          [
+            "MainPath",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "TrapPath",
+          "Adjust2",
+          "Fire2",
+          "Observe2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "TrapPath"
+          ],
+          [
+            "TrapPath",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究通电导线在磁场中受力与电流、磁感应强度的关系",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "安培力公式",
+        "formulas": [
+          "F = BIL"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-current",
+        "label": "电流",
+        "symbol": "I",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 5,
+          "step": 0.1,
+          "unit": "A"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-magnetic",
+        "label": "磁感应强度",
+        "symbol": "B",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 2,
+          "step": 0.1,
+          "unit": "T"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "导线长度",
+        "reason": "实验中导线长度固定，不影响探究电流和磁感应强度对安培力的影响"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "F",
+        "label": "安培力",
+        "unit": "N",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验通过调节电流和磁感应强度，观察安培力大小变化，验证安培力公式 F = BIL。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节电流",
+          "body": "保持磁感应强度不变，调节电流滑条，观察安培力变化。",
+          "mapsToKg": [
+            "O1",
+            "C1",
+            "C3"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "调节磁感应强度",
+          "body": "保持电流不变，调节磁感应强度滑条，观察安培力变化。",
+          "mapsToKg": [
+            "O1",
+            "C2",
+            "C3"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "验证公式",
+          "body": "同时调节两个参数，使安培力达到目标值，验证 F = BIL。",
+          "mapsToKg": [
+            "O1",
+            "C1",
+            "C2",
+            "C3",
+            "R1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "F = BIL"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "磁场",
+    "subtitle": "探究通电导线在磁场中受力与电流、磁感应强度的关系",
+    "winCondition": "成功验证安培力公式，安培力达标",
+    "knowledgeSummary": "安培力公式",
+    "controls": [
+      {
+        "id": "s-current",
+        "type": "range",
+        "label": "电流",
+        "symbol": "I",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 5,
+          "step": 0.1,
+          "unit": "A"
+        }
+      },
+      {
+        "id": "s-magnetic",
+        "type": "range",
+        "label": "磁感应强度",
+        "symbol": "B",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 2,
+          "step": 0.1,
+          "unit": "T"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "导线长度",
+        "reason": "实验中导线长度固定，不影响探究电流和磁感应强度对安培力的影响",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "电流在范围?",
+        "desc": "电流 I 在 0~5A 范围内"
+      },
+      {
+        "kgId": "C2",
+        "label": "磁感应强度在范围?",
+        "desc": "磁感应强度 B 在 0~2T 范围内"
+      },
+      {
+        "kgId": "C3",
+        "label": "安培力达标?",
+        "desc": "安培力 F 达到目标值（验证 F=BIL）"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-current": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-magnetic": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "安培力",
+        "symbol": "F",
+        "unit": "N"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-current",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-current → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-magnetic",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-magnetic → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "电流在范围?",
+        "type": "decision",
+        "desc": "电流 I 是否在 0~5A 范围内"
+      },
+      {
+        "name": "提示电流范围",
+        "type": "retry",
+        "desc": "电流超出范围，请重新调节，回到调节电流和磁感应强度后重试"
+      },
+      {
+        "name": "磁感应强度在范围?",
+        "type": "decision",
+        "desc": "磁感应强度 B 是否在 0~2T 范围内"
+      },
+      {
+        "name": "提示磁感应强度范围",
+        "type": "retry",
+        "desc": "磁感应强度超出范围，请重新调节，回到调节电流和磁感应强度后重试"
+      },
+      {
+        "name": "安培力达标?",
+        "type": "decision",
+        "desc": "安培力 F 是否达到目标值（验证 F=BIL）"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "安培力未达标，请重新调节参数，回到调节电流和磁感应强度后重试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功验证安培力公式，安培力达标"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

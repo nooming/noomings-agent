@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>透镜 · 凸透镜成像实验</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+    .app { max-width: 700px; width: 100%; background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .subtitle { color: #4a5568; font-size: 0.95rem; margin-bottom: 1.2rem; border-left: 3px solid #3182ce; padding-left: 10px; }
+    .canvas-wrap { background: #edf2f7; border-radius: 10px; padding: 8px; margin-bottom: 1rem; }
+    canvas { display: block; width: 100%; height: auto; background: white; border-radius: 6px; }
+    .control-panel { display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0; }
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-row label { min-width: 60px; font-weight: 500; font-size: 0.9rem; }
+    .slider-row input[type="range"] { flex: 1; }
+    .slider-row .value { min-width: 48px; text-align: right; font-size: 0.9rem; color: #2d3748; }
+    .btn-group { display: flex; gap: 12px; margin: 0.8rem 0 0.2rem; }
+    .btn { padding: 8px 20px; border: none; border-radius: 30px; font-weight: 500; cursor: pointer; background: #3182ce; color: white; font-size: 0.95rem; transition: 0.15s; }
+    .btn:active { transform: scale(0.96); }
+    .btn-secondary { background: #a0aec0; }
+    .btn-secondary:hover { background: #718096; }
+    .observe-box { background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 8px; padding: 12px 16px; margin: 0.8rem 0; font-size: 0.95rem; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .observe-box .label { font-weight: 600; color: #276749; }
+    .observe-box .result { margin-top: 4px; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    #observeResult { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .hint { color: #c05621; background: #fffaf0; border: 1px solid #fbd38d; padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; margin: 0.5rem 0; }
+    .confound-note { background: #f7fafc; border-left: 4px solid #d69e2e; padding: 8px 14px; border-radius: 4px; font-size: 0.85rem; color: #2d3748; margin: 0.5rem 0; }
+    .irrelevant-area { margin-top: 0.8rem; display: flex; align-items: center; gap: 12px; }
+    .irrelevant-area button { background: #edf2f7; border: 1px solid #cbd5e0; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; color: #4a5568; }
+    .irrelevant-area button:hover { background: #e2e8f0; }
+    .win-message { background: #38a169; color: white; padding: 10px 16px; border-radius: 30px; font-weight: 600; text-align: center; margin: 0.5rem 0; }
+    .flex { display: flex; align-items: center; justify-content: space-between; }
+  
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#60a5fa;--craft-bg:#0a1220;--craft-panel:#152238;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel,.slider-row label{color:var(--craft-text)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#essence-bench .btn-secondary{background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;}
+#essence-bench .observe-box{background:rgba(0,0,0,.32)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench .value{color:var(--craft-accent)!important;}
+#essence-bench .irrelevant-area{display:none!important;}
+#essence-hud{top:56px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#dual-mode-hud .dual-chip,#challengeStats,
+#essence-stage > #dual-mode-hud .dual-chip,#essence-stage > #dual-mode-hud #challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#ffe0c2!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>广场夜映 · 放映机</h2>
+    <p>露天电影幕布要重标定。试着弄清物距与焦距如何改变像落点；再接限次急单——幕距本局固定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后幕距本局固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">1/f = 1/u + 1/v</div>
+    <p id="craftWinText">物距、像距与焦距满足透镜成像公式；像成在光屏上时屏距即像距。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+    <canvas id="lensCanvas" width="640" height="320"></canvas>
+  </div>
+
+  
+    <div id="essence-hud">
+      <div class="essence-title">广场夜映 · 放映机</div>
+      <div class="essence-sub" id="goalMission">探究：自由调 u、f，观察成像位置</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：物距与焦距怎样改变像落点。竞赛另有限次急单。</p>
+  <div class="control-panel">
+    <div class="slider-row">
+      <label for="s-object-distance">物距 u</label>
+      <input type="range" id="s-object-distance" min="5" max="50" step="1" value="30">
+      <span class="value" id="objDistVal">30 cm</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-focal-length">焦距 f</label>
+      <input type="range" id="s-focal-length" min="5" max="20" step="1" value="12">
+      <span class="value" id="focalLenVal">12 cm</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-aperture">透镜口径 D</label>
+      <input type="range" id="s-aperture" min="2" max="10" step="0.5" value="6">
+      <span class="value" id="apertureVal">6.0 cm</span>
+    </div>
+  </div>
+
+  <!-- 按钮组 -->
+  <div class="btn-group">
+    <button class="btn" id="btn-test">🔍 测试成像</button>
+    <button class="btn btn-secondary" id="btn-reset">↺ 重置</button>
+  </div>
+
+  <!-- Observe 反馈 -->
+  <div class="observe-box" id="observeBox">
+    <div class="label">观察结果</div>
+    <div class="result" id="observeResult">光屏上还没有清晰像，调节后测试。</div>
+  </div>
+
+  <!-- 过关提示 (隐藏) -->
+  <div id="winMessage" class="win-message" style="display: none;">实验完成 · 像成在光屏上</div>
+  <div id="hintMessage" class="hint" style="display: none;"></div>
+
+  <input type="hidden" id="I1" value="irrelevant">
+
+  <!-- 埋点 hook (trace-adapter-hook) -->
+  <!-- trace-adapter-hook -->
+    </div>
+    <div class="essence-ft">
+      <!-- actions stay in scroll if none found -->
+    </div>
+  </aside>
+</div>
+<script>
+  (function(){
+    function emit(type, payload) {
+      try {
+        if (window.PlatformTraceAdapter) {
+          window.PlatformTraceAdapter.record(type, payload || {});
+          return;
+        }
+      } catch (e) {}
+      try {
+        if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+          window.parent.PlatformTraceAdapter.record(type, payload || {});
+        }
+      } catch (e) {}
+    }
+
+    function snapControls() {
+      var o = {};
+      document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+        var id = el.id || el.name; if (id) o[id] = el.value;
+      });
+      return o;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      emit('puzzle_open', {});
+
+      // 绑定 tuning 事件 (滑条)
+      document.querySelectorAll('input[type="range"]').forEach(function(el) {
+        el.addEventListener('input', function() {
+          emit('tuning', { control: el.id || 'slider', value: el.value });
+        });
+      });
+
+      // 无关控件 I1
+      var i1 = document.getElementById('I1');
+      if (i1) {
+        i1.addEventListener('click', function() {
+          emit('irrelevant_touch', { control: 'I1', value: 'click' });
+        });
+      }
+    });
+  })();
+  </script>
+<script>
+  (function() {
+    const canvas = document.getElementById('lensCanvas');
+    const ctx = canvas.getContext('2d');
+    const sliderU = document.getElementById('s-object-distance');
+    const sliderF = document.getElementById('s-focal-length');
+    const sliderD = document.getElementById('s-aperture');
+    const valU = document.getElementById('objDistVal');
+    const valF = document.getElementById('focalLenVal');
+    const valD = document.getElementById('apertureVal');
+    const btnTest = document.getElementById('btn-test');
+    const btnReset = document.getElementById('btn-reset');
+    const observeResult = document.getElementById('observeResult');
+    const winMessage = document.getElementById('winMessage');
+    const hintMessage = document.getElementById('hintMessage');
+
+    let W = 640, H = 360;
+    let SCREEN_DIST_CM = 22; // 透镜到光屏距离 (cm)；竞赛时锁定一次
+    let layout = { axisY: 220, lensX: 320, screenX: 540, pxPerCm: 10 };
+    let playMode = 'explore';
+    let lockedScreen = null;
+    let challengeWon = false;
+    /** 仅测试后揭示成像判定 */
+    let measured = false;
+    const MODE_GOALS = {
+      explore: {
+        hud: '探究：自由试像，观察像距如何随 u、f 变化',
+        side: '探究·幕布试映：试着弄清物距与焦距如何改变像距；不必先盯固定幕距。'
+      },
+      challenge: {
+        hud: '竞赛：限次把实像调到本局锁定光屏（本局固定）',
+        side: '竞赛·暗室急单：限次把实像调到本局锁定光屏；打偏不换屏。'
+      }
+    };
+    function refreshLensGoals() {
+      const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      if (playMode === 'challenge' && lockedScreen != null) {
+        if (mission) mission.textContent = '急单光屏距：' + lockedScreen + ' cm · 本局固定';
+        if (side) side.textContent = '竞赛急单：限次把实像调到距透镜 ' + lockedScreen + ' cm 的光屏（本局固定，打偏不换屏）。';
+      } else {
+        if (mission) mission.textContent = g.hud;
+        if (side) side.textContent = g.side;
+      }
+    }
+    /** FixedChallenge：仅进入竞赛时锁定一次光屏距 */
+    function lockChallengeScreen() {
+      const cands = [16, 18, 20, 22, 24, 26, 28];
+      lockedScreen = cands[Math.floor(Math.random() * cands.length)];
+      SCREEN_DIST_CM = lockedScreen;
+      challengeWon = false;
+      sliderU.value = '30';
+      sliderF.value = '12';
+      valU.textContent = '30 cm';
+      valF.textContent = '12 cm';
+      refreshLensGoals();
+      drawScene(getU(), getF());
+      observeResult.innerHTML = '急单已锁定光屏距 ' + SCREEN_DIST_CM + ' cm（本局不变）';
+      winMessage.style.display = 'none';
+    }
+    function applyExploreScreen() {
+      lockedScreen = null;
+      SCREEN_DIST_CM = 22;
+      challengeWon = false;
+      refreshLensGoals();
+      drawScene(getU(), getF());
+      observeResult.innerHTML = '自由试像：观察像落点（探究不要求固定屏距）';
+      winMessage.style.display = 'none';
+    }
+    window.__lensApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      if (playMode === 'challenge') lockChallengeScreen();
+      else applyExploreScreen();
+    };
+    document.addEventListener('dual-mode-change', function(ev) {
+      var m = ev && ev.detail && ev.detail.mode;
+      if (typeof window.__lensApplyMode === 'function') window.__lensApplyMode(m);
+    });
+    /* BATCH6-FIXED-20260724 FixedChallenge */
+
+    function syncCanvasSize() {
+      var stage = document.getElementById('essence-stage') || canvas.parentElement;
+      var cssW = Math.max(2, (stage && stage.clientWidth) || 640);
+      var cssH = Math.max(2, (stage && stage.clientHeight) || 360);
+      var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      var bw = Math.round(cssW * dpr), bh = Math.round(cssH * dpr);
+      if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      W = cssW; H = cssH;
+      layout.axisY = Math.round(H * 0.58);
+      layout.lensX = Math.round(W * 0.48);
+      layout.pxPerCm = Math.min(14, Math.max(7, W / 72));
+      layout.screenX = layout.lensX + SCREEN_DIST_CM * layout.pxPerCm;
+      return layout;
+    }
+
+    function getU() { return parseFloat(sliderU.value); }
+    function getF() { return parseFloat(sliderF.value); }
+
+    function computeImageDistance(u, f) {
+      if (u <= 0 || f <= 0) return NaN;
+      if (Math.abs(u - f) < 0.0001) return Infinity;
+      return 1 / ((1/f) - (1/u));
+    }
+
+    function isImageOnScreen(u, f) {
+      const v = computeImageDistance(u, f);
+      if (!isFinite(v) || isNaN(v)) return false;
+      // 探究容差较宽；竞赛更紧，同参未必两边同结论
+      const tol = playMode === 'challenge' ? 0.85 : 2.0;
+      return Math.abs(v - SCREEN_DIST_CM) < tol;
+    }
+
+    function getHintKey(u, f) {
+      const v = computeImageDistance(u, f);
+      if (!isFinite(v) || isNaN(v)) return '当前参数下不成像';
+      if (v < 0) return '成虚像，光屏上看不到';
+      const tol = playMode === 'challenge' ? 0.85 : 2.0;
+      if (Math.abs(v - SCREEN_DIST_CM) >= tol) {
+        return v < SCREEN_DIST_CM ? '像偏近（落在屏前）' : '像偏远（落在屏后）';
+      }
+      return 'success';
+    }
+
+    function drawScene(u, f) {
+      const L = syncCanvasSize();
+      ctx.clearRect(0, 0, W, H);
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#0b1526');
+      bg.addColorStop(1, '#111827');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // 实验室墙与导轨台
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, H * 0.78, W, H * 0.22);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(W * 0.06, L.axisY + 36, W * 0.88, 14);
+      ctx.fillStyle = '#475569';
+      for (let i = 0; i < 12; i++) {
+        const x = W * 0.08 + i * (W * 0.07);
+        ctx.fillRect(x, L.axisY + 36, 2, 14);
+      }
+      ctx.fillStyle = 'rgba(15,23,42,0.75)';
+      ctx.fillRect(W * 0.08 - 4, H * 0.9 - 14, 96, 18);
+      ctx.fillStyle = '#ffe0c2';
+      ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('广场放映导轨', W * 0.08, H * 0.9);
+
+      // 主光轴
+      ctx.beginPath();
+      ctx.moveTo(W * 0.06, L.axisY);
+      ctx.lineTo(W * 0.94, L.axisY);
+      ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 物
+      const objX = L.lensX - u * L.pxPerCm;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(objX - 10, L.axisY + 8, 20, 28);
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(objX, L.axisY);
+      ctx.lineTo(objX, L.axisY - 48);
+      ctx.stroke();
+      ctx.fillStyle = '#f87171';
+      ctx.beginPath();
+      ctx.moveTo(objX - 7, L.axisY - 38);
+      ctx.lineTo(objX, L.axisY - 52);
+      ctx.lineTo(objX + 7, L.axisY - 38);
+      ctx.fill();
+      ctx.fillStyle = '#fecaca';
+      ctx.font = '12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('物', objX - 8, L.axisY - 58);
+
+      // 透镜支架（口径 D 只改示意高度，成像公式仍只依赖 u、f）
+      var Dcm = sliderD ? parseFloat(sliderD.value) : 6;
+      var lensHalf = 36 + Dcm * 3.5;
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(L.lensX - 6, L.axisY - lensHalf - 12, 12, lensHalf * 2 + 24);
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(L.lensX, L.axisY, 10, lensHalf, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(L.lensX - 8, L.axisY - lensHalf * 0.85);
+      ctx.lineTo(L.lensX + 8, L.axisY + lensHalf * 0.85);
+      ctx.moveTo(L.lensX + 8, L.axisY - lensHalf * 0.85);
+      ctx.lineTo(L.lensX - 8, L.axisY + lensHalf * 0.85);
+      ctx.stroke();
+      ctx.fillStyle = '#bfdbfe';
+      ctx.fillText('透镜', L.lensX - 14, L.axisY + lensHalf + 20);
+
+      // 焦点标记
+      const fPx = f * L.pxPerCm;
+      ctx.fillStyle = '#93c5fd';
+      ctx.beginPath(); ctx.arc(L.lensX - fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(L.lensX + fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
+
+      // 光屏
+      const screenW = 18, screenH = 90;
+      ctx.fillStyle = '#166534';
+      ctx.fillRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+      ctx.fillStyle = '#86efac';
+      ctx.fillText('幕布', L.screenX - 12, L.axisY + screenH/2 + 18);
+
+      const v = computeImageDistance(u, f);
+      const onScreen = isImageOnScreen(u, f);
+      // 像距结论线仅测试后揭示，避免拖滑条即见答案
+      if (measured && isFinite(v) && v > 0) {
+        const imageX = L.lensX + v * L.pxPerCm;
+        if (imageX > L.lensX && imageX < W * 0.95) {
+          ctx.globalAlpha = onScreen ? 0.9 : 0.35;
+          ctx.strokeStyle = '#f472b6';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(imageX, L.axisY);
+          ctx.lineTo(imageX, L.axisY + (onScreen ? 40 : 28));
+          ctx.stroke();
+          ctx.fillStyle = '#f9a8d4';
+          ctx.font = '12px "Microsoft YaHei",sans-serif';
+          ctx.fillText('像', imageX - 6, L.axisY - 10);
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // 读数放右下，避开顶栏 dual-mode / essence-hud
+      const boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
+      ctx.fillStyle = 'rgba(15,23,42,0.85)';
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeStyle = measured
+        ? (onScreen ? 'rgba(74,222,128,0.55)' : 'rgba(251,113,133,0.45)')
+        : 'rgba(96,165,250,0.4)';
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+      ctx.fillStyle = '#dbeafe';
+      ctx.font = '12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('物距 ' + u + ' cm · 焦距 ' + f + ' cm', boxX + 10, boxY + 20);
+      ctx.fillStyle = measured ? (onScreen ? '#86efac' : '#fda4af') : '#94a3b8';
+      if (measured) {
+        ctx.fillText((playMode==='challenge'?'急单屏 ':'对照屏 ') + SCREEN_DIST_CM + 'cm · ' + (onScreen ? '已对准' : '未对准'), boxX + 10, boxY + 38);
+      } else {
+        ctx.fillText((playMode==='challenge'?'急单屏 ':'对照屏 ') + SCREEN_DIST_CM + 'cm · 成像待测', boxX + 10, boxY + 38);
+      }
+    }
+
+    // ----- 更新UI (Observe + 过关) -----
+    function updateObserveAndWin() {
+      const u = getU();
+      const f = getF();
+      const onScreen = isImageOnScreen(u, f);
+      const hintKey = getHintKey(u, f);
+
+      // 更新观察结果
+      if (onScreen) {
+        observeResult.innerHTML = '像已上屏 · 清晰';
+        observeResult.style.color = '#276749';
+      } else {
+        let reason = hintKey;
+        if (reason === 'success') reason = '像距匹配';
+        observeResult.innerHTML = '未成像 · ' + reason;
+        observeResult.style.color = '#c05621';
+      }
+
+      // 过关判定
+      const winOk = onScreen;
+      if (winOk) {
+        winMessage.style.display = 'block';
+        hintMessage.style.display = 'none';
+      } else {
+        winMessage.style.display = 'none';
+        if (hintKey !== 'success') {
+          hintMessage.style.display = 'block';
+          hintMessage.innerText = '未对准 · ' + hintKey + '，调物距或焦距'
+        } else {
+          hintMessage.style.display = 'none';
+        }
+      }
+
+      // 绘制场景
+      drawScene(u, f);
+
+      // ----- 埋点 snapshot + win (测试/发射时) -----
+      // 此函数由 btn-test 调用，确保只在此处 emit snapshot 和 win
+      // 但为了统一，每次更新都emit snapshot? 按照规格: 测试/发射/过关时 fire snapshot
+      // 我们只在 btn-test 点击时调用此函数，并附带 emit
+      // 但为了重置不触发，将 emit 放在 btn-test 回调中
+      return { winOk, hintKey };
+    }
+
+    // ----- 按钮事件 -----
+    function handleTest() {
+      const u = getU();
+      const f = getF();
+      const onScreen = isImageOnScreen(u, f);
+      const hintKey = getHintKey(u, f);
+      const winOk = onScreen;
+      measured = true;
+
+      // 更新UI
+      updateObserveAndWin();
+
+      // 埋点 snapshot
+      const controls = {
+        's-object-distance': u,
+        's-focal-length': f
+      };
+      try {
+        const emit = (function() {
+          function e(type, payload) {
+            try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload); return; } } catch(e) {}
+            try { if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload); } } catch(e) {}
+          }
+          return e;
+        })();
+        if (playMode === 'explore') {
+          observeResult.innerHTML = (onScreen ? '像碰巧落在对照屏上 · ' : '') + '探究对比中（不要求固定屏距）';
+          winMessage.style.display = 'none';
+          emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+        } else if (winOk) {
+          observeResult.innerHTML = '急单完成 · 像落在锁定光屏 ' + SCREEN_DIST_CM + ' cm';
+          emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey });
+          emit('win', { winOk: true });
+          if (!challengeWon && typeof window.__craftShowWin === 'function') {
+            challengeWon = true;
+            window.__craftShowWin('急单光屏距本局锁定。物距、像距与焦距满足透镜成像公式。');
+          }
+        } else {
+          // FixedChallenge：失败不换屏
+          const vMiss = computeImageDistance(u, f);
+          let missTxt = '未对准';
+          if (isFinite(vMiss) && vMiss > 0) {
+            missTxt = vMiss < SCREEN_DIST_CM ? '像偏近（屏前）' : '像偏远（屏后）';
+          } else if (vMiss < 0) {
+            missTxt = '成虚像，屏上看不到';
+          }
+          observeResult.innerHTML = '<strong>' + missTxt + '</strong><br><span style="font-size:0.82em;opacity:.92">急单屏距 ' + SCREEN_DIST_CM + ' cm</span>';
+          emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
+        }
+      } catch (e) {}
+    }
+
+    function handleReset() {
+      measured = false;
+      sliderU.value = 30;
+      sliderF.value = 12;
+      valU.textContent = '30 cm';
+      valF.textContent = '12 cm';
+      winMessage.style.display = 'none';
+      hintMessage.style.display = 'none';
+      observeResult.innerHTML = '等待测试…';
+      observeResult.style.color = '#2d3748';
+      drawScene(getU(), getF());
+    }
+
+    // 滑条数值更新
+    sliderU.addEventListener('input', function() {
+      measured = false;
+      valU.textContent = sliderU.value + ' cm';
+      observeResult.innerHTML = '等待测试…';
+      observeResult.style.color = '#2d3748';
+      winMessage.style.display = 'none';
+      drawScene(getU(), getF());
+    });
+    sliderF.addEventListener('input', function() {
+      measured = false;
+      valF.textContent = sliderF.value + ' cm';
+      observeResult.innerHTML = '等待测试…';
+      observeResult.style.color = '#2d3748';
+      winMessage.style.display = 'none';
+      drawScene(getU(), getF());
+    });
+    if (sliderD) sliderD.addEventListener('input', function() {
+      if (valD) valD.textContent = parseFloat(sliderD.value).toFixed(1) + ' cm';
+      drawScene(getU(), getF());
+    });
+
+    btnTest.addEventListener('click', handleTest);
+    btnReset.addEventListener('click', handleReset);
+
+    // 初始绘制
+    drawScene(getU(), getF());
+    window.addEventListener('resize', function(){ drawScene(getU(), getF()); });
+    if (typeof ResizeObserver !== 'undefined') {
+      var st = document.getElementById('essence-stage');
+      if (st) new ResizeObserver(function(){ drawScene(getU(), getF()); }).observe(st);
+    }
+
+  })();
+</script>
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    try {
+      if (typeof window.__lensApplyMode === 'function') window.__lensApplyMode(state.mode);
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode, attempts: state.attempts } }));
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

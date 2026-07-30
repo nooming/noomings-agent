@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>回旋加速器 · 探究轨道半径</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+            background: #f5f7fb;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        #app {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 顶部提示条 */
+        .top-hint {
+            background: #eef3fe;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            color: #1e3a6f;
+            border-bottom: 1px solid #d0ddef;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .top-hint span {
+            background: #d9e5fc;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+        .top-hint i {
+            font-style: normal;
+            background: #ffffffb0;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        /* 主布局：canvas + 侧栏 */
+        .main-layout {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        #simCanvasArea {
+            flex: 2;
+            min-width: 340px;
+            background: #0b1a2f;
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+        }
+        #simCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #0b1a2f;
+            touch-action: none;
+        }
+        #controlsPanel {
+            flex: 1;
+            min-width: 260px;
+            background: #ffffff;
+            padding: 20px 18px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            border-left: 1px solid #e9edf4;
+        }
+        /* 控件样式 */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .control-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1f2a44;
+            display: flex;
+            justify-content: space-between;
+        }
+        .control-group label .val {
+            background: #f0f4fe;
+            padding: 0 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #0b2b5e;
+        }
+        input[type=range] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #d9e2f0;
+            border-radius: 10px;
+            outline: none;
+            transition: background 0.2s;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #2b5797;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,20,40,0.2);
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #2b5797;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        .readout-row {
+            display: flex;
+            justify-content: space-between;
+            background: #f6f9ff;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            color: #1f3a5f;
+            border: 1px solid #e2eaf9;
+        }
+        .readout-row span:last-child {
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .btn {
+            background: #eef3fc;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #1f3a6f;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex: 1 0 auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid transparent;
+        }
+        .btn-primary {
+            background: #1f4a8a;
+            color: white;
+            box-shadow: 0 4px 8px rgba(25, 70, 140, 0.2);
+        }
+        .btn-primary:hover {
+            background: #163d73;
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid #bccbe0;
+        }
+        .btn-outline:hover {
+            background: #f0f5ff;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .observe-area {
+            background: #f2f6fe;
+            border-radius: 20px;
+            padding: 12px 14px 14px;
+            margin-top: 6px;
+            border: 1px solid #dce5f5;
+            min-height: 78px;
+            height: auto;
+            overflow: visible;
+            max-width: 100%;
+            flex-shrink: 0;
+        }
+        .observe-area .hint-label {
+            font-weight: 500;
+            color: #1f3a6f;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+        }
+        .observe-area .feedback {
+            margin-top: 6px;
+            font-size: 0.92rem;
+            color: #1f2a44;
+            line-height: 1.45;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: normal;
+        }
+        .observe-area .feedback .win {
+            color: #1d7a3c;
+            font-weight: 600;
+            display: block;
+            overflow-wrap: anywhere;
+        }
+        .observe-area .feedback .fail {
+            color: #b13e3e;
+            display: block;
+            overflow-wrap: anywhere;
+        }
+        .observe-area .feedback .fail-main,
+        .observe-area .feedback .win-main {
+            display: block;
+            font-weight: 600;
+        }
+        .observe-area .feedback .fail-sub,
+        .observe-area .feedback .win-sub {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            opacity: 0.92;
+            line-height: 1.35;
+        }
+        #feedbackMsg {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .confound-note {
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: #4a5b7a;
+            border: 1px dashed #c8d6ed;
+            margin-top: 4px;
+        }
+        .confound-note strong {
+            color: #1f3a6f;
+        }
+        #winOverlay {
+            display: none;
+            background: #e3f0e8;
+            border-radius: 24px;
+            padding: 16px 18px;
+            margin-top: 8px;
+            border: 1px solid #b3d5c2;
+            text-align: center;
+        }
+        #winOverlay.show {
+            display: block;
+        }
+        #winOverlay h3 {
+            color: #146b3a;
+            margin-bottom: 4px;
+        }
+        /* 移动端适配 */
+        @media (max-width: 680px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            #simCanvasArea {
+                aspect-ratio: 4 / 3;
+                min-width: unset;
+            }
+            #controlsPanel {
+                border-left: none;
+                border-top: 1px solid #e9edf4;
+            }
+        }
+    
+/* === essence-sidebar-shell already (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; min-height:0 !important; align-items:stretch !important; justify-content:stretch !important; }
+#app {
+  max-width:none !important; width:100% !important; height:100% !important;
+  border-radius:0 !important; box-shadow:none !important; margin:0 !important;
+}
+.main-layout { flex:1; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
+#simCanvasArea {
+  flex:1 1 auto !important; min-width:0 !important; min-height:0 !important;
+  max-height:none !important; aspect-ratio:auto !important;
+}
+#controlsPanel {
+  flex:0 0 clamp(280px, 28vw, 340px) !important; width:clamp(280px, 28vw, 340px) !important;
+  min-width:0 !important; overflow-y:auto; max-height:100%;
+}
+@media (max-width:720px) {
+  .main-layout { flex-direction:column !important; }
+  #simCanvasArea { min-height:48vh !important; }
+  #controlsPanel {
+    flex:0 0 auto !important; width:100% !important; max-height:min(42vh,360px) !important;
+    border-left:none !important; border-top:1px solid #e2e8f0;
+  }
+}
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#22d3ee;--craft-bg:#061018;--craft-panel:#0d2230;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench,#controlsPanel{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel,#controlsPanel .control-group label,#controlsPanel label{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#controlsPanel .btn,#controlsPanel button{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#controlsPanel .control-group label .val,#controlsPanel .val{
+  background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;
+}
+#controlsPanel #sideGoal,p#sideGoal{color:var(--craft-text)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.35)!important;border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+.top-hint{
+  background:rgba(0,0,0,.32)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+.top-hint span,.top-hint i{
+  background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;
+}
+.app-header,.top-bar{background:rgba(0,0,0,.28)!important;color:var(--craft-text)!important;}
+.app-header h1,h1{color:var(--craft-accent)!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>回旋加速器 · 束流提取</h2>
+    <p>提取口对不准。试着调 B 与入射速度，看轨道半径怎么变；竞赛时提取环本局锁定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛环带进入后固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">r = mv / (qB)</div>
+    <p id="craftWinText">对照多组轨道，你摸清了半径如何随 B 与入射速度变化。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="app">
+    <!-- 顶部提示 -->
+    <div class="top-hint">
+        <span>⚡ 同位素束流舱</span>
+        <i id="goalMission">探究：自由发射，观察半径如何随 B、v 变化</i>
+    </div>
+
+    <!-- 主区域 -->
+    <div class="main-layout">
+        <div id="simCanvasArea" style="position:relative">
+            <div id="dual-mode-hud">
+              <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
+              <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
+            </div>
+            <canvas id="simCanvas"></canvas>
+        </div>
+        <div id="controlsPanel">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
+              <strong style="font-size:13px;color:#1f2a44">束流控制台</strong>
+              <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
+            </div>
+            <p id="sideGoal" style="margin:0 0 8px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：B、v 怎样改变轨道半径。竞赛另有提取急单。</p>
+            <!-- 调节变量：磁感应强度 -->
+            <div class="control-group">
+                <label>磁感应强度 B <span class="val" id="val-magnetic">1.0 T</span></label>
+                <input type="range" id="s-magnetic" min="0.1" max="2.0" step="0.1" value="1.0">
+            </div>
+            <!-- 调节变量：入射速度 -->
+            <div class="control-group">
+                <label>入射速度 v <span class="val" id="val-velocity">5.0 m/s</span></label>
+                <input type="range" id="s-velocity" min="1" max="10" step="0.5" value="5.0">
+            </div>
+            <div class="control-group">
+                <label>腔室气压 p <span class="val" id="val-pressure">1.0 atm</span></label>
+                <input type="range" id="s-chamber-p" min="0.2" max="2.0" step="0.1" value="1.0">
+            </div>
+
+            <!-- 实时读数 -->
+            <div class="readout-row">
+                <span>磁感应强度 B</span>
+                <span id="readout-B">1.0 T</span>
+            </div>
+            <div class="readout-row">
+                <span>入射速度 v</span>
+                <span id="readout-v">5.0 m/s</span>
+            </div>
+
+            <!-- 按钮组 -->
+            <div class="button-row">
+                <button class="btn btn-primary" id="btn-fire">🚀 发射</button>
+                <button class="btn btn-outline" id="btn-reset">↺ 复位</button>
+            </div>
+
+            <!-- 混淆变量说明 (仅教案区) -->
+            <!-- Observe 反馈区 -->
+            <div class="observe-area" id="observeArea">
+                <div class="hint-label">📋 观察反馈</div>
+                <div class="feedback" id="feedbackMsg">等待发射……</div>
+            </div>
+
+            <!-- 过关 UI (初始隐藏) -->
+            <div id="winOverlay">
+                <h3>✅ 束流对齐提取环</h3>
+                <p style="font-size:0.9rem; color:#1f4a3a;">r = <span id="winRadius"></span> m · <span id="winTargetBand">目标环带</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- trace-adapter-hook -->
+<script>
+(function() {
+    // ---------- 埋点模拟 (emit) ----------
+    function emit(eventName, payload) {
+        console.log(`[telemetry] ${eventName}`, JSON.stringify(payload));
+        // 实际适配器可挂载 window.__traceAdapter
+        if (window.__traceAdapter && typeof window.__traceAdapter.emit === 'function') {
+            window.__traceAdapter.emit(eventName, payload);
+        }
+    }
+
+    // ---------- DOM 引用 ----------
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const canvasArea = document.getElementById('simCanvasArea');
+
+    const sMag = document.getElementById('s-magnetic');
+    const sVel = document.getElementById('s-velocity');
+    const sPress = document.getElementById('s-chamber-p');
+    const valMag = document.getElementById('val-magnetic');
+    const valVel = document.getElementById('val-velocity');
+    const valPress = document.getElementById('val-pressure');
+    const readoutB = document.getElementById('readout-B');
+    const readoutV = document.getElementById('readout-v');
+    const feedbackMsg = document.getElementById('feedbackMsg');
+    const winOverlay = document.getElementById('winOverlay');
+    const winRadiusSpan = document.getElementById('winRadius');
+    const btnFire = document.getElementById('btn-fire');
+    const btnReset = document.getElementById('btn-reset');
+
+    // ---------- 物理常量 ----------
+    const MASS = 1.0;      // kg (固定)
+    const CHARGE = 1.0;    // C (固定)
+
+    // ---------- 仿真状态 ----------
+    let simRunning = false;
+    let animId = null;
+    let lastTime = performance.now();
+
+    // 粒子轨迹 (圆周运动)
+    let angle = 0;          // 当前弧度
+    let angularVel = 0;     // 角速度 rad/s
+    let radius = 0;         // 轨道半径 m
+    let centerX = 0, centerY = 0; // 画布坐标系圆心
+    let scale = 60;         // 像素/米 (根据画布动态调整)
+
+    // 目标半径范围：探究可观察；竞赛 FixedChallenge 进入时锁定一次
+    let TARGET_R_MIN = 2.0;
+    let TARGET_R_MAX = 3.5;
+    let playMode = 'explore';
+    let lockedBand = null; // { min, max } 竞赛锁定
+    let challengeWon = false;
+    /** 仅发射后揭示轨道半径 r */
+    let measuredR = null;
+
+    // 是否已经过关 (防止重复触发)
+    let hasWon = false;
+
+    const MODE_GOALS = {
+      explore: {
+        hud: '目标：自由发射几轮，观察半径随 B、v 的变化',
+        side: '探究·束流试调：试着弄清 B、v 对轨道半径的影响；不必先盯固定环。'
+      },
+      challenge: {
+        hud: '目标：限次把轨道打进本局锁定提取环（打偏不换环）',
+        side: '竞赛·提取急单：限次把轨道打进本局锁定提取环；打偏不换环。'
+      }
+    };
+
+    function refreshCycloGoals() {
+      const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      if (playMode === 'challenge' && lockedBand) {
+        const lo = lockedBand.min.toFixed(1);
+        const hi = lockedBand.max.toFixed(1);
+        if (mission) mission.textContent = '急单提取环：' + lo + '–' + hi + ' m · 本局固定';
+        if (side) side.textContent = '竞赛急单：把轨道半径调进 ' + lo + '–' + hi + ' m 提取环。环带已锁定，打偏不换环。';
+      } else {
+        if (mission) mission.textContent = g.hud;
+        if (side) side.textContent = g.side;
+      }
+      const bandEl = document.getElementById('winTargetBand');
+      if (bandEl) bandEl.textContent = '目标 ' + TARGET_R_MIN.toFixed(1) + '~' + TARGET_R_MAX.toFixed(1) + ' m';
+    }
+
+    /** FixedChallenge：仅进入竞赛时锁定一次提取环带 */
+    function lockChallengeBand() {
+      const mid = 1.6 + Math.random() * 1.8; // 1.6–3.4
+      const half = 0.25 + Math.random() * 0.25; // 带宽 0.5–1.0
+      lockedBand = {
+        min: Math.max(0.8, mid - half),
+        max: Math.min(4.0, mid + half)
+      };
+      TARGET_R_MIN = lockedBand.min;
+      TARGET_R_MAX = lockedBand.max;
+      // 开局张力：默认参数往往偏出环带（r≈0.75）
+      sMag.value = '2.0';
+      sVel.value = '1.5';
+      challengeWon = false;
+      hasWon = false;
+      syncUI();
+      recalcPhysics();
+      refreshCycloGoals();
+      feedbackMsg.innerHTML = '急单已锁定提取环（本局不变）';
+      winOverlay.classList.remove('show');
+      drawStatic();
+    }
+
+    function applyExploreBand() {
+      lockedBand = null;
+      challengeWon = false;
+      hasWon = false;
+      TARGET_R_MIN = 2.0;
+      TARGET_R_MAX = 3.5;
+      sMag.value = '1.0';
+      sVel.value = '5.0';
+      syncUI();
+      recalcPhysics();
+      refreshCycloGoals();
+      feedbackMsg.innerHTML = '自由试调：发射后观察半径随 B、v 的变化。';
+      winOverlay.classList.remove('show');
+      drawStatic();
+    }
+
+    window.__cycloApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      if (playMode === 'challenge') lockChallengeBand();
+      else applyExploreBand();
+    };
+
+    // ---------- 画布尺寸 (DPR) ----------
+    function resizeCanvas() {
+        const area = canvasArea;
+        const dpr = window.devicePixelRatio || 1;
+        const w = area.clientWidth;
+        const h = area.clientHeight;
+        canvas.width = Math.max(1, Math.floor(w * dpr));
+        canvas.height = Math.max(1, Math.floor(h * dpr));
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        const ctx2 = canvas.getContext('2d');
+        ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+        // 更新圆心 (画布坐标)
+        centerX = w / 2;
+        centerY = h / 2;
+        // 根据画布大小调整scale，使半径可见
+        const maxDim = Math.min(w, h) * 0.38;
+        // 默认最大半径约 4m，scale = maxDim/4
+        scale = Math.max(30, maxDim / 4.5);
+    }
+
+    // ---------- 更新物理 (根据当前滑条) ----------
+    function recalcPhysics() {
+        const B = parseFloat(sMag.value);
+        const v = parseFloat(sVel.value);
+        // 回旋半径 r = mv/(qB)
+        if (B > 0.001) {
+            radius = MASS * v / (CHARGE * B);
+        } else {
+            radius = 999;
+        }
+        // 角速度 ω = qB/m (rad/s)
+        angularVel = CHARGE * B / MASS;
+    }
+
+    // ---------- 更新读数 & 滑条同步 ----------
+    function syncUI() {
+        const B = parseFloat(sMag.value);
+        const v = parseFloat(sVel.value);
+        const p = sPress ? parseFloat(sPress.value) : 1;
+        valMag.textContent = B.toFixed(1) + ' T';
+        valVel.textContent = v.toFixed(1) + ' m/s';
+        if (valPress) valPress.textContent = p.toFixed(1) + ' atm';
+        readoutB.textContent = B.toFixed(1) + ' T';
+        readoutV.textContent = v.toFixed(1) + ' m/s';
+    }
+
+    // 滑条事件绑定 (双向同步 + 埋点)
+    // 调参时收回实测半径虚线，避免边拖边看到 r 结论
+    function onTuneControl(controlId, value) {
+        if (simRunning) stopSim();
+        measuredR = null;
+        angle = 0;
+        syncUI();
+        recalcPhysics();
+        emit('tuning', { controlId: controlId, value: value, timestamp: Date.now() });
+        drawStatic();
+        feedbackMsg.innerHTML = '调节中… 点「发射」后显示轨道半径';
+    }
+    sMag.addEventListener('input', function() {
+        onTuneControl('s-magnetic', parseFloat(this.value));
+    });
+    sVel.addEventListener('input', function() {
+        onTuneControl('s-velocity', parseFloat(this.value));
+    });
+    if (sPress) sPress.addEventListener('input', function() {
+        syncUI();
+        emit('tuning', { controlId: 's-chamber-p', value: parseFloat(this.value), timestamp: Date.now() });
+        if (!simRunning) drawStatic();
+    });
+
+    // ---------- 绘制 (静态/动态) ----------
+    function drawChamber(w, h) {
+        // 医用同位素加速器舱：深蓝机房 + 地板灯带
+        const bg = ctx.createLinearGradient(0, 0, 0, h);
+        bg.addColorStop(0, '#071525');
+        bg.addColorStop(0.7, '#0b1a2f');
+        bg.addColorStop(1, '#0a1628');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, h - 48, w, 48);
+        ctx.strokeStyle = 'rgba(56,189,248,0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, h - 48);
+        ctx.lineTo(w, h - 48);
+        ctx.stroke();
+        for (let i = 0; i < 8; i++) {
+          ctx.fillStyle = i % 2 ? 'rgba(56,189,248,0.08)' : 'rgba(148,163,184,0.06)';
+          ctx.fillRect(20 + i * (w / 8), h - 36, 18, 8);
+        }
+        // 真空室外壳
+        const R = Math.min(w, h) * 0.42;
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R + 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+        // D 形电极
+        ctx.fillStyle = 'rgba(56,189,248,0.12)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R, -Math.PI / 2, Math.PI / 2, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R, Math.PI / 2, -Math.PI / 2, false);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(251,191,36,0.1)';
+        ctx.fill();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - R);
+        ctx.lineTo(centerX, centerY + R);
+        ctx.stroke();
+        // 提取环带（竞赛锁定 / 探究参考）
+        if (playMode === 'challenge' || lockedBand) {
+          const rLo = TARGET_R_MIN * scale;
+          const rHi = TARGET_R_MAX * scale;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, (rLo + rHi) / 2, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(74,222,128,0.55)';
+          ctx.lineWidth = Math.max(8, rHi - rLo);
+          ctx.stroke();
+          // 提取口缺口示意
+          ctx.strokeStyle = '#86efac';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, rHi + 6, -0.35, 0.35);
+          ctx.stroke();
+          // 环带说明：舞台底部，避开顶栏双模式条
+          ctx.fillStyle = 'rgba(15,23,42,0.82)';
+          ctx.fillRect(12, h - 52, 220, 18);
+          ctx.fillStyle = '#86efac';
+          ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+          ctx.fillText('急单环 ' + TARGET_R_MIN.toFixed(1) + '–' + TARGET_R_MAX.toFixed(1) + ' m', 16, h - 39);
+        } else {
+          ctx.strokeStyle = 'rgba(148,163,184,0.25)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 6]);
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, 2.75 * scale, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(15,23,42,0.82)';
+          ctx.fillRect(12, h - 52, 168, 18);
+          ctx.fillStyle = '#ffe0c2';
+          ctx.font = '12px "Microsoft YaHei",sans-serif';
+          ctx.fillText('参考环（探究不必命中）', 16, h - 39);
+        }
+        // 场景标题：底部第二行，避开顶栏/侧栏叠层
+        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        ctx.fillRect(12, h - 32, 168, 18);
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('同位素束流舱 · 真空室', 16, h - 19);
+        // 控制台小灯：右下，避开顶栏右侧「剩余机会」
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath(); ctx.arc(w - 36, h - 22, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath(); ctx.arc(w - 20, h - 22, 5, 0, Math.PI * 2); ctx.fill();
+        // 磁极标注
+        ctx.fillStyle = '#fde68a';
+        ctx.font = '12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('B ⊗', centerX - 12, centerY + R + 36);
+    }
+
+    function drawOrbitLabels() {
+        const hudSafeTop = 56; // 双模式条下方
+        // 仅发射后揭示：当前参数对应的半径虚线与读数（调参时不剧透）
+        if (measuredR != null && measuredR > 0 && measuredR < 100) {
+            const rPx = measuredR * scale;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, rPx, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#e0f2fe';
+            ctx.font = '13px sans-serif';
+            const labelY = Math.max(hudSafeTop + 14, centerY - rPx - 8);
+            ctx.fillText('r = ' + measuredR.toFixed(2) + ' m', centerX + 8, labelY);
+        } else {
+            ctx.fillStyle = 'rgba(15,23,42,0.75)';
+            ctx.fillRect(centerX - 72, hudSafeTop + 4, 144, 18);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('轨道半径待测 · 点发射', centerX - 64, hudSafeTop + 17);
+        }
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = '#f0c060';
+        ctx.fill();
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = '12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('粒子源', centerX + 10, centerY - 6);
+    }
+
+    function drawStatic() {
+        const w = canvas.width / (window.devicePixelRatio || 1);
+        const h = canvas.height / (window.devicePixelRatio || 1);
+        ctx.clearRect(0, 0, w, h);
+        drawChamber(w, h);
+        drawOrbitLabels();
+    }
+
+    function draw() {
+        const w = canvas.width / (window.devicePixelRatio || 1);
+        const h = canvas.height / (window.devicePixelRatio || 1);
+        ctx.clearRect(0, 0, w, h);
+        drawChamber(w, h);
+        drawOrbitLabels();
+
+        // 粒子仅在已测半径后沿该轨道运动（发射后过程可见）
+        if (measuredR != null && measuredR > 0 && measuredR < 100) {
+            const rPx = measuredR * scale;
+            const px = centerX + rPx * Math.cos(angle);
+            const py = centerY + rPx * Math.sin(angle);
+            ctx.beginPath();
+            ctx.arc(px, py, 7, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffb347';
+            ctx.shadowColor = '#ffb347';
+            ctx.shadowBlur = 14;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    // ---------- 更新物理 (dt) ----------
+    function update(dt) {
+        if (!simRunning) return;
+        // 角速度更新角度
+        const deltaAngle = angularVel * (dt / 1000);
+        angle += deltaAngle;
+        // 角度归一化
+        if (angle > 2 * Math.PI) angle -= 2 * Math.PI;
+    }
+
+    // ---------- RAF 循环 ----------
+    function loop(now) {
+        const dt = Math.min(50, now - lastTime);
+        lastTime = now;
+        update(dt);
+        draw();
+        animId = requestAnimationFrame(loop);
+    }
+
+    function startSim() {
+        if (simRunning) return;
+        simRunning = true;
+        hasWon = false; // 重置过关状态
+        winOverlay.classList.remove('show');
+        // 重置角度 (从0开始)
+        angle = 0;
+        recalcPhysics();
+        syncUI();
+        lastTime = performance.now();
+        if (animId) cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(loop);
+    }
+
+    function stopSim() {
+        simRunning = false;
+        if (animId) {
+            cancelAnimationFrame(animId);
+            animId = null;
+        }
+    }
+
+    function ensureFeedbackVisible() {
+        const area = document.getElementById('observeArea');
+        const panel = document.getElementById('controlsPanel');
+        if (panel && area) {
+          const pr = panel.getBoundingClientRect();
+          const ar = area.getBoundingClientRect();
+          if (ar.bottom > pr.bottom - 2 || ar.top < pr.top + 2) {
+            panel.scrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
+          }
+        }
+    }
+
+    // ---------- 发射/测试 ----------
+    function fire() {
+        // 停止当前动画
+        stopSim();
+        // 重置角度
+        angle = 0;
+        recalcPhysics();
+        syncUI();
+        const r = radius;
+        measuredR = r;
+        const controlsSnapshot = {
+            's-magnetic': parseFloat(sMag.value),
+            's-velocity': parseFloat(sVel.value)
+        };
+
+        if (playMode === 'explore') {
+            // 探究：只反馈半径，不要求命中固定环，不重抽目标
+            feedbackMsg.innerHTML = `<span class="win"><span class="win-main">当前 r=${r.toFixed(2)} m</span><span class="win-sub">继续对比不同 B、v</span></span>`;
+            winOverlay.classList.remove('show');
+            emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
+            ensureFeedbackVisible();
+            startSim();
+            return;
+        }
+
+        // 竞赛：命中本局锁定环带；失败不换环
+        const winOk = (r >= TARGET_R_MIN && r <= TARGET_R_MAX);
+        if (winOk) {
+            feedbackMsg.innerHTML = `<span class="win"><span class="win-main">✅ 束流对齐提取环</span><span class="win-sub">r=${r.toFixed(2)} m · 环带 ${TARGET_R_MIN.toFixed(1)}–${TARGET_R_MAX.toFixed(1)} m</span></span>`;
+            winRadiusSpan.textContent = r.toFixed(2);
+            winOverlay.classList.add('show');
+            if (!challengeWon) {
+              challengeWon = true;
+              emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'cyclo_rush' });
+              emit('win', { winOk: true });
+              if (typeof window.__craftShowWin === 'function') {
+                window.__craftShowWin('提取环本局锁定。半径 r=mv/(qB)：B 增大半径缩小，v 增大半径变大。');
+              }
+            }
+            hasWon = true;
+        } else {
+            // FixedChallenge：失败不换环；偏大/偏小可区分
+            const sideTxt = r < TARGET_R_MIN ? '半径偏小（环内）' : '半径偏大（环外）';
+            const hintKey = r < TARGET_R_MIN ? 'r_low' : 'r_high';
+            feedbackMsg.innerHTML = `<span class="fail"><span class="fail-main">${sideTxt}</span><span class="fail-sub">r=${r.toFixed(2)} m · 环带 ${TARGET_R_MIN.toFixed(1)}–${TARGET_R_MAX.toFixed(1)} m</span></span>`;
+            winOverlay.classList.remove('show');
+            emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+        }
+
+        ensureFeedbackVisible();
+        startSim();
+    }
+
+    // ---------- 复位 ----------
+    function resetSim() {
+        stopSim();
+        angle = 0;
+        measuredR = null;
+        recalcPhysics();
+        syncUI();
+        drawStatic();
+        feedbackMsg.innerHTML = '已复位，读数待测 · 点发射后显示半径';
+        winOverlay.classList.remove('show');
+        hasWon = false;
+    }
+
+    // ---------- 事件绑定 ----------
+    btnFire.addEventListener('click', fire);
+    btnReset.addEventListener('click', resetSim);
+
+    // ---------- 初始化 ----------
+    function init() {
+        resizeCanvas();
+        recalcPhysics();
+        syncUI();
+        refreshCycloGoals();
+        drawStatic();
+        feedbackMsg.innerHTML = '等待发射……';
+        // 窗口resize
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            if (!simRunning) drawStatic();
+        });
+        // 模拟埋点适配器 (开发用)
+        window.__traceAdapter = {
+            emit: (evt, data) => console.log(`[adapter] ${evt}`, data)
+        };
+    }
+
+    init();
+
+    // 额外: 滑条埋点 (irrelevant_touch 示例, 无I1控件, 但保留)
+    // 无I1控件, 忽略
+
+    // 暴露 emit 给全局 (调试)
+    window.__emit = emit;
+
+})();
+</script>
+<!-- trace-adapter-hook -->
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__cycloApplyMode === 'function') {
+      try { window.__cycloApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || $('simCanvasArea') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench') || $('controlsPanel');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

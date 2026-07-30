@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回旋加速器物理模拟游戏</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --panel-bg: #0a0a1a;
+            --text-color: #e0e8ff;
+            --accent-color: #00ffcc;
+            --highlight-color: #ff9500;
+            --danger-color: #ff3366;
+            --success-color: #00ff88;
+            --metal-color: #2a2a4a;
+            --field-in-color: #4488ff;
+            --field-out-color: #ff8844;
+            --disabled-text: #444;
+            --glow-color: rgba(0, 255, 204, 0.5);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container { display: flex; width: 100%; height: 100%; }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            position: relative;
+            background: 
+                radial-gradient(ellipse at 30% 50%, rgba(0, 100, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(100, 0, 255, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, #0a0a1a 0%, #030308 100%);
+        }
+
+        canvas#gameCanvas { width: 100%; height: 100%; cursor: crosshair; }
+
+        /* 菜单界面样式 */
+        .menu-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 5, 16, 0.97);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            backdrop-filter: blur(20px);
+        }
+
+        .menu-title {
+            font-size: 52px;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+            text-shadow: 
+                0 0 30px var(--glow-color),
+                0 0 60px var(--glow-color),
+                0 0 90px rgba(0, 255, 204, 0.3);
+            font-weight: bold;
+            letter-spacing: 8px;
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 30px var(--glow-color), 0 0 60px var(--glow-color); }
+            50% { text-shadow: 0 0 40px var(--glow-color), 0 0 80px var(--glow-color), 0 0 120px rgba(0, 255, 204, 0.4); }
+        }
+
+        .menu-subtitle {
+            font-size: 14px;
+            color: #556;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .menu-btn {
+            width: 260px;
+            padding: 14px 24px;
+            margin: 10px;
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.05), rgba(0, 150, 200, 0.05));
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 204, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.15), rgba(0, 200, 255, 0.1));
+            border-color: var(--accent-color);
+            transform: scale(1.03);
+            box-shadow: 
+                0 0 30px rgba(0, 255, 204, 0.3),
+                inset 0 0 20px rgba(0, 255, 204, 0.05);
+        }
+
+        .menu-btn.secondary {
+            border-color: rgba(68, 136, 255, 0.3);
+        }
+        .menu-btn.secondary:hover {
+            background: linear-gradient(135deg, rgba(68, 136, 255, 0.15), rgba(100, 150, 255, 0.1));
+            border-color: var(--field-in-color);
+            box-shadow: 0 0 30px rgba(68, 136, 255, 0.3);
+        }
+
+        /* 游戏说明弹窗 */
+        .instruction-modal {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(5, 5, 16, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 210;
+        }
+
+        .instruction-box {
+            width: 550px;
+            background: linear-gradient(135deg, var(--panel-bg), #0d0d20);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(0, 255, 204, 0.1);
+        }
+
+        .instruction-title {
+            color: var(--accent-color);
+            font-size: 22px;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+            padding-bottom: 15px;
+            text-shadow: 0 0 20px var(--glow-color);
+        }
+
+        .instruction-text-content {
+            line-height: 2;
+            color: #aabbcc;
+            font-size: 15px;
+            text-align: justify;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, var(--danger-color), #cc2255);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(255, 51, 102, 0.4);
+        }
+        .close-btn:hover { 
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(255, 51, 102, 0.6);
+        }
+
+        /* 探索模式退出按钮 */
+        .exit-explore-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(255, 51, 102, 0.15);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            display: none;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.2);
+        }
+        .exit-explore-btn:hover {
+            background: var(--danger-color);
+            color: #fff;
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
+        }
+
+        /* 坐标提示框样式 */
+        .coord-tooltip {
+            position: absolute;
+            background: rgba(10, 10, 30, 0.95);
+            color: var(--accent-color);
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            pointer-events: none;
+            display: none;
+            border: 1px solid var(--accent-color);
+            z-index: 20;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+
+        /* 底部提示 */
+        .bottom-hint {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #667;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 5;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* HUD 样式 */
+        .game-hud {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(10, 10, 25, 0.9), rgba(5, 5, 15, 0.95));
+            padding: 14px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            display: flex;
+            gap: 30px;
+            z-index: 10;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.4),
+                0 0 30px rgba(0, 255, 204, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .hud-item { text-align: center; }
+        .hud-label { 
+            font-size: 10px; 
+            color: #556; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 4px; 
+        }
+        .hud-value { 
+            font-size: 22px; 
+            font-weight: bold; 
+            font-family: 'Courier New', monospace; 
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--glow-color);
+        }
+        .hud-value.speed { color: var(--highlight-color); text-shadow: 0 0 10px rgba(255, 149, 0, 0.5); }
+        .hud-value.score { color: var(--success-color); text-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+
+        .message-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(10, 10, 25, 0.98), rgba(5, 5, 15, 0.99));
+            padding: 50px 70px;
+            border-radius: 24px;
+            text-align: center;
+            z-index: 100;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+        }
+
+        .message-overlay.success { 
+            border-color: var(--success-color);
+            box-shadow: 0 0 60px rgba(0, 255, 136, 0.2);
+        }
+        .message-overlay.fail { 
+            border-color: var(--danger-color);
+            box-shadow: 0 0 60px rgba(255, 51, 102, 0.2);
+        }
+        .message-title { font-size: 36px; font-weight: bold; margin-bottom: 15px; }
+        .message-overlay.success .message-title { color: var(--success-color); text-shadow: 0 0 30px rgba(0, 255, 136, 0.5); }
+        .message-overlay.fail .message-title { color: var(--danger-color); text-shadow: 0 0 30px rgba(255, 51, 102, 0.5); }
+        .message-info { font-size: 15px; color: #889; margin-bottom: 25px; }
+        .message-score {
+            font-size: 28px;
+            color: var(--highlight-color);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 149, 0, 0.5);
+        }
+
+        /* 控制面板样式 */
+        .controls {
+            width: 340px;
+            background: linear-gradient(180deg, var(--panel-bg), #08081a);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            border-left: 1px solid rgba(0, 255, 204, 0.1);
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: var(--accent-color);
+            margin-top: 0; margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.15);
+            padding-bottom: 12px;
+            text-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .section-title {
+            color: #556;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            margin-top: 18px;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(0, 255, 204, 0.02));
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .control-group:hover {
+            border-color: rgba(0, 255, 204, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.05);
+        }
+
+        .control-group.disabled { opacity: 0.35; pointer-events: none; }
+
+        label { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500; font-size: 12px; }
+        label span.value { 
+            color: var(--accent-color); 
+            font-family: 'Courier New', monospace; 
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--glow-color);
+        }
+
+        input[type="range"] {
+            width: 100%; cursor: pointer; height: 6px;
+            border-radius: 3px; appearance: none;
+            background: linear-gradient(90deg, rgba(0, 255, 204, 0.1), rgba(0, 150, 200, 0.1));
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; width: 16px; height: 16px;
+            border-radius: 50%; background: var(--accent-color);
+            cursor: pointer; 
+            box-shadow: 0 0 15px var(--glow-color), 0 0 30px rgba(0, 255, 204, 0.3);
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px var(--glow-color), 0 0 40px rgba(0, 255, 204, 0.5);
+        }
+
+        .target-info { 
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.05), rgba(255, 100, 100, 0.02)); 
+            border: 1px solid rgba(255, 51, 102, 0.2); 
+            border-radius: 10px; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+        }
+        .target-info h3 { color: var(--danger-color); margin: 0 0 8px 0; font-size: 12px; text-shadow: 0 0 10px rgba(255, 51, 102, 0.3); }
+        .target-detail { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #99a; }
+        .target-detail span:last-child { color: var(--highlight-color); font-family: 'Courier New', monospace; }
+
+        /* 成就面板 */
+        .achievement-panel {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.03), rgba(0, 200, 100, 0.02));
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .achievement-panel h3 {
+            color: var(--success-color);
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .achievement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            font-size: 11px;
+            color: #556;
+            transition: all 0.3s;
+        }
+
+        .achievement-item.unlocked {
+            color: var(--success-color);
+            background: rgba(0, 255, 136, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+        }
+
+        .achievement-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .achievement-item.unlocked .achievement-icon {
+            animation: achievementPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes achievementPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* 得分显示 */
+        .score-display {
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 200, 0, 0.02));
+            border: 1px solid rgba(255, 149, 0, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .score-display h3 {
+            color: var(--highlight-color);
+            margin: 0 0 8px 0;
+            font-size: 12px;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--highlight-color);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(255, 149, 0, 0.5);
+        }
+
+        .btn-group { display: flex; gap: 8px; margin-top: auto; }
+        button {
+            flex: 1; padding: 12px; border: none; border-radius: 10px;
+            font-size: 13px; cursor: pointer;
+            font-weight: bold; text-transform: uppercase;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        .btn-fire { 
+            background: linear-gradient(135deg, var(--accent-color), #00aa88); 
+            color: #000; 
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+        .btn-fire:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-reset { 
+            background: rgba(255, 255, 255, 0.05); 
+            color: #aab; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .btn-reset:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn-next { 
+            background: linear-gradient(135deg, var(--highlight-color), #dd8800); 
+            color: #000;
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.3);
+        }
+        .btn-next:hover {
+            box-shadow: 0 0 30px rgba(255, 149, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-trail { 
+            background: linear-gradient(135deg, #00cc66, #009944); 
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 204, 102, 0.3);
+        }
+
+        .level-indicator { 
+            text-align: center; 
+            padding: 8px; 
+            background: linear-gradient(135deg, rgba(0, 255, 204, 0.08), rgba(0, 200, 255, 0.05)); 
+            border-radius: 12px; 
+            margin-bottom: 15px; 
+            border: 1px solid rgba(0, 255, 204, 0.15); 
+            font-size: 15px; 
+            color: var(--accent-color); 
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .formula-box { 
+            background: rgba(0, 0, 0, 0.3); 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #778;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .direction-btn { 
+            user-select: none; 
+            transition: all 0.3s; 
+            border: 1px solid #334 !important; 
+            background: rgba(0, 0, 0, 0.3) !important; 
+        }
+        .direction-btn.active { 
+            border-color: var(--accent-color) !important; 
+            background: rgba(0, 255, 204, 0.1) !important; 
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+        }
+
+        /* 成就解锁通知 */
+        .achievement-notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 200, 100, 0.1));
+            border: 1px solid var(--success-color);
+            border-radius: 12px;
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 300;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.3);
+        }
+
+        .achievement-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .achievement-notification .icon {
+            font-size: 28px;
+            animation: achievementBounce 0.6s ease-out;
+        }
+
+        @keyframes achievementBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .achievement-notification .text {
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .achievement-notification .desc {
+            color: #889;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="game-area">
+        <canvas id="gameCanvas"></canvas>
+        
+        <button id="btnExitExplore" class="exit-explore-btn">← 退出探索</button>
+
+        <div id="coordTooltip" class="coord-tooltip"></div>
+        <div id="bottomHint" class="bottom-hint">提示：暂停或结束时悬停粒子可查看坐标</div>
+
+        <!-- 主菜单 -->
+        <div id="menuOverlay" class="menu-overlay">
+            <div class="menu-title">回旋加速器</div>
+            <div class="menu-subtitle">Physics Simulation</div>
+            <button id="btnAdventure" class="menu-btn">闯关模式</button>
+            <button id="btnExplore" class="menu-btn secondary">探索模式</button>
+            <button id="btnInstruction" class="menu-btn">游戏说明</button>
+        </div>
+
+        <!-- 游戏说明弹窗 -->
+        <div id="instructionModal" class="instruction-modal">
+            <div class="instruction-box">
+                <button id="btnCloseInstruction" class="close-btn">✕</button>
+                <div class="instruction-title">游戏说明</div>
+                <div class="instruction-text-content">
+                    <p>粒子处于回旋加速器和磁场共同作用的区域内，用户需要通过调整相关参数使粒子以合适的轨迹成功打到红色挡板，视作游戏成功。</p>
+                    <br>
+                    <p><strong>得分规则：</strong></p>
+                    <p>• 基础分：成功命中目标获得基础分数</p>
+                    <p>• 时间奖励：完成时间越短，奖励越高</p>
+                    <p>• 难度加成：更高关卡有更高分数倍率</p>
+                    <br>
+                    <p><strong>成就系统：</strong></p>
+                    <p>• 首次命中、完美射击、快速通关等成就等你解锁！</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-hud">
+            <div class="hud-item">
+                <div class="hud-label">时间</div>
+                <div class="hud-value" id="hud-time">0.00</div>
+            </div>
+            <div class="hud-item">
+                <div class="hud-label">速度</div>
+                <div class="hud-value speed" id="hud-speed">0.00</div>
+            </div>
+            <div class="hud-item">
+                <div class="hud-label">半径</div>
+                <div class="hud-value" id="hud-radius">0.00</div>
+            </div>
+            <div class="hud-item">
+                <div class="hud-label">得分</div>
+                <div class="hud-value score" id="hud-score">0</div>
+            </div>
+        </div>
+
+        <div class="message-overlay" id="messageOverlay">
+            <div class="message-title" id="msgTitle">命中目标</div>
+            <div class="message-info" id="msgInfo">完美射击！</div>
+            <div class="message-score" id="msgScore"></div>
+            <button class="btn-next" id="btnNext">下一关</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="level-indicator" id="levelIndicator">关卡 1 / 5</div>
+        
+        <!-- 得分显示 -->
+        <div class="score-display">
+            <h3>⭐ 总得分</h3>
+            <div class="score-value" id="totalScore">0</div>
+        </div>
+
+        <h2>参数控制台</h2>
+
+        <div class="target-info">
+            <h3>🎯 目标参数</h3>
+            <div class="target-detail"><span>挡板位置 X:</span><span id="targetX">700</span></div>
+            <div class="target-detail"><span>挡板中心 Y:</span><span id="targetY">350</span></div>
+            <div class="target-detail"><span>挡板高度:</span><span id="targetH">80</span></div>
+        </div>
+
+        <div class="formula-box">
+            <div>射出速度: v ≈ q·B_in·R / m</div>
+        </div>
+
+        <div class="section-title">⚙️ 粒子属性</div>
+        
+        <div class="control-group" id="group-q">
+            <label>电荷量 <span class="value" id="disp-q">1.00</span></label>
+            <input type="range" id="input-q" min="0.5" max="3.0" step="0.01" value="1.0">
+        </div>
+        
+        <div class="control-group" id="group-m">
+            <label>粒子质量 <span class="value" id="disp-m">1.00</span></label>
+            <input type="range" id="input-m" min="0.5" max="3.0" step="0.01" value="1.0">
+        </div>
+
+        <div class="section-title">🌀 内部参数</div>
+        
+        <div class="control-group internal" id="group-Bin">
+            <label>内部磁场 <span class="value" id="disp-Bin">1.00</span></label>
+            <input type="range" id="input-Bin" min="0.5" max="2.5" step="0.01" value="1.0">
+        </div>
+        
+        <div class="control-group internal" id="group-U">
+            <label>加速电压 <span class="value" id="disp-U">100.00</span></label>
+            <input type="range" id="input-U" min="50" max="250" step="0.01" value="100">
+        </div>
+
+        <div class="section-title">🧲 外部磁场</div>
+        
+        <div class="control-group external" id="group-Bout">
+            <label>磁场强度 <span class="value" id="disp-Bout">0.20</span></label>
+            <input type="range" id="input-Bout" min="0.05" max="0.80" step="0.01" value="0.20">
+        </div>
+        
+        <div class="control-group external" id="group-dir">
+            <label>磁场方向</label>
+            <div style="display:flex; gap:8px; margin-top:5px;">
+                <div class="direction-btn active" id="dir-in" style="flex:1; padding:10px; border-radius:8px; cursor:pointer; text-align:center;">
+                    <div style="font-size:18px; font-weight:bold;">×</div>
+                    <div style="font-size:9px;">向里</div>
+                </div>
+                <div class="direction-btn" id="dir-out" style="flex:1; padding:10px; border-radius:8px; cursor:pointer; text-align:center;">
+                    <div style="font-size:18px; font-weight:bold;">·</div>
+                    <div style="font-size:9px;">向外</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 成就面板 -->
+        <div class="achievement-panel">
+            <h3>🏆 成就</h3>
+            <div class="achievement-list" id="achievementList">
+                <div class="achievement-item" id="ach-first-hit">
+                    <span class="achievement-icon">🎯</span>
+                    <span>首次命中</span>
+                </div>
+                <div class="achievement-item" id="ach-perfect">
+                    <span class="achievement-icon">💎</span>
+                    <span>完美射击</span>
+                </div>
+                <div class="achievement-item" id="ach-speed">
+                    <span class="achievement-icon">⚡</span>
+                    <span>闪电通关</span>
+                </div>
+                <div class="achievement-item" id="ach-master">
+                    <span class="achievement-icon">👑</span>
+                    <span>物理大师</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-fire" id="btnFire">发射</button>
+            <button class="btn-trail" id="btnTrail">显示轨迹</button>
+            <button class="btn-reset" id="btnReset">重置</button>
+        </div>
+    </div>
+</div>
+
+<!-- 成就解锁通知 -->
+<div id="achievementNotification" class="achievement-notification">
+    <span class="icon">🏆</span>
+    <div>
+        <div class="text" id="achNotifyTitle">成就解锁</div>
+        <div class="desc" id="achNotifyDesc">恭喜获得新成就！</div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. 初始化与配置
+    // ==========================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const tooltip = document.getElementById('coordTooltip');
+    const bottomHint = document.getElementById('bottomHint');
+    
+    let mouseX = 0, mouseY = 0;
+    let isDraggingTarget = false;
+    let gameMode = 'menu';
+    let showTrail = false;
+
+    // 得分和成就系统
+    let totalScore = 0;
+    let currentLevelScore = 0;
+    let achievements = {
+        firstHit: { unlocked: false, name: '首次命中', desc: '成功命中第一个目标', icon: '🎯' },
+        perfect: { unlocked: false, name: '完美射击', desc: '命中目标中心区域', icon: '💎' },
+        speed: { unlocked: false, name: '闪电通关', desc: '5秒内完成关卡', icon: '⚡' },
+        master: { unlocked: false, name: '物理大师', desc: '完成所有关卡', icon: '👑' }
+    };
+    let levelAttempts = {}; // 记录每关尝试次数
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+        updateTooltip();
+        
+        if (isDraggingTarget && currentLevel === 6) {
+            target.x = mouseX;
+            target.y = canvas.height - mouseY;
+            updateTargetDisplay();
+            draw();
+        }
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (currentLevel === 6 && !isRunning) {
+            const screenTargetY = canvas.height - target.y;
+            if (mouseX >= target.x && mouseX <= target.x + 20 &&
+                mouseY >= screenTargetY - target.height/2 && mouseY <= screenTargetY + target.height/2) {
+                isDraggingTarget = true;
+                canvas.style.cursor = 'grabbing';
+            }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingTarget) {
+            isDraggingTarget = false;
+            canvas.style.cursor = 'crosshair';
+        }
+    });
+
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        if (!isRunning) draw();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    let params = { q: 1.0, m: 1.0, Bin: 1.0, Bout: 0.2, U: 100, Bdir: 'in' };
+    let isRunning = false;
+    let gamePhase = 'accelerating';
+    let totalTime = 0;
+    let currentLevel = 1;
+    let launchSpeed = 0;
+
+    const levels = [
+        { targetX: 750, targetY: 350, targetH: 120, locked: ['Bin', 'U', 'Bout'], defaults: { q: 1.0, m: 1.0, Bin: 1.0, U: 100, Bout: 0.2, Bdir: 'in' } },
+        { targetX: 800, targetY: 250, targetH: 110, locked: ['q', 'm', 'Bout', 'dir'], defaults: { q: 1.0, m: 1.0, Bin: 1.0, U: 100, Bout: 0.2, Bdir: 'in' } },
+        { targetX: 820, targetY: 520, targetH: 100, locked: ['q', 'm', 'Bin', 'U', 'dir'], defaults: { q: 1.0, m: 1.0, Bin: 0.9, U: 200, Bout: 0.2, Bdir: 'in' } },
+        { targetX: 850, targetY: 300, targetH: 70, locked: [], defaults: { q: 1.0, m: 1.0, Bin: 1.0, U: 100, Bout: 0.2, Bdir: 'in' } },
+        { targetX: 880, targetY: 400, targetH: 60, locked: [], defaults: { q: 1.0, m: 1.0, Bin: 1.0, U: 100, Bout: 0.2, Bdir: 'in' } },
+        { targetX: 700, targetY: 400, targetH: 80, locked: [], isFreeMode: true, defaults: { q: 1.0, m: 1.0, Bin: 1.0, U: 100, Bout: 0.2, Bdir: 'in' } }
+    ];
+
+    const ACCEL = {
+        cx: 180, radius: 130, gapHeight: 20,
+        get exitX() { return this.cx + this.radius; },
+        get cy() { return canvas.height / 2; }
+    };
+
+    let particle = { x: 0, y: 0, vx: 0, vy: 0, path: [], accelPath: [] };
+    let target = { x: 700, y: 350, height: 80 };
+
+    // ==========================================
+    // 2. UI 与 控制
+    // ==========================================
+    
+    function updateTargetDisplay() {
+        document.getElementById('targetX').textContent = Math.round(target.x);
+        document.getElementById('targetY').textContent = Math.round(target.y);
+        document.getElementById('targetH').textContent = target.height;
+    }
+
+    function updateControlLocks() {
+        const levelConfig = levels[currentLevel - 1];
+        if (!levelConfig) return;
+        const lockedParams = levelConfig.locked;
+        const paramToGroup = { 'q': 'group-q', 'm': 'group-m', 'Bin': 'group-Bin', 'U': 'group-U', 'Bout': 'group-Bout', 'dir': 'group-dir' };
+
+        Object.values(paramToGroup).forEach(groupId => {
+            const group = document.getElementById(groupId);
+            if (group) {
+                group.classList.remove('disabled');
+                const input = group.querySelector('input');
+                if (input) input.disabled = false;
+            }
+        });
+
+        lockedParams.forEach(paramId => {
+            const groupId = paramToGroup[paramId];
+            if (groupId) {
+                const group = document.getElementById(groupId);
+                if (group) {
+                    group.classList.add('disabled');
+                    const input = group.querySelector('input');
+                    if (input) input.disabled = true;
+                }
+            }
+        });
+        
+        const dirGroup = document.getElementById('group-dir');
+        if (lockedParams.includes('dir')) {
+            dirGroup.classList.add('disabled');
+            document.getElementById('dir-in').style.pointerEvents = 'none';
+            document.getElementById('dir-out').style.pointerEvents = 'none';
+        } else {
+            document.getElementById('dir-in').style.pointerEvents = 'auto';
+            document.getElementById('dir-out').style.pointerEvents = 'auto';
+        }
+
+        const exitBtn = document.getElementById('btnExitExplore');
+        if (levelConfig.isFreeMode) {
+            document.getElementById('levelIndicator').innerHTML = "模式: 自由探索";
+            bottomHint.textContent = "拖动挡板或调整参数，虚线为预测轨迹";
+            exitBtn.style.display = 'block';
+        } else {
+            document.getElementById('levelIndicator').innerHTML = `关卡 ${currentLevel} / 5`;
+            bottomHint.textContent = "提示：暂停或结束时悬停粒子可查看坐标";
+            exitBtn.style.display = 'none';
+        }
+    }
+
+    function getParticleScreenCoords() {
+        if (gamePhase === 'accelerating') return { x: ACCEL.cx + particle.x, y: ACCEL.cy - particle.y };
+        return { x: particle.x, y: particle.y };
+    }
+
+    function updateTooltip() {
+        if (isRunning && gamePhase !== 'ended') { tooltip.style.display = 'none'; return; }
+        const pos = getParticleScreenCoords();
+        const dist = Math.hypot(mouseX - pos.x, mouseY - pos.y);
+        if (dist < 25) {
+            const coordX = pos.x;
+            const coordY = canvas.height - pos.y;
+            tooltip.textContent = `(${coordX.toFixed(1)}, ${coordY.toFixed(1)})`;
+            tooltip.style.left = (mouseX + 15) + 'px';
+            tooltip.style.top = (mouseY + 15) + 'px';
+            tooltip.style.display = 'block';
+        } else { tooltip.style.display = 'none'; }
+    }
+
+    // ==========================================
+    // 3. 预测轨迹计算 - 修复：使用与实际模拟完全相同的计算逻辑
+    // ==========================================
+    
+    function calculatePrediction() {
+        if (currentLevel !== 6 || isRunning) return [];
+        
+        // 使用与实际模拟完全相同的初始条件和计算逻辑
+        let tempP = { x: 0, y: 0, vx: 0.1, vy: 2 };
+        let path = [];
+        const dt = 0.1; // 使用与实际模拟相同的主时间步长
+        const maxSteps = 5000;
+        let steps = 0;
+        
+        // 加速阶段模拟 - 使用与 updateAccelerating 完全相同的逻辑
+        while (steps < maxSteps) {
+            const subSteps = 60;
+            const subDt = dt / subSteps;
+            const r = ACCEL.radius;
+            const gap = ACCEL.gapHeight;
+            const B = params.Bin;
+            
+            for (let i = 0; i < subSteps; i++) {
+                let dist = Math.hypot(tempP.x, tempP.y);
+                const inGap = Math.abs(tempP.y) < gap / 2;
+                let ax = 0, ay = 0;
+                const v = Math.sqrt(tempP.vx * tempP.vx + tempP.vy * tempP.vy);
+                
+                if (!inGap) {
+                    if (v > 0.01) {
+                        ax = (tempP.vy * params.q * B) / params.m;
+                        ay = (-tempP.vx * params.q * B) / params.m;
+                    }
+                } else {
+                    const forceE = params.q * params.U * 0.4;
+                    const sign = tempP.vy > 0 ? 1 : -1;
+                    ay = sign * forceE / params.m;
+                }
+                
+                tempP.vx += ax * subDt;
+                tempP.vy += ay * subDt;
+                tempP.x += tempP.vx * subDt;
+                tempP.y += tempP.vy * subDt;
+                
+                dist = Math.hypot(tempP.x, tempP.y);
+                
+                if (dist >= r - 2) {
+                    if (tempP.x > 0) {
+                        // 转换到屏幕坐标
+                        const sx = ACCEL.cx + tempP.x;
+                        const sy = ACCEL.cy - tempP.y;
+                        path.push({ x: sx, y: sy });
+                        tempP.x = sx;
+                        tempP.y = sy;
+                        tempP.vy = -tempP.vy;
+                        break;
+                    } else {
+                        const scale = (r - 2) / dist;
+                        tempP.x *= scale;
+                        tempP.y *= scale;
+                    }
+                }
+            }
+            
+            if (path.length > 0) break;
+            steps++;
+        }
+        
+        // 飞行阶段模拟 - 使用与 updateFlying 完全相同的逻辑
+        steps = 0;
+        while (steps < maxSteps) {
+            const subSteps = 12;
+            const subDt = dt / subSteps;
+            
+            for (let i = 0; i < subSteps; i++) {
+                const v = Math.sqrt(tempP.vx * tempP.vx + tempP.vy * tempP.vy);
+                const distToCenter = Math.hypot(tempP.x - ACCEL.cx, tempP.y - ACCEL.cy);
+                
+                if (v > 0.01 && distToCenter > ACCEL.radius) {
+                    const F = params.q * v * params.Bout;
+                    const sign = params.Bdir === 'in' ? 1 : -1;
+                    let ax = sign * (tempP.vy / v) * F / params.m;
+                    let ay = sign * (-tempP.vx / v) * F / params.m;
+                    tempP.vx += ax * subDt;
+                    tempP.vy += ay * subDt;
+                }
+                
+                tempP.x += tempP.vx * subDt;
+                tempP.y += tempP.vy * subDt;
+            }
+            
+            if (steps % 3 === 0) path.push({ x: tempP.x, y: tempP.y });
+            
+            if (tempP.x > canvas.width + 50 || tempP.y < -50 || tempP.y > canvas.height + 50 || tempP.x < 0) break;
+            steps++;
+        }
+        
+        return path;
+    }
+
+    // ==========================================
+    // 4. 绘图函数
+    // ==========================================
+    
+    function drawCoordinateSystem() {
+        const w = canvas.width, h = canvas.height, tickSpacing = 50;
+        
+        // 绘制网格线
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.03)';
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+        
+        for (let x = tickSpacing; x < w; x += tickSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+        }
+        for (let logicalY = tickSpacing; logicalY < h; logicalY += tickSpacing) {
+            const screenY = h - logicalY;
+            ctx.beginPath();
+            ctx.moveTo(0, screenY);
+            ctx.lineTo(w, screenY);
+            ctx.stroke();
+        }
+
+        // 绘制坐标轴
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.lineTo(w, h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, h);
+        ctx.stroke();
+
+        // 绘制刻度数字
+        ctx.fillStyle = 'rgba(0, 255, 204, 0.4)';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        for (let x = tickSpacing; x < w; x += tickSpacing) {
+            ctx.fillText(x.toString(), x, h - 5);
+        }
+        ctx.textAlign = 'right';
+        for (let logicalY = tickSpacing; logicalY < h; logicalY += tickSpacing) {
+            ctx.fillText(logicalY.toString(), 15, h - logicalY + 3);
+        }
+    }
+
+    function drawFieldSymbol(x, y, type) {
+        ctx.fillStyle = type === 'in' ? 'rgba(68, 136, 255, 0.4)' : 'rgba(255, 136, 68, 0.5)';
+        ctx.font = '14px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(type === 'in' ? '×' : '·', x, y);
+    }
+
+    function drawInternalMagneticField() {
+        const cx = ACCEL.cx, cy = ACCEL.cy, r = ACCEL.radius, gap = ACCEL.gapHeight;
+        for (let x = cx - r + 20; x < cx + r; x += 30) {
+            for (let y = cy - r + 20; y < cy + r; y += 30) {
+                const dist = Math.hypot(x - cx, y - cy);
+                if (dist < r - 15 && Math.abs(y - cy) > gap / 2 + 5) {
+                    drawFieldSymbol(x, y, 'in');
+                }
+            }
+        }
+    }
+
+    function drawExternalMagneticField() {
+        const spacing = 30;
+        for (let x = spacing; x < canvas.width; x += spacing) {
+            for (let y = spacing; y < canvas.height; y += spacing) {
+                const dist = Math.hypot(x - ACCEL.cx, y - ACCEL.cy);
+                if (dist > ACCEL.radius + 10) {
+                    drawFieldSymbol(x, y, params.Bdir);
+                }
+            }
+        }
+    }
+
+    function drawAccelerator() {
+        const cx = ACCEL.cx, cy = ACCEL.cy, r = ACCEL.radius, gap = ACCEL.gapHeight;
+        
+        // 绘制加速器主体
+        ctx.fillStyle = 'rgba(15, 20, 35, 0.95)';
+        ctx.strokeStyle = 'rgba(68, 136, 255, 0.4)';
+        ctx.lineWidth = 2;
+
+        // 上半部分
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, Math.PI, 0);
+        ctx.lineTo(cx + r, cy - gap / 2);
+        ctx.lineTo(cx - r, cy - gap / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 下半部分
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI);
+        ctx.lineTo(cx - r, cy + gap / 2);
+        ctx.lineTo(cx + r, cy + gap / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 绘制内部磁场符号
+        drawInternalMagneticField();
+
+        // 绘制加速间隙
+        ctx.fillStyle = 'rgba(0, 255, 204, 0.08)';
+        ctx.fillRect(cx - r, cy - gap / 2, r * 2, gap);
+        
+        // 间隙发光效果
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - r, cy - gap / 2);
+        ctx.lineTo(cx + r, cy - gap / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx - r, cy + gap / 2);
+        ctx.lineTo(cx + r, cy + gap / 2);
+        ctx.stroke();
+
+        // 标签
+        ctx.fillStyle = 'rgba(0, 255, 204, 0.6)';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('内部磁场 (×)', cx, cy - r - 15);
+        
+        // 出口
+        ctx.strokeStyle = '#ff9500';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx + r, cy - 15, 15, 30);
+        
+        // 出口箭头
+        ctx.fillStyle = '#ff9500';
+        ctx.beginPath();
+        ctx.moveTo(cx + r + 25, cy);
+        ctx.lineTo(cx + r + 15, cy - 10);
+        ctx.lineTo(cx + r + 15, cy + 10);
+        ctx.fill();
+        
+        // 出口发光
+        ctx.shadowColor = '#ff9500';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(cx + r + 7, cy, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawTarget() {
+        const x = target.x, y = target.y, h = target.height;
+        const screenTargetY = canvas.height - y;
+        
+        // 目标发光效果
+        ctx.shadowColor = '#ff3366';
+        ctx.shadowBlur = 20;
+        
+        const gradient = ctx.createLinearGradient(x, screenTargetY - h/2, x + 18, screenTargetY - h/2);
+        gradient.addColorStop(0, '#ff3366');
+        gradient.addColorStop(1, '#cc2255');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, screenTargetY - h/2, 14, h);
+        
+        ctx.strokeStyle = '#ff6688';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, screenTargetY - h/2, 14, h);
+        
+        ctx.shadowBlur = 0;
+        
+        // 标签
+        ctx.fillStyle = '#ff3366';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('TARGET', x + 7, screenTargetY - h/2 - 10);
+    }
+
+    function drawParticle(x, y) {
+        // 外层光晕
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 20);
+        gradient.addColorStop(0, 'rgba(0, 255, 204, 1)');
+        gradient.addColorStop(0.3, 'rgba(0, 255, 204, 0.5)');
+        gradient.addColorStop(0.6, 'rgba(0, 255, 204, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 255, 204, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 核心
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 发光效果
+        ctx.shadowColor = '#00ffcc';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    function drawTrajectory() {
+        if (particle.path.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00ffcc';
+            ctx.shadowBlur = 15;
+            ctx.moveTo(particle.path[0].x, particle.path[0].y);
+            for (let i = 1; i < particle.path.length; i++) {
+                ctx.lineTo(particle.path[i].x, particle.path[i].y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawGreenTrail() {
+        if (!showTrail) return;
+        
+        // 绘制预测轨迹（探索模式）
+        if (currentLevel === 6 && !isRunning) {
+            const path = calculatePrediction();
+            if (path.length < 2) return;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 20;
+            ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        
+        // 绘制飞行轨迹
+        if (particle.path.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 20;
+            ctx.moveTo(particle.path[0].x, particle.path[0].y);
+            for (let i = 1; i < particle.path.length; i++) {
+                ctx.lineTo(particle.path[i].x, particle.path[i].y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        
+        // 绘制加速器内部轨迹
+        if (particle.accelPath.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 15;
+            const cx = ACCEL.cx, cy = ACCEL.cy;
+            ctx.moveTo(cx + particle.accelPath[0].x, cy - particle.accelPath[0].y);
+            for (let i = 1; i < particle.accelPath.length; i++) {
+                ctx.lineTo(cx + particle.accelPath[i].x, cy - particle.accelPath[i].y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    function drawPrediction() {
+        if (showTrail) return;
+        
+        const path = calculatePrediction();
+        if (path.length < 2) return;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+        ctx.moveTo(path[0].x, path[0].y);
+        for (let i = 1; i < path.length; i++) {
+            ctx.lineTo(path[i].x, path[i].y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // ==========================================
+    // 5. 物理模拟
+    // ==========================================
+    
+    function initParticle() {
+        particle.x = 0;
+        particle.y = 0;
+        particle.vx = 0.1;
+        particle.vy = 2;
+        particle.path = [];
+        particle.accelPath = [{ x: 0, y: 0 }];
+        totalTime = 0;
+        gamePhase = 'accelerating';
+        launchSpeed = 0;
+        document.getElementById('hud-time').textContent = "0.00";
+        document.getElementById('hud-speed').textContent = "0.00";
+        document.getElementById('hud-radius').textContent = "0.00";
+    }
+
+    function loadLevel(level) {
+        currentLevel = level;
+        const config = levels[level - 1];
+        target.x = config.targetX;
+        target.y = config.targetY;
+        target.height = config.targetH;
+        updateTargetDisplay();
+        const defs = config.defaults;
+        Object.assign(params, defs);
+        
+        document.getElementById('input-q').value = defs.q;
+        document.getElementById('disp-q').textContent = defs.q.toFixed(2);
+        document.getElementById('input-m').value = defs.m;
+        document.getElementById('disp-m').textContent = defs.m.toFixed(2);
+        document.getElementById('input-Bin').value = defs.Bin;
+        document.getElementById('disp-Bin').textContent = defs.Bin.toFixed(2);
+        document.getElementById('input-U').value = defs.U;
+        document.getElementById('disp-U').textContent = defs.U.toFixed(2);
+        document.getElementById('input-Bout').value = defs.Bout;
+        document.getElementById('disp-Bout').textContent = defs.Bout.toFixed(2);
+        
+        const dirIn = document.getElementById('dir-in');
+        const dirOut = document.getElementById('dir-out');
+        if (defs.Bdir === 'in') {
+            dirIn.classList.add('active');
+            dirOut.classList.remove('active');
+        } else {
+            dirIn.classList.remove('active');
+            dirOut.classList.add('active');
+        }
+        
+        updateControlLocks();
+        initParticle();
+        draw();
+    }
+
+    function update() {
+        const dt = 0.1;
+        totalTime += dt;
+        if (gamePhase === 'accelerating') updateAccelerating(dt);
+        else if (gamePhase === 'flying') updateFlying(dt);
+    }
+
+    function updateAccelerating(dt) {
+        const steps = 60, subDt = dt / steps, r = ACCEL.radius, gap = ACCEL.gapHeight, B = params.Bin;
+        for (let i = 0; i < steps; i++) {
+            let dist = Math.hypot(particle.x, particle.y);
+            const inGap = Math.abs(particle.y) < gap / 2;
+            let ax = 0, ay = 0;
+            const v = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+            if (!inGap) {
+                if (v > 0.01) {
+                    ax = (particle.vy * params.q * B) / params.m;
+                    ay = (-particle.vx * params.q * B) / params.m;
+                }
+            } else {
+                const forceE = params.q * params.U * 0.4;
+                const sign = particle.vy > 0 ? 1 : -1;
+                ay = sign * forceE / params.m;
+            }
+            particle.vx += ax * subDt;
+            particle.vy += ay * subDt;
+            particle.x += particle.vx * subDt;
+            particle.y += particle.vy * subDt;
+            dist = Math.hypot(particle.x, particle.y);
+            const lastP = particle.accelPath[particle.accelPath.length - 1];
+            if (Math.hypot(particle.x - lastP.x, particle.y - lastP.y) > 1.5) {
+                particle.accelPath.push({ x: particle.x, y: particle.y });
+            }
+            if (dist >= r - 2) {
+                if (particle.x > 0) {
+                    gamePhase = 'flying';
+                    particle.x = ACCEL.cx + particle.x;
+                    particle.y = ACCEL.cy - particle.y;
+                    particle.vy = -particle.vy;
+                    particle.path = [{ x: particle.x, y: particle.y }];
+                    launchSpeed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+                    break;
+                } else {
+                    const scale = (r - 2) / dist;
+                    particle.x *= scale;
+                    particle.y *= scale;
+                }
+            }
+        }
+    }
+
+    function updateFlying(dt) {
+        const steps = 12, subDt = dt / steps;
+        for (let i = 0; i < steps; i++) {
+            const v = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+            const distToCenter = Math.hypot(particle.x - ACCEL.cx, particle.y - ACCEL.cy);
+            if (v > 0.01 && distToCenter > ACCEL.radius) {
+                const F = params.q * v * params.Bout;
+                const sign = params.Bdir === 'in' ? 1 : -1;
+                let ax = sign * (particle.vy / v) * F / params.m;
+                let ay = sign * (-particle.vx / v) * F / params.m;
+                particle.vx += ax * subDt;
+                particle.vy += ay * subDt;
+            }
+            particle.x += particle.vx * subDt;
+            particle.y += particle.vy * subDt;
+            const lastP = particle.path[particle.path.length - 1];
+            if (Math.hypot(particle.x - lastP.x, particle.y - lastP.y) > 2.0) {
+                particle.path.push({ x: particle.x, y: particle.y });
+            }
+            
+            const pLogicalY = canvas.height - particle.y;
+            if (particle.x >= target.x && particle.x <= target.x + 20) {
+                if (pLogicalY >= target.y - target.height / 2 && pLogicalY <= target.y + target.height / 2) {
+                    gamePhase = 'ended';
+                    handleGameSuccess(pLogicalY);
+                    break;
+                }
+            }
+            if (particle.x > canvas.width + 50 || particle.y < -50 || particle.y > canvas.height + 50 || particle.x < 0) {
+                gamePhase = 'ended';
+                handleGameFail();
+                break;
+            }
+        }
+    }
+
+    // ==========================================
+    // 6. 得分和成就系统
+    // ==========================================
+    
+    function calculateScore(hitY) {
+        // 基础分
+        let baseScore = 100 * currentLevel;
+        
+        // 时间奖励 (越快越高)
+        const timeBonus = Math.max(0, Math.floor((30 - totalTime) * 5));
+        
+        // 精度奖励 (命中中心区域更高分)
+        const targetCenter = target.y;
+        const distance = Math.abs(hitY - targetCenter);
+        const accuracyBonus = Math.max(0, Math.floor((target.height / 2 - distance) * 2));
+        
+        // 关卡难度倍率
+        const multiplier = 1 + (currentLevel - 1) * 0.2;
+        
+        return Math.floor((baseScore + timeBonus + accuracyBonus) * multiplier);
+    }
+
+    function unlockAchievement(achievementId) {
+        if (achievements[achievementId] && !achievements[achievementId].unlocked) {
+            achievements[achievementId].unlocked = true;
+            
+            // 更新UI
+            const achElement = document.getElementById(`ach-${achievementId.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+            if (achElement) {
+                achElement.classList.add('unlocked');
+            }
+            
+            // 显示通知
+            showAchievementNotification(achievements[achievementId]);
+            
+            // 成就奖励分
+            totalScore += 50;
+            updateScoreDisplay();
+        }
+    }
+
+    function showAchievementNotification(achievement) {
+        const notification = document.getElementById('achievementNotification');
+        document.getElementById('achNotifyTitle').textContent = achievement.name;
+        document.getElementById('achNotifyDesc').textContent = achievement.desc;
+        notification.querySelector('.icon').textContent = achievement.icon;
+        
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    function updateScoreDisplay() {
+        document.getElementById('totalScore').textContent = totalScore;
+        document.getElementById('hud-score').textContent = totalScore;
+    }
+
+    function checkAchievements(hitY, time) {
+        // 首次命中
+        unlockAchievement('first-hit');
+        
+        // 完美射击 (命中中心区域)
+        const targetCenter = target.y;
+        const distance = Math.abs(hitY - targetCenter);
+        if (distance < target.height / 4) {
+            unlockAchievement('perfect');
+        }
+        
+        // 闪电通关 (5秒内)
+        if (time < 5) {
+            unlockAchievement('speed');
+        }
+    }
+
+    // ==========================================
+    // 7. 游戏流程控制
+    // ==========================================
+
+    function showMenu() {
+        isRunning = false;
+        showTrail = false;
+        document.getElementById('menuOverlay').style.display = 'flex';
+        document.getElementById('instructionModal').style.display = 'none';
+        document.getElementById('messageOverlay').style.display = 'none';
+        document.getElementById('btnExitExplore').style.display = 'none';
+        document.getElementById('btnTrail').textContent = '显示轨迹';
+    }
+
+    function startAdventureMode() {
+        gameMode = 'adventure';
+        document.getElementById('menuOverlay').style.display = 'none';
+        loadLevel(1);
+    }
+
+    function startExploreMode() {
+        gameMode = 'explore';
+        document.getElementById('menuOverlay').style.display = 'none';
+        loadLevel(6);
+    }
+
+    function handleGameSuccess(hitY) {
+        const score = calculateScore(hitY);
+        totalScore += score;
+        currentLevelScore = score;
+        updateScoreDisplay();
+        
+        // 检查成就
+        checkAchievements(hitY, totalTime);
+        
+        const overlay = document.getElementById('messageOverlay');
+        overlay.className = 'message-overlay success';
+        document.getElementById('msgTitle').textContent = '🎯 命中目标！';
+        document.getElementById('msgInfo').textContent = `射出速度: ${launchSpeed.toFixed(2)} | 时间: ${totalTime.toFixed(2)}s`;
+        document.getElementById('msgScore').textContent = `+${score} 分`;
+        
+        const btnNext = document.getElementById('btnNext');
+        
+        if (gameMode === 'adventure') {
+            if (currentLevel < 5) {
+                btnNext.textContent = '下一关';
+                btnNext.style.display = 'inline-block';
+                btnNext.onclick = () => {
+                    loadLevel(currentLevel + 1);
+                    overlay.style.display = 'none';
+                };
+            } else {
+                // 通关
+                unlockAchievement('master');
+                document.getElementById('msgTitle').textContent = '🏆 恭喜通关！';
+                document.getElementById('msgInfo').textContent = '你已完成所有挑战！';
+                document.getElementById('msgScore').textContent = `总分: ${totalScore}`;
+                btnNext.textContent = '返回菜单';
+                btnNext.style.display = 'inline-block';
+                btnNext.onclick = () => { showMenu(); };
+            }
+        } else {
+            btnNext.textContent = '重置';
+            btnNext.style.display = 'inline-block';
+            btnNext.onclick = () => {
+                initParticle();
+                draw();
+                overlay.style.display = 'none';
+            };
+        }
+        overlay.style.display = 'block';
+        document.getElementById('btnFire').textContent = '发射';
+        document.getElementById('btnReset').textContent = '重置';
+    }
+
+    function handleGameFail() {
+        const overlay = document.getElementById('messageOverlay');
+        overlay.className = 'message-overlay fail';
+        document.getElementById('msgTitle').textContent = '未命中';
+        document.getElementById('msgInfo').textContent = '粒子飞出边界，点击重置重新尝试';
+        document.getElementById('msgScore').textContent = '';
+        
+        const btnNext = document.getElementById('btnNext');
+        btnNext.textContent = '重置';
+        btnNext.style.display = 'inline-block';
+        btnNext.onclick = () => {
+            initParticle();
+            draw();
+            overlay.style.display = 'none';
+        };
+        overlay.style.display = 'block';
+        
+        document.getElementById('btnFire').textContent = '发射';
+        document.getElementById('btnReset').textContent = '重置';
+    }
+
+    // ==========================================
+    // 8. 主循环
+    // ==========================================
+    
+    function loop() {
+        if (!isRunning) return;
+        update();
+        draw();
+        document.getElementById('hud-time').textContent = totalTime.toFixed(2);
+        const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+        document.getElementById('hud-speed').textContent = speed.toFixed(2);
+        if (gamePhase === 'accelerating' && speed > 0.1) {
+            const r = (params.m * speed) / (params.q * params.Bin);
+            document.getElementById('hud-radius').textContent = r.toFixed(2);
+        }
+        if (gamePhase !== 'ended') requestAnimationFrame(loop);
+        else { isRunning = false; draw(); }
+    }
+
+    function draw() {
+        // 清空画布
+        ctx.fillStyle = '#050510';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制背景效果
+        drawCoordinateSystem();
+        
+        // 磁场背景色
+        ctx.fillStyle = params.Bdir === 'in' ? 'rgba(68, 136, 255, 0.02)' : 'rgba(255, 136, 68, 0.02)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        drawExternalMagneticField();
+        drawAccelerator();
+        
+        if (currentLevel === 6 && !isRunning) drawPrediction();
+        
+        drawTrajectory();
+        drawGreenTrail();
+        
+        drawTarget();
+        if (gamePhase === 'accelerating') {
+            drawParticle(ACCEL.cx + particle.x, ACCEL.cy - particle.y);
+        } else if (gamePhase === 'flying' || gamePhase === 'ended') {
+            drawParticle(particle.x, particle.y);
+        }
+    }
+
+    // ==========================================
+    // 9. 事件绑定
+    // ==========================================
+
+    document.getElementById('btnAdventure').addEventListener('click', startAdventureMode);
+    document.getElementById('btnExplore').addEventListener('click', startExploreMode);
+    
+    document.getElementById('btnInstruction').addEventListener('click', () => {
+        document.getElementById('instructionModal').style.display = 'flex';
+    });
+    document.getElementById('btnCloseInstruction').addEventListener('click', () => {
+        document.getElementById('instructionModal').style.display = 'none';
+    });
+
+    document.getElementById('btnExitExplore').addEventListener('click', showMenu);
+
+    document.getElementById('btnTrail').addEventListener('click', function() {
+        showTrail = !showTrail;
+        this.textContent = showTrail ? '隐藏轨迹' : '显示轨迹';
+        draw();
+    });
+
+    const paramInputs = ['q', 'm', 'Bin', 'U', 'Bout'];
+    paramInputs.forEach(key => {
+        const el = document.getElementById(`input-${key}`);
+        const disp = document.getElementById(`disp-${key}`);
+        el.addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value);
+            disp.textContent = val.toFixed(2);
+            params[key] = val;
+            if (!isRunning) draw();
+        });
+    });
+
+    document.getElementById('dir-in').addEventListener('click', () => {
+        if (document.getElementById('group-dir').classList.contains('disabled')) return;
+        params.Bdir = 'in';
+        document.getElementById('dir-in').classList.add('active');
+        document.getElementById('dir-out').classList.remove('active');
+        if (!isRunning) draw();
+    });
+
+    document.getElementById('dir-out').addEventListener('click', () => {
+        if (document.getElementById('group-dir').classList.contains('disabled')) return;
+        params.Bdir = 'out';
+        document.getElementById('dir-out').classList.add('active');
+        document.getElementById('dir-in').classList.remove('active');
+        if (!isRunning) draw();
+    });
+
+    document.getElementById('btnFire').addEventListener('click', () => {
+        if (isRunning) return;
+        initParticle();
+        isRunning = true;
+        document.getElementById('btnFire').textContent = '运行中...';
+        document.getElementById('btnReset').textContent = '暂停';
+        document.getElementById('messageOverlay').style.display = 'none';
+        loop();
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+        const btnText = this.textContent;
+        if (btnText === "重置") {
+            isRunning = false;
+            document.getElementById('btnFire').textContent = '发射';
+            document.getElementById('messageOverlay').style.display = 'none';
+            initParticle();
+            draw();
+            updateTooltip();
+        } else if (btnText === "暂停") {
+            isRunning = false;
+            this.textContent = '继续';
+            document.getElementById('btnFire').textContent = '已暂停';
+            updateTooltip();
+        } else if (btnText === "继续") {
+            isRunning = true;
+            this.textContent = '暂停';
+            document.getElementById('btnFire').textContent = '运行中...';
+            tooltip.style.display = 'none';
+            loop();
+        }
+    });
+
+    // 初始化
+    resizeCanvas();
+    showMenu();
+    updateScoreDisplay();
+</script>
+</body>
+</html>

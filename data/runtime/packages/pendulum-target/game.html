@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单摆投靶 · 探究游戏</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        html, body {
+            width: 100%; height: 100%; margin: 0; overflow: hidden;
+            background: #1a2a3a;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+            color: #eee;
+        }
+        #app { display: flex; flex-direction: row; width: 100%; height: 100%; min-height: 0; }
+        #stage {
+            position: relative; flex: 1; min-width: 0; min-height: 0;
+            background: #1e3347;
+        }
+        #simCanvas { display: block; width: 100%; height: 100%; cursor: default; }
+        #hud {
+            position: absolute; top: 12px; left: 12px; right: 12px; z-index: 5;
+            pointer-events: none; display: flex; flex-wrap: wrap; gap: 8px;
+        }
+        .hud-chip {
+            pointer-events: none; padding: 8px 14px; border-radius: 12px;
+            background: rgba(15, 26, 36, 0.88); border: 1px solid #2f4a60;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35); font-size: 13px; color: #b0d0e8;
+        }
+        .hud-chip strong { color: #cce4ff; font-weight: 600; }
+        .control-panel {
+            display: flex; flex-direction: column; width: clamp(280px, 28vw, 340px);
+            flex-shrink: 0; min-height: 0; background: #0f1a24;
+            border-left: 1px solid #2f4a60; z-index: 20;
+        }
+        .bench-hd {
+            padding: 12px 16px; border-bottom: 1px solid #2f4a60; flex-shrink: 0;
+        }
+        .bench-hd-title { font-size: 15px; letter-spacing: 1px; color: #b8d8f0; }
+        .bench-hd-sub { font-size: 11px; color: #8aaec9; margin-top: 3px; }
+        .bench-scroll {
+            flex: 1; overflow-y: auto; padding: 14px 16px 8px; min-height: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        .bench-ft {
+            padding: 10px 16px 14px; border-top: 1px solid #2f4a60;
+            background: rgba(12, 22, 32, 0.95); flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .slider-group { display: flex; flex-direction: column; gap: 12px; }
+        .slider-item {
+            display: flex; flex-direction: column; gap: 6px;
+            font-size: 13px; background: #12222e; padding: 10px 12px;
+            border-radius: 12px; border: 1px solid #2f4a60;
+        }
+        .slider-item .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+        .slider-item label { color: #b0d0e8; }
+        .slider-item input[type="range"] {
+            width: 100%; height: 32px; margin: 0; background: transparent;
+            -webkit-appearance: none; appearance: none; cursor: pointer;
+        }
+        .slider-item input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px; background: #3a5d7a; border-radius: 4px;
+        }
+        .slider-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 22px; height: 22px; margin-top: -8px;
+            background: #7fc1f0; border-radius: 50%;
+            border: 2px solid #1e3347; cursor: pointer;
+        }
+        .slider-item input[type="range"]::-moz-range-track {
+            height: 6px; background: #3a5d7a; border-radius: 4px;
+        }
+        .slider-item input[type="range"]::-moz-range-thumb {
+            width: 22px; height: 22px; background: #7fc1f0; border-radius: 50%;
+            border: 2px solid #1e3347; cursor: pointer;
+        }
+        .slider-value { min-width: 40px; text-align: right; font-weight: 600; color: #cce4ff; font-size: 13px; }
+        .mode-group, .level-select, .toggle-confuse {
+            display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+            background: #12222e; padding: 8px 10px; border-radius: 12px;
+            border: 1px solid #2f4a60; margin-top: 12px;
+        }
+        .mode-group button, .level-select button {
+            background: transparent; border: none; color: #8ab3d0;
+            padding: 6px 12px; border-radius: 20px; font-size: 13px;
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .mode-group button.active, .level-select button.active {
+            background: #3b7ba0; color: #fff; box-shadow: 0 2px 6px #00000055;
+        }
+        .mode-group button:hover, .level-select button:hover { background: #2a5f7a; color: #fff; }
+        .level-select span { color: #8aaec9; font-size: 13px; margin-right: 4px; }
+        .toggle-confuse { font-size: 13px; justify-content: space-between; }
+        .toggle-confuse input {
+            width: 36px; height: 18px; appearance: none; background: #3a5d7a;
+            border-radius: 40px; position: relative; cursor: pointer; transition: 0.2s;
+        }
+        .toggle-confuse input::before {
+            content: ''; position: absolute; width: 14px; height: 14px; background: #eee;
+            border-radius: 50%; top: 2px; left: 2px; transition: 0.2s;
+        }
+        .toggle-confuse input:checked { background: #5fa3c9; }
+        .toggle-confuse input:checked::before { transform: translateX(18px); background: #fff; }
+        .action-buttons { display: flex; gap: 8px; }
+        .btn {
+            flex: 1; background: #3b7ba0; border: none; color: white; font-weight: 700;
+            font-size: 14px; padding: 12px 10px; border-radius: 12px; cursor: pointer;
+            transition: 0.2s; box-shadow: 0 4px 0 #1b4055; letter-spacing: 0.5px;
+        }
+        .btn:hover { background: #4c96c0; transform: translateY(-1px); box-shadow: 0 5px 0 #1b4055; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #1b4055; }
+        .btn:disabled { opacity: 0.4; transform: none; box-shadow: 0 2px 0 #1b4055; pointer-events: none; }
+        .btn-reset { background: #6b4f6b; box-shadow: 0 4px 0 #3d2a3d; }
+        .btn-reset:hover { background: #8a6a8a; }
+        .status {
+            background: #12222e; padding: 8px 12px; border-radius: 10px;
+            border: 1px solid #2f4a60; color: #b0d0e8; font-weight: 500;
+            font-size: 12.5px; line-height: 1.4; min-height: 40px;
+        }
+        @media (max-width: 720px) {
+            #app { flex-direction: column; }
+            #stage { flex: 1 1 0; min-height: 48vh; }
+            .control-panel {
+                width: 100%; flex: 0 0 auto; max-height: min(42vh, 360px);
+                border-left: none; border-top: 1px solid #2f4a60;
+            }
+        }
+    
+/* === dual-mode-manual === */
+/* 双模式条参与 #hud flex 流，避免压住原生 hud-chip */
+#hud{right:auto!important;max-width:min(520px,calc(100% - 24px))!important;align-items:flex-start!important;}
+#dual-mode-hud{
+  position:relative!important;top:auto!important;left:auto!important;right:auto!important;
+  z-index:6;display:flex;gap:8px;align-items:center;
+  pointer-events:none;flex-wrap:wrap;max-width:100%;
+}
+#dual-mode-hud #goalMission,
+.hud-chip#goalMission{color:var(--craft-text,#e8eef5)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  pointer-events:auto;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.92);border:1px solid rgba(148,163,184,.45);
+  box-shadow:0 4px 12px rgba(0,0,0,.15);color:#1e293b;
+}
+#modeLabel{color:#2563eb;font-weight:700}
+#timerDisplay{font-family:ui-monospace,monospace}
+#challengeStats{display:none}
+#challengeStats.is-visible{display:inline-flex}
+#attemptsDisplay{color:#dc2626;font-weight:800}
+#modeSelect{
+  border:1px solid #93c5fd;border-radius:999px;padding:4px 10px;font-size:12px;
+  font-weight:600;color:#1d4ed8;background:#eff6ff;cursor:pointer;
+}
+.dual-bench-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+body.cap-dark #dual-mode-hud .dual-chip,body.cap-dark #challengeStats{
+  background:rgba(8,18,32,.92);border-color:rgba(0,200,255,.35);color:#cfe9f5;
+}
+body.cap-dark #modeLabel{color:#00c8ff}
+body.cap-dark #modeSelect{
+  background:rgba(0,40,60,.85);border-color:rgba(0,200,255,.45);color:#7dd3fc;
+}
+body.cap-dark #attemptsDisplay{color:#ff8a6a}
+
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(18,34,46,.92)!important;border-color:#2f4a60!important;color:#b8d8f0!important;
+}
+#modeLabel{color:#7dd3fc!important}
+#modeSelect{background:#12222e;border-color:#3b7ba0;color:#b8d8f0}
+.bench-hd.dual-bench-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#5fa3c9;--craft-bg:#0c1520;--craft-panel:#152434;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>矿井 · 单摆投递</h2>
+    <p>矿车沿铁轨往返。试着摆几次，弄清落点与释放角的关系；再接急单——矿车工况本局锁定，打偏不换车。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛工况进入后固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">周期与摆长相关；落点由释放角决定</div>
+    <p id="craftWinText">对照命中与未中，你摸清了摆长与释放角如何影响落点。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="app">
+    <div id="stage">
+        <canvas id="simCanvas" width="800" height="400"></canvas>
+        <div id="hud"><div id="dual-mode-hud">
+  <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
+  <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
+</div>
+            <div class="hud-chip">矿井投递 · <strong id="hudModeTag">自由试摆</strong></div>
+            <div class="hud-chip" id="goalMission" style="max-width:min(420px,70vw)">目标：自由试摆，观察落点与矿车的相对位置</div>
+            <div class="hud-chip" id="healthDisplay"><span>生命</span> <strong id="healthCount">5</strong></div>
+        </div>
+    </div>
+    <aside class="control-panel">
+        <div class="bench-hd dual-bench-row">
+            <div>
+              <div class="bench-hd-title">调节摆参数</div>
+              <div class="bench-hd-sub" id="benchGoalSub">探究：摸清释放角与落点</div>
+            </div>
+            <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
+        </div>
+        <div class="bench-scroll">
+            <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：摆长与释放角怎样影响落点。竞赛另有限次急单。</p>
+            <div class="slider-group">
+                <div class="slider-item">
+                    <div class="row"><label>摆长</label><span class="slider-value" id="lengthValue">150</span></div>
+                    <input type="range" id="s-length" min="60" max="220" value="150" step="1">
+                </div>
+                <div class="slider-item">
+                    <div class="row"><label>角度</label><span class="slider-value" id="angleValue">-45°</span></div>
+                    <input type="range" id="s-angle" min="-80" max="80" value="-45" step="1">
+                </div>
+                <div class="slider-item">
+                    <div class="row"><label>质量 m</label><span class="slider-value" id="massValue">3.0</span></div>
+                    <input type="range" id="s-mass" min="1" max="5" value="3" step="0.5">
+                </div>
+            </div>
+            <div class="mode-group" style="display:none" aria-hidden="true">
+                <button id="freeMode" class="active">自由</button>
+                <button id="compMode">竞赛</button>
+            </div>
+            <div class="level-select">
+                <span>关卡</span>
+                <button class="active" data-level="1">1</button>
+                <button data-level="2">2</button>
+                <button data-level="3">3</button>
+            </div>
+            <input type="hidden" id="confuseToggle" checked>
+        </div>
+        <div class="bench-ft">
+            <div class="status" id="statusMsg">就绪，调节参数</div>
+            <div class="action-buttons">
+                <button class="btn" id="releaseBtn">释放摆锤</button>
+                <button class="btn btn-reset" id="resetBtn">重置</button>
+            </div>
+        </div>
+    </aside>
+</div>
+<script>
+(function() {
+    const G = 980;
+    const DW = 800, DH = 400;
+    const GROUND_Y = 360;
+    const PIVOT_X = 200, PIVOT_Y = 70;
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const stage = document.getElementById('stage');
+    let scale = 1, offX = 0, offY = 0;
+
+    function resize() {
+        const w = stage.clientWidth || innerWidth;
+        const h = stage.clientHeight || innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        scale = Math.min(w / DW, h / DH);
+        offX = (w - DW * scale) / 2;
+        offY = (h - DH * scale) / 2;
+        ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
+        if (typeof drawScene === 'function') drawScene();
+    }
+    window.addEventListener('resize', resize);
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(stage);
+    const lengthSlider = document.getElementById('s-length');
+    const angleSlider = document.getElementById('s-angle');
+    const massSlider = document.getElementById('s-mass');
+    const lengthVal = document.getElementById('lengthValue');
+    const angleVal = document.getElementById('angleValue');
+    const massVal = document.getElementById('massValue');
+    const releaseBtn = document.getElementById('releaseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const freeModeBtn = document.getElementById('freeMode');
+    const compModeBtn = document.getElementById('compMode');
+    const healthSpan = document.getElementById('healthCount');
+    const statusMsg = document.getElementById('statusMsg');
+    const confuseToggle = document.getElementById('confuseToggle');
+    const levelBtns = document.querySelectorAll('.level-select button');
+
+    let isFreeMode = true;
+    let playMode = 'explore';
+    let health = 5;
+    let maxHealth = 5;
+    let currentLevel = 1;
+    let confuseOn = true;
+    let L = 150, theta = -45 * Math.PI / 180, omega = 0, theta0 = -45 * Math.PI / 180, mass = 3.0;
+    let elasticDelta = 0, shakeAccel = 0;
+    const STATE_READY = 'ready', STATE_SWING = 'swing', STATE_FLYING = 'flying';
+    let state = STATE_READY;
+    let bobX = PIVOT_X + L * Math.sin(theta);
+    let bobY = PIVOT_Y + L * Math.cos(theta);
+    let flyX = 0, flyY = 0, flyVx = 0, flyVy = 0, flyTime = 0;
+    let cartX = 600, cartWidth = 80, cartSpeed = 80, cartDir = 1, cartMinX = 480, cartMaxX = 720;
+    let hit = false, attemptUsed = false;
+    let lastTime = 0, animId = null;
+    let challengeWon = false;
+    let lockedCartSpec = null; // FixedChallenge：进竞赛锁定一次
+
+    const MODE_GOALS = {
+      explore: {
+        hud: '目标：自由试摆几轮，对比命中与未中',
+        side: '探究·矿井试投：试着弄清落点与释放角的关系；可先换工况多试几次。',
+        tag: '自由试摆',
+        sub: '探究：摸清释放角与落点'
+      },
+      challenge: {
+        hud: '目标：限次命中本局锁定工况的接矿车（打偏不换车）',
+        side: '竞赛·急单投递：限次把矿石摆进本局锁定工况的矿车；打偏不换车。',
+        tag: '急单投递',
+        sub: '竞赛：矿车工况本局固定'
+      }
+    };
+
+    function refreshGoalUI() {
+      const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      const sub = document.getElementById('benchGoalSub');
+      const tag = document.getElementById('hudModeTag');
+      if (playMode === 'challenge' && lockedCartSpec) {
+        if (mission) mission.textContent = '急单：车宽 ' + Math.round(lockedCartSpec.w) + ' · 速 ' + Math.round(lockedCartSpec.spd) + ' · 本局固定';
+        if (side) side.textContent = '竞赛急单：把矿石摆进宽约 ' + Math.round(lockedCartSpec.w) + '、速度约 ' + Math.round(lockedCartSpec.spd) + ' 的接矿车。工况已锁定，打偏不换车。';
+        if (sub) sub.textContent = '竞赛：工况锁定 · 限次命中';
+        if (tag) tag.textContent = g.tag;
+      } else {
+        if (mission) mission.textContent = g.hud;
+        if (side) side.textContent = g.side;
+        if (sub) sub.textContent = g.sub;
+        if (tag) tag.textContent = g.tag;
+      }
+    }
+
+    /** FixedChallenge：仅进入竞赛时锁定一次矿车工况（车更窄更快，目视可辨） */
+    function lockChallengeCart() {
+      lockedCartSpec = {
+        w: 34 + Math.random() * 14, // 明显窄于探究关卡 50–90
+        spd: 110 + Math.random() * 55,
+        minX: 220 + Math.random() * 40,
+        maxX: 740 - Math.random() * 40
+      };
+      cartWidth = lockedCartSpec.w;
+      cartSpeed = lockedCartSpec.spd;
+      cartMinX = lockedCartSpec.minX;
+      cartMaxX = lockedCartSpec.maxX;
+      cartX = cartMinX + (cartMaxX - cartMinX) * 0.35;
+      cartDir = 1;
+      // 开局张力：偏角偏极端，默认不易一次命中
+      L = 120; theta0 = -60 * Math.PI / 180; mass = 3.0;
+      lengthSlider.value = String(L);
+      angleSlider.value = '-60';
+      massSlider.value = '3';
+      challengeWon = false;
+      resetPhysics();
+      updateUI();
+      refreshGoalUI();
+      statusMsg.textContent = '急单已锁定矿车工况（本局不变）';
+      drawScene();
+    }
+
+    function applyExploreCart() {
+      lockedCartSpec = null;
+      challengeWon = false;
+      loadLevel(currentLevel || 1);
+      refreshGoalUI();
+    }
+
+    function challengeAttemptsLeft() {
+      var st = window.__dualModeGet && window.__dualModeGet();
+      return st && typeof st.attempts === 'number' ? st.attempts : maxHealth;
+    }
+    function syncHealthHudForMode() {
+      var chip = document.getElementById('healthDisplay');
+      if (chip) chip.style.display = playMode === 'challenge' ? 'none' : '';
+      if (playMode !== 'challenge') healthSpan.textContent = health;
+    }
+    window.__pendApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      isFreeMode = playMode === 'explore';
+      if (playMode === 'challenge') {
+        health = maxHealth; // 竞赛以 attempts 为准，health 仅作兼容占位
+        lockChallengeCart();
+      } else {
+        applyExploreCart();
+      }
+      syncHealthHudForMode();
+    };
+    document.addEventListener('dual-mode-change', function(ev) {
+      var m = ev && ev.detail && ev.detail.mode;
+      if (typeof window.__pendApplyMode === 'function') window.__pendApplyMode(m);
+    });
+
+    function degToRad(deg) { return deg * Math.PI / 180; }
+    function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+
+    function updateUI() {
+        lengthVal.textContent = L.toFixed(0);
+        angleVal.textContent = (theta0 * 180 / Math.PI).toFixed(0) + '°';
+        massVal.textContent = mass.toFixed(1);
+        healthSpan.textContent = health;
+        levelBtns.forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.level) === currentLevel);
+        });
+        freeModeBtn.classList.toggle('active', isFreeMode);
+        compModeBtn.classList.toggle('active', !isFreeMode);
+    }
+
+    function resetPhysics() {
+        theta = theta0;
+        omega = 0;
+        elasticDelta = 0;
+        shakeAccel = 0;
+        bobX = PIVOT_X + L * Math.sin(theta);
+        bobY = PIVOT_Y + L * Math.cos(theta);
+        state = STATE_READY;
+        hit = false;
+        attemptUsed = false;
+        flyTime = 0;
+        statusMsg.textContent = '就绪，点击释放';
+        releaseBtn.disabled = false;
+    }
+
+    function resetGame() {
+        resetPhysics();
+        if (!isFreeMode) { health = maxHealth; healthSpan.textContent = health; }
+        cartX = 600; cartDir = 1;
+        statusMsg.textContent = '已重置';
+        drawScene();
+    }
+
+    // ----- 修改小车运动范围（扩大） -----
+    function loadLevel(level) {
+        if (playMode === 'challenge') {
+          statusMsg.textContent = '竞赛中矿车工况已锁定，切回探究后再换关卡';
+          return;
+        }
+        currentLevel = level;
+        switch (level) {
+            case 1:
+                cartWidth = 90;
+                cartSpeed = 50;
+                cartMinX = 300;   // 原来480，向左扩180
+                cartMaxX = 720;
+                break;
+            case 2:
+                cartWidth = 70;
+                cartSpeed = 80;
+                cartMinX = 250;   // 原来460
+                cartMaxX = 750;
+                break;
+            case 3:
+                cartWidth = 50;
+                cartSpeed = 120;
+                cartMinX = 200;   // 原来440
+                cartMaxX = 780;
+                break;
+        }
+        cartX = cartMinX + (cartMaxX - cartMinX) / 2; // 初始居中
+        cartDir = 1;
+        resetGame();
+        statusMsg.textContent = `关卡 ${level} 已加载`;
+        updateUI();
+        drawScene();
+    }
+
+    function physicsStep(dt) {
+        if (state === STATE_SWING) {
+            if (confuseOn) {
+                elasticDelta += (Math.random() - 0.5) * 4 * dt * 20;
+                elasticDelta = clamp(elasticDelta, -12, 12);
+                shakeAccel = (Math.random() - 0.5) * 150;
+            } else {
+                elasticDelta = 0;
+                shakeAccel = 0;
+            }
+            let effectiveL = Math.max(30, L + elasticDelta);
+            let alpha = -(G / effectiveL) * Math.sin(theta) + (shakeAccel / effectiveL) * Math.cos(theta);
+            omega += alpha * dt;
+            omega *= 0.9995;
+            theta += omega * dt;
+            if (theta > Math.PI / 1.8) theta = Math.PI / 1.8;
+            if (theta < -Math.PI / 1.8) theta = -Math.PI / 1.8;
+            bobX = PIVOT_X + effectiveL * Math.sin(theta);
+            bobY = PIVOT_Y + effectiveL * Math.cos(theta);
+            if (Math.abs(theta) < 0.04 && Math.abs(omega) > 1.0 && !attemptUsed) {
+                detachBob();
+            }
+        } else if (state === STATE_FLYING) {
+            flyX += flyVx * dt;
+            flyY += flyVy * dt;
+            flyVy += G * dt;
+            flyTime += dt;
+            if (flyY >= GROUND_Y - 6) {
+                flyY = GROUND_Y - 6;
+                checkLanding(flyX);
+                state = STATE_READY;
+                releaseBtn.disabled = false;
+                if (hit) {
+                    statusMsg.textContent = playMode === 'challenge' ? '命中急单矿车！' : '命中！';
+                } else {
+                    // FixedChallenge：失败不换矿车工况；保留偏近/偏远（checkLanding 已写）
+                    var baseMiss = statusMsg.textContent || '';
+                    if (baseMiss.indexOf('偏近') < 0 && baseMiss.indexOf('偏远') < 0) {
+                      statusMsg.textContent = playMode === 'challenge'
+                        ? '未命中 · 矿车工况仍锁定（本局不变）'
+                        : '未命中';
+                    } else if (playMode === 'challenge' && baseMiss.indexOf('锁定') < 0) {
+                      statusMsg.textContent = baseMiss + ' · 工况仍锁定';
+                    }
+                }
+                // FixedChallenge：竞赛次数只走 dual-mode attempts（按钮门禁已扣），禁止再扣 health
+                if (!hit && playMode !== 'challenge' && !isFreeMode) {
+                    health = Math.max(0, health - 1);
+                    healthSpan.textContent = health;
+                    if (health === 0) statusMsg.textContent = '机会用尽 · 可切回探究后再接急单';
+                } else if (!hit && playMode === 'challenge') {
+                    var stMiss = window.__dualModeGet && window.__dualModeGet();
+                    if (stMiss && stMiss.attempts <= 0) {
+                      statusMsg.textContent = '机会用尽 · 可切回探究后再接急单';
+                    }
+                }
+                attemptUsed = true;
+                drawScene();
+            }
+        }
+    }
+
+    function detachBob() {
+        if (state !== STATE_SWING) return;
+        let effectiveL = L + elasticDelta;
+        let v = effectiveL * omega;
+        flyX = PIVOT_X + effectiveL * Math.sin(theta);
+        flyY = PIVOT_Y + effectiveL * Math.cos(theta);
+        flyVx = v;
+        flyVy = 0;
+        state = STATE_FLYING;
+        releaseBtn.disabled = true;
+        statusMsg.textContent = '🪝 脱钩！飞行中...';
+        attemptUsed = true;
+    }
+
+    function checkLanding(x) {
+        let left = cartX, right = cartX + cartWidth;
+        hit = (x >= left && x <= right);
+        if (hit && window.__emit) {
+          var c = window.__snapControls ? window.__snapControls() : {
+            's-length': L, 's-angle': theta0 * 180 / Math.PI, 's-mass': mass
+          };
+          if (playMode === 'challenge') {
+            if (!challengeWon) {
+              challengeWon = true;
+              window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_rush' });
+              window.__emit('win', { winOk: true });
+              if (typeof window.__craftShowWin === 'function') {
+                window.__craftShowWin('急单矿车工况本局锁定，你用摆长与释放角把矿石摆进了指定接矿车。');
+              }
+            }
+          } else {
+            window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_target' });
+            window.__emit('win', { winOk: true });
+          }
+        } else if (!hit && window.__emit) {
+          const missSide = x < left ? 'miss_short' : 'miss_long';
+          const missTxt = x < left ? '落点偏近（车前）' : '落点偏远（车后）';
+          if (statusMsg) statusMsg.textContent = missTxt + ' · 对照落点再调释放角';
+          window.__emit('snapshot', {
+            controls: { 's-length': L, 's-angle': theta0 * 180 / Math.PI, 's-mass': mass },
+            winOk: false, hintKey: playMode === 'challenge' ? missSide : 'pendulum_miss'
+          });
+        }
+    }
+
+    function drawScene() {
+        ctx.clearRect(0, 0, 800, 400);
+        // 矿井巷道场景
+        const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+        sky.addColorStop(0, '#0f1c28');
+        sky.addColorStop(1, '#1e3347');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, 800, 400);
+        // 木支撑
+        for (let i = 0; i < 5; i++) {
+            const sx = 80 + i * 150;
+            ctx.strokeStyle = '#6b4f2a';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(sx, 20);
+            ctx.lineTo(sx, GROUND_Y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(sx - 40, 36);
+            ctx.lineTo(sx + 40, 36);
+            ctx.stroke();
+        }
+        // 巷道顶灯
+        ctx.fillStyle = 'rgba(250,204,21,0.15)';
+        for (let i = 0; i < 4; i++) {
+            const lx = 140 + i * 160;
+            ctx.beginPath();
+            ctx.moveTo(lx, 40);
+            ctx.lineTo(lx - 50, GROUND_Y);
+            ctx.lineTo(lx + 50, GROUND_Y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(lx, 44, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(250,204,21,0.15)';
+        }
+        ctx.fillStyle = '#3d4f3a';
+        ctx.fillRect(0, GROUND_Y, 800, 400 - GROUND_Y);
+        // 铁轨
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y - 4);
+        ctx.lineTo(800, GROUND_Y - 4);
+        ctx.stroke();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        for (let x = 20; x < 800; x += 36) {
+            ctx.beginPath();
+            ctx.moveTo(x, GROUND_Y - 10);
+            ctx.lineTo(x + 16, GROUND_Y + 6);
+            ctx.stroke();
+        }
+        ctx.fillStyle = '#86efac';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('矿井投递 · 把矿石摆进移动矿车', 160, 52);
+        ctx.beginPath();
+        ctx.arc(PIVOT_X, PIVOT_Y, 8, 0, 2 * Math.PI);
+        ctx.fillStyle = '#c0d0e0';
+        ctx.shadowColor = '#00000066';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        let effL = L + (confuseOn ? elasticDelta : 0);
+        let drawTheta = theta;
+        let endX = PIVOT_X + effL * Math.sin(drawTheta);
+        let endY = PIVOT_Y + effL * Math.cos(drawTheta);
+        ctx.beginPath();
+        ctx.moveTo(PIVOT_X, PIVOT_Y);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = '#b0c8e0';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        if (state === STATE_READY || state === STATE_SWING) {
+            ctx.beginPath();
+            ctx.arc(endX, endY, 16, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(endX-4, endY-4, 4, endX, endY, 20);
+            grad.addColorStop(0, '#f8e080');
+            grad.addColorStop(1, '#c08030');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = '#00000066';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(mass.toFixed(1)+'kg', endX, endY-2);
+        } else if (state === STATE_FLYING) {
+            ctx.beginPath();
+            ctx.arc(flyX, flyY, 14, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(flyX-3, flyY-3, 3, flyX, flyY, 18);
+            grad.addColorStop(0, '#f8d080');
+            grad.addColorStop(1, '#b07030');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = '#00000066';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        let left = cartX, right = cartX + cartWidth;
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#8a6e4b';
+        ctx.fillRect(left, GROUND_Y - 22, cartWidth, 22);
+        ctx.fillStyle = '#a08060';
+        ctx.fillRect(left+4, GROUND_Y - 28, cartWidth-8, 8);
+        ctx.fillStyle = '#3a3a3a';
+        ctx.beginPath();
+        ctx.arc(left+12, GROUND_Y-2, 8, 0, 2*Math.PI);
+        ctx.arc(right-12, GROUND_Y-2, 8, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#fde68a';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('接矿车', (left+right)/2, GROUND_Y-30);
+        if (state === STATE_READY) {
+            ctx.strokeStyle = '#ffcc44';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.strokeRect(left-2, GROUND_Y-28, cartWidth+4, 30);
+            ctx.setLineDash([]);
+        }
+        if (state === STATE_READY && attemptUsed && !hit) {
+            ctx.fillStyle = '#ff6666';
+            ctx.beginPath();
+            ctx.arc(flyX, GROUND_Y-4, 6, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#ffaaaa';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('✖', flyX+12, GROUND_Y-20);
+        } else if (state === STATE_READY && attemptUsed && hit) {
+            ctx.fillStyle = '#66ff66';
+            ctx.beginPath();
+            ctx.arc(flyX, GROUND_Y-4, 8, 0, 2*Math.PI);
+            ctx.fill();
+            ctx.fillStyle = '#aaffaa';
+            ctx.font = '18px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('✔', flyX+16, GROUND_Y-30);
+        }
+        // 读数贴右下，避开左上双模式条
+        ctx.fillStyle = 'rgba(15,23,42,0.75)';
+        ctx.fillRect(560, 330, 220, 44);
+        ctx.strokeStyle = 'rgba(96,165,250,0.45)';
+        ctx.strokeRect(560, 330, 220, 44);
+        ctx.fillStyle = '#bfdbfe';
+        ctx.font = '12px ui-monospace,Consolas,sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`L=${L.toFixed(0)}  θ=${(theta0*180/Math.PI).toFixed(0)}°  m=${mass.toFixed(1)}`, 572, 338);
+        ctx.fillText(`关卡 ${currentLevel}`, 572, 356);
+        var outOfTries = playMode === 'challenge'
+          ? challengeAttemptsLeft() <= 0
+          : (!isFreeMode && health === 0);
+        if (outOfTries) {
+            ctx.fillStyle = '#ff4444';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('💀 挑战失败', 400, 180);
+        } else if (state === STATE_READY && hit && isFreeMode) {
+            ctx.fillStyle = '#66ff66';
+            ctx.font = 'bold 30px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🎉 命中！过关！', 400, 180);
+        }
+    }
+
+    function gameLoop(timestamp) {
+        if (!lastTime) lastTime = timestamp;
+        let dt = Math.min((timestamp - lastTime) / 1000, 0.03);
+        lastTime = timestamp;
+        if (state === STATE_READY || state === STATE_SWING || state === STATE_FLYING) {
+            cartX += cartSpeed * cartDir * dt;
+            if (cartX > cartMaxX) { cartX = cartMaxX; cartDir = -1; }
+            if (cartX < cartMinX) { cartX = cartMinX; cartDir = 1; }
+        }
+        if (state === STATE_SWING || state === STATE_FLYING) {
+            physicsStep(dt);
+        }
+        drawScene();
+        var noTriesLeft = playMode === 'challenge'
+          ? challengeAttemptsLeft() <= 0
+          : (!isFreeMode && health === 0);
+        if (noTriesLeft) {
+            releaseBtn.disabled = true;
+            if (playMode === 'challenge') statusMsg.textContent = '机会用尽 · 可切回探究后再接急单';
+            else statusMsg.textContent = '💔 已失败，点击重置';
+        } else if (state === STATE_READY && !attemptUsed) {
+            releaseBtn.disabled = false;
+        }
+        animId = requestAnimationFrame(gameLoop);
+    }
+
+    lengthSlider.addEventListener('input', function() {
+        if (state !== STATE_READY) return;
+        L = parseFloat(this.value);
+        theta0 = degToRad(parseFloat(angleSlider.value));
+        theta = theta0;
+        omega = 0;
+        resetPhysics();
+        updateUI();
+        drawScene();
+    });
+    angleSlider.addEventListener('input', function() {
+        if (state !== STATE_READY) return;
+        theta0 = degToRad(parseFloat(this.value));
+        theta = theta0;
+        omega = 0;
+        resetPhysics();
+        updateUI();
+        drawScene();
+    });
+    massSlider.addEventListener('input', function() {
+        mass = parseFloat(this.value);
+        massVal.textContent = mass.toFixed(1);
+        drawScene();
+    });
+
+    freeModeBtn.addEventListener('click', function() {
+        isFreeMode = true;
+        health = maxHealth;
+        healthSpan.textContent = health;
+        resetGame();
+        updateUI();
+        drawScene();
+    });
+    compModeBtn.addEventListener('click', function() {
+        isFreeMode = false;
+        health = maxHealth;
+        healthSpan.textContent = health;
+        resetGame();
+        updateUI();
+        drawScene();
+    });
+
+    levelBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            let level = parseInt(this.dataset.level);
+            loadLevel(level);
+            updateUI();
+            drawScene();
+        });
+    });
+
+    releaseBtn.addEventListener('click', function() {
+        if (state !== STATE_READY) return;
+        if (playMode === 'challenge' ? challengeAttemptsLeft() <= 0 : (!isFreeMode && health === 0)) return;
+        attemptUsed = false;
+        hit = false;
+        theta0 = theta;
+        omega = 0;
+        state = STATE_SWING;
+        releaseBtn.disabled = true;
+        statusMsg.textContent = '摆动中…';
+        elasticDelta = 0;
+        drawScene();
+    });
+
+    resetBtn.addEventListener('click', function() {
+        resetGame();
+        if (!isFreeMode) { health = maxHealth; healthSpan.textContent = health; }
+        updateUI();
+        drawScene();
+    });
+
+    // 弹性/晃动作为隐蔽扰动保留，不向学生剧透「混淆」
+    confuseOn = true;
+    if (confuseToggle) confuseToggle.checked = true;
+
+    function init() {
+        loadLevel(1);
+        updateUI();
+        resetGame();
+        resize();
+        lastTime = 0;
+        if (animId) cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(gameLoop);
+    }
+    init();
+})();
+</script>
+<!-- trace-adapter-hook -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+<script>
+/* === dual-mode-manual runtime === */
+(function(){
+  if (window.__dualModeManual) return;
+  window.__dualModeManual = true;
+  var MAX=5;
+  var EXP=600;
+  var state={mode:'explore',attempts:MAX,timeLeft:EXP,timerId:null};
+  function $(id){return document.getElementById(id);}
+  function setPhase(p){
+    try{
+      if(typeof window.__platformTraceSetPhase==='function') window.__platformTraceSetPhase(p);
+      else if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase) window.PlatformTraceAdapter.setPhase(p);
+    }catch(e){}
+  }
+  function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
+  function stop(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
+  function render(){
+    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),chip=$('dual-timer-chip');
+    if(label) label.textContent=state.mode==='explore'?'探究模式':'竞赛模式';
+    if(stats){ if(state.mode==='challenge') stats.classList.add('is-visible'); else stats.classList.remove('is-visible'); }
+    if(att) att.textContent=String(state.attempts);
+    if(chip) chip.style.display=state.mode==='explore'?'inline-flex':'none';
+    if(td) td.textContent=fmt(Math.max(0,state.timeLeft));
+  }
+  function startTimer(){
+    stop(); state.timeLeft=EXP; render();
+    state.timerId=setInterval(function(){
+      if(state.mode!=='explore') return;
+      state.timeLeft--; render();
+      if(state.timeLeft<=0){
+        stop();
+        var sel=$('modeSelect');
+        if(sel){ sel.value='challenge'; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+      }
+    },1000);
+  }
+  function apply(mode){
+    state.mode=mode==='challenge'?'challenge':'explore';
+    if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
+    else startTimer();
+    render(); setPhase(state.mode);
+    document.dispatchEvent(new CustomEvent('dual-mode-change',{detail:{mode:state.mode,attempts:state.attempts}}));
+  }
+  function consume(){
+    if(state.mode!=='challenge') return true;
+    if(state.attempts<=0) return false;
+    state.attempts--; render();
+    return state.attempts>=0;
+  }
+  window.__dualModeConsumeAttempt=consume;
+  window.__dualModeGet=function(){return {mode:state.mode,attempts:state.attempts};};
+  function boot(){
+    var sel=$('modeSelect');
+    if(!sel) return;
+    sel.addEventListener('change',function(){ apply(sel.value); });
+    apply(sel.value||'explore');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+})();
+</script>
+
+<script>/* dualModeTargetGate */
+(function(){
+  function bind(){
+    document.querySelectorAll('.control-panel .btn, .control-panel button').forEach(function(b){
+      if(b.__dualGate||/重置|复位|reset/i.test(b.textContent||'')||/reset/i.test(b.id||'')) return;
+      b.__dualGate=true;
+      b.addEventListener('click',function(e){
+        var st=window.__dualModeGet&&window.__dualModeGet();
+        if(st&&st.mode==='challenge'&&window.__dualModeConsumeAttempt&&!window.__dualModeConsumeAttempt()){
+          e.stopImmediatePropagation(); e.preventDefault();
+        }
+      },true);
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else setTimeout(bind,0);
+})();
+</script>
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

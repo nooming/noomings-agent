@@ -1,0 +1,218 @@
+{
+  "_expertMeta": {
+    "id": "friction-incline",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.509Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "仓库卸货滑道 · 摩擦探究",
+    "sub": "斜面摩擦",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节滑条参数",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "货箱是否下滑·结果判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "是否冲过接货区",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "是否停在接货区",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "竞赛次数耗尽",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "临界条件：μ < tanθ 时物块下滑",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "质量m不影响下滑临界",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "重置按钮",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C5",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "仓库卸货滑道 · 摩擦探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "仓库卸货滑道 · 摩擦探究",
+        "formulas": [
+          "R = 32"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-angle",
+        "label": "斜面倾角",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "non-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-friction",
+        "label": "摩擦系数",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-mass",
+        "label": "质量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·斜面倾角",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-friction",
+        "label": "单变量·摩擦系数",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_s_mass",
+        "label": "试探混淆·质量",
+        "priorityRank": 3,
+        "score": 0.7
+      }
+    ]
+  }
+}

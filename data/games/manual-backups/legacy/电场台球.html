@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>电场台球 - 物理教育小游戏</title>
+  <style>
+:root {
+  --table-green: #1a5f2a;
+  --table-border: #2d1810;
+  --white-ball: #f5f5f5;
+  --electric-blue: #00d4ff;
+  --electric-purple: #7c3aed;
+  --accent: #f59e0b;
+  --bg-dark: #0f172a;
+  --card-bg: #1e293b;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+}
+
+.hidden {
+  display: none !important;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+}
+
+.game-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  grid-template-rows: auto 1fr;
+  gap: 1rem;
+}
+
+.game-header {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.game-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--electric-blue), var(--electric-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.physics-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(124, 58, 237, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(124, 58, 237, 0.4);
+}
+
+.formula {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--electric-blue);
+}
+
+.legend {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.game-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.controls-panel {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.btn-help {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-help:hover {
+  color: var(--electric-blue);
+  border-color: var(--electric-blue);
+}
+
+.formula-display {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  background: rgba(0, 212, 255, 0.08);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.formula-label {
+  color: var(--text-muted);
+}
+
+.formula-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--electric-blue);
+  margin: 0 0.2rem;
+}
+
+.formula-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.formula-row-mag {
+  font-size: 0.7rem;
+}
+
+
+.control-group {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.control-group.control-group-range {
+  min-width: 120px;
+}
+
+.control-group-advanced {
+  min-width: 180px;
+}
+
+.advanced-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.btn-small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.control-group-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.control-group-btn .btn-primary {
+  width: auto !important;
+  flex-shrink: 0;
+}
+
+.hint-inline-main {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  flex: 1;
+}
+
+.control-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-dark);
+  border-radius: 4px;
+  outline: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, var(--electric-blue), var(--electric-purple));
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.control-group span:last-child:not(.legend) {
+  margin-left: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--electric-blue);
+}
+
+.btn-primary {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: white;
+  background: linear-gradient(135deg, var(--electric-purple), #5b21b6);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--electric-blue);
+  background: transparent;
+  border: 1px solid var(--electric-blue);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+.mode-toggle.mode-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(56, 189, 248, 0.9));
+  color: white;
+  border-color: transparent;
+}
+
+.mode-toggle.mode-active:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.angle-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-angle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: var(--bg-dark);
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-angle:hover {
+  border-color: var(--electric-blue);
+  color: var(--electric-blue);
+}
+
+.hint-inline {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: 0;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.canvas-wrapper {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+  aspect-ratio: 7 / 4;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--table-green);
+  box-shadow: 
+    inset 0 0 60px rgba(0, 0, 0, 0.3),
+    0 4px 20px rgba(0, 0, 0, 0.4);
+  cursor: crosshair;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 1rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.game-overlay.hidden {
+  display: none;
+}
+
+.overlay-content {
+  text-align: center;
+  padding: 2rem;
+}
+
+.overlay-content .btn-primary {
+  width: 100%;
+}
+
+.overlay-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--electric-blue);
+}
+
+.overlay-content p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.toast {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5rem 1rem;
+  background: rgba(34, 197, 94, 0.9);
+  color: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 5;
+  animation: toastIn 0.3s ease;
+}
+
+.toast.hidden {
+  display: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 400px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.modal-content h3 {
+  margin-bottom: 1rem;
+}
+
+.modal-content ol {
+  margin: 0 0 1rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.modal-touch {
+  font-size: 0.85rem;
+  color: var(--electric-blue);
+  margin-bottom: 1rem;
+}
+
+.modal-content .btn-secondary {
+  width: 100%;
+}
+
+.control-group-btn .btn-primary {
+  width: 100%;
+}
+
+.start-modal {
+  max-width: 520px;
+}
+
+.start-desc {
+  margin: 0.75rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.start-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tutorial-hud {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  width: min(360px, calc(100% - 2rem));
+  background: rgba(30, 41, 59, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+}
+
+.tutorial-hud__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.tutorial-hud__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--electric-blue);
+}
+
+.tutorial-hud__progress {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tutorial-hud__text {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.tutorial-hud__goal {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.tutorial-hud__goal strong {
+  color: var(--accent);
+}
+
+.tutorial-hud__actions {
+  margin-top: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.tutorial-hud__actions .btn-primary,
+.tutorial-hud__actions .btn-secondary {
+  width: auto;
+  flex: 1;
+}
+
+.info-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.5rem 0;
+}
+
+.info-item {
+  font-size: 0.9rem;
+}
+
+.info-item-full {
+  width: 100%;
+}
+
+.pocketed-balls {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.info-item strong {
+  color: var(--accent);
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.physics-tips {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  height: fit-content;
+}
+
+.sidebar .info-panel {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.physics-tips h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.physics-tips ul {
+  list-style: none;
+}
+
+.physics-tips li {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--electric-purple);
+}
+
+.physics-tips li strong {
+  color: var(--electric-blue);
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sidebar {
+    flex-direction: column;
+  }
+
+  .sidebar .info-panel {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <h1>⚡ 电场台球</h1>
+      <p class="subtitle">电场 + 磁场台球实验</p>
+      <div class="physics-info">
+        <span class="formula">F = qE，F<sub>B</sub> = qvB</span>
+        <span class="legend">白球带正电荷 q，电场 E 负责“击球”，垂直屏幕的磁场 B 让白球轨迹持续偏转</span>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <div class="controls-panel">
+        <div class="control-group control-group-range">
+          <label>电场强度 E (N/C)</label>
+          <input type="range" id="fieldStrength" min="0" max="50" value="25" step="1">
+          <span id="strengthValue">25</span>
+        </div>
+        <div class="control-group control-group-range">
+          <label>磁场强度 B (T，垂直屏幕)</label>
+          <input type="range" id="magneticField" min="-5" max="5" value="0" step="0.1">
+          <span id="magneticValue">0.0 T</span>
+        </div>
+        <div class="control-group">
+          <label>电场方向 θ</label>
+          <div class="angle-control">
+            <button type="button" id="angleMinus" class="btn-angle" title="逆时针 0.1°">−</button>
+            <span id="angleValue">0°</span>
+            <button type="button" id="anglePlus" class="btn-angle" title="顺时针 0.1°">+</button>
+          </div>
+          <span class="hint-inline">（移动预览，点击台面锁定；± 或 ←→ 微调 0.1°）</span>
+        </div>
+        <div class="control-group formula-display">
+          <div class="formula-row">
+            <span class="formula-label">F<sub>E</sub> = qE =</span>
+            <span id="forceValue" class="formula-value">20 N</span>
+            <span class="formula-label">，a =</span>
+            <span id="accelValue" class="formula-value">200 m/s²</span>
+          </div>
+          <div class="formula-row formula-row-mag">
+            <span class="formula-label">F<sub>B</sub> = qvB =</span>
+            <span id="magForceValue" class="formula-value formula-value-mag">0.0 N</span>
+            <span class="formula-label">，r ≈</span>
+            <span id="radiusValue" class="formula-value formula-value-mag">∞ m</span>
+          </div>
+        </div>
+        <div class="control-group control-group-advanced">
+          <label>进阶选项</label>
+          <div class="advanced-row">
+            <button id="toggleChargeBtn" class="btn-secondary btn-small" type="button">白球电荷：+q</button>
+            <button id="toggleGuideBtn" class="btn-secondary btn-small" type="button">辅助线：开</button>
+          </div>
+        </div>
+        <div class="control-group control-group-advanced">
+          <label>模式切换</label>
+          <div class="advanced-row">
+            <button id="switchTutorialBtn" class="btn-secondary btn-small mode-toggle" type="button">教程模式</button>
+            <button id="switchChallengeBtn" class="btn-secondary btn-small mode-toggle" type="button">闯关模式</button>
+            <button id="switchFreeBtn" class="btn-secondary btn-small mode-toggle" type="button">自由模式</button>
+          </div>
+        </div>
+        <div class="control-group control-group-btn">
+          <button id="applyForce" class="btn-primary">施加电场击球</button>
+          <p class="hint-inline-main">💡 鼠标移动预览方向，点击台面锁定；按空格键或点击按钮施加电场击球，磁场会让带电白球持续偏转</p>
+        </div>
+        <button id="helpBtn" class="btn-help">?</button>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="700" height="400"></canvas>
+        <div id="gameOverlay" class="game-overlay hidden">
+          <div class="overlay-content">
+            <h2 id="overlayTitle">游戏胜利！</h2>
+            <p id="overlayMsg">恭喜打进全部 15 颗球！</p>
+            <button id="playAgainBtn" class="btn-primary">再来一局</button>
+          </div>
+        </div>
+        <div id="toast" class="toast hidden"></div>
+
+        <div id="tutorialHud" class="tutorial-hud hidden">
+          <div class="tutorial-hud__header">
+            <div id="tutorialTitle" class="tutorial-hud__title">教程</div>
+            <div id="tutorialProgress" class="tutorial-hud__progress">1/4</div>
+          </div>
+          <div class="tutorial-hud__body">
+            <p id="tutorialText" class="tutorial-hud__text"></p>
+            <p class="tutorial-hud__goal"><strong>目标：</strong><span id="tutorialGoal"></span></p>
+          </div>
+          <div class="tutorial-hud__actions">
+            <button id="tutorialNextBtn" class="btn-primary" disabled>下一步</button>
+            <button id="tutorialExitBtn" class="btn-secondary">退出教程</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="helpModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>游戏说明</h3>
+        <ol>
+          <li>白球带正电荷，受电场力 F = qE 和磁场力 qvB 共同作用</li>
+          <li>调整电场强度与方向，点击台面锁定瞄准</li>
+          <li>磁场方向垂直屏幕，B 为负值表示反方向</li>
+          <li>点击「施加电场击球」击球</li>
+          <li>将目标球击入袋，白球进袋会自动复位</li>
+          <li>自由模式打进全部 15 颗球；闯关模式共 3 关，目标球数和洞口数量会逐关变化</li>
+        </ol>
+        <p class="modal-touch">支持触摸：在台面上滑动瞄准，松手锁定方向</p>
+        <button id="closeHelpBtn" class="btn-secondary">知道了</button>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="physics-tips">
+        <h3>📚 物理知识</h3>
+        <ul>
+          <li><strong>库仑力：</strong>带电粒子在电场中受力 F = qE</li>
+          <li><strong>加速度：</strong>a = F/m = qE/m，方向与电场方向一致</li>
+          <li><strong>洛伦兹力：</strong>磁场方向垂直屏幕时，磁场力会使运动轨迹发生偏转</li>
+          <li><strong>正电荷：</strong>受力方向与电场方向相同</li>
+          <li><strong>负电荷：</strong>受力方向与电场方向相反</li>
+        </ul>
+      </div>
+      <div class="info-panel">
+        <div class="info-item">
+          <span>进球数：</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="info-item">
+          <span>剩余球：</span>
+          <strong id="remaining">15</strong>
+        </div>
+        <div class="info-item">
+          <span>当前模式：</span>
+          <strong id="modeLabel">闯关模式</strong>
+        </div>
+        <div class="info-item">
+          <span>当前关卡：</span>
+          <strong id="challengeLevel">—</strong>
+        </div>
+        <div class="info-item info-item-full" id="challengeHint" style="display:none;">
+          <span class="hint-inline">本模式共 3 关：1 球、2 球、3 球 + 障碍</span>
+        </div>
+        <div class="info-item info-item-full">
+          <span>已进球：</span>
+          <span id="pocketedBalls" class="pocketed-balls">—</span>
+        </div>
+        <button id="resetBtn" class="btn-secondary">重新开始</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+/**
+ * 电场台球 - 物理教育小游戏
+ * 物理原理：F = qE，带电粒子在电场中受力
+ */
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 物理常量
+const BALL_RADIUS = 10;
+const POCKET_RADIUS = 25;
+const BALL_DIAMETER = 20;  // 2 * BALL_RADIUS，标准球间距
+const WHITE_CHARGE = 0.4;    // 白球电荷 (C)
+const WHITE_MASS = 0.1;     // 白球质量 (kg)
+const FRICTION = 0.98;      // 摩擦系数
+const MIN_VELOCITY = 0.3;   // 最小速度阈值
+const MAX_STEP_DIST = 8;    // 每子步最大位移，防止高速穿模
+const MAGNETIC_SCALE = 0.025; // 磁场转向强度缩放，兼顾可见性与稳定性
+
+// 游戏状态
+let balls = [];
+let whiteBall = null;
+let score = 0;
+let isApplying = false;
+let gameOver = false;
+
+// 电场参数
+let fieldStrength = 25;
+let fieldAngle = 0;   // 度，0=右，90=上
+let magneticField = 0; // 垂直屏幕方向，负值表示反向
+let mouseX = null;   // 鼠标在画布上的位置，用于瞄准预览
+let mouseY = null;
+let aimLocked = false;  // 方向是否已锁定（点击台面锁定）
+let lockedAimLen = 250;  // 锁定时的瞄准线长度（与点击时的距离一致）
+let whiteChargeSign = 1;  // +1 表示 +q，-1 表示 -q
+let showImpactGuide = true;  // 是否显示被击球运动方向辅助线
+
+let audioCtx = null;
+let lastHitSoundTime = 0;
+let lastWallSoundTime = 0;
+function playSound(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    let freq = 220;
+    let duration = 0.12;
+    let startGain = 0.12;
+    let endGain = 0.01;
+    let typeWave = 'sine';
+
+    if (type === 'pocket') {
+      freq = 520;
+      duration = 0.15;
+      startGain = 0.14;
+      typeWave = 'triangle';
+    } else if (type === 'victory') {
+      freq = 880;
+      duration = 0.25;
+      startGain = 0.16;
+      typeWave = 'square';
+    } else if (type === 'hit') {
+      freq = 420;
+      duration = 0.07;
+      startGain = 0.14;
+      endGain = 0.005;
+      typeWave = 'triangle';
+    } else if (type === 'wall') {
+      freq = 260;
+      duration = 0.06;
+      startGain = 0.12;
+      endGain = 0.006;
+      typeWave = 'square';
+    } else if (type === 'fault') { // 白球落袋
+      freq = 160;
+      duration = 0.15;
+      startGain = 0.14;
+      endGain = 0.004;
+      typeWave = 'sine';
+    }
+
+    osc.type = typeWave;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(startGain, now);
+    gain.gain.exponentialRampToValueAtTime(endGain, now + duration);
+    osc.start(now);
+    osc.stop(now + duration);
+  } catch (_) {}
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => el.classList.add('hidden'), 1000);
+}
+
+// 模式状态
+let currentMode = 'challenge'; // 'free' | 'challenge' | 'tutorial'
+let currentChallengeLevel = 1;
+let activePockets = [];
+let overlayAction = null;
+const challengeLevels = [
+  // 第 1 关：1 球 + 6 洞
+  { ballCount: 1, pocketIndices: [0, 1, 2, 3, 4, 5], hasObstacle: false },
+  // 第 2 关：2 球 + 4 洞（四角洞）
+  { ballCount: 2, pocketIndices: [0, 2, 3, 5], hasObstacle: false },
+  // 第 3 关：3 球 + 4 洞（四角洞）+ 1 个障碍物
+  { ballCount: 3, pocketIndices: [0, 2, 3, 5], hasObstacle: true }
+];
+let obstacleRects = []; // 闯关模式下的矩形刚体障碍物
+let tutorialSteps = [
+  {
+    id: 'intro',
+    title: '步骤 1：认识电场击球',
+    text: '白球带正电荷 q，在电场 E 中会受到电场力 F = qE，从而产生加速度 a = F/m。我们用“电场”来代替球杆击球。',
+    goal: '先阅读说明，感受这是一个“用电场打台球”的游戏。',
+    conditionMet: () => true,
+    autoNextEvent: null
+  },
+  {
+    id: 'field-strength',
+    title: '步骤 2：调节电场强度 E',
+    text: '尝试拖动左侧滑块，改变电场强度 E。注意右下方公式区 F = qE 和 a = F/m 的数值如何变化。',
+    goal: '至少把电场强度调到 35 N/C 以上一次。',
+    conditionMet: () => window._tutorialFlags.fieldStrongEnough,
+    autoNextEvent: 'field-change'
+  },
+  {
+    id: 'aim-and-hit',
+    title: '步骤 3：用电场“开球”',
+    text: '移动鼠标在台面上预览方向，点击一次台面锁定方向，然后点击「施加电场击球」。观察白球的运动方向与加速度方向是否和电场方向一致。',
+    goal: '完成一次击球（点击「施加电场击球」）。',
+    conditionMet: () => window._tutorialFlags.hitOnce,
+    autoNextEvent: 'hit'
+  },
+  {
+    id: 'pocket-one',
+    title: '步骤 4：打进一颗目标球',
+    text: '继续调整电场强度和方向，尝试利用碰撞把任意一颗目标球打进袋。思考：如果把 q 变成负电荷，受力方向会如何变化？',
+    goal: '打进任意一颗目标球（非白球）。',
+    conditionMet: () => score >= 1,
+    autoNextEvent: 'pocket'
+  }
+];
+let tutorialIndex = -1;
+window._tutorialFlags = {
+  fieldStrongEnough: false,
+  hitOnce: false
+};
+
+function showGameOver(options = {}) {
+  const {
+    title = '游戏结束',
+    msg = '',
+    buttonText = '确定',
+    playVictorySound = false,
+    onButton = null
+  } = options;
+
+  const overlay = document.getElementById('gameOverlay');
+  document.getElementById('overlayTitle').textContent = title;
+  document.getElementById('overlayMsg').textContent = msg;
+  document.getElementById('playAgainBtn').textContent = buttonText;
+  overlayAction = typeof onButton === 'function' ? onButton : null;
+  overlay.classList.remove('hidden');
+  // 结算弹层出现时，隐藏教程 HUD，避免遮挡按钮
+  const hud = document.getElementById('tutorialHud');
+  if (hud) hud.classList.add('hidden');
+  if (playVictorySound) playSound('victory');
+}
+
+function hideGameOver() {
+  document.getElementById('gameOverlay').classList.add('hidden');
+  if (currentMode === 'tutorial') {
+    refreshTutorialHud();
+  }
+}
+
+// 球袋位置
+const pockets = [
+  { x: 15, y: 15 },
+  { x: canvas.width / 2, y: 15 },
+  { x: canvas.width - 15, y: 15 },
+  { x: 15, y: canvas.height - 15 },
+  { x: canvas.width / 2, y: canvas.height - 15 },
+  { x: canvas.width - 15, y: canvas.height - 15 }
+];
+
+function getCurrentChallengeConfig() {
+  return challengeLevels[Math.max(0, Math.min(challengeLevels.length - 1, currentChallengeLevel - 1))];
+}
+
+function getActivePocketsForMode(mode) {
+  if (mode === 'challenge') {
+    return getCurrentChallengeConfig().pocketIndices.map(index => pockets[index]);
+  }
+  return pockets;
+}
+
+function createChallengeBalls(ballCount) {
+  const challengePositions = [
+    { x: canvas.width - 180, y: canvas.height / 2, number: 1 },
+    { x: canvas.width - 240, y: canvas.height / 2 - BALL_DIAMETER, number: 2 },
+    { x: canvas.width - 240, y: canvas.height / 2 + BALL_DIAMETER, number: 3 }
+  ];
+
+  for (let i = 0; i < ballCount; i++) {
+    const pos = challengePositions[i];
+    balls.push(new Ball(pos.x, pos.y, BALL_COLORS[pos.number], false, pos.number));
+  }
+}
+
+function createChallengeObstacleIfNeeded(config) {
+  if (!config.hasObstacle) return;
+  const w = 20;
+  const h = 80;
+  obstacleRects.push({
+    x: canvas.width / 2 - w / 2,
+    y: canvas.height / 2 - h / 2,
+    width: w,
+    height: h
+  });
+}
+
+function isScoringBall(ball) {
+  return !ball.isWhite;
+}
+
+function resolveBallRectCollisions() {
+  if (!obstacleRects.length) return;
+  for (const ball of balls) {
+    if (ball.inPocket || ball.pocketing) continue;
+    for (const r of obstacleRects) {
+      const closestX = Math.max(r.x, Math.min(ball.x, r.x + r.width));
+      const closestY = Math.max(r.y, Math.min(ball.y, r.y + r.height));
+      const dx = ball.x - closestX;
+      const dy = ball.y - closestY;
+      const dist2 = dx * dx + dy * dy;
+      if (dist2 >= BALL_RADIUS * BALL_RADIUS) continue;
+
+      let nx = 0;
+      let ny = 0;
+
+      if (dist2 > 1e-8) {
+        // 常规情况：球心在矩形外，按最近点法向分离
+        const dist = Math.sqrt(dist2);
+        nx = dx / dist;
+        ny = dy / dist;
+        const overlap = BALL_RADIUS - dist;
+        ball.x += nx * overlap;
+        ball.y += ny * overlap;
+      } else {
+        // 特殊情况：球心进入矩形内部，按最近边推出
+        const toLeft = ball.x - r.x;
+        const toRight = r.x + r.width - ball.x;
+        const toTop = ball.y - r.y;
+        const toBottom = r.y + r.height - ball.y;
+        const minEdge = Math.min(toLeft, toRight, toTop, toBottom);
+
+        if (minEdge === toLeft) {
+          nx = -1;
+          ball.x -= toLeft + BALL_RADIUS;
+        } else if (minEdge === toRight) {
+          nx = 1;
+          ball.x += toRight + BALL_RADIUS;
+        } else if (minEdge === toTop) {
+          ny = -1;
+          ball.y -= toTop + BALL_RADIUS;
+        } else {
+          ny = 1;
+          ball.y += toBottom + BALL_RADIUS;
+        }
+      }
+
+      const vn = ball.vx * nx + ball.vy * ny;
+      if (vn < 0) {
+        ball.vx -= 2 * vn * nx;
+        ball.vy -= 2 * vn * ny;
+      }
+    }
+  }
+}
+
+// 标准美式台球花色 (1-7全色, 8黑, 9-15花色)
+const BALL_COLORS = {
+  1: '#f4d03f',   // 黄
+  2: '#3498db',   // 蓝
+  3: '#e74c3c',   // 红
+  4: '#9b59b6',   // 紫
+  5: '#e67e22',   // 橙
+  6: '#27ae60',   // 绿
+  7: '#722F37',   // 酒红
+  8: '#1a1a1a',   // 黑
+  9: '#f4d03f',   // 黄条纹
+  10: '#3498db',  // 蓝条纹
+  11: '#e74c3c',  // 红条纹
+  12: '#9b59b6',  // 紫条纹
+  13: '#e67e22',  // 橙条纹
+  14: '#27ae60',  // 绿条纹
+  15: '#722F37'   // 酒红条纹
+};
+
+class Ball {
+  constructor(x, y, color, isWhite = false, number = 0) {
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.radius = BALL_RADIUS;
+    this.color = color;
+    this.isWhite = isWhite;
+    this.inPocket = false;
+    this.number = number;
+    this.isStripe = number >= 9 && number <= 15;
+    this.pocketProgress = 1;
+    this.pocketing = false;  // 进袋动画中
+  }
+
+  draw() {
+    if (this.inPocket) return;
+
+    const r = this.radius * (this.pocketing ? this.pocketProgress : 1);
+    if (r < 1) return;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+
+    if (this.isWhite) {
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(whiteChargeSign > 0 ? '+q' : '-q', this.x, this.y);
+    } else {
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      if (this.isStripe) {
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillRect(this.x - r, this.y - r * 0.35, r * 2, r * 0.7);
+      }
+      ctx.font = '10px sans-serif';
+      ctx.fillStyle = this.number === 8 ? '#fff' : '#333';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.number.toString(), this.x, this.y);
+    }
+    ctx.restore();
+  }
+
+  update(dt = 1) {
+    if (this.inPocket) return;
+    if (this.pocketing) {
+      this.pocketProgress -= 0.08 * dt;
+      if (this.pocketProgress <= 0) {
+        this.inPocket = true;
+        this.pocketProgress = 0;
+      }
+      return;
+    }
+
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+
+    this.vx *= Math.pow(FRICTION, dt);
+    this.vy *= Math.pow(FRICTION, dt);
+
+    if (Math.abs(this.vx) < MIN_VELOCITY) this.vx = 0;
+    if (Math.abs(this.vy) < MIN_VELOCITY) this.vy = 0;
+
+    // 边界碰撞
+    if (this.x - this.radius < 20) {
+      this.x = 20 + this.radius;
+      this.vx = -this.vx * 0.8;
+      if (!this.isWhite) {
+        const now = performance.now();
+        if (now - lastWallSoundTime > 80) {
+          lastWallSoundTime = now;
+          playSound('wall');
+        }
+      }
+    }
+    if (this.x + this.radius > canvas.width - 20) {
+      this.x = canvas.width - 20 - this.radius;
+      this.vx = -this.vx * 0.8;
+      if (!this.isWhite) {
+        const now = performance.now();
+        if (now - lastWallSoundTime > 80) {
+          lastWallSoundTime = now;
+          playSound('wall');
+        }
+      }
+    }
+    if (this.y - this.radius < 20) {
+      this.y = 20 + this.radius;
+      this.vy = -this.vy * 0.8;
+      if (!this.isWhite) {
+        const now = performance.now();
+        if (now - lastWallSoundTime > 80) {
+          lastWallSoundTime = now;
+          playSound('wall');
+        }
+      }
+    }
+    if (this.y + this.radius > canvas.height - 20) {
+      this.y = canvas.height - 20 - this.radius;
+      this.vy = -this.vy * 0.8;
+      if (!this.isWhite) {
+        const now = performance.now();
+        if (now - lastWallSoundTime > 80) {
+          lastWallSoundTime = now;
+          playSound('wall');
+        }
+      }
+    }
+  }
+}
+
+// 初始化：自由模式=15球，闯关模式=1球
+function initGame(mode = currentMode) {
+  currentMode = mode;
+  balls = [];
+  score = 0;
+  gameOver = false;
+  obstacleRects = [];
+  activePockets = getActivePocketsForMode(currentMode);
+  hideGameOver();
+  const hud = document.getElementById('tutorialHud');
+  if (hud) hud.classList.add('hidden');
+
+  // 台球桌横向：长边左右(700)，短边上下(400)。桌首在左，桌尾在右
+  // 白球在开球区（桌首/左侧）
+  whiteBall = new Ball(100, canvas.height / 2, '#f5f5f5', true);
+  balls.push(whiteBall);
+
+  if (currentMode === 'challenge') {
+    const config = getCurrentChallengeConfig();
+    createChallengeBalls(config.ballCount);
+    createChallengeObstacleIfNeeded(config);
+  } else if (currentMode === 'tutorial') {
+    // 教程模式沿用第 1 关的单球布局
+    createChallengeBalls(1);
+  } else {
+    // 三角框在桌尾（右侧），三角尖尖朝左（朝向白球）
+    const footSpotX = canvas.width - 20 - (canvas.width - 40) / 4;  // 底边位置
+    const apexY = canvas.height / 2;
+    const r = BALL_RADIUS;
+    const rowSpacing = r * Math.sqrt(3);  // 约 17.3
+
+    // 标准摆球顺序：8号在第三排中间。左底角一全色一花色
+    const rackOrder = [
+      1,      // 顶点（尖尖，最靠左）
+      2, 3,   // 第2排
+      4, 8, 5,  // 第3排，8在中间
+      11, 9, 10, 7,  // 第4排
+      6, 12, 13, 14, 15  // 第5排
+    ];
+
+    let idx = 0;
+    for (let row = 0; row < 5; row++) {
+      const colsInRow = row + 1;
+      const startCol = -colsInRow / 2 + 0.5;
+      // 顶点在左，底边在右。col0=左(y小)，col4=右(y大)
+      for (let col = 0; col < colsInRow; col++) {
+        const x = footSpotX - (4 - row) * rowSpacing;
+        const y = apexY + (startCol + col) * BALL_DIAMETER;
+        const num = rackOrder[idx];
+        balls.push(new Ball(x, y, BALL_COLORS[num], false, num));
+        idx++;
+      }
+    }
+  }
+
+  updateUI();
+}
+
+// 施加电场力：F = qE，a = F/m = qE/m
+function applyElectricField() {
+  if (whiteBall.inPocket || gameOver) return;
+
+  const angleRad = (fieldAngle * Math.PI) / 180;
+  const Ex = fieldStrength * Math.cos(angleRad);
+  const Ey = -fieldStrength * Math.sin(angleRad);  //  Canvas y轴向下
+
+  const effectiveQ = WHITE_CHARGE * whiteChargeSign;
+  const Fx = effectiveQ * Ex;
+  const Fy = effectiveQ * Ey;
+
+  const ax = Fx / WHITE_MASS;
+  const ay = Fy / WHITE_MASS;
+
+  const impulse = 0.15;
+  whiteBall.vx += ax * impulse;
+  whiteBall.vy += ay * impulse;
+
+  isApplying = true;
+  document.getElementById('applyForce').disabled = true;
+  playSound('hit');
+}
+
+function applyMagneticField(dt = 1) {
+  if (!whiteBall || whiteBall.inPocket) return;
+  const speed = Math.hypot(whiteBall.vx, whiteBall.vy);
+  if (speed < MIN_VELOCITY) return;
+
+  const omega = (WHITE_CHARGE * whiteChargeSign * magneticField / WHITE_MASS) * MAGNETIC_SCALE;
+  // 旋转速度向量：磁场只改变方向，不改变速率，并限制单步旋转角避免“原地打转”
+  const rawTheta = omega * dt;
+  const maxTheta = 0.3; // 单步最多旋转约 17°
+  const theta = Math.max(-maxTheta, Math.min(maxTheta, rawTheta));
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const vx = whiteBall.vx;
+  const vy = whiteBall.vy;
+  whiteBall.vx = vx * cosT - vy * sinT;
+  whiteBall.vy = vx * sinT + vy * cosT;
+}
+
+// 回溯到首次接触点，得到更准确的碰撞法向（与辅助线预测一致）
+function getImpactNormal(ax, ay, avx, avy, bx, by, radius) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const v2 = avx * avx + avy * avy;
+  if (v2 < 1e-8) return null;
+  const vd = avx * dx + avy * dy;
+  if (vd <= 0) return null;
+  const disc = vd * vd - v2 * (dx * dx + dy * dy - 4 * radius * radius);
+  if (disc < 0) return null;
+  const t = (Math.sqrt(disc) - vd) / v2;
+  if (t <= 0 || t > 1) return null;
+  const aix = ax - avx * t;
+  const aiy = ay - avy * t;
+  const ndx = bx - aix;
+  const ndy = by - aiy;
+  const nlen = Math.sqrt(ndx * ndx + ndy * ndy);
+  if (nlen < 0.1) return null;
+  return { nx: ndx / nlen, ny: ndy / nlen };
+}
+
+// 碰撞检测
+function checkCollisions() {
+  for (let i = 0; i < balls.length; i++) {
+    for (let j = i + 1; j < balls.length; j++) {
+      const a = balls[i];
+      const b = balls[j];
+      if (a.inPocket || b.inPocket || a.pocketing || b.pocketing) continue;
+
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < a.radius + b.radius) {
+        let nx, ny;
+        const n = getImpactNormal(a.x, a.y, a.vx, a.vy, b.x, b.y, a.radius);
+        if (n) {
+          nx = n.nx;
+          ny = n.ny;
+        } else {
+          nx = dx / dist;
+          ny = dy / dist;
+        }
+
+        const dvx = a.vx - b.vx;
+        const dvy = a.vy - b.vy;
+        const dvn = dvx * nx + dvy * ny;
+
+        if (dvn > 0) {
+          a.vx -= dvn * nx;
+          a.vy -= dvn * ny;
+          b.vx += dvn * nx;
+          b.vy += dvn * ny;
+
+          const overlap = (a.radius + b.radius) - dist;
+          a.x -= overlap * nx * 0.5;
+          a.y -= overlap * ny * 0.5;
+          b.x += overlap * nx * 0.5;
+          b.y += overlap * ny * 0.5;
+
+          // 撞击音效：优先对白球参与的碰撞播放，轻微节流
+          if (a.isWhite || b.isWhite) {
+            const now = performance.now();
+            if (now - lastHitSoundTime > 60) {
+              lastHitSoundTime = now;
+              playSound('hit');
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// 检查进球
+function checkPockets() {
+  for (const ball of balls) {
+    if (ball.inPocket || ball.pocketing) continue;
+
+    for (const pocket of activePockets) {
+      const dx = ball.x - pocket.x;
+      const dy = ball.y - pocket.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < POCKET_RADIUS) {
+        if (ball.isWhite) {
+          ball.inPocket = false;
+          ball.x = 100;
+          ball.y = canvas.height / 2;
+          ball.vx = 0;
+          ball.vy = 0;
+          aimLocked = false;
+          playSound('fault');
+        } else {
+          ball.pocketing = true;
+          ball.vx = 0;
+          ball.vy = 0;
+          if (isScoringBall(ball)) {
+            score++;
+            showToast('进球！' + (ball.number === 8 ? '黑八' : ball.number + '号'));
+          }
+          playSound('pocket');
+          if (currentMode === 'tutorial') {
+            handleTutorialEvent('pocket');
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  const remaining = balls.filter(b => !b.inPocket && !b.pocketing && isScoringBall(b)).length;
+  if (remaining === 0 && !gameOver) {
+    if (currentMode === 'tutorial') {
+      // 教程以闯关单球为基础：目标球打进后继续按教程步骤推进
+      refreshTutorialHud();
+      updateUI();
+      return;
+    }
+    if (currentMode === 'challenge') {
+      gameOver = true;
+      if (currentChallengeLevel < challengeLevels.length) {
+        const nextLevel = currentChallengeLevel + 1;
+        showGameOver({
+          title: '过关！',
+          msg: `你已完成第 ${currentChallengeLevel} 关，准备进入第 ${nextLevel} 关。`,
+          buttonText: '进入下一关',
+          playVictorySound: true,
+          onButton: () => {
+            hideGameOver();
+            currentChallengeLevel = nextLevel;
+            initGame('challenge');
+          }
+        });
+      } else {
+        showGameOver({
+          title: '闯关完成！',
+          msg: '恭喜通过全部 3 关挑战！',
+          buttonText: '从第 1 关重来',
+          playVictorySound: true,
+          onButton: () => {
+            hideGameOver();
+            currentChallengeLevel = 1;
+            initGame('challenge');
+          }
+        });
+      }
+      updateUI();
+      return;
+    }
+    gameOver = true;
+    showGameOver({
+      title: '游戏胜利！',
+      msg: '恭喜打进全部 15 颗球！',
+      buttonText: '再来一局',
+      playVictorySound: true,
+      onButton: () => {
+        hideGameOver();
+        initGame(currentMode);
+      }
+    });
+  }
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('remaining').textContent = balls.filter(b => !b.inPocket && isScoringBall(b)).length;
+  const levelEl = document.getElementById('challengeLevel');
+  const modeEl = document.getElementById('modeLabel');
+  const challengeHintEl = document.getElementById('challengeHint');
+  if (levelEl) {
+    levelEl.textContent = currentMode === 'challenge' ? `${currentChallengeLevel}/3` : '—';
+  }
+  if (modeEl) {
+    modeEl.textContent =
+      currentMode === 'free' ? '自由模式' :
+      currentMode === 'challenge' ? '闯关模式' :
+      '教程模式';
+  }
+  if (challengeHintEl) {
+    challengeHintEl.style.display = currentMode === 'challenge' ? 'block' : 'none';
+  }
+
+  const pocketed = balls.filter(b => b.inPocket && isScoringBall(b));
+  const solids = pocketed.filter(b => b.number >= 1 && b.number <= 7).map(b => b.number).sort((a, b) => a - b);
+  const stripes = pocketed.filter(b => b.number >= 9 && b.number <= 15).map(b => b.number).sort((a, b) => a - b);
+  const black8 = pocketed.filter(b => b.number === 8).length > 0;
+  const parts = [];
+  if (solids.length) parts.push('全色 ' + solids.join(','));
+  if (stripes.length) parts.push('花色 ' + stripes.join(','));
+  if (black8) parts.push('黑八');
+  document.getElementById('pocketedBalls').textContent = parts.length ? parts.join(' | ') : '—';
+
+  const effectiveQ = WHITE_CHARGE * whiteChargeSign;
+  const F = effectiveQ * fieldStrength;
+  const a = F / WHITE_MASS;
+  document.getElementById('forceValue').textContent = F.toFixed(1) + ' N';
+  document.getElementById('accelValue').textContent = a.toFixed(0) + ' m/s²';
+  document.getElementById('magneticValue').textContent = magneticField.toFixed(1) + ' T';
+
+  const v =
+    whiteBall && !whiteBall.inPocket
+      ? Math.hypot(whiteBall.vx, whiteBall.vy)
+      : 0;
+  const FB =
+    Math.abs(magneticField) > 0 && v > MIN_VELOCITY
+      ? Math.abs(WHITE_CHARGE) * v * Math.abs(magneticField)
+      : 0;
+  const magForceEl = document.getElementById('magForceValue');
+  if (magForceEl) {
+    magForceEl.textContent = FB.toFixed(2) + ' N';
+  }
+  const radiusEl = document.getElementById('radiusValue');
+  if (radiusEl) {
+    if (Math.abs(magneticField) > 1e-3 && v > MIN_VELOCITY) {
+      const r = (WHITE_MASS * v) / (Math.abs(WHITE_CHARGE) * Math.abs(magneticField));
+      radiusEl.textContent = r.toFixed(2) + ' m';
+    } else {
+      radiusEl.textContent = '∞ m';
+    }
+  }
+
+  const allStopped = balls.every(b => 
+    (Math.abs(b.vx) < MIN_VELOCITY && Math.abs(b.vy) < MIN_VELOCITY) || b.inPocket || b.pocketing
+  );
+  if (allStopped && isApplying) {
+    isApplying = false;
+    document.getElementById('applyForce').disabled = false;
+    aimLocked = false;  // 击球后球停止，解锁方向，可重新瞄准
+  }
+}
+
+function drawFieldLines() {
+  const angleRad = fieldAngle * Math.PI / 180;
+  const dirX = Math.cos(angleRad);
+  const dirY = -Math.sin(angleRad);
+  const perpX = -dirY;
+  const perpY = dirX;
+
+  const tableLeft = 20;
+  const tableTop = 20;
+  const tableRight = canvas.width - 20;
+  const tableBottom = canvas.height - 20;
+  const tableW = tableRight - tableLeft;
+  const tableH = tableBottom - tableTop;
+  const centerX = (tableLeft + tableRight) / 2;
+  const centerY = (tableTop + tableBottom) / 2;
+
+  // 电场强度越大，线越密（间距越小）
+  const baseSpacing = 50;
+  const spacing = Math.max(12, baseSpacing - fieldStrength * 0.4);
+  const numLines = Math.ceil(Math.sqrt(tableW * tableW + tableH * tableH) / spacing) + 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(tableLeft, tableTop, tableW, tableH);
+  ctx.clip();
+
+  const lineAlpha = 0.25 + fieldStrength * 0.004;
+  ctx.strokeStyle = `rgba(0, 212, 255, ${Math.min(0.55, lineAlpha)})`;
+  ctx.lineWidth = 1;
+  ctx.lineCap = 'round';
+
+  for (let i = -numLines; i <= numLines; i++) {
+    const offset = i * spacing;
+    const baseX = centerX + perpX * offset;
+    const baseY = centerY + perpY * offset;
+
+    const len = Math.max(tableW, tableH) * 1.5;
+    const x1 = baseX - dirX * len;
+    const y1 = baseY - dirY * len;
+    const x2 = baseX + dirX * len;
+    const y2 = baseY + dirY * len;
+
+    const pts = clipLineToRect(x1, y1, x2, y2, tableLeft, tableTop, tableRight, tableBottom);
+    if (pts) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      ctx.lineTo(pts[1].x, pts[1].y);
+      ctx.stroke();
+
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      const arrowLen = Math.min(12, 4 + fieldStrength * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      ctx.lineTo(midX + dirX * arrowLen, midY + dirY * arrowLen);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+function clipLineToRect(x1, y1, x2, y2, left, top, right, bottom) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  let t0 = 0, t1 = 1;
+
+  const clip = (p, q) => {
+    if (Math.abs(p) < 1e-6) return q >= 0;
+    const t = q / p;
+    if (p < 0) { if (t > t1) return false; t0 = Math.max(t0, t); }
+    else { if (t < t0) return false; t1 = Math.min(t1, t); }
+    return true;
+  };
+
+  if (!clip(dx, right - x1) || !clip(-dx, x1 - left) || !clip(dy, bottom - y1) || !clip(-dy, y1 - top))
+    return null;
+  return [
+    { x: x1 + t0 * dx, y: y1 + t0 * dy },
+    { x: x1 + t1 * dx, y: y1 + t1 * dy }
+  ];
+}
+
+function drawTable() {
+  ctx.fillStyle = '#1a5f2a';
+  ctx.fillRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+  drawFieldLines();
+
+  ctx.strokeStyle = '#2d1810';
+  ctx.lineWidth = 15;
+  ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
+
+  ctx.fillStyle = '#0f172a';
+  for (const p of activePockets) {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, POCKET_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#2d1810';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // 第 3 关的矩形障碍物
+  if (currentMode === 'challenge') {
+    ctx.save();
+    ctx.fillStyle = '#64748b';
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 2;
+    for (const r of obstacleRects) {
+      ctx.beginPath();
+      ctx.rect(r.x, r.y, r.width, r.height);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 左上角的电场方向箭头
+  const cx = 55;
+  const cy = 55;
+  const arrowLen = 35;
+  const angleRad = fieldAngle * Math.PI / 180;
+  const ex = Math.cos(angleRad) * arrowLen;
+  const ey = -Math.sin(angleRad) * arrowLen;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.9)';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(ex, ey);
+  ctx.stroke();
+
+  const headLen = 10;
+  const headAngle = Math.PI / 6;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - headLen * Math.cos(angleRad - headAngle), ey + headLen * Math.sin(angleRad - headAngle));
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - headLen * Math.cos(angleRad + headAngle), ey + headLen * Math.sin(angleRad + headAngle));
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.font = '12px sans-serif';
+  ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+  ctx.fillText('E', cx + ex * 1.3, cy + ey * 1.3);
+
+  // 左上角磁场方向标记：⊙ 表示出屏幕，⊗ 表示入屏幕
+  const bx = 130;
+  const by = 55;
+  const br = 12;
+  const bAbs = Math.abs(magneticField);
+  const bAlpha = bAbs < 0.05 ? 0.7 : 1;
+
+  ctx.save();
+  ctx.strokeStyle = `rgba(236, 72, 153, ${bAlpha})`;
+  ctx.fillStyle = `rgba(236, 72, 153, ${bAlpha})`;
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+  ctx.arc(bx, by, br, 0, Math.PI * 2);
+  ctx.stroke();
+
+  if (magneticField > 0.05) {
+    // ⊙：出屏幕（正方向）
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (magneticField < -0.05) {
+    // ⊗：入屏幕（反方向）
+    const crossLen = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(bx - crossLen, by - crossLen);
+    ctx.lineTo(bx + crossLen, by + crossLen);
+    ctx.moveTo(bx - crossLen, by + crossLen);
+    ctx.lineTo(bx + crossLen, by - crossLen);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = `rgba(251, 113, 133, ${bAlpha})`;
+  ctx.fillText(`B=${magneticField.toFixed(1)}`, bx + 18, by + 4);
+}
+
+function getFirstBallInAimPath(wx, wy, dirX, dirY) {
+  const hitRadius = BALL_RADIUS * 2.1;
+  let first = null;
+  let minDist = Infinity;
+  for (const ball of balls) {
+    if (ball.isWhite || ball.inPocket || ball.pocketing) continue;
+    const dx = ball.x - wx;
+    const dy = ball.y - wy;
+    const dot = dx * dirX + dy * dirY;
+    if (dot <= 0) continue;
+    const cross = Math.abs(dx * dirY - dy * dirX);
+    if (cross > hitRadius) continue;
+    if (dot < minDist) {
+      minDist = dot;
+      first = ball;
+    }
+  }
+  return first;
+}
+
+function simulateFirstBallDirection(wx, wy, dirX, dirY, ball) {
+  const ax = wx - ball.x;
+  const ay = wy - ball.y;
+  const b = 2 * (ax * dirX + ay * dirY);
+  const c = ax * ax + ay * ay - 4 * BALL_RADIUS * BALL_RADIUS;
+  const disc = b * b - 4 * c;
+  if (disc < 0) return null;
+  const sqrtDisc = Math.sqrt(disc);
+  const t1 = (-b - sqrtDisc) / 2;
+  const t2 = (-b + sqrtDisc) / 2;
+  const t = (t1 > 0 ? t1 : t2);
+  if (t <= 0) return null;
+  const impactX = wx + t * dirX;
+  const impactY = wy + t * dirY;
+  const nx = ball.x - impactX;
+  const ny = ball.y - impactY;
+  const len = Math.sqrt(nx * nx + ny * ny);
+  if (len < 0.1) return null;
+  return { x: nx / len, y: ny / len };
+}
+
+function getCanvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const clientX = e.clientX ?? e.touches?.[0]?.clientX;
+  const clientY = e.clientY ?? e.touches?.[0]?.clientY;
+  if (clientX == null || clientY == null) return { x: 0, y: 0 };
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+
+function updateAngleFromPoint(px, py) {
+  if (!whiteBall || whiteBall.inPocket) return;
+  const dx = px - whiteBall.x;
+  const dy = py - whiteBall.y;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;  // 避免除以零
+  fieldAngle = Math.atan2(-dy, dx) * 180 / Math.PI;
+  if (fieldAngle < 0) fieldAngle += 360;
+  refreshAngleDisplay();
+}
+
+function refreshAngleDisplay() {
+  document.getElementById('angleValue').textContent = Math.round(fieldAngle * 10) / 10 + '°';
+}
+
+function adjustAngle(delta) {
+  fieldAngle = (fieldAngle + delta * 0.1 + 360) % 360;
+  refreshAngleDisplay();
+  aimLocked = true;
+}
+
+// 根据当前最大速度计算子步数，防止穿模
+function getSubSteps() {
+  let maxVel = 0;
+  for (const ball of balls) {
+    if (ball.inPocket || ball.pocketing) continue;
+    const v = Math.hypot(ball.vx, ball.vy);
+    if (v > maxVel) maxVel = v;
+  }
+  if (maxVel <= 0) return 1;
+  return Math.min(8, Math.max(1, Math.ceil(maxVel / MAX_STEP_DIST)));
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawTable();
+
+  const subSteps = getSubSteps();
+  const dt = 1 / subSteps;
+  for (let s = 0; s < subSteps; s++) {
+    applyMagneticField(dt);
+    for (const ball of balls) {
+      ball.update(dt);
+    }
+    checkCollisions();
+    resolveBallRectCollisions();
+  }
+  checkPockets();
+
+  for (const ball of balls) {
+    ball.draw();
+  }
+
+  // 瞄准线：从白球中心出发，球静止时显示
+  const canAim = whiteBall && !whiteBall.inPocket && !gameOver &&
+    balls.every(b => (Math.abs(b.vx) < MIN_VELOCITY && Math.abs(b.vy) < MIN_VELOCITY) || b.inPocket || b.pocketing);
+  if (canAim) {
+    const wx = whiteBall.x;
+    const wy = whiteBall.y;
+    let previewEndX, previewEndY;
+    let previewDirX, previewDirY;
+    let lockedEndX, lockedEndY;
+    let lockedDirX, lockedDirY;
+
+    if (mouseX !== null && mouseY !== null) {
+      const dx = mouseX - wx;
+      const dy = mouseY - wy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 5) {
+        previewDirX = dx / dist;
+        previewDirY = dy / dist;
+        previewEndX = mouseX;
+        previewEndY = mouseY;
+      } else {
+        previewEndX = wx;
+        previewEndY = wy;
+        previewDirX = 1;
+        previewDirY = 0;
+      }
+    }
+
+    if (aimLocked) {
+      const len = lockedAimLen;
+      const rad = fieldAngle * Math.PI / 180;
+      lockedDirX = Math.cos(rad);
+      lockedDirY = -Math.sin(rad);
+      lockedEndX = wx + lockedDirX * len;
+      lockedEndY = wy + lockedDirY * len;
+    }
+
+    const guideDirX = previewDirX ?? lockedDirX;
+    const guideDirY = previewDirY ?? lockedDirY;
+    if (showImpactGuide && guideDirX !== undefined && guideDirY !== undefined &&
+      ((mouseX !== null && mouseY !== null && Math.hypot(mouseX - wx, mouseY - wy) > 5) || aimLocked)) {
+      const firstBall = getFirstBallInAimPath(wx, wy, guideDirX, guideDirY);
+      if (firstBall) {
+        const dir = simulateFirstBallDirection(wx, wy, guideDirX, guideDirY, firstBall);
+        if (dir) {
+          const lineLen = 100;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(firstBall.x, firstBall.y);
+          ctx.lineTo(firstBall.x + dir.x * lineLen, firstBall.y + dir.y * lineLen);
+          ctx.strokeStyle = 'rgba(255, 200, 100, 0.7)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 6]);
+          ctx.lineCap = 'round';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    if (previewEndX !== undefined && previewEndY !== undefined) {
+      const dx = previewEndX - wx;
+      const dy = previewEndY - wy;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(previewEndX, previewEndY);
+        ctx.strokeStyle = aimLocked ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        const angle = Math.atan2(dy, dx);
+        const arrowLen = 12;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(previewEndX, previewEndY);
+        ctx.lineTo(previewEndX - arrowLen * Math.cos(angle - 0.4), previewEndY - arrowLen * Math.sin(angle - 0.4));
+        ctx.moveTo(previewEndX, previewEndY);
+        ctx.lineTo(previewEndX - arrowLen * Math.cos(angle + 0.4), previewEndY - arrowLen * Math.sin(angle + 0.4));
+        ctx.strokeStyle = aimLocked ? 'rgba(255, 255, 255, 0.38)' : 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    if (lockedEndX !== undefined && lockedEndY !== undefined) {
+      const dx = lockedEndX - wx;
+      const dy = lockedEndY - wy;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(lockedEndX, lockedEndY);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        const angle = Math.atan2(dy, dx);
+        const arrowLen = 12;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(lockedEndX, lockedEndY);
+        ctx.lineTo(lockedEndX - arrowLen * Math.cos(angle - 0.4), lockedEndY - arrowLen * Math.sin(angle - 0.4));
+        ctx.moveTo(lockedEndX, lockedEndY);
+        ctx.lineTo(lockedEndX - arrowLen * Math.cos(angle + 0.4), lockedEndY - arrowLen * Math.sin(angle + 0.4));
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  updateUI();
+  requestAnimationFrame(gameLoop);
+}
+
+// 教程 HUD 更新
+function refreshTutorialHud() {
+  const hud = document.getElementById('tutorialHud');
+  if (!hud) return;
+  if (currentMode !== 'tutorial' || tutorialIndex < 0 || tutorialIndex >= tutorialSteps.length) {
+    hud.classList.add('hidden');
+    return;
+  }
+  const step = tutorialSteps[tutorialIndex];
+  hud.classList.remove('hidden');
+  document.getElementById('tutorialTitle').textContent = step.title;
+  document.getElementById('tutorialText').textContent = step.text;
+  document.getElementById('tutorialGoal').textContent = step.goal;
+  document.getElementById('tutorialProgress').textContent =
+    (tutorialIndex + 1) + '/' + tutorialSteps.length;
+
+  const nextBtn = document.getElementById('tutorialNextBtn');
+  const canNext = step.conditionMet();
+  nextBtn.disabled = !canNext;
+}
+
+function setTutorialIndex(idx) {
+  tutorialIndex = idx;
+  refreshTutorialHud();
+}
+
+function handleTutorialEvent(type) {
+  if (currentMode !== 'tutorial' || tutorialIndex < 0) return;
+  const step = tutorialSteps[tutorialIndex];
+  if (!step) return;
+  if (step.autoNextEvent && step.autoNextEvent === type && step.conditionMet()) {
+    const nextIdx = Math.min(tutorialSteps.length - 1, tutorialIndex + 1);
+    setTutorialIndex(nextIdx);
+  } else {
+    refreshTutorialHud();
+  }
+}
+
+function startFreeMode() {
+  currentMode = 'free';
+  initGame('free');
+  refreshAdvancedButtons();
+}
+
+function startChallengeMode() {
+  currentMode = 'challenge';
+  currentChallengeLevel = 1;
+  initGame('challenge');
+  refreshAdvancedButtons();
+}
+
+function startTutorialMode() {
+  currentMode = 'tutorial';
+  initGame('tutorial');
+  window._tutorialFlags.fieldStrongEnough = false;
+  window._tutorialFlags.hitOnce = false;
+  setTutorialIndex(0);
+  refreshAdvancedButtons();
+}
+
+function finishTutorial() {
+  showGameOver({
+    title: '教程完成！',
+    msg: '你已经掌握了电场强度、方向和击球进球的核心操作。',
+    buttonText: '返回闯关模式',
+    playVictorySound: true,
+    onButton: () => {
+      hideGameOver();
+      startChallengeMode();
+    }
+  });
+}
+
+document.getElementById('fieldStrength').addEventListener('input', (e) => {
+  fieldStrength = parseInt(e.target.value);
+  document.getElementById('strengthValue').textContent = fieldStrength;
+  if (currentMode === 'tutorial' && fieldStrength >= 35) {
+    window._tutorialFlags.fieldStrongEnough = true;
+    handleTutorialEvent('field-change');
+  }
+});
+
+document.getElementById('magneticField').addEventListener('input', (e) => {
+  magneticField = parseFloat(e.target.value);
+  document.getElementById('magneticValue').textContent = magneticField.toFixed(1);
+});
+
+document.getElementById('angleMinus').addEventListener('click', () => adjustAngle(-1));
+document.getElementById('anglePlus').addEventListener('click', () => adjustAngle(1));
+
+function refreshAdvancedButtons() {
+  const chargeBtn = document.getElementById('toggleChargeBtn');
+  const guideBtn = document.getElementById('toggleGuideBtn');
+  const freeBtn = document.getElementById('switchFreeBtn');
+  const challengeBtn = document.getElementById('switchChallengeBtn');
+  const tutorialBtn = document.getElementById('switchTutorialBtn');
+  if (chargeBtn) {
+    chargeBtn.textContent = whiteChargeSign > 0 ? '白球电荷：+q' : '白球电荷：-q';
+  }
+  if (guideBtn) {
+    guideBtn.textContent = showImpactGuide ? '辅助线：开' : '辅助线：关';
+  }
+  if (freeBtn) {
+    freeBtn.disabled = currentMode === 'free';
+    freeBtn.classList.toggle('mode-active', currentMode === 'free');
+  }
+  if (challengeBtn) {
+    challengeBtn.disabled = currentMode === 'challenge';
+    challengeBtn.classList.toggle('mode-active', currentMode === 'challenge');
+  }
+  if (tutorialBtn) {
+    tutorialBtn.disabled = currentMode === 'tutorial';
+    tutorialBtn.textContent = '教程模式';
+    tutorialBtn.classList.toggle('mode-active', currentMode === 'tutorial');
+  }
+}
+
+document.getElementById('toggleChargeBtn').addEventListener('click', () => {
+  whiteChargeSign = whiteChargeSign > 0 ? -1 : 1;
+  refreshAdvancedButtons();
+  updateUI();
+});
+
+document.getElementById('toggleGuideBtn').addEventListener('click', () => {
+  showImpactGuide = !showImpactGuide;
+  refreshAdvancedButtons();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowLeft') { adjustAngle(-1); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { adjustAngle(1); e.preventDefault(); }
+  if (e.key === ' ' || e.code === 'Space') {
+    // 空格键施加电场击球
+    const btn = document.getElementById('applyForce');
+    if (btn && !btn.disabled) {
+      e.preventDefault();
+      btn.click();
+    }
+  }
+});
+
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.remove('hidden');
+});
+document.getElementById('closeHelpBtn').addEventListener('click', () => {
+  document.getElementById('helpModal').classList.add('hidden');
+});
+document.getElementById('playAgainBtn').addEventListener('click', () => {
+  hideGameOver();
+  if (overlayAction) {
+    const fn = overlayAction;
+    overlayAction = null;
+    fn();
+  } else {
+    initGame();
+  }
+});
+
+document.getElementById('helpModal').addEventListener('click', (e) => {
+  if (e.target.id === 'helpModal') e.target.classList.add('hidden');
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  const { x, y } = getCanvasCoords(e);
+  mouseX = x;
+  mouseY = y;
+  // 仅预览，不更新角度（需点击锁定方向）
+});
+
+canvas.addEventListener('click', (e) => {
+  const canAim = whiteBall && !whiteBall.inPocket && !gameOver &&
+    balls.every(b => (Math.abs(b.vx) < MIN_VELOCITY && Math.abs(b.vy) < MIN_VELOCITY) || b.inPocket);
+  if (!canAim) return;
+  const { x, y } = getCanvasCoords(e);
+  const dx = x - whiteBall.x;
+  const dy = y - whiteBall.y;
+  lockedAimLen = Math.sqrt(dx * dx + dy * dy);
+  if (lockedAimLen < 10) lockedAimLen = 50;
+  updateAngleFromPoint(x, y);
+  aimLocked = true;  // 点击锁定方向
+});
+
+canvas.addEventListener('mouseleave', () => {
+  mouseX = null;
+  mouseY = null;
+});
+
+let lastTouch = null;
+canvas.addEventListener('touchstart', (e) => {
+  if (e.touches.length) {
+    lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    const { x, y } = getCanvasCoords(e.touches[0]);
+    mouseX = x;
+    mouseY = y;
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', (e) => {
+  if (e.touches.length) {
+    const { x, y } = getCanvasCoords(e.touches[0]);
+    mouseX = x;
+    mouseY = y;
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', (e) => {
+  if (e.changedTouches.length && lastTouch) {
+    const tx = e.changedTouches[0].clientX;
+    const ty = e.changedTouches[0].clientY;
+    const { x, y } = getCanvasCoords(e.changedTouches[0]);
+    const canAim = whiteBall && !whiteBall.inPocket && !gameOver &&
+      balls.every(b => (Math.abs(b.vx) < MIN_VELOCITY && Math.abs(b.vy) < MIN_VELOCITY) || b.inPocket || b.pocketing);
+    if (canAim && Math.hypot(tx - lastTouch.x, ty - lastTouch.y) < 20) {
+      const dx = x - whiteBall.x;
+      const dy = y - whiteBall.y;
+      lockedAimLen = Math.sqrt(dx * dx + dy * dy);
+      if (lockedAimLen < 10) lockedAimLen = 50;
+      updateAngleFromPoint(x, y);
+      aimLocked = true;
+    }
+    lastTouch = null;
+  }
+  mouseX = null;
+  mouseY = null;
+});
+
+document.getElementById('applyForce').addEventListener('click', () => {
+  if (currentMode === 'tutorial') {
+    window._tutorialFlags.hitOnce = true;
+    handleTutorialEvent('hit');
+  }
+  applyElectricField();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  initGame();
+  if (currentMode === 'tutorial' && tutorialIndex >= 0) {
+    refreshTutorialHud();
+  }
+  refreshAdvancedButtons();
+});
+
+// 模式切换按钮
+(function setupModeSwitching() {
+  const switchChallengeBtn = document.getElementById('switchChallengeBtn');
+  const switchFreeBtn = document.getElementById('switchFreeBtn');
+  const switchTutorialBtn = document.getElementById('switchTutorialBtn');
+  const tutorialExitBtn = document.getElementById('tutorialExitBtn');
+  const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+
+  switchChallengeBtn.addEventListener('click', () => startChallengeMode());
+  switchFreeBtn.addEventListener('click', () => startFreeMode());
+  switchTutorialBtn.addEventListener('click', () => {
+    startTutorialMode();
+  });
+  tutorialExitBtn.addEventListener('click', () => {
+    startChallengeMode();
+  });
+  tutorialNextBtn.addEventListener('click', () => {
+    if (tutorialIndex === tutorialSteps.length - 1) {
+      finishTutorial();
+      return;
+    }
+    const nextIdx = Math.min(tutorialSteps.length - 1, tutorialIndex + 1);
+    setTutorialIndex(nextIdx);
+  });
+
+// 默认进入闯关模式
+initGame('challenge');
+refreshAdvancedButtons();
+})();
+
+gameLoop();
+
+  </script>
+</body>
+</html>

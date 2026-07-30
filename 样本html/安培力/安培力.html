@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>磁场 · 安培力探究</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
+    .card { max-width: 700px; width: 100%; background: white; border-radius: 12px; padding: 20px 24px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 4px; }
+    .sub { color: #4a5568; font-size: 0.9rem; margin-bottom: 18px; border-left: 3px solid #3182ce; padding-left: 10px; }
+    .canvas-wrap { background: #edf2f7; border-radius: 8px; padding: 8px; margin-bottom: 16px; }
+    canvas { display: block; width: 100%; height: auto; background: white; border-radius: 4px; }
+    .slider-group { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 12px; }
+    .slider-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .slider-row label { min-width: 80px; font-weight: 500; font-size: 0.95rem; }
+    .slider-row input[type="range"] { flex: 1; min-width: 120px; }
+    .slider-row .val { min-width: 48px; text-align: right; font-family: monospace; font-size: 0.9rem; }
+    .unit { color: #2d3748; font-size: 0.85rem; margin-left: 2px; }
+    .confound-note { background: #f0fff4; border-left: 4px solid #38a169; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; color: #22543d; margin: 8px 0 12px; }
+    .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 12px 0 8px; }
+    button { background: #3182ce; color: white; border: none; padding: 8px 20px; border-radius: 40px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+    button:hover { background: #2b6cb0; }
+    button.secondary { background: #a0aec0; }
+    button.secondary:hover { background: #718096; }
+    .observe-box { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin: 12px 0 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .observe-label { font-weight: 500; }
+    .observe-value { font-size: 1.3rem; font-weight: 600; font-family: monospace; color: #2b6cb0; }
+    .hint { font-size: 0.9rem; color: #2d3748; background: #ebf8ff; padding: 8px 12px; border-radius: 12px; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; display: block; }
+    #feedbackArea { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .irrelevant-area { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .irrelevant-area button { background: #e2e8f0; color: #2d3748; font-size: 0.8rem; padding: 4px 14px; }
+    .irrelevant-area button:hover { background: #cbd5e0; }
+    .win-badge { background: #f6e05e; color: #1a202c; font-weight: 600; padding: 4px 14px; border-radius: 30px; font-size: 0.9rem; }
+    .flex { display: flex; align-items: center; gap: 8px; }
+  
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#4ade80;--craft-bg:#06140c;--craft-panel:#102418;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+/* HUD 避让 + observe 浅底残留 */
+#essence-stage > #dual-mode-hud,#dual-mode-hud{
+  right:auto!important;width:auto!important;max-width:min(420px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+}
+#essence-hud{top:56px!important;left:10px!important;right:auto!important;max-width:min(420px,calc(100% - 24px))!important;}
+#essence-hud .essence-title{color:var(--craft-text)!important;}
+#essence-hud .essence-sub{color:var(--craft-muted)!important;}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.32)!important;border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .observe-box .val,.observe-box .val,.observe-box .reading,.observe-item strong{
+  color:var(--craft-accent)!important;
+}
+#essence-bench .observe-box,.observe-box,#observePanel{color:var(--craft-text)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>电磁吊运 · 磁轨货厢</h2>
+    <p>夜班仓库磁轨吊运偏了。试着弄清电流与磁场如何改变导线托力；再接限次急单——目标托力本局固定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标力本局固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">F = BIL</div>
+    <p id="craftWinText">通过调参与观察，你验证了本实验的核心关系。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+    <canvas id="simCanvas" width="600" height="240"></canvas>
+  </div>
+
+  
+    <div id="essence-hud">
+      <div class="essence-title">电磁吊运 · 磁轨货厢</div>
+      <div class="essence-sub" id="goalMission">探究：自由调 I、B，观察托力变化</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="card">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：I、B 怎样改变导线托力。竞赛另有限次急单。</p>
+  <div class="slider-group">
+    <div class="slider-row">
+      <label for="s-current">电流 I</label>
+      <input type="range" id="s-current" min="0" max="5" step="0.1" value="2.0">
+      <span class="val" id="currentVal">2.0</span><span class="unit">A</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-magnetic">磁感应强度 B</label>
+      <input type="range" id="s-magnetic" min="0" max="2" step="0.1" value="1.0">
+      <span class="val" id="magneticVal">1.0</span><span class="unit">T</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-wire-temp">导线温度 T</label>
+      <input type="range" id="s-wire-temp" min="10" max="80" step="1" value="25">
+      <span class="val" id="wireTempVal">25</span><span class="unit">°C</span>
+    </div>
+  </div>
+
+  <!-- 操作按钮 + 观察读数 -->
+  <!-- 提示 / 过关反馈 -->
+  <div id="feedbackArea" class="hint" style="margin-top:4px;">待测 · 调参后点测试</div>
+
+  <input type="hidden" id="I1" value="irrelevant">
+  <span id="irrMsg" style="display:none;font-size:0.8rem; color:var(--craft-muted);"></span>
+
+  <!-- 过关标记（隐藏） -->
+  <div id="winIndicator" class="win-badge" style="display:none; margin-top:10px;">✓ 过关！安培力达标</div>
+</div>
+
+<!-- trace-adapter-hook (埋点) -->
+
+
+
+
+<!-- 确保 trace-adapter-hook 只出现一次 (已在上方嵌入) -->
+<!-- trace-adapter-hook -->
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+    <button id="btn-test" class="primary">测试 / 发射</button>
+    <button id="btn-reset" class="secondary">重置</button>
+    <span class="observe-box" style="flex:1; margin:0;">
+      <span class="observe-label">安培力 F</span>
+      <span class="observe-value" id="forceDisplay">0.00</span>
+      <span class="unit">N</span>
+    </span>
+  </div>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // puzzle_open
+    emit('puzzle_open', {});
+
+    // tuning 绑定 (滑条)
+    document.querySelectorAll('input[type="range"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || 'slider', value: el.value });
+      });
+    });
+
+    // irrelevant_touch I1
+    var i1 = document.getElementById('I1');
+    if (i1) {
+      i1.addEventListener('click', function() {
+        emit('irrelevant_touch', { control: 'I1', value: 'click' });
+        document.getElementById('irrMsg').innerText = '点击了装饰 (已上报)';
+        setTimeout(function(){ document.getElementById('irrMsg').innerText = ''; }, 1500);
+      });
+    }
+
+    // 全局暴露 emit 和 snap 以便业务调用
+    window.__emit = emit;
+    window.__snap = snapControls;
+  });
+})();
+</script>
+<script>
+(function() {
+  // ----- 物理常量 & DOM 引用 -----
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  const L = 0.8; // 固定导线长度 (m)
+
+  const sCurrent = document.getElementById('s-current');
+  const sMagnetic = document.getElementById('s-magnetic');
+  const sWireTemp = document.getElementById('s-wire-temp');
+  const currentVal = document.getElementById('currentVal');
+  const magneticVal = document.getElementById('magneticVal');
+  const wireTempVal = document.getElementById('wireTempVal');
+  const forceDisplay = document.getElementById('forceDisplay');
+  const feedback = document.getElementById('feedbackArea');
+  const winIndicator = document.getElementById('winIndicator');
+
+  // 目标安培力：探究观察；竞赛 FixedChallenge 进入时锁定一次
+  let F_TARGET = 2.4; // N
+  // 探究/竞赛分流：竞赛容差更紧，同参未必两边同结论
+  const TOL_MODE = { explore: 0.22, challenge: 0.08 };
+  function forceTol() { return TOL_MODE[playMode] || TOL_MODE.explore; }
+  let playMode = 'explore';
+  let lockedF = null;
+  let challengeWon = false;
+
+  const MODE_GOALS = {
+    explore: {
+      hud: '探究：自由试吊，观察托力如何随 I、B 变化',
+      side: '探究·磁轨试吊：试着弄清电流与磁场如何改变托力；不必先盯固定目标力。'
+    },
+    challenge: {
+      hud: '竞赛：限次把托力打进本局锁定目标（本局固定）',
+      side: '竞赛·吊运急单：限次把托力打进本局锁定目标；打偏不换单。'
+    }
+  };
+  function refreshMagGoals() {
+    const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+    const mission = document.getElementById('goalMission');
+    const side = document.getElementById('sideGoal');
+    if (playMode === 'challenge' && lockedF != null) {
+      if (mission) mission.textContent = '急单托力：' + lockedF.toFixed(1) + ' N · 本局固定';
+      if (side) side.textContent = '竞赛急单：限次把托力调到约 ' + lockedF.toFixed(1) + ' N（本局固定，打偏不换单）。';
+    } else {
+      if (mission) mission.textContent = g.hud;
+      if (side) side.textContent = g.side;
+    }
+  }
+  /** FixedChallenge：仅进入竞赛时锁定一次目标力 */
+  function lockChallengeF() {
+    // 可达：I∈[0,5], B∈[0,2], L=0.8 → F∈[0,8]
+    const candidates = [1.6, 2.0, 2.4, 2.8, 3.2, 3.6, 4.0];
+    lockedF = candidates[Math.floor(Math.random() * candidates.length)];
+    F_TARGET = lockedF;
+    challengeWon = false;
+    sCurrent.value = '1.0';
+    sMagnetic.value = '0.5';
+    refreshMagGoals();
+    updateAll();
+    feedback.textContent = '急单已锁定托力 ' + F_TARGET.toFixed(1) + ' N（本局不变）';
+    winIndicator.style.display = 'none';
+  }
+  function applyExploreF() {
+    lockedF = null;
+    F_TARGET = 2.4;
+    challengeWon = false;
+    sCurrent.value = '2.0';
+    sMagnetic.value = '1.0';
+    refreshMagGoals();
+    updateAll();
+    feedback.textContent = '自由试吊：调 I、B 观察托力';
+    winIndicator.style.display = 'none';
+  }
+  window.__magApplyMode = function(mode) {
+    playMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (playMode === 'challenge') lockChallengeF();
+    else applyExploreF();
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    var m = ev && ev.detail && ev.detail.mode;
+    if (typeof window.__magApplyMode === 'function') window.__magApplyMode(m);
+  });
+  /* BATCH5-FIXED-20260724 FixedChallenge */
+
+  // ----- 物理计算 (唯一公式) -----
+  function computeForce(I, B) {
+    return B * I * L;
+  }
+
+  /** 仅测试后揭示 F */
+  let measuredF = null;
+
+  // ----- 更新UI + canvas + 判定 -----
+  function updateAll() {
+    const I = parseFloat(sCurrent.value) || 0;
+    const B = parseFloat(sMagnetic.value) || 0;
+    currentVal.textContent = I.toFixed(1);
+    magneticVal.textContent = B.toFixed(1);
+    if (wireTempVal && sWireTemp) wireTempVal.textContent = parseFloat(sWireTemp.value).toFixed(0);
+
+    const F = computeForce(I, B);
+    forceDisplay.textContent = measuredF != null ? measuredF.toFixed(2) : '—';
+
+    // 绘制 canvas (极简示意图)
+    drawCanvas(I, B, F);
+
+    if (playMode === 'explore') {
+      feedback.textContent = measuredF != null
+        ? ('本次托力 ' + measuredF.toFixed(2) + ' N · 换参再测')
+        : '读数待测 · 调 I、B 后点测试';
+    } else {
+      feedback.textContent = measuredF != null
+        ? ('本次 ' + measuredF.toFixed(2) + ' N · 急单锁定 ' + F_TARGET.toFixed(1) + ' N')
+        : ('读数待测 · 急单锁定 ' + F_TARGET.toFixed(1) + ' N · 点测试');
+    }
+  }
+
+  let W = 600, H = 360, dpr = 1, pulse = 0;
+  const wrap = canvas.parentElement;
+  function resizeCanvas() {
+    const rect = wrap.getBoundingClientRect();
+    dpr = window.devicePixelRatio || 1;
+    W = Math.max(320, rect.width);
+    H = Math.max(240, rect.height);
+    canvas.width = Math.floor(W * dpr);
+    canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const I = parseFloat(sCurrent.value) || 0;
+    const B = parseFloat(sMagnetic.value) || 0;
+    drawCanvas(I, B, computeForce(I, B));
+  }
+
+  function drawCanvas(I, B, F) {
+    ctx.clearRect(0, 0, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0b1220');
+    bg.addColorStop(1, '#111827');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    // 实验室墙与磁铁架
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(0, H - 70, W, 70);
+    ctx.fillStyle = '#374151';
+    ctx.fillRect(0, H - 70, W, 10);
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(W * 0.12, 48, W * 0.76, H * 0.55);
+    ctx.strokeStyle = '#fca5a5';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(W * 0.12, 48, W * 0.76, H * 0.55);
+    ctx.fillStyle = '#fecaca';
+    ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+    ctx.fillText('磁轨吊运区', W * 0.14, 70);
+
+    // B × 标记
+    const dens = Math.max(3, Math.round(B * 6));
+    for (let i = 0; i < dens; i++) {
+      for (let j = 0; j < 4; j++) {
+        const x = W * 0.18 + i * (W * 0.64) / dens;
+        const y = 100 + j * (H * 0.1);
+        ctx.strokeStyle = 'rgba(96,165,250,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#93c5fd';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('×', x - 4, y + 4);
+      }
+    }
+
+    // 载流导线 + 轨道
+    const yWire = H * 0.42;
+    const lift = Math.min(50, F * 12);
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(W * 0.1, yWire + 28, W * 0.8, 8);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.16, yWire - lift);
+    ctx.lineTo(W * 0.84, yWire - lift);
+    ctx.stroke();
+    ctx.fillStyle = '#fde68a';
+    ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
+    ctx.fillText('I →', W * 0.78, yWire - lift - 14);
+    // 力箭头
+    if (F > 0.05) {
+      const ax = W * 0.5;
+      ctx.strokeStyle = '#f87171';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ax, yWire - lift + 10);
+      ctx.lineTo(ax, yWire - lift + 10 + 36 + pulse * 4);
+      ctx.stroke();
+      ctx.fillStyle = '#f87171';
+      ctx.beginPath();
+      ctx.moveTo(ax, yWire - lift + 52 + pulse * 4);
+      ctx.lineTo(ax - 8, yWire - lift + 40 + pulse * 4);
+      ctx.lineTo(ax + 8, yWire - lift + 40 + pulse * 4);
+      ctx.fill();
+      ctx.fillText('F', ax + 12, yWire - lift + 40);
+    }
+
+    // 目标力指示牌
+    const onBand = Math.abs(F - F_TARGET) <= forceTol();
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(16, H - 58, 260, 40);
+    ctx.strokeStyle = onBand ? 'rgba(74,222,128,0.6)' : 'rgba(248,113,113,0.45)';
+    ctx.strokeRect(16, H - 58, 260, 40);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '12px "Microsoft YaHei",sans-serif';
+    ctx.fillText((playMode==='challenge'?'急单':'参考') + ' F ≈ ' + F_TARGET.toFixed(1) + ' N (±' + forceTol() + ')', 26, H - 42);
+    ctx.fillStyle = measuredF != null ? (Math.abs(measuredF - F_TARGET) <= forceTol() ? '#86efac' : '#fca5a5') : '#94a3b8';
+    if (measuredF != null) {
+      ctx.fillText('当前 ' + measuredF.toFixed(2) + ' N · I=' + I.toFixed(1) + 'A B=' + B.toFixed(1) + 'T', 26, H - 26);
+    } else {
+      ctx.fillText('当前 F 待测 · I=' + I.toFixed(1) + 'A B=' + B.toFixed(1) + 'T', 26, H - 26);
+    }
+  }
+
+  // ----- 测试/发射 事件 (snapshot + win) -----
+  function onTest() {
+    const I = parseFloat(sCurrent.value) || 0;
+    const B = parseFloat(sMagnetic.value) || 0;
+    const F = computeForce(I, B);
+    measuredF = F;
+    forceDisplay.textContent = measuredF.toFixed(2);
+    drawCanvas(I, B, F);
+
+    // 约束检查
+    let hintKey = '';
+    let winOk = false;
+
+    if (I < 0 || I > 5) {
+      hintKey = '电流超出范围 (0~5A)';
+      feedback.innerHTML = '电流超范围 · 调回 0~5 A';
+    } else if (B < 0 || B > 2) {
+      hintKey = '磁感应强度超出范围 (0~2T)';
+      feedback.innerHTML = '磁场超范围 · 调回 0~2 T';
+    } else if (playMode === 'explore') {
+      hintKey = 'explore_observe';
+      feedback.textContent = '当前托力 · 探究对比中';
+      winIndicator.style.display = 'none';
+    } else if (Math.abs(F - F_TARGET) <= forceTol()) {
+      winOk = true;
+      hintKey = '过关！安培力达标';
+      feedback.textContent = '急单完成 · 托力已入目标';
+      winIndicator.style.display = 'inline-block';
+      if (!challengeWon && typeof window.__craftShowWin === 'function') {
+        challengeWon = true;
+        window.__craftShowWin('急单托力本局锁定。导线长度固定时，F 与 B、I 成正比。');
+      }
+    } else {
+      // FixedChallenge：失败不换目标；偏大/偏小可区分
+      const tooHigh = F > F_TARGET + forceTol();
+      hintKey = tooHigh ? 'force_high' : 'force_low';
+      feedback.innerHTML = '<strong>' + (tooHigh ? '托力偏大' : '托力偏小') + '</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + F.toFixed(2) + ' N · 急单 ' + F_TARGET.toFixed(1) + ' N</span>';
+      winIndicator.style.display = 'none';
+    }
+
+    // 构造 controls 快照
+    var controlsSnapshot = {};
+    controlsSnapshot['s-current'] = I.toString();
+    controlsSnapshot['s-magnetic'] = B.toString();
+
+    // emit snapshot
+    if (window.__emit) {
+      window.__emit('snapshot', { controls: controlsSnapshot, winOk: winOk, hintKey: hintKey });
+    }
+
+    // 如果过关，额外 emit win
+    if (winOk) {
+      if (window.__emit) {
+        window.__emit('win', { winOk: true });
+      }
+    }
+  }
+
+  // ----- 重置 -----
+  function onReset() {
+    measuredF = null;
+    sCurrent.value = '2.0';
+    sMagnetic.value = '1.0';
+    winIndicator.style.display = 'none';
+    feedback.innerHTML = '← 已重置，读数待测 · 点击测试';
+    updateAll();
+  }
+
+  // ----- 绑定事件 -----
+  sCurrent.addEventListener('input', function() { measuredF = null; updateAll(); });
+  sMagnetic.addEventListener('input', function() { measuredF = null; updateAll(); });
+  if (sWireTemp) sWireTemp.addEventListener('input', function() { updateAll(); });
+
+  document.getElementById('btn-test').addEventListener('click', onTest);
+  document.getElementById('btn-reset').addEventListener('click', onReset);
+
+  window.addEventListener('resize', resizeCanvas);
+  if (typeof ResizeObserver !== 'undefined' && wrap) new ResizeObserver(resizeCanvas).observe(wrap);
+  resizeCanvas();
+  updateAll();
+  (function loop() {
+    pulse = 0.5 + 0.5 * Math.sin(performance.now() / 280);
+    const I = parseFloat(sCurrent.value) || 0;
+    const B = parseFloat(sMagnetic.value) || 0;
+    drawCanvas(I, B, computeForce(I, B));
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    try {
+      if (typeof window.__magApplyMode === 'function') window.__magApplyMode(state.mode);
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode, attempts: state.attempts } }));
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

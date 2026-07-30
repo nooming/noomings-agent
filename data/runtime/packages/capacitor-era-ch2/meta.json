@@ -1,0 +1,111 @@
+{
+  "id": "capacitor-era-ch2",
+  "title": "电容·串并联",
+  "analyzedAt": "2026-07-30T07:59:38.214Z",
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "strategy.routes[5] (confound_audio_volume): highlightNodes 应含 Start/Env（多关环境分叉时）",
+      "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-c2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-c3]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-cable]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+    ],
+    "checklist": {
+      "nodeCount": true,
+      "constraints": true,
+      "teachNodes": true,
+      "verifyLinks": true,
+      "playChain": true,
+      "strategyMermaid": true,
+      "strategyMermaidSyntax": true,
+      "strategyRoutes": true,
+      "strategyPerAvRoutes": true,
+      "strategyObserveAdjustCvar": true,
+      "strategyMacroPaths": true,
+      "strategyFeedbackLoop": true,
+      "strategyRouteIsolation": true,
+      "strategyMentalBackbone": true,
+      "dtFeedbackToOperation": true,
+      "dtEnvAlignment": true,
+      "kgConditionalParamCoupling": true,
+      "kgMassEnvCoupling": true,
+      "dtConditionalParamBranch": true,
+      "strategyTeacherAlignment": true,
+      "coupledStratInvalid": true,
+      "strategyMisconceptionLoop": true,
+      "strategyMapsTo": true,
+      "strategyControlVarRoutes": true,
+      "strategySingleVarRoutes": true,
+      "kgEnvBeforeOperation": true,
+      "dtHasOperationStep": true,
+      "strategyKgPathAligned": false,
+      "optionalToggleNotConstraint": true,
+      "dtOutcomeOriented": true,
+      "chapterScope": true,
+      "routeFeedbackLoopHighlighted": true,
+      "inquiryKnowledgePoints": true,
+      "inquiryAdjustmentVars": true,
+      "inquiryFormulas": true,
+      "inquiryFormulasClean": true,
+      "inquiryOutputVars": true,
+      "inquiryNoCrossDomainOv": true,
+      "inquiryConfounding": true,
+      "inquiryFlow": true,
+      "inquiryFlowStartsKp": true,
+      "inquiryAvSemantics": true,
+      "inquiryAvLabels": true,
+      "inquiryO1Label": true,
+      "inquiryNarrativeNoHollow": true,
+      "inquiryConfoundingNotOperation": true,
+      "inquiryOutputNotOperation": true,
+      "physicsModel": true,
+      "gameSpec": true,
+      "telemetrySpec": true,
+      "inquiryRouteScores": true,
+      "inquiryScript": true,
+      "strategyRouteScores": true
+    },
+    "score": 98,
+    "total": 53,
+    "passed": 52
+  },
+  "analyzeSteps": [
+    {
+      "id": "physics_model",
+      "label": "剥离物理模型",
+      "status": "done",
+      "summary": "6 条公式 · 源码含 requestAnimationFram…"
+    },
+    {
+      "id": "variables",
+      "label": "确定变量",
+      "status": "done",
+      "summary": "AV×4 CV×1 OV×2"
+    },
+    {
+      "id": "priority",
+      "label": "单变量优先级",
+      "status": "done",
+      "summary": "s-c1(rank=1, unknown) ｜ s-c2(rank=2, unknown) ｜ s-c3(rank=3, unknown) ｜ s-cable(rank=4, unknown)"
+    },
+    {
+      "id": "graph",
+      "label": "生成事理图谱",
+      "status": "pending",
+      "summary": "等待 LLM 生成 DT/KG/strategy"
+    }
+  ],
+  "repairedAt": "2026-07-30T09:34:44.395Z",
+  "repair": "quality-surgical-v1",
+  "narrativeSurgicalAt": "2026-07-30T10:43:35.556Z",
+  "narrativeBaseline": "narrative-v2",
+  "narrativeCleanBefore": 0.35,
+  "narrativeCleanAfter": 1
+}

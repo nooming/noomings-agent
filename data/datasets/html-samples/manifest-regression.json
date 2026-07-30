@@ -1,0 +1,262 @@
+{
+  "version": 1,
+  "description": "Agent 回归专用：不在教学 catalog 上架。含抛体重复、入门单摆/欧姆定律、流体力学等移出 manifest 的样本。",
+  "samples": [
+    {
+      "id": "projectile-implicit",
+      "topic": "平抛",
+      "knowledgeText": "做一个平抛探究：学生改变出手高度和水平初速度，看落点远近。不要写具体公式，只要描述实验。",
+      "tags": [
+        "existing-html",
+        "implicit-formula"
+      ],
+      "existingHtml": "games/legacy/高尔夫球斜抛入洞.html",
+      "expected": {
+        "formulasContain": [
+          "t",
+          "g"
+        ],
+        "adjustmentLabelsContain": [
+          "高度",
+          "速度"
+        ],
+        "outputLabelsContain": [
+          "落点",
+          "距离",
+          "射程"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "projectile-wind-confound",
+      "topic": "平抛",
+      "knownNonBlocking": true,
+      "knowledgeText": "平抛入筐：调节角度和初速度。风向指示器只是装饰，不影响落点。",
+      "tags": [
+        "generate",
+        "has-confounding"
+      ],
+      "expected": {
+        "formulasContain": [
+          "v0",
+          "g"
+        ],
+        "adjustmentLabelsContain": [
+          "角度",
+          "速度"
+        ],
+        "outputLabelsContain": [
+          "落点",
+          "命中"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "projectile-fire-btn",
+      "topic": "斜抛",
+      "knowledgeText": "斜抛：滑块调角度，点击发射按钮，初速度固定。看能否命中目标。",
+      "tags": [
+        "generate",
+        "button-action"
+      ],
+      "expected": {
+        "formulasContain": [
+          "v0",
+          "g"
+        ],
+        "adjustmentLabelsContain": [
+          "角度",
+          "发射"
+        ],
+        "outputLabelsContain": [
+          "命中",
+          "射程"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "single-slider",
+      "topic": "简谐",
+      "knowledgeText": "单摆探究：只给一个滑块调节摆长，观察周期变化。小角度近似。",
+      "tags": [
+        "generate",
+        "minimal",
+        "single-av"
+      ],
+      "expected": {
+        "formulasContain": [
+          "T",
+          "L",
+          "g"
+        ],
+        "adjustmentLabelsContain": [
+          "摆长",
+          "长度"
+        ],
+        "outputLabelsContain": [
+          "周期",
+          "T"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 1,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "no-confound",
+      "topic": "欧姆定律",
+      "knowledgeText": "探究欧姆定律：调节电压和电阻，测量电流。所有控件都影响结论，没有无关干扰项。",
+      "tags": [
+        "generate",
+        "boundary"
+      ],
+      "expected": {
+        "formulasContain": [
+          "I",
+          "U",
+          "R"
+        ],
+        "adjustmentLabelsContain": [
+          "电压",
+          "电阻"
+        ],
+        "outputLabelsContain": [
+          "电流",
+          "I"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "bernoulli-flow",
+      "topic": "流体力学",
+      "knowledgeText": "伯努利：调节管道截面积和流速，观察压强变化。",
+      "tags": [
+        "generate"
+      ],
+      "expected": {
+        "formulasContain": [
+          "p",
+          "v",
+          "A"
+        ],
+        "adjustmentLabelsContain": [
+          "面积",
+          "流速"
+        ],
+        "outputLabelsContain": [
+          "压强"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "spring-oscillator",
+      "topic": "简谐振动",
+      "knowledgeText": "弹簧振子：学生调节劲度系数和质量，探究周期 T 与 k、m 的关系。",
+      "tags": [
+        "generate",
+        "regression-archive"
+      ],
+      "expected": {
+        "formulasContain": [
+          "T",
+          "m",
+          "k"
+        ],
+        "adjustmentLabelsContain": [
+          "劲度",
+          "质量"
+        ],
+        "outputLabelsContain": [
+          "周期",
+          "T"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "half-life",
+      "topic": "放射性",
+      "knowledgeText": "放射性衰变：调节半衰期和初始活度，观察剩余活度随时间变化。",
+      "tags": [
+        "generate",
+        "regression-archive"
+      ],
+      "expected": {
+        "formulasContain": [
+          "N",
+          "t"
+        ],
+        "adjustmentLabelsContain": [
+          "半衰期",
+          "活度"
+        ],
+        "outputLabelsContain": [
+          "剩余",
+          "活度"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    }
+  ]
+}

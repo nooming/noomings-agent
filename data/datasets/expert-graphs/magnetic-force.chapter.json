@@ -1,0 +1,267 @@
+{
+  "_expertMeta": {
+    "id": "magnetic-force",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.527Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "磁场 · 安培力探究",
+    "sub": "电磁吊运 · 磁轨货厢",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C0",
+        "label": "选择模式",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "探究模式",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "竞赛模式",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调参并测试",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "探究观察",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C6",
+        "label": "托力达标?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "安培力公式",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C0",
+        "tp": "premise"
+      },
+      {
+        "s": "C0",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C0",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "C5",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C6",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C0",
+        "tp": "premise"
+      },
+      {
+        "s": "C0",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "磁场 · 安培力探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "磁场 · 安培力探究",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-current",
+        "label": "电流",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-magnetic",
+        "label": "磁场",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-wire-temp",
+        "label": "导线温度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·电流",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-magnetic",
+        "label": "单变量·磁场",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-wire-temp",
+        "label": "单变量·导线温度",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "explore_trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "priorityRank": 4,
+        "score": 0.55
+      }
+    ]
+  }
+}

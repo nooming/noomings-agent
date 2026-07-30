@@ -1,0 +1,577 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节 R1、R2 和连接方式 | O1 | operation | 调参+操作 |\n| 总电流达标? | C1 | constraint | 结果判定 |\n| 过关 | R1 | result | 胜利 |\n| 提示重试 | - | - | skip retry 回到 O1 |\n| 再试 | - | - | skip retry 回到 O1 |",
+  "kg": {
+    "title": "串联与并联电路",
+    "sub": "调节电阻使电流达标",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入电路实验",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究串联与并联电路中电阻对总电阻和总电流的影响"
+      },
+      {
+        "id": "O1",
+        "label": "调节电阻与连接方式",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "调节电阻R1、R2和切换连接方式，观察总电阻和总电流变化"
+      },
+      {
+        "id": "C1",
+        "label": "总电流达标?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断总电流是否达到目标值，若未达标则需调整参数"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "总电流达到目标值，成功过关"
+      },
+      {
+        "id": "S1",
+        "label": "串联总电阻公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "串联电路中总电阻等于各电阻之和：R_total = R1 + R2"
+      },
+      {
+        "id": "S2",
+        "label": "并联总电阻公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "并联电路中总电阻的倒数等于各电阻倒数之和：1/R_total = 1/R1 + 1/R2"
+      },
+      {
+        "id": "S3",
+        "label": "欧姆定律",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "电流等于电压除以总电阻：I = U / R_total"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中与过关无关的装饰性控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "串联与并联电路",
+    "sub": "调节电阻使电流达标",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始电路实验，调节电阻和连接方式使总电流达到目标值",
+      "children": [
+        {
+          "n": "调节电阻与连接方式",
+          "t": "step",
+          "d": "调节电阻R1、R2和切换连接方式，观察总电阻和总电流变化",
+          "children": []
+        },
+        {
+          "n": "总电流达标?",
+          "t": "decision",
+          "d": "判断总电流是否达到目标值",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示重试",
+              "t": "retry",
+              "d": "总电流未达标，请重新调节电阻或切换连接方式"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "总电流达到目标值，成功过关"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "串联与并联电路",
+    "sub": "调节电阻使电流达标"
+  },
+  "traceMap": {
+    "controls": {
+      "s-r1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-r2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "串联与并联电路",
+    "sub": "调节电阻使电流达标",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust2 --> Fire2\nFire --> Observe{观察总电流?}:::stratCond\nFire2 --> Observe2{观察总电流?}:::stratCond\nMainTune --> Fire[连接电路并观察]\nObserve -->|未达标| Adjust[调整：改一个电阻]\nObserve -->|达标| Win[过关]:::stratResult\nObserve2 -->|未达标| Adjust2[固定其余，只调s-r1]\nObserve2 -->|达标| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| MainTune[调参：每次只改一个电阻]\nStrategySelect -->|多参盲调| TrapTune[调参：同时调两个电阻]\nTrapTune --> Fire2[连接电路并观察]\nStart([开始实验]):::stratStart",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MainTune",
+          "Fire",
+          "Observe",
+          "Adjust",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MainTune"
+          ],
+          [
+            "MainTune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "TrapTune",
+          "Fire2",
+          "Observe2",
+          "Adjust2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "TrapTune"
+          ],
+          [
+            "TrapTune",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究串联与并联电路中电阻对总电阻和总电流的影响",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "串联电路总电阻",
+        "formulas": [
+          "R_total = R1 + R2"
+        ],
+        "mapsToKg": []
+      },
+      {
+        "id": "KP2",
+        "label": "并联电路总电阻",
+        "formulas": [
+          "1/R_total = 1/R1 + 1/R2"
+        ],
+        "mapsToKg": []
+      },
+      {
+        "id": "KP3",
+        "label": "欧姆定律",
+        "formulas": [
+          "I = U / R_total"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-r1",
+        "label": "电阻R1",
+        "symbol": "R1",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "Ω"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-r2",
+        "label": "电阻R2",
+        "symbol": "R2",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "Ω"
+        }
+      },
+      {
+        "id": "AV3",
+        "controlId": "btn-connect",
+        "label": "连接方式切换",
+        "symbol": "",
+        "type": "button",
+        "role": "secondary",
+        "suggestedRange": null
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "null",
+        "label": "电源电压",
+        "reason": "电源电压固定，不影响电阻变化对电流的影响"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "R_total",
+        "label": "总电阻",
+        "unit": "Ω",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      },
+      {
+        "id": "OV2",
+        "symbol": "I",
+        "label": "总电流",
+        "unit": "A",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "KP2",
+      "KP3",
+      "AV1",
+      "AV2",
+      "AV3",
+      "OV1",
+      "OV2"
+    ],
+    "narrative": {
+      "intro": "本实验将探究串联与并联电路中电阻对总电阻和总电流的影响。通过调节电阻R1、R2并切换连接方式，观察总电阻和总电流的变化，使电流达到目标值。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节电阻",
+          "body": "分别调节电阻R1和R2的阻值，观察总电阻和总电流的变化。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "切换连接方式",
+          "body": "点击按钮切换串联或并联连接，观察总电阻和总电流的变化。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "达标判断",
+          "body": "观察总电流是否达到目标值，若未达标则继续调整。",
+          "mapsToKg": [
+            "C1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "R_total = R1 + R2",
+      "1/R_total = 1/R1 + 1/R2",
+      "I = U / R_total"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1",
+      "OV2"
+    ]
+  },
+  "gameSpec": {
+    "title": "串联与并联电路",
+    "subtitle": "调节电阻使电流达标",
+    "winCondition": "总电流达到目标值，成功过关",
+    "knowledgeSummary": "串联电路总电阻；并联电路总电阻；欧姆定律",
+    "controls": [
+      {
+        "id": "s-r1",
+        "type": "range",
+        "label": "电阻R1",
+        "symbol": "R1",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "Ω"
+        }
+      },
+      {
+        "id": "s-r2",
+        "type": "range",
+        "label": "电阻R2",
+        "symbol": "R2",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "Ω"
+        }
+      },
+      {
+        "id": "btn-connect",
+        "type": "button",
+        "label": "连接方式切换",
+        "symbol": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "null",
+        "label": "电源电压",
+        "reason": "电源电压固定，不影响电阻变化对电流的影响",
+        "uiStrategy": "teach_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "总电流达标?",
+        "desc": "判断总电流是否达到目标值，若未达标则需调整参数"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-r1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-r2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "总电阻",
+        "symbol": "R_total",
+        "unit": "Ω"
+      },
+      {
+        "label": "总电流",
+        "symbol": "I",
+        "unit": "A"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-r1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-r1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-r2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-r2 → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "总电流达标?",
+        "type": "decision",
+        "desc": "判断总电流是否达到目标值"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "总电流未达标，请重新调节电阻或切换连接方式"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "总电流达到目标值，成功过关"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

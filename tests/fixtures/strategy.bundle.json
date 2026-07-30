@@ -1,0 +1,1497 @@
+{
+  "multiFork": {
+    "mapping": "| DT | KG | type | note |\n| --- | --- | --- | --- |\n| 进入 | P1 | premise | |\n| 操作 | O1 | operation | |\n| 约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+    "kg": {
+      "title": "多分叉途径演示",
+      "sub": "策略高亮回归",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入演示关卡"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节参数并提交测试"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "主要约束须满足"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "达成目标过关"
+        },
+        {
+          "id": "S1",
+          "label": "S1",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "教学要点一说明"
+        },
+        {
+          "id": "S2",
+          "label": "S2",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "教学要点二说明"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "R1",
+          "tp": "core"
+        },
+        {
+          "s": "S1",
+          "t": "O1",
+          "tp": "verify"
+        },
+        {
+          "s": "S2",
+          "t": "O1",
+          "tp": "verify"
+        }
+      ]
+    },
+    "dt": {
+      "title": "演示 DT",
+      "sub": "单约束",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "进入",
+        "children": [
+          {
+            "n": "达标?",
+            "t": "decision",
+            "d": "判定",
+            "children": [
+              {
+                "_e": "否",
+                "n": "重试",
+                "t": "retry",
+                "d": "未达标"
+              },
+              {
+                "_e": "是",
+                "n": "过关",
+                "t": "result",
+                "d": "达标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关",
+      "sub": "达标"
+    },
+    "traceMap": {
+      "controls": {
+        "param": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "多分叉策略",
+      "sub": "route highlight fixture",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> Env{模式?}:::stratCond\nEnv -->|关| ModeOff[关态分水岭]:::stratCore\nEnv -->|开| ModeOn[开态分水岭]:::stratCore\nModeOff --> CheckB{是否误调?}:::stratCond\nCheckB -->|是| InvalidParamB[误调参数 B]:::stratInvalid\nInvalidParamB --> ModeOff\nCheckB -->|否| StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|途径1| PathAFirst[先调路径 A]\nStrategySelect -->|途径2| PathBFirst[先调路径 B]\nPathAFirst --> PrepA[路径 A 汇合]\nPathBFirst --> PrepV[路径 B 汇合]\nPrepA --> CheckGoal{达标?}:::stratCond\nPrepV --> CheckGoal\nCheckGoal -->|是| Win[过关]:::stratResult\nCheckGoal -->|否| Retry1[重试]:::stratRetry\nRetry1 --> StrategySelect\nModeOn --> StrategySelect2{选择策略2?}:::stratCond\nStrategySelect2 -->|组合途径| ComboPath[组合途径]\nStrategySelect2 -->|参数 B 优先| ParamBFirst[先调参数 B]\nParamBFirst --> PrepM[参数 B 路径汇合]\nComboPath --> PrepS[组合路径汇合]\nPrepM --> CheckGoal2{达标2?}:::stratCond\nPrepS --> CheckGoal2\nCheckGoal2 -->|是| Win\nCheckGoal2 -->|否| Retry2[重试2]:::stratRetry\nRetry2 --> StrategySelect2",
+      "routes": [
+        {
+          "id": "r1",
+          "label": "途径1 先调路径 A",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "Env",
+            "ModeOff",
+            "CheckB",
+            "StrategySelect",
+            "PathAFirst",
+            "PrepA",
+            "CheckGoal",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "PathAFirst"
+            ],
+            [
+              "CheckGoal",
+              "Win"
+            ]
+          ]
+        },
+        {
+      "id": "r2",
+      "label": "途径2 先调路径 B",
+      "mapsTo": [
+        "P1",
+        "O1",
+        "C1",
+        "R1"
+      ],
+      "highlightNodes": [
+        "Start",
+        "Env",
+        "ModeOff",
+        "CheckB",
+        "StrategySelect",
+        "PathBFirst",
+        "PrepV",
+        "CheckGoal",
+        "Win"
+      ],
+      "highlightEdges": [
+        [
+          "StrategySelect",
+          "PathBFirst"
+        ],
+        [
+          "PrepV",
+          "CheckGoal"
+        ],
+        [
+          "CheckGoal",
+          "Win"
+        ]
+      ]
+        },
+        {
+          "id": "r3",
+          "label": "途径3 参数 B 优先",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "ParamBFirst"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect2",
+              "ParamBFirst"
+            ],
+            [
+              "ParamBFirst",
+              "PrepM"
+            ],
+            [
+              "PrepM",
+              "CheckGoal2"
+            ],
+            [
+              "CheckGoal2",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "r4",
+          "label": "途径4 组合途径",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "ComboPath"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect2",
+              "ComboPath"
+            ],
+            [
+              "ComboPath",
+              "PrepS"
+            ],
+            [
+              "PrepS",
+              "CheckGoal2"
+            ],
+            [
+              "CheckGoal2",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "r5",
+          "label": "关态误调迷思",
+          "mapsTo": [
+            "P1",
+            "O1"
+          ],
+          "warn": "irrelevant",
+          "highlightNodes": [
+            "Start",
+            "Env",
+            "ModeOff",
+            "InvalidParamB"
+          ],
+          "highlightEdges": [
+            [
+              "ModeOff",
+              "InvalidParamB"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "sharedHub": {
+    "kg": {
+      "title": "共享 hub 策略回归",
+      "sub": "抽象拓扑",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "进入关卡开始游玩"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "调节参数操作控件"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "参数约束判定条件说明"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 4,
+          "r": 22,
+          "desc": "达成目标过关结果节点"
+        }
+      ],
+      "links": [
+        {
+          "source": "P1",
+          "target": "O1",
+          "type": "premise"
+        },
+        {
+          "source": "O1",
+          "target": "C1",
+          "type": "operation"
+        },
+        {
+          "source": "C1",
+          "target": "R1",
+          "type": "constraint"
+        }
+      ]
+    },
+    "dt": {
+      "title": "共享 hub",
+      "sub": "回归",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "开始",
+        "c": [
+          {
+            "n": "过关",
+            "t": "result",
+            "d": "成功过关"
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关"
+    },
+    "mapping": "| DT | KG | type | 备注 |\n| --- | --- | --- | --- |\n| 根 | P1 | premise | |",
+    "traceMap": {
+      "controls": {
+        "input-a": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      },
+      "legacyTypes": {}
+    },
+    "strategy": {
+      "title": "共享 hub 策略",
+      "sub": "Fire 扇出 + 编号副本",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|A| Strategy1[策略A]\nStrategySelect -->|B| Strategy2[策略B]\nStrategySelect -->|C| Strategy3[策略C]\nStrategy1 --> AdjustA[调节A]\nStrategy2 --> AdjustB[调节B]\nStrategy3 --> Tune[调节C]\nAdjustA --> Fire[发射]\nAdjustB --> Fire\nTune --> Fire\nFire --> Observe{观察?}:::stratCond\nFire --> Observe2{观察2?}:::stratCond\nFire --> CheckGoal{命中?}:::stratCond\nFire --> CheckGoal2{命中2?}:::stratCond\nObserve -->|偏近| AdjustA\nObserve -->|偏远| AdjustB\nObserve2 -->|偏近| AdjustA\nObserve2 -->|偏远| AdjustB\nTune --> Fire\nStrategy1 --> AdjustA\nStrategy2 --> AdjustB\nStrategy3 --> Tune\nFire --> CheckGoal\nCheckGoal -->|是| Win[过关]:::stratResult\nCheckGoal2 -->|是| Win\nObserve --> CheckGoal\nCheckGoal -->|否| Observe",
+      "routes": [
+        {
+          "id": "route1",
+          "label": "策略A",
+          "mapsTo": [
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Strategy1",
+            "AdjustA",
+            "Fire",
+            "Observe",
+            "CheckGoal",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Start",
+              "StrategySelect"
+            ],
+            [
+              "StrategySelect",
+              "Strategy1"
+            ],
+            [
+              "Strategy1",
+              "AdjustA"
+            ],
+            [
+              "AdjustA",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "Observe"
+            ],
+            [
+              "Observe",
+              "AdjustA"
+            ],
+            [
+              "Fire",
+              "CheckGoal"
+            ],
+            [
+              "CheckGoal",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route2",
+          "label": "策略B",
+          "mapsTo": [
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Strategy2",
+            "AdjustB",
+            "Fire",
+            "Observe2",
+            "CheckGoal2",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Start",
+              "StrategySelect"
+            ],
+            [
+              "StrategySelect",
+              "Strategy2"
+            ],
+            [
+              "Strategy2",
+              "AdjustB"
+            ],
+            [
+              "AdjustB",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "Observe2"
+            ],
+            [
+              "Observe2",
+              "AdjustA"
+            ],
+            [
+              "Observe2",
+              "AdjustB"
+            ],
+            [
+              "AdjustA",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "CheckGoal2"
+            ],
+            [
+              "CheckGoal2",
+              "Win"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "restrictedPairwise": {
+    "mapping": "| DT | KG | type | note |\n| --- | --- | --- | --- |\n| 进入 | P1 | premise | |\n| 操作 | O1 | operation | |\n| 约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+    "kg": {
+      "title": "受限 pairwise 回归",
+      "sub": "Observe+Adjust 共享 + Judge 子图",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入关卡"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节参数"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "约束满足"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "过关"
+        },
+        {
+          "id": "S1",
+          "label": "S1",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "教学要点"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "R1",
+          "tp": "core"
+        },
+        {
+          "s": "S1",
+          "t": "O1",
+          "tp": "verify"
+        }
+      ]
+    },
+    "dt": {
+      "title": "演示 DT",
+      "sub": "单约束",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "进入",
+        "children": [
+          {
+            "n": "达标?",
+            "t": "decision",
+            "d": "判定",
+            "children": [
+              {
+                "_e": "否",
+                "n": "重试",
+                "t": "retry",
+                "d": "未达标"
+              },
+              {
+                "_e": "是",
+                "n": "过关",
+                "t": "result",
+                "d": "达标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关",
+      "sub": "达标"
+    },
+    "traceMap": {
+      "controls": {
+        "param": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "受限 pairwise 策略",
+      "sub": "Judge bleed 回归",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|参数 A 优先| ParamAFirst[先调参数 A]\nStrategySelect -->|参数 B 优先| ParamBFirst[先调参数 B]\nStrategySelect -->|同步微调| Sync[同步微调]\nParamAFirst --> Adjust[调节]\nParamBFirst --> Adjust\nSync --> Adjust\nAdjust --> Fire[发射]\nFire --> Observe{观察?}:::stratCond\nObserve -->|否| Judge{偏近或偏远?}:::stratCond\nJudge -->|偏近| DecreaseA[减小参数 A]\nJudge -->|偏远| IncreaseA[增大参数 A]\nJudge -->|出界| Retry[重置]:::stratRetry\nObserve -->|是| Win[过关]:::stratResult\nDecreaseA --> Adjust\nIncreaseA --> Adjust\nRetry --> Adjust",
+      "routes": [
+        {
+          "id": "param-a-first",
+          "label": "参数 A 优先",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "ParamAFirst",
+            "Adjust",
+            "Fire",
+            "Observe",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Start",
+              "StrategySelect"
+            ],
+            [
+              "StrategySelect",
+              "ParamAFirst"
+            ],
+            [
+              "ParamAFirst",
+              "Adjust"
+            ],
+            [
+              "Adjust",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "Observe"
+            ],
+            [
+              "Observe",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "sync",
+          "label": "同步微调",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Sync",
+            "Adjust",
+            "Fire",
+            "Observe",
+            "Judge",
+            "DecreaseA",
+            "IncreaseA",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Start",
+              "StrategySelect"
+            ],
+            [
+              "StrategySelect",
+              "Sync"
+            ],
+            [
+              "Sync",
+              "Adjust"
+            ],
+            [
+              "Adjust",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "Observe"
+            ],
+            [
+              "Observe",
+              "Judge"
+            ],
+            [
+              "Judge",
+              "DecreaseA"
+            ],
+            [
+              "DecreaseA",
+              "Adjust"
+            ],
+            [
+              "Observe",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route-3",
+          "label": "出界重试",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Sync",
+            "Adjust",
+            "Fire",
+            "Observe",
+            "Judge",
+            "Retry",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Start",
+              "StrategySelect"
+            ],
+            [
+              "StrategySelect",
+              "Sync"
+            ],
+            [
+              "Sync",
+              "Adjust"
+            ],
+            [
+              "Adjust",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "Observe"
+            ],
+            [
+              "Observe",
+              "Judge"
+            ],
+            [
+              "Judge",
+              "Retry"
+            ],
+            [
+              "Retry",
+              "Adjust"
+            ],
+            [
+              "Observe",
+              "Win"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "macroFanout": {
+    "mapping": "| DT | KG | type | note |\n| --- | --- | --- | --- |\n| 进入 | P1 | premise | |\n| 操作 | O1 | operation | |\n| 约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+    "kg": {
+      "title": "宏策略扇出回归",
+      "sub": "Fire 多 gate 扇出检测",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入关卡"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节参数"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "约束满足"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "过关"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "R1",
+          "tp": "core"
+        }
+      ]
+    },
+    "dt": {
+      "title": "演示 DT",
+      "sub": "单约束",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "进入",
+        "children": [
+          {
+            "n": "达标?",
+            "t": "decision",
+            "d": "判定",
+            "children": [
+              {
+                "_e": "否",
+                "n": "重试",
+                "t": "retry",
+                "d": "未达标"
+              },
+              {
+                "_e": "是",
+                "n": "过关",
+                "t": "result",
+                "d": "达标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关",
+      "sub": "达标"
+    },
+    "traceMap": {
+      "controls": {
+        "param": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "宏策略扇出",
+      "sub": "detectMacroRouteFanOut 回归",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|A| Adjust1[调节1]\nAdjust1 --> Fire[发射]\nFire --> CheckGoal{命中目标?}:::stratCond\nFire --> CheckGoal2{命中目标2?}:::stratCond\nFire --> CheckGoal3{命中目标3?}:::stratCond\nFire --> Observe{观察偏近/偏远?}:::stratCond\nFire --> Observe2{观察偏近/偏远2?}:::stratCond\nFire --> Observe3{观察偏近/偏远3?}:::stratCond\nCheckGoal -->|是| Win[过关]:::stratResult\nCheckGoal2 -->|是| Win\nCheckGoal3 -->|是| Win",
+      "routes": [
+        {
+          "id": "route1",
+          "label": "途径1",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust1",
+            "Fire",
+            "CheckGoal",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "Adjust1"
+            ],
+            [
+              "Adjust1",
+              "Fire"
+            ],
+            [
+              "Fire",
+              "CheckGoal"
+            ],
+            [
+              "CheckGoal",
+              "Win"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "phantomContinue": {
+    "mapping": "| DT | KG | type | note |\n| --- | --- | --- | --- |\n| 进入 | P1 | premise | |\n| 操作 | O1 | operation | |\n| 约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+    "kg": {
+      "title": "phantom Continue 回归",
+      "sub": "Observe3→Continue→Win",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入关卡"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节参数"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "约束满足"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "过关"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "R1",
+          "tp": "core"
+        }
+      ]
+    },
+    "dt": {
+      "title": "演示 DT",
+      "sub": "单约束",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "进入",
+        "children": [
+          {
+            "n": "达标?",
+            "t": "decision",
+            "d": "判定",
+            "children": [
+              {
+                "_e": "否",
+                "n": "重试",
+                "t": "retry",
+                "d": "未达标"
+              },
+              {
+                "_e": "是",
+                "n": "过关",
+                "t": "result",
+                "d": "达标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关",
+      "sub": "达标"
+    },
+    "traceMap": {
+      "controls": {
+        "param": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "phantom Continue",
+      "sub": "禁止 Observe3→Win 直连",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|route1| Adjust1[调节1]\nAdjust1 --> Fire1[发射1]\nFire1 --> Observe1{观察1?}:::stratCond\nObserve1 -->|否| Retry1[重试1]:::stratRetry\nRetry1 --> Adjust1\nStrategySelect -->|route2| Adjust3[调节3]\nAdjust3 --> Fire3[发射3]\nFire3 --> Observe3{观察3?}:::stratCond\nObserve3 -->|未飞出| Continue[继续观察]\nContinue -->|命中| Win[过关]:::stratResult\nStrategySelect -->|route3| Adjust2[调节2]\nAdjust2 --> Fire2[发射2]\nFire2 --> Observe2{观察2?}:::stratCond\nObserve2 -->|否| Retry2[重试2]:::stratRetry\nRetry2 --> Adjust2",
+      "routes": [
+        {
+          "id": "route-1",
+          "label": "途径1",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust1",
+            "Fire1",
+            "Observe1",
+            "Retry1",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "Adjust1"
+            ],
+            [
+              "Adjust1",
+              "Fire1"
+            ],
+            [
+              "Fire1",
+              "Observe1"
+            ],
+            [
+              "Observe1",
+              "Retry1"
+            ],
+            [
+              "Retry1",
+              "Adjust1"
+            ]
+          ]
+        },
+        {
+          "id": "route-2",
+          "label": "途径2 Continue",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust3",
+            "Fire3",
+            "Observe3",
+            "Continue",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "Adjust3"
+            ],
+            [
+              "Adjust3",
+              "Fire3"
+            ],
+            [
+              "Fire3",
+              "Observe3"
+            ],
+            [
+              "Observe3",
+              "Continue"
+            ],
+            [
+              "Continue",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route-3",
+          "label": "途径3",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust2",
+            "Fire2",
+            "Observe2",
+            "Retry2",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "Adjust2"
+            ],
+            [
+              "Adjust2",
+              "Fire2"
+            ],
+            [
+              "Fire2",
+              "Observe2"
+            ],
+            [
+              "Observe2",
+              "Retry2"
+            ],
+            [
+              "Retry2",
+              "Adjust2"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "multiGateRetry": {
+    "mapping": "| DT | KG | type | note |\n| --- | --- | --- | --- |\n| 进入 | P1 | premise | |\n| 操作 | O1 | operation | |\n| 约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+    "kg": {
+      "title": "多 gate Retry 隔离",
+      "sub": "分 route gate + Retry 回归",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "P1",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入关卡"
+        },
+        {
+          "id": "O1",
+          "label": "O1",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节参数"
+        },
+        {
+          "id": "C1",
+          "label": "C1",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "约束满足"
+        },
+        {
+          "id": "R1",
+          "label": "R1",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "过关"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "R1",
+          "tp": "core"
+        }
+      ]
+    },
+    "dt": {
+      "title": "演示 DT",
+      "sub": "单约束",
+      "tree": {
+        "n": "根",
+        "t": "root",
+        "d": "进入",
+        "children": [
+          {
+            "n": "达标?",
+            "t": "decision",
+            "d": "判定",
+            "children": [
+              {
+                "_e": "否",
+                "n": "重试",
+                "t": "retry",
+                "d": "未达标"
+              },
+              {
+                "_e": "是",
+                "n": "过关",
+                "t": "result",
+                "d": "达标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "过关",
+      "sub": "达标"
+    },
+    "traceMap": {
+      "controls": {
+        "param": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "多 gate Retry",
+      "sub": "CheckGoal 编号隔离 + 分 Observe Retry",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|route1| Adjust1[调节1]\nAdjust1 --> Fire[发射]\nFire --> CheckGoal{命中?}:::stratCond\nFire --> CheckGoal2{命中2?}:::stratCond\nFire --> CheckGoal3{命中3?}:::stratCond\nCheckGoal -->|否| Retry[重试]:::stratRetry\nCheckGoal2 -->|否| Retry\nCheckGoal3 -->|否| Retry\nCheckGoal -->|是| Win[过关]:::stratResult\nCheckGoal2 -->|是| Win\nCheckGoal3 -->|是| Win\nRetry --> Adjust1\nStrategySelect -->|routeA| AdjustA[调节A]\nAdjustA --> Fire1[发射1]\nFire1 --> Observe1{观察1?}:::stratCond\nObserve1 -->|否| Retry1[重试1]:::stratRetry\nRetry1 --> AdjustA\nStrategySelect -->|routeB| AdjustB[调节B]\nAdjustB --> Fire2[发射2]\nFire2 --> Observe2{观察2?}:::stratCond\nObserve2 -->|否| Retry2[重试2]:::stratRetry\nRetry2 --> AdjustB\nStrategySelect -->|routeC| AdjustC[调节C]\nAdjustC --> Fire3[发射3]\nFire3 --> Observe3{观察3?}:::stratCond\nObserve3 -->|否| Retry3[重试3]:::stratRetry\nRetry3 --> AdjustC\nPrepLink[PrepLink] --> Fire1\nObserve1 -->|是| Win\nObserve2 -->|是| Win\nObserve3 -->|是| Win",
+      "routes": [
+        {
+          "id": "route1",
+          "label": "gate1",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust1",
+            "Fire",
+            "CheckGoal",
+            "Retry",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "Adjust1"
+            ],
+            [
+              "Fire",
+              "CheckGoal"
+            ],
+            [
+              "CheckGoal",
+              "Retry"
+            ],
+            [
+              "CheckGoal",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route2",
+          "label": "gate2",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust1",
+            "Fire",
+            "CheckGoal2",
+            "Retry",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Fire",
+              "CheckGoal2"
+            ],
+            [
+              "CheckGoal2",
+              "Retry"
+            ],
+            [
+              "CheckGoal2",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route3",
+          "label": "gate3",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "Adjust1",
+            "Fire",
+            "CheckGoal3",
+            "Retry",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Fire",
+              "CheckGoal3"
+            ],
+            [
+              "CheckGoal3",
+              "Retry"
+            ],
+            [
+              "CheckGoal3",
+              "Win"
+            ]
+          ]
+        },
+        {
+          "id": "route-a",
+          "label": "Observe1 分支",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "AdjustA",
+            "Fire1",
+            "Observe1",
+            "PrepLink",
+            "Retry1",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "AdjustA"
+            ],
+            [
+              "PrepLink",
+              "Fire1"
+            ],
+            [
+              "Fire1",
+              "Observe1"
+            ],
+            [
+              "Observe1",
+              "Retry1"
+            ],
+            [
+              "Retry1",
+              "AdjustA"
+            ]
+          ]
+        },
+        {
+          "id": "route-b",
+          "label": "Observe2 分支",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "AdjustB",
+            "Fire2",
+            "Observe2",
+            "Retry2",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "AdjustB"
+            ],
+            [
+              "Fire2",
+              "Observe2"
+            ],
+            [
+              "Observe2",
+              "Retry2"
+            ],
+            [
+              "Retry2",
+              "AdjustB"
+            ]
+          ]
+        },
+        {
+          "id": "route-c",
+          "label": "Observe3 分支",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "AdjustC",
+            "Fire3",
+            "Observe3",
+            "Retry3",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "StrategySelect",
+              "AdjustC"
+            ],
+            [
+              "Fire3",
+              "Observe3"
+            ],
+            [
+              "Observe3",
+              "Retry3"
+            ],
+            [
+              "Retry3",
+              "AdjustC"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}

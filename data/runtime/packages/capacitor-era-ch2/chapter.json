@@ -1,0 +1,1265 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C1 | constraint | 开态 |\n| 否→竞赛模式 | C1 | constraint | 关态 |\n| 调节 C₁ | O1 | operation | 调参 |\n| 调节 C₂ | O1 | operation | 调参 |\n| 调节 C₃ | O1 | operation | 调参 |\n| 调节 L | O1 | operation | 调参 |\n| 确认配置 | O1 | operation | 触发读数 |\n| 总电容在目标带? | C2 | constraint | 过关判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | skip retry | skip retry | 回到调参 |\n| 过载? | C3 | constraint | 安全判定 |\n| 是→重试 | skip retry | skip retry | 过载提示 |\n| 否→继续 | step | junction | 继续 |\n| 击穿? | C4 | constraint | 安全判定 |\n| 是→重试 | skip retry | skip retry | 击穿提示 |\n| 否→继续 | step | junction | 继续 |\n| 并联公式 | S1 | core | teach 节点 |\n| 串联公式 | S2 | core | teach 节点 |\n| 验证 | verify | verify | 连回 O1 |",
+  "kg": {
+    "title": "电容实验二：串并联配置",
+    "sub": "第二章 · 储能电站重启",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始储能电站串并联配置实验"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究模式或竞赛模式，竞赛模式目标随机锁定",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节电容与馈线",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "拖动滑条调节 C₁、C₂、C₃ 和馈线长度 L，点击确认配置"
+      },
+      {
+        "id": "C2",
+        "label": "总电容在目标带?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "总电容是否落入目标区间（探究±3%，竞赛±1.2%）",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "过载?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "总电容是否超过 750 µF 安全阈值",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C4",
+        "label": "击穿?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "并联组或 C₃ 承压是否超过额定耐压 2500 V",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "总电容达标且无过载击穿，电站重启成功"
+      },
+      {
+        "id": "S1",
+        "label": "并联公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "并联时总电容等于各电容之和：C = C₁ + C₂"
+      },
+      {
+        "id": "S2",
+        "label": "串联公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "串联时总电容倒数等于各电容倒数之和：1/C = 1/Cp + 1/C₃"
+      },
+      {
+        "id": "I1",
+        "label": "音量",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "音频音量滑条，与电容实验无关"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "电容实验二：串并联配置",
+    "sub": "第二章 · 储能电站重启",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始储能电站串并联配置实验",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择探究模式或竞赛模式",
+          "children": [
+            {
+              "_e": "否",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "竞赛模式，目标随机锁定"
+            },
+            {
+              "_e": "是",
+              "n": "探究模式",
+              "t": "step",
+              "d": "探究模式，目标固定 500 µF"
+            }
+          ]
+        },
+        {
+          "n": "调节 C₁、C₂、C₃、L",
+          "t": "step",
+          "d": "拖动滑条调节参数，点击确认配置",
+          "children": [
+            {
+              "n": "调节电容与馈线",
+              "t": "step",
+              "d": "拖动滑条调节 C₁、C₂、C₃ 和馈线长度 L，点击确认配置",
+              "children": []
+            },
+            {
+              "n": "总电容在目标带?",
+              "t": "decision",
+              "d": "总电容是否落入目标区间",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "重试",
+                  "t": "retry",
+                  "d": "未达标，返回调参",
+                  "children": []
+                },
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "总电容达标"
+                }
+              ]
+            },
+            {
+              "n": "负载正常?",
+              "t": "decision",
+              "d": "总电容是否超过 750 µF",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "过载重试",
+                  "t": "retry",
+                  "d": "过载，返回调参",
+                  "children": []
+                },
+                {
+                  "_e": "是",
+                  "n": "继续",
+                  "t": "step",
+                  "d": "未过载"
+                }
+              ]
+            },
+            {
+              "n": "击穿?",
+              "t": "decision",
+              "d": "并联组或 C₃ 承压是否超过 2500 V",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "继续",
+                  "t": "step",
+                  "d": "未击穿"
+                },
+                {
+                  "_e": "是",
+                  "n": "击穿重试",
+                  "t": "retry",
+                  "d": "击穿，返回调参"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 你学到了什么",
+    "sub": "通过调参与观察，你验证了本实验的核心关系。"
+  },
+  "traceMap": {
+    "controls": {
+      "s-c1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-c2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-c3": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-cable": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "audio-volume": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "电容实验二：串并联配置",
+    "sub": "第二章 · 储能电站重启",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[确认配置]\nAdjust2 --> Fire2[确认配置]\nAdjust3 --> Fire3[确认配置]\nAdjust4 --> Fire4[确认配置]\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFire1 --> Observe1{观察总电容?}:::stratCond\nFire2 --> Observe2{观察总电容?}:::stratCond\nFire3 --> Observe3{观察总电容?}:::stratCond\nFire4 --> Observe4{观察总电容?}:::stratCond\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|未达标| Adjust\nObserve1 -->|偏低| Adjust1\nObserve1 -->|偏高| Adjust1\nObserve1 -->|观察| Retry1[重试]:::stratRetry\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|偏低| Adjust2\nObserve2 -->|偏高| Adjust2\nObserve2 -->|观察| Retry2[重试]:::stratRetry\nObserve2 -->|达标| Win\nObserve3 -->|偏低| Adjust3\nObserve3 -->|偏高| Adjust3\nObserve3 -->|观察| Retry3[重试]:::stratRetry\nObserve3 -->|达标| Win\nObserve4 -->|偏低| Adjust4\nObserve4 -->|偏高| Adjust4\nObserve4 -->|观察| Retry4[重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetest --> Observe\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nObserve{观察偏高/偏低/达标?}:::stratCond\nAdjust[单变量微调]\nRetest[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjust --> Retest\nAdjustFB --> RetestFB\nRetry1 --> Adjust1\nRetry2 --> Adjust2\nRetry3 --> Adjust3\nRetry4 --> Adjust4\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nRoute1 --> Adjust1[调整C₁]\nRoute2 --> Adjust2[调整C₂]\nRoute3 --> Adjust3[调整C₃]\nRoute4 --> Adjust4[调整L]\nTrap --> AdjustT[固定其余，只调audio-volume]\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·电容C1",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeOn",
+          "ModeOff",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2",
+          "Adjust3",
+          "Fire3",
+          "Observe3",
+          "Retry3",
+          "Adjust4",
+          "Fire4",
+          "Observe4",
+          "Retry4"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "Env",
+            "ModeOff"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
+          [
+            "ModeOff",
+            "StrategySelect"
+          ],
+          [
+            "Route1",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ],
+          [
+            "Route2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Win"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ],
+          [
+            "Route3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Observe3",
+            "Win"
+          ],
+          [
+            "Observe3",
+            "Retry3"
+          ],
+          [
+            "Retry3",
+            "Adjust3"
+          ],
+          [
+            "Route4",
+            "Adjust4"
+          ],
+          [
+            "Adjust4",
+            "Fire4"
+          ],
+          [
+            "Fire4",
+            "Observe4"
+          ],
+          [
+            "Observe4",
+            "Adjust4"
+          ],
+          [
+            "Observe4",
+            "Win"
+          ],
+          [
+            "Observe4",
+            "Retry4"
+          ],
+          [
+            "Retry4",
+            "Adjust4"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-c2",
+        "label": "单变量·电容C2",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ModeOff",
+          "Env",
+          "ModeOn",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Route1",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-c3",
+        "label": "单变量·电容C3",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ModeOff",
+          "Env",
+          "ModeOn",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Route2",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Observe2",
+            "Win"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-cable",
+        "label": "单变量·馈线长度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.55,
+        "weight": 0.55,
+        "priorityRank": 4,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ModeOff",
+          "Env",
+          "ModeOn",
+          "Adjust3",
+          "Fire3",
+          "Observe3",
+          "Retry3"
+        ],
+        "highlightEdges": [
+          [
+            "Route3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Observe3",
+            "Win"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Observe3",
+            "Retry3"
+          ],
+          [
+            "Retry3",
+            "Adjust3"
+          ],
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeOn",
+          "StrategySelect",
+          "AdjustT",
+          "FireT",
+          "ObserveT",
+          "RetryT"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeOn"
+          ],
+          [
+            "ModeOn",
+            "StrategySelect"
+          ],
+          [
+            "ModeOff",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "AdjustT"
+          ],
+          [
+            "AdjustT",
+            "FireT"
+          ],
+          [
+            "FireT",
+            "ObserveT"
+          ],
+          [
+            "ObserveT",
+            "AdjustT"
+          ],
+          [
+            "ObserveT",
+            "RetryT"
+          ],
+          [
+            "RetryT",
+            "AdjustT"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_audio_volume",
+        "label": "试探混淆·音量",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.47000000000000003,
+        "weight": 0.47000000000000003,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 5
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "电容实验二：串并联配置",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容实验二：串并联配置",
+        "formulas": [
+          "C = ΣCᵢ；串联 1/C = Σ(1/Cᵢ)",
+          "R    = [100, 400]",
+          "E = 500",
+          "R  = 1000"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-c1",
+        "label": "电容C1",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-c2",
+        "label": "电容C2",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-c3",
+        "label": "电容C3",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 4
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：并联公式、串联公式",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：并联公式；串联公式",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节电容与馈线、调节电容与馈线、调节电容与馈线、调节电容与馈线、模式选择；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1",
+            "O1",
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：音量（音频音量滑条，与电容实验无关）",
+          "mapsToKg": [
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "电容读数",
+        "symbol": "C",
+        "unit": "pF",
+        "role": "primary",
+        "source": "observe"
+      },
+      {
+        "id": "OV2",
+        "label": "是否击穿",
+        "symbol": "E>Ebd",
+        "unit": "",
+        "role": "secondary",
+        "source": "constraint"
+      }
+    ],
+    "domain": "capacitor"
+  },
+  "physicsModel": {
+    "formulas": [
+      "C = ΣCᵢ；串联 1/C = Σ(1/Cᵢ)",
+      "R    = [100, 400]",
+      "E = 500",
+      "R  = 1000"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1",
+      "OV2"
+    ],
+    "core": {
+      "formulas": [
+        "C = ΣCᵢ；串联 1/C = Σ(1/Cᵢ)",
+        "R    = [100, 400]",
+        "E = 500",
+        "R  = 1000"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "电容读数进入目标带且未击穿",
+      "domain": "capacitor"
+    }
+  },
+  "gameSpec": {
+    "title": "电容实验二：串并联配置",
+    "subtitle": "第二章 · 储能电站重启",
+    "winCondition": "总电容达标且无过载击穿，电站重启成功",
+    "knowledgeSummary": "电容实验二：串并联配置",
+    "controls": [
+      {
+        "id": "s-c1",
+        "type": "range",
+        "label": "电容C1",
+        "symbol": "电容C1",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-c2",
+        "type": "range",
+        "label": "电容C2",
+        "symbol": "电容C2",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-c3",
+        "type": "range",
+        "label": "电容C3",
+        "symbol": "电容C3",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-cable",
+        "type": "range",
+        "label": "馈线长度",
+        "symbol": "馈线长度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因",
+        "uiStrategy": "teach_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "选择探究模式或竞赛模式，竞赛模式目标随机锁定"
+      },
+      {
+        "kgId": "C2",
+        "label": "总电容在目标带?",
+        "desc": "总电容是否落入目标区间（探究±3%，竞赛±1.2%）"
+      },
+      {
+        "kgId": "C3",
+        "label": "过载?",
+        "desc": "总电容是否超过 750 µF 安全阈值"
+      },
+      {
+        "kgId": "C4",
+        "label": "击穿?",
+        "desc": "并联组或 C₃ 承压是否超过额定耐压 2500 V"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-c1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-c2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-c3": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-cable": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "audio-volume": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "电容C1",
+        "symbol": "电容C1",
+        "unit": "",
+        "source": "state.s-c1"
+      },
+      {
+        "label": "电容C2",
+        "symbol": "电容C2",
+        "unit": "",
+        "source": "state.s-c2"
+      },
+      {
+        "label": "电容C3",
+        "symbol": "电容C3",
+        "unit": "",
+        "source": "state.s-c3"
+      },
+      {
+        "label": "馈线长度",
+        "symbol": "馈线长度",
+        "unit": "",
+        "source": "state.s-cable"
+      },
+      {
+        "label": "电容读数",
+        "symbol": "C",
+        "unit": "pF",
+        "source": "computed"
+      },
+      {
+        "label": "是否击穿",
+        "symbol": "E>Ebd",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-c1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-c1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-c2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-c2 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-c3",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-c3 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-cable",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-cable → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "audio-volume",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 audio-volume"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "选择探究模式或竞赛模式"
+      },
+      {
+        "name": "总电容在目标带?",
+        "type": "decision",
+        "desc": "总电容是否落入目标区间"
+      },
+      {
+        "name": "重试",
+        "type": "retry",
+        "desc": "未达标，返回调参"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "总电容达标"
+      },
+      {
+        "name": "过载?",
+        "type": "decision",
+        "desc": "总电容是否超过 750 µF"
+      },
+      {
+        "name": "过载重试",
+        "type": "retry",
+        "desc": "过载，返回调参"
+      },
+      {
+        "name": "击穿?",
+        "type": "decision",
+        "desc": "并联组或 C₃ 承压是否超过 2500 V"
+      },
+      {
+        "name": "击穿重试",
+        "type": "retry",
+        "desc": "击穿，返回调参"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

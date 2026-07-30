@@ -1,0 +1,221 @@
+{
+  "_expertMeta": {
+    "id": "multi-kp",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.511Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "机械能 · 过山车环路",
+    "sub": "探究过山车翻越环顶的条件",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "小车停在出发台",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调参发射",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "过环判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "停稳判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "飞出边界",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C5",
+        "label": "超时判定",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "机械能守恒",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "能量与过环关系",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "method"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "O1",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "机械能 · 过山车环路",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "机械能 · 过山车环路",
+        "formulas": [
+          "R = 0.55",
+          "R = 0.6",
+          "E = 3.4"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-speed",
+        "label": "初速度",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-height",
+        "label": "起始高度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-mass",
+        "label": "质量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1",
+      "OV2"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·初速度",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-height",
+        "label": "单变量·起始高度",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_s_mass",
+        "label": "试探混淆·质量",
+        "priorityRank": 3,
+        "score": 0.7
+      }
+    ]
+  }
+}

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>气体 · 玻意耳定律</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
+        .card { max-width: 680px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 24px 28px; }
+        h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.01em; }
+        .sub { color: #4b5563; font-size: 0.95rem; margin-bottom: 20px; border-left: 3px solid #3b82f6; padding-left: 12px; }
+        .canvas-wrap { background: #eef2f6; border-radius: 12px; padding: 12px; margin-bottom: 20px; }
+        canvas { display: block; width: 100%; height: auto; background: white; border-radius: 8px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.04); }
+        .control-grid { display: flex; flex-direction: column; gap: 18px; margin: 18px 0 16px; }
+        .slider-group { display: flex; flex-direction: column; gap: 4px; }
+        .slider-group label { font-weight: 500; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .slider-group input[type="range"] { width: 100%; accent-color: #2563eb; }
+        .row-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin: 8px 0 14px; }
+        button { background: #2563eb; color: white; border: none; padding: 8px 20px; border-radius: 40px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; box-shadow: 0 2px 6px rgba(37,99,235,0.2); }
+        button:hover { background: #1d4ed8; }
+        button.secondary { background: #e5e7eb; color: #1f2937; box-shadow: none; }
+        button.secondary:hover { background: #d1d5db; }
+        .observe-box { background: #f8fafc; border-radius: 12px; padding: 14px 16px; margin: 12px 0 16px; border: 1px solid #e2e8f0; }
+        .observe-box .val { font-size: 1.8rem; font-weight: 600; color: #0f172a; letter-spacing: -0.02em; }
+        .observe-box .unit { font-size: 0.9rem; color: #475569; margin-left: 6px; }
+        .hint { font-size: 0.9rem; color: #475569; margin-top: 6px; line-height: 1.45; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+        #hintMsg { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+        .confound-note { background: #f1f5f9; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #334155; border-left: 3px solid #94a3b8; margin: 8px 0 12px; }
+        .win-badge { background: #10b981; color: white; padding: 6px 14px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; display: inline-block; margin-top: 6px; }
+        .irr-area { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d1d5db; display: flex; justify-content: flex-end; }
+        #I1 { background: transparent; border: 1px solid #cbd5e1; color: #334155; box-shadow: none; font-size: 0.8rem; padding: 4px 14px; }
+        #I1:hover { background: #f1f5f9; }
+        footer { font-size: 0.7rem; color: #94a3b8; text-align: center; margin-top: 16px; }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#c084fc;--craft-bg:#120818;--craft-panel:#22142e;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-text)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#essence-bench .secondary,#btn-reset{background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;}
+#essence-bench .observe-box{background:rgba(0,0,0,.32)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench .observe-box .val{color:#ffe0c2!important;}
+#essence-bench .hint{color:var(--craft-text)!important;}
+#essence-bench footer{display:none!important;}
+#essence-bench .irr-area{display:none!important;}
+#essence-hud{top:56px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#dual-mode-hud .dual-chip,#challengeStats,
+#essence-stage > #dual-mode-hud .dual-chip,#essence-stage > #dual-mode-hud #challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#ffe0c2!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>深潜器 · 压舱气室</h2>
+    <p>下潜前压舱气室读数飘了。试着弄清压强与体积如何关联；再接限次急单——标定带本局固定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后标定带本局固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">pV = 常数（等温）</div>
+    <p id="craftWinText">温度不变时，压强与体积成反比，二者乘积保持恒定。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="gasCanvas" width="600" height="200"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">深潜器 · 压舱气室</div>
+      <div class="essence-sub" id="goalMission">探究：自由调 p、V，观察乘积变化</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="card">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：压强与体积怎样关联。竞赛另有限次急单。</p>
+    <div class="control-grid">
+        <div class="slider-group">
+            <label for="s-pressure">压强 <span id="pValDisplay">3.0 atm</span></label>
+            <input type="range" id="s-pressure" min="1" max="10" step="0.1" value="3.0">
+        </div>
+        <div class="slider-group">
+            <label for="s-volume">体积 <span id="vValDisplay">5.0 L</span></label>
+            <input type="range" id="s-volume" min="1" max="10" step="0.1" value="5.0">
+        </div>
+        <div class="slider-group">
+            <label for="s-temp">标称温度 T <span id="tValDisplay">300 K</span></label>
+            <input type="range" id="s-temp" min="250" max="400" step="1" value="300">
+        </div>
+    </div>
+
+    <!-- 操作按钮 + 无关控件 I1 -->
+    <div class="row-buttons">
+        <button type="button" id="btn-test">测试 · 观察乘积</button>
+        <button type="button" id="btn-reset" class="secondary">重置</button>
+    </div>
+
+    <!-- Observe 反馈区 -->
+    <div class="observe-box" id="observeBox">
+        <div>
+            <span class="val" id="pvDisplay">—</span>
+            <span class="unit">atm·L</span>
+        </div>
+        <div class="hint" id="hintMessage">偏离标定带 · 调参后点测试</div>
+        <div id="winIndicator"></div>
+    </div>
+
+    <input type="hidden" id="I1" value="irrelevant">
+</div>
+
+<!-- trace-adapter-hook (埋点, 只嵌入一次) -->
+
+
+
+
+<!-- trace-adapter-hook -->
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <!-- actions stay in scroll if none found -->
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+    function emit(type, payload) {
+        try {
+            if (window.PlatformTraceAdapter) {
+                window.PlatformTraceAdapter.record(type, payload || {});
+                return;
+            }
+        } catch (e) {}
+        try {
+            if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+                window.parent.PlatformTraceAdapter.record(type, payload || {});
+            }
+        } catch (e) {}
+    }
+
+    function snapControls() {
+        var o = {};
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+            var id = el.id || el.name; if (id) o[id] = el.value;
+        });
+        return o;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // puzzle_open
+        emit('puzzle_open', {});
+
+        // tuning 绑定 (所有 range)
+        document.querySelectorAll('input[type="range"]').forEach(function(el) {
+            el.addEventListener('input', function() {
+                emit('tuning', { control: el.id || 'slider', value: el.value });
+            });
+        });
+
+        // irrelevant_touch 绑定 I1
+        var i1 = document.getElementById('I1');
+        if (i1) {
+            i1.addEventListener('click', function() {
+                emit('irrelevant_touch', { control: 'I1', value: 'click' });
+            });
+        }
+    });
+})();
+</script>
+<script>
+    (function() {
+        const pSlider = document.getElementById('s-pressure');
+        const vSlider = document.getElementById('s-volume');
+        const tSlider = document.getElementById('s-temp');
+        const pDisplay = document.getElementById('pValDisplay');
+        const vDisplay = document.getElementById('vValDisplay');
+        const tDisplay = document.getElementById('tValDisplay');
+        const pvDisplay = document.getElementById('pvDisplay');
+        const hintMsg = document.getElementById('hintMessage');
+        const winIndicator = document.getElementById('winIndicator');
+        const btnTest = document.getElementById('btn-test');
+        const btnReset = document.getElementById('btn-reset');
+        const canvas = document.getElementById('gasCanvas');
+        const ctx = canvas.getContext('2d');
+        let W = 600, H = 320, animT = 0, pulse = 0;
+        let BAND_LO = 9.5, BAND_HI = 10.5;
+        let playMode = 'explore';
+        let lockedBand = null;
+        let challengeWon = false;
+        /** 仅「测试」后揭示 p·V 乘积 */
+        let measuredPV = null;
+        const MODE_GOALS = {
+          explore: {
+            hud: '探究：自由试压，观察 p·V 乘积如何变化',
+            side: '探究·压舱试压：试着弄清 p、V 如何影响乘积；宽标定带仅作对照。'
+          },
+          challenge: {
+            hud: '竞赛：限次把乘积打进本局锁定标定带（本局固定）',
+            side: '竞赛·等温急单：限次把乘积打进本局锁定标定带；打偏不换带。'
+          }
+        };
+        function refreshGasGoals() {
+          const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+          const mission = document.getElementById('goalMission');
+          const side = document.getElementById('sideGoal');
+          if (playMode === 'challenge' && lockedBand) {
+            if (mission) mission.textContent = '急单标定带：' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + ' · 本局固定';
+            if (side) side.textContent = '竞赛急单：限次把乘积调进 ' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + '（本局固定，打偏不换带）。';
+          } else {
+            if (mission) mission.textContent = g.hud;
+            if (side) side.textContent = g.side;
+          }
+        }
+        /** FixedChallenge：仅进入竞赛时锁定一次标定带（带宽明显窄于探究 ±0.5） */
+        function lockChallengeBand() {
+          const mid = 8 + Math.random() * 6; // 8–14
+          const half = 0.22 + Math.random() * 0.13; // 带宽约 0.44–0.70，窄于探究 1.0
+          BAND_LO = Math.round((mid - half) * 10) / 10;
+          BAND_HI = Math.round((mid + half) * 10) / 10;
+          lockedBand = { lo: BAND_LO, hi: BAND_HI };
+          challengeWon = false;
+          measuredPV = null;
+          pSlider.value = '3.0';
+          vSlider.value = '5.0';
+          refreshGasGoals();
+          updateAll();
+          hintMsg.textContent = '急单已锁定 · 标定带本局固定 · 调参后点测试';
+          winIndicator.innerHTML = '';
+        }
+        function applyExploreBand() {
+          lockedBand = null;
+          BAND_LO = 9.5; BAND_HI = 10.5;
+          challengeWon = false;
+          measuredPV = null;
+          refreshGasGoals();
+          updateAll();
+          hintMsg.textContent = '自由试压 · 点测试后对比乘积';
+          winIndicator.innerHTML = '';
+        }
+        window.__gasApplyMode = function(mode) {
+          playMode = mode === 'challenge' ? 'challenge' : 'explore';
+          if (playMode === 'challenge') lockChallengeBand();
+          else applyExploreBand();
+        };
+        document.addEventListener('dual-mode-change', function(ev) {
+          var m = ev && ev.detail && ev.detail.mode;
+          if (typeof window.__gasApplyMode === 'function') window.__gasApplyMode(m);
+        });
+        /* BATCH6-FIXED-20260724 FixedChallenge */
+
+        function syncCanvasSize() {
+            var stage = document.getElementById('essence-stage') || canvas.parentElement;
+            var cssW = Math.max(2, (stage && stage.clientWidth) || 600);
+            var cssH = Math.max(2, (stage && stage.clientHeight) || 320);
+            var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            var bw = Math.round(cssW * dpr), bh = Math.round(cssH * dpr);
+            if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            W = cssW; H = cssH;
+        }
+
+        function computePV() {
+            const p = parseFloat(pSlider.value) || 1;
+            const V = parseFloat(vSlider.value) || 1;
+            return { p, V, pv: p * V };
+        }
+
+        function drawScene(p, V, pv) {
+            syncCanvasSize();
+            ctx.clearRect(0, 0, W, H);
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#1a1024');
+            bg.addColorStop(1, '#0f172a');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, H * 0.82, W, H * 0.18);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, H * 0.82, W, 6);
+
+            // 实验台
+            const cylX = W * 0.18, cylY = H * 0.22, cylW = W * 0.58, cylH = H * 0.48;
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(cylX - 18, cylY + cylH, cylW + 36, 18);
+            ctx.strokeStyle = '#a78bfa';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(cylX, cylY, cylW, cylH);
+            ctx.fillStyle = 'rgba(192,132,252,0.08)';
+            ctx.fillRect(cylX, cylY, cylW, cylH);
+
+            const gasW = Math.max(40, (V / 10) * (cylW - 28));
+            const gasGrad = ctx.createLinearGradient(cylX, 0, cylX + gasW, 0);
+            gasGrad.addColorStop(0, 'rgba(167,139,250,0.55)');
+            gasGrad.addColorStop(1, 'rgba(56,189,248,0.35)');
+            ctx.fillStyle = gasGrad;
+            ctx.fillRect(cylX + 8, cylY + 10, gasW, cylH - 20);
+
+            // 分子
+            const n = 8 + Math.floor(p);
+            for (let i = 0; i < n; i++) {
+                const x = cylX + 20 + ((i * 47 + animT * (20 + p * 8)) % Math.max(20, gasW - 24));
+                const y = cylY + 24 + (i * 37 % Math.max(20, cylH - 48));
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(250,204,21,0.85)';
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 活塞
+            const pistonX = cylX + 8 + gasW;
+            ctx.fillStyle = '#c4b5fd';
+            ctx.fillRect(pistonX, cylY + 4, 14, cylH - 8);
+            ctx.fillStyle = '#ddd6fe';
+            ctx.fillRect(pistonX + 14, cylY + cylH * 0.35, Math.min(80, W - pistonX - 40), 16);
+            ctx.fillStyle = '#e9d5ff';
+            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('压舱活塞', pistonX + 18, cylY + cylH * 0.35 - 6);
+
+            // 压力表
+            ctx.beginPath();
+            ctx.fillStyle = '#111827';
+            ctx.arc(W * 0.86, H * 0.32, 34, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#c084fc';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            const ang = -Math.PI * 0.75 + (p / 10) * Math.PI * 1.5;
+            ctx.beginPath();
+            ctx.moveTo(W * 0.86, H * 0.32);
+            ctx.lineTo(W * 0.86 + Math.cos(ang) * 22, H * 0.32 + Math.sin(ang) * 22);
+            ctx.strokeStyle = '#fde68a';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#e9d5ff';
+            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.fillText('压强表', W * 0.86 - 18, H * 0.32 + 48);
+
+            const onBand = pv >= BAND_LO && pv <= BAND_HI;
+            const boxW = 230, boxH = 50, boxX = W - boxW - 16, boxY = H - boxH - 28;
+            ctx.fillStyle = 'rgba(15,23,42,0.85)';
+            ctx.fillRect(boxX, boxY, boxW, boxH);
+            ctx.strokeStyle = onBand ? 'rgba(167,139,250,0.7)' : 'rgba(148,163,184,0.35)';
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+            ctx.fillStyle = '#e9d5ff';
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText((playMode==='challenge'?'急单':'对照') + ' ' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + ' atm·L', boxX + 10, boxY + 20);
+            if (measuredPV == null) {
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText('当前乘积 待测 · 点测试后显示', boxX + 10, boxY + 38);
+            } else {
+                ctx.fillStyle = onBand ? '#c4b5fd' : '#fda4af';
+                ctx.fillText('当前乘积 ' + measuredPV.toFixed(2), boxX + 10, boxY + 38);
+            }
+
+            if (pulse > 0) {
+                ctx.globalAlpha = pulse;
+                ctx.strokeStyle = '#c084fc';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(cylX - 4, cylY - 4, cylW + 8, cylH + 8);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function updateAll() {
+            const { p, V, pv } = computePV();
+            pDisplay.textContent = p.toFixed(1) + ' atm';
+            vDisplay.textContent = V.toFixed(1) + ' L';
+            if (tDisplay && tSlider) tDisplay.textContent = parseFloat(tSlider.value).toFixed(0) + ' K';
+            pvDisplay.textContent = measuredPV == null ? '—' : measuredPV.toFixed(2);
+            drawScene(p, V, pv);
+        }
+
+        function checkWin() {
+            const { pv } = computePV();
+            const ok = (pv >= BAND_LO && pv <= BAND_HI);
+            let hintKey = 'win';
+            if (!ok) hintKey = pv < BAND_LO ? 'pv_low' : 'pv_high';
+            return { winOk: ok, hintKey: hintKey, pv: pv };
+        }
+
+        function emit(type, payload) {
+            try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload || {}); return; } } catch (e) {}
+            try { if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload || {}); } } catch (e) {}
+        }
+
+        function fireSnapshotAndWin() {
+            const { winOk, hintKey } = checkWin();
+            const { pv } = computePV();
+            measuredPV = pv;
+            pulse = 1;
+            const controls = {};
+            document.querySelectorAll('input[type="range"]').forEach(el => { if (el.id) controls[el.id] = el.value; });
+            try { emit('snapshot', { controls, winOk: playMode==='challenge' && winOk, hintKey: playMode==='explore'?'explore_observe':hintKey }); } catch(e) {}
+            if (playMode === 'explore') {
+                winIndicator.innerHTML = '';
+                hintMsg.textContent = '本次乘积 ' + pv.toFixed(2) + ' · 探究对比中';
+            } else if (winOk) {
+                try { emit('win', { winOk: true }); } catch(e) {}
+                winIndicator.innerHTML = '<span class="win-badge">过关 · 乘积落入锁定标定带</span>';
+                hintMsg.textContent = '急单完成 · 乘积已入标定带';
+                if (!challengeWon && typeof window.__craftShowWin === 'function') {
+                  challengeWon = true;
+                  window.__craftShowWin('急单标定带本局锁定。温度不变时，压强与体积成反比，乘积近似恒定。');
+                }
+            } else {
+                // FixedChallenge：失败不换带；偏高/偏低可区分
+                winIndicator.innerHTML = '';
+                const sideTxt = pv < BAND_LO ? '乘积偏低' : '乘积偏高';
+                hintMsg.innerHTML = '<span style="font-weight:600">' + sideTxt + '</span><br><span style="font-size:0.82em;opacity:.92">本次 ' + pv.toFixed(2) + ' · 带 ' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + '</span>';
+            }
+            updateAll();
+        }
+
+        function resetToDefault() {
+            pSlider.value = '3.0';
+            vSlider.value = '5.0';
+            measuredPV = null;
+            updateAll();
+            winIndicator.innerHTML = '';
+            hintMsg.textContent = '已重置 · 调参后点测试查看乘积';
+        }
+
+        pSlider.addEventListener('input', function() {
+            measuredPV = null;
+            updateAll();
+            hintMsg.textContent = '调节中… 点「测试 · 观察乘积」查看结果';
+            winIndicator.innerHTML = '';
+        });
+        vSlider.addEventListener('input', function() {
+            measuredPV = null;
+            updateAll();
+            hintMsg.textContent = '调节中… 点「测试 · 观察乘积」查看结果';
+            winIndicator.innerHTML = '';
+        });
+        if (tSlider) tSlider.addEventListener('input', function() {
+            updateAll();
+        });
+        btnTest.addEventListener('click', fireSnapshotAndWin);
+        btnReset.addEventListener('click', resetToDefault);
+
+        function tick() {
+            animT += 0.016;
+            if (pulse > 0) pulse = Math.max(0, pulse - 0.025);
+            updateAll();
+            requestAnimationFrame(tick);
+        }
+        window.addEventListener('resize', updateAll);
+        hintMsg.textContent = '偏离标定带 · 调压强或体积后点测试';
+        requestAnimationFrame(tick);
+    })();
+</script>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    try {
+      if (typeof window.__gasApplyMode === 'function') window.__gasApplyMode(state.mode);
+    } catch (e) {}
+    document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode, attempts: state.attempts } }));
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

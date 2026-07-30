@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>斜抛运动探究与挑战 · Agent A 预览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+  window.MathJax = { tex:{inlineMath:[['$','$'],['\\(','\\)']]}, svg:{fontCache:'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="/static/viewer/js/graph-shell.css">
+<style>
+body{height:100vh;overflow:hidden;}
+#batch-warn{color:var(--text-muted);font-size:10px;margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-left">
+    <h1>斜抛运动探究与挑战</h1>
+    <p>AGENT A · KNOWLEDGE GRAPH &amp; DECISION TREE</p>
+    <span id="batch-warn"></span>
+  </div>
+  <div id="view-toggle">
+    <div class="vtab active" id="vt-dt">决策树</div>
+    <div class="vtab" id="vt-kg">事理图谱</div>
+    <div class="vtab" id="vt-strategy">策略全景</div>
+  </div>
+</div>
+<div id="tabs"></div>
+<div id="main">
+  <div id="graph">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="strategy-panel"><div id="strategy-viewport"><div id="strategy-mermaid"></div></div></div>
+    <div class="gctrl" id="gctrl">
+      <button class="gbtn" id="btn-zoom">重置视图</button>
+      <button class="gbtn graph-only" id="btn-hl">清除高亮</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="panel-hd">
+      <h2 id="p-title">—</h2>
+      <div class="psub" id="p-sub">点击节点查看细节</div>
+    </div>
+    <div id="legend">
+      <div class="ltitle" id="legend-title">节点类型</div>
+      <div id="legend-items"></div>
+      <div id="kg-filter" class="hidden">
+        <button type="button" class="fbtn active" data-kg-filter="all">全部</button>
+        <button type="button" class="fbtn" data-kg-filter="play">仅游玩</button>
+        <button type="button" class="fbtn" data-kg-filter="teach">仅教案</button>
+      </div>
+      <div id="legend-hint" class="legend-hint hidden">实心 = 游玩子图 · 实心+虚线描边 = 教案子图 · 空心 = 无关变量</div>
+    </div>
+    <div id="info"><div class="info-empty">← 点击节点查看细节</div></div>
+  </div>
+</div>
+<script src="/static/viewer/js/strategy-mermaid-theme.js"></script>
+<script src="/static/shared/strategy-mermaid-parse.js"></script>
+<script src="/static/shared/tab-label.js"></script>
+<script src="/static/viewer/js/viewer.js"></script>
+<script>
+(async function () {
+  const [chRes, metaRes] = await Promise.all([
+    fetch('./chapter.json'),
+    fetch('./meta.json'),
+  ]);
+  if (!chRes.ok) throw new Error('chapter.json not found');
+  const chapter = await chRes.json();
+  const meta = metaRes.ok ? await metaRes.json() : {};
+  const fullTab = (meta.title || chapter.kg?.title || '草稿预览').trim();
+  GraphViewer.init({
+    kgChapters: [Object.assign({}, chapter.kg, { _tabLabel: fullTab, _tabTitleFull: fullTab })],
+    dtChapters: [chapter.dt],
+    metaChapters: [{ winSync: chapter.winSync, mapping: chapter.mapping, strategy: chapter.strategy }],
+    features: { trace: false, agent: false },
+  });
+})();
+</script>
+</body>
+</html>

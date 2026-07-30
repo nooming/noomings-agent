@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>夜市飞椅 · 圆周运动</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+    .container { max-width: 720px; width: 100%; background: white; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    .subtitle { color: #4a5568; margin-bottom: 20px; font-size: 0.95rem; }
+    .canvas-wrap { background: #edf2f7; border-radius: 12px; padding: 8px; margin-bottom: 20px; }
+    canvas { display: block; width: 100%; height: auto; background: white; border-radius: 8px; }
+    .control-panel { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+    .slider-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .slider-row label { min-width: 70px; font-weight: 500; font-size: 0.95rem; }
+    .slider-row input[type="range"] { flex: 1; min-width: 120px; }
+    .slider-row .value-badge { background: #e2e8f0; padding: 2px 12px; border-radius: 20px; font-size: 0.9rem; min-width: 60px; text-align: center; }
+    .irrelevant-area { display: flex; align-items: center; gap: 16px; margin: 6px 0 10px; padding: 8px 12px; background: #f1f5f9; border-radius: 40px; }
+    .irrelevant-area button { background: #cbd5e1; border: none; padding: 6px 18px; border-radius: 30px; font-size: 0.85rem; cursor: pointer; }
+    .irrelevant-area .note { color: #475569; font-size: 0.85rem; }
+    .action-row { display: flex; gap: 14px; margin: 8px 0 16px; }
+    .action-row button { background: #2563eb; color: white; border: none; padding: 10px 28px; border-radius: 40px; font-size: 1rem; font-weight: 500; cursor: pointer; }
+    .action-row button:active { background: #1d4ed8; }
+    .observe-box { background: #f8fafc; border-radius: 12px; padding: 16px 20px; margin: 12px 0 16px; border: 1px solid #e2e8f0; }
+    .observe-box h3 { font-size: 1rem; margin-bottom: 8px; color: #0f172a; }
+    .observe-grid { display: flex; gap: 32px; flex-wrap: wrap; }
+    .observe-item { display: flex; align-items: baseline; gap: 6px; }
+    .observe-item .val { font-weight: 700; font-size: 1.2rem; color: #0f172a; }
+    .observe-item .unit { color: #64748b; font-size: 0.9rem; }
+    .hint-msg { margin-top: 10px; padding: 8px 12px; border-radius: 12px; background: #eef2ff; color: #1e3a8a; font-size: 0.88rem; display: block; max-width: 100%; line-height: 1.45; overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+    #hintMsg { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+    .win-badge { background: #bbf7d0; color: #166534; padding: 6px 18px; border-radius: 40px; font-weight: 600; display: inline-block; margin-top: 6px; }
+    .confound-note { background: #f1f5f9; padding: 8px 16px; border-radius: 30px; font-size: 0.85rem; color: #334155; margin-bottom: 6px; }
+    .footer { margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 14px; font-size: 0.8rem; color: #64748b; text-align: center; }
+  
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#fbbf24;--craft-bg:#141008;--craft-panel:#242014;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+/* === batch2 audit fixes === */
+#craft-gauge{display:none!important;}
+#essence-bench .value-badge,
+#essence-bench .observe-box,
+#essence-bench .observe-item,
+#essence-bench .observe-item .val,
+#essence-bench .hint-msg,
+#essence-bench .note{color:#fef3c7!important;}
+#essence-bench .value-badge{
+  background:rgba(0,0,0,.45)!important;
+}
+#essence-bench .observe-box{
+  background:rgba(0,0,0,.28)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench .observe-box h3{color:var(--craft-accent)!important;}
+#essence-bench .hint-msg{
+  background:rgba(0,0,0,.45)!important;
+  color:#fef3c7!important;
+  border:1px solid rgba(251,191,36,.35)!important;
+}
+#dual-mode-hud .dual-chip,
+#challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#fde68a!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+#essence-hud{
+  top:10px!important;left:auto!important;right:12px!important;
+  max-width:min(220px,40%)!important;z-index:6;
+  align-items:flex-end!important;
+}
+#essence-hud .essence-title{
+  background:rgba(15,23,42,.9)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  font-size:13px!important;padding:6px 10px!important;
+}
+#essence-hud .essence-sub{display:none!important;}
+#modeSelect{
+  background:rgba(0,0,0,.35)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>夜市飞椅 · 安全巡检</h2>
+    <p>庙会飞椅转得偏慢。试着调半径与转速，看线速度与向心力怎么变；再接限次巡检——安全带本局锁定，过慢或过快都不合格。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛安全带进入后锁定，未达标只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">a = v²/r</div>
+    <p id="craftWinText">对照多组读数，你摸清了线速度、向心力如何随半径与转速变化。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+    <canvas id="simCanvas" width="640" height="320"></canvas>
+  </div>
+
+  
+    <div id="essence-hud">
+      <div class="essence-title">夜市 · 飞椅巡检</div>
+      <div class="essence-sub" id="goalMission">目标：自由调飞椅，观察 v 与 F 随 r、ω 的变化</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="container">
+  <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
+  <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">试着弄清：r、ω 怎样改变线速度与向心力。竞赛另有限次巡检。</p>
+
+  <!-- 调节变量 -->
+  <div class="control-panel">
+    <div class="slider-row">
+      <label for="s-radius">半径 r</label>
+      <input type="range" id="s-radius" min="0.1" max="2.0" step="0.1" value="0.8">
+      <span class="value-badge" id="radiusDisplay">0.8 m</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-omega">角速度 ω</label>
+      <input type="range" id="s-omega" min="0.5" max="5.0" step="0.5" value="2.0">
+      <span class="value-badge" id="omegaDisplay">2.0 rad/s</span>
+    </div>
+    <div class="slider-row">
+      <label for="s-base-tilt">底座倾角 φ</label>
+      <input type="range" id="s-base-tilt" min="0" max="15" step="1" value="0">
+      <span class="value-badge" id="tiltDisplay">0°</span>
+    </div>
+  </div>
+
+  <!-- 无关控件（埋点占位，不展示） -->
+  <input type="hidden" id="I1" value="irrelevant">
+
+  <!-- 动作按钮 -->
+  <!-- Observe 反馈 -->
+  <div class="observe-box" id="observeBox">
+    <h3>📊 观测读数</h3>
+    <div class="observe-grid">
+      <div class="observe-item"><span>线速度 v = </span><span class="val" id="vDisplay">—</span><span class="unit">m/s</span></div>
+      <div class="observe-item"><span>向心力 F = </span><span class="val" id="fDisplay">—</span><span class="unit">N</span></div>
+    </div>
+    <div id="hintMessage" class="hint-msg">读数待测 · 调 r、ω 后点测试</div>
+    <div id="winMessage" style="margin-top:6px;"></div>
+  </div>
+
+</div>
+
+<!-- 埋点 hook (仅一次) -->
+<!-- trace-adapter-hook -->
+
+
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+    <button type="button" id="btn-fire">测试 / 发射</button>
+  </div>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    // tuning 绑定 (range)
+    document.querySelectorAll('input[type="range"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || 'slider', value: el.value });
+      });
+    });
+    // irrelevant touch
+    var i1 = document.getElementById('I1');
+    if (i1) {
+      i1.addEventListener('change', function() {
+        emit('irrelevant_touch', { control: 'I1', value: i1.value });
+      });
+    }
+  });
+})();
+</script>
+<script>
+(function() {
+  // ----- 物理常量 & DOM 引用 -----
+  const MASS = 0.5; // kg (固定)
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  let W = 640, H = 320;
+  let angle = 0;
+  let lastTs = null;
+  /** 测试后的舞台反馈：fly=切线飞出，drop=偏慢掉转，ok=安全带内巡航 */
+  let rideAnim = null;
+
+  function syncCanvasSize() {
+    var stage = document.getElementById('essence-stage') || canvas.parentElement;
+    var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 640);
+    var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 320);
+    var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    var bw = Math.round(cssW * dpr);
+    var bh = Math.round(cssH * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw;
+      canvas.height = bh;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = cssW;
+    H = cssH;
+  }
+
+  const sRadius = document.getElementById('s-radius');
+  const sOmega = document.getElementById('s-omega');
+  const sTilt = document.getElementById('s-base-tilt');
+  const radiusDisplay = document.getElementById('radiusDisplay');
+  const omegaDisplay = document.getElementById('omegaDisplay');
+  const tiltDisplay = document.getElementById('tiltDisplay');
+  const vDisplay = document.getElementById('vDisplay');
+  const fDisplay = document.getElementById('fDisplay');
+  const hintMsg = document.getElementById('hintMessage');
+  const winMsg = document.getElementById('winMessage');
+  const btnFire = document.getElementById('btn-fire');
+
+  let V_TARGET = 2.5;
+  let V_HI = 4.0;
+  let F_TARGET = 3.0;
+  let F_HI = 5.5;
+  let playMode = 'explore';
+  let exploreTests = 0;
+  let exploreParamKeys = new Set();
+  let exploreWon = false;
+  let challengeWon = false;
+  /** 仅测试后揭示 v、F */
+  let measured = false;
+
+  const MODE_GOALS = {
+    explore: {
+      hud: '目标：自由试转几轮，并换过 r 或 ω，对比读数（见过偏慢与偏快）',
+      side: '探究·飞椅试转：试着弄清 r、ω 对读数的影响；注意过慢与过快都有风险。'
+    },
+    challenge: {
+      hud: '目标：限次把 v、F 调进本局安全带（过低/过高均不合格，阈值固定）',
+      side: '竞赛·安全巡检：限次把线速度与向心力调进本局锁定安全带；过慢或超速飞出都不换阈值。'
+    }
+  };
+
+  function refreshGoalUI() {
+    const mission = document.getElementById('goalMission');
+    const side = document.getElementById('sideGoal');
+    if (playMode === 'challenge') {
+      if (mission) mission.textContent = '安全带：v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' 且 F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1) + ' · 本局固定';
+      if (side) side.textContent = '竞赛巡检：把飞椅调进 v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' m/s 且 F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1) + ' N。过慢掉转、过快飞出都不换题。';
+    } else {
+      const g = MODE_GOALS.explore;
+      if (mission) mission.textContent = g.hud;
+      if (side) side.textContent = g.side;
+    }
+  }
+
+  /** FixedChallenge：仅进入竞赛时锁定一次阈值（含上下界，避免拉满稳赢） */
+  function lockChallengeTargets(reasonHint) {
+    const rSol = 0.6 + Math.random() * 1.1;
+    const wSol = 1.5 + Math.random() * 2.5;
+    let nextV = Math.round(rSol * wSol * 0.82 * 10) / 10;
+    let nextF = Math.round(MASS * wSol * wSol * rSol * 0.82 * 10) / 10;
+    V_TARGET = Math.max(1.2, Math.min(5.0, nextV));
+    F_TARGET = Math.max(1.2, Math.min(10.0, nextF));
+    // 上界落在可探究中间带：最大滑条仍可冲出带外
+    // 竞赛安全带更窄于探究对照带 (v 2.5–4.0 / F 3.0–5.5)，同参未必两边同结论
+    V_HI = Math.min(9.5, Math.round((V_TARGET * 1.28 + 0.35) * 10) / 10);
+    F_HI = Math.min(22, Math.round((F_TARGET * 1.28 + 0.4) * 10) / 10);
+    if (V_HI <= V_TARGET + 0.25) V_HI = Math.min(9.5, V_TARGET + 0.7);
+    if (F_HI <= F_TARGET + 0.25) F_HI = Math.min(22, F_TARGET + 0.8);
+    // 开局故意偏低，形成探究张力
+    measured = false;
+    sRadius.value = '0.5';
+    sOmega.value = '1.0';
+    updateSliders();
+    refreshGoalUI();
+    if (reasonHint) hintMsg.textContent = reasonHint + ' → 安全带锁定 v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' · F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1) + '（本局不变）· 点测试读数';
+  }
+
+  window.__circApplyMode = function(mode) {
+    playMode = mode === 'challenge' ? 'challenge' : 'explore';
+    exploreWon = false;
+    challengeWon = false;
+    measured = false;
+    rideAnim = null;
+    window.__legacyWinEmitted = false;
+    exploreTests = 0;
+    exploreParamKeys = new Set();
+    winMsg.innerHTML = '';
+    if (playMode === 'challenge') {
+      lockChallengeTargets('巡检单已下发');
+    } else {
+      V_TARGET = 2.5;
+      V_HI = 4.0;
+      F_TARGET = 3.0;
+      F_HI = 5.5;
+      sRadius.value = '0.8';
+      sOmega.value = '2.0';
+      updateSliders();
+      refreshGoalUI();
+      hintMsg.textContent = '读数待测 · 调 r、ω 后点测试';
+    }
+  };
+
+  function computePhysics(r, omega) {
+    const v = omega * r;
+    const F = MASS * omega * omega * r;
+    return { v, F };
+  }
+
+  function roundRect(x, y, w, h, rr) {
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawScene(r, omega) {
+    syncCanvasSize();
+    ctx.clearRect(0, 0, W, H);
+
+    // 夜市天空
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#0b1026');
+    bg.addColorStop(0.45, '#1e1b4b');
+    bg.addColorStop(1, '#312e81');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 星点 + 灯笼
+    for (var i = 0; i < 28; i++) {
+      ctx.fillStyle = 'rgba(254,243,199,' + (0.25 + (i % 5) * 0.1) + ')';
+      ctx.beginPath();
+      ctx.arc((i * 97) % W, 12 + (i * 37) % 90, 1.2 + (i % 3) * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (var L = 0; L < 5; L++) {
+      var lx = 70 + L * (W / 5.2);
+      ctx.strokeStyle = 'rgba(251,191,36,0.45)';
+      ctx.beginPath();
+      ctx.moveTo(lx, 8);
+      ctx.lineTo(lx, 34);
+      ctx.stroke();
+      ctx.fillStyle = L % 2 ? '#f43f5e' : '#f59e0b';
+      roundRect(lx - 10, 34, 20, 26, 8);
+      ctx.fill();
+    }
+
+    // 摊位剪影（叙事锚点）
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(18, H - 110, 72, 74);
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.moveTo(12, H - 110);
+    ctx.lineTo(54, H - 138);
+    ctx.lineTo(96, H - 110);
+    ctx.fill();
+    ctx.fillStyle = '#fde68a';
+    ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+    ctx.fillText('糖画摊', 30, H - 118);
+
+    // 地坪
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, H - 36, W, 36);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, H - 36, W, 4);
+    ctx.fillStyle = 'rgba(251,191,36,0.25)';
+    for (var g = 0; g < 10; g++) ctx.fillRect(16 + g * 70, H - 20, 28, 4);
+
+    // 飞椅中枢：避开左上双模式条
+    const cx = Math.max(210, Math.min(W * 0.46, W - 200));
+    const cy = Math.max(145, Math.min(H * 0.46, H - 115));
+    const maxR = Math.min(cx - 50, cy - 70, W - cx - 100, H - cy - 55);
+    const scale = Math.min(110, maxR / 2.05);
+
+    // 底座与立柱
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.ellipse(cx, H - 40, 78, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#94a3b8';
+    roundRect(cx - 14, cy - 8, 28, H - 48 - (cy - 8), 4);
+    ctx.fill();
+    // 顶盖彩灯
+    ctx.fillStyle = '#e11d48';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 8, 22, Math.PI, 0);
+    ctx.fill();
+    for (var bulb = 0; bulb < 6; bulb++) {
+      var ba = -Math.PI + (bulb / 5) * Math.PI;
+      ctx.fillStyle = bulb % 2 ? '#fbbf24' : '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(ba) * 18, cy - 8 + Math.sin(ba) * 10, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 标题下移避开 dual-mode，浅字+底板保证深景可读
+    ctx.fillStyle = 'rgba(15,23,42,0.82)';
+    ctx.fillRect(148, 54, 268, 40);
+    ctx.fillStyle = '#ffe0c2';
+    ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+    ctx.fillText('庙会飞椅', 156, 72);
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = '11px "Microsoft YaHei",sans-serif';
+    if (playMode === 'challenge') {
+      ctx.fillText('巡检：v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' 且 F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1), 156, 88);
+    } else {
+      ctx.fillText('试转中 · 观察读数如何随 r、ω 变化', 156, 88);
+    }
+
+    const drawR = rideAnim ? rideAnim.r0 : r;
+    const drawOmega = rideAnim ? rideAnim.omega0 : omega;
+    const radiusPx = Math.max(18, drawR * scale);
+    const aNow = rideAnim ? rideAnim.angle0 : angle;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radiusPx, 0, 2 * Math.PI);
+    ctx.strokeStyle = rideAnim && rideAnim.kind === 'fly'
+      ? 'rgba(251,113,133,0.45)'
+      : 'rgba(196,181,253,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 6]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    let bx, by, armConnected = true;
+    if (rideAnim && rideAnim.kind === 'fly') {
+      bx = rideAnim.x;
+      by = rideAnim.y;
+      armConnected = false;
+      // 断臂残端：停在脱离瞬间的圆周点
+      const hx = cx + radiusPx * Math.cos(rideAnim.angle0);
+      const hy = cy + radiusPx * Math.sin(rideAnim.angle0);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(hx, hy);
+      ctx.strokeStyle = 'rgba(233,213,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([3, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 飞出轨迹
+      if (rideAnim.trail && rideAnim.trail.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(rideAnim.trail[0].x, rideAnim.trail[0].y);
+        for (var ti = 1; ti < rideAnim.trail.length; ti++) {
+          ctx.lineTo(rideAnim.trail[ti].x, rideAnim.trail[ti].y);
+        }
+        ctx.strokeStyle = 'rgba(251,113,133,0.75)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+    } else if (rideAnim && rideAnim.kind === 'drop') {
+      bx = rideAnim.x;
+      by = rideAnim.y;
+      armConnected = rideAnim.t < rideAnim.snapT;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(bx, by);
+      ctx.strokeStyle = armConnected ? '#fca5a5' : 'rgba(252,165,165,0.25)';
+      ctx.lineWidth = armConnected ? 2.5 : 1.5;
+      if (!armConnected) ctx.setLineDash([2, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      bx = cx + radiusPx * Math.cos(aNow);
+      by = cy + radiusPx * Math.sin(aNow);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(bx, by);
+      ctx.strokeStyle = rideAnim && rideAnim.kind === 'ok' ? '#86efac' : '#e9d5ff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      if (rideAnim && rideAnim.kind === 'ok') {
+        ctx.beginPath();
+        ctx.arc(cx, cy, radiusPx + 6, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(134,239,172,' + (0.35 + 0.35 * Math.sin(rideAnim.t * 10)) + ')';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+
+    // 座舱
+    ctx.fillStyle = rideAnim && rideAnim.kind === 'fly' ? '#fb7185'
+      : (rideAnim && rideAnim.kind === 'drop' ? '#fca5a5' : '#fbbf24');
+    roundRect(bx - 13, by - 8, 26, 20, 5);
+    ctx.fill();
+    ctx.strokeStyle = rideAnim && rideAnim.kind === 'fly' ? '#be123c' : '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#1e1b4b';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('座', bx, by + 5);
+    ctx.textAlign = 'left';
+
+    // 飞出火花 / 掉转尘土
+    if (rideAnim && rideAnim.kind === 'fly') {
+      for (var sp = 0; sp < 6; sp++) {
+        var sf = (rideAnim.t * 18 + sp * 1.7) % 1;
+        ctx.fillStyle = 'rgba(253,224,71,' + (0.85 - sf * 0.8) + ')';
+        ctx.beginPath();
+        ctx.arc(bx - rideAnim.vx * sf * 0.04, by - rideAnim.vy * sf * 0.04, 2.2 - sf, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(254,226,226,0.92)';
+      ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('超速飞出', Math.min(W - 88, Math.max(12, bx + 16)), Math.max(70, by - 14));
+    } else if (rideAnim && rideAnim.kind === 'drop') {
+      ctx.fillStyle = 'rgba(254,226,226,0.9)';
+      ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('偏慢掉转', Math.min(W - 88, Math.max(12, bx + 16)), Math.max(70, by - 14));
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fafaf9';
+    ctx.fill();
+
+    roundRect(16, H - 78, 168, 52, 10);
+    ctx.fillStyle = 'rgba(15,23,42,0.88)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,36,0.45)';
+    ctx.stroke();
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = '12px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
+    ctx.fillText('r = ' + drawR.toFixed(1) + ' m', 28, H - 56);
+    ctx.fillText('ω = ' + drawOmega.toFixed(1) + ' rad/s', 28, H - 36);
+  }
+
+  function startRideAnim(kind, r, omega, onDone) {
+    const cx = Math.max(210, Math.min(W * 0.46, W - 200));
+    const cy = Math.max(145, Math.min(H * 0.46, H - 115));
+    const maxR = Math.min(cx - 50, cy - 70, W - cx - 100, H - cy - 55);
+    const scale = Math.min(110, maxR / 2.05);
+    const radiusPx = Math.max(18, r * scale);
+    const a0 = angle;
+    const x0 = cx + radiusPx * Math.cos(a0);
+    const y0 = cy + radiusPx * Math.sin(a0);
+    // 切线方向（与 angle += omega*dt 一致：逆时针）
+    const tx = -Math.sin(a0);
+    const ty = Math.cos(a0);
+    const speed = Math.max(40, Math.min(420, omega * radiusPx * 1.15));
+    if (kind === 'fly') {
+      rideAnim = {
+        kind: 'fly', t: 0, dur: 1.35, onDone: onDone || null,
+        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale,
+        x: x0, y: y0,
+        vx: tx * speed * 1.35 + Math.cos(a0) * speed * 0.25,
+        vy: ty * speed * 1.35 + Math.sin(a0) * speed * 0.25,
+        trail: [{ x: x0, y: y0 }]
+      };
+    } else if (kind === 'drop') {
+      rideAnim = {
+        kind: 'drop', t: 0, dur: 1.45, snapT: 0.55, onDone: onDone || null,
+        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale,
+        x: x0, y: y0, vx: tx * speed * 0.15, vy: 0, spin: a0
+      };
+    } else {
+      rideAnim = {
+        kind: 'ok', t: 0, dur: 1.1, onDone: onDone || null,
+        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale
+      };
+    }
+  }
+
+  function stepRideAnim(dt) {
+    if (!rideAnim) return;
+    rideAnim.t += dt;
+    if (rideAnim.kind === 'fly') {
+      rideAnim.vy += 520 * dt;
+      rideAnim.vx *= (1 - 0.35 * dt);
+      rideAnim.x += rideAnim.vx * dt;
+      rideAnim.y += rideAnim.vy * dt;
+      rideAnim.trail.push({ x: rideAnim.x, y: rideAnim.y });
+      if (rideAnim.trail.length > 28) rideAnim.trail.shift();
+      if (rideAnim.y > H - 48) {
+        rideAnim.y = H - 48;
+        rideAnim.vy *= -0.18;
+        rideAnim.vx *= 0.7;
+      }
+    } else if (rideAnim.kind === 'drop') {
+      const radiusPx = Math.max(18, rideAnim.r0 * rideAnim.scale);
+      if (rideAnim.t < rideAnim.snapT) {
+        // 动力不足：向内塌缩并下沉，仍连着臂
+        const u = rideAnim.t / rideAnim.snapT;
+        const shrink = 1 - 0.55 * u * u;
+        rideAnim.spin += rideAnim.omega0 * dt * (1 - 0.7 * u);
+        rideAnim.x = rideAnim.cx + radiusPx * shrink * Math.cos(rideAnim.spin);
+        rideAnim.y = rideAnim.cy + radiusPx * shrink * Math.sin(rideAnim.spin) + 18 * u * u;
+      } else {
+        // 脱臂坠落
+        rideAnim.vy += 780 * dt;
+        rideAnim.vx *= (1 - 0.8 * dt);
+        rideAnim.x += rideAnim.vx * dt;
+        rideAnim.y += rideAnim.vy * dt;
+        if (rideAnim.y > H - 48) {
+          rideAnim.y = H - 48;
+          rideAnim.vy = 0;
+          rideAnim.vx *= 0.5;
+        }
+      }
+    } else if (rideAnim.kind === 'ok') {
+      angle += rideAnim.omega0 * dt;
+      rideAnim.angle0 = angle;
+    }
+    if (rideAnim.t >= rideAnim.dur) {
+      var done = rideAnim.onDone;
+      rideAnim = null;
+      if (typeof done === 'function') done();
+    }
+  }
+
+  function updateObserve(r, omega, reveal) {
+    const { v, F } = computePhysics(r, omega);
+    if (reveal || measured) {
+      vDisplay.textContent = v.toFixed(2);
+      fDisplay.textContent = F.toFixed(2);
+    } else {
+      vDisplay.textContent = '—';
+      fDisplay.textContent = '—';
+    }
+    return { v, F };
+  }
+
+  function checkWin(v, F) {
+    const vLow = v < V_TARGET;
+    const vHigh = v > V_HI;
+    const fLow = F < F_TARGET;
+    const fHigh = F > F_HI;
+    const vOk = !vLow && !vHigh;
+    const fOk = !fLow && !fHigh;
+    const winOk = vOk && fOk;
+    let hintKey = '';
+    let failKind = '';
+    if (winOk) hintKey = 'win';
+    else if (vHigh || fHigh) {
+      hintKey = 'too_fast';
+      failKind = 'fly';
+    } else if (vLow || fLow) {
+      hintKey = (vLow && fLow) ? 'both_low' : (vLow ? 'v_low' : 'f_low');
+      failKind = 'slow';
+    }
+    return { winOk, hintKey, vOk, fOk, vLow, vHigh, fLow, fHigh, failKind };
+  }
+
+  function fireTest() {
+    if (rideAnim) return; // 飞出/掉转播完再测，避免叠动画
+    const r = parseFloat(sRadius.value);
+    const omega = parseFloat(sOmega.value);
+    measured = true;
+    const { v, F } = updateObserve(r, omega, true);
+    const { winOk, hintKey, vOk, fOk, vLow, vHigh, fLow, fHigh, failKind } = checkWin(v, F);
+    var controls = { 's-radius': r, 's-omega': omega };
+    const emit = window.__emit || function(){};
+    const animKind = winOk ? 'ok' : (failKind === 'fly' ? 'fly' : (failKind === 'slow' ? 'drop' : 'ok'));
+
+    if (playMode === 'challenge') {
+      if (winOk) {
+        if (!challengeWon) {
+          challengeWon = true;
+          hintMsg.textContent = '巡检通过！v、F 均落在安全带内。';
+          winMsg.innerHTML = '<span class="win-badge">巡检过关</span>';
+          emit('snapshot', { controls: controls, winOk: true, hintKey: 'circ_challenge' });
+          emit('win', { winOk: true });
+          if (typeof window.__craftShowWin === 'function') {
+            window.__craftShowWin('你在本局锁定的安全带内调对了半径与角速度：过慢不够、过快会飞出。');
+          }
+        }
+        startRideAnim('ok', r, omega, null);
+      } else {
+        let msg = failKind === 'fly' ? '超速飞出：' : '动力不足：';
+        if (vLow) msg += 'v偏低 ';
+        if (vHigh) msg += 'v过高 ';
+        if (fLow) msg += 'F偏低 ';
+        if (fHigh) msg += 'F过高 ';
+        winMsg.innerHTML = failKind === 'fly'
+          ? '<span class="fail-badge" style="color:#fb7185;">未过关·超速飞出</span>'
+          : '<span class="fail-badge" style="color:#fca5a5;">未过关·偏慢掉转</span>';
+        emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
+        hintMsg.innerHTML = '<strong>' + msg.trim() + '</strong><br><span style="font-size:0.82em;opacity:.92">舞台：' + (failKind === 'fly' ? '切线飞出' : '向内掉转') + ' · 安全带仍锁</span>';
+        // 先播飞出/掉转，结束后再重置偏低初值（FixedChallenge 不重抽阈值）
+        startRideAnim(animKind, r, omega, function() {
+          measured = false;
+          sRadius.value = '0.5';
+          sOmega.value = '1.0';
+          updateSliders();
+          refreshGoalUI();
+          hintMsg.innerHTML = '<strong>' + msg.trim() + '</strong><br><span style="font-size:0.82em;opacity:.92">安全带 v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' · F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1) + '</span>';
+        });
+      }
+      return;
+    }
+
+    // 探究：换参对比；同步播偏慢/偏快舞台形态，便于目视区分
+    exploreTests += 1;
+    exploreParamKeys.add(r.toFixed(1) + '|' + omega.toFixed(1));
+    let msg = '本次 v=' + v.toFixed(2) + ' · F=' + F.toFixed(2);
+    if (failKind === 'fly') msg += ' · 偏快：座舱切线飞出（示意）';
+    else if (failKind === 'slow') msg += ' · 偏慢：座舱向内掉转（示意）';
+    else msg += ' · 落在参考安全带内';
+    msg += '。换组参数再对比。';
+    hintMsg.textContent = msg;
+    winMsg.innerHTML = '';
+    startRideAnim(animKind, r, omega, null);
+    emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_sample' });
+    if (!exploreWon && exploreTests >= 3 && exploreParamKeys.size >= 2) {
+      exploreWon = true;
+      winMsg.innerHTML = '<span class="win-badge">探究完成</span>';
+      hintMsg.textContent = '已对比多组读数 · 可切换竞赛接安全巡检（安全带本局固定）';
+      emit('snapshot', { controls: controls, winOk: true, hintKey: 'circ_explore' });
+      emit('win', { winOk: true });
+      if (typeof window.__craftShowWin === 'function') {
+        window.__craftShowWin('你通过对比不同 r、ω 下的读数，归纳了线速度与向心力的关系。');
+      }
+    }
+  }
+
+  function updateSliders() {
+    const r = parseFloat(sRadius.value);
+    const omega = parseFloat(sOmega.value);
+    const tilt = sTilt ? parseFloat(sTilt.value) : 0;
+    radiusDisplay.textContent = r.toFixed(1) + ' m';
+    omegaDisplay.textContent = omega.toFixed(1) + ' rad/s';
+    if (tiltDisplay) tiltDisplay.textContent = tilt.toFixed(0) + '°';
+    updateObserve(r, omega, false);
+  }
+
+  sRadius.addEventListener('input', function() {
+    measured = false;
+    updateSliders();
+    hintMsg.textContent = '调节中… 点「测试 / 发射」查看 v、F';
+    winMsg.innerHTML = '';
+  });
+  sOmega.addEventListener('input', function() {
+    measured = false;
+    updateSliders();
+    hintMsg.textContent = '调节中… 点「测试 / 发射」查看 v、F';
+    winMsg.innerHTML = '';
+  });
+  if (sTilt) sTilt.addEventListener('input', function() {
+    measured = false;
+    updateSliders();
+    hintMsg.textContent = '调节中… 点「测试 / 发射」查看 v、F';
+    winMsg.innerHTML = '';
+  });
+  btnFire.addEventListener('click', fireTest);
+
+  function loop(ts) {
+    if (lastTs == null) lastTs = ts;
+    var dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+    const r = parseFloat(sRadius.value);
+    const omega = parseFloat(sOmega.value);
+    if (rideAnim) {
+      stepRideAnim(dt);
+    } else {
+      // 视觉角速度严格跟随滑条 ω（rad/s）
+      angle += omega * dt;
+    }
+    updateObserve(r, omega, false);
+    drawScene(r, omega);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  updateSliders();
+  refreshGoalUI();
+  hintMsg.textContent = '读数未达巡检线 · 调 r、ω 后点测试';
+  winMsg.innerHTML = '';
+  window.__circRedraw = function() {
+    updateSliders();
+  };
+
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    if (typeof window.__circRedraw === 'function') {
+      window.__circRedraw();
+      return;
+    }
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__circApplyMode === 'function') {
+      try { window.__circApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "catalogId": "capacitor-era",
+  "version": 1,
+  "description": "电容纪元：traceMap 与 DOM id 一致，仅过滤无关 UI 控件",
+  "controlAliases": {},
+  "ignoreControls": ["dlg-text", "dialogue", "chapter-badge", "v-title", "v-sub", "victory", "trans", "trans-title"],
+  "events": {
+    "tuning": true,
+    "snapshot": true,
+    "puzzle_open": true,
+    "win": true,
+    "action": true,
+    "canvas_interact": true
+  }
+}

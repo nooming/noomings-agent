@@ -1,0 +1,616 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节物距和焦距 | O1 | operation | 调参操作 |\n| 物距在范围? | C1 | constraint | 物距 5-50 cm |\n| 焦距在范围? | C2 | constraint | 焦距 5-20 cm |\n| 像成在屏上? | C3 | constraint | 结果判定 |\n| 过关 | R1 | result | 胜利 |\n| 提示重试 | - | - | skip retry |\n| 再试 | - | - | skip retry |\n| 未达标重试 | - | - | skip retry |",
+  "kg": {
+    "title": "透镜",
+    "sub": "凸透镜成像实验",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入实验",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始凸透镜成像实验，调节物距和焦距观察像"
+      },
+      {
+        "id": "O1",
+        "label": "调节物距和焦距",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节物距和焦距的数值"
+      },
+      {
+        "id": "C1",
+        "label": "物距在范围",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "物距必须在5cm到50cm之间"
+      },
+      {
+        "id": "C2",
+        "label": "焦距在范围",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "焦距必须在5cm到20cm之间"
+      },
+      {
+        "id": "C3",
+        "label": "像成在屏上",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "观察光屏上是否出现清晰的像，即像距等于屏距"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "成功在光屏上观察到清晰的像，实验完成"
+      },
+      {
+        "id": "S1",
+        "label": "凸透镜成像公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "1/f = 1/u + 1/v，其中f为焦距，u为物距，v为像距"
+      },
+      {
+        "id": "S2",
+        "label": "成像条件推导",
+        "group": "method",
+        "layer": "teach",
+        "level": 2,
+        "r": 22,
+        "desc": "像成在屏上要求像距等于光屏位置，由物距和焦距决定"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "实验中存在的无关控件，不影响成像判定"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "S2",
+        "tp": "core"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "透镜",
+    "sub": "凸透镜成像实验",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始凸透镜成像实验",
+      "children": [
+        {
+          "n": "调节物距和焦距",
+          "t": "step",
+          "d": "通过滑条调节物距和焦距的数值",
+          "children": []
+        },
+        {
+          "n": "物距在范围?",
+          "t": "decision",
+          "d": "物距必须在5cm到50cm之间",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示重试",
+              "t": "retry",
+              "d": "物距超出范围，请重新调节"
+            },
+            {
+              "_e": "是",
+              "n": "焦距在范围?",
+              "t": "decision",
+              "d": "焦距必须在5cm到20cm之间",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "再试",
+                  "t": "retry",
+                  "d": "焦距超出范围，请重新调节"
+                },
+                {
+                  "_e": "是",
+                  "n": "像成在屏上?",
+                  "t": "decision",
+                  "d": "观察光屏上是否出现清晰的像",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "像未成在屏上，请调节物距或焦距"
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "成功在光屏上观察到清晰的像"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "透镜",
+    "sub": "凸透镜成像实验"
+  },
+  "traceMap": {
+    "controls": {
+      "s-object-distance": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-focal-length": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "透镜",
+    "sub": "凸透镜成像实验",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[观察光屏]\nAdjust2 --> Fire2[观察光屏]\nFire1 --> Observe1{像成在屏上?}:::stratCond\nFire2 --> Observe2{像成在屏上?}:::stratCond\nObserve1 -->|否| Adjust1\nObserve1 -->|否| Retry1[重试]:::stratRetry\nObserve1 -->|是| Win[过关]:::stratResult\nObserve2 -->|否| Adjust2\nObserve2 -->|否| Retry2[重试]:::stratRetry\nObserve2 -->|是| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| ControlVar[每次只改一个参数]\nStrategySelect -->|多参盲调| MultiBlind[同时调多个参数]\nStart([开始实验]):::stratStart\nControlVar --> Adjust1[调节物距或焦距]\nMultiBlind --> Adjust2[固定其余，只调s-object-distance]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetry1 --> Adjust1\nRetry2 --> Adjust2",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ControlVar",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ControlVar"
+          ],
+          [
+            "ControlVar",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MultiBlind",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MultiBlind"
+          ],
+          [
+            "MultiBlind",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究凸透镜成像规律，通过改变物距和焦距，观察像是否成在光屏上。",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "凸透镜成像公式",
+        "formulas": [
+          "1/f = 1/u + 1/v"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-object-distance",
+        "label": "物距",
+        "symbol": "u",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 5,
+          "max": 50,
+          "step": 1,
+          "unit": "cm"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-focal-length",
+        "label": "焦距",
+        "symbol": "f",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 5,
+          "max": 20,
+          "step": 1,
+          "unit": "cm"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "光屏位置",
+        "reason": "实验中光屏位置可调，但像是否成在屏上取决于像距是否等于屏距，核心是物距和焦距决定像距，光屏位置不影响成像条件，只影响观察。"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "成像状态",
+        "label": "像是否成在屏上",
+        "unit": "",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "observation"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验探究凸透镜成像规律，通过调节物距和焦距，观察光屏上是否出现清晰的像。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节物距",
+          "body": "将物距滑条调节至合适数值（5-50cm之间）。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "调节焦距",
+          "body": "将焦距滑条调节至合适数值（5-20cm之间）。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "观察成像",
+          "body": "观察光屏上是否出现清晰的像。",
+          "mapsToKg": [
+            "C3"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "1/f = 1/u + 1/v"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "透镜",
+    "subtitle": "凸透镜成像实验",
+    "winCondition": "成功在光屏上观察到清晰的像，实验完成",
+    "knowledgeSummary": "凸透镜成像公式",
+    "controls": [
+      {
+        "id": "s-object-distance",
+        "type": "range",
+        "label": "物距",
+        "symbol": "u",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 5,
+          "max": 50,
+          "step": 1,
+          "unit": "cm"
+        }
+      },
+      {
+        "id": "s-focal-length",
+        "type": "range",
+        "label": "焦距",
+        "symbol": "f",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 5,
+          "max": 20,
+          "step": 1,
+          "unit": "cm"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "光屏位置",
+        "reason": "实验中光屏位置可调，但像是否成在屏上取决于像距是否等于屏距，核心是物距和焦距决定像距，光屏位置不影响成像条件，只影响观察。",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "物距在范围",
+        "desc": "物距必须在5cm到50cm之间"
+      },
+      {
+        "kgId": "C2",
+        "label": "焦距在范围",
+        "desc": "焦距必须在5cm到20cm之间"
+      },
+      {
+        "kgId": "C3",
+        "label": "像成在屏上",
+        "desc": "观察光屏上是否出现清晰的像，即像距等于屏距"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-object-distance": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-focal-length": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "像是否成在屏上",
+        "symbol": "成像状态",
+        "unit": null
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-object-distance",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-object-distance → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-focal-length",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-focal-length → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "物距在范围?",
+        "type": "decision",
+        "desc": "物距必须在5cm到50cm之间"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "物距超出范围，请重新调节"
+      },
+      {
+        "name": "焦距在范围?",
+        "type": "decision",
+        "desc": "焦距必须在5cm到20cm之间"
+      },
+      {
+        "name": "再试",
+        "type": "retry",
+        "desc": "焦距超出范围，请重新调节"
+      },
+      {
+        "name": "像成在屏上?",
+        "type": "decision",
+        "desc": "观察光屏上是否出现清晰的像"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "像未成在屏上，请调节物距或焦距"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功在光屏上观察到清晰的像"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

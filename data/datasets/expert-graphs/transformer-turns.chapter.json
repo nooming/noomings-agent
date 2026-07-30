@@ -1,0 +1,245 @@
+{
+  "_expertMeta": {
+    "id": "transformer-turns",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.529Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "变压器 · 探究",
+    "sub": "营地供电 · 变压器柜",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调参与测试",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "U₂在目标区间",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "竞赛次数未耗尽",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "探究观察",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "验证公式",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关按钮",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "C_OUTCOME_1",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C1",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "变压器 · 探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "变压器 · 探究",
+        "formulas": [
+          "U1/U2 ≈ N1/N2"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-n1",
+        "label": "原边匝数",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-n2",
+        "label": "副边匝数",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-U1",
+        "label": "原边电压",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-winding-temp",
+        "label": "绕组温度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 4,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·原边匝数",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-n2",
+        "label": "单变量·副边匝数",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-U1",
+        "label": "单变量·原边电压",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "main_s-winding-temp",
+        "label": "单变量·绕组温度",
+        "priorityRank": 4,
+        "score": 0.55
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "priorityRank": 5,
+        "score": 0.47000000000000003
+      }
+    ]
+  }
+}

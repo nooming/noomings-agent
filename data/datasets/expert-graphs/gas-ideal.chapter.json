@@ -1,0 +1,223 @@
+{
+  "_expertMeta": {
+    "id": "gas-ideal",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.537Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "气体 · 玻意耳定律",
+    "sub": "深潜器 · 压舱气室",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节压强/体积/温度并测试",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "乘积在标定带内",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "乘积偏低或偏高",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "探究: 观察乘积变化",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "竞赛: 限次命中标定带",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "无关按钮",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "C_OUTCOME_1",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "气体 · 玻意耳定律",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "气体 · 玻意耳定律",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-pressure",
+        "label": "压强",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-temp",
+        "label": "温度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-volume",
+        "label": "体积",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "OV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·压强",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-temp",
+        "label": "单变量·温度",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-volume",
+        "label": "单变量·体积",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "priorityRank": 4,
+        "score": 0.55
+      }
+    ]
+  }
+}

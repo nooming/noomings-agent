@@ -1,0 +1,1089 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 调节电阻与测试 | O1 | operation | 调参+测试 |\n| 电流达标? | C2 | constraint | 结果判定 |\n| 未达标重试 | — | — | skip retry |\n| 过关 | R1 | result | 胜利 |\n| 竞赛限次判定 | C3 | constraint | 竞赛模式剩余机会判定 |\n| 机会耗尽失败 | — | — | skip retry |\n| 继续尝试 | — | — | skip retry |\n| 串联与并联原理 | S1 | core | teach |\n| 电流与电阻关系 | S2 | core | teach |\n| 欧姆定律验证 | S3 | core | teach |",
+  "kg": {
+    "title": "串联与并联电路 · 调节电阻使电流达标",
+    "sub": "舞台灯电源板",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究或竞赛，了解目标电流"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究模式或竞赛模式，竞赛模式锁定目标电流并限次5次",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节电阻与测试",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节电阻 R₁、R₂ 和仪表内阻，点击测试按钮观察电流"
+      },
+      {
+        "id": "C2",
+        "label": "电流达标判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛模式下电流与目标电流偏差小于 0.004 A 即达标",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "竞赛限次判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛模式剩余机会大于0，否则失败",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛模式下电流对准目标，显示过关信息"
+      },
+      {
+        "id": "S1",
+        "label": "串联与并联原理",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "串联总电阻等于各电阻之和，并联总电阻倒数等于各电阻倒数之和"
+      },
+      {
+        "id": "S2",
+        "label": "电流与电阻关系",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "电源电压固定时，总电阻越大电流越小，反之亦然"
+      },
+      {
+        "id": "S3",
+        "label": "欧姆定律验证",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "通过调节电阻观察电流变化，验证 I=U/R 关系"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "隐藏输入框 I1，点击仅记录无关操作"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "串联与并联电路 · 调节电阻使电流达标",
+    "sub": "舞台灯电源板",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究或竞赛",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择探究模式或竞赛模式",
+          "children": [
+            {
+              "_e": "否",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "竞赛模式，锁定目标电流，限次5次"
+            },
+            {
+              "_e": "是",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究，无次数限制"
+            }
+          ]
+        },
+        {
+          "n": "调节电阻与测试",
+          "t": "step",
+          "d": "调节电阻 R₁、R₂ 和仪表内阻，点击测试按钮观察电流"
+        },
+        {
+          "n": "电流达标?",
+          "t": "decision",
+          "d": "竞赛模式下电流与目标电流偏差小于0.004A",
+          "children": [
+            {
+              "_e": "否",
+              "n": "未达标重试",
+              "t": "retry",
+              "d": "电流未对准，重新调节电阻再测试"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "电流已对准目标，过关"
+            }
+          ]
+        },
+        {
+          "n": "竞赛限次判定",
+          "t": "decision",
+          "d": "竞赛模式剩余机会大于0",
+          "children": [
+            {
+              "_e": "否",
+              "n": "机会耗尽失败",
+              "t": "retry",
+              "d": "竞赛机会耗尽，游戏结束"
+            },
+            {
+              "_e": "是",
+              "n": "继续尝试",
+              "t": "step",
+              "d": "还有机会，继续调节"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 你学到了什么",
+    "sub": "舞台灯电源板"
+  },
+  "traceMap": {
+    "controls": {
+      "s-r1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-r2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-meter-r": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "connect-status": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "obs-rtotal": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "obs-current": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "r1-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "r2-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "meter-r-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-r1"
+      },
+      "irrelevant_touch": {
+        "canonical": "irrelevant_touch",
+        "control": "I1"
+      }
+    }
+  },
+  "strategy": {
+    "title": "串联与并联电路 · 调节电阻使电流达标",
+    "sub": "舞台灯电源板",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustMeter --> Fire\nAdjustMulti --> Fire\nAdjustR1 --> Fire[测试/发射]\nAdjustR2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察电流?}:::stratCond\nModeSelect -->|探究模式| Explore[自由探究]:::stratCore\nObserve -->|偏大| AdjustR1\nObserve -->|偏小| AdjustR1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电阻R1| Route_main\nStrategySelect -->|单变量·电表内阻| Route_main_s_meter_r\nStrategySelect -->|单变量·电阻R2| Route_main_s_r2\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电阻R1]\nRoute_main_s_r2[控制变量：只改电阻R2]\nRoute_main_s_meter_r[控制变量：只改电表内阻]\nRetry --> AdjustMeter\nRetry --> AdjustR1\nRetry --> AdjustR2\nRoute_main --> Adjust\nRoute_main_s_meter_r --> Adjust\nRoute_main_s_r2 --> Adjust\nRouteMeter --> AdjustMeter[调整仪表内阻]\nRouteR1 --> AdjustR1[调整 R₁]\nRouteR2 --> AdjustR2[调整 R₂]\nTrap --> AdjustMulti[固定其余，只调s-r1]",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·电阻R1",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "AdjustR1",
+          "Fire",
+          "Observe",
+          "Win",
+          "AdjustR2",
+          "AdjustMeter",
+          "Retry",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "RouteR1",
+            "AdjustR1"
+          ],
+          [
+            "AdjustR1",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "RouteR2",
+            "AdjustR2"
+          ],
+          [
+            "AdjustR2",
+            "Fire"
+          ],
+          [
+            "RouteMeter",
+            "AdjustMeter"
+          ],
+          [
+            "AdjustMeter",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustR1"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustMeter"
+          ],
+          [
+            "Retry",
+            "AdjustR1"
+          ],
+          [
+            "Retry",
+            "AdjustR2"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-r2",
+        "label": "单变量·电阻R2",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Explore",
+          "Win",
+          "AdjustMeter",
+          "Fire",
+          "Observe",
+          "AdjustR1",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "RouteMeter",
+            "AdjustMeter"
+          ],
+          [
+            "AdjustMeter",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustR1"
+          ],
+          [
+            "AdjustR1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustMeter"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-meter-r",
+        "label": "单变量·电表内阻",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Explore",
+          "Win",
+          "AdjustR1",
+          "Fire",
+          "Observe",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "RouteR1",
+            "AdjustR1"
+          ],
+          [
+            "AdjustR1",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustR1"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustR1"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "StrategySelect",
+          "AdjustMulti",
+          "Fire",
+          "Observe",
+          "Retry",
+          "AdjustR1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "AdjustMulti"
+          ],
+          [
+            "AdjustMulti",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Observe",
+            "AdjustR1"
+          ],
+          [
+            "AdjustR1",
+            "Fire"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.55,
+        "weight": 0.55,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 4
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "串联与并联电路 · 调节电阻使电流达标",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "串联与并联电路 · 调节电阻使电流达标",
+        "formulas": [
+          "R=ΣRi；并：1/R=Σ1/Ri",
+          "E = 12"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-r1",
+        "label": "电阻R1",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-r2",
+        "label": "电阻R2",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-meter-r",
+        "label": "电表内阻",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：串联与并联原理、电流与电阻关系、欧姆定律验证",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：串联与并联原理；电流与电阻关系；欧姆定律验证",
+          "mapsToKg": [
+            "S1",
+            "S2",
+            "S3"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节电阻与测试、调节电阻与测试、调节电阻与测试；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：无关控件（隐藏输入框 I1，点击仅记录无关操作）；无关控件（隐藏输入框 I1，点击仅记录无关操作）；无关控件（隐藏输入框 I1，点击仅记录无关操作）；无关控件（隐藏输入框 I1，点击仅记录无关操作）；无关控件（隐藏输入框 I1，点击仅记录无关操作）；无关控件（隐藏输入框 I1，点击仅记录无关操作）",
+          "mapsToKg": [
+            "I1",
+            "I1",
+            "I1",
+            "I1",
+            "I1",
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "过关结果",
+        "symbol": "",
+        "unit": "",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "rc"
+  },
+  "physicsModel": {
+    "formulas": [
+      "R=ΣRi；并：1/R=Σ1/Ri",
+      "E = 12"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "R=ΣRi；并：1/R=Σ1/Ri",
+        "E = 12"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "命中/过关判定函数驱动 win 事件",
+      "domain": "rc"
+    }
+  },
+  "gameSpec": {
+    "title": "串联与并联电路 · 调节电阻使电流达标",
+    "subtitle": "舞台灯电源板",
+    "winCondition": "竞赛模式下电流对准目标，显示过关信息",
+    "knowledgeSummary": "串联与并联电路 · 调节电阻使电流达标",
+    "controls": [
+      {
+        "id": "s-r1",
+        "type": "range",
+        "label": "电阻R1",
+        "symbol": "电阻R1",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-r2",
+        "type": "range",
+        "label": "电阻R2",
+        "symbol": "电阻R2",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-meter-r",
+        "type": "range",
+        "label": "电表内阻",
+        "symbol": "电表内阻",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "选择探究模式或竞赛模式，竞赛模式锁定目标电流并限次5次"
+      },
+      {
+        "kgId": "C2",
+        "label": "电流达标判定",
+        "desc": "竞赛模式下电流与目标电流偏差小于 0.004 A 即达标"
+      },
+      {
+        "kgId": "C3",
+        "label": "竞赛限次判定",
+        "desc": "竞赛模式剩余机会大于0，否则失败"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-r1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-r2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-meter-r": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "connect-status": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "obs-rtotal": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "obs-current": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "r1-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "r2-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "meter-r-val": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "电阻R1",
+        "symbol": "电阻R1",
+        "unit": "",
+        "source": "state.s-r1"
+      },
+      {
+        "label": "电阻R2",
+        "symbol": "电阻R2",
+        "unit": "",
+        "source": "state.s-r2"
+      },
+      {
+        "label": "电表内阻",
+        "symbol": "电表内阻",
+        "unit": "",
+        "source": "state.s-meter-r"
+      },
+      {
+        "label": "过关结果",
+        "symbol": "过关结果",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-r1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-r1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-r2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-r2 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-meter-r",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-meter-r → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "connect-status",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 connect-status"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "obs-rtotal",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 obs-rtotal"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "obs-current",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 obs-current"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "r1-val",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 r1-val"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "r2-val",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 r2-val"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "meter-r-val",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 meter-r-val"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      },
+      {
+        "type": "tuning",
+        "canonical": "tuning",
+        "control": "s-r1",
+        "required": true
+      },
+      {
+        "type": "irrelevant_touch",
+        "canonical": "irrelevant_touch",
+        "control": "I1",
+        "required": false
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "选择探究模式或竞赛模式"
+      },
+      {
+        "name": "电流达标?",
+        "type": "decision",
+        "desc": "竞赛模式下电流与目标电流偏差小于0.004A"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "电流未对准，重新调节电阻再测试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "电流已对准目标，过关"
+      },
+      {
+        "name": "竞赛限次判定",
+        "type": "decision",
+        "desc": "竞赛模式剩余机会大于0"
+      },
+      {
+        "name": "机会耗尽失败",
+        "type": "retry",
+        "desc": "竞赛机会耗尽，游戏结束"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

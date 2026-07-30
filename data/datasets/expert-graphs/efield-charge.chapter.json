@@ -1,0 +1,205 @@
+{
+  "_expertMeta": {
+    "id": "efield-charge",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.519Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "电场 · 带电粒子偏转",
+    "sub": "探究场强、电荷量对偏转的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节场强/电荷/间距",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "飞出边界?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "命中靶区?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "偏转原理",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "S3",
+        "label": "电场力公式",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "C_OUT",
+        "label": "结果落在目标区?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "O1",
+        "t": "C_OUT",
+        "tp": "premise"
+      },
+      {
+        "s": "C_OUT",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "电场 · 带电粒子偏转",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电场 · 带电粒子偏转",
+        "formulas": [
+          "E = 1.2",
+          "E = state.fieldStrength"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-plate-gap",
+        "label": "极板间距",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-fieldStrength",
+        "label": "场强",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-charge",
+        "label": "电荷量",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·极板间距",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-fieldStrength",
+        "label": "单变量·场强",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-charge",
+        "label": "单变量·电荷量",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      }
+    ]
+  }
+}

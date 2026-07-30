@@ -1,0 +1,681 @@
+{
+  "version": 1,
+  "description": "985 大物课纲 · 精华 HTML 探究样本（约 20 条起，可随组员/试点扩展；eval 子集仍覆盖 hard tags）",
+  "samples": [
+    {
+      "id": "projectile-basic",
+      "topic": "斜抛",
+      "knowledgeText": "调节发射角、初速度与高度探究抛物线轨迹；质量为混淆控件。靶心挑战模式下命中目标过关。",
+      "hint": "过关：挑战模式命中靶心",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "teammate",
+        "craft:gold"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "friction-incline",
+      "topic": "斜面摩擦",
+      "knowledgeText": "斜面摩擦与下滑条件：学生调节摩擦系数和斜面角度，观察物体是否能在斜面上滑下。",
+      "tags": [
+        "generate",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "μ",
+          "θ"
+        ],
+        "adjustmentLabelsContain": [
+          "摩擦",
+          "角度"
+        ],
+        "outputLabelsContain": [
+          "下滑"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "efield-charge",
+      "topic": "电场",
+      "knowledgeText": "带电粒子在匀强电场中运动：学生调节场强大小和粒子电荷量，观察偏转轨迹或受力情况，使粒子进入目标区域。",
+      "tags": [
+        "generate",
+        "multi-av",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "E",
+          "q",
+          "F"
+        ],
+        "adjustmentLabelsContain": [
+          "场强",
+          "电荷"
+        ],
+        "outputLabelsContain": [
+          "轨迹",
+          "偏转",
+          "力"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "cyclotron-radius",
+      "topic": "回旋加速器",
+      "knowledgeText": "粒子在磁场中做圆周运动：调节磁感应强度和入射速度，探究轨道半径如何变化。",
+      "tags": [
+        "generate",
+        "multi-av",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "B",
+          "v",
+          "r"
+        ],
+        "adjustmentLabelsContain": [
+          "磁",
+          "速度"
+        ],
+        "outputLabelsContain": [
+          "半径",
+          "r"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "multi-kp",
+      "topic": "机械能",
+      "split": "eval",
+      "knowledgeText": "过山车模型：涉及重力势能 mgh 和动能 ½mv²。学生调节起始高度和释放速度，看能否通过环路最高点。",
+      "tags": [
+        "generate",
+        "multi-kp",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "mgh",
+          "mv"
+        ],
+        "adjustmentLabelsContain": [
+          "高度",
+          "速度"
+        ],
+        "outputLabelsContain": [
+          "能量",
+          "动能",
+          "势能",
+          "通过"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1,
+        "minKnowledgePoints": 2
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "capacitor-confound-ui",
+      "topic": "电容",
+      "split": "eval",
+      "knowledgeText": "探究平行板电容：调节极板面积和间距看电容变化。界面上还有背景颜色和装饰按钮，这些不影响电容结论。",
+      "tags": [
+        "generate",
+        "has-confounding",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "C"
+        ],
+        "adjustmentLabelsContain": [
+          "面积",
+          "间距"
+        ],
+        "outputLabelsContain": [
+          "电容",
+          "C"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "series-parallel",
+      "topic": "电路",
+      "split": "eval",
+      "knowledgeText": "串联与并联：调节两个电阻阻值，观察总电阻和总电流变化，使电流达到目标值。",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "R",
+          "I",
+          "U"
+        ],
+        "adjustmentLabelsContain": [
+          "电阻"
+        ],
+        "outputLabelsContain": [
+          "电流",
+          "I",
+          "电阻"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "heat-conduction",
+      "topic": "热传导",
+      "split": "eval",
+      "knowledgeText": "热传导探究：调节材料导热系数和温差，观察热流速率变化。",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "Q",
+          "k",
+          "ΔT"
+        ],
+        "adjustmentLabelsContain": [
+          "导热",
+          "温差",
+          "温度"
+        ],
+        "outputLabelsContain": [
+          "热流",
+          "Q"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "rc-circuit",
+      "topic": "RC电路",
+      "knowledgeText": "RC 充电：调节电阻 R 和电容 C，观察时间常数 τ=RC 与充电曲线。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "R",
+          "C",
+          "τ"
+        ],
+        "adjustmentLabelsContain": [
+          "电阻",
+          "电容"
+        ],
+        "outputLabelsContain": [
+          "时间",
+          "τ"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "thin-lens-implicit",
+      "topic": "透镜",
+      "knowledgeText": "凸透镜成像实验：改变物距和焦距，观察像是否成在屏上。不写公式，只描述实验。",
+      "tags": [
+        "generate",
+        "implicit-formula",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "f",
+          "u",
+          "v"
+        ],
+        "adjustmentLabelsContain": [
+          "物距",
+          "焦距"
+        ],
+        "outputLabelsContain": [
+          "像"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "refraction-snell",
+      "topic": "折射",
+      "knowledgeText": "光从空气射入介质：调节入射角和折射率，观察折射角，使光线命中目标。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "n",
+          "sin"
+        ],
+        "adjustmentLabelsContain": [
+          "入射",
+          "折射"
+        ],
+        "outputLabelsContain": [
+          "折射角"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "circular-motion",
+      "topic": "圆周运动",
+      "knowledgeText": "匀速圆周：调节半径和角速度，观察线速度与向心力。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "v",
+          "ω",
+          "r"
+        ],
+        "adjustmentLabelsContain": [
+          "半径",
+          "角速度"
+        ],
+        "outputLabelsContain": [
+          "线速度",
+          "向心力"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "momentum-collision",
+      "topic": "动量",
+      "knowledgeText": "两球碰撞：调节两球质量和初速度，观察碰撞后速度，使动量守恒且目标球进入指定区域。",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "m",
+          "v",
+          "p"
+        ],
+        "adjustmentLabelsContain": [
+          "质量",
+          "速度"
+        ],
+        "outputLabelsContain": [
+          "动量",
+          "p",
+          "速度"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "magnetic-force",
+      "topic": "安培力",
+      "knowledgeText": "通电导线在磁场中受力：学生调节电流和磁感应强度，观察安培力是否达到目标值。",
+      "tags": [
+        "generate",
+        "craft:draft"
+      ],
+      "expected": {
+        "formulasContain": [
+          "F",
+          "I",
+          "B"
+        ],
+        "adjustmentLabelsContain": [
+          "电流",
+          "磁"
+        ],
+        "outputLabelsContain": [
+          "力",
+          "F"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "transformer-turns",
+      "topic": "变压器",
+      "knowledgeText": "理想变压器：调节原副线圈匝数和输入电压，观察输出电压与匝数比的关系。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "U",
+          "n"
+        ],
+        "adjustmentLabelsContain": [
+          "匝",
+          "电压"
+        ],
+        "outputLabelsContain": [
+          "输出",
+          "U"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "gas-ideal",
+      "topic": "理想气体",
+      "knowledgeText": "理想气体等温过程：学生调节压强或体积，探究玻意耳定律 pV 乘积是否恒定。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "p",
+          "V"
+        ],
+        "adjustmentLabelsContain": [
+          "压强",
+          "体积"
+        ],
+        "outputLabelsContain": [
+          "pV",
+          "乘积"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "photoelectric",
+      "topic": "光电效应",
+      "knowledgeText": "光电效应：学生调节入射光频率和金属逸出功，观察是否产生光电流（hf > W）。",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "h",
+          "f",
+          "W"
+        ],
+        "adjustmentLabelsContain": [
+          "频率",
+          "逸出功"
+        ],
+        "outputLabelsContain": [
+          "光电流",
+          "电流"
+        ],
+        "confoundingMin": 0,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "pendulum-clock",
+      "topic": "单摆秒摆",
+      "knowledgeText": "调节摆长与摆角使周期接近 2.000s；摆锤质量为混淆变量（不进入周期公式）。",
+      "hint": "过关：T=2.000±0.005s 且摆角足够大",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "pendulum-target",
+      "topic": "单摆投靶",
+      "knowledgeText": "调节摆长与摆角使脱钩后的摆锤命中矿车；质量与弹性晃动为混淆项。",
+      "hint": "过关：摆锤命中下方目标车",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "projectile-cannon",
+      "topic": "抛体大炮",
+      "knowledgeText": "调节发射角、初速、重力、阻力与风速探究抛体命中；材料颜色为混淆控件。",
+      "hint": "过关：炮弹命中靶心",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "topic": "电容",
+      "knowledgeText": "电容纪元第一章：调节极板面积、间距与介质，探究电容与击穿约束。",
+      "hint": "过关：信号塔重建完成（介质与击穿目标）",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "topic": "电容",
+      "knowledgeText": "电容纪元第二章：调节串并联电容配置，使电站等效电容达标。",
+      "hint": "过关：电站重启完成（串并联目标）",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "topic": "电容",
+      "knowledgeText": "电容纪元第四章：通过电容与电压组合探究储能 E=½CV² 并过关。",
+      "hint": "过关：封印解除（储能与充电目标）",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "expected": {
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    }
+  ]
+}

@@ -1,0 +1,3391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>热传导 · Agent A 预览</title>
+<script src="../vendor/d3.v7.min.js"></script>
+<script src="../vendor/mermaid.min.js"></script>
+<script>
+  window.MathJax = { tex:{inlineMath:[['$','$'],['\\(','\\)']]}, svg:{fontCache:'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root{--font-ui:'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;--font-formula:'Noto Serif SC','Songti SC','SimSun',serif;}
+:root {
+  --font-ui: 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-formula: 'Cambria Math', 'Noto Serif SC', 'Times New Roman', serif;
+  --bg-body: #f4f7fb;
+  --bg-graph: #eef2f8;
+  --bg-header: rgba(255,255,255,0.98);
+  --bg-panel: #ffffff;
+  --text-main: #1a3344;
+  --text-muted: #3d6a7a;
+  --text-hint: #5a7a8a;
+  --accent: #007baa;
+  --accent-dim: #3d6a7a;
+  --dt-label: #1a3344;
+  --dt-label-result: #0d6b4a;
+  --dt-label-retry: #9a4a2a;
+  --graph-link-dt: rgba(0,90,130,0.55);
+  --graph-link-yes: rgba(30,130,80,0.65);
+  --graph-link-no: rgba(180,70,50,0.65);
+  --graph-node-stroke: #ffffff;
+  --graph-dim-opacity: 0.22;
+  --graph-link-dim-opacity: 0.12;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-body);color:var(--text-main);font-family:var(--font-ui);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+#header{background:var(--bg-header);border-bottom:1px solid var(--accent-dim);padding:12px 22px 10px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#header-left h1{font-family:'Noto Serif SC',STSong,serif;font-size:17px;color:var(--accent);letter-spacing:5px;font-weight:500;}
+#header-left p{font-size:9px;color:var(--text-muted);letter-spacing:3px;margin-top:3px;}
+#view-toggle{display:flex;gap:6px;align-items:center;}
+.vtab{padding:6px 18px;font-size:11px;letter-spacing:3px;cursor:pointer;border:1px solid var(--accent-dim);border-radius:4px;color:var(--text-muted);background:transparent;font-family:inherit;transition:all 0.18s;}
+.vtab:hover{border-color:var(--accent);color:var(--accent);}
+.vtab.active{border-color:var(--accent);color:var(--accent);background:rgba(0,100,160,0.12);}
+.vtab-primary{letter-spacing:2px;font-weight:600;}
+.vtab-secondary{font-size:10px;letter-spacing:1px;padding:5px 12px;opacity:0.85;}
+.view-struct-wrap{position:relative;}
+.struct-menu{position:absolute;top:calc(100% + 4px);right:0;min-width:132px;padding:4px;background:var(--bg-panel);border:1px solid var(--accent-dim);border-radius:6px;box-shadow:0 8px 24px rgba(15,40,60,0.12);z-index:40;display:flex;flex-direction:column;gap:2px;}
+.struct-menu.hidden{display:none;}
+.struct-menu .struct-item{width:100%;text-align:left;letter-spacing:2px;border-radius:4px;}
+#legend-items .priority-legend{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--accent-dim);}
+#legend-items .prio-lr{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-muted);}
+#legend-items .prio-line{height:0;flex:0 0 28px;border-top:3px solid #0f766e;}
+#legend-items .prio-line.mid{border-top-width:2.5px;border-top-color:#0369a1;}
+#legend-items .prio-line.low{border-top-width:2px;border-top-color:#64748b;}
+#legend-items .prio-line.trap{border-top:2px dashed #dc2626;}
+#legend-items .prio-line.confound{border-top:2px dashed #a16207;}
+#legend-items .route-btn .route-score{float:right;opacity:0.75;font-variant-numeric:tabular-nums;}
+#legend-items .route-btn.prio-1{border-left:3px solid #0f766e;}
+#legend-items .route-btn.prio-2{border-left:3px solid #0369a1;}
+#legend-items .route-btn.prio-3{border-left:3px solid #64748b;}
+#strategy-mermaid svg path.prio-edge-high{stroke:#0f766e!important;stroke-width:4.2px!important;}
+#strategy-mermaid svg path.prio-edge-mid{stroke:#0369a1!important;stroke-width:3px!important;}
+#strategy-mermaid svg path.prio-edge-low{stroke:#64748b!important;stroke-width:2.2px!important;}
+#strategy-mermaid svg path.prio-edge-trap{stroke:#dc2626!important;stroke-width:1.5px!important;stroke-dasharray:7 5;}
+#strategy-mermaid svg path.prio-edge-confound{stroke:#a16207!important;stroke-width:1.3px!important;stroke-dasharray:7 5;}
+#tabs{background:var(--bg-header);border-bottom:1px solid var(--accent-dim);display:flex;flex-wrap:wrap;gap:2px;padding:7px 16px;flex-shrink:0;}
+.tab{padding:4px 12px;font-size:11px;letter-spacing:2px;cursor:pointer;border:1px solid var(--accent-dim);border-radius:3px;color:var(--text-muted);background:transparent;transition:all 0.16s;max-width:11em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tab:hover,.tab.active{border-color:var(--accent);color:var(--accent);}
+.tab.active{background:rgba(0,100,160,0.12);}
+#main{display:flex;flex:1;min-height:0;}
+#graph{flex:1;position:relative;overflow:hidden;background:var(--bg-graph);}
+#svg{width:100%;height:100%;display:block;}
+#svg.hidden{display:none;}
+#strategy-panel{position:absolute;inset:0;overflow:hidden;padding:0;background:var(--bg-graph);display:none;}
+#strategy-panel.visible{display:block;}
+#graph.strategy-active{overflow:hidden;}
+#strategy-viewport{width:100%;height:100%;overflow:hidden;cursor:grab;touch-action:none;}
+#strategy-viewport:active{cursor:grabbing;}
+#strategy-mermaid{display:inline-block;width:auto;max-width:100%;min-width:0;min-height:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;will-change:transform;}
+#strategy-mermaid svg{width:auto;max-width:none;height:auto;display:block;}
+#strategy-mermaid svg .strategy-dim{opacity:0.22;}
+#strategy-mermaid svg .strategy-hl{opacity:1!important;}
+#strategy-mermaid svg .strategy-hl rect,#strategy-mermaid svg .strategy-hl polygon,#strategy-mermaid svg .strategy-hl circle{stroke-width:3px!important;}
+#strategy-mermaid svg .labelBkg rect,
+#strategy-mermaid svg .edgeLabel rect.labelBkg{fill:var(--bg-graph)!important;}
+#strategy-mermaid span.edgeLabel,
+#strategy-mermaid .edgeLabel span{background:var(--bg-graph)!important;}
+#strategy-mermaid .edgeLabel foreignObject,
+#strategy-mermaid .edgeLabel foreignObject>div{background:var(--bg-graph)!important;}
+#strategy-mermaid svg path.strategy-hl{stroke:var(--accent)!important;stroke-width:2.5px!important;opacity:1!important;}
+#strategy-mermaid svg path.strategy-dim{opacity:0.12;}
+#strategy-mermaid svg g.edgeLabel.strategy-hl{opacity:1!important;}
+#strategy-mermaid svg g.edgeLabel.strategy-dim{opacity:0.22;}
+#legend-items .route-btn.active{border-color:var(--accent);color:var(--accent);}
+#legend-items .route-btn.warn.active{border-color:#dc2626;color:#991b1b;}
+.gctrl .gbtn.graph-only{display:inline-block;}
+.gctrl.strategy-mode .gbtn.graph-only{display:none;}
+#strategy-empty,.strategy-loading{font-size:13px;color:var(--text-hint);text-align:center;margin-top:40px;}
+#legend-items .strategy-color-legend{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--accent-dim);font-size:13px;}
+#legend-items .strat-lr{margin-bottom:6px;}
+#legend-items .strat-ld{width:16px;height:16px;border-radius:4px;flex-shrink:0;}
+#legend-items .strategy-route-list{margin-top:4px;}
+.gctrl.hidden{display:none;}
+#legend-items .route-btn{display:block;width:100%;text-align:left;margin-bottom:6px;padding:6px 10px;font-size:11px;cursor:pointer;border:1px solid var(--accent-dim);border-radius:4px;color:var(--text-muted);background:transparent;font-family:inherit;}
+#legend-items .route-btn:hover,#legend-items .route-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,100,160,0.08);}
+#legend-items .route-btn.warn{border-color:#b45309;color:#92400e;}
+#info .route-kg-btn{display:block;margin-top:12px;padding:6px 12px;font-size:11px;cursor:pointer;border:1px solid var(--accent);border-radius:4px;color:var(--accent);background:rgba(0,100,160,0.08);font-family:inherit;}
+#info .route-kg-btn:hover{background:rgba(0,100,160,0.15);}
+#info .route-teach-sec{margin-top:12px;padding-top:10px;border-top:1px solid var(--accent-dim);}
+#info .route-teach-sec:first-of-type{margin-top:4px;padding-top:0;border-top:none;}
+#info .route-teach-h{font-size:11px;letter-spacing:1px;color:var(--accent);margin:0 0 6px;font-weight:600;font-family:var(--font-ui);}
+#info .route-teach-sec p{font-size:12px;line-height:1.75;color:var(--text-main);margin:0 0 6px;font-family:var(--font-ui);}
+#info .route-teach-sec p:last-child{margin-bottom:0;}
+#info .route-badge-cv{background:#a16207;}
+#info .route-badge-trap{background:#dc2626;}
+#info .route-teach-kg{margin-top:2px;}
+#info .route-teach-kg summary{cursor:pointer;font-size:11px;color:var(--text-muted);list-style:none;font-family:var(--font-ui);}
+#info .route-teach-kg summary::-webkit-details-marker{display:none;}
+#info .route-teach-kg summary::before{content:'▸ ';color:var(--accent);}
+#info .route-teach-kg[open] summary::before{content:'▾ ';}
+#info .route-kg-list{margin:8px 0 0;padding-left:1.1em;font-size:11px;line-height:1.7;color:var(--text-muted);font-family:var(--font-ui);}
+#info .route-kg-id{font-family:ui-monospace,Consolas,monospace;font-size:10px;opacity:0.85;margin-right:4px;}
+#info .route-kg-desc{opacity:0.85;}
+#legend-items .route-btn.hidden,#legend-items .route-btn-extra.hidden{display:none;}
+#legend-items .route-more-btn{display:block;width:100%;margin-top:4px;padding:4px 8px;font-size:10px;cursor:pointer;border:1px dashed var(--accent-dim);border-radius:4px;color:var(--text-muted);background:transparent;font-family:inherit;}
+#legend-items .route-more-btn:hover{border-color:var(--accent);color:var(--accent);}
+.gctrl{position:absolute;bottom:14px;left:14px;display:flex;gap:7px;flex-wrap:wrap;}
+.gbtn{background:var(--bg-panel);border:1px solid var(--accent-dim);border-radius:4px;padding:5px 13px;font-size:11px;letter-spacing:2px;color:var(--text-muted);cursor:pointer;font-family:inherit;}
+.gbtn:hover{color:var(--accent);border-color:var(--accent);}
+#panel{width:310px;background:var(--bg-panel);border-left:1px solid var(--accent-dim);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+#panel-hd{padding:16px 18px 12px;border-bottom:1px solid var(--accent-dim);flex-shrink:0;}
+#panel-hd h2{font-size:13px;color:var(--accent);letter-spacing:3px;}
+#panel-hd .psub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+#legend{padding:10px 18px;border-bottom:1px solid var(--accent-dim);flex-shrink:0;}
+#legend .ltitle{font-size:9px;letter-spacing:3px;color:var(--text-muted);margin-bottom:7px;}
+#legend-title.hidden{display:none;}
+.legend-section+.legend-section{margin-top:10px;padding-top:8px;border-top:1px solid var(--accent-dim);}
+.legend-section:first-child{border-top:none;padding-top:0;}
+.legend-subsection{margin-top:7px;}
+.legend-subsection:first-child{margin-top:0;}
+.legend-subtitle{font-size:9px;color:var(--text-muted);margin-bottom:4px;letter-spacing:1px;}
+.legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;}
+.legend-grid .lr{margin-bottom:0;font-size:10px;gap:5px;}
+.legend-grid .ld,.legend-grid .ll{flex-shrink:0;width:12px;}
+.legend-grid .ld.dashed,.legend-grid .ld.hollow{width:11px;height:11px;}
+.legend-grid .ll{height:3px;border-radius:1px;align-self:center;}
+.legend-grid .ll.dashed{height:0;background:transparent;border-top:2px dashed;box-sizing:border-box;}
+.legend-note{font-size:9px;color:var(--text-muted);margin-top:6px;line-height:1.4;}
+.lr{display:flex;align-items:center;gap:7px;margin-bottom:4px;font-size:11px;}
+.ld{width:10px;height:10px;border-radius:50%;box-sizing:border-box;}
+.ld.diamond{border-radius:2px;transform:rotate(45deg);width:9px;height:9px;}
+.ld.dashed{width:11px;height:11px;border:2px dashed rgba(255,255,255,0.95);box-sizing:border-box;}
+.ld.hollow{width:11px;height:11px;border:2px dashed;background:transparent!important;box-sizing:border-box;}
+#kg-filter{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
+#kg-filter.hidden{display:none;}
+#kg-filter .fbtn{padding:3px 10px;font-size:10px;cursor:pointer;border:1px solid var(--accent-dim);border-radius:3px;color:var(--text-muted);background:transparent;}
+#kg-filter .fbtn.active{border-color:var(--accent);color:var(--accent);}
+.legend-hint{font-size:9px;color:var(--text-muted);margin-top:6px;}
+.legend-hint.hidden{display:none;}
+.node.teach-node circle{stroke-dasharray:4,3;}
+.node.irrelevant-node circle{fill:#f4f4f4;stroke:#888888;stroke-width:2.5px;stroke-dasharray:3,2;}
+.i-badge.layer-play{background:#0d9488;}
+.i-badge.layer-teach{background:#556677;}
+.i-badges{margin-bottom:9px;display:flex;flex-wrap:wrap;gap:5px;}
+#info{flex:1;overflow-y:auto;padding:14px 18px;}
+.info-empty{font-size:12px;color:var(--text-hint);line-height:2.2;text-align:center;margin-top:22px;font-family:var(--font-ui);}
+.i-title{font-size:14px;color:var(--text-main);margin-bottom:8px;}
+.i-badge{display:inline-block;font-size:10px;padding:2px 9px;border-radius:10px;color:#fff;margin-bottom:9px;}
+.i-desc{font-size:13px;line-height:1.9;font-family:'Noto Serif SC',var(--font-formula);}
+.i-rel-lbl{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin:10px 0 4px;}
+.i-rel-list{font-size:12px;line-height:1.8;}
+.node circle,.node path.diamond-shape{cursor:pointer;stroke:var(--graph-node-stroke);stroke-width:2px;}
+.node text{font-size:10px;pointer-events:none;text-anchor:middle;fill:var(--text-main);font-weight:600;}
+.link{fill:none;stroke-opacity:0.52;stroke-width:1.8px;}
+.link.premise{stroke:#6688aa;}.link.method{stroke:#3388dd;}.link.core{stroke:#8855cc;}.link.result{stroke:#33aa66;}.link.verify{stroke:#dd66aa;stroke-dasharray:6,4;}
+.tree-link{fill:none;stroke:var(--graph-link-dt);stroke-width:1.6px;}
+.tree-link.decision-yes{stroke:var(--graph-link-yes);}
+.tree-link.decision-no{stroke:var(--graph-link-no);}
+.tree-node circle,.tree-node .diamond-path{cursor:pointer;stroke:var(--graph-node-stroke);stroke-width:2px;}
+.edge-lbl{font-size:9px;fill:var(--text-muted);pointer-events:none;}
+
+body{height:100vh;overflow:hidden;font-family:var(--font-ui);}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-left">
+    <h1>热传导</h1>
+    <p>AGENT A · 探究策略图（优先级可视）</p>
+  </div>
+  <div id="view-toggle" class="view-toggle-strategy-first">
+    <div class="vtab active vtab-primary" id="vt-strategy">探究策略图</div>
+    <div class="view-struct-wrap">
+      <button type="button" class="vtab vtab-secondary" id="btn-struct-toggle" aria-expanded="false">结构数据 ▾</button>
+      <div id="struct-menu" class="struct-menu hidden" role="menu">
+        <div class="vtab struct-item" id="vt-dt" role="menuitem">决策树</div>
+        <div class="vtab struct-item" id="vt-kg" role="menuitem">事理图谱</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="tabs"></div>
+<div id="main">
+  <div id="graph">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="strategy-panel"><div id="strategy-viewport"><div id="strategy-mermaid"></div></div></div>
+    <div class="gctrl" id="gctrl">
+      <button class="gbtn" id="btn-zoom">重置视图</button>
+      <button class="gbtn graph-only" id="btn-hl">清除高亮</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="panel-hd">
+      <h2 id="p-title">—</h2>
+      <div class="psub" id="p-sub">点击节点查看细节</div>
+    </div>
+    <div id="legend">
+      <div class="ltitle" id="legend-title">调节优先级</div>
+      <div id="legend-items"></div>
+      <div id="kg-filter" class="hidden">
+        <button type="button" class="fbtn active" data-kg-filter="all">全部</button>
+        <button type="button" class="fbtn" data-kg-filter="play">仅游玩</button>
+        <button type="button" class="fbtn" data-kg-filter="teach">仅教案</button>
+      </div>
+      <div id="legend-hint" class="legend-hint hidden">实心 = 游玩子图 · 实心+虚线描边 = 教案子图 · 空心 = 无关变量</div>
+    </div>
+    <div id="info"><div class="i-desc" style="text-align:center;margin-top:20px">← 点击节点查看细节</div></div>
+  </div>
+</div>
+<script>
+/**
+ * Shared Mermaid classDef for strategy panorama (appended at end of diagram by viewer.js).
+ * Palette aligned with teacher reference flowchart (start/cond/core/invalid/success).
+ */
+const STRATEGY_MERMAID_CLASS_DEFS = [
+  'classDef stratStart fill:#e2e8f0,stroke:#475569,stroke-width:2px',
+  'classDef stratCond fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px',
+  'classDef stratToggle fill:#eff6ff,stroke:#1d4ed8,stroke-width:2px',
+  'classDef stratCore fill:#fff7ed,stroke:#ea580c,stroke-width:2px',
+  'classDef stratAction fill:#fff7ed,stroke:#ea580c,stroke-width:2px',
+  'classDef stratTeach fill:#fff7ed,stroke:#ea580c,stroke-width:2px',
+  'classDef stratOp fill:#fff7ed,stroke:#ea580c,stroke-width:2px',
+  'classDef stratSuccess fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,font-weight:bold',
+  'classDef stratResult fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,font-weight:bold',
+  'classDef stratEnd fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,font-weight:bold',
+  'classDef stratRetry fill:#fff7ed,stroke:#ea580c,stroke-width:2px',
+  'classDef stratTrap fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#991b1b',
+  'classDef stratInvalid fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#991b1b',
+].join('\n');
+
+if (typeof window !== 'undefined') window.STRATEGY_MERMAID_CLASS_DEFS = STRATEGY_MERMAID_CLASS_DEFS;
+else if (typeof globalThis !== 'undefined') globalThis.STRATEGY_MERMAID_CLASS_DEFS = STRATEGY_MERMAID_CLASS_DEFS;
+
+/**
+ * Shared Mermaid strategy edge parser (browser + Node validate).
+ * Avoids HTML-breaking arrow sequences in regex when inlined in graph.html script.
+ */
+(function (root) {
+  const ARROW_SOLID = '--' + '>';
+  const MERMAID_EDGE_SPLIT = new RegExp('(-\\.->|' + ARROW_SOLID + ')');
+
+  function extractMermaidNodeId(seg) {
+    const s = seg.trim().replace(/:::strat\w+/g, '');
+    const m = s.match(/\b([A-Za-z][A-Za-z0-9_]*)\s*(?:$|\(|\[|\{|")/) || s.match(/^([A-Za-z][A-Za-z0-9_]*)/);
+    return m ? m[1] : null;
+  }
+
+  function parseTargetSeg(seg) {
+    let s = seg.trim().replace(/:::strat\w+/g, '');
+    let label = null;
+    const lm = s.match(/^\|([^|]*)\|([\s\S]*)$/);
+    if (lm) {
+      label = lm[1];
+      s = lm[2].trim();
+    }
+    return { id: extractMermaidNodeId(s), label };
+  }
+
+  /** Mermaid dash-label edges: rewrite to pipe form for shared arrow splitter. */
+  function normalizeDashLabelEdges(line) {
+    return String(line).replace(
+      /(\b[A-Za-z][A-Za-z0-9_]*)\s+--\s+([^-\n]+?)\s+-->/g,
+      (_, from, label) => `${from} -->|${String(label).trim()}|`
+    );
+  }
+
+  function parseStrategyMermaidEdges(body) {
+    const edges = [];
+    const lines = (body || '').replace(/\r\n/g, '\n').split('\n');
+
+    for (const raw of lines) {
+      const line = normalizeDashLabelEdges(raw.trim());
+      if (!line || /^graph\s|^flowchart\s|^classDef\s|^class\s/i.test(line)) continue;
+      const parts = line.split(MERMAID_EDGE_SPLIT);
+      if (parts.length < 3) continue;
+      let from = extractMermaidNodeId(parts[0]);
+      for (let i = 1; i < parts.length; i += 2) {
+        const arrow = parts[i];
+        if (arrow !== ARROW_SOLID && arrow !== '-.->') continue;
+        const { id: to, label } = parseTargetSeg(parts[i + 1] || '');
+        if (from && to) {
+          edges.push({
+            from,
+            to,
+            dotted: arrow === '-.->',
+            label,
+            key: `${from}->${to}`,
+          });
+        }
+        from = to;
+      }
+    }
+    return edges;
+  }
+
+  function addEdgeKey(keys, from, to) {
+    if (from && to) keys.add(`${from}->${to}`);
+  }
+
+  function shortestPathEdgeKeys(from, to, edges) {
+    if (!from || !to || from === to) return [];
+    const adj = new Map();
+    edges.forEach(e => {
+      if (!adj.has(e.from)) adj.set(e.from, []);
+      adj.get(e.from).push({ to: e.to, key: e.key });
+    });
+    const q = [{ id: from, path: [] }];
+    const seen = new Set([from]);
+    while (q.length) {
+      const { id, path } = q.shift();
+      for (const { to: nxt, key } of adj.get(id) || []) {
+        if (seen.has(nxt)) continue;
+        const nextPath = [...path, key];
+        if (nxt === to) return nextPath;
+        seen.add(nxt);
+        q.push({ id: nxt, path: nextPath });
+      }
+    }
+    return [];
+  }
+
+  function shortestPathNodes(from, to, edges) {
+    if (!from || !to) return [];
+    if (from === to) return [from];
+    const keys = shortestPathEdgeKeys(from, to, edges);
+    if (!keys.length) return [];
+    const nodes = [from];
+    keys.forEach(k => {
+      const i = k.indexOf('->');
+      if (i >= 0) nodes.push(k.slice(i + 2));
+    });
+    return nodes;
+  }
+
+  function findStartNode(mermaidBody, edges) {
+    const body = String(mermaidBody || '');
+    for (const raw of body.replace(/\r\n/g, '\n').split('\n')) {
+      const line = raw.trim();
+      if (!/:::stratStart\b/i.test(line)) continue;
+      const id = extractMermaidNodeId(line.split(/-->/)[0] || line);
+      if (id) return id;
+    }
+    const parsed = edges || parseStrategyMermaidEdges(mermaidBody);
+    const inDeg = new Map();
+    parsed.forEach(e => {
+      if (!inDeg.has(e.from)) inDeg.set(e.from, 0);
+      if (!inDeg.has(e.to)) inDeg.set(e.to, 0);
+      inDeg.set(e.to, (inDeg.get(e.to) || 0) + 1);
+    });
+    const roots = [...inDeg.entries()].filter(([, d]) => d === 0).map(([id]) => id);
+    if (roots.includes('Start')) return 'Start';
+    return roots[0] || 'Start';
+  }
+
+  function addEdgeKeyEndpoints(nodeSet, keySet) {
+    keySet.forEach(k => {
+      const i = k.indexOf('->');
+      if (i < 0) return;
+      nodeSet.add(k.slice(0, i));
+      nodeSet.add(k.slice(i + 2));
+    });
+  }
+
+  function routeEntryNodes(highlightNodes, edges) {
+    const hlSet = new Set(highlightNodes || []);
+    const sources = (highlightNodes || []).filter(n =>
+      !edges.some(e => e.to === n && hlSet.has(e.from)),
+    );
+    if (sources.length) return sources;
+    return (highlightNodes || []).filter(n =>
+      edges.some(e => e.to === n && !hlSet.has(e.from)),
+    );
+  }
+
+  function extractStratResultNodeIds(mermaidBody) {
+    const ids = new Set();
+    const body = normalizeStrategyNodeClasses(String(mermaidBody || ''));
+    const classRe = /\b([A-Za-z][A-Za-z0-9_]*)(?:\(\[[^\]]*\]|\[[^\]]*\]|\{[^}]*\}):::strat(?:Result|End|Success)\b/gi;
+    let m;
+    while ((m = classRe.exec(body)) !== null) ids.add(m[1]);
+    const labelRes = [
+      /\b([A-Za-z][A-Za-z0-9_]*)\(\[([^\]]+)\]\)(:::strat\w+)?/gi,
+      /\b([A-Za-z][A-Za-z0-9_]*)\[([^\]]+)\](:::strat\w+)?/gi,
+      /\b([A-Za-z][A-Za-z0-9_]*)\{([^}]+)\}(:::strat\w+)?/gi,
+    ];
+    for (const re of labelRes) {
+      while ((m = re.exec(body)) !== null) {
+        const label = String(m[2] || '').replace(/^"|"$/g, '').trim();
+        const stratClass = m[3] || '';
+        const decl = m[0] || '';
+        if (/:::strat(?:Cond|Retry|Invalid)\b/i.test(stratClass)
+          || /:::strat(?:Cond|Retry|Invalid)\b/i.test(decl)) continue;
+        if (/\{/.test(decl) && /\?/.test(label)) continue;
+        if (STRATEGY_SUCCESS_LABEL.test(label) && !STRATEGY_SUCCESS_LABEL_EXEMPT.test(label)) {
+          ids.add(m[1]);
+        }
+      }
+    }
+    return ids;
+  }
+
+      const STRATEGY_SUCCESS_LABEL = /过关|胜利|命中|成功|完成|通过|🎉/;
+  const STRATEGY_SUCCESS_LABEL_EXEMPT = /不影响过关|无效.*过关|关态下.*不影响|不影响.*判定|仅UI|仅 UI/i;
+  const SUCCESS_EDGE_LABEL = /^(是|yes|ok|达标|命中|成功|过关|胜利|完成|通过|正确|命中目标|达标了)$/i;
+  const FAILURE_EDGE_LABEL = /否|未|不|偏近|偏远|偏低|偏高|retry|再试|迷思|无效|失败|miss|no/i;
+
+function isSuccessBranchEdge(edge, resultIds) {
+    const lbl = String(edge.label || '').trim();
+    if (!lbl) return resultIds.has(edge.to) && !edge.dotted;
+    if (FAILURE_EDGE_LABEL.test(lbl)) return false;
+    return SUCCESS_EDGE_LABEL.test(lbl);
+  }
+
+  function routeShouldAppendSuccessOutcomes(route, opts) {
+    if (route?.warn === 'irrelevant') return false;
+    if (routeIsMisconceptionRoute(route, opts?.mermaidBody)) return false;
+    const resultKgIds = opts?.resultKgIds;
+    if (resultKgIds == null) return true;
+    if (resultKgIds.size === 0) return false;
+    return (route.mapsTo || []).some(id => resultKgIds.has(id));
+  }
+
+  function extractStratInvalidNodeIds(mermaidBody) {
+    const ids = new Set();
+    const body = normalizeStrategyNodeClasses(String(mermaidBody || ''));
+    const classRe = /\b([A-Za-z][A-Za-z0-9_]*)(?:\(\[[^\]]*\]|\[[^\]]*\]|\{[^}]*\}):::stratInvalid\b/gi;
+    let m;
+    while ((m = classRe.exec(body)) !== null) ids.add(m[1]);
+    return ids;
+  }
+
+    const MISCONCEPTION_ROUTE_WARN_RE = /无效|迷思|不影响|invalid|misconception|无关变量|陷阱|trap|误调.*迷思|关态下|关态.*无效/i;
+  const MISCONCEPTION_ROUTE_NODE_RE = /Invalid|Misconception|Trap/i;
+
+  /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
+  function routeIsMisconceptionRoute(route, mermaidBody) {
+    if (route?.warn === 'irrelevant') return true;
+    const warn = String(route?.warn || '');
+    if (MISCONCEPTION_ROUTE_WARN_RE.test(warn)) return true;
+    const hl = route?.highlightNodes || [];
+    if (hl.some(id => MISCONCEPTION_ROUTE_NODE_RE.test(String(id)))) return true;
+    if (mermaidBody) {
+      const invalidIds = extractStratInvalidNodeIds(mermaidBody);
+      if (hl.some(id => invalidIds.has(id))) return true;
+    }
+    return false;
+  }
+
+  function stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, route) {
+    if (!routeIsMisconceptionRoute(route, mermaidBody)) return;
+    const resultIds = extractStratResultNodeIds(mermaidBody);
+    for (const id of resultIds) nodeSet.delete(id);
+    for (const key of [...keySet]) {
+      const i = key.indexOf('->');
+      if (i < 0) continue;
+      if (resultIds.has(key.slice(i + 2))) keySet.delete(key);
+    }
+  }
+
+  function sanitizeMisconceptionRouteHighlights(routes, mermaidBody) {
+    if (!Array.isArray(routes)) return routes;
+    const resultIds = extractStratResultNodeIds(mermaidBody || '');
+    if (!resultIds.size) return routes;
+    return routes.map(route => {
+      if (!routeIsMisconceptionRoute(route, mermaidBody)) return route;
+      const highlightNodes = (route.highlightNodes || []).filter(id => !resultIds.has(id));
+      const highlightEdges = (route.highlightEdges || []).filter(pair =>
+        !Array.isArray(pair) || pair.length < 2 || !resultIds.has(pair[1]),
+      );
+      if (highlightNodes.length === (route.highlightNodes || []).length
+        && highlightEdges.length === (route.highlightEdges || []).length) {
+        return route;
+      }
+      return { ...route, highlightNodes, highlightEdges };
+    });
+  }
+
+  function extractStratRetryNodeIds(mermaidBody) {
+    const ids = new Set();
+    const body = normalizeStrategyNodeClasses(String(mermaidBody || ''));
+    const classRe = /\b([A-Za-z][A-Za-z0-9_]*)(?:\(\[[^\]]*\]|\[[^\]]*\]|\{[^}]*\}):::stratRetry\b/gi;
+    let m;
+    while ((m = classRe.exec(body)) !== null) ids.add(m[1]);
+    const labelRes = [
+      /\b([A-Za-z][A-Za-z0-9_]*)\(\[([^\]]+)\]\)(:::strat\w+)?/gi,
+      /\b([A-Za-z][A-Za-z0-9_]*)\[([^\]]+)\](:::strat\w+)?/gi,
+    ];
+    for (const re of labelRes) {
+      while ((m = re.exec(body)) !== null) {
+        const label = String(m[2] || '').replace(/^"|"$/g, '').trim();
+        if (/��|��|retry/i.test(label)) ids.add(m[1]);
+      }
+    }
+    return ids;
+  }
+
+  function extractStratCondNodeIds(mermaidBody) {
+    const ids = new Set();
+    const body = normalizeStrategyNodeClasses(String(mermaidBody || ''));
+    const classRe = /\b([A-Za-z][A-Za-z0-9_]*)(?:\(\[[^\]]*\]|\[[^\]]*\]|\{[^}]*\}):::stratCond\b/gi;
+    let m;
+    while ((m = classRe.exec(body)) !== null) ids.add(m[1]);
+    return ids;
+  }
+
+  /** Pairwise path may only use nodes declared on the route (prevents shared-hub bleed). */
+  function pathRespectsHlOrig(pathKeys, hlOrig) {
+    if (!pathKeys.length) return false;
+    for (const key of pathKeys) {
+      const i = key.indexOf('->');
+      if (i < 0) return false;
+      const from = key.slice(0, i);
+      const to = key.slice(i + 2);
+      if (!hlOrig.has(from) || !hlOrig.has(to)) return false;
+    }
+    return true;
+  }
+
+  function addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, hasExplicitSpine) {
+    for (let i = 0; i < hl.length; i++) {
+      for (let j = i + 1; j < hl.length; j++) {
+        const a = hl[i];
+        const b = hl[j];
+        if (hasExplicitSpine && shouldSkipSpinePairwise(a, b, mermaidBody)) continue;
+        for (const path of [pathFn(a, b), pathFn(b, a)]) {
+          if (pathRespectsHlOrig(path, hlOrig)) path.forEach(k => keys.add(k));
+        }
+      }
+    }
+  }
+
+  function isSharedRouteTerminal(id, mermaidBody) {
+    if (extractStratResultNodeIds(mermaidBody).has(id)) return true;
+    if (extractStratRetryNodeIds(mermaidBody).has(id)) return true;
+    return /^Retry\d*$/i.test(id);
+  }
+
+  function shouldSkipSpinePairwise(a, b, mermaidBody) {
+    return isSharedRouteTerminal(a, mermaidBody) || isSharedRouteTerminal(b, mermaidBody);
+  }
+
+  function branchReachableHighlight(root, hlSet, edges) {
+    if (hlSet.has(root)) return true;
+    const adj = new Map();
+    edges.forEach(e => {
+      if (!adj.has(e.from)) adj.set(e.from, []);
+      adj.get(e.from).push(e.to);
+    });
+    const q = [root];
+    const seen = new Set([root]);
+    while (q.length) {
+      const id = q.shift();
+      if (hlSet.has(id)) return true;
+      for (const nxt of adj.get(id) || []) {
+        if (seen.has(nxt)) continue;
+        seen.add(nxt);
+        q.push(nxt);
+      }
+    }
+    return false;
+  }
+
+  /** At macro forks, forbid paths through sibling branches not on this route. */
+  function forkSiblingExclusions(edges, hlSet) {
+    const forbidden = new Set();
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).includes(e.to)) byFrom.get(e.from).push(e.to);
+    });
+    byFrom.forEach((children, from) => {
+      if (children.length < 2) return;
+      const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
+      if (active.length === 1) {
+        children.forEach(c => {
+          if (c !== active[0]) forbidden.add(c);
+        });
+      }
+    });
+    return forbidden;
+  }
+
+  function numberedRouteSiblingExclusions(hlSet, mermaidBody) {
+    const forbidden = new Set();
+    const edges = parseStrategyMermaidEdges(mermaidBody);
+    const ids = new Set();
+    edges.forEach(e => {
+      ids.add(e.from);
+      ids.add(e.to);
+    });
+    const basesInHl = new Map();
+    for (const id of hlSet) {
+      const m = String(id).match(/^([A-Za-z]+?)(\d*)$/);
+      if (!m) continue;
+      const base = m[1];
+      if (!/^(Observe|CheckGoal|Adjust|Fire|Tune|Launch|Strategy|Strat)/i.test(base)) continue;
+      const suffix = m[2] || '';
+      if (!basesInHl.has(base)) basesInHl.set(base, new Set());
+      basesInHl.get(base).add(suffix);
+    }
+    for (const id of ids) {
+      const m = String(id).match(/^([A-Za-z]+?)(\d*)$/);
+      if (!m) continue;
+      const base = m[1];
+      if (!basesInHl.has(base)) continue;
+      const suffix = m[2] || '';
+      const allowed = basesInHl.get(base);
+      if (allowed.size >= 1 && !allowed.has(suffix)) forbidden.add(id);
+    }
+    return forbidden;
+  }
+
+  /** When exactly one direct child is declared on the route, forbid sibling macro-strategy entries. */
+  function directStrategyBranchExclusions(edges, hlOrig) {
+    const forbidden = new Set();
+    if (!hlOrig || !hlOrig.size) return forbidden;
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).includes(e.to)) byFrom.get(e.from).push(e.to);
+    });
+    byFrom.forEach((children, from) => {
+      if (children.length < 2) return;
+      if (!/StrategySelect/i.test(from)) return;
+      const declared = children.filter(child => hlOrig.has(child));
+      if (declared.length !== 1) return;
+      const keep = declared[0];
+      children.forEach(c => {
+        if (c !== keep) forbidden.add(c);
+      });
+    });
+    return forbidden;
+  }
+
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
+    const forbidden = forkSiblingExclusions(edges, hlSet);
+    directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
+    if (detectMacroRouteFanOut(mermaidBody)) {
+      numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
+    }
+    return forbidden;
+  }
+
+  function shortestPathEdgeKeysAvoiding(from, to, edges, forbidden) {
+    if (!from || !to || from === to) return [];
+    const adj = new Map();
+    edges.forEach(e => {
+      if (forbidden.has(e.to)) return;
+      if (!adj.has(e.from)) adj.set(e.from, []);
+      adj.get(e.from).push({ to: e.to, key: e.key });
+    });
+    const q = [{ id: from, path: [] }];
+    const seen = new Set([from]);
+    while (q.length) {
+      const { id, path } = q.shift();
+      for (const { to: nxt, key } of adj.get(id) || []) {
+        if (seen.has(nxt)) continue;
+        const nextPath = [...path, key];
+        if (nxt === to) return nextPath;
+        seen.add(nxt);
+        q.push({ id: nxt, path: nextPath });
+      }
+    }
+    return [];
+  }
+
+  /** Replace highlightEdges shortcuts that are not direct mermaid edges with actual paths. */
+  function resolvePhantomHighlightEdges(keySet, nodeSet, edges, pathFn) {
+    const edgeKeys = new Set(edges.map(e => e.key));
+    const phantom = [...keySet].filter(k => !edgeKeys.has(k));
+    for (const key of phantom) {
+      const i = key.indexOf('->');
+      if (i < 0) continue;
+      const from = key.slice(0, i);
+      const to = key.slice(i + 2);
+      const path = pathFn(from, to);
+      if (!path.length) continue;
+      keySet.delete(key);
+      path.forEach(k => keySet.add(k));
+      path.forEach(k => {
+        const j = k.indexOf('->');
+        if (j >= 0) {
+          nodeSet.add(k.slice(0, j));
+          nodeSet.add(k.slice(j + 2));
+        }
+      });
+    }
+  }
+
+  function appendRouteSuccessOutcomes(nodeSet, keySet, edges, mermaidBody, route, opts) {
+    if (!routeShouldAppendSuccessOutcomes(route, { ...(opts || {}), mermaidBody })) return;
+    const resultIds = extractStratResultNodeIds(mermaidBody);
+    if (!resultIds.size) return;
+    const hlOrig = new Set(route.highlightNodes || []);
+    edges.forEach(e => {
+      if (!resultIds.has(e.to) || !nodeSet.has(e.from)) return;
+      if (!hlOrig.has(e.from) && !hlOrig.has(e.to)) return;
+      if (!isSuccessBranchEdge(e, resultIds)) return;
+      nodeSet.add(e.to);
+      keySet.add(e.key);
+    });
+  }
+
+  function observeRetrySameBranch(observeId, retryId) {
+    const o = String(observeId).match(/^Observe([A-Za-z]*\d*)$/i);
+    const r = String(retryId).match(/^Retry([A-Za-z]*\d*)$/i);
+    if (!o || !r) return false;
+    const oSuffix = o[1] || '1';
+    const rSuffix = r[1] || '1';
+    return oSuffix === rSuffix;
+  }
+
+  function nodeBranchSuffix(id, baseRe) {
+    const m = String(id || '').match(baseRe);
+    return m ? (m[1] || '') : null;
+  }
+
+  function branchSuffixesMatch(gateId, targetId) {
+    if (/^Observe[A-Za-z]*\d*$/i.test(gateId)) {
+      return observeRetrySameBranch(gateId, targetId)
+        || observeContinueSameBranch(gateId, targetId);
+    }
+    const gCheck = String(gateId).match(/^CheckGoal([A-Za-z]*\d*)$/i);
+    if (gCheck) {
+      const gSuffix = gCheck[1] || '';
+      const c = String(targetId).match(/^Continue([A-Za-z]*\d*)$/i);
+      if (c) return (c[1] || '') === gSuffix;
+      const r = String(targetId).match(/^Retry([A-Za-z]*\d*)$/i);
+      if (r) return (r[1] || '') === gSuffix;
+    }
+    return failureGateRetrySameBranch(gateId, targetId);
+  }
+
+  function observeContinueSameBranch(observeId, continueId) {
+    const o = String(observeId).match(/^Observe([A-Za-z]*\d*)$/i);
+    const c = String(continueId).match(/^Continue([A-Za-z]*\d*)$/i);
+    if (!o || !c) return false;
+    return (o[1] || '') === (c[1] || '');
+  }
+
+  function isRetestOperationId(id) {
+    return /^(Fire|Launch|Tune|QuickFire)([A-Za-z]*\d*)?$/i.test(String(id || ''));
+  }
+
+  function retestOpSuffixMatches(sourceId, opId) {
+    const src = nodeBranchSuffix(sourceId, /^(?:Observe|CheckGoal|Adjust)([A-Za-z]*\d*)$/i);
+    if (src === null) return true;
+    const op = nodeBranchSuffix(opId, /^(?:Fire|Launch|Tune)([A-Za-z]*\d*)$/i);
+    if (op === null) return false;
+    return src === op;
+  }
+
+  /** Node id �?display label from mermaid defs (shared by expand + compact). */
+  function extractStrategyNodeLabels(mermaidBody) {
+    const labels = new Map();
+    const body = String(mermaidBody || '');
+    const re = /\b([A-Za-z][A-Za-z0-9_]*)(?:\(\[([^\]]+)\]\)|\[([^\]]+)\]|\{([^}]+)\})/g;
+    let m;
+    while ((m = re.exec(body)) !== null) {
+      if (!labels.has(m[1])) labels.set(m[1], m[2] || m[3] || m[4] || '');
+    }
+    return labels;
+  }
+
+  const ADJUST_ID_RE = /^Adjust\w*\d*$/i;
+  const ADJUST_PARAM_RE = /^(Decrease|Increase|FineTune|Retune|Calibrate|Analyze)\w*\d*$/i;
+  const ADJUST_TEXT_RE = /t|�|�c|e|�'|�|<�|�|Ol|�/i;
+
+  function isAdjustLikeNodeId(id, nodeLabels) {
+    const s = String(id || '');
+    if (ADJUST_ID_RE.test(s) || ADJUST_PARAM_RE.test(s)) return true;
+    if (/^ReAim|^LockAim|^Lock\d*$/i.test(s)) return true;
+    const label = nodeLabels instanceof Map ? (nodeLabels.get(s) || '') : '';
+    return ADJUST_TEXT_RE.test(`${s}${label}`);
+  }
+
+  function extractRetestNodeIds(mermaidBody, edges) {
+    const ids = new Set(extractStratRetryNodeIds(mermaidBody));
+    for (const e of edges || []) {
+      if (/^Continue\d*$/i.test(e.from)) ids.add(e.from);
+      if (/^Continue\d*$/i.test(e.to)) ids.add(e.to);
+    }
+    const body = String(mermaidBody || '');
+    const continueRe = /\b(Continue\d*)\(\[|\b(Continue\d*)\[|\b(Continue\d*)\{/gi;
+    let m;
+    while ((m = continueRe.exec(body)) !== null) {
+      ids.add(m[1] || m[2] || m[3]);
+    }
+    return ids;
+  }
+
+  function followAdjustToRetestOp(adjustId, observeSuffix, nodeSet, keySet, edges, nodeLabels, depth = 0) {
+    if (depth > 3) return;
+    for (const e of edges) {
+      if (e.from !== adjustId) continue;
+      if (isRetestOperationId(e.to) && retestOpSuffixMatches(`Observe${observeSuffix}`, e.to)) {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        continue;
+      }
+      const chainOk = isAdjustLikeNodeId(e.to, nodeLabels)
+        || /^ReAim|^LockAim|^Lock\d*$/i.test(String(e.to));
+      if (chainOk && !/^Judge|^CheckGoal|^Observe/i.test(String(e.to))) {
+        if (!nodeSet.has(e.to)) {
+          nodeSet.add(e.to);
+          keySet.add(e.key);
+          followAdjustToRetestOp(e.to, observeSuffix, nodeSet, keySet, edges, nodeLabels, depth + 1);
+        }
+      }
+    }
+  }
+
+  /** When route spine includes Observe/CheckGoal, light feedback adjust + continue loops. */
+  function appendRouteObserveAdjustFireLoop(nodeSet, keySet, edges, mermaidBody, route) {
+    if (route?.warn === 'irrelevant') return;
+    const resultIds = extractStratResultNodeIds(mermaidBody);
+    const retestIds = extractRetestNodeIds(mermaidBody, edges);
+    const nodeLabels = extractStrategyNodeLabels(mermaidBody);
+
+    const observeOnRoute = [...nodeSet].filter(id => /^Observe[A-Za-z]*\d*$/i.test(id));
+    for (const obsId of observeOnRoute) {
+      const obsSuffix = nodeBranchSuffix(obsId, /^Observe([A-Za-z]*\d*)$/i);
+      if (obsSuffix === null) continue;
+      for (const e of edges) {
+        if (e.from !== obsId) continue;
+        if (isSuccessBranchEdge(e, resultIds)) continue;
+        if (resultIds.has(e.to)) continue;
+        if (/^(CheckGoal|Judge|Observe)[A-Za-z]*\d*$/i.test(e.to)) continue;
+        const feedbackTarget = isAdjustLikeNodeId(e.to, nodeLabels)
+          || /^Continue\d*$/i.test(e.to)
+          || /^Retry[A-Za-z]*\d*$/i.test(e.to)
+          || /^ReAim|^LockAim|^Lock\d*$/i.test(String(e.to));
+        if (!feedbackTarget) continue;
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        if (isAdjustLikeNodeId(e.to, nodeLabels) || /^ReAim|^Lock/i.test(String(e.to))) {
+          followAdjustToRetestOp(e.to, obsSuffix, nodeSet, keySet, edges, nodeLabels);
+        } else if (isRetestOperationId(e.to) && retestOpSuffixMatches(obsId, e.to)) {
+          nodeSet.add(e.to);
+        }
+      }
+    }
+
+    const checkGoals = [...nodeSet].filter(id => /^CheckGoal[A-Za-z]*\d*$/i.test(id));
+    for (const cgId of checkGoals) {
+      for (const e of edges) {
+        if (e.from !== cgId) continue;
+        if (isSuccessBranchEdge(e, resultIds)) continue;
+        if (!retestIds.has(e.to) && !/^Continue\d*$/i.test(e.to)) continue;
+        if (!branchSuffixesMatch(cgId, e.to)) continue;
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        for (const e2 of edges) {
+          if (e2.from !== e.to) continue;
+          if (isRetestOperationId(e2.to) && retestOpSuffixMatches(cgId, e2.to)) {
+            nodeSet.add(e2.to);
+            keySet.add(e2.key);
+          }
+        }
+      }
+    }
+  }
+
+  function failureGateRetrySameBranch(gateId, retryId) {
+    if (/^Continue\d*$/i.test(retryId)) return branchSuffixesMatch(gateId, retryId);
+    if (/^Observe[A-Za-z]*\d*$/i.test(gateId)) return observeRetrySameBranch(gateId, retryId);
+    const r = String(retryId).match(/^Retry([A-Za-z]*\d*)$/i);
+    if (!r) return false;
+    const rSuffix = r[1] || '';
+    const gCheck = String(gateId).match(/^CheckGoal([A-Za-z]*\d*)$/i);
+    if (gCheck) {
+      if (!rSuffix) return true;
+      return (gCheck[1] || '') === rSuffix;
+    }
+    const gJudge = String(gateId).match(/^Judge([A-Za-z]*\d*)$/i);
+    if (gJudge) {
+      if (!rSuffix) return true;
+      return (gJudge[1] || '') === rSuffix;
+    }
+    return false;
+  }
+
+  function isFailureGateNode(id, mermaidBody) {
+    if (/^(Observe|CheckGoal|Judge)[A-Za-z]*\d*$/i.test(id)) return true;
+    return extractStratCondNodeIds(mermaidBody).has(id);
+  }
+
+  function isFailureRetryEdge(edge, retryIds) {
+    if (/^Continue\d*$/i.test(edge.to)) {
+      const lbl = String(edge.label || '').trim();
+      if (lbl && SUCCESS_EDGE_LABEL.test(lbl)) return false;
+      return true;
+    }
+    if (!retryIds.has(edge.to)) return false;
+    const lbl = String(edge.label || '').trim();
+    if (!lbl) return true;
+    if (SUCCESS_EDGE_LABEL.test(lbl)) return false;
+    return true;
+  }
+
+  function isRetryDeclaredForRoute(route, gateId, retryId) {
+    if (route?.highlightFailureBranches === true) return true;
+    const hlOrig = new Set(route.highlightNodes || []);
+    if (hlOrig.has(retryId)) return true;
+    if (hlOrig.has(gateId) && branchSuffixesMatch(gateId, retryId)) return true;
+    if (hlOrig.has(gateId) && failureGateRetrySameBranch(gateId, retryId)) return true;
+    for (const pair of route.highlightEdges || []) {
+      if (!Array.isArray(pair) || pair.length < 2) continue;
+      if (pair[0] === gateId && pair[1] === retryId) return true;
+    }
+    return false;
+  }
+
+  function routeShouldAppendFailureOutcomes(route, edges, mermaidBody) {
+    if (route?.warn === 'irrelevant') return false;
+    if (route?.highlightFailureBranches === true) return true;
+    const hlOrig = new Set(route.highlightNodes || []);
+    for (const n of hlOrig) {
+      if (/^Retry[A-Za-z]*\d*$/i.test(n)) return true;
+      if (/^Continue\d*$/i.test(n)) return true;
+    }
+    for (const pair of route.highlightEdges || []) {
+      if (Array.isArray(pair) && pair.length >= 2 && /^Retry[A-Za-z]*\d*$/i.test(pair[1])) return true;
+      if (Array.isArray(pair) && pair.length >= 2 && /^Continue\d*$/i.test(pair[1])) return true;
+    }
+    const retryIds = extractRetestNodeIds(mermaidBody, edges);
+    for (const n of hlOrig) {
+      if (!isFailureGateNode(n, mermaidBody)) continue;
+      if (edges.some(e =>
+        e.from === n
+        && (branchSuffixesMatch(e.from, e.to) || failureGateRetrySameBranch(e.from, e.to))
+        && isFailureRetryEdge(e, retryIds),
+      )) return true;
+    }
+    return false;
+  }
+
+  function appendRouteFailureOutcomes(nodeSet, keySet, edges, mermaidBody, route) {
+    if (!routeShouldAppendFailureOutcomes(route, edges, mermaidBody)) return;
+    const retryIds = extractRetestNodeIds(mermaidBody, edges);
+    if (!retryIds.size) return;
+    const hlOrig = new Set(route.highlightNodes || []);
+    edges.forEach(e => {
+      const isRetest = retryIds.has(e.to) || /^Continue\d*$/i.test(e.to);
+      if (!isRetest || !nodeSet.has(e.from)) return;
+      if (!isFailureGateNode(e.from, mermaidBody)) return;
+      if (!branchSuffixesMatch(e.from, e.to) && !failureGateRetrySameBranch(e.from, e.to)) return;
+      if (!isFailureRetryEdge(e, retryIds)) return;
+      if (!isRetryDeclaredForRoute(route, e.from, e.to) && !/^Continue\d*$/i.test(e.to)) return;
+      if (route?.highlightFailureBranches !== true && !hlOrig.has(e.from) && !hlOrig.has(e.to)
+        && !/^Continue\d*$/i.test(e.to)) return;
+      nodeSet.add(e.to);
+      keySet.add(e.key);
+    });
+  }
+
+  /** When a Retry/Continue node is on the route, include return edge to declared route node. */
+  function appendRouteRetryReturnEdges(nodeSet, keySet, edges, route) {
+    const hlOrig = new Set(route.highlightNodes || []);
+    edges.forEach(e => {
+      const fromIsRetest = /^Retry[A-Za-z]*\d*$/i.test(e.from) || /^Continue\d*$/i.test(e.from);
+      if (!fromIsRetest) return;
+      if (!nodeSet.has(e.from)) return;
+      if (!hlOrig.has(e.to) && !nodeSet.has(e.to)) return;
+      if (isRetestOperationId(e.to) || hlOrig.has(e.to)) {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+      }
+    });
+  }
+
+  /** Retry return + gate�Retry failure edges (topology-driven). */
+  function appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, route) {
+    appendRouteFailureOutcomes(nodeSet, keySet, edges, mermaidBody, route);
+    appendRouteRetryReturnEdges(nodeSet, keySet, edges, route);
+  }
+
+  
+  function isConfoundProbeRouteLike(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
+  function isConfoundVisualNodeId(id) {
+    return /^(ProbeCV|ObserveCV|BackFromCV)\d*$/i.test(String(id || ''));
+  }
+
+  function stripConfoundBleedFromRoute(nodeSet, keySet, route) {
+    if (isConfoundProbeRouteLike(route)) return;
+    for (const id of [...nodeSet]) {
+      if (isConfoundVisualNodeId(id)) nodeSet.delete(id);
+    }
+    for (const k of [...keySet]) {
+      const i = k.indexOf('->');
+      if (i < 0) continue;
+      const a = k.slice(0, i);
+      const b = k.slice(i + 2);
+      if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
+      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+    }
+  }
+
+  function normalizeRouteLabelKey(label) {
+    return String(label || '')
+      .replace(/\s*·\s*优先\d+(?:\s*·\s*[\d.]+)?$/u, '')
+      .replace(/\s*·\s*陷阱(?:\s*·\s*[\d.]+)?$/u, '')
+      .replace(/\s*·\s*旁路(?:\s*·\s*[\d.]+)?$/u, '')
+      .replace(/\s+/g, '')
+      .trim();
+  }
+
+  function preferSpineNodeScore(id) {
+    const s = String(id || '');
+    if (/^Adjust/i.test(s)) return 55;
+    if (/Route|Strat(?!egySelect)/i.test(s)) return 50;
+    if (/^(Fire|Launch|Tune)/i.test(s)) return 45;
+    if (/^Observe/i.test(s)) return 35;
+    if (/^Check/i.test(s)) return 30;
+    if (/^(Win|Continue|Victory)/i.test(s)) return 25;
+    if (/^(Retry|Fail|Invalid|ModeOff|Trap)/i.test(s)) return -5;
+    return 8;
+  }
+
+  function findStrategySelectOutEdge(route, edges) {
+    const selectEdges = edges.filter(e => /StrategySelect/i.test(e.from) && e.label);
+    if (!selectEdges.length) return null;
+    const want = normalizeRouteLabelKey(route && route.label);
+    if (want) {
+      let hit = selectEdges.find(e => normalizeRouteLabelKey(e.label) === want);
+      if (hit) return hit;
+      hit = selectEdges.find(e => {
+        const k = normalizeRouteLabelKey(e.label);
+        return k && want && (k.includes(want) || want.includes(k));
+      });
+      if (hit) return hit;
+    }
+    if (/trap|盲调|多参|多滑/i.test(String((route && route.id) || '') + String((route && route.label) || ''))) {
+      return selectEdges.find(e => /盲调|多参|trap|多滑/i.test(e.label || '')) || null;
+    }
+    const idm = String((route && route.id) || '').match(/^main[_-](.+)$/i);
+    if (idm) {
+      const frag = idm[1].toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (frag) {
+        const fragShort = frag.replace(/^s/, '');
+        for (const e of selectEdges) {
+          const q = [e.to];
+          const seen = new Set(q);
+          while (q.length) {
+            const cur = q.shift();
+            const curNorm = String(cur).toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (preferSpineNodeScore(cur) >= 45 && curNorm.includes(fragShort)) return e;
+            if (/^Adjust/i.test(cur) && curNorm.includes(fragShort.slice(0, Math.min(4, fragShort.length)))) {
+              return e;
+            }
+            for (const nx of edges) {
+              if (nx.from !== cur || seen.has(nx.to)) continue;
+              if (preferSpineNodeScore(nx.to) < 0) continue;
+              seen.add(nx.to);
+              q.push(nx.to);
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function greedySpineFromEntry(entry, edges, forbidden, maxDepth) {
+    const nodes = [entry];
+    const pairs = [];
+    let cur = entry;
+    const depth = maxDepth == null ? 14 : maxDepth;
+    for (let d = 0; d < depth; d++) {
+      const outs = edges.filter(e => e.from === cur && !forbidden.has(e.to));
+      if (!outs.length) break;
+      // From Observe/Check: prefer Win/success, never dive into Adjust* (feedback loops)
+      const ranked = outs
+        .map(e => {
+          let score = preferSpineNodeScore(e.to);
+          if (/^(Observe|Check)/i.test(cur)) {
+            if (/^(Win|Victory|Success|Continue)/i.test(e.to)) score = 80;
+            else if (/^Adjust/i.test(e.to) || /^Retry/i.test(e.to)) score = -1;
+          }
+          return { e: e, score: score };
+        })
+        .filter(x => x.score >= 0)
+        .sort((a, b) => b.score - a.score);
+      if (!ranked.length) break;
+      const best = ranked[0].e;
+      pairs.push([best.from, best.to]);
+      nodes.push(best.to);
+      cur = best.to;
+      if (/^(Win|Victory|Success)/i.test(cur)) break;
+      if (/^(Observe|Check)/i.test(cur)) {
+        // one more hop to Win if present, then stop
+        const winEdge = edges.find(e =>
+          e.from === cur && !forbidden.has(e.to) && /^(Win|Victory|Success)/i.test(e.to));
+        if (winEdge) {
+          pairs.push([winEdge.from, winEdge.to]);
+          nodes.push(winEdge.to);
+        }
+        break;
+      }
+    }
+    return { nodes: nodes, pairs: pairs };
+  }
+
+  /**
+   * Sparse 单变量 routes often only declare Start/StrategySelect/Win.
+   * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
+   */
+  function seedSingleVarRouteSpine(route, mermaidBody, edges, startId) {
+    const empty = { entry: null, nodes: [], edgePairs: [], keys: [] };
+    if (!route || routeIsMisconceptionRoute(route, mermaidBody)) return empty;
+    const selectEdge = findStrategySelectOutEdge(route, edges);
+    if (!selectEdge) return empty;
+    const entry = selectEdge.to;
+    const siblings = edges
+      .filter(e => /StrategySelect/i.test(e.from))
+      .map(e => e.to)
+      .filter(id => id && id !== entry);
+    const forbidden = new Set(siblings);
+    let prefixKeys = startId
+      ? shortestPathEdgeKeysAvoiding(startId, entry, edges, forbidden)
+      : [];
+    if ((!prefixKeys || !prefixKeys.length) && startId && startId !== entry) {
+      prefixKeys = shortestPathEdgeKeys(startId, entry, edges);
+      if (!prefixKeys.length) return empty;
+    }
+    const walk = greedySpineFromEntry(entry, edges, forbidden);
+    const nodes = new Set();
+    const edgePairs = [];
+    const keys = new Set();
+    const ingestKeys = function (pathKeys) {
+      (pathKeys || []).forEach(k => {
+        keys.add(k);
+        const j = k.indexOf('->');
+        if (j < 0) return;
+        const a = k.slice(0, j);
+        const b = k.slice(j + 2);
+        nodes.add(a);
+        nodes.add(b);
+        edgePairs.push([a, b]);
+      });
+    };
+    ingestKeys(prefixKeys);
+    nodes.add(entry);
+    walk.nodes.forEach(n => nodes.add(n));
+    walk.pairs.forEach(p => {
+      edgePairs.push(p);
+      keys.add(p[0] + '->' + p[1]);
+    });
+    keys.add(selectEdge.key);
+    edgePairs.push([selectEdge.from, selectEdge.to]);
+    nodes.add(selectEdge.from);
+    return { entry: entry, nodes: [...nodes], edgePairs: edgePairs, keys: [...keys] };
+  }
+
+  function pruneHighlightToSelectEntry(highlightNodes, entry, edges) {
+    if (!entry) return highlightNodes || [];
+    const siblings = new Set(
+      edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== entry),
+    );
+    if (!siblings.size) return highlightNodes || [];
+    return (highlightNodes || []).filter(id => !siblings.has(id));
+  }
+
+function expandRouteHighlight(route, mermaidBody, opts) {
+    const edges = parseStrategyMermaidEdges(mermaidBody);
+    const startId = findStartNode(mermaidBody, edges);
+    const spineSeed = seedSingleVarRouteSpine(route, mermaidBody, edges, startId);
+    const sparse = !(Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+      || (route.highlightNodes || []).length < 6;
+    let effectiveNodes = [...(route.highlightNodes || [])];
+    if (spineSeed.entry && sparse) {
+      effectiveNodes = [...new Set([...effectiveNodes, ...spineSeed.nodes])];
+      effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
+    } else if (spineSeed.entry) {
+      // Even with explicit spine, drop sibling StrategySelect targets to avoid bleed.
+      effectiveNodes = pruneHighlightToSelectEntry(effectiveNodes, spineSeed.entry, edges);
+    }
+    if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
+      const keep = new Set(spineSeed.nodes);
+      effectiveNodes = effectiveNodes.filter(id => {
+        // Drop other-route Adjust*/Route* not on this spine
+        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id)) return keep.has(id);
+        if (/Route/i.test(id) && !/StrategySelect/i.test(id)) return keep.has(id) || id === spineSeed.entry;
+        return true;
+      });
+    }
+    const siblingEntries = spineSeed.entry
+      ? new Set(
+        edges.filter(e => /StrategySelect/i.test(e.from)).map(e => e.to).filter(id => id && id !== spineSeed.entry),
+      )
+      : new Set();
+    const rawEdges = (Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0)
+      ? route.highlightEdges
+      : (spineSeed.edgePairs.length ? spineSeed.edgePairs : (route.highlightEdges || []));
+    const filteredEdges = siblingEntries.size
+      ? rawEdges.filter(pair => {
+        if (!Array.isArray(pair) || pair.length < 2) return false;
+        return !siblingEntries.has(pair[0]) && !siblingEntries.has(pair[1]);
+      })
+      : rawEdges;
+    const syntheticRoute = {
+      ...route,
+      highlightNodes: effectiveNodes,
+      highlightEdges: filteredEdges,
+    };
+    const hlOrig = new Set(syntheticRoute.highlightNodes || []);
+    const nodeSet = new Set(syntheticRoute.highlightNodes || []);
+    // 1 seedSpine — highlightNodes + highlightEdges (+ restricted pairwise in buildRouteHighlightEdgeKeys)
+    const keySet = buildRouteHighlightEdgeKeys(syntheticRoute, mermaidBody);
+    if (spineSeed.keys && spineSeed.keys.length && sparse) {
+      spineSeed.keys.forEach(k => keySet.add(k));
+      spineSeed.nodes.forEach(n => nodeSet.add(n));
+    }
+    const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const pathFn = (from, to) =>
+      (forbidden.size
+        ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
+        : shortestPathEdgeKeys(from, to, edges));
+
+    if (!hasExplicitSpine) {
+      const entries = routeEntryNodes(syntheticRoute.highlightNodes, edges);
+      for (const entry of entries) {
+        const pathKeys = pathFn(startId, entry);
+        if (!pathRespectsHlOrig(pathKeys, hlOrig)) continue;
+        pathKeys.forEach(k => keySet.add(k));
+        pathKeys.forEach(k => {
+          const j = k.indexOf('->');
+          if (j >= 0) {
+            nodeSet.add(k.slice(0, j));
+            nodeSet.add(k.slice(j + 2));
+          }
+        });
+      }
+    }
+    // 2 resolvePhantomEdges — expand highlightEdges shortcuts not in Mermaid
+    resolvePhantomHighlightEdges(keySet, nodeSet, edges, pathFn);
+    addEdgeKeyEndpoints(nodeSet, keySet);
+    appendRouteObserveAdjustFireLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
+    // 3 appendSuccessOutcomes / 4 appendFailureAndRetryLoop
+    appendRouteSuccessOutcomes(nodeSet, keySet, edges, mermaidBody, syntheticRoute, opts || {});
+    appendFailureAndRetryLoop(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
+    stripMisconceptionSuccessHighlights(nodeSet, keySet, mermaidBody, syntheticRoute);
+    stripConfoundBleedFromRoute(nodeSet, keySet, syntheticRoute);
+    // Final pass: drop other-route Adjust*/Route* that feedback loops may reintroduce
+    if (spineSeed.entry && spineSeed.nodes && spineSeed.nodes.length) {
+      const keep = new Set(spineSeed.nodes);
+      // Keep Adjust* that are direct feedback from an already-highlighted Observe*
+      edges.forEach(e => {
+        if (nodeSet.has(e.from) && /^Observe/i.test(e.from) && /^Adjust/i.test(e.to)) {
+          keep.add(e.to);
+          nodeSet.add(e.to);
+          keySet.add(e.key);
+        }
+      });
+      for (const id of [...nodeSet]) {
+        if (/^Adjust/i.test(id) && !/^Adjust$/i.test(id) && !keep.has(id)) nodeSet.delete(id);
+        if (/Route/i.test(id) && !/StrategySelect/i.test(id) && id !== spineSeed.entry && !keep.has(id)) {
+          nodeSet.delete(id);
+        }
+      }
+      for (const k of [...keySet]) {
+        const j = k.indexOf('->');
+        if (j < 0) continue;
+        const a = k.slice(0, j);
+        const b = k.slice(j + 2);
+        if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
+      }
+    }
+    return { highlightNodes: [...nodeSet], edgeKeys: keySet };
+  }
+
+  function buildRouteHighlightEdgeKeys(route, mermaidBody) {
+    const keys = new Set();
+    const nodes = new Set(route.highlightNodes || []);
+    const hlOrig = new Set(route.highlightNodes || []);
+    const edges = parseStrategyMermaidEdges(mermaidBody);
+    const hasExplicitSpine = Array.isArray(route.highlightEdges) && route.highlightEdges.length > 0;
+
+    (route.highlightEdges || []).forEach(pair => {
+      if (Array.isArray(pair) && pair.length >= 2) addEdgeKey(keys, pair[0], pair[1]);
+    });
+
+    if (!hasExplicitSpine) {
+      edges.forEach(e => {
+        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+          return;
+        }
+        if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
+        else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
+      });
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const pathFn = (from, to) =>
+        (forbidden.size
+          ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
+          : shortestPathEdgeKeys(from, to, edges));
+      const hl = route.highlightNodes || [];
+      addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
+    } else {
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const pathFn = (from, to) =>
+        (forbidden.size
+          ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
+          : shortestPathEdgeKeys(from, to, edges));
+      const hl = route.highlightNodes || [];
+      addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, true);
+    }
+    return keys;
+  }
+
+  /** Parse Mermaid flowchart edge / edge-label SVG id �?"From->To" (supports diagram-prefixed ids). */
+  function edgeKeyFromMermaidSvgId(id) {
+    if (!id) return null;
+    let m = id.match(/edge-label-([^-]+)-([^-]+)/i);
+    if (m) return `${m[1]}->${m[2]}`;
+    m = id.match(/edgeLabel-L_([^_]+)_([^_]+)/i);
+    if (m) return `${m[1]}->${m[2]}`;
+    m = id.match(/edgeLabel-([^-]+)-([^-]+)/i);
+    if (m) return `${m[1]}->${m[2]}`;
+    m = id.match(/(?:^|[-])L_([^_]+)_([^_]+)_/);
+    if (m) return `${m[1]}->${m[2]}`;
+    m = id.match(/(?:^|[-])L-([^-]+)-([^-]+)(?:-|$)/i);
+    return m ? `${m[1]}->${m[2]}` : null;
+  }
+
+  function edgeKeyFromMermaidClassName(className) {
+    if (!className) return null;
+    const cls = String(className);
+    const from = cls.match(/(?:^|\s)LS-([A-Za-z][A-Za-z0-9_]*)\b/);
+    const to = cls.match(/(?:^|\s)LE-([A-Za-z][A-Za-z0-9_]*)\b/);
+    if (from && to) return `${from[1]}->${to[1]}`;
+    return null;
+  }
+
+  function suggestHighlightEdges(route, mermaidBody) {
+    const keys = buildRouteHighlightEdgeKeys(
+      { highlightNodes: route.highlightNodes || [], highlightEdges: [] },
+      mermaidBody
+    );
+    return Array.from(keys).map(k => {
+      const i = k.indexOf('->');
+      return [k.slice(0, i), k.slice(i + 2)];
+    });
+  }
+
+  function edgeExistsInMermaid(mermaidBody, from, to) {
+    return parseStrategyMermaidEdges(mermaidBody).some(e => e.from === from && e.to === to);
+  }
+
+  const INVALID_STRAT_CLASS_PLACEMENT =
+    /(\]|\}|\))\s+:::strat\w+|\(:::(strat\w+)\s*(-\.->|-->)/i;
+
+  const NODE_WITH_CLASS_ARROW =
+    /([A-Za-z][A-Za-z0-9_]*)(\[[^\]]*\]|\{[^}]*\}|\([^)]*\))(:::strat\w+)\s*(-\.->|-->)\s*/g;
+
+  const LABEL_NEEDS_QUOTES = /[()":#;&|]/;
+
+  function escapeMermaidLabelText(text) {
+    return String(text).replace(/"/g, '#quot;');
+  }
+
+  /** Mermaid 10`[` ~�+ `()` I{�\ Node["~"] */
+  function quoteMermaidNodeLabels(segment) {
+    return String(segment).replace(
+      /([A-Za-z][A-Za-z0-9_]*)(\[)([^\]]*)(\])(:::strat\w+)?/g,
+      (match, id, _open, label, _close, stratClass) => {
+        if (/^\s*"/.test(label)) return match;
+        if (!LABEL_NEEDS_QUOTES.test(label)) return match;
+        return `${id}["${escapeMermaidLabelText(label.trim())}"]${stratClass || ''}`;
+      },
+    ).replace(
+      /([A-Za-z][A-Za-z0-9_]*)(\{)([^}]*)(\})(:::strat\w+)?/g,
+      (match, id, _open, label, _close, stratClass) => {
+        if (/^\s*"/.test(label)) return match;
+        if (!LABEL_NEEDS_QUOTES.test(label)) return match;
+        return `${id}{"${escapeMermaidLabelText(label.trim())}"}${stratClass || ''}`;
+      },
+    );
+  }
+
+  /** LLM 8� class �4�( L��?class '(���4U� �?*/
+  function sanitizeStrategyMermaidLine(line) {
+    let s = normalizeDashLabelEdges(String(line).trim());
+    if (!s || /^(graph|flowchart)\s/i.test(s) || /^classDef\s/i.test(s) || /^class\s/i.test(s)) {
+      return s;
+    }
+    s = s.replace(/(\]|\}|\))\s+:::(strat\w+)/g, '$1:::$2');
+    s = s.replace(
+      NODE_WITH_CLASS_ARROW,
+      (_, id, shape, stratClass, arrow) => `${id}${shape}${stratClass}\n  ${id} ${arrow} `,
+    );
+    s = quoteMermaidNodeLabels(s);
+    return s;
+  }
+
+  function normalizeStrategyNodeClasses(body) {
+    return String(body || '')
+      .replace(/:::stratEnd\b/g, ':::stratResult')
+      .replace(/:::stratOp\b/g, ':::stratCore');
+  }
+
+  function stratNodeLayer(body, nodeId) {
+    const lines = String(body || '').split('\n');
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!new RegExp(`\\b${nodeId}\\b`).test(line)) continue;
+      if (/:::stratStart\b/i.test(line)) return 0;
+      if (/:::stratCond\b/i.test(line)) return 1;
+      if (/:::stratCore\b/i.test(line)) return 2;
+      if (/:::stratResult\b/i.test(line)) return 4;
+      if (/:::stratInvalid|:::stratRetry\b/i.test(line)) return 5;
+    }
+    return 3;
+  }
+
+  /** Stable topological edge order for consistent Dagre layout. */
+  function sortStrategyMermaidEdges(body) {
+    const normalized = normalizeStrategyNodeClasses(String(body || '').replace(/\r\n/g, '\n'));
+    const lines = normalized.split('\n');
+    const headerLine = lines.find(l => /^(graph|flowchart)\s/i.test(l.trim()))?.trim() || 'graph TD';
+    const classDefLines = lines.filter(l => /^classDef\s/i.test(l.trim()));
+    const classLines = lines.filter(l => /^class\s/i.test(l.trim()) && !/^classDef\s/i.test(l.trim()));
+
+    const edgeEntries = [];
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t || /^(graph|flowchart)\s/i.test(t) || /^classDef\s/i.test(t) || /^class\s/i.test(t)) continue;
+      const edges = parseStrategyMermaidEdges(t);
+      if (edges.length) {
+        const e = edges[0];
+        edgeEntries.push({
+          line,
+          from: e.from,
+          to: e.to,
+          fromLayer: stratNodeLayer(normalized, e.from),
+          toLayer: stratNodeLayer(normalized, e.to),
+        });
+      } else {
+        edgeEntries.push({ line, from: '', to: '', fromLayer: 3, toLayer: 3 });
+      }
+    }
+
+    edgeEntries.sort((a, b) => {
+      const la = Math.min(a.fromLayer, a.toLayer);
+      const lb = Math.min(b.fromLayer, b.toLayer);
+      if (la !== lb) return la - lb;
+      const fa = a.from || '';
+      const fb = b.from || '';
+      if (fa !== fb) return fa.localeCompare(fb);
+      return (a.to || '').localeCompare(b.to || '');
+    });
+
+    return [headerLine, ...edgeEntries.map(e => e.line), ...classDefLines, ...classLines].join('\n');
+  }
+
+  function sanitizeStrategyMermaid(body) {
+    const sanitized = normalizeStrategyNodeClasses(String(body || ''))
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .flatMap(line => sanitizeStrategyMermaidLine(line).split('\n'))
+      .join('\n');
+    return sortStrategyMermaidEdges(sanitized);
+  }
+
+  function hasUnquotedSpecialMermaidLabels(body) {
+    const text = String(body || '');
+    const bracketRe = /\[([^\]]+)\]/g;
+    let m;
+    while ((m = bracketRe.exec(text)) !== null) {
+      const inner = m[1];
+      if (/^\s*"/.test(inner)) continue;
+      if (LABEL_NEEDS_QUOTES.test(inner)) return true;
+    }
+    const braceRe = /\{([^}]+)\}/g;
+    while ((m = braceRe.exec(text)) !== null) {
+      const inner = m[1];
+      if (/^\s*"/.test(inner)) continue;
+      if (LABEL_NEEDS_QUOTES.test(inner)) return true;
+    }
+    return false;
+  }
+
+  function hasInvalidStrategyMermaidSyntax(body) {
+    const text = String(body || '');
+    return INVALID_STRAT_CLASS_PLACEMENT.test(text) || hasUnquotedSpecialMermaidLabels(text);
+  }
+
+  const ROUTE_HUB_SKIP = new Set([
+    'Start', 'StrategySelect', 'Env', 'ModeOff', 'ModeOn', 'Ideal', 'OffMode', 'NoDrag',
+  ]);
+
+  function isRouteBranchTarget(id) {
+    const s = String(id || '');
+    return /^(Observe|CheckGoal|Adjust|Fire|Tune|Launch|Retry|Win)/i.test(s)
+      || /(?:Observe|CheckGoal|Adjust|Fire|Tune|Launch)\d+$/i.test(s);
+  }
+
+  function routeNodeBase(id) {
+    const m = String(id || '').match(/^([A-Za-z]+?)(\d+)?$/);
+    return m ? m[1] : null;
+  }
+
+  /** Hub node fans out to numbered parallel copies (CheckGoal2/Observe3) or Fire�?+ branch targets. */
+  function detectMacroRouteFanOut(mermaidBody) {
+    const edges = parseStrategyMermaidEdges(mermaidBody);
+    const outMap = new Map();
+    for (const e of edges) {
+      if (!outMap.has(e.from)) outMap.set(e.from, new Set());
+      outMap.get(e.from).add(e.to);
+    }
+    for (const [from, targets] of outMap) {
+      if (ROUTE_HUB_SKIP.has(from)) continue;
+
+      const numberedGroups = new Map();
+      for (const t of targets) {
+        const base = routeNodeBase(t);
+        if (!base || !/^(Observe|CheckGoal|Adjust|Fire|Tune|Launch)$/i.test(base)) continue;
+        if (!numberedGroups.has(base)) numberedGroups.set(base, new Set());
+        numberedGroups.get(base).add(t);
+      }
+      for (const [, ids] of numberedGroups) {
+        if (ids.size >= 2) return true;
+      }
+
+      if (/^(Fire|Launch|Tune)$/i.test(from)) {
+        const branchTargets = [...targets].filter(isRouteBranchTarget);
+        if (branchTargets.length >= 3) return true;
+      }
+    }
+    return false;
+  }
+
+  const api = {
+    ARROW_SOLID,
+    MERMAID_EDGE_SPLIT,
+    normalizeDashLabelEdges,
+    normalizeStrategyNodeClasses,
+    sanitizeStrategyMermaid,
+    sanitizeStrategyMermaidLine,
+    sortStrategyMermaidEdges,
+    quoteMermaidNodeLabels,
+    hasUnquotedSpecialMermaidLabels,
+    hasInvalidStrategyMermaidSyntax,
+    parseStrategyMermaidEdges,
+    buildRouteHighlightEdgeKeys,
+    expandRouteHighlight,
+    extractStratResultNodeIds,
+    extractStratCondNodeIds,
+    extractStratRetryNodeIds,
+    extractStrategyNodeLabels,
+    isAdjustLikeNodeId,
+    appendRouteSuccessOutcomes,
+    appendRouteFailureOutcomes,
+    appendRouteRetryReturnEdges,
+    appendRouteObserveAdjustFireLoop,
+    extractRetestNodeIds,
+    routeNodeBase,
+    branchSuffixesMatch,
+    routeShouldAppendSuccessOutcomes,
+    routeShouldAppendFailureOutcomes,
+    routeIsMisconceptionRoute,
+    sanitizeMisconceptionRouteHighlights,
+    stripMisconceptionSuccessHighlights,
+    extractStratInvalidNodeIds,
+    isSuccessBranchEdge,
+    isFailureRetryEdge,
+    observeRetrySameBranch,
+    failureGateRetrySameBranch,
+    isFailureGateNode,
+    pathRespectsHlOrig,
+    findStartNode,
+    shortestPathNodes,
+    shortestPathEdgeKeys,
+    edgeKeyFromMermaidSvgId,
+    edgeKeyFromMermaidClassName,
+    suggestHighlightEdges,
+    edgeExistsInMermaid,
+    detectMacroRouteFanOut,
+    seedSingleVarRouteSpine,
+    findStrategySelectOutEdge,
+    normalizeRouteLabelKey,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  } else if (typeof root !== 'undefined') {
+    root.StrategyMermaidParse = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : {});
+
+/**
+ * Annotate strategy Mermaid so StrategySelect out-edges show priorityRank / score,
+ * ordered top-to-bottom, with trap as dotted edges.
+ * Browser + Node. Does not mutate chapter validation labels until applied to a display copy.
+ */
+(function (root) {
+  function isConfoundProbeRoute(route) {
+    return route?.kind === 'confoundProbe'
+      || /试探混淆/.test(String(route?.label || ''));
+  }
+
+  function isTrapRoute(route) {
+    if (isConfoundProbeRoute(route)) return false;
+    return route?.tier === 'suboptimal'
+      || /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`);
+  }
+
+  /** Strip prior annotation so re-annotate is idempotent. */
+  function stripPriorityAnnotation(label) {
+    return String(label || '')
+      .replace(/\s*·\s*优先\d+\s*·\s*[\d.]+$/u, '')
+      .replace(/\s*·\s*陷阱\s*·\s*[\d.]+$/u, '')
+      .replace(/\s*·\s*旁路\s*·\s*[\d.]+$/u, '')
+      .replace(/\s*·\s*优先\d+$/u, '')
+      .replace(/\s*·\s*陷阱$/u, '')
+      .replace(/\s*·\s*旁路$/u, '')
+      .trim();
+  }
+
+  /** Short display: 单变量·极板间距 → 单变量·间距；单变量·介质材料 → 单变量·介质 */
+  function shortDisplayLabel(label) {
+    return stripPriorityAnnotation(label)
+      .replace(/极板/g, '')
+      .replace(/材料$/g, '')
+      .trim();
+  }
+
+  function normalizeLabelKey(label) {
+    return stripPriorityAnnotation(label).replace(/\s+/g, '');
+  }
+
+  function routePriorityMeta(route) {
+    if (isConfoundProbeRoute(route)) {
+      return {
+        rank: 98,
+        score: route?.score != null ? Number(route.score) : 0.15,
+        trap: false,
+        confound: true,
+      };
+    }
+    if (isTrapRoute(route)) {
+      return {
+        rank: 99,
+        score: route?.score != null ? Number(route.score) : 0.2,
+        trap: true,
+        confound: false,
+      };
+    }
+    const rank = route?.priorityRank != null ? Number(route.priorityRank) : 50;
+    const score = route?.score != null
+      ? Number(route.score)
+      : (route?.weight != null ? Number(route.weight) : 0.75);
+    return { rank, score, trap: false, confound: false };
+  }
+
+  function formatPriorityEdgeLabel(route) {
+    const meta = routePriorityMeta(route);
+    const short = shortDisplayLabel(route?.label || '');
+    const score = (Number.isFinite(meta.score) ? meta.score : 0).toFixed(2);
+    if (meta.confound) return `${short} · 旁路 · ${score}`;
+    if (meta.trap) return `${short} · 陷阱 · ${score}`;
+    return `${short} · 优先${meta.rank} · ${score}`;
+  }
+
+  function strokeWidthForMeta(meta) {
+    if (meta.confound) return 1.2;
+    if (meta.trap) return 1.4;
+    if (meta.rank <= 1) return 4.2;
+    if (meta.rank === 2) return 3;
+    if (meta.rank === 3) return 2.2;
+    return 1.6;
+  }
+
+  function strokeColorForMeta(meta) {
+    if (meta.confound) return '#a16207';
+    if (meta.trap) return '#dc2626';
+    if (meta.rank <= 1) return '#0f766e';
+    if (meta.rank === 2) return '#0369a1';
+    if (meta.rank === 3) return '#64748b';
+    return '#94a3b8';
+  }
+
+  function matchRouteForEdgeLabel(edgeLabel, routes) {
+    const key = normalizeLabelKey(edgeLabel);
+    if (!key || !Array.isArray(routes)) return null;
+    const exact = routes.find(r => normalizeLabelKey(r.label) === key);
+    if (exact) return exact;
+    return routes.find(r => {
+      const rk = normalizeLabelKey(r.label);
+      return rk && (key.includes(rk) || rk.includes(key));
+    }) || null;
+  }
+
+  function findSelectOutEdgeTarget(route) {
+    const edges = route?.highlightEdges || [];
+    for (const pair of edges) {
+      if (!Array.isArray(pair) || pair.length < 2) continue;
+      if (/StrategySelect/i.test(String(pair[0]))) return String(pair[1]);
+    }
+    return null;
+  }
+
+  /**
+   * Rank routes for StrategySelect fan-out (preferred first by priorityRank, trap last).
+   */
+  function rankedStrategySelectRoutes(routes) {
+    const list = Array.isArray(routes) ? [...routes] : [];
+    return list
+      .filter(r => r && r.warn !== 'irrelevant')
+      .sort((a, b) => {
+        const ma = routePriorityMeta(a);
+        const mb = routePriorityMeta(b);
+        // AV first, then confound bypass, then trap
+        const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+        if (tier(ma) !== tier(mb)) return tier(ma) - tier(mb);
+        if (ma.rank !== mb.rank) return ma.rank - mb.rank;
+        return String(a.label || '').localeCompare(String(b.label || ''), 'zh');
+      });
+  }
+
+  function rewriteSelectEdgeLine(line, route) {
+    const meta = routePriorityMeta(route);
+    const newLabel = formatPriorityEdgeLabel(route);
+    let s = String(line);
+    // Swap solid → dotted for trap / confound probe
+    if (meta.trap || meta.confound) {
+      s = s.replace(/-->/g, '-.->').replace(/-\.-\.->/g, '-.->');
+    } else {
+      s = s.replace(/-\.->/g, '-->');
+    }
+    s = s.replace(/\|([^|]+)\|/, `|${newLabel}|`);
+    return s;
+  }
+
+  function ensureTrapClassOnTarget(body, targetId) {
+    if (!targetId) return body;
+    const re = new RegExp(
+      `(\\b${targetId}\\b(?:\\[[^\\]]*\\]|\\([^)]*\\)|\\{[^}]*\\}))(:::strat\\w+)?`,
+      'g',
+    );
+    return String(body).replace(re, (full, nodePart, cls) => {
+      if (cls && /stratTrap|stratInvalid/i.test(cls)) return full;
+      return `${nodePart}:::stratTrap`;
+    });
+  }
+
+  /**
+   * @param {string} mermaidBody
+   * @param {Array} routes strategy.routes
+   * @returns {string} display mermaid with priority labels + ordered StrategySelect edges
+   */
+  function annotateStrategyMermaidPriority(mermaidBody, routes) {
+    const raw = String(mermaidBody || '').replace(/\r\n/g, '\n');
+    if (!raw.trim() || !Array.isArray(routes) || !routes.length) return raw;
+
+    const lines = raw.split('\n');
+    const selectEdgeIdx = [];
+    const selectEdges = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (!t || /^(graph|flowchart|classDef|class)\s/i.test(t)) continue;
+      // StrategySelect -->|label| Target  (or -.->)
+      const m = t.match(
+        /\b(StrategySelect)\b[^\n]*?(-->|-\.->)\s*\|([^|]+)\|\s*([A-Za-z][A-Za-z0-9_]*)/,
+      );
+      if (!m) continue;
+      const label = m[3].trim();
+      const to = m[4];
+      let route = matchRouteForEdgeLabel(label, routes);
+      if (!route) {
+        route = routes.find(r => findSelectOutEdgeTarget(r) === to) || null;
+      }
+      selectEdgeIdx.push(i);
+      selectEdges.push({
+        index: i,
+        line: lines[i],
+        to,
+        route,
+        meta: route ? routePriorityMeta(route) : { rank: 50, score: 0.5, trap: false },
+      });
+    }
+
+    if (!selectEdges.length) return raw;
+
+    // Prefer route list order when every edge matched
+    const ranked = rankedStrategySelectRoutes(routes);
+    selectEdges.sort((a, b) => {
+      if (a.route && b.route) {
+        const ia = ranked.indexOf(a.route);
+        const ib = ranked.indexOf(b.route);
+        if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
+      }
+      const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+      if (tier(a.meta) !== tier(b.meta)) return tier(a.meta) - tier(b.meta);
+      if (a.meta.rank !== b.meta.rank) return a.meta.rank - b.meta.rank;
+      return a.index - b.index;
+    });
+
+    const rewritten = selectEdges.map(e => {
+      if (!e.route) return e.line;
+      return rewriteSelectEdgeLine(e.line, e.route);
+    });
+
+    // Place sorted select-out edges at the first original select-edge slot; remove other slots
+    const firstSlot = selectEdgeIdx[0];
+    const skip = new Set(selectEdgeIdx);
+    const out = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (i === firstSlot) {
+        rewritten.forEach(l => out.push(l));
+        continue;
+      }
+      if (skip.has(i)) continue;
+      out.push(lines[i]);
+    }
+
+    let result = out.join('\n');
+    for (const e of selectEdges) {
+      if ((e.meta.trap || e.meta.confound) && e.to) result = ensureTrapClassOnTarget(result, e.to);
+    }
+    return result;
+  }
+
+  /**
+   * Map StrategySelect→target edge keys to priority style meta (for SVG post-style).
+   */
+  function strategySelectPriorityStyles(routes) {
+    const map = new Map();
+    for (const route of rankedStrategySelectRoutes(routes)) {
+      const to = findSelectOutEdgeTarget(route);
+      if (!to) continue;
+      const meta = routePriorityMeta(route);
+      map.set(`StrategySelect->${to}`, {
+        ...meta,
+        strokeWidth: strokeWidthForMeta(meta),
+        stroke: strokeColorForMeta(meta),
+        label: formatPriorityEdgeLabel(route),
+        routeId: route.id,
+      });
+    }
+    return map;
+  }
+
+  const api = {
+    isTrapRoute,
+    isConfoundProbeRoute,
+    stripPriorityAnnotation,
+    shortDisplayLabel,
+    formatPriorityEdgeLabel,
+    routePriorityMeta,
+    rankedStrategySelectRoutes,
+    annotateStrategyMermaidPriority,
+    strategySelectPriorityStyles,
+    strokeWidthForMeta,
+    strokeColorForMeta,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  } else if (typeof root !== 'undefined') {
+    root.StrategyPriorityMermaid = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : {});
+
+/* GraphViewer — shared KG/DT renderer */
+const GraphViewer = (function () {
+  let KG_CHAPTERS = [], DT_CHAPTERS = [], metaChapters = [];
+  let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
+  let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
+  let mermaidReady = false, strategyRenderId = 0, activeStrategyRouteId = null;
+  let strategyZoomBeh = null, strategyResizeTimer = null;
+  let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
+  let lastStrategyDisplayMermaid = '';
+
+  function isStudentAudience() {
+    if (typeof window !== 'undefined' && window.__GRAPH_AUDIENCE__ === 'student') return true;
+    if (typeof document !== 'undefined' && document.body?.dataset?.audience === 'student') return true;
+    try {
+      return new URLSearchParams(location.search).get('audience') === 'student';
+    } catch {
+      return false;
+    }
+  }
+  const KG_COLORS = { premise:'#5577aa', operation:'#0d9488', method:'#2266bb', core:'#7744cc', result:'#228855', constraint:'#bb6622', junction:'#cc4488', irrelevant:'#888888' };
+  const KG_NAMES = { premise:'已知前提', operation:'游玩操作', method:'推导步骤', core:'核心方程', result:'结果/目标', constraint:'约束条件', junction:'殊途同归', irrelevant:'无关变量' };
+  const LAYER_NAMES = { play:'游玩子图', teach:'教案子图' };
+  const DT_COLORS = { root:'#007baa', step:'#2266bb', core:'#7744cc', decision:'#aa6600', result:'#228855', retry:'#884433', junction:'#884488' };
+  const DT_NAMES = { root:'问题根节点', step:'推导步骤', core:'核心方程/洞察', decision:'决策判断', result:'成功结果', retry:'死路/回退', junction:'路径汇合' };
+  const KG_NODE_LEGEND_GROUPS = [
+    { title: '游玩子图', items: [
+      {color:'#5577aa',label:'已知前提'},{color:'#0d9488',label:'游玩操作'},
+      {color:'#bb6622',label:'约束条件'},{color:'#228855',label:'结果/目标'},
+    ]},
+    { title: '教案子图', items: [
+      {color:'#2266bb',label:'推导步骤',dashed:true},{color:'#7744cc',label:'核心方程',dashed:true},
+      {color:'#cc4488',label:'殊途同归',dashed:true},
+    ]},
+    { title: null, items: [
+      {color:'#888888',label:'无关变量',hollow:true},
+    ]},
+  ];
+  const KG_LINK_LEGEND_GROUPS = [
+    { title: '实线', items: [
+      {color:'#6688aa',label:'前提进入'},{color:'#3388dd',label:'推导主链'},
+      {color:'#8855cc',label:'关键结论'},{color:'#33aa66',label:'结果/目标'},
+    ]},
+    { title: null, items: [
+      {color:'#dd66aa',label:'验证回扣',dashed:true},
+    ]},
+  ];
+  const DT_LEGEND = [
+    {color:'#007baa',label:'问题根节点'},{color:'#2266bb',label:'推导步骤'},
+    {color:'#7744cc',label:'核心方程/洞察'},{color:'#aa6600',label:'决策判断',diamond:true},
+    {color:'#228855',label:'成功结果'},{color:'#884433',label:'死路/回退'},{color:'#884488',label:'路径汇合'},
+  ];
+  const STRATEGY_COLOR_LEGEND = [
+    { bg: '#e2e8f0', border: '#475569', label: '起点' },
+    { bg: '#eff6ff', border: '#1d4ed8', label: '决策/判断' },
+    { bg: '#fff7ed', border: '#ea580c', label: '核心分水岭' },
+    { bg: '#fff7ed', border: '#ea580c', label: '偏出重试' },
+    { bg: '#f8fafc', border: '#94a3b8', label: '流程步骤' },
+    { bg: '#fef2f2', border: '#dc2626', label: '无效操作' },
+    { bg: '#f0fdf4', border: '#16a34a', label: '成功解决' },
+  ];
+  const PRIORITY_LINE_LEGEND = [
+    { cls: 'high', label: '高优（优先1）· 粗实线' },
+    { cls: 'mid', label: '次优 · 中实线' },
+    { cls: 'low', label: '较低优 · 细实线' },
+    { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
+    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+  ];
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function cssVarNum(name, fallback) {
+  const v = parseFloat(cssVar(name));
+  return Number.isFinite(v) ? v : fallback;
+}
+function dtLabelFill(type) {
+  if (type === 'result') return cssVar('--dt-label-result');
+  if (type === 'retry') return cssVar('--dt-label-retry');
+  return cssVar('--dt-label');
+}
+
+function defaultTabLabel(ch, i) {
+  const title = (ch.title || '').split('·')[0].trim();
+  if (title) return title;
+  return KG_CHAPTERS.length > 1 ? `第 ${i + 1} 关` : '草稿预览';
+}
+
+function buildTabs() {
+  const container = document.getElementById('tabs');
+  if (!container) return;
+  container.innerHTML = '';
+  const multi = KG_CHAPTERS.length > 1;
+  container.style.display = multi ? '' : 'none';
+  KG_CHAPTERS.forEach((ch, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'tab' + (i===0?' active':'');
+    const fullLabel = ch._tabTitleFull || ch._tabLabel || defaultTabLabel(ch, i);
+    const compact = (typeof TabLabel !== 'undefined' && TabLabel.compactTabLabel)
+      ? TabLabel.compactTabLabel(fullLabel, { fallbackIndex: i })
+      : { short: fullLabel, full: fullLabel };
+    btn.textContent = compact.short;
+    if (compact.full && compact.full !== compact.short) btn.title = compact.full;
+    btn.addEventListener('click', () => loadChapter(i));
+    container.appendChild(btn);
+  });
+  syncStrategyTabVisibility();
+}
+
+function chapterHasStrategy(idx) {
+  return !!(metaChapters[idx]?.strategy?.mermaid?.trim());
+}
+
+function syncStrategyTabVisibility() {
+  const vt = document.getElementById('vt-strategy');
+  const structWrap = document.querySelector('.view-struct-wrap');
+  if (!vt) return;
+  const show = chapterHasStrategy(currentCh);
+  vt.style.display = show ? '' : 'none';
+  if (structWrap) structWrap.style.display = '';
+  if (!show && currentView === 'strategy') switchView('dt');
+  else if (show && currentView !== 'strategy' && currentView !== 'kg' && currentView !== 'dt') {
+    switchView('strategy');
+  }
+}
+
+function priorityApi() {
+  return (typeof StrategyPriorityMermaid !== 'undefined') ? StrategyPriorityMermaid : null;
+}
+
+function annotateDisplayMermaid(body, routes) {
+  const api = priorityApi();
+  if (api?.annotateStrategyMermaidPriority) {
+    return api.annotateStrategyMermaidPriority(body, routes);
+  }
+  return body || '';
+}
+
+function setLegendTitle(text) {
+  const el = document.getElementById('legend-title') || document.querySelector('#legend .ltitle');
+  if (el) el.textContent = text;
+}
+
+function closeStructMenu() {
+  const menu = document.getElementById('struct-menu');
+  const btn = document.getElementById('btn-struct-toggle');
+  menu?.classList.add('hidden');
+  btn?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleStructMenu() {
+  const menu = document.getElementById('struct-menu');
+  const btn = document.getElementById('btn-struct-toggle');
+  if (!menu) return;
+  const open = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden', !open);
+  btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function panelTitleForView(idx) {
+  const meta = metaChapters[idx] || null;
+  if (currentView === 'kg') return KG_CHAPTERS[idx].title;
+  if (currentView === 'strategy') return meta?.strategy?.title || KG_CHAPTERS[idx].title;
+  return DT_CHAPTERS[idx].title;
+}
+function panelSubForView(idx) {
+  const meta = metaChapters[idx] || null;
+  let sub;
+  if (currentView === 'kg') sub = KG_CHAPTERS[idx].sub;
+  else if (currentView === 'strategy') sub = meta?.strategy?.sub || '';
+  else sub = DT_CHAPTERS[idx].sub;
+  const winTitle = meta?.winSync?.title?.trim();
+  const kgTitle = KG_CHAPTERS[idx]?.title?.trim();
+  const winHint = winTitle && winTitle !== kgTitle ? ` · 过关：${winTitle}` : '';
+  return sub + winHint;
+}
+function setGraphChrome() {
+  const isStrategy = currentView === 'strategy';
+  document.getElementById('svg')?.classList.toggle('hidden', isStrategy);
+  document.getElementById('strategy-panel')?.classList.toggle('visible', isStrategy);
+  document.getElementById('graph')?.classList.toggle('strategy-active', isStrategy);
+  document.getElementById('gctrl')?.classList.toggle('strategy-mode', isStrategy);
+  const legendTitle = document.getElementById('legend-title');
+  if (legendTitle) {
+    legendTitle.classList.toggle('hidden', currentView === 'kg');
+    if (currentView !== 'kg') legendTitle.textContent = isStrategy ? '解题途径' : '节点类型';
+  }
+}
+
+function ensureStrategyViewport() {
+  const panel = document.getElementById('strategy-panel');
+  if (!panel) return null;
+  let viewport = document.getElementById('strategy-viewport');
+  let mount = document.getElementById('strategy-mermaid');
+  if (!viewport) {
+    viewport = document.createElement('div');
+    viewport.id = 'strategy-viewport';
+    if (mount) {
+      panel.insertBefore(viewport, mount);
+      viewport.appendChild(mount);
+    } else {
+      mount = document.createElement('div');
+      mount.id = 'strategy-mermaid';
+      viewport.appendChild(mount);
+      panel.appendChild(viewport);
+    }
+  }
+  return viewport;
+}
+
+function bindStrategyZoom() {
+  if (typeof d3 === 'undefined') return;
+  ensureStrategyViewport();
+  const viewport = d3.select('#strategy-viewport');
+  const mount = document.getElementById('strategy-mermaid');
+  if (!viewport.node() || !mount) return;
+  if (!strategyZoomBeh) {
+    strategyZoomBeh = d3.zoom()
+      .scaleExtent([0.15, 2.5])
+      .on('zoom', (event) => {
+        mount.style.transform = `translate(${event.transform.x}px, ${event.transform.y}px) scale(${event.transform.k})`;
+        mount.style.transformOrigin = '0 0';
+      });
+    viewport.call(strategyZoomBeh);
+    viewport.on('dblclick.zoom', null);
+  }
+}
+
+function getStrategySvgBBox() {
+  const svg = document.querySelector('#strategy-mermaid svg');
+  if (!svg) return null;
+  try {
+    const bb = svg.getBBox();
+    if (bb.width > 0 && bb.height > 0) return bb;
+  } catch (_) { /* ignore */ }
+  const r = svg.getBoundingClientRect();
+  if (r.width > 0 && r.height > 0) return { x: 0, y: 0, width: r.width, height: r.height };
+  return null;
+}
+
+function fitStrategyToPanel() {
+  if (typeof d3 === 'undefined') return;
+  bindStrategyZoom();
+  const panel = document.getElementById('strategy-panel');
+  const viewport = d3.select('#strategy-viewport');
+  const bbox = getStrategySvgBBox();
+  if (!panel || !bbox || !strategyZoomBeh || !viewport.node()) return;
+
+  const padX = 24;
+  const padY = 24;
+  const pw = panel.clientWidth - padX * 2;
+  const ph = panel.clientHeight - padY * 2;
+  if (pw <= 0 || ph <= 0) return;
+
+  const k = Math.min(1, pw / bbox.width, ph / bbox.height);
+  const tx = padX + (pw - bbox.width * k) / 2 - bbox.x * k;
+  const ty = padY + (ph - bbox.height * k) / 2 - bbox.y * k;
+  viewport.call(strategyZoomBeh.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
+}
+
+function clearStrategyTransform() {
+  const mount = document.getElementById('strategy-mermaid');
+  if (mount) {
+    mount.style.transform = '';
+    mount.style.transformOrigin = '';
+    mount.style.minWidth = '';
+    mount.style.minHeight = '';
+    mount.style.marginBottom = '';
+  }
+}
+
+function resetStrategyScale() {
+  fitStrategyToPanel();
+}
+
+function scheduleStrategyResizeFit() {
+  if (currentView !== 'strategy') return;
+  clearTimeout(strategyResizeTimer);
+  strategyResizeTimer = setTimeout(() => fitStrategyToPanel(), 150);
+}
+
+function strategyGraphBgFill() {
+  return cssVar('--bg-graph') || '#eef2f8';
+}
+
+function patchStrategyEdgeLabelBackground(svg) {
+  if (!svg) return;
+  const fill = strategyGraphBgFill();
+  svg.querySelectorAll('.labelBkg rect, .edgeLabel rect').forEach(rect => {
+    rect.setAttribute('fill', fill);
+    rect.style.fill = fill;
+  });
+  svg.querySelectorAll('span.edgeLabel').forEach(span => {
+    span.style.backgroundColor = fill;
+    span.style.background = fill;
+  });
+  svg.querySelectorAll('g.edgeLabel foreignObject, g.edgeLabel foreignObject > div').forEach(el => {
+    el.style.backgroundColor = fill;
+    el.style.background = fill;
+  });
+}
+
+function getStrategyEdgePathGroups(svg) {
+  const edgePaths = svg.querySelector('g.edgePaths');
+  if (!edgePaths) return [];
+  return Array.from(edgePaths.children);
+}
+
+function getStrategyEdgeLabelGroups(svg) {
+  const edgeLabels = svg.querySelector('g.edgeLabels');
+  if (!edgeLabels) return [];
+  return Array.from(edgeLabels.children);
+}
+
+function pathsInEdgeGroup(group) {
+  if (!group) return [];
+  if (group.tagName === 'path') return [group];
+  return Array.from(group.querySelectorAll('path'));
+}
+
+function infoEmptyHtml() {
+  if (currentView === 'strategy') {
+    return '<div class="info-empty">← 点击左侧途径<br>查看教学说明</div>';
+  }
+  return '<div class="info-empty">← 点击节点<br>查看推导细节</div>';
+}
+
+function escText(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Match route → adjustmentVariable / confoundingVariable for teaching copy. */
+function resolveRouteVarContext(route) {
+  const meta = metaChapters[currentCh] || {};
+  const script = meta.inquiryScript || {};
+  const avs = script.adjustmentVariables || [];
+  const cvs = script.confoundingVariables || [];
+  const label = String(route?.label || '');
+  const shortLab = label
+    .replace(/^单变量[·•.]/, '')
+    .replace(/^试探混淆[·•.]/, '')
+    .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
+    .trim();
+
+  const avHit = avs.find(a => {
+    if (!a) return false;
+    const lab = `单变量·${a.label || ''}`;
+    if (lab === label || (a.label && label.includes(a.label))) return true;
+    if (a.controlId && (route.id || '').includes(a.controlId)) return true;
+    return !!(a.label && shortLab && (shortLab === a.label || shortLab.includes(a.label) || a.label.includes(shortLab)));
+  }) || null;
+
+  const cvHit = cvs.find(c => {
+    if (!c) return false;
+    if (c.controlId && /confound|probe|cv/i.test(String(route?.id || '')) && String(route.id).includes(c.controlId)) return true;
+    if (c.label && (label.includes(c.label) || shortLab === c.label)) return true;
+    if (c.controlId && String(route?.id || '').includes(c.controlId)) return true;
+    return false;
+  }) || null;
+
+  return { avHit, cvHit, shortLab, avs, cvs };
+}
+
+function monoToneZh(m) {
+  const key = String(m || '').toLowerCase();
+  if (key === 'monotone' || key === 'mono') return '大致单调：拧同一方向，现象朝同一方向变';
+  if (key === 'nonmonotone' || key === 'non-mono' || key === 'peak') return '非单调：中间可能有最佳区，两端都可能失败';
+  if (key === 'unknown' || !m) return '';
+  return String(m);
+}
+
+function buildRouteTeachingHtml(route) {
+  const student = isStudentAudience();
+  const nodes = KG_CHAPTERS[currentCh]?.nodes || [];
+  const prioApi = priorityApi();
+  const meta = prioApi?.routePriorityMeta ? prioApi.routePriorityMeta(route) : null;
+  const { avHit, cvHit, shortLab } = resolveRouteVarContext(route);
+  const score = meta?.score != null ? Number(meta.score).toFixed(2) : (route.score != null ? Number(route.score).toFixed(2) : null);
+
+  let badge = '';
+  let kindTitle = escText(route.label || '途径');
+  if (meta?.confound) {
+    badge = student
+      ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
+      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+  } else if (meta?.trap) {
+    badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
+  } else if (meta && meta.rank <= 20) {
+    badge = student
+      ? '<span class="i-badge layer-play">探究途径</span>'
+      : `<span class="i-badge layer-play">优先 ${meta.rank}${score != null ? ` · 得分 ${score}` : ''}</span>`;
+  } else if (route.warn === 'irrelevant') {
+    badge = student
+      ? '<span class="i-badge" style="background:#888">界面控件</span>'
+      : '<span class="i-badge" style="background:#888">无关操作</span>';
+  } else if (route.layer === 'teach') {
+    badge = student
+      ? '<span class="i-badge layer-play">探究途径</span>'
+      : '<span class="i-badge layer-teach">教案途径</span>';
+  } else {
+    badge = '<span class="i-badge layer-play">探究途径</span>';
+  }
+
+  // 1) 调什么
+  let adjustBlock = '';
+  if (meta?.confound || route.kind === 'confoundProbe') {
+    if (student) {
+      const name = cvHit?.label || shortLab || '该控件';
+      adjustBlock = `<p>本路径会拧到<strong>${escText(name)}</strong>。自己对照：拧了之后过关有没有变得更容易？</p>`;
+    } else {
+      const cvName = cvHit?.label || shortLab || '混淆控件';
+      const ctrl = cvHit?.controlId ? `（控件 ${escText(cvHit.controlId)}）` : '';
+      adjustBlock = `<p>本路径试探的是<strong>${escText(cvName)}</strong>${ctrl}。它通常是装饰/无关量，用来对照「拧了有没有用」。</p>`;
+    }
+  } else if (meta?.trap || /盲调|多参|trap/i.test(`${route.id || ''}${route.label || ''}`)) {
+    adjustBlock = '<p>本路径会<strong>同时拧多个滑条</strong>，而不是每次只改一个变量。</p>';
+  } else if (avHit) {
+    const ctrl = (!student && avHit.controlId) ? `（控件 ${escText(avHit.controlId)}）` : '';
+    adjustBlock = `<p>本路径主要调节：<strong>${escText(avHit.label || shortLab)}</strong>${ctrl}。建议每次只动这一个量，其它先固定。</p>`;
+  } else {
+    const name = shortLab || route.label || '该变量';
+    adjustBlock = `<p>本路径关注：<strong>${escText(name)}</strong>。尽量单变量调节，便于归因。</p>`;
+  }
+
+  // 2) 为何优先 / 得分
+  let whyBits = [];
+  if (student) {
+    if (meta?.confound) {
+      whyBits.push('这是对照路径：用来检验某个控件是否真能帮你过关。');
+    } else if (meta?.trap) {
+      whyBits.push('同时拧多量时现象难归因；可对照「每次只改一项」的路径看看差异。');
+    } else {
+      whyBits.push('用控制变量法：固定其余，只改一项，观察结果是否跟着变。');
+      if (avHit?.monotonicity) {
+        const zh = monoToneZh(avHit.monotonicity);
+        if (zh) whyBits.push(escText(zh));
+      }
+    }
+  } else if (meta?.confound) {
+    whyBits.push(`旁路得分约 <strong>${score ?? '0.15'}</strong>：故意压低，避免把混淆拧法当成「主策略」。`);
+    if (cvHit?.reason) whyBits.push(escText(cvHit.reason));
+    whyBits.push('教学用途：让学生自己发现「这个量几乎不帮过关」，再回到单变量主路径。');
+  } else if (meta?.trap) {
+    whyBits.push(`陷阱得分约 <strong>${score ?? '0.20'}</strong>：效率低、难归因，图谱里用虚线警示。`);
+    whyBits.push('分数越低越不建议作为常规探究顺序；对比高优实线路径即可。');
+  } else {
+    if (meta?.rank != null) {
+      whyBits.push(`优先序 <strong>${meta.rank}</strong>：数字越小越建议先试（优先 1 通常是最有信息量的单变量）。`);
+    }
+    if (score != null) {
+      whyBits.push(`路径得分 <strong>${score}</strong>：越高表示越符合「先关键、易归因」的探究策略（不是考试分数）。`);
+    }
+    if (avHit?.monotonicity) {
+      const zh = monoToneZh(avHit.monotonicity);
+      if (zh) whyBits.push(`响应形态：${escText(zh)}。`);
+    }
+    if (avHit?.affects?.length) {
+      whyBits.push(`主要牵动：${escText(avHit.affects.join('、'))}。`);
+    }
+    if (avHit?.notes) whyBits.push(escText(avHit.notes));
+  }
+  const whyBlock = whyBits.length
+    ? whyBits.map(t => `<p>${t}</p>`).join('')
+    : '<p>按图中线宽与颜色对比即可：粗实线优先，虚线为旁路或陷阱。</p>';
+
+  // 3) 典型误区
+  let trapBits = [];
+  if (!student && route.warn && route.warn !== 'irrelevant') {
+    trapBits.push(escText(route.warn));
+  }
+  if (meta?.confound) {
+    trapBits.push(student
+      ? '提示：若拧了很久却几乎看不到过关变化，可以换一个控件再试。'
+      : '误区：把混淆量当成「还没拧够的关键参数」反复试，会浪费发射次数、也学不到因果。');
+  } else if (meta?.trap) {
+    trapBits.push('误区：多滑条一起拧，现象变了却说不清是谁导致的；失败后也难复盘。');
+  } else {
+    trapBits.push(student
+      ? '提示：还没看清这一变量的作用时，先不要同时改很多控件。'
+      : '误区：还没看清这一变量的作用，就同时改其它量，或过早去拧外观/装饰类控件。');
+  }
+  const trapBlock = trapBits.map(t => `<p>${t}</p>`).join('');
+
+  // 4) KG 映射（可折叠）
+  const mapped = (route.mapsTo || []).map(id => {
+    const n = nodes.find(x => x.id === id);
+    if (n) {
+      return `<li><span class="route-kg-id">${escText(id)}</span> ${escText(n.label)}${n.desc ? `<span class="route-kg-desc"> — ${escText(n.desc)}</span>` : ''}</li>`;
+    }
+    return `<li><span class="route-kg-id">${escText(id)}</span></li>`;
+  }).join('');
+  const kgBlock = student
+    ? ''
+    : (mapped
+      ? `<details class="route-teach-kg"><summary>事理图谱对应（可展开）</summary><ul class="route-kg-list">${mapped}</ul></details>`
+      : `<details class="route-teach-kg"><summary>事理图谱对应（可展开）</summary><p class="i-desc">本路径未直接挂 KG 节点（常见于混淆旁路）。</p></details>`);
+
+  let h = `<div class="i-title">${kindTitle}</div><div class="i-badges">${badge}</div>`;
+  h += `<section class="route-teach-sec"><h3 class="route-teach-h">1. 本路径调什么</h3>${adjustBlock}</section>`;
+  h += `<section class="route-teach-sec"><h3 class="route-teach-h">${student ? '2. 怎么探究' : '2. 为何优先 / 得分含义'}</h3>${whyBlock}</section>`;
+  h += `<section class="route-teach-sec"><h3 class="route-teach-h">${student ? '3. 小提示' : '3. 典型误区'}</h3>${trapBlock}</section>`;
+  if (kgBlock) h += `<section class="route-teach-sec">${kgBlock}</section>`;
+  if ((route.mapsTo || []).length) {
+    h += `<button type="button" class="route-kg-btn" id="btn-route-kg">在事理图谱中查看</button>`;
+  }
+  return h;
+}
+
+function refreshInfoEmptyIfBare() {
+  const infoEl = document.getElementById('info');
+  if (infoEl?.querySelector('.info-empty')) infoEl.innerHTML = infoEmptyHtml();
+}
+
+function resetPanelForViewChange() {
+  document.getElementById('p-title').textContent = panelTitleForView(currentCh);
+  document.getElementById('p-sub').textContent = panelSubForView(currentCh);
+  clearInfoPanel();
+  setGraphChrome();
+  updateLegend();
+}
+
+function strategyParseApi() {
+  return typeof StrategyMermaidParse !== 'undefined' ? StrategyMermaidParse : null;
+}
+
+function parseStrategyMermaidEdges(body) {
+  const api = strategyParseApi();
+  return api ? api.parseStrategyMermaidEdges(body) : [];
+}
+
+function buildRouteHighlightEdgeKeys(route, mermaidBody) {
+  const api = strategyParseApi();
+  return api ? api.buildRouteHighlightEdgeKeys(route, mermaidBody) : new Set();
+}
+
+function expandRouteHighlight(route, mermaidBody, opts) {
+  const api = strategyParseApi();
+  if (api?.expandRouteHighlight) return api.expandRouteHighlight(route, mermaidBody, opts);
+  return {
+    highlightNodes: route.highlightNodes || [],
+    edgeKeys: buildRouteHighlightEdgeKeys(route, mermaidBody),
+  };
+}
+
+function syncGraphHash() {
+  const params = new URLSearchParams();
+  params.set('ch', String(currentCh));
+  params.set('view', currentView);
+  if (currentView === 'strategy' && activeStrategyRouteId) params.set('route', activeStrategyRouteId);
+  const next = '#' + params.toString();
+  if (location.hash !== next) history.replaceState(null, '', next);
+}
+
+function parseGraphHash() {
+  const raw = (location.hash || '').replace(/^#/, '').trim();
+  if (!raw) return null;
+  const params = new URLSearchParams(raw);
+  const ch = parseInt(params.get('ch'), 10);
+  const fallbackView = chapterHasStrategy(Number.isFinite(ch) ? ch : 0) ? 'strategy' : 'dt';
+  return {
+    ch: Number.isFinite(ch) ? ch : 0,
+    view: params.get('view') || fallbackView,
+    route: params.get('route') || null,
+  };
+}
+
+function applyGraphHashFromUrl() {
+  const h = parseGraphHash();
+  if (!h) return;
+  if (h.ch >= 0 && h.ch < KG_CHAPTERS.length) currentCh = h.ch;
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === currentCh));
+  pendingRouteId = h.view === 'strategy' ? h.route : null;
+  if (['dt', 'kg', 'strategy'].includes(h.view) && h.view !== currentView) {
+    currentView = h.view;
+    document.getElementById('vt-kg').classList.toggle('active', h.view === 'kg');
+    document.getElementById('vt-dt').classList.toggle('active', h.view === 'dt');
+    document.getElementById('vt-strategy')?.classList.toggle('active', h.view === 'strategy');
+    setGraphChrome();
+  }
+}
+
+function activatePendingRoute() {
+  if (!pendingRouteId || currentView !== 'strategy') return;
+  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  const route = routes.find(r => r.id === pendingRouteId);
+  pendingRouteId = null;
+  if (!route) return;
+  const legendEl = document.getElementById('legend-items');
+  const btn = legendEl?.querySelector(`[data-route-id="${route.id}"]`);
+  if (btn) {
+    legendEl.querySelectorAll('.route-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  showRouteInfo(route);
+}
+
+function edgeKeyFromMermaidSvgId(id) {
+  const api = strategyParseApi();
+  if (api?.edgeKeyFromMermaidSvgId) return api.edgeKeyFromMermaidSvgId(id);
+  if (!id) return null;
+  let m = id.match(/edge-label-([^-]+)-([^-]+)/i);
+  if (m) return `${m[1]}->${m[2]}`;
+  m = id.match(/(?:^|[-])L_([^_]+)_([^_]+)_/);
+  return m ? `${m[1]}->${m[2]}` : null;
+}
+
+function edgeKeyFromMermaidClassName(className) {
+  const api = strategyParseApi();
+  if (api?.edgeKeyFromMermaidClassName) return api.edgeKeyFromMermaidClassName(className);
+  if (!className) return null;
+  const cls = String(className);
+  const from = cls.match(/(?:^|\s)LS-([A-Za-z][A-Za-z0-9_]*)\b/);
+  const to = cls.match(/(?:^|\s)LE-([A-Za-z][A-Za-z0-9_]*)\b/);
+  if (from && to) return `${from[1]}->${to[1]}`;
+  return null;
+}
+
+function edgeKeyFromSvgElement(el) {
+  let cur = el;
+  for (let i = 0; i < 6 && cur; i++) {
+    const idKey = edgeKeyFromMermaidSvgId(cur.getAttribute?.('id') || '');
+    if (idKey) return idKey;
+    const clsObj = cur.className;
+    const cls = typeof clsObj === 'string' ? clsObj : (clsObj?.baseVal || '');
+    const clsKey = edgeKeyFromMermaidClassName(cls);
+    if (clsKey) return clsKey;
+    cur = cur.parentElement;
+  }
+  return null;
+}
+
+function svgPathEdgeKey(pathEl) {
+  return edgeKeyFromSvgElement(pathEl);
+}
+
+function edgeKeyFromPathGroup(group) {
+  if (!group) return null;
+  const fromGroup = edgeKeyFromSvgElement(group);
+  if (fromGroup) return fromGroup;
+  const path = group.querySelector?.('path');
+  if (!path) return null;
+  return edgeKeyFromSvgElement(path);
+}
+
+function rectCenter(el) {
+  if (!el?.getBoundingClientRect) return null;
+  const r = el.getBoundingClientRect();
+  if (!Number.isFinite(r.left) || !Number.isFinite(r.top)) return null;
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+function buildEdgePathGeoEntries(svg) {
+  const edgeSel = 'g.edgePaths path, g.edgePath path, path.flowchart-link, .edgePath path';
+  return Array.from(svg.querySelectorAll(edgeSel)).map(pathEl => ({
+    key: edgeKeyFromSvgElement(pathEl),
+    center: rectCenter(pathEl),
+  })).filter(x => x.key && x.center);
+}
+
+function nearestEdgeKeyForLabel(labelEl, pathGeo) {
+  const center = rectCenter(labelEl);
+  if (!center || !pathGeo.length) return null;
+  let best = null;
+  for (const entry of pathGeo) {
+    const dx = entry.center.x - center.x;
+    const dy = entry.center.y - center.y;
+    const dist2 = dx * dx + dy * dy;
+    if (!best || dist2 < best.dist2) best = { key: entry.key, dist2 };
+  }
+  // If nearest path is too far, avoid accidental mis-association.
+  return best && best.dist2 <= 240 * 240 ? best.key : null;
+}
+
+function clearStrategyRouteHighlightVisual() {
+  const svg = document.querySelector('#strategy-mermaid svg');
+  if (!svg) return;
+  svg.querySelectorAll('.strategy-dim, .strategy-hl').forEach(el => {
+    el.classList.remove('strategy-dim', 'strategy-hl');
+  });
+  patchStrategyEdgeLabelBackground(svg);
+}
+
+function afterStrategyRender() {
+  const svg = document.querySelector('#strategy-mermaid svg');
+  patchStrategyEdgeLabelBackground(svg);
+  clearStrategyRouteHighlightVisual();
+  applyPriorityEdgeStyles();
+  requestAnimationFrame(() => {
+    fitStrategyToPanel();
+    if (pendingRouteId) {
+      activatePendingRoute();
+      return;
+    }
+    const routeId = activeStrategyRouteId
+      || document.querySelector('#legend-items .route-btn.active[data-route-id]')?.dataset.routeId;
+    if (!routeId) return;
+    const routes = metaChapters[currentCh]?.strategy?.routes || [];
+    const route = routes.find(r => r.id === routeId);
+    if (route) applyStrategyRouteHighlight(route);
+  });
+}
+
+function applyPriorityEdgeStyles() {
+  const svg = document.querySelector('#strategy-mermaid svg');
+  const api = priorityApi();
+  const routes = metaChapters[currentCh]?.strategy?.routes || [];
+  if (!svg || !api?.strategySelectPriorityStyles || !routes.length) return;
+  const styleMap = api.strategySelectPriorityStyles(routes);
+  if (!styleMap.size) return;
+
+  const pathGroups = getStrategyEdgePathGroups(svg);
+  pathGroups.forEach(group => {
+    const key = edgeKeyFromPathGroup(group);
+    const meta = key && styleMap.get(key);
+    pathsInEdgeGroup(group).forEach(pathEl => {
+      pathEl.classList.remove('prio-edge-high', 'prio-edge-mid', 'prio-edge-low', 'prio-edge-trap', 'prio-edge-confound');
+      if (!meta) return;
+      let cls = 'prio-edge-low';
+      if (meta.confound) cls = 'prio-edge-confound';
+      else if (meta.trap) cls = 'prio-edge-trap';
+      else if (meta.rank <= 1) cls = 'prio-edge-high';
+      else if (meta.rank === 2) cls = 'prio-edge-mid';
+      pathEl.classList.add(cls);
+      pathEl.style.stroke = meta.stroke;
+      pathEl.style.strokeWidth = `${meta.strokeWidth}px`;
+      if (meta.trap || meta.confound) pathEl.style.strokeDasharray = '7 5';
+      else pathEl.style.strokeDasharray = '';
+    });
+  });
+}
+
+function mermaidNodeIdFromSvgGroup(gEl) {
+  const dataId = gEl.getAttribute?.('data-id');
+  if (dataId) return dataId;
+  const id = gEl.getAttribute('id') || '';
+  const m = id.match(/flowchart-([A-Za-z][A-Za-z0-9_]*)-/i);
+  return m ? m[1] : null;
+}
+
+function clearStrategyRouteHighlight() {
+  activeStrategyRouteId = null;
+  clearStrategyRouteHighlightVisual();
+}
+
+function applyStrategyRouteHighlight(route) {
+  const svg = document.querySelector('#strategy-mermaid svg');
+  if (!svg || !route) return;
+  clearStrategyRouteHighlightVisual();
+  activeStrategyRouteId = route.id;
+  const mermaidBody = metaChapters[currentCh]?.strategy?.mermaid || '';
+  const resultKgIds = new Set(
+    (KG_CHAPTERS[currentCh]?.nodes || []).filter(n => n.group === 'result').map(n => n.id),
+  );
+  const expanded = expandRouteHighlight(route, mermaidBody, { resultKgIds });
+  const idSet = new Set(expanded.highlightNodes);
+  const edgeKeys = expanded.edgeKeys;
+  const parsed = parseStrategyMermaidEdges(mermaidBody);
+
+  svg.querySelectorAll('g.node').forEach(gEl => {
+    const nid = mermaidNodeIdFromSvgGroup(gEl);
+    if (nid && idSet.has(nid)) gEl.classList.add('strategy-hl');
+    else gEl.classList.add('strategy-dim');
+  });
+
+  const pathGroups = getStrategyEdgePathGroups(svg);
+  const labelGroups = getStrategyEdgeLabelGroups(svg);
+  const parsedByIndex = pathGroups.map((group, i) => ({
+    group,
+    key: edgeKeyFromPathGroup(group),
+    fallbackKey: parsed[i]?.key || null,
+  }));
+  const markedPaths = new Set();
+  const markedLabelGroups = new Set();
+  parsedByIndex.forEach((entry, i) => {
+    const key = entry.key || entry.fallbackKey;
+    const hl = key && edgeKeys.has(key);
+    pathsInEdgeGroup(entry.group).forEach(pathEl => {
+      pathEl.classList.add(hl ? 'strategy-hl' : 'strategy-dim');
+      markedPaths.add(pathEl);
+    });
+    const labelGroup = labelGroups[i];
+    if (labelGroup) {
+      labelGroup.classList.add(hl ? 'strategy-hl' : 'strategy-dim');
+      markedLabelGroups.add(labelGroup);
+    }
+  });
+
+  const edgeSel = 'g.edgePaths path, g.edgePath path, path.flowchart-link, .edgePath path';
+  svg.querySelectorAll(edgeSel).forEach(pathEl => {
+    if (markedPaths.has(pathEl)) return;
+    const key = edgeKeyFromSvgElement(pathEl);
+    pathEl.classList.add(key && edgeKeys.has(key) ? 'strategy-hl' : 'strategy-dim');
+  });
+
+  const pathGeo = buildEdgePathGeoEntries(svg);
+  svg.querySelectorAll('g.edgeLabel').forEach(gEl => {
+    if (markedLabelGroups.has(gEl)) return;
+    const key = edgeKeyFromSvgElement(gEl) || nearestEdgeKeyForLabel(gEl, pathGeo);
+    gEl.classList.add(key && edgeKeys.has(key) ? 'strategy-hl' : 'strategy-dim');
+  });
+
+  patchStrategyEdgeLabelBackground(svg);
+  syncGraphHash();
+}
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById('vt-kg')?.classList.toggle('active', v === 'kg');
+  document.getElementById('vt-dt')?.classList.toggle('active', v === 'dt');
+  document.getElementById('vt-strategy')?.classList.toggle('active', v === 'strategy');
+  if (v === 'strategy') closeStructMenu();
+  if (v !== 'strategy') {
+    clearStrategyTransform();
+    clearStrategyRouteHighlight();
+  }
+  resetPanelForViewChange();
+  render();
+  syncGraphHash();
+}
+
+function loadChapter(idx) {
+  currentCh = idx;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  syncStrategyTabVisibility();
+  document.getElementById('p-title').textContent = panelTitleForView(idx);
+  document.getElementById('p-sub').textContent = panelSubForView(idx);
+  clearInfoPanel();
+  clearStrategyRouteHighlight();
+  updateLegend();
+  render();
+  syncGraphHash();
+}
+
+function render() {
+  if (simulation) { simulation.stop(); simulation = null; }
+  d3svg.selectAll('*').remove();
+  document.getElementById('p-title').textContent = panelTitleForView(currentCh);
+  document.getElementById('p-sub').textContent = panelSubForView(currentCh);
+  if (currentView === 'kg') renderKG(KG_CHAPTERS[currentCh]);
+  else if (currentView === 'strategy') renderStrategy();
+  else renderDT(DT_CHAPTERS[currentCh]);
+}
+
+function getStrategyClassDefs() {
+  return (typeof STRATEGY_MERMAID_CLASS_DEFS !== 'undefined' ? STRATEGY_MERMAID_CLASS_DEFS : '');
+}
+
+function sanitizeStrategyMermaidBody(body) {
+  const api = strategyParseApi();
+  if (api?.sanitizeStrategyMermaid) return api.sanitizeStrategyMermaid(body);
+  return body || '';
+}
+
+function buildStrategyMermaidSource(body, defs) {
+  const trimmed = sanitizeStrategyMermaidBody(body).trim();
+  if (!defs) return trimmed;
+  const nl = trimmed.indexOf('\n');
+  const header = nl === -1 ? trimmed : trimmed.slice(0, nl);
+  const rest = nl === -1 ? '' : trimmed.slice(nl + 1);
+  if (/^(graph|flowchart)\s+(LR|TD)/i.test(header)) {
+    return rest ? header + '\n' + rest + '\n' + defs : header + '\n' + defs;
+  }
+  return trimmed + '\n' + defs;
+}
+
+function ensureMermaid() {
+  if (mermaidReady || typeof mermaid === 'undefined') return;
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'neutral',
+    themeVariables: {
+      edgeLabelBackground: '#eef2f8',
+      primaryColor: '#f1f5f9',
+      primaryTextColor: '#1e293b',
+      primaryBorderColor: '#475569',
+    },
+    securityLevel: 'loose',
+    flowchart: {
+      curve: 'basis',
+      htmlLabels: true,
+      useMaxWidth: false,
+      nodeSpacing: 55,
+      rankSpacing: 70,
+    },
+  });
+  mermaidReady = true;
+}
+
+function renderStrategy() {
+  ensureStrategyViewport();
+  const mount = document.getElementById('strategy-mermaid');
+  if (!mount) return;
+  const strat = metaChapters[currentCh]?.strategy;
+  const rid = ++strategyRenderId;
+  if (!strat?.mermaid?.trim()) {
+    mount.innerHTML = '<div id="strategy-empty">本章暂无策略全景</div>';
+    return;
+  }
+  ensureMermaid();
+  if (typeof mermaid === 'undefined') {
+    mount.innerHTML = '<div id="strategy-empty">需要联网加载 Mermaid</div>';
+    return;
+  }
+  mount.innerHTML = '<div class="strategy-loading">正在渲染策略图…</div>';
+  const id = 'strategy-diagram-' + currentCh + '-' + rid;
+  const displayBody = annotateDisplayMermaid(strat.mermaid, strat.routes || []);
+  lastStrategyDisplayMermaid = displayBody;
+  const src = buildStrategyMermaidSource(displayBody, getStrategyClassDefs());
+  mermaid.render(id, src).then(({ svg }) => {
+    if (rid !== strategyRenderId) return;
+    mount.innerHTML = svg;
+    const svgEl = mount.querySelector('svg');
+    if (svgEl) {
+      svgEl.removeAttribute('width');
+      svgEl.style.width = '';
+      svgEl.style.maxWidth = '';
+      requestAnimationFrame(() => {
+        afterStrategyRender();
+        activatePendingRoute();
+      });
+    }
+  }).catch(err => {
+    if (rid !== strategyRenderId) return;
+    mount.innerHTML = '<div id="strategy-empty">策略图渲染失败：' + (err.message || err) + '</div>';
+  });
+}
+
+function showRouteInfo(route) {
+  const infoEl = document.getElementById('info');
+  if (!infoEl || !route) return;
+  infoEl.innerHTML = buildRouteTeachingHtml(route);
+  document.getElementById('btn-route-kg')?.addEventListener('click', () => showRouteInKg(route));
+  if (window.MathJax) MathJax.typesetPromise([infoEl]).catch(() => {});
+  applyStrategyRouteHighlight(route);
+}
+
+function showRouteInKg(route) {
+  const ids = route?.mapsTo || [];
+  if (!ids.length) return;
+  switchView('kg');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => kgHighlightIds(ids));
+  });
+}
+
+function kgHighlightIds(ids) {
+  if (!nodeG || !linkG || !lastKgNodes) return;
+  const idSet = new Set(ids);
+  nodeG.selectAll('circle').transition().duration(260)
+    .attr('opacity', n => !kgNodeVisible(n) ? 0 : (idSet.has(n.id) ? 1 : cssVarNum('--graph-dim-opacity', 0.22)))
+    .attr('stroke-width', n => idSet.has(n.id) ? 3 : 1)
+    .attr('stroke', cssVar('--graph-node-stroke') || '#fff');
+  linkG.transition().duration(260).attr('opacity', l => {
+    if (!kgLinkVisible(l)) return 0;
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return idSet.has(s) && idSet.has(t) ? 0.75 : cssVarNum('--graph-link-dim-opacity', 0.12);
+  });
+}
+
+function renderNodeLegendRow(d) {
+  const cls = `${d.diamond ? ' diamond' : ''}${d.dashed ? ' dashed' : ''}${d.hollow ? ' hollow' : ''}`;
+  const style = d.hollow
+    ? `border-color:${d.color}`
+    : d.dashed
+      ? `background:${d.color};border-color:rgba(255,255,255,0.95)`
+      : `background:${d.color}`;
+  return `<div class="lr"><div class="ld${cls}" style="${style}"></div>${d.label}</div>`;
+}
+
+function renderLinkLegendRow(d) {
+  const cls = d.dashed ? ' dashed' : '';
+  const style = d.dashed ? `border-color:${d.color}` : `background:${d.color}`;
+  return `<div class="lr"><div class="ll${cls}" style="${style}"></div>${d.label}</div>`;
+}
+
+function renderLegendGroup(title, items, rowFn) {
+  const subtitle = title ? `<div class="legend-subtitle">${title}</div>` : '';
+  return `<div class="legend-subsection">${subtitle}<div class="legend-grid">${items.map(rowFn).join('')}</div></div>`;
+}
+
+function updateLegend() {
+  const legendEl = document.getElementById('legend-items');
+  if (currentView === 'strategy') {
+    setLegendTitle('调节优先级');
+    const routes = metaChapters[currentCh]?.strategy?.routes || [];
+    const prioApi = priorityApi();
+    const ranked = prioApi?.rankedStrategySelectRoutes
+      ? prioApi.rankedStrategySelectRoutes(routes)
+      : [...routes];
+    // Compact: line legend only (drop bulky color chips by default)
+    const prioLines = PRIORITY_LINE_LEGEND.map(c =>
+      `<div class="prio-lr"><div class="prio-line ${c.cls}"></div>${c.label}</div>`
+    ).join('');
+    const DEFAULT_VISIBLE = 5;
+    const routeBtns = ranked.map((r, i) => {
+      const meta = prioApi?.routePriorityMeta ? prioApi.routePriorityMeta(r) : { rank: r.priorityRank, score: r.score, trap: false };
+      const scoreTxt = meta?.score != null ? Number(meta.score).toFixed(2) : '';
+      const prioCls = meta?.confound
+        ? 'confound'
+        : (meta?.trap ? 'warn' : (meta?.rank <= 3 ? `prio-${meta.rank}` : ''));
+      const label = prioApi?.formatPriorityEdgeLabel ? prioApi.formatPriorityEdgeLabel(r) : r.label;
+      const studentSafeLabel = isStudentAudience()
+        ? String(label || r.label || '')
+          .replace(/·\s*优先\d+/g, '')
+          .replace(/试探混淆/g, '旁路试探')
+        : label;
+      const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
+      return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
+    }).join('');
+    const moreBtn = ranked.length > DEFAULT_VISIBLE
+      ? `<button type="button" class="route-more-btn" id="btn-route-more" aria-expanded="false">展开全部途径（${ranked.length}）</button>`
+      : '';
+    legendEl.innerHTML = `<div class="priority-legend">${prioLines}</div><div class="strategy-route-list">${routeBtns}${moreBtn}</div>`;
+    legendEl.querySelector('#btn-route-more')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      legendEl.querySelectorAll('.route-btn-extra').forEach(el => el.classList.toggle('hidden', expanded));
+      btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      btn.textContent = expanded ? `展开全部途径（${ranked.length}）` : '收起途径列表';
+    });
+    legendEl.querySelectorAll('.route-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const route = routes.find(x => x.id === btn.dataset.routeId);
+        const isToggleOff = btn.classList.contains('active') && activeStrategyRouteId === route?.id;
+        legendEl.querySelectorAll('.route-btn').forEach(b => b.classList.remove('active'));
+        if (isToggleOff) {
+          clearStrategyRouteHighlight();
+          clearInfoPanel();
+          applyPriorityEdgeStyles();
+          syncGraphHash();
+          return;
+        }
+        btn.classList.add('active');
+        if (route) showRouteInfo(route);
+      });
+    });
+    document.getElementById('kg-filter').classList.add('hidden');
+    document.getElementById('legend-hint').classList.add('hidden');
+    return;
+  }
+  if (currentView === 'kg') {
+    setLegendTitle('节点类型');
+    const nodeGroups = KG_NODE_LEGEND_GROUPS.map(g => renderLegendGroup(g.title, g.items, renderNodeLegendRow)).join('');
+    const linkGroups = KG_LINK_LEGEND_GROUPS.map(g => renderLegendGroup(g.title, g.items, renderLinkLegendRow)).join('');
+    legendEl.innerHTML = `<div class="kg-legend">
+      <div class="legend-section">
+        <div class="ltitle">节点类型</div>
+        ${nodeGroups}
+      </div>
+      <div class="legend-section">
+        <div class="ltitle">连线类型</div>
+        ${linkGroups}
+      </div>
+    </div>`;
+    document.getElementById('kg-filter').classList.remove('hidden');
+    document.getElementById('legend-hint').classList.add('hidden');
+    return;
+  }
+  setLegendTitle('节点类型');
+  legendEl.innerHTML = `<div class="legend-section"><div class="legend-grid">${DT_LEGEND.map(renderNodeLegendRow).join('')}</div></div>`;
+  document.getElementById('kg-filter').classList.add('hidden');
+  document.getElementById('legend-hint').classList.add('hidden');
+}
+
+function kgNodeVisible(d) {
+  return kgFilter === 'all' || d.layer === kgFilter;
+}
+function kgLinkVisible(l) {
+  const sid = typeof l.source==='object' ? l.source.id : l.source;
+  const tid = typeof l.target==='object' ? l.target.id : l.target;
+  const nodes = KG_CHAPTERS[currentCh]?.nodes || [];
+  const sn = nodes.find(n=>n.id===sid), tn = nodes.find(n=>n.id===tid);
+  return sn && tn && kgNodeVisible(sn) && kgNodeVisible(tn);
+}
+function kgForceX(d, W) {
+  if (d.id === 'P1' || d.id === 'R1') return W * 0.5;
+  if (d.layer === 'play') return W * 0.28;
+  if (d.layer === 'teach') return W * 0.72;
+  return W * 0.5;
+}
+
+function kgForceY(d, H, maxLv) {
+  const lv = maxLv > 0 ? (d.level ?? 0) / maxLv : 0;
+  if (d.layer === 'teach') return H * (0.12 + lv * 0.28);
+  if (d.layer === 'play') return H * (0.52 + lv * 0.32);
+  return H * (0.08 + lv * 0.80);
+}
+
+function kgNodeRadius(d) {
+  const n = Number(d?.r);
+  if (Number.isFinite(n) && n > 0) return n;
+  return d?.group === 'irrelevant' ? 18 : 22;
+}
+
+function kgCanvasLabel(d) {
+  const id = d.id || '';
+  const raw = (d.label || '').trim();
+  if (!raw || raw === id) return id;
+  if (raw.startsWith(id)) return raw.length > 16 ? raw.slice(0, 14) + '…' : raw;
+  const short = raw.length > 10 ? raw.slice(0, 8) + '…' : raw;
+  return id + ' ' + short;
+}
+
+function kgCollideRadius(d) {
+  const label = kgCanvasLabel(d);
+  return kgNodeRadius(d) + 20 + Math.min(48, label.length * 4);
+}
+function setKgFilter(f) {
+  kgFilter = f;
+  document.querySelectorAll('#kg-filter .fbtn').forEach(b =>
+    b.classList.toggle('active', b.dataset.kgFilter === f));
+  if (currentView === 'kg') render();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  力导向图 (事理图谱)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderKG(chData) {
+  const W = svgEl.clientWidth||900, H = svgEl.clientHeight||600;
+  d3svg.attr('viewBox',[0,0,W,H]);
+  gRoot = d3svg.append('g');
+
+  const defs = d3svg.append('defs');
+  ['premise','method','core','result','verify'].forEach(t => {
+    const col = t==='premise'?'#6688aa':t==='method'?'#3388dd':t==='core'?'#8855cc':t==='result'?'#33aa66':'#dd66aa';
+    defs.append('marker').attr('id','arr-'+t).attr('viewBox','0 -5 10 10').attr('refX',28).attr('refY',0)
+      .attr('markerWidth',7).attr('markerHeight',7).attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill',col);
+  });
+
+  const nodes = chData.nodes.map(n=>({...n}));
+  lastKgNodes = nodes;
+  lastKgLinks = chData.links.map(l => ({...l}));
+  const links = chData.links.map(l=>({...l, source:l.s, target:l.t}));
+  const maxLv = Math.max(...nodes.map(n=>n.level));
+
+  linkG = gRoot.append('g').selectAll('line').data(links).join('line')
+    .attr('class',d=>'link '+d.tp)
+    .attr('marker-end',d=>'url(#arr-'+d.tp+')')
+    .attr('opacity',d=>kgLinkVisible(d)?(d.tp==='verify'?0.62:0.52):0)
+    .style('pointer-events',d=>kgLinkVisible(d)?'stroke':'none');
+
+  nodeG = gRoot.append('g').selectAll('g').data(nodes).join('g')
+    .attr('class', d => {
+      let c = 'node';
+      if (d.layer === 'teach') c += ' teach-node';
+      if (d.id === 'P1' || d.id === 'R1') c += ' hub-node';
+      if (d.group === 'irrelevant') c += ' irrelevant-node';
+      return c;
+    })
+    .attr('opacity',d=>kgNodeVisible(d)?1:0)
+    .style('pointer-events',d=>kgNodeVisible(d)?'all':'none')
+    .call(d3.drag()
+      .on('start',(ev,d)=>{ if(!kgNodeVisible(d))return; if(!ev.active)simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag', (ev,d)=>{ if(!kgNodeVisible(d))return; d.fx=ev.x; d.fy=ev.y; })
+      .on('end',  (ev,d)=>{ if(!ev.active)simulation.alphaTarget(0); d.fx=d.x; d.fy=d.y; }));
+
+  nodeG.append('circle')
+    .attr('r', d => {
+      const r = kgNodeRadius(d);
+      return (d.id === 'P1' || d.id === 'R1') ? r + 2 : r;
+    })
+    .attr('fill', d => (d.group === 'irrelevant' ? 'none' : (KG_COLORS[d.group] || '#446688')));
+
+  nodeG.append('text').text(d => kgCanvasLabel(d)).attr('dy', d => {
+    const r = kgNodeRadius(d);
+    const hub = (d.id === 'P1' || d.id === 'R1') ? r + 2 : r;
+    return hub + 13;
+  }).style('font-size', '10px');
+
+  simulation = d3.forceSimulation(nodes)
+    .force('link',   d3.forceLink(links).id(d=>d.id).distance(95).strength(0.65))
+    .force('charge', d3.forceManyBody().strength(-620))
+    .force('collide',d3.forceCollide().radius(kgCollideRadius).strength(0.95))
+    .force('x',      d3.forceX(d=>kgForceX(d,W)).strength(0.38))
+    .force('y',      d3.forceY(d=>kgForceY(d,H,maxLv)).strength(0.58))
+    .force('center', d3.forceCenter(W/2,H/2).strength(0.03));
+  simulation.alpha(0.92).restart();
+
+  simulation.on('tick',()=>{
+    linkG.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+         .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeG.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+
+  zoomBeh = d3.zoom().scaleExtent([0.25,3]).on('zoom',e=>gRoot.attr('transform',e.transform));
+  d3svg.call(zoomBeh);
+
+  nodeG.on('click',(ev,d)=>{
+    if(!kgNodeVisible(d))return;
+    ev.stopPropagation();
+    kgHighlight(d,nodes,links);
+    showKGInfo(d,links,nodes);
+  });
+  d3svg.on('dblclick', kgClearHL);
+}
+
+function kgGetConn(id,links){
+  const v=new Set([id]); const q=[id];
+  while(q.length){ const c=q.shift();
+    links.forEach(l=>{
+      const s=typeof l.source==='object'?l.source.id:l.source;
+      const t=typeof l.target==='object'?l.target.id:l.target;
+      if(s===c&&!v.has(t)){v.add(t);q.push(t);}
+      if(t===c&&!v.has(s)){v.add(s);q.push(s);}
+    });
+  } return v;
+}
+function kgHighlight(d,nodes,links){
+  const conn=kgGetConn(d.id,links);
+  nodeG.selectAll('circle').transition().duration(260)
+    .attr('opacity',n=>!kgNodeVisible(n)?0:(conn.has(n.id)?1:cssVarNum('--graph-dim-opacity',0.22)))
+    .attr('stroke-width',n=>conn.has(n.id)?3:1);
+  linkG.transition().duration(260).attr('opacity',l=>{
+    if(!kgLinkVisible(l))return 0;
+    const s=typeof l.source==='object'?l.source.id:l.source,t=typeof l.target==='object'?l.target.id:l.target;
+    return conn.has(s)&&conn.has(t)?(l.tp==='verify'?0.85:0.75):cssVarNum('--graph-link-dim-opacity',0.12);
+  });
+}
+function kgClearHL(){
+  if(!nodeG)return;
+  nodeG.selectAll('circle').transition().duration(260)
+    .attr('opacity',n=>kgNodeVisible(n)?1:0).attr('stroke-width',n=>(n.id==='P1'||n.id==='R1')?2.5:2);
+  linkG.transition().duration(260).attr('opacity',d=>kgLinkVisible(d)?(d.tp==='verify'?0.62:0.52):0);
+}
+function showKGInfo(d,links,nodes){
+  const col=KG_COLORS[d.group]||'#446688';
+  const layerCol=d.layer==='play'?'layer-play':'layer-teach';
+  const ups=links.filter(l=>(typeof l.target==='object'?l.target.id:l.target)===d.id).map(l=>{ const s=typeof l.source==='object'?l.source.id:l.source; const nd=nodes.find(n=>n.id===s); return `<span style="color:${KG_COLORS[nd?.group]||'#aaa'}">${nd?.label||s}</span>`; });
+  const dns=links.filter(l=>(typeof l.source==='object'?l.source.id:l.source)===d.id).map(l=>{ const t=typeof l.target==='object'?l.target.id:l.target; const nd=nodes.find(n=>n.id===t); return `<span style="color:${KG_COLORS[nd?.group]||'#aaa'}">${nd?.label||t}</span>`; });
+  let h=`<div class="i-title">${d.label}</div><div class="i-badges"><span class="i-badge" style="background:${col}">${KG_NAMES[d.group]||d.group}</span>`;
+  if(d.layer) h+=`<span class="i-badge ${layerCol}">${LAYER_NAMES[d.layer]||d.layer}</span>`;
+  h+=`</div><div class="i-desc">${d.desc}</div>`;
+  if(ups.length) h+=`<div class="i-rel-lbl">↑ 逻辑依赖</div><div class="i-rel-list">${ups.join(' · ')}</div>`;
+  if(dns.length) h+=`<div class="i-rel-lbl" style="margin-top:10px">↓ 逻辑导出</div><div class="i-rel-list">${dns.join(' · ')}</div>`;
+  document.getElementById('info').innerHTML = h;
+  if(window.MathJax) MathJax.typesetPromise([document.getElementById('info')]).catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  决策�?(horizontal d3.tree layout)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderDT(chData) {
+  // Use minimum dimensions so layout is correct even in constrained viewports
+  const W = Math.max(svgEl.clientWidth||0, 900), H = Math.max(svgEl.clientHeight||0, 600);
+  d3svg.attr('viewBox',[0,0,W,H]);
+  gRoot = d3svg.append('g');
+
+  // Build hierarchy (uid = tree path �?duplicate labels across mode branches stay distinct)
+  function toHier(n, path = '0') {
+    const obj = { name: n.n, type: n.t, desc: n.d || '', edgeLabel: n._e || '', uid: path };
+    if (n.children && n.children.length) {
+      obj.children = n.children.map((c, i) => toHier(c, `${path}/${i}`));
+    }
+    return obj;
+  }
+  const root = d3.hierarchy(toHier(chData.tree));
+
+  // Estimate sizes �?nodeW is the per-node horizontal margin
+  const nodeW = 160;
+  const treeH = H - 80;
+  const treeW = Math.max(W - 80, 400);
+
+  const treeLayout = d3.tree().size([treeH, treeW - nodeW]);
+  treeLayout(root);
+
+  const nodes = root.descendants();
+  const links = root.links();
+
+  // Draw links (curved elbow)
+  const linkGroup = gRoot.append('g');
+  linkGroup.selectAll('path').data(links).join('path')
+    .attr('class', d => {
+      const el = d.target.data.edgeLabel||'';
+      if(el==='是'||el==='Path A') return 'tree-link decision-yes';
+      if(el==='否'||el==='Path B') return 'tree-link decision-no';
+      if(el==='Path A') return 'tree-link path-a';
+      if(el==='Path B') return 'tree-link path-b';
+      return 'tree-link';
+    })
+    .attr('d', d => {
+      const sx = d.source.y + 30, sy = d.source.x;
+      const tx = d.target.y + 30, ty = d.target.x;
+      const mx = (sx + tx) / 2;
+      return `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`;
+    });
+
+  // Edge labels
+  linkGroup.selectAll('text.edge-lbl').data(links.filter(d=>d.target.data.edgeLabel)).join('text')
+    .attr('class', d => {
+      const el = d.target.data.edgeLabel;
+      if(el==='是') return 'edge-lbl yes';
+      if(el==='否') return 'edge-lbl no';
+      if(el==='Path A') return 'edge-lbl path-a';
+      if(el==='Path B') return 'edge-lbl path-b';
+      return 'edge-lbl';
+    })
+    .attr('x', d => (d.source.y + d.target.y) / 2 + 30)
+    .attr('y', d => (d.source.x + d.target.x) / 2 - 5)
+    .attr('text-anchor','middle')
+    .text(d => d.target.data.edgeLabel);
+
+  // Draw nodes
+  const nodeGroup = gRoot.append('g').selectAll('g').data(nodes).join('g')
+    .attr('class','tree-node')
+    .attr('transform', d => `translate(${d.y + 30},${d.x})`);
+
+  // Node shape: diamond for decision, circle for others
+  nodeGroup.each(function(d) {
+    const g = d3.select(this);
+    const col = DT_COLORS[d.data.type] || '#446688';
+    const r = d.data.type==='root' ? 24 : d.data.type==='result' ? 22 : 18;
+    if(d.data.type === 'decision') {
+      const s = r * 1.35;
+      g.append('path').attr('class','diamond-path')
+        .attr('d', `M0,${-s} L${s},0 L0,${s} L${-s},0 Z`)
+        .attr('fill', col);
+    } else {
+      g.append('circle').attr('r', r).attr('fill', col);
+    }
+  });
+
+  // Node labels (multi-line, below/beside)
+  nodeGroup.each(function(d) {
+    const g = d3.select(this);
+    const lines = d.data.name.split('\n');
+    const r = d.data.type==='root'?24:d.data.type==='result'?22:18;
+    const baseY = (d.data.type==='decision' ? r*1.35 : r) + 12;
+    lines.forEach((line, i) => {
+      g.append('text')
+        .attr('dy', baseY + i * 13)
+        .attr('text-anchor','middle')
+        .style('font-size', d.data.type==='root'?'11px':'10px')
+        .style('fill', dtLabelFill(d.data.type))
+        .text(line);
+    });
+  });
+
+  // Click handler
+  nodeGroup.on('click', (ev, d) => {
+    ev.stopPropagation();
+    dtHighlight(d, nodeGroup, linkGroup, links);
+    showDTInfo(d.data);
+  });
+
+  zoomBeh = d3.zoom().scaleExtent([0.15, 3]).on('zoom', e => gRoot.attr('transform', e.transform));
+  d3svg.call(zoomBeh);
+  d3svg.on('dblclick', () => { dtClearHL(nodeGroup, linkGroup); });
+
+  // Auto-fit
+  const bbox = gRoot.node().getBBox();
+  const scale = Math.min(0.88, Math.min(W/bbox.width, H/bbox.height));
+  const tx = (W - bbox.width*scale)/2 - bbox.x*scale;
+  const ty = (H - bbox.height*scale)/2 - bbox.y*scale;
+  d3svg.call(zoomBeh.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
+}
+
+function dtHighlight(d, nodeGroup, linkGroup, links) {
+  const ids = new Set();
+  let n = d;
+  while (n) { ids.add(n.data.uid); n = n.parent; }
+  function addDesc(node) {
+    ids.add(node.data.uid);
+    if (node.children) node.children.forEach(addDesc);
+  }
+  addDesc(d);
+
+  nodeGroup.selectAll('circle,path.diamond-path').transition().duration(240)
+    .attr('opacity', nd => ids.has(nd.data.uid) ? 1 : cssVarNum('--graph-dim-opacity', 0.22))
+    .attr('stroke-width', nd => ids.has(nd.data.uid) ? 3 : 1);
+  linkGroup.selectAll('path').transition().duration(240)
+    .attr('opacity', l => ids.has(l.source.data.uid) && ids.has(l.target.data.uid) ? 1 : cssVarNum('--graph-link-dim-opacity', 0.12));
+}
+function dtClearHL(nodeGroup, linkGroup) {
+  if (!nodeGroup) return;
+  nodeGroup.selectAll('circle,path.diamond-path').transition().duration(240).attr('opacity',1).attr('stroke-width',2);
+  linkGroup.selectAll('path').transition().duration(240).attr('opacity',1);
+}
+
+function showDTInfo(data) {
+  const col = DT_COLORS[data.type]||'#446688';
+  let h = `<div class="i-title">${data.name.replace(/\n/g,'<br>')}</div>`;
+  h += `<span class="i-badge" style="background:${col}">${DT_NAMES[data.type]||data.type}</span>`;
+  if(data.desc) h += `<div class="i-desc">${data.desc}</div>`;
+  document.getElementById('info').innerHTML = h;
+  if(window.MathJax) MathJax.typesetPromise([document.getElementById('info')]).catch(()=>{});
+}
+
+function kgResetLayout() {
+  if (!simulation || currentView !== 'kg') return;
+  simulation.nodes().forEach(d => { d.fx = null; d.fy = null; });
+  simulation.alpha(1).restart();
+}
+
+function clearInfoPanel() {
+  document.getElementById('info').innerHTML = infoEmptyHtml();
+}
+
+
+  function bindControls() {
+    document.getElementById('btn-zoom')?.addEventListener('click', () => {
+      if (currentView === 'strategy') {
+        fitStrategyToPanel();
+        return;
+      }
+      if (currentView === 'kg') kgResetLayout();
+      if (zoomBeh) d3svg.transition().duration(600).call(zoomBeh.transform, d3.zoomIdentity);
+    });
+    document.getElementById('btn-hl')?.addEventListener('click', () => {
+      if (currentView === 'kg') kgClearHL();
+      const ng = d3svg.selectAll('.tree-node');
+      const lg = d3svg.select('.tree-link').node() ? d3svg.selectAll('path.tree-link') : null;
+      if (ng && lg) {
+        ng.selectAll('circle,path.diamond-path').transition().duration(240).attr('opacity', 1).attr('stroke-width', 2);
+        lg.transition().duration(240).attr('opacity', 1);
+      }
+    });
+    document.querySelectorAll('#kg-filter .fbtn').forEach(btn => {
+      btn.addEventListener('click', () => setKgFilter(btn.dataset.kgFilter));
+    });
+    document.getElementById('vt-dt')?.addEventListener('click', () => {
+      closeStructMenu();
+      switchView('dt');
+    });
+    document.getElementById('vt-kg')?.addEventListener('click', () => {
+      closeStructMenu();
+      switchView('kg');
+    });
+    document.getElementById('vt-strategy')?.addEventListener('click', () => switchView('strategy'));
+    document.getElementById('btn-struct-toggle')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleStructMenu();
+    });
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.view-struct-wrap');
+      if (wrap && !wrap.contains(e.target)) closeStructMenu();
+    });
+  }
+
+  function init(opts) {
+    KG_CHAPTERS = opts.kgChapters || [];
+    DT_CHAPTERS = opts.dtChapters || [];
+    metaChapters = opts.metaChapters || [];
+    svgEl = document.getElementById('svg');
+    d3svg = d3.select(svgEl);
+    const preferStrategy = opts.defaultView === 'strategy'
+      || (opts.defaultView == null && chapterHasStrategy(0));
+    if (preferStrategy && chapterHasStrategy(0)) currentView = 'strategy';
+    else if (opts.defaultView === 'kg' || opts.defaultView === 'dt') currentView = opts.defaultView;
+    else currentView = chapterHasStrategy(0) ? 'strategy' : 'dt';
+    bindControls();
+    setGraphChrome();
+    if (opts.onReady) opts.onReady({ buildTabs, loadChapter, render, switchView, setChapters });
+    applyGraphHashFromUrl();
+    buildTabs();
+    syncStrategyTabVisibility();
+    updateLegend();
+    refreshInfoEmptyIfBare();
+    render();
+    window.addEventListener('hashchange', () => {
+      applyGraphHashFromUrl();
+      resetPanelForViewChange();
+      render();
+    });
+    window.addEventListener('resize', scheduleStrategyResizeFit);
+  }
+
+  function setChapters(kg, dt, meta) {
+    KG_CHAPTERS = kg;
+    DT_CHAPTERS = dt;
+    if (meta) metaChapters = meta;
+    const tabs = document.getElementById('tabs');
+    if (tabs) tabs.innerHTML = '';
+    buildTabs();
+    currentCh = 0;
+    render();
+  }
+
+  return { init, setChapters, render, switchView, loadChapter };
+})();
+
+</script>
+<script>
+(function () {
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | C1 | constraint | 竞赛模式 |\n| 否(探究) | C1 | constraint | 探究模式 |\n| 调节参数并测试热流 | O1 | operation | 调节导热系数k、温差ΔT、截面积A，点击测试热流 |\n| 热流在安全带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否(过热) | C3 | constraint | 过热失败 |\n| 否(不足) | C4 | constraint | 不足失败 |\n| 重试(过热) | skip retry | - | retry |\n| 重试(不足) | skip retry | - | retry |\n| 重试(模式) | skip retry | - | retry |\n| 导热系数与温差影响热流 | S1 | core | teach |\n| 验证公式 | verify | - | 连回O1 |","kg":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式自由调参观察，或竞赛模式限次达标 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调节参数并测试热流","group":"operation","layer":"play","level":2,"r":22,"desc":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果"},{"id":"C2","label":"热流在安全带内?·结果判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"竞赛模式下热流需在锁定安全带区间内，过低或过高均不合格 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C3","label":"过热失败","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流超过上限导致炉墙过热，需降低导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"C4","label":"供暖不足","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流低于下限导致供暖不足，需提高导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":4,"r":22,"desc":"热流落在安全带区间内，竞赛急单完成，显示过关"},{"id":"S1","label":"导热系数与温差影响热流","group":"core","layer":"teach","level":0,"r":22,"desc":"热流速率Q/t = κAΔT/d，导热系数κ和温差ΔT越大热流越大"},{"id":"S2","label":"截面积A对热流的影响","group":"core","layer":"teach","level":0,"r":22,"desc":"截面积A增大热流增大，但竞赛中A固定为0.05m²，不影响过关判定"},{"id":"I1","label":"重置按钮","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"重置滑条至默认值，与过关判定无关"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C2","t":"C4","tp":"premise"},{"s":"C2","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","tree":{"n":"进入关卡","t":"root","d":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标","children":[{"n":"模式选择?","t":"decision","d":"选择探究模式或竞赛模式","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调参观察热流变化"},{"_e":"是","n":"竞赛模式","t":"step","d":"限次将热流调至锁定安全带区间"}]},{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮","children":[{"n":"热流在安全带内?","t":"decision","d":"竞赛模式下热流需在锁定安全带区间内","children":[{"_e":"是","n":"过关","t":"result","d":"热流落在安全带区间内，竞赛急单完成"},{"_e":"否","n":"温升达标?","t":"decision","d":"判断热流是过高还是过低","children":[{"_e":"是","n":"过热失败","t":"junction","d":"热流超过上限，需降低导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"热流低于下限，需提高导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]}]}]}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"热流随导热与温差增大；太小供暖不足，太大则炉墙过热"},"strategy":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","mermaid":"graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nAdjustMulti --> Fire\nAdjustMulti --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[同时调多个参数]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nAdjustMulti[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust","routes":[{"id":"main","label":"单变量·截面积","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","Challenge","Fire","Observe","Win","RetryLow","RetryOverheat","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["AdjustK","Fire"],["Fire","Observe"],["Observe","Win"],["AdjustDT","Fire"],["AdjustA","Fire"],["Observe","AdjustK"],["Observe","RetryLow"],["Observe","RetryOverheat"],["RetryLow","AdjustK"],["RetryOverheat","AdjustK"]],"highlightFailureBranches":true},{"id":"main_s-thermal-conductivity","label":"单变量·导热系数","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","AdjustK"],"highlightEdges":[["AdjustDT","Fire"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"],["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"main_s-temperature-diff","label":"单变量·温差","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","AdjustK"],"highlightEdges":[["AdjustK","Fire"],["Observe","Win"],["Observe","AdjustK"],["Observe","RetryLow"],["Observe","RetryOverheat"],["RetryLow","AdjustK"],["RetryOverheat","AdjustK"],["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","Challenge","StrategySelect","Fire","Observe","RetryLow","RetryOverheat","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["AdjustMulti","Fire"],["Fire","Observe"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"],["RetryLow","AdjustK"],["RetryOverheat","AdjustK"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.55,"weight":0.55,"highlightNodes":["StrategySelect","ObserveCV","BackFromCV"],"highlightEdges":[["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"priorityRank":4}]},"traceMap":{"controls":{"s-thermal-conductivity":{"kgId":"O1","role":"operation"},"s-temperature-diff":{"kgId":"O1","role":"operation"},"s-area":{"kgId":"O1","role":"operation"},"modeSelect":{"kgId":"C1","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"irrelevant_touch":{"canonical":"irrelevant_touch","control":"s-area"}}},"inquiryScript":{"summary":"热传导 · 探究","knowledgePoints":[{"id":"KP1","label":"热传导 · 探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-area","label":"截面积","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-thermal-conductivity","label":"导热系数","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-temperature-diff","label":"温差","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：导热系数与温差影响热流、截面积A对热流的影响","steps":[{"order":1,"title":"明确知识点","body":"回顾：导热系数与温差影响热流；截面积A对热流的影响","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节参数并测试热流、调节参数并测试热流、调节参数并测试热流、模式选择；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：重置按钮（重置滑条至默认值，与过关判定无关）","mapsToKg":["I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"heat"}};
+  GraphViewer.init({
+    kgChapters: [chapter.kg],
+    dtChapters: [chapter.dt],
+    metaChapters: [{ winSync: chapter.winSync, mapping: chapter.mapping, strategy: chapter.strategy, traceMap: chapter.traceMap, inquiryScript: chapter.inquiryScript }],
+    features: { trace: false, agent: false },
+    defaultView: 'strategy',
+  });
+})();
+</script>
+</body>
+</html>

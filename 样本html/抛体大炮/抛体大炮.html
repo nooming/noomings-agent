@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<!-- BATCH1-CHALLENGE-REFRESH-20260724 -->
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>海防炮台 · 野战试射</title>
+    <style>
+        :root {
+            --bg-color: #2b213a;
+            --panel-bg: #fff;
+            --primary: #ff7eb3;
+            --secondary: #7af2cc;
+            --accent: #ffaf40;
+            --free-mode: #9b59b6;
+            --text: #333;
+            --pixel-font: 'VT323', 'Microsoft YaHei', 'SimHei', monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-font-smoothing: none; }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text);
+            font-family: var(--pixel-font); display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; font-size: 20px;
+        }
+
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.05));
+            background-size: 100% 4px; pointer-events: none; z-index: 9999;
+        }
+
+        header {
+            width: 100%; height: 52px; background: #fff; border-bottom:4px solid #000;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; box-shadow: 4px 4px 0px rgba(0,0,0,0.2); z-index: 10; flex-shrink: 0;
+        }
+
+        h1 { margin: 0; font-size: 1.7rem; color: var(--primary); text-shadow: 2px 2px 0 #000; }
+
+        .header-controls { display: flex; gap: 12px; align-items: center; }
+
+        .score-display {
+            font-size: 1.3rem; font-weight: bold; color: var(--text);
+            background: #eee; padding: 2px 10px; border: 2px solid #000;
+            box-shadow: 2px 2px 0 #000;
+        }
+        
+        .score-display span { color: var(--accent); }
+
+        .level-tag {
+            background: var(--accent); color: #fff; padding: 4px 12px; border: 2px solid #000;
+            font-size: 1.3rem; text-shadow: 1px 1px 0 #000; box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+            transition: background 0.3s;
+        }
+        
+        .level-tag.free-mode { background: var(--free-mode); }
+
+        .btn-guide {
+            background: var(--secondary); color: #000; border: 2px solid #000; padding: 4px 10px;
+            font-family: var(--pixel-font); font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            box-shadow: 2px 2px 0 #000; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-guide:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 #000; background: #fff; }
+
+        #app {
+            flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: row;
+        }
+
+        #stage {
+            position: relative; flex: 1; min-width: 0; min-height: 0;
+            background-color: #87CEEB;
+            border-right: 4px solid #000;
+            overflow: hidden; image-rendering: pixelated;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .hud {
+            position: absolute; top: 92px; left: 10px; background: rgba(255, 255, 255, 0.96);
+            border: 2px solid #000; padding: 8px 10px; box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+            font-size: 1.05rem; display: none; z-index: 6; max-width: min(240px, calc(100% - 80px));
+        }
+        
+        .hud-row { display: flex; justify-content: space-between; width: 100%; min-width: 160px; margin-bottom: 4px; gap: 12px; }
+        .hud-row span:first-child { color: #666; }
+        .hud-row span:last-child { font-weight: bold; color: var(--primary); }
+
+        .wind-indicator {
+            position: absolute; top: 56px; right: 10px; width: 56px; height: 56px;
+            background: rgba(0,0,0,0.5); border: 2px solid #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px;
+        }
+        
+        .wind-arrow { font-size: 28px; line-height: 28px; transition: transform 0.3s; }
+
+        #controls-area {
+            width: clamp(280px, 28vw, 340px); flex-shrink: 0; min-height: 0;
+            background: #fff; border: none; border-left: 0;
+            display: flex; flex-direction: column; padding: 0;
+            box-shadow: -6px 0 0 rgba(0,0,0,0.15);
+        }
+        .ctrl-hd {
+            padding: 10px 14px; border-bottom: 3px solid #000; background: #f7f7f7;
+            font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; flex-shrink: 0;
+        }
+        .ctrl-scroll {
+            flex: 1; overflow-y: auto; padding: 12px 14px 8px; min-height: 0;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .ctrl-ft {
+            padding: 12px 14px 14px; border-top: 3px solid #000; background: #f7f7f7; flex-shrink: 0;
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 4px; border-radius: 4px; border: 2px solid transparent; padding: 4px; }
+        .input-group.highlight { background: rgba(255, 175, 64, 0.15); border-color: var(--accent); animation: pulse-border 2s infinite; }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(255, 175, 64, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(255, 175, 64, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 175, 64, 0); }
+        }
+
+        .label-row { display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: bold; }
+        .val-display { color: var(--secondary); }
+
+        input[type=range] {
+            -webkit-appearance: none; appearance: none; width: 100%; height: 28px;
+            background: transparent; outline: none; margin: 0; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 8px; background: #ddd; border: 2px solid #000;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 22px; height: 22px; margin-top: -9px;
+            background: var(--primary); border: 2px solid #000; cursor: pointer;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+        }
+        input[type=range]::-moz-range-track { height: 8px; background: #ddd; border: 2px solid #000; }
+        input[type=range]::-moz-range-thumb {
+            width: 22px; height: 22px; background: var(--primary); border: 2px solid #000; cursor: pointer;
+        }
+
+        .pixel-btn {
+            background: var(--secondary); color: #000; border: 2px solid #000; padding: 12px 16px;
+            font-family: var(--pixel-font); font-size: 1.4rem; font-weight: bold;
+            text-transform: uppercase; cursor: pointer; box-shadow: 4px 4px 0 #000;
+            transition: transform 0.1s, box-shadow 0.1s; text-align: center; width: 100%;
+        }
+        .pixel-btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; background: #fff; }
+        .pixel-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #000; }
+        .pixel-btn:disabled { background: #ccc; color: #666; cursor: not-allowed; transform: none; box-shadow: none; border-color: #999; }
+
+        @media (max-width:720px) {
+            header { height: 48px; padding: 0 10px; }
+            h1 { font-size: 1.35rem; }
+            .score-display, .level-tag { font-size: 1.05rem; }
+            #app { flex-direction: column; }
+            #stage { flex: 1 1 0; min-height: 48vh; border-right: none; border-bottom: 4px solid #000; }
+            #controls-area {
+                width: 100%; flex: 0 0 auto; max-height: min(42vh, 360px);
+                box-shadow: none;
+            }
+            .wind-indicator { width: 48px; height: 48px; }
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; align-items: center;
+            justify-content: center; z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .pixel-modal {
+            background: #fff; border: 4px solid #000; padding: 30px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5); text-align: center;
+            width: 400px; max-width: 90%; animation: bounceIn 0.4s steps(4);
+            display: flex; flex-direction: column;
+        }
+
+        .guide-modal { width: 600px; height: 80%; max-width: 95%; text-align: left; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+        .guide-header { background: var(--secondary); padding: 15px; border-bottom: 4px solid #000; display: flex; justify-content: space-between; align-items: center; }
+        .guide-header h2 { margin: 0; font-size: 2rem; color: #000; text-shadow: 2px 2px 0 #fff; }
+        .guide-content { padding: 20px; overflow-y: auto; font-size: 1.2rem; line-height: 1.6; }
+        .guide-section { margin-bottom: 20px; border-bottom: 2px dashed #ccc; padding-bottom: 10px; }
+        .guide-section h3 { margin-top: 0; color: var(--primary); font-size: 1.4rem; margin-bottom: 5px; }
+        .highlight { color: #e74c3c; font-weight: bold; }
+        .formula-box { background: #f0f0f0; border: 2px solid #555; padding: 15px; margin: 10px 0; font-family: 'Courier New', monospace; text-align: center; color: #000; font-size: 1.1rem; border-left: 5px solid var(--accent); }
+
+        .pixel-modal h2 { margin-top: 0; font-size: 2.5rem; color: var(--primary); text-shadow: 2px 2px 0 #000; }
+        .pixel-modal p { font-size: 1.4rem; margin-bottom: 25px; color: #555; }
+        .btn-group { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .pixel-btn-close { background: #e74c3c; color: #fff; width: 100%; }
+        .pixel-btn-close:hover { background: #c0392b; }
+
+        @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+        .tag { font-size: 0.8rem; background: #000; color: #fff; padding: 0 4px; margin-left: 5px; vertical-align: middle; }
+
+        .pixel-modal.level-clear { width: 500px; border-color: var(--free-mode); }
+        .level-clear h2 { color: var(--free-mode) !important; margin-bottom: 10px; }
+        .level-clear p { line-height: 1.5; font-size: 1.5rem; }
+        .pixel-btn-enter-free { background: var(--free-mode); color: #fff; width: 100%; }
+        .pixel-btn-enter-free:hover { background: #8e44ad; transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #000; }
+        
+        .score-pop {
+            position: absolute; color: var(--accent); font-weight: bold; font-size: 1.5rem;
+            pointer-events: none; animation: scoreFloat 1s forwards; z-index: 10;
+        }
+        @keyframes scoreFloat {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+    
+/* === dual-mode-manual === */
+#dual-mode-hud{
+  position:absolute;top:10px;left:10px;right:10px;z-index:40;
+  display:flex;gap:8px;align-items:center;justify-content:flex-start;
+  pointer-events:none;flex-wrap:wrap;max-width:none;
+}
+#dual-mode-hud .dual-chip,#challengeStats{
+  pointer-events:auto;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;
+  background:#0f172a;border:1px solid rgba(255,126,179,.55);
+  box-shadow:0 4px 12px rgba(0,0,0,.35);color:#f8fafc;
+}
+#modeLabel{color:#ff7eb3;font-weight:700}
+#timerDisplay{font-family:ui-monospace,Consolas,monospace;font-weight:700;color:#ffffff;letter-spacing:.5px}
+#challengeStats{display:none}
+#challengeStats.is-visible{display:inline-flex}
+#attemptsDisplay{color:#fda4af;font-weight:800}
+#craft-gauge{display:none!important}
+#modeSelect{
+  border:1px solid #93c5fd;border-radius:999px;padding:4px 10px;font-size:12px;
+  font-weight:600;color:#1d4ed8;background:#eff6ff;cursor:pointer;
+}
+.dual-bench-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+body.cap-dark #dual-mode-hud .dual-chip,body.cap-dark #challengeStats{
+  background:rgba(8,18,32,.92);border-color:rgba(0,200,255,.35);color:#cfe9f5;
+}
+body.cap-dark #modeLabel{color:#00c8ff}
+body.cap-dark #modeSelect{
+  background:rgba(0,40,60,.85);border-color:rgba(0,200,255,.45);color:#7dd3fc;
+}
+body.cap-dark #attemptsDisplay{color:#ff8a6a}
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#ff7eb3;--craft-bg:#2b213a;--craft-panel:#1a1424;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+/* 顶栏白底残留 → craft 深色 */
+header{
+  background:var(--craft-panel)!important;color:var(--craft-text)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  box-shadow:none!important;
+}
+header .score-display{
+  background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;box-shadow:none!important;
+}
+header .btn-guide{
+  background:color-mix(in srgb,var(--craft-accent) 75%,#fff)!important;color:#0b1020!important;
+  border-color:transparent!important;box-shadow:none!important;
+}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:#0f172a!important;border-color:color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;box-shadow:0 4px 12px rgba(0,0,0,.35)!important;
+}
+#dual-mode-hud #goalMission{
+  pointer-events:none;display:inline-block;padding:7px 12px;border-radius:12px;margin-top:0!important;
+  background:rgba(15,23,42,.92)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;box-shadow:0 4px 12px rgba(0,0,0,.35);
+  max-width:min(420px,calc(100% - 24px));
+}
+#modeLabel{color:var(--craft-accent)!important;}
+#timerDisplay{color:#ffffff!important;}
+#hud-panel{
+  top:92px!important;z-index:6!important;
+  background:rgba(15,23,42,.92)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+  box-shadow:0 6px 18px rgba(0,0,0,.35)!important;
+}
+#hud-panel .hud-row span:first-child{color:var(--craft-muted)!important;}
+#hud-panel .hud-row span:last-child{color:#7af2cc!important;}
+#craft-gauge{display:none!important;}
+.ctrl-hd #modeSelect,#modeSelect{
+  background:rgba(0,0,0,.35)!important;border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+.label-row{color:var(--craft-text)!important;}
+.input-group.highlight{background:color-mix(in srgb,var(--craft-accent) 18%,transparent)!important;border-color:var(--craft-accent)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>海防炮台 · 野战试射</h2>
+    <p>临海炮位上，试着自由打几发，对照落点看阻力与风怎样改弹道；再接「要塞突击」——限次命中掩体后的目标。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；顶部与侧栏会写明当前任务。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用</div>
+    <p id="craftWinText">通过调参与观察，你弄清了阻力、风与弹道落点的关系。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+
+    <div class="scanlines"></div>
+
+    <header>
+        <h1>海防炮台</h1>
+        <div class="header-controls">
+            <div class="score-display">总分: <span id="total-score">0</span></div>
+            <button class="btn-guide" id="btn-guide">参数手册</button>
+            <div class="level-tag" id="level-display">试射场</div>
+        </div>
+    </header>
+
+    <div id="app">
+    <div id="stage">
+<div id="dual-mode-hud">
+  <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
+  <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">6</span></div>
+<div id="goalMission" style="margin-top:6px;font-size:12px;line-height:1.35;max-width:340px;opacity:.95">目标：自由试射，对比落点，弄清阻力与风的影响</div>
+</div>
+        <canvas id="game-canvas"></canvas>
+        
+        <div class="hud" id="hud-panel">
+            <div class="hud-row"><span>时间</span><span id="hud-time">0.0s</span></div>
+            <div class="hud-row"><span>距离</span><span id="hud-dist">0m</span></div>
+            <div class="hud-row"><span>高度</span><span id="hud-high">0m</span></div>
+            <div class="hud-row"><span>速度</span><span id="hud-spd">0m/s</span></div>
+            <div class="hud-row"><span>本次得分</span><span id="hud-potential" style="color:var(--accent)">100</span></div>
+            <div class="hud-row" style="margin-top:5px; border-top:1px dashed #000; padding-top:5px;">
+                <span>阻力损耗</span><span id="hud-drag" style="color:#e74c3c">0%</span>
+            </div>
+        </div>
+
+        <div class="wind-indicator" id="wind-indicator" title="当前风向与风力">
+            <div class="wind-arrow" id="wind-arrow">➤</div>
+            <div id="wind-text">0</div>
+        </div>
+    </div>
+
+    <aside id="controls-area">
+        <div class="ctrl-hd"><div class="dual-bench-row"><span>炮台操控</span><select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">要塞突击</option></select></div></div>
+        <div id="sideGoalBox" style="padding:10px 12px 0">
+          <div style="border:1px solid rgba(122,242,204,.35);background:rgba(0,0,0,.28);border-radius:10px;padding:8px 10px">
+            <div style="font-size:11px;font-weight:700;color:#7af2cc;letter-spacing:.04em">当前目标</div>
+            <p id="sideGoal" style="margin:4px 0 0;font-size:12px;line-height:1.45;color:rgba(255,255,255,.88)">试着弄清：换阻力或风速后，落点如何变化。竞赛另有要塞任务。</p>
+          </div>
+        </div>
+        <div class="ctrl-scroll">
+        <div class="input-group" id="group-angle">
+            <div class="label-row"><span>发射角度</span> <span class="val-display" id="val-angle">45°</span></div>
+            <input type="range" id="in-angle" min="0" max="90" value="45">
+        </div>
+
+        <div class="input-group" id="group-power">
+            <div class="label-row"><span>发射力度</span> <span class="val-display" id="val-power">90 m/s</span></div>
+            <input type="range" id="in-power" min="10" max="200" value="90">
+        </div>
+
+        <div class="input-group" id="group-grav">
+            <div class="label-row"><span>重力</span> <span class="val-display" id="val-grav">9.8</span></div>
+            <input type="range" id="in-grav" min="1" max="25" step="0.1" value="9.8">
+        </div>
+
+        <div class="input-group" id="group-drag">
+            <div class="label-row"><span>空气阻力</span> <span class="val-display" id="val-drag">0.005</span></div>
+            <input type="range" id="in-drag" min="0" max="0.1" step="0.001" value="0.005">
+        </div>
+
+        <div class="input-group" id="group-wind">
+            <div class="label-row"><span>风速</span> <span class="val-display" id="val-wind">0</span></div>
+            <input type="range" id="in-wind" min="-50" max="50" step="1" value="0">
+        </div>
+
+        <div class="input-group" id="group-mass">
+            <div class="label-row"><span>弹药质量</span> <span class="val-display" id="val-mass">1.0</span></div>
+            <input type="range" id="in-mass" min="0.1" max="5.0" step="0.1" value="1.0">
+        </div>
+
+        <!-- 无关混淆变量 -->
+        <div class="input-group" id="group-material">
+            <div class="label-row"><span>弹药材质</span> <span class="val-display" id="val-material">铁质</span></div>
+            <input type="range" id="in-material" min="1" max="5" step="1" value="3">
+        </div>
+        </div>
+        <div class="ctrl-ft">
+            <button class="pixel-btn" id="btn-fire">发射!</button>
+        </div>
+    </aside>
+    </div>
+
+    <!-- 结果弹窗 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="pixel-modal">
+            <h2 id="modal-title">挑战成功!</h2>
+            <p id="modal-msg">目标击中!</p>
+            <div class="btn-group">
+                <button class="pixel-btn" id="btn-retry" style="background:#e74c3c; color:#fff;">重试</button>
+                <button class="pixel-btn" id="btn-next">下一关</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自由模式解锁弹窗 -->
+    <div class="modal-overlay" id="level-clear-overlay">
+        <div class="pixel-modal level-clear">
+            <h2>恭喜过关!</h2>
+            <p>你已经完成了所有基础物理训练！<br>现在解锁【自由模式】！</p>
+            <p style="font-size:1rem; color:#666; margin-bottom:20px;">
+                之后的关卡将随机生成各种挑战地形。<br>
+                享受物理射击的乐趣吧！
+            </p>
+            <div class="btn-group">
+                <button class="pixel-btn pixel-btn-enter-free" id="btn-enter-free">进入自由模式</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 物理说明弹窗 -->
+    <div class="modal-overlay" id="guide-overlay">
+        <div class="pixel-modal guide-modal">
+            <div class="guide-header">
+                <h2>大炮参数说明手册</h2>
+            </div>
+            <div class="guide-content">
+                <div class="guide-section">
+                    <h3>1. 发射角度</h3>
+                    <p>决定炮弹飞出的方向。在真空中，45度角通常能获得最远射程。</p>
+                </div>
+                <div class="guide-section">
+                    <h3>2. 发射力度</h3>
+                    <p>炮弹离开炮口时的初速度。力度越大，射程越远。</p>
+                </div>
+                <div class="guide-section">
+                    <h3>3. 重力</h3>
+                    <p>星球引力大小。数值越大，炮弹下坠越快。</p>
+                </div>
+                <div class="guide-section">
+                    <h3>4. 空气阻力</h3>
+                    <p>模拟空气对炮弹的阻挡。</p>
+                    <p class="highlight">重点：如果阻力设为 0，炮弹进入“真空”状态，速度永远不会减慢！</p>
+                </div>
+                <div class="guide-section">
+                    <h3>5. 风速</h3>
+                    <p>正值顺风(推远)，负值逆风(推近)。</p>
+                    <p class="highlight">重点：风力是通过空气介质传递的。只有当【空气阻力 > 0】时，风才会对炮弹产生影响！</p>
+                </div>
+                <div class="guide-section" style="border: none;">
+                    <h3>空气阻力与风（调参提示）</h3>
+                    <p>阻力越大，弹道越「矮、短」；顺风推远、逆风推近。</p>
+                    <p class="highlight">重点：风靠空气传递——只有阻力大于 0 时，风速才会改变落点。过关后可对照阻力公式归纳。</p>
+                </div>
+                <div class="guide-section">
+                    <h3>6. 弹药质量</h3>
+                    <p>质量越大，惯性越强。重物受风力和阻力减速的影响较小。</p>
+                </div>
+                <div class="guide-section" style="border: none;">
+                    <h3>7. 弹药材质 (玄学参数)</h3>
+                    <p>改变炮弹表面的物理材料构造。</p>
+                    <p class="highlight">专家提示：不同的材质能带来微妙的发射手感与气动玄学变化，请自行体会。</p>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="pixel-btn pixel-btn-close" id="btn-close-guide">关闭手册</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+class PixelGame {
+    constructor() {
+        this.dom = {
+            canvas: document.getElementById('game-canvas'),
+            stage: document.getElementById('stage'),
+            inputs: {
+                angle: document.getElementById('in-angle'),
+                power: document.getElementById('in-power'),
+                grav: document.getElementById('in-grav'),
+                drag: document.getElementById('in-drag'),
+                wind: document.getElementById('in-wind'),
+                mass: document.getElementById('in-mass'),
+                material: document.getElementById('in-material') // 新增材质混淆滑块
+            },
+            groups: {
+                angle: document.getElementById('group-angle'),
+                power: document.getElementById('group-power'),
+                grav: document.getElementById('group-grav'),
+                drag: document.getElementById('group-drag'),
+                wind: document.getElementById('group-wind'),
+                mass: document.getElementById('group-mass'),
+                material: document.getElementById('group-material')
+            },
+            displays: {
+                angle: document.getElementById('val-angle'),
+                power: document.getElementById('val-power'),
+                grav: document.getElementById('val-grav'),
+                drag: document.getElementById('val-drag'),
+                wind: document.getElementById('val-wind'),
+                mass: document.getElementById('val-mass'),
+                material: document.getElementById('val-material')
+            },
+            hud: {
+                panel: document.getElementById('hud-panel'),
+                time: document.getElementById('hud-time'),
+                dist: document.getElementById('hud-dist'),
+                high: document.getElementById('hud-high'),
+                spd: document.getElementById('hud-spd'),
+                drag: document.getElementById('hud-drag'),
+                potential: document.getElementById('hud-potential')
+            },
+            wind: {
+                arrow: document.getElementById('wind-arrow'),
+                text: document.getElementById('wind-text')
+            },
+            btnFire: document.getElementById('btn-fire'),
+            btnGuide: document.getElementById('btn-guide'),
+            modal: {
+                overlay: document.getElementById('modal-overlay'),
+                title: document.getElementById('modal-title'),
+                msg: document.getElementById('modal-msg'),
+                retry: document.getElementById('btn-retry'),
+                next: document.getElementById('btn-next')
+            },
+            levelClear: {
+                overlay: document.getElementById('level-clear-overlay'),
+                btnEnter: document.getElementById('btn-enter-free')
+            },
+            guide: {
+                overlay: document.getElementById('guide-overlay'),
+                close: document.getElementById('btn-close-guide')
+            },
+            level: document.getElementById('level-display'),
+            totalScore: document.getElementById('total-score')
+        };
+
+        this.ctx = this.dom.canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = false; 
+
+        this.state = 'READY';
+        this.level = 1;
+        this.playMode = 'explore'; // explore | challenge
+        
+        this.totalScore = 0;
+        this.attemptsInLevel = 0; 
+        
+        this.pixelsPerMeter = 4;
+        this.timeScale = 0.05;
+        
+        this.proj = null;
+        this.target = null;
+        this.obstacles = []; 
+        this.particles = [];
+        this.muzzleFlash = null;
+        this.recoil = 0;
+        
+        this.landingPoints = [];
+        this.rangePosts = [];
+        this.exploreShots = 0;
+        this.exploreDragSeen = new Set();
+        this.exploreWindSeen = new Set();
+        this.exploreWon = false;
+        
+        this.width = 0;
+        this.height = 0;
+        this.groundY = 0;
+
+        this.init();
+    }
+
+    init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(() => this.resize()).observe(this.dom.stage);
+        }
+
+        Object.keys(this.dom.inputs).forEach(k => {
+            this.dom.inputs[k].addEventListener('input', () => this.updateUI());
+        });
+
+        this.dom.btnFire.addEventListener('click', () => this.fire());
+        this.dom.btnGuide.addEventListener('click', () => this.openGuide());
+        this.dom.guide.close.addEventListener('click', () => this.closeGuide());
+        
+        this.dom.modal.retry.addEventListener('click', () => this.closeModal());
+        this.dom.modal.next.addEventListener('click', () => this.nextLevel());
+        
+        this.dom.levelClear.btnEnter.addEventListener('click', () => this.enterFreeMode());
+
+        document.addEventListener('dual-mode-change', (ev) => {
+            this.applyPlayMode(ev.detail && ev.detail.mode);
+        });
+
+        setTimeout(() => {
+            this.resize();
+            const dm = window.__dualModeGet ? window.__dualModeGet() : null;
+            this.applyPlayMode(dm ? dm.mode : 'explore');
+            this.updateScoreDisplay();
+            this.updateUI();
+            this.loop();
+        }, 100);
+    }
+
+    applyPlayMode(mode) {
+        this.playMode = mode === 'challenge' ? 'challenge' : 'explore';
+        this.state = 'READY';
+        this.proj = null;
+        this.particles = [];
+        this.landingPoints = [];
+        this.attemptsInLevel = 0;
+        if (this.playMode === 'explore') {
+            this.level = 0;
+            this.exploreShots = 0;
+            this.exploreDragSeen = new Set();
+            this.exploreWindSeen = new Set();
+            this.exploreWon = false;
+            this.dom.modal.overlay.classList.remove('active');
+        } else {
+            this.level = 1;
+            this.exploreWon = false;
+        }
+        this.generateLevel();
+        this.updateLevelTag();
+        this.refreshGoalUI();
+        if (this.dom.hud && this.dom.hud.panel) this.dom.hud.panel.style.display = 'none';
+        this.draw();
+    }
+
+    refreshGoalUI() {
+        const mission = document.getElementById('goalMission');
+        const side = document.getElementById('sideGoal');
+        if (this.playMode === 'challenge') {
+            if (this.target) {
+                const distM = ((this.target.x - 60) / this.pixelsPerMeter).toFixed(0);
+                const heightM = Math.max(0, ((this.groundY - this.target.y) / this.pixelsPerMeter)).toFixed(0);
+                const bunker = this.obstacles && this.obstacles.length ? '（需越过掩体）' : '（开阔）';
+                if (mission) mission.textContent = `当前要塞：约 ${distM} m · 高度 ${heightM} m ${bunker} · 本关固定，打偏不换`;
+                if (side) side.textContent = `竞赛·要塞突击：限次命中约 ${distM} m、高约 ${heightM} m 的标志物${bunker}（本关固定，打偏不换）。`;
+            } else {
+                if (mission) mission.textContent = '目标：限次命中掩体后的要塞标志物（本关固定）';
+                if (side) side.textContent = '竞赛·要塞突击：限次命中掩体后目标（本关固定）；打偏不换目标。';
+            }
+        } else {
+            if (mission) mission.textContent = '目标：自由试射≥3发，并换过阻力或风速，对比落点归纳弹道规律';
+            if (side) side.textContent = '探究·临海试射：试着弄清阻力与风如何改落点；先对比几组即可，不必打掩体。';
+        }
+    }
+
+    openGuide() { this.dom.guide.overlay.classList.add('active'); }
+    closeGuide() { this.dom.guide.overlay.classList.remove('active'); }
+
+    resize() {
+        const rect = this.dom.stage.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+            this.width = rect.width;
+            this.height = rect.height;
+            const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+            this.dom.canvas.style.width = this.width + 'px';
+            this.dom.canvas.style.height = this.height + 'px';
+            this.dom.canvas.width = Math.round(this.width * dpr);
+            this.dom.canvas.height = Math.round(this.height * dpr);
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            this.groundY = this.height * 0.85;
+            
+            // FixedChallenge：竞赛期已有目标时 resize 只重绘，不重 roll
+            if (this.state === 'READY') {
+                if (this.playMode !== 'challenge' || !this.target) this.generateLevel();
+                this.draw();
+            }
+        }
+    }
+
+    updateUI() {
+        const getVal = (id) => this.dom.inputs[id].value;
+        this.dom.displays.angle.innerText = getVal('angle') + '°';
+        this.dom.displays.power.innerText = getVal('power') + ' m/s';
+        this.dom.displays.grav.innerText = getVal('grav') + ' m/s²';
+        this.dom.displays.drag.innerText = parseFloat(getVal('drag')).toFixed(3);
+        this.dom.displays.wind.innerText = getVal('wind') + ' m/s';
+        this.dom.displays.mass.innerText = getVal('mass') + ' kg';
+
+        // 材质混淆UI逻辑
+        const materials = ["木质", "石质", "铁质", "钢质", "钛金"];
+        const matIndex = parseInt(getVal('material')) - 1;
+        this.dom.displays.material.innerText = materials[matIndex];
+
+        const windSpeed = parseFloat(getVal('wind'));
+        this.dom.wind.text.innerText = windSpeed;
+        if (windSpeed > 0) {
+            this.dom.wind.arrow.style.transform = 'rotate(0deg)'; 
+            this.dom.wind.arrow.style.color = '#7af2cc'; 
+        } else if (windSpeed < 0) {
+            this.dom.wind.arrow.style.transform = 'rotate(180deg)'; 
+            this.dom.wind.arrow.style.color = '#ff7eb3'; 
+        } else {
+            this.dom.wind.arrow.style.color = '#ccc'; 
+        }
+        if(this.state === 'READY') this.draw();
+    }
+
+    highlightInputs(inputKeys) {
+        Object.values(this.dom.groups).forEach(el => el.classList.remove('highlight'));
+        inputKeys.forEach(key => {
+            if(this.dom.groups[key]) this.dom.groups[key].classList.add('highlight');
+        });
+    }
+
+    updateLevelTag() {
+        if (this.playMode === 'explore') {
+            this.dom.level.innerText = '试射场';
+            this.dom.level.classList.add('free-mode');
+            return;
+        }
+        if (this.level > 4) {
+            this.dom.level.innerText = '随机要塞';
+            this.dom.level.classList.add('free-mode');
+        } else {
+            this.dom.level.innerText = `突击 ${this.level}`;
+            this.dom.level.classList.remove('free-mode');
+        }
+    }
+
+    calculatePotentialScore() {
+        let score = 100 - (this.attemptsInLevel - 1) * 10;
+        return Math.max(60, score);
+    }
+
+    updateScoreDisplay() {
+        this.dom.totalScore.innerText = this.totalScore;
+    }
+
+    generateLevel() {
+        if (this.width === 0) return;
+        this.obstacles = [];
+        this.rangePosts = [];
+        this.target = null;
+
+        if (this.playMode === 'explore') {
+            this.highlightInputs(['drag', 'wind']);
+            const marks = [40, 80, 120, 160];
+            marks.forEach((m) => {
+                const x = 60 + m * this.pixelsPerMeter;
+                if (x < this.width - 30) this.rangePosts.push({ x, meters: m });
+            });
+            this.refreshGoalUI();
+            return;
+        }
+
+        const type = ((Math.max(1, this.level) - 1) % 4) + 1;
+        const obstacleColor = '#5d4037';
+        if (type === 4) this.highlightInputs(['drag', 'wind']);
+        else this.highlightInputs([]);
+
+        if (type === 1) {
+            const minX = this.width * 0.35; const maxX = this.width * 0.88;
+            const x = Math.random() * (maxX - minX) + minX;
+            const isAir = Math.random() > 0.45;
+            const y = isAir ? this.groundY - (80 + Math.random() * (this.height * 0.28)) : this.groundY;
+            this.target = { x, y, w: 26, h: 26, color: '#e74c3c' };
+        } else if (type === 2) {
+            const wallW = 32, wallH = this.height * 0.55, wallX = this.width * 0.38;
+            this.obstacles.push({ x: wallX, y: this.groundY - wallH, w: wallW, h: wallH, color: obstacleColor });
+            const targetX = wallX + wallW + 30 + Math.random() * 90;
+            const isAir = Math.random() > 0.35;
+            const targetY = isAir ? this.groundY - (50 + Math.random() * 110) : this.groundY;
+            this.target = { x: targetX, y: targetY, w: 26, h: 26, color: '#e74c3c' };
+        } else if (type === 3) {
+            const platW = 180, platH = 18, platY = this.height * 0.32, platX = this.width * 0.32;
+            this.obstacles.push({ x: platX, y: platY, w: platW, h: platH, color: '#546e7a' });
+            const targetX = Math.min(this.width - 40, platX + platW + 80 + Math.random() * 100);
+            this.target = { x: targetX, y: this.groundY, w: 26, h: 26, color: '#e74c3c' };
+        } else {
+            const wallW = 30, wallH = this.height * 0.65, wallX = this.width * 0.42;
+            this.obstacles.push({ x: wallX, y: this.groundY - wallH, w: wallW, h: wallH, color: obstacleColor });
+            const targetX = wallX + wallW + 36;
+            const targetY = this.groundY - (90 + Math.random() * 100);
+            this.target = { x: targetX, y: targetY, w: 26, h: 26, color: '#e74c3c' };
+            const forcedWind = -15 - Math.floor(Math.random() * 20);
+            this.dom.inputs.wind.value = String(forcedWind);
+            this.updateUI();
+        }
+        this.refreshGoalUI();
+    }
+
+    fire() {
+        if(this.state !== 'READY') return;
+        
+        this.attemptsInLevel++;
+
+        const angle = parseFloat(this.dom.inputs.angle.value) * Math.PI / 180;
+        const v0 = parseFloat(this.dom.inputs.power.value);
+        const g = parseFloat(this.dom.inputs.grav.value);
+        const k = parseFloat(this.dom.inputs.drag.value);
+        const wind = parseFloat(this.dom.inputs.wind.value);
+        const m = parseFloat(this.dom.inputs.mass.value);
+
+        // 提取混淆材质值，并赋予不同的外观颜色
+        const matIndex = parseInt(this.dom.inputs.material.value) - 1;
+        const matColors = ['#d35400', '#7f8c8d', '#bdc3c7', '#2c3e50', '#9b59b6'];
+
+        this.proj = {
+            x: 60, y: this.groundY - 25,
+            vx: v0 * Math.cos(angle), vy: -v0 * Math.sin(angle),
+            m, k, g, wind, t: 0,
+            ke0: 0.5 * m * v0 * v0,
+            active: true, size: 8,
+            color: matColors[matIndex] // 仅改变视觉表现
+        };
+
+        this.state = 'SIMULATING';
+        this.recoil = 15;
+        this.muzzleFlash = { life: 1.0 };
+        
+        this.dom.hud.panel.style.display = 'block';
+        this.dom.hud.potential.innerText = this.calculatePotentialScore();
+        
+        this.dom.btnFire.disabled = true;
+        this.dom.btnFire.innerText = "发射中...";
+    }
+
+    updatePhysics() {
+        if(!this.proj || !this.proj.active) return;
+        const p = this.proj;
+        const dt = this.timeScale;
+
+        // 【注意】物理公式依然严格基于初速、质量、引力、阻力和风速计算，完全忽略了 p.color 或材质变量
+        const vrX = p.vx - p.wind;
+        const vrY = p.vy;
+        const vr = Math.sqrt(vrX*vrX + vrY*vrY);
+
+        const FdMag = p.k * vr * vr;
+        const FdX = -FdMag * (vrX / vr) || 0;
+        const FdY = -FdMag * (vrY / vr) || 0;
+
+        const FgY = p.m * p.g;
+        const FnetX = FdX;
+        const FnetY = FgY + FdY;
+
+        const ax = FnetX / p.m;
+        const ay = FnetY / p.m;
+
+        p.vx += ax * dt;
+        p.vy += ay * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.t += dt;
+
+        // 飞行烟迹（过程可见，非调参时落点预览）
+        if (Math.random() < 0.65) {
+            this.particles.push({
+                x: p.x, y: p.y,
+                vx: -p.vx * 0.02 + (Math.random() - 0.5) * 0.8,
+                vy: -0.4 + Math.random() * 0.6,
+                life: 0.55 + Math.random() * 0.25,
+                color: 'rgba(226,232,240,0.85)',
+                size: 2 + Math.random() * 3
+            });
+        }
+
+        const ke = 0.5 * p.m * (p.vx*p.vx + p.vy*p.vy);
+        const loss = ((p.ke0 - ke) / p.ke0 * 100);
+
+        this.dom.hud.time.innerText = p.t.toFixed(1) + 's';
+        this.dom.hud.dist.innerText = ((p.x - 60) / this.pixelsPerMeter).toFixed(0) + 'm';
+        this.dom.hud.high.innerText = ((this.groundY - p.y) / this.pixelsPerMeter).toFixed(0) + 'm';
+        this.dom.hud.spd.innerText = Math.sqrt(p.vx*p.vx + p.vy*p.vy).toFixed(0) + 'm/s';
+        this.dom.hud.drag.innerText = Math.max(0, loss).toFixed(0) + '%';
+
+        // 将爆炸的颜色替换为当前的材质颜色，增强混淆性
+        for (let obs of this.obstacles) {
+            if (p.x > obs.x && p.x < obs.x + obs.w && p.y > obs.y && p.y < obs.y + obs.h) {
+                this.endSim(false, "撞到障碍物!");
+                this.createExplosion(p.x, p.y, p.color, 15);
+                return;
+            }
+        }
+
+        if(p.y + p.size >= this.groundY) {
+            if (this.playMode === 'explore') {
+                this.endSim(false, "落点已记录");
+            } else {
+                let missMsg = "未命中要塞!";
+                if (this.target) {
+                    const dx = p.x - this.target.x;
+                    const nearFar = Math.abs(dx) < 18 ? '落点接近水平位置但未中'
+                      : (dx < 0 ? '落点偏近（未及要塞）' : '落点偏远（越过要塞）');
+                    missMsg = nearFar;
+                }
+                this.endSim(false, missMsg);
+                this.createExplosion(p.x, p.y, p.color, 10);
+            }
+            return;
+        }
+        if(p.x > this.width || p.x < 0) {
+            let reason = p.x > this.width ? "飞出右边界" : "飞出左边界";
+            this.endSim(false, reason);
+            return;
+        }
+
+        if (!this.target) return;
+        const dx = p.x - this.target.x;
+        const dy = p.y - this.target.y;
+        if(Math.abs(dx) < (p.size + this.target.w/2) && Math.abs(dy) < (p.size + this.target.h/2)) {
+            this.createExplosion(this.target.x, this.target.y, p.color, 30);
+            this.shakeScreen();
+            this.endSim(true, "要塞目标击中!");
+        }
+    }
+
+    createExplosion(x, y, color, count) {
+        for(let i=0; i<count; i++) {
+            this.particles.push({
+                x: x, y: y,
+                vx: (Math.random()-0.5) * 10, vy: (Math.random()-0.5) * 10,
+                life: 1.0, color: color, size: Math.random() * 6 + 4
+            });
+        }
+    }
+
+    shakeScreen() {
+        this.dom.stage.classList.add('shake');
+        setTimeout(() => this.dom.stage.classList.remove('shake'), 500);
+    }
+
+    maybeExploreWin() {
+        if (this.exploreWon) return;
+        const dragOk = this.exploreDragSeen.size >= 2;
+        const windOk = this.exploreWindSeen.size >= 2;
+        if (this.exploreShots < 3 || !(dragOk || windOk)) return;
+        this.exploreWon = true;
+        if (window.__emit) {
+            var c = window.__snapControls ? window.__snapControls() : {};
+            window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'cannon_explore_compare' });
+            window.__emit('win', { winOk: true });
+        }
+        this.dom.modal.title.innerText = '试射归纳完成';
+        this.dom.modal.title.style.color = '#06d6a0';
+        this.dom.modal.msg.innerText = '你已对比不同阻力/风速下的落点。可切换「要塞突击」——那里要限次命中掩体后的目标。';
+        this.dom.modal.retry.style.display = 'none';
+        this.dom.modal.next.style.display = 'inline-block';
+        this.dom.modal.next.innerText = '继续试射';
+        this.dom.modal.next.onclick = () => {
+            this.closeModal();
+            this.dom.modal.next.innerText = '下一关';
+            this.dom.modal.next.onclick = () => this.nextLevel();
+        };
+        setTimeout(() => this.dom.modal.overlay.classList.add('active'), 400);
+    }
+
+    endSim(win, msg) {
+        this.state = 'ENDED';
+        this.proj.active = false;
+        this.dom.btnFire.disabled = false;
+        this.dom.btnFire.innerText = "发射!";
+
+        let landX = this.proj ? this.proj.x : 0;
+        let landY = this.proj ? this.proj.y : 0;
+        if (landX > this.width) landX = this.width - 10;
+        if (landX < 0) landX = 10;
+        if (landY < 0) landY = 10;
+        if (landY > this.groundY) landY = this.groundY;
+        const dist = Math.floor((landX - 60) / this.pixelsPerMeter);
+        this.landingPoints.push({ x: landX, y: landY, win: win, dist: dist, explore: this.playMode === 'explore' });
+
+        if (this.playMode === 'explore') {
+            const drag = parseFloat(this.dom.inputs.drag.value).toFixed(3);
+            const wind = String(parseFloat(this.dom.inputs.wind.value));
+            this.exploreDragSeen.add(drag);
+            this.exploreWindSeen.add(wind);
+            this.exploreShots += 1;
+            const tip = document.createElement('div');
+            tip.className = 'score-pop';
+            tip.innerText = `落点 ${dist}m`;
+            tip.style.left = '50%';
+            tip.style.top = '28%';
+            tip.style.transform = 'translateX(-50%)';
+            tip.style.color = '#7af2cc';
+            this.dom.stage.appendChild(tip);
+            setTimeout(() => tip.remove(), 900);
+            this.maybeExploreWin();
+            this.state = 'READY';
+            this.proj = null;
+            this.dom.hud.panel.style.display = 'none';
+            return;
+        }
+
+        let earnedScore = 0;
+        if (win) {
+            if (window.__emit) {
+              var c = window.__snapControls ? window.__snapControls() : {};
+              window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'cannon_fort_hit' });
+              window.__emit('win', { winOk: true });
+            }
+            earnedScore = this.calculatePotentialScore();
+            this.totalScore += earnedScore;
+            this.updateScoreDisplay();
+            const scorePop = document.createElement('div');
+            scorePop.className = 'score-pop';
+            scorePop.innerText = `+${earnedScore}`;
+            scorePop.style.left = '50%';
+            scorePop.style.top = '30%';
+            scorePop.style.transform = 'translateX(-50%)';
+            this.dom.stage.appendChild(scorePop);
+            setTimeout(() => scorePop.remove(), 1000);
+        }
+
+        this.dom.modal.title.innerText = win ? "突击成功!" : "未攻破";
+        this.dom.modal.title.style.color = win ? "#06d6a0" : "#e74c3c";
+        let msgContent = `${msg}`;
+        if (win) {
+            msgContent += `\n获得积分: +${earnedScore}`;
+            msgContent += `\n当前总分: ${this.totalScore}`;
+        } else {
+            // FixedChallenge：失败不重 roll，保持本关要塞位置
+            this.landingPoints = [];
+            const distM = this.target ? ((this.target.x - 60) / this.pixelsPerMeter).toFixed(0) : '?';
+            const heightM = this.target ? Math.max(0, ((this.groundY - this.target.y) / this.pixelsPerMeter)).toFixed(0) : '?';
+            msgContent += `\n要塞仍在 → 约 ${distM} m / 高 ${heightM} m（本关固定）`;
+            const dm = window.__dualModeGet ? window.__dualModeGet() : null;
+            if (dm && typeof dm.attempts === 'number') msgContent += `\n剩余机会：${dm.attempts}`;
+        }
+        this.dom.modal.msg.innerText = msgContent;
+        this.dom.modal.retry.style.display = win ? "none" : "inline-block";
+        this.dom.modal.retry.innerText = '再瞄一发';
+        this.dom.modal.next.style.display = win ? "inline-block" : "none";
+        this.dom.modal.next.innerText = '下一关';
+        this.dom.modal.next.onclick = () => this.nextLevel();
+        setTimeout(() => { this.dom.modal.overlay.classList.add('active'); }, 500);
+    }
+
+    closeModal() {
+        this.dom.modal.overlay.classList.remove('active');
+        this.reset();
+    }
+
+    nextLevel() {
+        if (this.level === 4) {
+            this.dom.modal.overlay.classList.remove('active');
+            this.dom.levelClear.overlay.classList.add('active');
+        } else {
+            this.dom.modal.overlay.classList.remove('active');
+            this.level++;
+            this.updateLevelTag();
+            this.landingPoints = []; 
+            this.attemptsInLevel = 0; 
+            this.generateLevel();
+            this.reset();
+        }
+    }
+
+    enterFreeMode() {
+        this.dom.levelClear.overlay.classList.remove('active');
+        this.level++;
+        this.updateLevelTag();
+        this.landingPoints = []; 
+        this.attemptsInLevel = 0; 
+        this.generateLevel();
+        this.reset();
+    }
+
+    reset() {
+        this.state = 'READY';
+        this.proj = null;
+        this.particles = [];
+        this.dom.hud.panel.style.display = 'none';
+        this.draw();
+    }
+
+    drawRect(x, y, w, h, color) {
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(Math.floor(x), Math.floor(y), w, h);
+    }
+
+    drawEnvironment() {
+        const sky = this.ctx.createLinearGradient(0, 0, 0, this.groundY);
+        sky.addColorStop(0, '#4a90b8');
+        sky.addColorStop(0.45, '#6eb6e0');
+        sky.addColorStop(0.75, '#a8d4ef');
+        sky.addColorStop(1, '#cfe8f5');
+        this.ctx.fillStyle = sky;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        // 太阳光晕
+        const sunX = this.width * 0.82, sunY = 48;
+        const sg = this.ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 55);
+        sg.addColorStop(0, 'rgba(254,243,199,0.9)');
+        sg.addColorStop(0.4, 'rgba(253,224,71,0.35)');
+        sg.addColorStop(1, 'rgba(253,224,71,0)');
+        this.ctx.fillStyle = sg;
+        this.ctx.beginPath();
+        this.ctx.arc(sunX, sunY, 55, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = '#6b8799';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, this.groundY - 40);
+        this.ctx.lineTo(this.width * 0.18, this.groundY - 95);
+        this.ctx.lineTo(this.width * 0.32, this.groundY - 50);
+        this.ctx.lineTo(this.width * 0.5, this.groundY - 110);
+        this.ctx.lineTo(this.width * 0.7, this.groundY - 55);
+        this.ctx.lineTo(this.width, this.groundY - 85);
+        this.ctx.lineTo(this.width, this.groundY);
+        this.ctx.lineTo(0, this.groundY);
+        this.ctx.fill();
+        // 近景山脊第二层
+        this.ctx.fillStyle = 'rgba(71,85,105,0.35)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, this.groundY);
+        this.ctx.lineTo(0, this.groundY - 28);
+        this.ctx.quadraticCurveTo(this.width * 0.35, this.groundY - 70, this.width * 0.55, this.groundY - 32);
+        this.ctx.quadraticCurveTo(this.width * 0.75, this.groundY - 58, this.width * 0.7, this.groundY);
+        this.ctx.fill();
+
+        const grass = this.ctx.createLinearGradient(0, this.groundY, 0, this.height);
+        grass.addColorStop(0, '#5aa34f');
+        grass.addColorStop(1, '#2f6b32');
+        this.ctx.fillStyle = grass;
+        this.ctx.fillRect(0, this.groundY, this.width, this.height - this.groundY);
+        this.ctx.fillStyle = '#2f6b32';
+        this.ctx.fillRect(0, this.groundY, this.width, 3);
+
+        const seaX = this.width * 0.72;
+        const sea = this.ctx.createLinearGradient(seaX, this.groundY, this.width, this.height);
+        sea.addColorStop(0, '#3d8ea8');
+        sea.addColorStop(1, '#1f5f78');
+        this.ctx.fillStyle = sea;
+        this.ctx.fillRect(seaX, this.groundY + 8, this.width - seaX, this.height - this.groundY - 8);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        const tw = Date.now() * 0.003;
+        for (let i = 0; i < 4; i++) {
+            const wx = seaX + 20 + i * 36 + Math.sin(tw + i) * 6;
+            this.ctx.fillRect(wx, this.groundY + 18 + (i % 2) * 8, 18, 3);
+        }
+
+        // 沙袋掩体（材质条纹）
+        for (let i = 0; i < 5; i++) {
+            const bx = 18 + i * 14;
+            const bag = this.ctx.createLinearGradient(bx, this.groundY - 12, bx + 12, this.groundY);
+            bag.addColorStop(0, '#d4b896');
+            bag.addColorStop(1, '#a67c52');
+            this.ctx.fillStyle = bag;
+            this.ctx.fillRect(bx, this.groundY - 10, 12, 10);
+            this.ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            this.ctx.fillRect(bx + 2, this.groundY - 6, 8, 1);
+        }
+
+        // 炮台旗帜（有意微摆）
+        const flagPoleX = 108;
+        const fw = Math.sin(Date.now() * 0.005) * 4;
+        this.ctx.strokeStyle = '#334155';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(flagPoleX, this.groundY);
+        this.ctx.lineTo(flagPoleX, this.groundY - 52);
+        this.ctx.stroke();
+        this.ctx.fillStyle = '#ef4444';
+        this.ctx.beginPath();
+        this.ctx.moveTo(flagPoleX, this.groundY - 52);
+        this.ctx.lineTo(flagPoleX + 22 + fw, this.groundY - 44);
+        this.ctx.lineTo(flagPoleX, this.groundY - 36);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        const time = Date.now() * 0.0005;
+        const cx = (time * 50) % (this.width + 200) - 100;
+        this.drawRect(cx, 50, 60, 20, '#fff');
+        this.drawRect(cx + 20, 40, 40, 10, '#fff');
+
+        if (this.playMode === 'explore' && this.rangePosts) {
+            this.ctx.font = "12px 'VT323', monospace";
+            this.ctx.textAlign = 'center';
+            this.rangePosts.forEach((p) => {
+                this.ctx.fillStyle = 'rgba(30,40,50,0.55)';
+                this.ctx.fillRect(p.x - 1, this.groundY - 28, 2, 28);
+                this.ctx.fillStyle = '#1e293b';
+                this.ctx.fillRect(p.x - 10, this.groundY - 32, 20, 10);
+                this.ctx.fillStyle = '#f8fafc';
+                this.ctx.fillText(p.meters + 'm', p.x, this.groundY - 24);
+            });
+        }
+    }
+
+    drawObstacles() {
+        for (let obs of this.obstacles) {
+            this.ctx.fillStyle = obs.color;
+            this.ctx.fillRect(Math.floor(obs.x), Math.floor(obs.y), Math.floor(obs.w), Math.floor(obs.h));
+            this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            this.ctx.fillRect(Math.floor(obs.x), Math.floor(obs.y + obs.h - 10), Math.floor(obs.w), 10);
+            this.ctx.fillStyle = 'rgba(255,255,255,0.1)';
+            for(let i = 10; i < obs.w; i+=20) {
+                this.ctx.fillRect(Math.floor(obs.x + i), Math.floor(obs.y), 4, obs.h);
+            }
+        }
+    }
+
+    drawTarget() {
+        if (!this.target) return;
+        const t = this.target;
+        
+        const floatY = Math.sin(Date.now() / 300) * 5;
+        const drawY = t.y + floatY;
+
+        if (t.y < this.groundY) {
+            this.ctx.strokeStyle = '#555';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(t.x, t.y + t.h/2);
+            this.ctx.lineTo(t.x, this.groundY);
+            this.ctx.stroke();
+        }
+
+        this.ctx.fillStyle = t.color;
+        this.ctx.fillRect(Math.floor(t.x - t.w/2), Math.floor(drawY - t.h/2), t.w, t.h);
+        
+        this.ctx.fillStyle = '#fff';
+        this.ctx.fillRect(Math.floor(t.x - t.w/2) + 4, Math.floor(drawY - t.h/2) + 4, 4, 4);
+        this.ctx.fillRect(Math.floor(t.x) - 4, Math.floor(drawY) - 4, 8, 8);
+    }
+
+    drawLandingPoints() {
+        this.ctx.font = "12px 'VT323'";
+        this.ctx.textAlign = "center";
+
+        for (let p of this.landingPoints) {
+            if (p.win) {
+                this.ctx.strokeStyle = '#2ecc71';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(Math.floor(p.x), Math.floor(p.y), 8, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.fillStyle = '#2ecc71';
+                this.ctx.fillRect(Math.floor(p.x)-1, Math.floor(p.y)-1, 2, 2);
+            } else {
+                this.ctx.fillStyle = '#e74c3c';
+                this.ctx.fillRect(Math.floor(p.x - 4), Math.floor(p.y - 5), 2, 10);
+                this.ctx.fillRect(Math.floor(p.x + 2), Math.floor(p.y - 5), 2, 10);
+                this.ctx.fillRect(Math.floor(p.x - 1), Math.floor(p.y - 6), 2, 12);
+                this.ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                this.ctx.fillText(`${p.dist}m`, Math.floor(p.x), Math.floor(p.y + 20));
+            }
+        }
+    }
+
+    drawCannon() {
+        this.recoil *= 0.9;
+        if(this.recoil < 0.5) this.recoil = 0;
+
+        const angle = parseFloat(this.dom.inputs.angle.value) * Math.PI / 180;
+        const cx = 60 - this.recoil;
+        const cy = this.groundY - 18; 
+
+        this.drawRect(cx - 20, cy, 44, 18, '#2c3e50'); 
+        this.drawRect(cx - 22, cy + 4, 48, 14, '#1a1a1a'); 
+        this.drawRect(cx - 20, cy + 4, 2, 14, '#3e3e3e');
+        this.drawRect(cx - 12, cy + 4, 2, 14, '#3e3e3e');
+        this.drawRect(cx, cy + 4, 2, 14, '#3e3e3e');
+        this.drawRect(cx + 12, cy + 4, 2, 14, '#3e3e3e');
+
+        this.ctx.save();
+        this.ctx.translate(cx, cy);
+        this.ctx.rotate(-angle);
+
+        this.drawRect(-16, -16, 32, 32, '#2c3e50');
+        this.ctx.fillStyle = '#5d6d7e'; 
+        this.drawRect(-18, -20, 4, 6); 
+        this.drawRect(14, -20, 4, 6);  
+        this.drawRect(-18, 14, 4, 6);  
+        this.drawRect(14, 14, 4, 6);   
+        this.drawRect(-20, -12, 4, 6); 
+        this.drawRect(16, -12, 4, 6);
+        this.drawRect(-20, 6, 4, 6);
+        this.drawRect(16, 6, 4, 6);
+
+        this.ctx.fillStyle = '#7af2cc';
+        this.drawRect(-4, -4, 8, 8);
+        this.ctx.fillStyle = '#fff'; 
+        this.drawRect(-2, -2, 4, 4);
+
+        this.ctx.fillStyle = '#1a1a1a';
+        this.ctx.fillRect(0, -8, 50, 16);
+        this.ctx.fillStyle = '#34495e'; 
+        this.ctx.fillRect(0, -6, 50, 12);
+        this.ctx.fillStyle = '#7af2cc'; 
+        this.ctx.fillRect(4, -2, 42, 2);
+        this.ctx.fillStyle = '#2c3e50';
+        this.ctx.fillRect(45, -9, 6, 18);
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(48, -8, 4, 16);
+
+        this.ctx.restore();
+    }
+
+    drawMuzzleFlash() {
+        if(!this.muzzleFlash) return;
+        
+        this.muzzleFlash.life -= 0.2;
+        if(this.muzzleFlash.life <= 0) {
+            this.muzzleFlash = null;
+            return;
+        }
+
+        const angle = parseFloat(this.dom.inputs.angle.value) * Math.PI / 180;
+        const cx = 60 - this.recoil;
+        const cy = this.groundY - 18;
+
+        const dist = 65;
+        const fx = cx + Math.cos(angle) * dist;
+        const fy = cy - Math.sin(angle) * dist;
+
+        this.ctx.globalAlpha = this.muzzleFlash.life;
+        this.ctx.fillStyle = '#f1c40f';
+        const size = (1.5 - this.muzzleFlash.life) * 15 + 8;
+        this.ctx.fillRect(Math.floor(fx - size/2), Math.floor(fy - size/2), size, size);
+        
+        this.ctx.fillStyle = '#fff';
+        const innerSize = size * 0.6;
+        this.ctx.fillRect(Math.floor(fx - innerSize/2), Math.floor(fy - innerSize/2), innerSize, innerSize);
+        this.ctx.globalAlpha = 1.0;
+    }
+
+    drawProj() {
+        if(this.proj) {
+            const p = this.proj;
+            // 使用混淆材质带来的颜色变化
+            this.ctx.fillStyle = p.color || '#ffaf40';
+            this.ctx.fillRect(Math.floor(p.x - p.size/2), Math.floor(p.y - p.size/2), p.size, p.size);
+            
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeRect(Math.floor(p.x - p.size/2), Math.floor(p.y - p.size/2), p.size, p.size);
+        }
+    }
+
+    drawParticles() {
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.3; 
+            p.life -= 0.03;
+
+            if (p.life <= 0) {
+                this.particles.splice(i, 1);
+                continue;
+            }
+
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = p.color;
+            this.ctx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
+            this.ctx.globalAlpha = 1.0;
+        }
+    }
+
+    draw() {
+        if(this.width === 0 || this.height === 0) return;
+
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        this.drawEnvironment();
+        this.drawObstacles();
+        this.drawTarget();
+        this.drawLandingPoints();
+        this.drawCannon();
+        this.drawMuzzleFlash();
+
+        if (this.state === 'SIMULATING') {
+            this.drawProj();
+        }
+        
+        this.drawParticles();
+    }
+
+    loop() {
+        requestAnimationFrame(() => this.loop());
+        
+        if (this.width === 0 || this.height === 0) {
+            this.resize();
+        }
+
+        if (this.state === 'SIMULATING') {
+            this.updatePhysics();
+        }
+        
+        this.draw();
+    }
+}
+
+window.onload = () => {
+    new PixelGame();
+};
+</script>
+<!-- trace-adapter-hook -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+<script>
+/* === dual-mode-manual runtime === */
+(function(){
+  if (window.__dualModeManual) return;
+  window.__dualModeManual = true;
+  var MAX=6;
+  var EXP=600;
+  var state={mode:'explore',attempts:MAX,timeLeft:EXP,timerId:null};
+  function $(id){return document.getElementById(id);}
+  function setPhase(p){
+    try{
+      if(typeof window.__platformTraceSetPhase==='function') window.__platformTraceSetPhase(p);
+      else if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase) window.PlatformTraceAdapter.setPhase(p);
+    }catch(e){}
+  }
+  function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
+  function stop(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
+  function render(){
+    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),chip=$('dual-timer-chip');
+    if(label) label.textContent=state.mode==='explore'?'探究模式':'竞赛模式';
+    if(stats){ if(state.mode==='challenge') stats.classList.add('is-visible'); else stats.classList.remove('is-visible'); }
+    if(att) att.textContent=String(state.attempts);
+    if(chip) chip.style.display=state.mode==='explore'?'inline-flex':'none';
+    if(td) td.textContent=fmt(Math.max(0,state.timeLeft));
+  }
+  function startTimer(){
+    stop(); state.timeLeft=EXP; render();
+    state.timerId=setInterval(function(){
+      if(state.mode!=='explore') return;
+      state.timeLeft--; render();
+      if(state.timeLeft<=0){
+        stop();
+        var sel=$('modeSelect');
+        if(sel){ sel.value='challenge'; sel.dispatchEvent(new Event('change',{bubbles:true})); }
+      }
+    },1000);
+  }
+  function apply(mode){
+    state.mode=mode==='challenge'?'challenge':'explore';
+    if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
+    else startTimer();
+    render(); setPhase(state.mode);
+    document.dispatchEvent(new CustomEvent('dual-mode-change',{detail:{mode:state.mode,attempts:state.attempts}}));
+  }
+  function consume(){
+    if(state.mode!=='challenge') return true;
+    if(state.attempts<=0) return false;
+    state.attempts--; render();
+    return state.attempts>=0;
+  }
+  window.__dualModeConsumeAttempt=consume;
+  window.__dualModeGet=function(){return {mode:state.mode,attempts:state.attempts};};
+  function boot(){
+    var sel=$('modeSelect');
+    if(!sel) return;
+    sel.addEventListener('change',function(){ apply(sel.value); });
+    apply(sel.value||'explore');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
+  else boot();
+})();
+</script>
+
+<script>/* dualModeFireGate */
+(function(){
+  function bind(){
+    var btn=document.getElementById('btn-fire');
+    if(!btn||btn.__dualGate) return;
+    btn.__dualGate=true;
+    btn.addEventListener('click',function(e){
+      if(window.__dualModeGet && window.__dualModeGet().mode==='challenge'){
+        if(window.__dualModeConsumeAttempt && !window.__dualModeConsumeAttempt()){
+          e.stopImmediatePropagation(); e.preventDefault();
+          btn.disabled=true;
+          setTimeout(function(){ if(window.__dualModeGet().attempts>0) btn.disabled=false; },0);
+        }
+      }
+    }, true);
+    document.addEventListener('dual-mode-change',function(ev){
+      if(ev.detail.mode==='explore') btn.disabled=false;
+      else if(ev.detail.attempts<=0) btn.disabled=true;
+      else btn.disabled=false;
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind); else bind();
+})();
+</script>
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // 大炮已有 #hud-panel 读数板，不再注入 craft-gauge，避免遮挡
+  function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,598 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节摩擦系数和角度 | O1 | operation | 调参操作 |\n| 物体下滑? | C1 | constraint | 结果判定 |\n| 过关 | R1 | result | 过关 |\n| 提示重试 | - | - | skip retry 回到 O1 |\n| 再试 | - | - | skip retry 回到 O1 |\n| 摩擦系数在范围? | C2 | constraint | 参数范围约束 |\n| 斜面角度在范围? | C3 | constraint | 参数范围约束 |\n| 提示摩擦系数范围 | - | - | skip retry 回到 O1 |\n| 提示斜面角度范围 | - | - | skip retry 回到 O1 |\n| 临界条件公式 | S1 | core | teach 节点 |\n| 下滑力与摩擦力 | S2 | core | teach 节点 |",
+  "kg": {
+    "title": "摩擦",
+    "sub": "斜面摩擦与下滑条件",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究斜面摩擦实验"
+      },
+      {
+        "id": "O1",
+        "label": "调节摩擦系数和角度",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "调节摩擦系数μ和斜面角度θ，观察物体是否下滑"
+      },
+      {
+        "id": "C1",
+        "label": "物体下滑?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断物体是否下滑，依据μ < tanθ则下滑"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "成功判断物体下滑条件，理解摩擦系数与角度的关系"
+      },
+      {
+        "id": "C2",
+        "label": "摩擦系数在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "摩擦系数μ在0到1之间"
+      },
+      {
+        "id": "C3",
+        "label": "斜面角度在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "斜面角度θ在0到90度之间"
+      },
+      {
+        "id": "S1",
+        "label": "临界条件公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "μ = tanθ 是物体下滑的临界条件"
+      },
+      {
+        "id": "S2",
+        "label": "下滑力与摩擦力",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "下滑力 = mg sinθ，最大静摩擦力 = μ mg cosθ"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中的无关装饰控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "C3",
+        "t": "C1",
+        "tp": "method"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "摩擦",
+    "sub": "斜面摩擦与下滑条件",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究斜面摩擦实验",
+      "children": [
+        {
+          "n": "调节摩擦系数和角度",
+          "t": "step",
+          "d": "调节摩擦系数μ和斜面角度θ，观察物体是否下滑",
+          "children": []
+        },
+        {
+          "n": "摩擦系数在范围?",
+          "t": "decision",
+          "d": "检查摩擦系数μ是否在0到1之间",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示摩擦系数范围",
+              "t": "retry",
+              "d": "摩擦系数应在0到1之间，请重新调节"
+            },
+            {
+              "_e": "是",
+              "n": "斜面角度在范围?",
+              "t": "decision",
+              "d": "检查斜面角度θ是否在0到90度之间",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示斜面角度范围",
+                  "t": "retry",
+                  "d": "斜面角度应在0到90度之间，请重新调节"
+                },
+                {
+                  "_e": "是",
+                  "n": "物体下滑?",
+                  "t": "decision",
+                  "d": "判断物体是否下滑，依据μ < tanθ则下滑",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "提示重试",
+                      "t": "retry",
+                      "d": "物体未下滑，请调整参数使μ < tanθ"
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "物体下滑，成功理解斜面摩擦条件"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "摩擦",
+    "sub": "斜面摩擦与下滑条件"
+  },
+  "traceMap": {
+    "controls": {
+      "s-friction": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "摩擦",
+    "sub": "斜面摩擦与下滑条件",
+    "mermaid": "graph TD\nEnv -->|控制变量：每次只改一项| MainAdjust[调整单一参数]\nEnv -->|多参盲调| TrapAdjust[同时调多个参数]\nFire --> Observe{物体下滑?}:::stratCond\nFire --> Observe\nGoalCheck -->|否| Retry\nGoalCheck -->|是| Win\nInvalidMisconception --> ModeOff\nMainAdjust --> Fire[观察物体状态]\nModeOff --> CheckMisconception{是否误调无效参数?}:::stratCond\nObserve -->|未达标| GoalCheck\nObserve -->|否| MainAdjust\nObserve -->|否| TrapAdjust\nObserve -->|是| Win[过关]:::stratResult\nObserve -->|是| Win\nStart --> Env{选择调参策略?}:::stratCond\nTrapAdjust --> Fire\nStart([开始探究]):::stratStart\nGoalCheck{是否进洞?}:::stratCond\nTrapAdjust -->|参数超范围| Retry\nCheckMisconception -->|是| InvalidMisconception[条件下误操作]:::stratInvalid\nMainAdjust -->|参数超范围| Retry[重新调参]:::stratRetry\nRetry --> MainAdjust",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C2",
+          "C3",
+          "C1",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "MainAdjust",
+          "Fire",
+          "Observe",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "MainAdjust"
+          ],
+          [
+            "MainAdjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "MainAdjust"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C2",
+          "C3",
+          "C1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "TrapAdjust",
+          "Fire",
+          "Observe"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "TrapAdjust"
+          ],
+          [
+            "TrapAdjust",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究摩擦系数和斜面角度对物体是否下滑的影响",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "斜面摩擦力与下滑条件",
+        "formulas": [
+          "μ = tanθ 临界条件",
+          "下滑力 = mg sinθ",
+          "最大静摩擦力 = μ mg cosθ"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-friction",
+        "label": "摩擦系数",
+        "symbol": "μ",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "unit": ""
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-angle",
+        "label": "斜面角度",
+        "symbol": "θ",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0,
+          "max": 90,
+          "step": 1,
+          "unit": "°"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "物体质量",
+        "reason": "下滑条件与质量无关，仅取决于μ和θ"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "state",
+        "label": "物体状态",
+        "unit": "",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验探究摩擦系数和斜面角度如何影响物体是否下滑。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "调节摩擦系数μ和斜面角度θ，观察物体状态。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "判断下滑",
+          "body": "根据μ < tanθ判断物体是否下滑。",
+          "mapsToKg": [
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "总结规律",
+          "body": "理解临界条件μ = tanθ。",
+          "mapsToKg": [
+            "S1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "μ = tanθ 临界条件",
+      "下滑力 = mg sinθ",
+      "最大静摩擦力 = μ mg cosθ"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "摩擦",
+    "subtitle": "斜面摩擦与下滑条件",
+    "winCondition": "成功判断物体下滑条件，理解摩擦系数与角度的关系",
+    "knowledgeSummary": "斜面摩擦力与下滑条件",
+    "controls": [
+      {
+        "id": "s-friction",
+        "type": "range",
+        "label": "摩擦系数",
+        "symbol": "μ",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-angle",
+        "type": "range",
+        "label": "斜面角度",
+        "symbol": "θ",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 90,
+          "step": 1,
+          "unit": "°"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "物体质量",
+        "reason": "下滑条件与质量无关，仅取决于μ和θ",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "物体下滑?",
+        "desc": "判断物体是否下滑，依据μ < tanθ则下滑"
+      },
+      {
+        "kgId": "C2",
+        "label": "摩擦系数在范围?",
+        "desc": "摩擦系数μ在0到1之间"
+      },
+      {
+        "kgId": "C3",
+        "label": "斜面角度在范围?",
+        "desc": "斜面角度θ在0到90度之间"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-friction": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致",
+      "遵守 simHints 中的目标距离与发射高度"
+    ],
+    "simHints": {
+      "type": "projectile2d",
+      "g": 9.8,
+      "launchHeightM": 6,
+      "targetRangeM": [
+        18,
+        35
+      ],
+      "metersPerPixel": 0.1,
+      "notes": "模拟与射程读数共用 simulateLanding；可见筐矩形=win 判定区"
+    },
+    "outputVariables": [
+      {
+        "label": "物体状态",
+        "symbol": "state",
+        "unit": null
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-friction",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-friction → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-angle",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-angle → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "摩擦系数在范围?",
+        "type": "decision",
+        "desc": "检查摩擦系数μ是否在0到1之间"
+      },
+      {
+        "name": "提示摩擦系数范围",
+        "type": "retry",
+        "desc": "摩擦系数应在0到1之间，请重新调节"
+      },
+      {
+        "name": "斜面角度在范围?",
+        "type": "decision",
+        "desc": "检查斜面角度θ是否在0到90度之间"
+      },
+      {
+        "name": "提示斜面角度范围",
+        "type": "retry",
+        "desc": "斜面角度应在0到90度之间，请重新调节"
+      },
+      {
+        "name": "物体下滑?",
+        "type": "decision",
+        "desc": "判断物体是否下滑，依据μ < tanθ则下滑"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "物体未下滑，请调整参数使μ < tanθ"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "物体下滑，成功理解斜面摩擦条件"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

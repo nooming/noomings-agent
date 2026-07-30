@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机械能 · 过山车环路</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
+        .card { max-width: 720px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 20px 24px 28px; }
+        h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
+        .sub { color: #4a5568; font-size: 0.95rem; margin-bottom: 16px; border-left: 3px solid #3182ce; padding-left: 10px; }
+        .canvas-wrap { background: #edf2f7; border-radius: 12px; padding: 8px; margin-bottom: 16px; }
+        canvas { display: block; width: 100%; height: auto; background: #e2e8f0; border-radius: 8px; }
+        .control-grid { display: flex; flex-wrap: wrap; gap: 16px 20px; margin: 16px 0 12px; }
+        .slider-group { flex: 1 1 180px; min-width: 140px; }
+        .slider-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 2px; color: #2d3748; }
+        .slider-group input { width: 100%; margin: 4px 0 2px; }
+        .slider-group .value { font-size: 0.8rem; color: #4a5568; }
+        .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 8px 0 12px; }
+        .btn { background: #3182ce; color: white; border: none; padding: 8px 22px; border-radius: 40px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: 0.15s; }
+        .btn:active { transform: scale(0.96); }
+        .btn-reset { background: #718096; }
+        .btn-irr { background: #a0aec0; color: #1a202c; font-size: 0.75rem; padding: 4px 14px; border-radius: 30px; margin-left: auto; }
+        .observe-box { background: #f0f4ff; border-radius: 12px; padding: 12px 16px; margin: 8px 0 12px; border-left: 4px solid #3182ce; }
+        .observe-box strong { font-weight: 600; }
+        .hint { font-size: 0.85rem; color: #2d3748; margin-top: 4px; }
+        .confound-note { background: #f7fafc; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; color: #4a5568; border: 1px dashed #cbd5e0; margin: 8px 0 4px; }
+        .win-badge { background: #38a169; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
+        .fail-badge { background: #e53e3e; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
+        .flex { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .mt-1 { margin-top: 6px; }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#3b82f6;--craft-bg:#0b1220;--craft-panel:#152238;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+/* === batch2 audit fixes === */
+#craft-gauge{display:none!important;}
+#essence-bench .slider-group .value,
+#essence-bench .value,
+#essence-bench .hint,
+#essence-bench #observeText{color:#e2e8f0!important;}
+#essence-bench .observe-box{
+  background:rgba(0,0,0,.28)!important;
+  border-left-color:var(--craft-accent)!important;
+  color:var(--craft-text)!important;
+}
+#dual-mode-hud .dual-chip,
+#challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#bfdbfe!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+#essence-hud{
+  top:10px!important;left:auto!important;right:12px!important;
+  max-width:min(220px,40%)!important;z-index:6;
+  align-items:flex-end!important;
+}
+#essence-hud .essence-title{
+  background:rgba(15,23,42,.9)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  font-size:13px!important;padding:6px 10px!important;
+}
+#essence-hud .essence-sub{display:none!important;}
+#modeSelect{
+  background:rgba(0,0,0,.35)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>夜场乐园 · 过山车试车</h2>
+    <p>首班试车卡在出发台——试着弄清怎样才能翻过环顶。过环后看小车停在减速带哪里：能量不够会掉落，过大则冲出带外；对照停靠远近再调参。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；顶部与侧栏会写明当前任务。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">½mv² + mgh = 常量（理想）</div>
+    <p id="craftWinText">对照掉落、停在减速带不同位置与冲出带外，你摸清了高度与初速既不能太小、也不能太大。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="trackCanvas" width="600" height="320"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">夜场乐园 · 过山车</div>
+      <div class="essence-sub" id="goalMission">目标：自由试车，对照减速带停靠位置，同时见过「过环停稳」与失败（掉落或冲出）；竞赛停稳区另有布置</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="card">
+    <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
+    <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">试着弄清：调 h / v 时小车停在减速带前/中/末端，还是掉落或冲出带外。竞赛轨道/停稳区与探究不同。</p>
+
+    <div class="control-grid">
+        <div class="slider-group">
+            <label for="s-height">起始高度 h <span style="font-weight:400;">(m)</span></label>
+            <input type="range" id="s-height" min="0" max="10" step="0.1" value="4.0">
+            <div class="value" id="heightDisplay">4.0 m</div>
+        </div>
+        <div class="slider-group">
+            <label for="s-speed">释放速度 v <span style="font-weight:400;">(m/s)</span></label>
+            <input type="range" id="s-speed" min="0" max="10" step="0.1" value="2.0">
+            <div class="value" id="speedDisplay">2.0 m/s</div>
+        </div>
+        <div class="slider-group">
+            <label for="s-mass">小车质量 m <span style="font-weight:400;">(kg)</span></label>
+            <input type="range" id="s-mass" min="0.5" max="5" step="0.1" value="1.5">
+            <div class="value" id="massDisplay">1.5 kg</div>
+        </div>
+    </div>
+
+    <div class="observe-box" id="observePanel">
+        <strong>📊 观察结果</strong>
+        <div id="observeText" class="hint">小车待发 · 调参后点发射</div>
+        <div id="winMessage" class="mt-1"></div>
+    </div>
+
+</div>
+
+<!-- trace-adapter-hook -->
+
+
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+        <button class="btn" id="btn-fire">🚀 发射</button>
+        <button class="btn btn-reset" id="btn-reset">↺ 重置</button>
+        <input type="hidden" id="I1" value="irrelevant">
+    </div>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    var irrBtn = document.getElementById('I1');
+    if (irrBtn) {
+      irrBtn.addEventListener('change', function() {
+        emit('irrelevant_touch', { control: 'I1', value: irrBtn.value });
+      });
+    }
+  });
+})();
+</script>
+<script>
+(function() {
+    // ----- 物理常量 & canvas（像素尺寸跟舞台 + DPR，避免 CSS 拉伸糊） -----
+    const canvas = document.getElementById('trackCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = 600, H = 320;
+    let layout = null;
+    // 提前声明：布局/停稳区几何随模式分流（syncCanvasSize 会读）
+    let playMode = 'explore';
+
+    function syncCanvasSize() {
+        var stage = document.getElementById('essence-stage') || canvas.parentElement;
+        var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 600);
+        var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 320);
+        var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        var bw = Math.round(cssW * dpr);
+        var bh = Math.round(cssH * dpr);
+        if (canvas.width !== bw || canvas.height !== bh) {
+            canvas.width = bw;
+            canvas.height = bh;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        W = cssW;
+        H = cssH;
+        // 布局随舞台：环路做大、占满视觉中心，左侧留给双模式条
+        // 探究环略靠左以拉长停稳区；竞赛环略靠右+短停稳区，目视可辨且本局 Fixed
+        var groundY = Math.round(H * 0.88);
+        var loopRadius = Math.max(70, Math.min(130, Math.round(Math.min(W * 0.16, H * 0.22))));
+        var loopCenterX = Math.round(W * (playMode === 'challenge' ? 0.60 : 0.50));
+        var loopCenterY = groundY - loopRadius - 6;
+        var loopTopY = loopCenterY - loopRadius;
+        var startX = Math.max(168, Math.round(W * 0.24));
+        // 环顶物理高度固定按 10 m 标定，使 h 滑条与视觉高度一一对应
+        var metersPerPixel = 10 / Math.max(140, groundY - loopTopY);
+        layout = { groundY, loopRadius, loopCenterX, loopCenterY, loopTopY, startX, metersPerPixel };
+        return layout;
+    }
+
+    function startYForH(h) {
+        var L = layout || syncCanvasSize();
+        return L.groundY - h / L.metersPerPixel;
+    }
+
+    let carX = 0, carY = 0;
+    let launched = false;
+    let passedLoop = false;
+    let simulationDone = false;
+    let winOk = false;
+    let hintKey = '';
+    let animFailDrop = false;
+    let animating = false;
+    let carSparks = [];
+    let winGlow = 0;
+    let failGlow = 0;
+    let testCount = 0;
+    let sawPass = false;
+    let sawFail = false;
+    let exploreWon = false;
+    let challengeWon = false;
+
+    const MODE_GOALS = {
+      explore: {
+        hud: '目标：自由试车几轮，对照减速带停靠远近，见过「停稳」与失败（掉落或冲出）',
+        side: '探究·夜场试车：过环后看停在减速带哪里；过慢掉落、过猛冲出带外，用目视距离调参。竞赛轨道/停稳区与探究不同。'
+      },
+      challenge: {
+        hud: '目标：限次内翻过环顶并停在竞赛停稳区内（环路与停稳区本局固定，失败不换题）',
+        side: '竞赛·首班发车：竞赛轨道/停稳区与探究不同；限次翻过环顶并停在带内（本局固定）；掉落或冲出都不换题。'
+      }
+    };
+
+    function refreshGoalUI() {
+      const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      if (mission) mission.textContent = g.hud;
+      if (side) side.textContent = g.side;
+    }
+
+    window.__mechApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      winOk = false;
+      exploreWon = false;
+      challengeWon = false;
+      window.__legacyWinEmitted = false;
+      testCount = 0;
+      sawPass = false;
+      sawFail = false;
+      animating = false;
+      if (btnFire) btnFire.disabled = false;
+      if (playMode === 'challenge') {
+        // 竞赛开局故意卡在「能量不够」：固定环路，考临界
+        heightSlider.value = '4.0';
+        speedSlider.value = '2.0';
+      } else {
+        heightSlider.value = '4.0';
+        speedSlider.value = '2.0';
+      }
+      updateDisplays();
+      resetSim();
+      refreshGoalUI();
+      observeText.textContent = playMode === 'challenge'
+        ? '夜场限次试车：竞赛停稳区与探究不同，本局固定；找合适能量翻过环顶并停稳'
+        : '小车停在出发台 · 先自由试车，对照减速带停靠位置调参（竞赛停稳区另有布置）';
+    };
+
+    const heightSlider = document.getElementById('s-height');
+    const speedSlider = document.getElementById('s-speed');
+    const massSlider = document.getElementById('s-mass');
+    const heightDisplay = document.getElementById('heightDisplay');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const massDisplay = document.getElementById('massDisplay');
+    const observeText = document.getElementById('observeText');
+    const winMessage = document.getElementById('winMessage');
+    const btnFire = document.getElementById('btn-fire');
+    const btnReset = document.getElementById('btn-reset');
+
+    function updateDisplays() {
+        const h = parseFloat(heightSlider.value);
+        const v = parseFloat(speedSlider.value);
+        const m = parseFloat(massSlider.value);
+        heightDisplay.textContent = h.toFixed(1) + ' m';
+        speedDisplay.textContent = v.toFixed(1) + ' m/s';
+        massDisplay.textContent = m.toFixed(1) + ' kg';
+        if (!launched && !animating) {
+            placeCarAtStart(h);
+            drawTrack();
+        }
+    }
+    heightSlider.addEventListener('input', updateDisplays);
+    speedSlider.addEventListener('input', updateDisplays);
+    massSlider.addEventListener('input', updateDisplays);
+
+    function placeCarAtStart(h) {
+        var L = layout || syncCanvasSize();
+        carX = L.startX + 8;
+        carY = startYForH(h) - 10;
+    }
+
+    // 成功带调参（典型舞台环顶视觉≈10m、R_m≈4.8–5.0）：
+    // E0=g·h+½v²；过环需 E0≥E_top_min；地面 vg=√(2E0)。
+    // 减速带恒定比能耗散：停距 s∝vg²，以 vMax=vGroundCrit·RATIO 恰对应停在带末端。
+    // 成功：过环且最终停在减速带 [x0,x1] 内；失败：环上掉落，或冲出 x1 后在带外滑行停下。
+    // 探究/竞赛分流：竞赛停稳区更短、上限 RATIO 更紧，同参未必两边同结论；本局 Fixed 不换长度。
+    // 验证约：低能(h=4,v=2)掉落；中等(h≈6–8,v≈4–6)探究停中后段、竞赛更靠后或冲出；
+    // (h=10,v=10)两边皆冲出。动画与判据共用同一减速模型，停靠位置连续可读。
+    const LOOP_TOP_H_FACTOR = 0.55;
+    const V_TOP_MIN_FACTOR = 0.6;
+    // 探究：较长停稳区 + 较松上限；竞赛：明显更短 + 更紧上限（视觉与判据一致，约 2× 长度差）
+    const BRAKE_MODE = {
+        explore: { groundSpeedMaxRatio: 1.45, zoneFrac: 0.22, minLen: 130, rightPad: 52 },
+        challenge: { groundSpeedMaxRatio: 1.20, zoneFrac: 0.09, minLen: 52, rightPad: 110 }
+    };
+
+    function brakeModeCfg() {
+        return BRAKE_MODE[playMode] || BRAKE_MODE.explore;
+    }
+
+    function brakeZoneGeom(L) {
+        var cfg = brakeModeCfg();
+        var exitX = L.loopCenterX + L.loopRadius + 20;
+        var x0 = exitX + 10;
+        // 右侧预留冲出滑行；竞赛 rightPad 更大 → 停稳区更短且冲出仍可见
+        var rightPad = cfg.rightPad != null ? cfg.rightPad : 96;
+        var x1 = Math.min(W - rightPad, Math.max(x0 + cfg.minLen, exitX + Math.round(W * cfg.zoneFrac)));
+        x1 = Math.min(x1, W - 40);
+        if (x1 < x0 + 40) x1 = Math.min(W - 40, x0 + 40);
+        // 停稳区 = 整条减速带 [x0,x1]；刻度仅供目视对照，不另设隐藏子区间
+        return { exitX: exitX, x0: x0, x1: x1, len: Math.max(1, x1 - x0) };
+    }
+
+    function computePassLoop(h, v) {
+        return computeRunOutcome(h, v).canLoop;
+    }
+
+    function computeRunOutcome(h, v) {
+        var L = layout || syncCanvasSize();
+        const loopTopHeight = (L.groundY - L.loopTopY) * L.metersPerPixel;
+        const g = 9.8;
+        const E0 = g * h + 0.5 * v * v;
+        const loopRadiusM = L.loopRadius * L.metersPerPixel;
+        const vTopMin = V_TOP_MIN_FACTOR * Math.sqrt(g * loopRadiusM);
+        const E_top_min = g * loopTopHeight * LOOP_TOP_H_FACTOR + 0.5 * vTopMin * vTopMin;
+        const canLoop = E0 >= E_top_min - 1e-9;
+        const vGround = Math.sqrt(Math.max(0, 2 * E0));
+        const vGroundCrit = Math.sqrt(Math.max(0, 2 * E_top_min));
+        const vMax = vGroundCrit * brakeModeCfg().groundSpeedMaxRatio;
+        // 停距分数：(vg/vMax)²；=1 恰停末端，>1 冲出
+        const stopFrac = vMax > 1e-9 ? (vGround / vMax) * (vGround / vMax) : 0;
+        const brake = brakeZoneGeom(L);
+        const tooFast = canLoop && (stopFrac > 1 + 1e-9);
+        var finalX = brake.x0 + Math.min(1, stopFrac) * brake.len;
+        var overshootPx = 0;
+        if (tooFast) {
+            // 带外滑行预估（与动画 coastA≈0.42·aBrake 同构，仅作文案兜底）
+            var leftFrac = Math.max(0, stopFrac - 1);
+            overshootPx = Math.min(W - brake.x1 - 16, brake.len * leftFrac / 0.28);
+            finalX = brake.x1 + overshootPx;
+        }
+        return {
+            E0: E0,
+            canLoop: canLoop,
+            tooFast: tooFast,
+            success: canLoop && !tooFast,
+            vGround: vGround,
+            vMax: vMax,
+            E_top_min: E_top_min,
+            stopFrac: stopFrac,
+            finalX: finalX,
+            overshootPx: overshootPx
+        };
+    }
+
+    /** 根据最终车位给出目视向描述（不剧透公式） */
+    function describeBrakeStop(carX, brake) {
+        var len = Math.max(1, brake.x1 - brake.x0);
+        if (carX <= brake.x1 + 2) {
+            var t = (carX - brake.x0) / len;
+            if (t < 0.34) return { kind: 'in', where: '前段', short: '停·前段' };
+            if (t < 0.67) return { kind: 'in', where: '中段', short: '停·中段' };
+            if (t < 0.9) return { kind: 'in', where: '后段', short: '停·后段' };
+            return { kind: 'in', where: '末端附近', short: '停·末端' };
+        }
+        var past = carX - brake.x1;
+        if (past < len * 0.18) return { kind: 'out', where: '刚冲出末端一点点', short: '冲出·一点点' };
+        if (past < len * 0.45) return { kind: 'out', where: '冲出减速带一小段', short: '冲出·一小段' };
+        return { kind: 'out', where: '明显冲出减速带', short: '冲出·较远' };
+    }
+
+    function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    function drawCar(x, y) {
+        var m = massSlider ? parseFloat(massSlider.value) : 1.5;
+        var s = 0.75 + Math.min(1.4, Math.max(0.5, m)) * 0.18;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(s, s);
+        // 车厢体（尺度随质量，过环判据用比能，与 m 无关）
+        ctx.fillStyle = '#f59e0b';
+        roundRect(-14, -10, 28, 16, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-8, -7, 7, 6);
+        ctx.fillRect(1, -7, 7, 6);
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.arc(-8, 7, 3.5, 0, Math.PI * 2);
+        ctx.arc(8, 7, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawTrack() {
+        var L = syncCanvasSize();
+        ctx.clearRect(0, 0, W, H);
+        var groundY = L.groundY;
+        var startX = L.startX;
+        var loopCenterX = L.loopCenterX;
+        var loopCenterY = L.loopCenterY;
+        var loopRadius = L.loopRadius;
+        var loopTopY = L.loopTopY;
+        // 竖直圆环：进出点在环底（圆心正下方），非整圆开口朝下的上半拱
+        var entryX = loopCenterX;
+        var entryY = loopCenterY + loopRadius;
+        var brake = brakeZoneGeom(L);
+        var exitX = brake.exitX;
+        var h = parseFloat(heightSlider.value);
+        var sy = startYForH(h);
+
+        // —— 乐园黄昏天空 ——
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#0f172a');
+        sky.addColorStop(0.28, '#1e3a5f');
+        sky.addColorStop(0.55, '#7c2d12');
+        sky.addColorStop(0.78, '#334155');
+        sky.addColorStop(1, '#475569');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // 落日光晕
+        var sunX = W * 0.78, sunY = groundY - 70;
+        var sunG = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 90);
+        sunG.addColorStop(0, 'rgba(254,215,170,0.75)');
+        sunG.addColorStop(0.35, 'rgba(251,146,60,0.28)');
+        sunG.addColorStop(1, 'rgba(251,146,60,0)');
+        ctx.fillStyle = sunG;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 90, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 远山剪影
+        ctx.fillStyle = 'rgba(15,23,42,0.45)';
+        ctx.beginPath();
+        ctx.moveTo(0, groundY - 40);
+        ctx.quadraticCurveTo(W * 0.2, groundY - 90, W * 0.38, groundY - 50);
+        ctx.quadraticCurveTo(W * 0.55, groundY - 110, W * 0.72, groundY - 55);
+        ctx.quadraticCurveTo(W * 0.88, groundY - 85, W, groundY - 48);
+        ctx.lineTo(W, groundY);
+        ctx.lineTo(0, groundY);
+        ctx.fill();
+
+        // 灯串 / 彩旗（灯珠闪烁）
+        var tNow = performance.now();
+        for (var i = 0; i < 7; i++) {
+            var fx = W * 0.12 + i * (W * 0.11);
+            ctx.strokeStyle = 'rgba(251,191,36,0.35)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(fx, 28);
+            ctx.lineTo(fx + 36, 48);
+            ctx.stroke();
+            var flap = Math.sin(tNow * 0.004 + i) * 3;
+            ctx.fillStyle = i % 2 ? '#f472b6' : '#38bdf8';
+            ctx.beginPath();
+            ctx.moveTo(fx + 10, 34);
+            ctx.lineTo(fx + 22, 34 + flap * 0.2);
+            ctx.lineTo(fx + 16, 46 + flap);
+            ctx.fill();
+            // 串灯
+            var twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tNow * 0.008 + i * 1.7));
+            ctx.fillStyle = `rgba(254,243,199,${twinkle})`;
+            ctx.beginPath();
+            ctx.arc(fx + 8, 32, 2.2, 0, Math.PI * 2);
+            ctx.arc(fx + 24, 40, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 售票亭（叙事锚点）
+        var boothX = Math.max(16, startX - 110);
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(boothX, groundY - 58, 52, 58);
+        ctx.fillStyle = '#ea580c';
+        ctx.beginPath();
+        ctx.moveTo(boothX - 6, groundY - 58);
+        ctx.lineTo(boothX + 26, groundY - 78);
+        ctx.lineTo(boothX + 58, groundY - 58);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(boothX + 12, groundY - 44, 28, 18);
+        ctx.fillStyle = '#fde68a';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('售票处', boothX + 6, groundY - 82);
+
+        // 围栏
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(8, groundY - 18);
+        ctx.lineTo(W - 8, groundY - 18);
+        ctx.stroke();
+        for (var p = 8; p < W; p += 28) {
+            ctx.beginPath();
+            ctx.moveTo(p, groundY - 18);
+            ctx.lineTo(p, groundY);
+            ctx.stroke();
+        }
+
+        // 地坪
+        const floor = ctx.createLinearGradient(0, groundY, 0, H);
+        floor.addColorStop(0, '#64748b');
+        floor.addColorStop(1, '#334155');
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, groundY, W, H - groundY);
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(0, groundY, W, 5);
+        ctx.fillStyle = '#22c55e';
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(0, groundY + 5, W, 10);
+        ctx.globalAlpha = 1;
+
+        // 出发平台高度随 h 绑定
+        var deckW = 64, deckH = 12;
+        var deckY = sy;
+        // 钢架立柱
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(startX - 18, groundY);
+        ctx.lineTo(startX - 18, deckY);
+        ctx.moveTo(startX + 28, groundY);
+        ctx.lineTo(startX + 28, deckY);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+        ctx.lineWidth = 2;
+        for (var k = 0; k < 4; k++) {
+            var yy = deckY + (groundY - deckY) * (k / 4);
+            ctx.beginPath();
+            ctx.moveTo(startX - 18, yy);
+            ctx.lineTo(startX + 28, yy + 10);
+            ctx.stroke();
+        }
+        ctx.fillStyle = '#b45309';
+        roundRect(startX - 26, deckY - 2, deckW, deckH, 3);
+        ctx.fill();
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('出发台', startX - 18, deckY - 10);
+
+        // 高度标尺（与滑条 h 视觉绑定）
+        var rulerX = startX - 42;
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(rulerX, groundY);
+        ctx.lineTo(rulerX, deckY);
+        ctx.stroke();
+        ctx.font = '11px ui-monospace,Consolas,sans-serif';
+        ctx.fillStyle = 'rgba(15,23,42,0.78)';
+        ctx.fillRect(rulerX - 10, Math.max(40, deckY - 30), 56, 18);
+        ctx.fillStyle = '#ffe0c2';
+        ctx.fillText('h=' + h.toFixed(1) + 'm', rulerX - 8, Math.max(56, deckY - 16));
+
+        // 环路支架
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(loopCenterX - loopRadius - 6, groundY);
+        ctx.lineTo(loopCenterX - loopRadius - 6, loopCenterY);
+        ctx.moveTo(loopCenterX + loopRadius + 6, groundY);
+        ctx.lineTo(loopCenterX + loopRadius + 6, loopCenterY);
+        ctx.moveTo(loopCenterX, groundY);
+        ctx.lineTo(loopCenterX, entryY);
+        ctx.stroke();
+
+        // 轨道：出发台 → 环底入环 → 竖直全环（过顶）→ 环底出环落地
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 5;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(startX, sy);
+        ctx.lineTo(entryX, entryY);
+        // 两段半圆拼成竖直全环（避免起止角差恰为 2π 时部分浏览器不画）
+        // 逆时针：环底→右侧→环顶→左侧→环底
+        ctx.arc(loopCenterX, loopCenterY, loopRadius, Math.PI / 2, Math.PI * 1.5, true);
+        ctx.arc(loopCenterX, loopCenterY, loopRadius, Math.PI * 1.5, Math.PI / 2 + Math.PI * 2, true);
+        ctx.lineTo(brake.x1 + 8, groundY - 4);
+        ctx.stroke();
+        // 轨枕高光
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(startX, sy - 3);
+        ctx.lineTo(entryX, entryY - 3);
+        ctx.stroke();
+
+        // 减速带：出环后右侧地面（斑马纹理 + 停稳区刻度）
+        var bz0 = brake.x0, bz1 = brake.x1, bzTop = groundY - 5, bzH = 12;
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(bz0, bzTop, bz1 - bz0, bzH);
+        ctx.fillStyle = '#1e293b';
+        for (var zx = bz0; zx < bz1; zx += 12) {
+            ctx.beginPath();
+            ctx.moveTo(zx, bzTop);
+            ctx.lineTo(Math.min(zx + 6, bz1), bzTop);
+            ctx.lineTo(Math.min(zx + 12, bz1), bzTop + bzH);
+            ctx.lineTo(Math.min(zx + 6, bz1), bzTop + bzH);
+            ctx.closePath();
+            ctx.fill();
+        }
+        // 四等分刻度：目视对照停在前/中/后/末端
+        ctx.strokeStyle = 'rgba(254,243,199,0.95)';
+        ctx.lineWidth = 1.5;
+        for (var ti = 0; ti <= 4; ti++) {
+            var tx = bz0 + (bz1 - bz0) * (ti / 4);
+            ctx.beginPath();
+            ctx.moveTo(tx, bzTop - 5);
+            ctx.lineTo(tx, bzTop + bzH + 3);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bz0, bzTop, bz1 - bz0, bzH);
+        // 成功/失败短暂光效（不改判据）
+        if (winGlow > 0) {
+            ctx.strokeStyle = `rgba(74,222,128,${0.9 * Math.min(1, winGlow)})`;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(bz0 - 3, bzTop - 4, bz1 - bz0 + 6, bzH + 8);
+            ctx.fillStyle = `rgba(74,222,128,${0.15 * Math.min(1, winGlow)})`;
+            ctx.fillRect(bz0 - 3, bzTop - 4, bz1 - bz0 + 6, bzH + 8);
+        } else if (failGlow > 0) {
+            ctx.strokeStyle = `rgba(248,113,113,${0.8 * Math.min(1, failGlow)})`;
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([5, 3]);
+            ctx.strokeRect(bz1 - 6, bzTop - 8, 18, bzH + 16);
+            ctx.setLineDash([]);
+        }
+        // 末端竖标：冲出时对照「差多少」
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(bz1 - 2, bzTop - 10, 3, bzH + 14);
+        ctx.fillStyle = 'rgba(15,23,42,0.78)';
+        ctx.fillRect((bz0 + bz1) / 2 - 30, bzTop - 20, 60, 14);
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('停稳区', (bz0 + bz1) / 2 - 18, bzTop - 8);
+        ctx.fillStyle = 'rgba(15,23,42,0.7)';
+        ctx.fillRect(bz1 - 22, bzTop - 34, 40, 12);
+        ctx.fillStyle = '#fecaca';
+        ctx.font = '10px "Microsoft YaHei",sans-serif';
+        ctx.fillText('末端', bz1 - 12, bzTop - 24);
+
+        // 最高点标记
+        ctx.fillStyle = '#fca5a5';
+        ctx.beginPath();
+        ctx.arc(loopCenterX, loopTopY, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(15,23,42,0.72)';
+        ctx.fillRect(loopCenterX - 18, loopTopY - 26, 36, 16);
+        ctx.fillStyle = '#ffe0c2';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('环顶', loopCenterX - 14, loopTopY - 12);
+
+        // 读数徽章：减速带上方偏右，避开环路与左上双模式条
+        var badgeX = Math.min(W - 140, Math.max(brake.x0, brake.x1 - 110));
+        var badgeY = groundY - 72;
+        roundRect(badgeX, badgeY, 118, 36, 8);
+        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(96,165,250,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '12px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
+        ctx.fillText('v₀ = ' + parseFloat(speedSlider.value).toFixed(1) + ' m/s', badgeX + 12, badgeY + 22);
+
+        if (!launched && !animating && !simulationDone) {
+            placeCarAtStart(h);
+        }
+        // 结束后保留动画停靠的真实车位（连续位移），不再吸附到固定点
+
+        // 运行火花尾迹
+        for (var si = carSparks.length - 1; si >= 0; si--) {
+            var sp = carSparks[si];
+            sp.x += sp.vx;
+            sp.y += sp.vy;
+            sp.life -= 0.04;
+            if (sp.life <= 0) { carSparks.splice(si, 1); continue; }
+            ctx.globalAlpha = Math.max(0, sp.life);
+            ctx.fillStyle = sp.hot ? '#fde68a' : '#fb923c';
+            ctx.beginPath();
+            ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        drawCar(carX, carY);
+        if (winGlow > 0) winGlow = Math.max(0, winGlow - 0.02);
+        if (failGlow > 0) failGlow = Math.max(0, failGlow - 0.02);
+    }
+
+    function resetSim() {
+        launched = false;
+        simulationDone = false;
+        winOk = false;
+        hintKey = '';
+        passedLoop = false;
+        animFailDrop = false;
+        animating = false;
+        placeCarAtStart(parseFloat(heightSlider.value));
+        observeText.textContent = '小车停在出发台 · 尚未过环，调 h / v 后再发射';
+        winMessage.innerHTML = '';
+        drawTrack();
+    }
+
+    function maybeModeWin(success, failKind) {
+        const emitFn = window.__emit || window.emit;
+        const controlsSnapshot = {
+          's-height': heightSlider.value,
+          's-speed': speedSlider.value
+        };
+        if (playMode === 'challenge') {
+          if (!success) {
+            var failHint = failKind === 'fly' ? 'fail_speed' : 'fail_energy';
+            if (emitFn) emitFn('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: failHint });
+            return;
+          }
+          if (challengeWon) return;
+          challengeWon = true;
+          winOk = true;
+          hintKey = 'rush_loop';
+          winMessage.innerHTML = '<span class="win-badge">夜场试车成功</span>';
+          if (emitFn) {
+            emitFn('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: hintKey });
+            emitFn('win', { winOk: true });
+          }
+          if (typeof window.__craftShowWin === 'function') {
+            window.__craftShowWin('限次试车中，你把机械能调到合适区间，车厢翻过了固定环顶并停在减速带内。');
+          }
+          return;
+        }
+        // 探究：必须同时见过成功与失败（掉落或冲出减速带皆算失败体验），才算摸清临界
+        if (exploreWon) return;
+        if (testCount < 3 || !sawPass || !sawFail) {
+          var partialHint = success ? 'pass_partial' : (failKind === 'fly' ? 'fail_speed_partial' : 'fail_partial');
+          if (emitFn) emitFn('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: partialHint });
+          return;
+        }
+        exploreWon = true;
+        winOk = true;
+        hintKey = 'critical_explored';
+        winMessage.innerHTML = '<span class="win-badge">探究完成</span>';
+        if (emitFn) {
+          emitFn('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: hintKey });
+          emitFn('win', { winOk: true });
+        }
+        if (typeof window.__craftShowWin === 'function') {
+          window.__craftShowWin('你通过对照掉落、减速带内不同停靠位置与冲出带外，归纳出了合适的机械能区间。');
+        }
+    }
+
+    function heightMetersAtY(y, L) {
+        return Math.max(0, (L.groundY - y) * L.metersPerPixel);
+    }
+
+    function heightMetersAtLoopAngle(angle, L) {
+        var y = L.loopCenterY + L.loopRadius * Math.sin(angle);
+        return heightMetersAtY(y, L);
+    }
+
+    // 动画用有效高度：与过环门槛的环顶折减一致，避免「判据已过环但环顶动能归零卡死」
+    function animHeightM(heightM) {
+        return heightM * LOOP_TOP_H_FACTOR;
+    }
+
+    function speedFromEnergy(E0, heightM, g) {
+        var ke = E0 - g * heightM;
+        return ke > 1e-6 ? Math.sqrt(2 * ke) : 0;
+    }
+
+    function setCarOnLoop(L, angle) {
+        carX = L.loopCenterX + L.loopRadius * Math.cos(angle);
+        carY = L.loopCenterY + L.loopRadius * Math.sin(angle);
+    }
+
+    function finishFire(h, v, outcome) {
+        var success = outcome.success;
+        var failKind = success ? '' : (outcome.tooFast ? 'fly' : 'drop');
+        var Ldone = layout || syncCanvasSize();
+        var brakeDone = brakeZoneGeom(Ldone);
+        // 最终停靠与连续模型对齐（动画过程连续减速，落点按 stopFrac / 冲出距）
+        if (success) {
+            carX = brakeDone.x0 + Math.min(0.999, Math.max(0, outcome.stopFrac)) * brakeDone.len;
+            carY = Ldone.groundY - 12;
+        } else if (failKind === 'fly') {
+            var pastPx = Math.max(16, Math.min(outcome.overshootPx, Math.max(24, W - brakeDone.x1 - 16)));
+            carX = brakeDone.x1 + pastPx;
+            carY = Ldone.groundY - 12;
+        }
+        var stopDesc = failKind === 'drop' ? null : describeBrakeStop(carX, brakeDone);
+        passedLoop = success;
+        simulationDone = true;
+        launched = true;
+        animating = false;
+        animFailDrop = failKind === 'drop';
+        testCount += 1;
+        if (success) sawPass = true; else sawFail = true;
+        if (success) {
+            winGlow = 1.0;
+            failGlow = 0;
+            observeText.textContent = playMode === 'challenge'
+              ? ('过山车翻过环顶，停在减速带' + stopDesc.where + '。夜场试车达标。')
+              : ('过山车停在减速带' + stopDesc.where + '。可对照刻度微调，或再试掉落 / 冲出。');
+            winMessage.innerHTML = '<span class="win-badge">' + stopDesc.short + '</span>';
+            hintKey = 'pass';
+        } else if (failKind === 'fly') {
+            failGlow = 1.0;
+            winGlow = 0;
+            observeText.textContent = playMode === 'challenge'
+              ? ('过环后' + stopDesc.where + '。轨道不变，试着略降能量再停进带内。')
+              : ('过环后' + stopDesc.where + '。对照末端红标看冲出多远，再略降 h 或 v。');
+            winMessage.innerHTML = '<span class="fail-badge">' + stopDesc.short + '</span>';
+            hintKey = 'fail_speed';
+        } else {
+            failGlow = 0.85;
+            winGlow = 0;
+            observeText.textContent = playMode === 'challenge'
+              ? '未能过环。轨道不变，继续调参再试。'
+              : '掉落了。能量不够过环顶，先加大再观察减速带停靠。';
+            winMessage.innerHTML = '<span class="fail-badge">未过环·掉落</span>';
+            hintKey = 'fail_energy';
+        }
+        drawTrack();
+        maybeModeWin(success, failKind);
+        // 光效衰减刷新（待机也续画旗帜闪烁）
+        (function fadeFx() {
+            if (animating) return;
+            if (winGlow > 0 || failGlow > 0 || carSparks.length) {
+                drawTrack();
+                requestAnimationFrame(fadeFx);
+            }
+        })();
+    }
+
+    function fire() {
+        if (animating) return;
+        const h = parseFloat(heightSlider.value);
+        const v = parseFloat(speedSlider.value);
+        if (h < 0 || h > 10 || v < 0 || v > 10) {
+            observeText.textContent = '参数超出范围 (h:0~10, v:0~10)';
+            winMessage.innerHTML = '<span class="fail-badge">参数无效</span>';
+            return;
+        }
+        var L = syncCanvasSize();
+        const outcome = computeRunOutcome(h, v);
+        simulationDone = false;
+        launched = true;
+        animating = true;
+        animFailDrop = !outcome.canLoop;
+        observeText.textContent = '过山车运行中…';
+        winMessage.innerHTML = '';
+        const gPhys = 9.8;
+        const E0 = outcome.E0;
+        const loopRadiusM = L.loopRadius * L.metersPerPixel;
+        const ANIM_SCALE = 3.4;
+        const entryX = L.loopCenterX;
+        const entryY = L.loopCenterY + L.loopRadius;
+        const brake = brakeZoneGeom(L);
+        const sx0 = L.startX + 8;
+        const sy0 = startYForH(h) - 10;
+        const rampLenPx = Math.hypot(entryX - sx0, (entryY - 8) - sy0);
+        const runoutLenPx = Math.max(1, brake.x0 - entryX);
+        const brakeLenPx = Math.max(40, brake.x1 - brake.x0);
+        let phase = 'ramp';
+        let rampS = 0;
+        let loopAngle = Math.PI / 2;
+        let runoutS = 0;
+        let dropVy = 0;
+        // 减速带连续减速：进入时赋初速，a 使 vMax 恰在末端刹停
+        let brakeVel = 0;
+        let brakeA = 0;
+        let coastA = 0;
+        let lastTs = null;
+        function animFrame(ts) {
+            if (!lastTs) lastTs = ts;
+            var dt = Math.min(0.032, (ts - lastTs) / 1000);
+            lastTs = ts;
+            if (phase === 'ramp') {
+                var hm = animHeightM(heightMetersAtY(sy0 + (entryY - 8 - sy0) * (rampS / rampLenPx) + 10, L));
+                var spd = Math.max(0.35, speedFromEnergy(E0, hm, gPhys));
+                rampS += spd * ANIM_SCALE * dt / L.metersPerPixel;
+                if (rampS >= rampLenPx) {
+                    rampS = rampLenPx;
+                    // 能量够过顶：走完整环再进减速带；能量不够：中途掉落
+                    phase = outcome.canLoop ? 'loop' : 'loop_fail';
+                    loopAngle = Math.PI / 2;
+                }
+                var ru = rampS / rampLenPx;
+                carX = sx0 + (entryX - sx0) * ru;
+                carY = sy0 + (entryY - 8 - sy0) * ru;
+            } else if (phase === 'loop') {
+                var hmLoop = animHeightM(heightMetersAtLoopAngle(loopAngle, L));
+                var spdLoop = Math.max(0.45, speedFromEnergy(E0, hmLoop, gPhys));
+                loopAngle -= (spdLoop * ANIM_SCALE * dt) / loopRadiusM;
+                if (loopAngle <= Math.PI / 2 - Math.PI * 2 + 0.015) {
+                    loopAngle = Math.PI / 2 - Math.PI * 2;
+                    phase = 'runout';
+                    runoutS = 0;
+                }
+                if (phase === 'loop') setCarOnLoop(L, loopAngle);
+            } else if (phase === 'loop_fail') {
+                var hmFail = animHeightM(heightMetersAtLoopAngle(loopAngle, L));
+                var spdFail = speedFromEnergy(E0, hmFail, gPhys);
+                setCarOnLoop(L, loopAngle);
+                if (spdFail < 0.4 && loopAngle < Math.PI / 2 - 0.12) {
+                    phase = 'drop';
+                    dropVy = 0;
+                } else {
+                    loopAngle -= (Math.max(spdFail, 0.15) * ANIM_SCALE * dt) / loopRadiusM;
+                    if (loopAngle <= -Math.PI / 2 + 0.06) {
+                        loopAngle = -Math.PI / 2 + 0.06;
+                        phase = 'drop';
+                        dropVy = 0;
+                    }
+                }
+            } else if (phase === 'drop') {
+                dropVy += 520 * dt;
+                carY += dropVy * dt;
+                carX -= 32 * dt;
+                if (carY >= L.groundY - 12) {
+                    carY = L.groundY - 12;
+                    phase = 'done';
+                }
+            } else if (phase === 'runout') {
+                // 出环落地 → 驶入减速带起点
+                var hmRun = animHeightM(heightMetersAtY(L.groundY - 12, L));
+                var spdRun = Math.max(0.8, speedFromEnergy(E0, hmRun, gPhys));
+                runoutS += spdRun * ANIM_SCALE * dt / L.metersPerPixel;
+                var ru2 = Math.min(1, runoutS / runoutLenPx);
+                carX = entryX + (brake.x0 - entryX) * ru2;
+                carY = L.groundY - 12;
+                if (ru2 >= 1) {
+                    phase = 'brake';
+                    var hmBr0 = animHeightM(heightMetersAtY(L.groundY - 12, L));
+                    var vEnter = Math.max(0.35, speedFromEnergy(E0, hmBr0, gPhys));
+                    brakeVel = vEnter * ANIM_SCALE / L.metersPerPixel;
+                    var vMaxPx = outcome.vMax * ANIM_SCALE / L.metersPerPixel;
+                    // a = vMax²/(2L)：恰使临界最大速停在带末端；更大动能则冲出
+                    brakeA = (vMaxPx * vMaxPx) / (2 * brakeLenPx);
+                    // 带外减速度更小，冲出距离更易目视分辨「差一点 / 明显过冲」
+                    coastA = brakeA * 0.28;
+                }
+            } else if (phase === 'brake') {
+                // 同一套连续减速：用剩余刹停距判断停带内或冲出，避免欧拉积分误判
+                carY = L.groundY - 12;
+                var xOld = carX;
+                var stopLeft = brakeA > 1e-9 ? (brakeVel * brakeVel) / (2 * brakeA) : 0;
+                if (xOld + stopLeft <= brake.x1 + 0.75) {
+                    // 动能将在带内耗尽 → 滑行至停点
+                    var step = Math.min(brakeVel * dt, stopLeft);
+                    carX = xOld + step;
+                    brakeVel = Math.max(0, brakeVel - brakeA * dt);
+                    if (brakeVel <= 1e-3 || step >= stopLeft - 1e-3) {
+                        carX = Math.min(xOld + stopLeft, brake.x1);
+                        brakeVel = 0;
+                        phase = 'done';
+                    }
+                } else {
+                    // 到末端仍有较大剩余动能 → 出带
+                    carX = xOld + brakeVel * dt;
+                    if (carX >= brake.x1) {
+                        var distEnd = Math.max(0, brake.x1 - xOld);
+                        brakeVel = Math.sqrt(Math.max(0, brakeVel * brakeVel - 2 * brakeA * distEnd));
+                        carX = brake.x1;
+                        phase = 'coast';
+                    } else {
+                        brakeVel = Math.max(0, brakeVel - brakeA * dt);
+                    }
+                }
+            } else if (phase === 'coast') {
+                // 冲出带端后沿地面继续滑行（目视可读冲出远近；不做卡通抛飞）
+                carY = L.groundY - 12;
+                var coastStop = coastA > 1e-9 ? (brakeVel * brakeVel) / (2 * coastA) : 0;
+                var cstep = Math.min(brakeVel * dt, coastStop);
+                carX += cstep;
+                brakeVel = Math.max(0, brakeVel - coastA * dt);
+                if (brakeVel <= 1e-3 || cstep >= coastStop - 1e-3 || carX >= W - 16) {
+                    carX = Math.min(carX, W - 16);
+                    if (brakeVel <= 1e-3 || cstep >= coastStop - 1e-3) {
+                        // 停在带外真实滑行终点
+                    }
+                    brakeVel = 0;
+                    phase = 'done';
+                }
+            }
+            // 运动火花（环底更快时更密）
+            if (phase === 'loop' || phase === 'ramp' || phase === 'runout' || phase === 'brake' || phase === 'coast') {
+                if (Math.random() < 0.55) {
+                    carSparks.push({
+                        x: carX - 4 + Math.random() * 6,
+                        y: carY + 4,
+                        vx: -0.8 + Math.random() * 0.4,
+                        vy: -0.3 + Math.random() * 0.6,
+                        life: 0.7 + Math.random() * 0.3,
+                        r: 1.2 + Math.random() * 1.6,
+                        hot: phase === 'loop' || phase === 'brake'
+                    });
+                    if (carSparks.length > 40) carSparks.shift();
+                }
+            }
+            drawTrack();
+            if (phase !== 'done') requestAnimationFrame(animFrame);
+            else finishFire(h, v, outcome);
+        }
+        requestAnimationFrame(animFrame);
+    }
+
+    refreshGoalUI();
+    btnFire.addEventListener('click', fire);
+    btnReset.addEventListener('click', resetSim);
+
+    updateDisplays();
+    resetSim();
+    window.__mechRedraw = drawTrack;
+    // 待机彩旗/串灯微动（不改玩法）
+    (function ambientMech() {
+        if (!animating) drawTrack();
+        requestAnimationFrame(ambientMech);
+    })();
+
+    if (typeof window.emit === 'undefined') {
+        window.emit = function(type, payload) {
+            try {
+                if (window.PlatformTraceAdapter) {
+                    window.PlatformTraceAdapter.record(type, payload || {});
+                    return;
+                }
+            } catch (e) {}
+            try {
+                if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+                    window.parent.PlatformTraceAdapter.record(type, payload || {});
+                }
+            } catch (e) {}
+        };
+    }
+
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    if (typeof window.__mechRedraw === 'function') {
+      window.__mechRedraw();
+      return;
+    }
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__mechApplyMode === 'function') {
+      try { window.__mechApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

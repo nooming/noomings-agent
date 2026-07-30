@@ -1,0 +1,246 @@
+{
+  "_expertMeta": {
+    "id": "projectile-cannon",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.506Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "海防炮台 · 野战试射",
+    "sub": "试射场",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入试射场",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节参数并发射",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "飞出边界?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "撞到障碍物?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "命中要塞目标?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "阻力与风影响弹道",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "质量影响惯性",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "弹药材质",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "method"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "海防炮台 · 野战试射",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "海防炮台 · 野战试射",
+        "formulas": [
+          "F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用",
+          "v0 = parseFloat(this.dom.inputs.power.value)"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "in-power",
+        "label": "初速度",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "in-grav",
+        "label": "重力加速度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "in-wind",
+        "label": "风速",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV4",
+        "controlId": "in-angle",
+        "label": "发射角度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 4,
+        "monotonicity": "non-monotone"
+      },
+      {
+        "id": "AV5",
+        "controlId": "in-drag",
+        "label": "空气阻力",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 5,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "in-mass",
+        "label": "质量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      },
+      {
+        "id": "CV2",
+        "controlId": "in-material",
+        "label": "外观材料",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·初速度",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_in-grav",
+        "label": "单变量·重力加速度",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_in-wind",
+        "label": "单变量·风速",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "main_in-angle",
+        "label": "单变量·发射角度",
+        "priorityRank": 4,
+        "score": 0.55
+      },
+      {
+        "id": "main_in-drag",
+        "label": "单变量·空气阻力",
+        "priorityRank": 5,
+        "score": 0.47000000000000003
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_in_mass",
+        "label": "试探混淆·质量",
+        "priorityRank": 6,
+        "score": 0.39
+      }
+    ]
+  }
+}

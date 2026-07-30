@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<!-- BATCH1-FIXED-CHALLENGE-20260724 -->
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仓库卸货滑道 · 摩擦探究</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+    .app { max-width: 720px; width: 100%; background: white; border-radius: 16px; padding: 24px 20px 32px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+    h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.3px; }
+    .sub { color: #4a5568; font-size: 0.95rem; margin-bottom: 20px; border-left: 3px solid #3182ce; padding-left: 12px; }
+    .canvas-wrap { background: #eef2f6; border-radius: 12px; padding: 8px; margin-bottom: 20px; }
+    canvas { display: block; width: 100%; height: auto; background: #dce3ed; border-radius: 8px; }
+    .control-grid { display: flex; flex-wrap: wrap; gap: 18px 24px; margin: 18px 0 12px; }
+    .slider-group { flex: 1 1 180px; min-width: 140px; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 500; color: #1a202c; margin-bottom: 4px; }
+    .slider-group input { width: 100%; accent-color: #2b6cb0; }
+    .value-badge { background: #edf2f7; padding: 0 8px; border-radius: 20px; font-size: 0.8rem; }
+    .action-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 12px 0 16px; }
+    .btn { background: #2b6cb0; color: white; border: none; padding: 8px 22px; border-radius: 40px; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: 0.15s; box-shadow: 0 2px 6px rgba(43,108,176,0.2); }
+    .btn:active { transform: scale(0.96); }
+    .btn-outline { background: transparent; border: 1px solid #a0aec0; color: #2d3748; box-shadow: none; }
+    .btn-outline:hover { background: #f0f4f8; }
+    .observe-box { background: #f0f5fa; border-radius: 12px; padding: 14px 16px; margin: 12px 0 8px; border-left: 4px solid #3182ce; }
+    .observe-box .label { font-weight: 600; font-size: 0.85rem; color: #2c5282; letter-spacing: 0.3px; }
+    .observe-box .state { font-size: 1.3rem; font-weight: 600; margin-top: 2px; }
+    .hint { color: #2d3748; background: #fff9e6; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; margin: 6px 0 10px; border: 1px solid #f6e3b0; }
+    .confound-note { background: #f7fafc; border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; color: #4a5568; border: 1px dashed #cbd5e0; margin: 8px 0 12px; }
+    .win-banner { background: #38a169; color: white; padding: 10px 16px; border-radius: 40px; font-weight: 600; text-align: center; margin: 8px 0 0; }
+    .irrelevant-area { margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+    .flex { display: flex; align-items: center; gap: 8px; }
+    .mt-1 { margin-top: 6px; }
+  
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则，否则会变成整条白幕遮挡 canvas */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#e8a06a;--craft-bg:#1a1410;--craft-panel:#2a2118;--craft-text:#f3f0ea;--craft-muted:#d4c4b0;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-text)!important;}
+#essence-bench .essence-sub,#essence-hud .essence-sub{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+/* 清掉原白底蓝条卡片残留，适配 craft 侧栏 */
+#essence-bench .observe-box{
+  background:rgba(0,0,0,.35)!important;border-left:4px solid var(--craft-accent)!important;color:var(--craft-text)!important;
+}
+#essence-bench .observe-box .label{color:var(--craft-accent)!important;font-weight:700;}
+#essence-bench .observe-box .state{color:#fff!important;font-size:1.25rem;}
+#essence-bench .value-badge{
+  background:rgba(0,0,0,.45)!important;color:#ffe0c2!important;
+}
+#essence-bench .btn-outline{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint{
+  background:rgba(232,160,106,.16)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#craft-gauge{display:none!important;}
+#winBanner{display:none!important;}
+
+/* 倒计时高对比：深色芯片 + 亮色字 */
+#dual-mode-hud .dual-chip,
+#challengeStats,
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel,
+#essence-stage > #dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay,
+#essence-stage > #dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#ffe0c2!important;letter-spacing:.5px;
+}
+#dual-timer-chip span[style*="background"]{background:rgba(255,224,194,.45)!important;}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+
+/* 侧栏层次（对齐斜抛观感） */
+#essence-bench-hd,#essence-bench .dual-bench-hd{
+  padding:14px 16px!important;
+}
+#essence-bench .essence-scroll{padding:16px 16px 10px!important;}
+#essence-bench .control-grid{
+  display:flex!important;flex-direction:column!important;gap:14px!important;
+  margin:0 0 16px!important;padding:12px!important;border-radius:14px!important;
+  background:rgba(0,0,0,.22)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+}
+#essence-bench .slider-group{flex:none!important;min-width:0!important;width:100%!important;}
+#essence-bench .slider-group label{
+  font-size:.88rem!important;margin-bottom:6px!important;
+}
+#essence-bench .observe-box{
+  margin:0 0 8px!important;padding:16px!important;border-radius:14px!important;
+  background:rgba(0,0,0,.32)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+#essence-bench .essence-ft{
+  padding:12px 16px 16px!important;
+  background:rgba(0,0,0,.18)!important;
+  border-top:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;
+}
+#essence-bench .essence-ft .btn{
+  width:100%!important;padding:12px 16px!important;font-size:1rem!important;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench .essence-ft .btn-outline{
+  box-shadow:none!important;width:100%!important;padding:10px 14px!important;
+}
+#essence-bench .action-row{flex-direction:column!important;gap:8px!important;margin:0!important;width:100%;}
+#essence-hud{
+  top:10px!important;left:auto!important;right:12px!important;
+  max-width:min(220px,40%)!important;z-index:6;
+  align-items:flex-end!important;
+}
+#essence-hud .essence-title{
+  background:rgba(15,23,42,.9)!important;border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  font-size:13px!important;padding:6px 10px!important;
+}
+#essence-hud .essence-sub{display:none!important;}
+#modeSelect{
+  background:rgba(0,0,0,.35)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>仓库卸货滑道</h2>
+    <p>夜班仓库等着出货。试着调 μ 与倾角，对比「卡住 / 卸到接货区 / 冲过接货区」；再接急单——μ 锁定，限次只靠调坡度把货箱停在接货区。</p>
+    <p style="font-size:13px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛锁定 μ 后本局不变，卡住或冲过都只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">临界关系：当 μ &lt; tanθ 时物块下滑</div>
+    <p id="craftWinText">通过对比卡住、停在接货区与冲过接货区，你摸清了 μ 与 θ 既不能太保守、也不能过猛。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+    <canvas id="simCanvas" width="680" height="280"></canvas>
+  </div>
+
+  
+    <div id="essence-hud">
+      <div class="essence-title">仓库 · 卸货滑道</div>
+      <div class="essence-sub" id="goalMission">目标：对比卡住与卸下，摸清临界</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="app">
+  <div id="sideGoalBox" style="margin:0 0 12px;padding:10px 12px;border-radius:12px;border:1px solid rgba(56,189,248,.35);background:rgba(15,23,42,.35)">
+    <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em">当前目标</div>
+    <p id="sideGoal" style="margin:4px 0 0;font-size:12px;line-height:1.45;color:rgba(254,243,199,.92)">试着弄清：μ 与 θ 怎样决定货箱卡住还是卸下。竞赛另有急单。</p>
+  </div>
+  <!-- 调节变量 -->
+  <div class="control-grid">
+    <div class="slider-group" id="group-friction">
+      <label>摩擦系数 μ <span class="value-badge" id="muDisplay">0.70</span></label>
+      <input type="range" id="s-friction" min="0" max="1" step="0.01" value="0.70">
+    </div>
+    <div class="slider-group">
+      <label>斜面角度 θ <span class="value-badge" id="angleDisplay">30°</span></label>
+      <input type="range" id="s-angle" min="0" max="90" step="1" value="30">
+    </div>
+    <div class="slider-group">
+      <label>物体质量 m <span class="value-badge" id="massDisplay">1.0</span></label>
+      <input type="range" id="s-mass" min="0.1" max="5" step="0.1" value="1.0">
+    </div>
+  </div>
+
+  <!-- Observe 反馈区 -->
+  <div class="observe-box" id="observeBox">
+    <div class="label">物体状态</div>
+    <div class="state" id="stateDisplay">—</div>
+    <div id="hintMessage" class="hint" style="margin-top:6px;">货箱状态待测 · 调参后点测试卸货</div>
+  </div>
+
+  <div id="winBanner" class="win-banner" style="display:none;" hidden></div>
+
+  <!-- 埋点 hook (trace-adapter-hook) -->
+  <!-- trace-adapter-hook -->
+  
+
+  <!-- 业务逻辑脚本 -->
+  
+</div>
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+    <button class="btn" id="btn-test">测试卸货</button>
+    <button class="btn btn-outline" id="btn-reset">↺ 重置</button>
+  </div>
+    </div>
+  </aside>
+</div>
+<script>
+    (function() {
+      function emit(type, payload) {
+        try {
+          if (window.PlatformTraceAdapter) {
+            window.PlatformTraceAdapter.record(type, payload || {});
+            return;
+          }
+        } catch (e) {}
+        try {
+          if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+            window.parent.PlatformTraceAdapter.record(type, payload || {});
+          }
+        } catch (e) {}
+      }
+
+      function snapControls() {
+        var o = {};
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+          var id = el.id || el.name; if (id) o[id] = el.value;
+        });
+        return o;
+      }
+
+      // 同步挂载，供后续 craft-gold-runtime 包装 __emit → showWin
+      window.__traceEmit = emit;
+      window.__emit = emit;
+      window.__snapControls = snapControls;
+
+      document.addEventListener('DOMContentLoaded', function() {
+        emit('puzzle_open', {});
+
+        // tuning 绑定 (滑条)
+        document.querySelectorAll('input[type="range"]').forEach(function(el) {
+          el.addEventListener('input', function() {
+            emit('tuning', { control: el.id || 'slider', value: el.value });
+          });
+        });
+
+      });
+    })();
+  </script>
+<script>
+    (function() {
+      const canvas = document.getElementById('simCanvas');
+      const ctx = canvas.getContext('2d');
+      const frictionSlider = document.getElementById('s-friction');
+      const angleSlider = document.getElementById('s-angle');
+      const massSlider = document.getElementById('s-mass');
+      const muDisplay = document.getElementById('muDisplay');
+      const angleDisplay = document.getElementById('angleDisplay');
+      const massDisplay = document.getElementById('massDisplay');
+      const stateDisplay = document.getElementById('stateDisplay');
+      const hintMsg = document.getElementById('hintMessage');
+      const btnTest = document.getElementById('btn-test');
+      const btnReset = document.getElementById('btn-reset');
+
+      // t=0 坡底，t=1 坡顶；待机靠坡顶，下滑 t 减小
+      const T_TOP = 0.82;
+      const T_BOTTOM = 0.12;
+      let animating = false;
+      let blockT = T_TOP;
+      let testCount = 0;
+      let sawSlide = false;
+      let sawRest = false;
+      let lastMu = null;
+      let lastTheta = null;
+      let won = false;
+      let playMode = 'explore';
+      let challengeLockedMu = null;
+      let layout = { W: 680, H: 280, groundY: 225, BASE_X: 80, BASE_Y: 220, LENGTH: 260 };
+      let outcomeFlash = 0; // 成功接货短暂光效
+      let outcomeFlashKind = ''; // land | overshoot | stuck
+      // 探究/竞赛分流：竞赛接货区更短，同参未必两边同结论；本局 Fixed 不换区
+      const ZONE_MODE = {
+        explore: { landLimit: -0.36, label: '接货区' },
+        challenge: { landLimit: -0.16, label: '急单接货' }
+      };
+      function zoneCfg() {
+        return ZONE_MODE[playMode] || ZONE_MODE.explore;
+      }
+
+      function refreshGoalUI() {
+        const mission = document.getElementById('goalMission');
+        const side = document.getElementById('sideGoal');
+        if (playMode === 'challenge' && challengeLockedMu != null) {
+          if (mission) mission.textContent = '当前急单：μ=' + challengeLockedMu.toFixed(2) + ' 已锁定 · 调 θ 停到接货区 · 本局固定';
+          if (side) side.textContent = '竞赛急单：μ 锁定为 ' + challengeLockedMu.toFixed(2) + '。限次只调倾角把货箱停在接货区（卡住或冲过都不换 μ）。';
+        } else {
+          if (mission) mission.textContent = '目标：自由试卸几轮，同时见过「卡住」「停接货区」「冲过」';
+          if (side) side.textContent = '探究·仓库试滑：试着弄清卡住、停在接货区与冲过接货区的差别；用停距调参。';
+        }
+      }
+
+      function setFrictionLocked(locked, muVal) {
+        if (!frictionSlider) return;
+        const grp = document.getElementById('group-friction');
+        if (locked) {
+          frictionSlider.value = String(muVal);
+          frictionSlider.disabled = true;
+          frictionSlider.style.opacity = '0.55';
+          if (grp) grp.title = '竞赛急单：摩擦系数已锁定';
+        } else {
+          frictionSlider.disabled = false;
+          frictionSlider.style.opacity = '';
+          if (grp) grp.title = '';
+        }
+        updateLabels();
+      }
+
+      /** FixedChallenge：仅进入竞赛时锁定一次 μ；失败禁止重抽 */
+      function lockChallengeOrder(reasonHint) {
+        const nextMu = Math.round((0.35 + Math.random() * 0.40) * 100) / 100;
+        challengeLockedMu = nextMu;
+        const safeTheta = Math.max(5, Math.floor(Math.atan(challengeLockedMu) * 180 / Math.PI) - 8);
+        setFrictionLocked(true, challengeLockedMu);
+        angleSlider.value = String(safeTheta);
+        blockT = T_TOP;
+        stateDisplay.textContent = '—';
+        hintMsg.textContent = (reasonHint || '急单已下发') + '：μ=' + challengeLockedMu.toFixed(2) + ' 已锁定（本局不变），调坡度再测';
+        refreshGoalUI();
+        idleDraw();
+      }
+
+      window.__frictionApplyMode = function(mode) {
+        playMode = mode === 'challenge' ? 'challenge' : 'explore';
+        won = false;
+        window.__legacyWinEmitted = false;
+        testCount = 0; sawSlide = false; sawRest = false;
+        lastMu = null; lastTheta = null;
+        animating = false; btnTest.disabled = false;
+        if (playMode === 'challenge') {
+          challengeLockedMu = null;
+          lockChallengeOrder('新急单');
+        } else {
+          challengeLockedMu = null;
+          setFrictionLocked(false);
+          frictionSlider.value = '0.70';
+          angleSlider.value = '30';
+          if (massSlider) massSlider.value = '1.0';
+          hintMsg.textContent = '货箱状态待测 · 调参后点测试卸货';
+          stateDisplay.textContent = '—';
+          blockT = T_TOP;
+          refreshGoalUI();
+          idleDraw();
+        }
+      };
+
+      function syncCanvasSize() {
+        var stage = document.getElementById('essence-stage') || canvas.parentElement;
+        var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 680);
+        var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 280);
+        var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        var bw = Math.round(cssW * dpr);
+        var bh = Math.round(cssH * dpr);
+        if (canvas.width !== bw || canvas.height !== bh) {
+          canvas.width = bw;
+          canvas.height = bh;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        layout.W = cssW;
+        layout.H = cssH;
+        layout.groundY = Math.round(cssH * 0.84);
+        // 左侧留给接货区，斜面加长以填满舞台中心
+        var palletReserve = 120;
+        layout.LENGTH = Math.round(Math.min(cssW * 0.58, 0.88 * (layout.groundY - 48)));
+        layout.BASE_X = Math.round(Math.max(palletReserve + 16, Math.min(cssW * 0.28, cssW - layout.LENGTH - 80)));
+        layout.BASE_Y = layout.groundY - 5;
+      }
+
+      function params() {
+        const mu = parseFloat(frictionSlider.value);
+        const thetaDeg = parseFloat(angleSlider.value);
+        const mass = massSlider ? parseFloat(massSlider.value) : 1;
+        const thetaRad = thetaDeg * Math.PI / 180;
+        const tanTheta = Math.tan(thetaRad);
+        const excess = tanTheta - mu;
+        const willSlide = excess > 0;
+        // 连续停距：超额越大，冲出坡脚越远；中间带落在接货区
+        // stopT：≥0 在斜面上；<0 沿地面向左（接货区方向）
+        let stopT = T_TOP;
+        let outcome = 'stuck';
+        if (willSlide) {
+          // excess≈0.05 刚进区；越大越冲过；landLimit 按模式分流
+          stopT = -(0.04 + excess * 0.95);
+          if (stopT < -0.72) stopT = -0.72;
+          if (stopT > zoneCfg().landLimit) outcome = 'land';
+          else outcome = 'overshoot';
+        }
+        return { mu, thetaDeg, thetaRad, mass, tanTheta, excess, willSlide, stopT, outcome };
+      }
+
+      function updateLabels() {
+        const p = params();
+        muDisplay.textContent = p.mu.toFixed(2);
+        angleDisplay.textContent = p.thetaDeg + '°';
+        if (massDisplay) massDisplay.textContent = p.mass.toFixed(1);
+      }
+
+      function roundRect(x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+      }
+
+      function drawScene(thetaRad, mass, t, sliding) {
+        syncCanvasSize();
+        const W = layout.W, H = layout.H;
+        const groundY = layout.groundY;
+        const BASE_X = layout.BASE_X, BASE_Y = layout.BASE_Y, LENGTH = layout.LENGTH;
+        const m = (typeof mass === 'number' && isFinite(mass)) ? mass : 1;
+        const cosA = Math.cos(thetaRad);
+        const sinA = Math.sin(thetaRad);
+        const dx = LENGTH * cosA;
+        const dy = LENGTH * sinA;
+        const topX = BASE_X + dx;
+        const topY = BASE_Y - dy;
+
+        // —— 仓库内景：提高墙/地/道具色差 ——
+        const wall = ctx.createLinearGradient(0, 0, 0, H);
+        wall.addColorStop(0, '#4a5568');
+        wall.addColorStop(0.4, '#334155');
+        wall.addColorStop(1, '#1e293b');
+        ctx.fillStyle = wall;
+        ctx.fillRect(0, 0, W, H);
+
+        // 顶部高窗（更亮、更清晰）+ 光束呼吸
+        const tNow = performance.now();
+        const winPulse = 0.9 + 0.1 * Math.sin(tNow * 0.002);
+        const winCount = Math.max(3, Math.floor(W / 160));
+        for (let i = 0; i < winCount; i++) {
+          const wx = 40 + i * (W / winCount);
+          const ww = Math.min(70, W / winCount - 24);
+          ctx.fillStyle = `rgba(186,230,253,${0.38 * winPulse})`;
+          ctx.fillRect(wx + 4, 12, ww, 36);
+          ctx.strokeStyle = 'rgba(254,243,199,0.7)';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(wx + 4, 12, ww, 36);
+          ctx.beginPath();
+          ctx.moveTo(wx + 4 + ww / 2, 12);
+          ctx.lineTo(wx + 4 + ww / 2, 48);
+          ctx.moveTo(wx + 4, 30);
+          ctx.lineTo(wx + 4 + ww, 30);
+          ctx.stroke();
+          const beam = ctx.createLinearGradient(wx + ww / 2, 48, wx + ww / 2, groundY);
+          beam.addColorStop(0, `rgba(255,240,200,${0.14 * winPulse})`);
+          beam.addColorStop(1, 'rgba(255,240,200,0)');
+          ctx.fillStyle = beam;
+          ctx.fillRect(wx, 48, ww + 8, groundY - 48);
+        }
+
+        // 悬挂工作灯（微摆）
+        const lampX = Math.min(W - 80, topX + 40);
+        const lampSwing = Math.sin(tNow * 0.0018) * 6;
+        ctx.strokeStyle = 'rgba(148,163,184,0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(lampX, 8);
+        ctx.lineTo(lampX + lampSwing, 58);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(lampX + lampSwing - 10, 58);
+        ctx.lineTo(lampX + lampSwing + 10, 58);
+        ctx.lineTo(lampX + lampSwing, 72);
+        ctx.closePath();
+        ctx.fill();
+        const lampGlow = ctx.createRadialGradient(lampX + lampSwing, 78, 2, lampX + lampSwing, 90, 40);
+        lampGlow.addColorStop(0, 'rgba(251,191,36,0.28)');
+        lampGlow.addColorStop(1, 'rgba(251,191,36,0)');
+        ctx.fillStyle = lampGlow;
+        ctx.beginPath();
+        ctx.arc(lampX + lampSwing, 90, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 远处货架（低干扰，靠右）
+        for (let i = 0; i < 4; i++) {
+          const sx = W - 40 - (4 - i) * 48;
+          if (sx < topX + 40) continue;
+          ctx.fillStyle = 'rgba(15,23,42,0.35)';
+          ctx.fillRect(sx, 90, 32, groundY - 90);
+          ctx.fillStyle = 'rgba(71,85,105,0.4)';
+          for (let r = 0; r < 3; r++) {
+            ctx.fillRect(sx + 4, 105 + r * 36, 24, 8);
+          }
+          // 货箱剪影
+          ctx.fillStyle = 'rgba(180,83,9,0.35)';
+          ctx.fillRect(sx + 6, groundY - 28, 20, 18);
+        }
+
+        // 悬浮尘埃（氛围，低噪声）
+        for (let i = 0; i < 10; i++) {
+          const dx = (i * 97 + tNow * 0.02) % W;
+          const dy = 40 + (i * 37) % Math.max(40, groundY - 60) + Math.sin(tNow * 0.001 + i) * 6;
+          ctx.fillStyle = `rgba(254,243,199,${0.12 + (i % 3) * 0.05})`;
+          ctx.beginPath();
+          ctx.arc(dx, dy, 1.2 + (i % 2) * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 水泥地面：偏亮冷灰，与木滑道拉开对比
+        const floor = ctx.createLinearGradient(0, groundY, 0, H);
+        floor.addColorStop(0, '#94a3b8');
+        floor.addColorStop(1, '#64748b');
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, groundY, W, H - groundY);
+        ctx.strokeStyle = 'rgba(15,23,42,0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.moveTo(20 + i * 110, groundY + 4);
+          ctx.lineTo(20 + i * 110, H - 4);
+          ctx.stroke();
+        }
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(W, groundY);
+        ctx.stroke();
+
+        // 接货托盘：长度随模式 landLimit，目视可辨探究宽区 vs 竞赛短区
+        const zc = zoneCfg();
+        const palletW = Math.min(BASE_X - 16, Math.max(40, Math.abs(zc.landLimit) * LENGTH * 0.95));
+        const palletX = Math.max(8, BASE_X - palletW - 8);
+        const palletY = groundY - 6;
+        ctx.fillStyle = playMode === 'challenge' ? '#c2410c' : '#b45309';
+        roundRect(palletX, palletY, palletW, 12, 2);
+        ctx.fill();
+        ctx.strokeStyle = playMode === 'challenge' ? '#9a3412' : '#78350f';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#d97706';
+        const slatN = Math.max(2, Math.floor(palletW / 24));
+        for (let i = 0; i < slatN; i++) {
+          ctx.fillRect(palletX + 6 + i * (palletW / slatN), palletY - 5, Math.max(10, palletW / slatN - 8), 6);
+        }
+        ctx.fillStyle = 'rgba(15,23,42,0.35)';
+        ctx.fillRect(palletX + 8, groundY + 2, palletW - 16, 3);
+        // 成功接货短暂光晕 / 冲过警示描边
+        if (outcomeFlash > 0) {
+          const fa = Math.min(1, outcomeFlash);
+          if (outcomeFlashKind === 'land') {
+            ctx.strokeStyle = `rgba(74,222,128,${0.85 * fa})`;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(palletX - 3, palletY - 8, palletW + 6, 22);
+            ctx.fillStyle = `rgba(74,222,128,${0.18 * fa})`;
+            ctx.fillRect(palletX - 3, palletY - 8, palletW + 6, 22);
+          } else if (outcomeFlashKind === 'overshoot') {
+            ctx.strokeStyle = `rgba(248,113,113,${0.75 * fa})`;
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(palletX - 4, palletY - 10, palletW + 8, 26);
+            ctx.setLineDash([]);
+          }
+        }
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText(zc.label, palletX + Math.max(4, palletW / 2 - 22), palletY + 28);
+
+        // —— 木质滑道楔体（饱和木色） ——
+        ctx.beginPath();
+        ctx.moveTo(BASE_X, BASE_Y);
+        ctx.lineTo(topX, topY);
+        ctx.lineTo(topX + 20, topY);
+        ctx.lineTo(topX + 20, BASE_Y);
+        ctx.closePath();
+        const rampFill = ctx.createLinearGradient(BASE_X, topY, topX, BASE_Y);
+        rampFill.addColorStop(0, '#d4a574');
+        rampFill.addColorStop(0.5, '#b45309');
+        rampFill.addColorStop(1, '#78350f');
+        ctx.fillStyle = rampFill;
+        ctx.fill();
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 木板条纹理
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(BASE_X, BASE_Y);
+        ctx.lineTo(topX, topY);
+        ctx.lineTo(topX + 20, topY);
+        ctx.lineTo(topX + 20, BASE_Y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(69,26,3,0.45)';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < 10; i++) {
+          const u = i / 9;
+          const x0 = BASE_X + dx * u;
+          const y0 = BASE_Y - dy * u;
+          ctx.beginPath();
+          ctx.moveTo(x0, y0);
+          ctx.lineTo(x0 + 20 * cosA + 2, y0 + 20 * sinA);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 坡面高光边
+        ctx.beginPath();
+        ctx.moveTo(BASE_X, BASE_Y);
+        ctx.lineTo(topX, topY);
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 3.5;
+        ctx.stroke();
+
+        // 坡顶装车台
+        const deckW = 56, deckH = 12;
+        ctx.fillStyle = '#92400e';
+        roundRect(topX - 6, topY - deckH - 2, deckW, deckH, 2);
+        ctx.fill();
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(topX + deckW - 16, topY - deckH - 16, 6, 16);
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('装车台', topX, topY - deckH - 20);
+
+        // 角度弧（不抢戏）
+        const arcR = 32;
+        ctx.beginPath();
+        ctx.arc(BASE_X, BASE_Y, arcR, -thetaRad, 0);
+        ctx.strokeStyle = 'rgba(232,160,106,0.85)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(BASE_X, BASE_Y);
+        ctx.lineTo(BASE_X + arcR + 6, BASE_Y);
+        ctx.strokeStyle = 'rgba(255,224,194,0.5)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        const midA = -thetaRad / 2;
+        ctx.fillStyle = '#ffe0c2';
+        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+        ctx.fillText('θ', BASE_X + Math.cos(midA) * (arcR + 12), BASE_Y + Math.sin(midA) * (arcR + 12) + 4);
+
+        // 读数贴坡脚（避开左上双模式条与右上 essence-hud）
+        const badgeW = 118, badgeH = 48;
+        const badgeX = BASE_X + 44;
+        const badgeY = Math.max(56, BASE_Y - 78);
+        roundRect(badgeX, badgeY, badgeW, badgeH, 10);
+        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232,160,106,0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#ffe0c2';
+        ctx.font = '13px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
+        ctx.fillText('μ = ' + parseFloat(frictionSlider.value).toFixed(2), badgeX + 12, badgeY + 20);
+        ctx.fillText('θ = ' + (thetaRad * 180 / Math.PI).toFixed(0) + '°', badgeX + 12, badgeY + 38);
+
+        // —— 木箱货件（硬描边、少 blur）；t<0 表示已离坡沿地面向左滑行 ——
+        let objX, objY, onRamp = true;
+        if (t >= 0) {
+          objX = BASE_X + dx * t;
+          objY = BASE_Y - dy * t;
+        } else {
+          onRamp = false;
+          objX = BASE_X + t * LENGTH;
+          objY = groundY - 10;
+        }
+        const size = 16 + Math.min(14, m * 2.4);
+        ctx.save();
+        ctx.translate(objX, objY);
+        ctx.rotate(onRamp ? -thetaRad : 0);
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+        const crate = ctx.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
+        if (sliding) {
+          crate.addColorStop(0, '#fdba74');
+          crate.addColorStop(1, '#ea580c');
+        } else {
+          crate.addColorStop(0, '#f0c987');
+          crate.addColorStop(1, '#b45309');
+        }
+        roundRect(-size / 2, -size / 2, size, size, 3);
+        ctx.fillStyle = crate;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(69,26,3,0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(-size / 2 + 4, -size / 6);
+        ctx.lineTo(size / 2 - 4, -size / 6);
+        ctx.moveTo(-size / 2 + 4, size / 6);
+        ctx.lineTo(size / 2 - 4, size / 6);
+        ctx.stroke();
+        ctx.strokeStyle = sliding ? '#9f1239' : '#78350f';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(0, -size / 2 + 2);
+        ctx.lineTo(0, size / 2 - 2);
+        ctx.moveTo(-size / 2 + 2, 0);
+        ctx.lineTo(size / 2 - 2, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        // 下滑微尘：落在运动轨迹后方（坡顶一侧，相对向下滑动）
+        if (sliding && onRamp && t < 0.75) {
+          ctx.fillStyle = 'rgba(254,243,199,0.55)';
+          for (let i = 0; i < 5; i++) {
+            const along = 10 + i * 6;
+            const px = objX + Math.cos(thetaRad) * along + (i % 2) * 2;
+            const py = objY - Math.sin(thetaRad) * along + 3;
+            ctx.beginPath();
+            ctx.arc(px, py, 1.4 + (i % 3) * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        // 冲过接货区时的地面扬尘
+        if (sliding && !onRamp) {
+          ctx.fillStyle = 'rgba(254,243,199,0.4)';
+          for (let i = 0; i < 4; i++) {
+            ctx.beginPath();
+            ctx.arc(objX + 8 + i * 5, groundY - 2, 1.2 + (i % 2) * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      function idleDraw() {
+        if (animating) return;
+        const p = params();
+        updateLabels();
+        blockT = T_TOP;
+        drawScene(p.thetaRad, p.mass, blockT, false);
+        if (stateDisplay.textContent === '—' || stateDisplay.textContent === '') {
+          /* keep */
+        }
+      }
+
+      function maybeWin(lastOutcome) {
+        if (won) return;
+        const emit = window.__emit || window.__traceEmit || function(){};
+        const controls = window.__snapControls ? window.__snapControls() : {};
+        if (playMode === 'challenge') {
+          if (lastOutcome !== 'land') {
+            // FixedChallenge：失败只提示，μ 保持
+            blockT = T_TOP;
+            stateDisplay.textContent = lastOutcome === 'overshoot' ? '冲过接货区' : '卡住';
+            hintMsg.textContent = lastOutcome === 'overshoot'
+              ? ('冲过了：μ=' + (challengeLockedMu != null ? challengeLockedMu.toFixed(2) : '?') + ' 仍锁定。略减小倾角再试（本局不换单）。')
+              : ('未卸下：μ=' + (challengeLockedMu != null ? challengeLockedMu.toFixed(2) : '?') + ' 仍锁定。加大倾角再试（本局不换单）。');
+            refreshGoalUI();
+            idleDraw();
+            return;
+          }
+          won = true;
+          emit('snapshot', { controls: controls, winOk: true, hintKey: 'rush_unload' });
+          emit('win', { winOk: true });
+          if (typeof window.__craftShowWin === 'function') {
+            window.__craftShowWin('急单完成：在摩擦系数锁定时，你把货箱停在了接货区——既未卡住，也未冲过。');
+          }
+          return;
+        }
+        if (testCount < 3 || !sawSlide || !sawRest) return;
+        // 探究：最好见过冲过，但不强制（避免拖太久）；有卡住+卸下即可
+        won = true;
+        emit('snapshot', { controls: controls, winOk: true, hintKey: 'critical_explored' });
+        emit('win', { winOk: true });
+        if (typeof window.__craftShowWin === 'function') {
+          window.__craftShowWin('你通过对比卡住、停在接货区与冲过远近，归纳出了合适的倾角区间。');
+        }
+      }
+
+      function fireTest() {
+        if (animating) return;
+        const p = params();
+        updateLabels();
+        testCount += 1;
+        if (p.willSlide) sawSlide = true; else sawRest = true;
+        if (lastMu !== null && (Math.abs(lastMu - p.mu) > 0.001 || Math.abs(lastTheta - p.thetaDeg) > 0.001)) {
+          /* param changed across tests — good */
+        }
+        lastMu = p.mu;
+        lastTheta = p.thetaDeg;
+
+        const emit = window.__emit || window.__traceEmit || function(){};
+        emit('action', { control: 'btn-test', value: 'test' });
+
+        animating = true;
+        btnTest.disabled = true;
+        blockT = T_TOP;
+        const start = performance.now();
+        const duration = p.willSlide ? (p.outcome === 'overshoot' ? 1300 : 1100) : 700;
+        const endT = p.willSlide ? p.stopT : T_TOP;
+
+        function frame(now) {
+          const u = Math.min(1, (now - start) / duration);
+          if (p.willSlide) {
+            // 先加速下坡，再按连续停距冲入/冲过接货区
+            const ease = u * u;
+            blockT = T_TOP + (endT - T_TOP) * ease;
+            drawScene(p.thetaRad, p.mass, blockT, true);
+            stateDisplay.textContent = p.outcome === 'overshoot' ? '冲过中…' : '卸货中…';
+            hintMsg.textContent = '观察货箱停在接货区还是冲过';
+          } else {
+            // 坡顶微颤后停住
+            const shake = (u < 0.7) ? Math.sin(u * 28) * 0.008 * (1 - u) : 0;
+            blockT = T_TOP + shake;
+            drawScene(p.thetaRad, p.mass, blockT, false);
+            stateDisplay.textContent = '卡在滑道上';
+            hintMsg.textContent = '货箱未能下滑';
+          }
+          if (u < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            animating = false;
+            btnTest.disabled = false;
+            blockT = p.willSlide ? endT : T_TOP;
+            if (!p.willSlide) {
+              stateDisplay.textContent = '卡在滑道上';
+            } else if (p.outcome === 'overshoot') {
+              stateDisplay.textContent = '冲过接货区';
+            } else {
+              stateDisplay.textContent = '已卸到接货区';
+            }
+            if (playMode === 'challenge') {
+              if (!p.willSlide) hintMsg.textContent = '急单未达成：卡住了，μ 仍锁定，加大倾角再试…';
+              else if (p.outcome === 'overshoot') hintMsg.textContent = '急单未达成：冲过接货区，μ 仍锁定，略减小倾角再试…';
+              else hintMsg.textContent = '急单达成：货箱停在接货区！';
+            } else {
+              if (!p.willSlide) hintMsg.textContent = '这次货箱停住了。换组参数再试试？';
+              else if (p.outcome === 'overshoot') hintMsg.textContent = '这次冲过了接货区。对照停距，略减倾角再试。';
+              else hintMsg.textContent = '这次货箱停在接货区了。换组参数再对比卡住/冲过？';
+            }
+            outcomeFlashKind = !p.willSlide ? 'stuck' : (p.outcome === 'overshoot' ? 'overshoot' : 'land');
+            outcomeFlash = 1.0;
+            drawScene(p.thetaRad, p.mass, blockT, p.willSlide);
+            const controls = {
+              's-friction': frictionSlider.value,
+              's-angle': angleSlider.value
+            };
+            if (massSlider) controls['s-mass'] = massSlider.value;
+            const hintKey = !p.willSlide ? 'rest' : (p.outcome === 'overshoot' ? 'overshoot' : 'slide');
+            emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
+            maybeWin(p.willSlide ? p.outcome : 'stuck');
+            // 光效衰减（不改玩法）
+            (function fadeFlash(t0) {
+              function tick(now) {
+                outcomeFlash = Math.max(0, 1 - (now - t0) / 900);
+                if (!animating) {
+                  const pp = params();
+                  drawScene(pp.thetaRad, pp.mass, blockT, false);
+                }
+                if (outcomeFlash > 0) requestAnimationFrame(tick);
+              }
+              requestAnimationFrame(tick);
+            })(performance.now());
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function resetSim() {
+        if (typeof window.__frictionApplyMode === 'function') {
+          window.__frictionApplyMode(playMode);
+          return;
+        }
+        animating = false;
+        btnTest.disabled = false;
+        frictionSlider.value = '0.70';
+        angleSlider.value = '30';
+        if (massSlider) massSlider.value = '1.0';
+        stateDisplay.textContent = '—';
+        hintMsg.textContent = '货箱状态待测 · 调参后点测试卸货';
+        testCount = 0;
+        sawSlide = false;
+        sawRest = false;
+        lastMu = null;
+        lastTheta = null;
+        won = false;
+        window.__legacyWinEmitted = false;
+        blockT = T_TOP;
+        idleDraw();
+      }
+
+      function onParamInput() {
+        if (animating) return;
+        updateLabels();
+        const p = params();
+        blockT = T_TOP;
+        drawScene(p.thetaRad, p.mass, blockT, false);
+        hintMsg.textContent = '货箱状态待测 · 调参后点测试卸货';
+      }
+      frictionSlider.addEventListener('input', onParamInput);
+      angleSlider.addEventListener('input', onParamInput);
+      if (massSlider) massSlider.addEventListener('input', onParamInput);
+
+      btnTest.addEventListener('click', fireTest);
+      btnReset.addEventListener('click', resetSim);
+
+      window.__frictionRedraw = function() {
+        if (animating) return;
+        const p = params();
+        drawScene(p.thetaRad, p.mass, blockT, false);
+      };
+      window.__snapControls = function() {
+        var o = { 's-friction': frictionSlider.value, 's-angle': angleSlider.value };
+        if (massSlider) o['s-mass'] = massSlider.value;
+        return o;
+      };
+
+      syncCanvasSize();
+      refreshGoalUI();
+      idleDraw();
+      // 待机氛围动效（灯摆/尘埃），不改玩法
+      (function ambientLoop() {
+        if (!animating) idleDraw();
+        requestAnimationFrame(ambientLoop);
+      })();
+      if (window.__dualModeGet) {
+        try { window.__frictionApplyMode(window.__dualModeGet().mode); } catch (e) {}
+      }
+    })();
+  </script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    if (typeof window.__frictionRedraw === 'function') {
+      window.__frictionRedraw();
+      return;
+    }
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  // 主脚本可能稍后挂载重绘
+  setTimeout(fit, 0);
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__frictionApplyMode === 'function') {
+      try { window.__frictionApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:rgba(255,224,194,.45)"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // 侧栏已有观测区，不再注入 craft-gauge，避免叠在标题/读数上
+  function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

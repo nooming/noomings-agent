@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>串联与并联电路 · 调节电阻使电流达标</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+        .app { max-width: 700px; width: 100%; background: white; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
+        .subtitle { color: #4a5568; font-size: 0.95rem; margin-bottom: 20px; border-left: 4px solid #3182ce; padding-left: 12px; }
+        .canvas-wrap { background: #edf2f7; border-radius: 12px; padding: 12px; margin-bottom: 20px; }
+        canvas { display: block; width: 100%; height: auto; background: white; border-radius: 8px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.05); }
+        .control-grid { display: flex; flex-direction: column; gap: 18px; margin: 20px 0 16px; }
+        .slider-group { display: flex; flex-direction: column; gap: 4px; }
+        .slider-group label { font-weight: 500; font-size: 0.9rem; display: flex; justify-content: space-between; }
+        .slider-group input[type="range"] { width: 100%; margin: 4px 0; }
+        .row-buttons { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 8px 0 12px; }
+        button { padding: 8px 18px; border: none; border-radius: 30px; font-weight: 500; font-size: 0.9rem; background: #e2e8f0; color: #1a202c; cursor: pointer; transition: 0.15s; }
+        button.primary { background: #3182ce; color: white; }
+        button.primary:hover { background: #2b6cb0; }
+        button.secondary { background: #edf2f7; border: 1px solid #cbd5e0; }
+        button.secondary:hover { background: #e2e8f0; }
+        .observe-panel { background: rgba(0,0,0,.22); border-radius: 12px; padding: 14px 18px; margin: 16px 0 12px; border: 1px solid rgba(52,211,153,.35); }
+        .observe-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .observe-item { font-size: 0.92rem; color: #e2e8f0; }
+        .observe-item strong { font-weight: 600; color: #6ee7b7; }
+        .observe-item .value { font-family: ui-monospace, monospace; font-weight: 700; color: #f8fafc; }
+        .feedback { margin: 12px 0 8px; padding: 10px 14px; border-radius: 12px; font-weight: 500; text-align: center; }
+        .feedback.win { background: rgba(34,197,94,.2); color: #bbf7d0; border: 1px solid rgba(74,222,128,.4); }
+        .feedback.fail { background: rgba(248,113,113,.15); color: #fecaca; border: 1px solid rgba(248,113,113,.35); }
+        .feedback.info { background: rgba(56,189,248,.12); color: #bae6fd; border: 1px solid rgba(56,189,248,.3); }
+        #essence-bench label, .slider-group label { color: #a7f3d0 !important; }
+        #connect-status { color: #6ee7b7 !important; }
+        .confound-note { font-size: 0.8rem; color: #718096; background: #f0f4f8; padding: 6px 12px; border-radius: 20px; display: inline-block; margin: 6px 0 10px; }
+        .irrelevant-area { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d2dce6; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .irrelevant-area span { font-size: 0.8rem; color: #718096; }
+        #I1 { background: #e9d8fd; color: #44337a; border: 1px solid #b794f4; }
+        #I1:hover { background: #d6bcfa; }
+        .footer-note { font-size: 0.75rem; color: #a0aec0; margin-top: 16px; text-align: right; }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+
+/* dual-mode HUD 不得吃到舞台 flex 拉伸规则 */
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#34d399;--craft-bg:#07140f;--craft-panel:#10241c;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{display:none!important;}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+/* 双模式条收窄 + essence-hud 下移，避免与模式芯片叠层 */
+#essence-stage > #dual-mode-hud,#dual-mode-hud{
+  right:auto!important;width:auto!important;max-width:min(420px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+}
+#essence-hud{
+  top:56px!important;left:10px!important;right:auto!important;
+  max-width:min(420px,calc(100% - 24px))!important;
+}
+#essence-hud .essence-title{color:var(--craft-text)!important;}
+#essence-hud .essence-sub{color:var(--craft-muted)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>舞台灯电源板</h2>
+    <p>后台电源板要给灯带配流。试着弄清串并联如何改变总电流；再接限次急单——目标电流本局固定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标电流本局固定，未命中只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">串：R=ΣRi；并：1/R=Σ1/Ri</div>
+    <p id="craftWinText">通过调参与观察，你验证了本实验的核心关系。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="circuitCanvas" width="600" height="200"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">舞台灯电源板</div>
+      <div class="essence-sub" id="goalMission">探究：切换串/并联，观察电流如何变</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+      <div class="app">
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：串/并联与电阻怎样改变总电流。竞赛另有限次急单。</p>
+
+    <!-- canvas 示意电路 (极简) -->
+    <!-- 调节控件 -->
+    <div class="control-grid">
+        <div class="slider-group">
+            <label for="s-r1">电阻 R₁ <span id="r1-val">50</span> Ω</label>
+            <input type="range" id="s-r1" min="1" max="100" step="1" value="50">
+        </div>
+        <div class="slider-group">
+            <label for="s-r2">电阻 R₂ <span id="r2-val">50</span> Ω</label>
+            <input type="range" id="s-r2" min="1" max="100" step="1" value="50">
+        </div>
+        <div class="slider-group">
+            <label for="s-meter-r">仪表内阻 r<sub>g</sub> <span id="meter-r-val">0.5</span> Ω</label>
+            <input type="range" id="s-meter-r" min="0.1" max="5" step="0.1" value="0.5">
+        </div>
+    </div>
+
+    <!-- 按钮行：连接切换 + 测试 -->
+    <div class="row-buttons">
+        <button type="button" id="btn-connect" class="secondary">🔁 切换连接 (串联)</button>
+        <button type="button" id="btn-test" class="primary">📊 测试 / 发射</button>
+        <span style="font-size:0.85rem; color:var(--craft-muted); margin-left:auto;" id="connect-status">串联</span>
+    </div>
+
+    <!-- 混淆变量 (teach_only) -->
+    <!-- Observe 读数 -->
+    <div class="observe-panel">
+        <div class="observe-row">
+            <div class="observe-item">总电阻 <strong>R<sub>total</sub></strong> = <span class="value" id="obs-rtotal">100.0</span> Ω</div>
+            <div class="observe-item">总电流 <strong>I</strong> = <span class="value" id="obs-current">0.12</span> A</div>
+            <div class="observe-item">目标电流 <strong>I<sub>target</sub></strong> = <span class="value" id="obs-target">0.15</span> A</div>
+        </div>
+    </div>
+
+    <!-- 反馈区域 -->
+    <div id="feedback-area" class="feedback info">待测 · 调电阻或切换连接后点测试</div>
+
+    <input type="hidden" id="I1" value="irrelevant">
+
+</div>
+
+<!-- trace-adapter-hook (埋点) -->
+
+
+
+<!-- trace-adapter-hook -->
+
+<!-- legacy-win-bridge -->
+    </div>
+    <div class="essence-ft">
+      <button type="button" id="btn-test-ft" class="primary btn" style="width:100%;padding:12px;border:none;border-radius:12px;font-weight:700;cursor:pointer">测试 / 发射</button>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+    function emit(type, payload) {
+        try {
+            if (window.PlatformTraceAdapter) {
+                window.PlatformTraceAdapter.record(type, payload || {});
+                return;
+            }
+        } catch (e) {}
+        try {
+            if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+                window.parent.PlatformTraceAdapter.record(type, payload || {});
+            }
+        } catch (e) {}
+    }
+
+    function snapControls() {
+        var o = {};
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+            var id = el.id || el.name; if (id) o[id] = el.value;
+        });
+        // 额外记录连接状态
+        var connectBtn = document.getElementById('btn-connect');
+        if (connectBtn) o['btn-connect'] = connectBtn.dataset.mode || 'series';
+        return o;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // puzzle_open
+        emit('puzzle_open', {});
+
+        // tuning 绑定 (滑条)
+        document.querySelectorAll('input[type="range"]').forEach(function(el) {
+            el.addEventListener('input', function() {
+                emit('tuning', { control: el.id || 'slider', value: el.value });
+            });
+        });
+
+        // 无关控件 I1
+        var i1 = document.getElementById('I1');
+        if (i1) {
+            i1.addEventListener('click', function() {
+                emit('irrelevant_touch', { control: 'I1', value: 'click' });
+            });
+        }
+    });
+})();
+</script>
+<script>
+    (function() {
+        // ----- 物理常量 & 状态 -----
+        const U_SOURCE = 12;        // 固定电源电压 12V
+        let mode = 'series';        // 'series' 或 'parallel'
+        let targetCurrent = 0.15;   // 探究参考；竞赛锁定
+        let playMode = 'explore';
+        let lockedTargetI = null;
+        let challengeWon = false;
+
+        // DOM 引用
+        const sR1 = document.getElementById('s-r1');
+        const sR2 = document.getElementById('s-r2');
+        const sMeterR = document.getElementById('s-meter-r');
+        const r1Val = document.getElementById('r1-val');
+        const r2Val = document.getElementById('r2-val');
+        const meterRVal = document.getElementById('meter-r-val');
+        const btnConnect = document.getElementById('btn-connect');
+        const btnTest = document.getElementById('btn-test');
+        const connectStatus = document.getElementById('connect-status');
+        const obsRtotal = document.getElementById('obs-rtotal');
+        const obsCurrent = document.getElementById('obs-current');
+        const obsTarget = document.getElementById('obs-target');
+        const feedback = document.getElementById('feedback-area');
+        const canvas = document.getElementById('circuitCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrap = canvas.parentElement;
+        let W = 600, H = 360, dpr = 1;
+        let flowT = 0;
+
+        const MODE_GOALS = {
+          explore: {
+            hud: '探究：切换串/并联，对比总电流如何变',
+            side: '探究·后台试配：试着弄清串并联如何改变总电流；不必先盯固定目标。'
+          },
+          challenge: {
+            hud: '竞赛：限次把电流对准本局锁定目标（本局固定）',
+            side: '竞赛·开演急单：限次把电流对准本局锁定目标；打偏不换目标。'
+          }
+        };
+
+        function refreshSeriesGoals() {
+          const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
+          const mission = document.getElementById('goalMission');
+          const side = document.getElementById('sideGoal');
+          if (playMode === 'challenge' && lockedTargetI != null) {
+            if (mission) mission.textContent = '急单目标电流：' + targetCurrent.toFixed(2) + ' A · 本局固定';
+            if (side) side.textContent = '竞赛急单：限次把电流调到 ' + targetCurrent.toFixed(2) + ' A（本局固定，打偏不换目标）。';
+            obsTarget.textContent = targetCurrent.toFixed(2);
+          } else {
+            if (mission) mission.textContent = g.hud;
+            if (side) side.textContent = g.side;
+            obsTarget.textContent = '—';
+          }
+        }
+
+        /** FixedChallenge：仅进入竞赛时锁定一次目标电流 */
+        function lockChallengeTarget() {
+          // 可达区间：串联约 0.08–0.30 A（12V / 40–150Ω）
+          lockedTargetI = 0.10 + Math.random() * 0.16;
+          targetCurrent = Math.round(lockedTargetI * 100) / 100;
+          challengeWon = false;
+          mode = 'series';
+          sR1.value = '80';
+          sR2.value = '80';
+          btnConnect.textContent = '🔁 切换连接 (串联)';
+          refreshSeriesGoals();
+          updateAll();
+          feedback.className = 'feedback info';
+          feedback.textContent = '急单已锁定 · 目标电流 ' + targetCurrent.toFixed(2) + ' A（本局固定）';
+        }
+
+        function applyExploreTarget() {
+          lockedTargetI = null;
+          challengeWon = false;
+          targetCurrent = 0.15;
+          mode = 'series';
+          sR1.value = '50';
+          sR2.value = '50';
+          btnConnect.textContent = '🔁 切换连接 (串联)';
+          refreshSeriesGoals();
+          updateAll();
+          feedback.className = 'feedback info';
+          feedback.textContent = '自由试配：切换串/并联，观察电流变化。';
+        }
+
+        window.__seriesApplyMode = function(m) {
+          playMode = m === 'challenge' ? 'challenge' : 'explore';
+          if (playMode === 'challenge') lockChallengeTarget();
+          else applyExploreTarget();
+        };
+
+        obsTarget.textContent = '—';
+
+        function computeCircuit(r1, r2, mode) {
+            let Rtotal;
+            if (mode === 'series') {
+                Rtotal = r1 + r2;
+            } else {
+                if (r1 === 0 || r2 === 0) Rtotal = 0;
+                else Rtotal = 1 / ((1 / r1) + (1 / r2));
+            }
+            const I = (Rtotal > 0) ? (U_SOURCE / Rtotal) : 0;
+            return { Rtotal: Rtotal, I: I };
+        }
+
+        function resizeCanvas() {
+            const rect = wrap.getBoundingClientRect();
+            dpr = window.devicePixelRatio || 1;
+            W = Math.max(320, rect.width);
+            H = Math.max(240, rect.height);
+            canvas.width = Math.floor(W * dpr);
+            canvas.height = Math.floor(H * dpr);
+            canvas.style.width = W + 'px';
+            canvas.style.height = H + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            updateAll();
+        }
+
+        /** 仅测试后揭示 R总、I */
+        let measuredI = null;
+        let measuredRtotal = null;
+
+        function updateAll() {
+            const r1 = parseFloat(sR1.value) || 1;
+            const r2 = parseFloat(sR2.value) || 1;
+            const out = computeCircuit(r1, r2, mode);
+            r1Val.textContent = r1;
+            r2Val.textContent = r2;
+            if (meterRVal && sMeterR) meterRVal.textContent = parseFloat(sMeterR.value).toFixed(1);
+            if (measuredI != null) {
+              obsRtotal.textContent = measuredRtotal.toFixed(2);
+              obsCurrent.textContent = measuredI.toFixed(3);
+            } else {
+              obsRtotal.textContent = '—';
+              obsCurrent.textContent = '—';
+            }
+            connectStatus.textContent = (mode === 'series') ? '串联' : '并联';
+            drawWorkbench(r1, r2, mode, out.Rtotal, out.I);
+        }
+
+        function drawResistorBody(x, y, w, h, label, ohms) {
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x, y, w, h);
+            const bands = ['#ef4444', '#fbbf24', '#22c55e', '#f8fafc'];
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = bands[i];
+                ctx.fillRect(x + 10 + i * (w - 28) / 4, y + 4, 7, h - 8);
+            }
+            ctx.strokeStyle = '#fde68a';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x, y, w, h);
+            ctx.fillStyle = '#ecfdf5';
+            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+            ctx.fillText(label + ' ' + ohms + 'Ω', x, y - 8);
+        }
+
+        function drawFlowDots(points, speed) {
+            if (points.length < 2) return;
+            let total = 0;
+            const seg = [];
+            for (let i = 1; i < points.length; i++) {
+                const dx = points[i].x - points[i - 1].x;
+                const dy = points[i].y - points[i - 1].y;
+                const len = Math.hypot(dx, dy);
+                seg.push(len);
+                total += len;
+            }
+            const n = 10;
+            for (let k = 0; k < n; k++) {
+                let dist = ((flowT * speed + k / n) % 1) * total;
+                for (let i = 0; i < seg.length; i++) {
+                    if (dist <= seg[i]) {
+                        const t = seg[i] ? dist / seg[i] : 0;
+                        const x = points[i].x + (points[i + 1].x - points[i].x) * t;
+                        const y = points[i].y + (points[i + 1].y - points[i].y) * t;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+                        ctx.fillStyle = '#67e8f9';
+                        ctx.shadowColor = '#22d3ee';
+                        ctx.shadowBlur = 8;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                        break;
+                    }
+                    dist -= seg[i];
+                }
+            }
+        }
+
+        function drawWorkbench(r1, r2, mode, Rtotal, I) {
+            ctx.clearRect(0, 0, W, H);
+            // 车间墙面
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#0a1a14');
+            bg.addColorStop(0.55, '#0f241c');
+            bg.addColorStop(1, '#07140f');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+            // 工具挂板
+            ctx.fillStyle = '#14532d';
+            ctx.fillRect(16, 40, 70, 120);
+            ctx.fillStyle = '#86efac';
+            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.fillText('工具板', 28, 58);
+            for (let i = 0; i < 3; i++) {
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(30, 70 + i * 28, 40, 6);
+            }
+            // 窗户
+            ctx.fillStyle = '#0ea5e9';
+            ctx.globalAlpha = 0.25;
+            ctx.fillRect(W - 150, 36, 110, 80);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(W - 150, 36, 110, 80);
+
+            // 木工位台面
+            const benchY = H - 64;
+            ctx.fillStyle = '#3f2a1a';
+            ctx.fillRect(0, benchY, W, 64);
+            ctx.fillStyle = '#5b3d24';
+            ctx.fillRect(0, benchY, W, 12);
+
+            // 面包板
+            const bx = W * 0.12, by = H * 0.28, bw = W * 0.52, bh = H * 0.38;
+            ctx.fillStyle = '#fff7ed';
+            ctx.fillRect(bx, by, bw, bh);
+            ctx.strokeStyle = '#fdba74';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(bx, by, bw, bh);
+            ctx.fillStyle = '#fed7aa';
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 18; col++) {
+                    ctx.beginPath();
+                    ctx.arc(bx + 18 + col * (bw - 36) / 17, by + 18 + row * (bh - 36) / 7, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.fillStyle = '#9a3412';
+            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+            ctx.fillText('舞台电源板 · ' + (mode === 'series' ? '串联' : '并联'), bx + 12, by - 10);
+
+            // 电源模块
+            const px = 24, py = benchY - 120;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(px, py, 90, 100);
+            ctx.strokeStyle = '#34d399';
+            ctx.strokeRect(px, py, 90, 100);
+            ctx.fillStyle = '#6ee7b7';
+            ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
+            ctx.fillText('12V', px + 28, py + 36);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.fillText('直流电源', px + 18, py + 58);
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath(); ctx.arc(px + 28, py + 78, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(px + 62, py + 78, 6, 0, Math.PI * 2); ctx.fill();
+
+            // 电流表
+            const mx = W - 150, my = benchY - 140;
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(mx, my, 120, 120);
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(mx, my, 120, 120);
+            ctx.fillStyle = '#022c22';
+            ctx.fillRect(mx + 12, my + 16, 96, 44);
+            const showI = measuredI != null ? measuredI : null;
+            const onTarget = showI != null && Math.abs(showI - targetCurrent) < 0.001;
+            ctx.fillStyle = showI != null ? (onTarget ? '#4ade80' : '#fbbf24') : '#94a3b8';
+            ctx.font = 'bold 20px ui-monospace,monospace';
+            ctx.fillText(showI != null ? showI.toFixed(3) : '—', mx + 18, my + 45);
+            ctx.fillStyle = '#a7f3d0';
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText(playMode === 'challenge' ? ('A  目标 ' + targetCurrent.toFixed(2)) : 'A  待测', mx + 16, my + 72);
+            ctx.fillStyle = showI != null ? (onTarget ? '#86efac' : '#fca5a5') : '#94a3b8';
+            ctx.fillText(showI != null ? (onTarget ? '已对准' : '未对准') : '待测', mx + 16, my + 96);
+
+            // 电阻与连线
+            const r1x = bx + bw * 0.18, r2x = bx + bw * 0.58;
+            const ry = by + bh * 0.42;
+            const rw = Math.min(70, bw * 0.18), rh = 28;
+            if (mode === 'series') {
+                drawResistorBody(r1x, ry, rw, rh, 'R₁', r1);
+                drawResistorBody(r2x, ry, rw, rh, 'R₂', r2);
+                ctx.strokeStyle = '#0f766e';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(px + 90, py + 50);
+                ctx.lineTo(r1x, ry + rh / 2);
+                ctx.lineTo(r1x + rw, ry + rh / 2);
+                ctx.lineTo(r2x, ry + rh / 2);
+                ctx.lineTo(r2x + rw, ry + rh / 2);
+                ctx.lineTo(mx, my + 40);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(mx + 60, my + 120);
+                ctx.lineTo(mx + 60, benchY - 8);
+                ctx.lineTo(px + 45, benchY - 8);
+                ctx.lineTo(px + 45, py + 100);
+                ctx.stroke();
+                drawFlowDots([
+                    { x: px + 90, y: py + 50 },
+                    { x: r1x, y: ry + rh / 2 },
+                    { x: r2x + rw, y: ry + rh / 2 },
+                    { x: mx, y: my + 40 }
+                ], 0.35 + Math.min(0.8, I));
+            } else {
+                const y1 = ry - 36, y2 = ry + 36;
+                drawResistorBody(r1x + 40, y1, rw, rh, 'R₁', r1);
+                drawResistorBody(r1x + 40, y2, rw, rh, 'R₂', r2);
+                ctx.strokeStyle = '#0f766e';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(px + 90, py + 50);
+                ctx.lineTo(r1x, ry + rh / 2);
+                ctx.moveTo(r1x, y1 + rh / 2);
+                ctx.lineTo(r1x, y2 + rh / 2);
+                ctx.moveTo(r1x, y1 + rh / 2);
+                ctx.lineTo(r1x + 40, y1 + rh / 2);
+                ctx.lineTo(r1x + 40 + rw, y1 + rh / 2);
+                ctx.lineTo(r2x + rw, y1 + rh / 2);
+                ctx.moveTo(r1x, y2 + rh / 2);
+                ctx.lineTo(r1x + 40, y2 + rh / 2);
+                ctx.lineTo(r1x + 40 + rw, y2 + rh / 2);
+                ctx.lineTo(r2x + rw, y2 + rh / 2);
+                ctx.moveTo(r2x + rw, y1 + rh / 2);
+                ctx.lineTo(r2x + rw, y2 + rh / 2);
+                ctx.lineTo(mx, my + 40);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(mx + 60, my + 120);
+                ctx.lineTo(mx + 60, benchY - 8);
+                ctx.lineTo(px + 45, benchY - 8);
+                ctx.lineTo(px + 45, py + 100);
+                ctx.stroke();
+                drawFlowDots([
+                    { x: px + 90, y: py + 50 },
+                    { x: r1x, y: ry + rh / 2 },
+                    { x: r2x + rw, y: ry + rh / 2 },
+                    { x: mx, y: my + 40 }
+                ], 0.45 + Math.min(1, I));
+            }
+
+            // 底部状态条
+            ctx.fillStyle = 'rgba(6, 78, 59, 0.85)';
+            ctx.fillRect(16, benchY - 40, 280, 32);
+            ctx.strokeStyle = 'rgba(52,211,153,0.45)';
+            ctx.strokeRect(16, benchY - 40, 280, 32);
+            ctx.fillStyle = '#ecfdf5';
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            const tgtLabel = playMode === 'challenge'
+              ? ('急单 ' + targetCurrent.toFixed(2) + 'A')
+              : '探究对比';
+            if (measuredI != null) {
+              ctx.fillText('R总 ' + measuredRtotal.toFixed(1) + 'Ω · I ' + measuredI.toFixed(3) + 'A · ' + tgtLabel, 26, benchY - 19);
+            } else {
+              ctx.fillText('R总 待测 · I 待测 · ' + tgtLabel, 26, benchY - 19);
+            }
+        }
+
+        // ----- 测试/发射 与过关判定 (snapshot + win) -----
+        function fireTest() {
+            const r1 = parseFloat(sR1.value) || 1;
+            const r2 = parseFloat(sR2.value) || 1;
+            const { Rtotal, I } = computeCircuit(r1, r2, mode);
+            measuredI = I;
+            measuredRtotal = Rtotal;
+            var controlsSnapshot = snapControls();
+            controlsSnapshot['mode'] = mode;
+
+            if (playMode === 'explore') {
+                feedback.className = 'feedback info';
+                feedback.textContent = '当前电流 · 继续对比串并联（探究）';
+                try {
+                    (function() {
+                        function emit(type, payload) {
+                            try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload); return; } } catch(e) {}
+                            try { if (window.parent && window.parent!==window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload); } } catch(e) {}
+                        }
+                        emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
+                    })();
+                } catch(e) {}
+                updateAll();
+                return;
+            }
+
+            // 探究观察不靠此容差过关；竞赛用更紧容差（分流）
+            const iTol = playMode === 'challenge' ? 0.004 : 0.012;
+            const winOk = (Math.abs(I - targetCurrent) < iTol);
+            const hintKey = winOk ? 'win' : (I > targetCurrent ? '电流偏大，增大电阻' : '电流偏小，减小电阻');
+
+            if (winOk) {
+                feedback.className = 'feedback win';
+                feedback.textContent = '急单完成 · 电流已对准目标';
+                if (!challengeWon) {
+                    challengeWon = true;
+                    if (typeof window.__craftShowWin === 'function') {
+                        window.__craftShowWin('目标电流本局锁定。串联电阻相加、并联等效更小，同一电源下总电流随之变化。');
+                    }
+                }
+            } else {
+                // FixedChallenge：失败不换目标
+                feedback.className = 'feedback fail';
+                feedback.textContent = '未对准 · 目标仍锁定，再调参后测试';
+            }
+
+            try {
+                var snapPayload = { controls: controlsSnapshot, winOk: winOk, hintKey: hintKey };
+                (function() {
+                    function emit(type, payload) {
+                        try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload); return; } } catch(e) {}
+                        try { if (window.parent && window.parent!==window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload); } } catch(e) {}
+                    }
+                    emit('snapshot', snapPayload);
+                    if (winOk) emit('win', { winOk: true });
+                })();
+            } catch(e) {}
+
+            updateAll();
+        }
+
+        // 辅助 snapControls (与埋点一致)
+        function snapControls() {
+            var o = {};
+            document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+                var id = el.id || el.name; if (id) o[id] = el.value;
+            });
+            o['btn-connect'] = mode;
+            return o;
+        }
+
+        // ----- 事件绑定 -----
+        // 滑条 input 更新 (tuning 已在 adapter 中绑定，这里只做UI)
+        sR1.addEventListener('input', function() { measuredI = null; measuredRtotal = null; updateAll(); });
+        sR2.addEventListener('input', function() { measuredI = null; measuredRtotal = null; updateAll(); });
+        if (sMeterR) sMeterR.addEventListener('input', function() { updateAll(); });
+
+        // 连接切换
+        btnConnect.addEventListener('click', function() {
+            mode = (mode === 'series') ? 'parallel' : 'series';
+            measuredI = null; measuredRtotal = null;
+            // 更新按钮文字
+            btnConnect.textContent = (mode === 'series') ? '🔁 切换连接 (串联)' : '🔁 切换连接 (并联)';
+            updateAll();
+            // 额外 tuning 事件 (连接切换视为 tuning, 但 adapter 未绑, 手动补)
+            try {
+                (function() {
+                    function emit(type, payload) {
+                        try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload); return; } } catch(e) {}
+                        try { if (window.parent && window.parent!==window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload); } } catch(e) {}
+                    }
+                    emit('tuning', { control: 'btn-connect', value: mode });
+                })();
+            } catch(e) {}
+        });
+
+        // 测试按钮
+        btnTest.addEventListener('click', fireTest);
+        var btnTestFt = document.getElementById('btn-test-ft');
+        if (btnTestFt) btnTestFt.addEventListener('click', fireTest);
+
+        // 无关控件 I1 点击 (埋点已在 adapter 中绑定 irrelevant_touch, 额外视觉反馈)
+        document.getElementById('I1').addEventListener('click', function() {
+            // 仅装饰反馈
+            feedback.className = 'feedback info';
+            feedback.textContent = '已记录一次工作台操作';
+            setTimeout(function() { feedback.textContent = '待测 · 调电阻或切换连接后点测试'; }, 1200);
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        if (typeof ResizeObserver !== 'undefined' && wrap) {
+            new ResizeObserver(resizeCanvas).observe(wrap);
+        }
+        resizeCanvas();
+        (function loop() {
+            flowT += 0.008;
+            const r1 = parseFloat(sR1.value) || 1;
+            const r2 = parseFloat(sR2.value) || 1;
+            const out = computeCircuit(r1, r2, mode);
+            drawWorkbench(r1, r2, mode, out.Rtotal, out.I);
+            requestAnimationFrame(loop);
+        })();
+    })();
+</script>
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+    var dw = Number(cvs.getAttribute('width')) || cvs.width || 600;
+    var dh = Number(cvs.getAttribute('height')) || cvs.height || 400;
+    // keep design buffer; CSS scales visually
+    if (!cvs._essenceDesign) cvs._essenceDesign = { dw: dw, dh: dh };
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__seriesApplyMode === 'function') {
+      try { window.__seriesApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

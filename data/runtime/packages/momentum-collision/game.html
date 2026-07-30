@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动量守恒 · 碰撞实验</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+        .app { max-width: 820px; width: 100%; background: white; border-radius: 16px; padding: 20px 24px 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 0.1rem; }
+        .sub { color: #4a5568; font-size: 0.95rem; margin-bottom: 1.2rem; border-left: 3px solid #3182ce; padding-left: 12px; }
+        .canvas-wrap { background: #edf2f7; border-radius: 12px; padding: 8px; margin-bottom: 1rem; }
+        canvas { display: block; width: 100%; height: auto; background: white; border-radius: 8px; border: 1px solid #cbd5e0; }
+        .control-panel { display: flex; flex-wrap: wrap; gap: 1rem 1.8rem; background: #f7fafc; padding: 16px 18px; border-radius: 14px; margin: 12px 0 10px; border: 1px solid #e2e8f0; }
+        .slider-group { display: flex; flex-direction: column; min-width: 130px; flex: 1 0 40%; }
+        .slider-group label { font-size: 0.85rem; font-weight: 500; color: #2d3748; display: flex; justify-content: space-between; }
+        .slider-group input { width: 100%; margin-top: 2px; }
+        .value-badge { background: #e2e8f0; padding: 0 8px; border-radius: 20px; font-size: 0.8rem; }
+        .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 6px 0 12px; }
+        .btn { background: #3182ce; color: white; border: none; padding: 8px 24px; border-radius: 40px; font-weight: 500; font-size: 0.95rem; cursor: pointer; transition: 0.15s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn:active { transform: scale(0.96); }
+        .btn-reset { background: #4a5568; }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .observe-box { background: #f0f4ff; border-radius: 12px; padding: 12px 16px; margin: 10px 0 6px; border: 1px solid #c3d9ff; display: flex; flex-wrap: wrap; gap: 0.8rem 2rem; }
+        .observe-item { font-size: 0.95rem; }
+        .observe-item strong { color: #2b6cb0; }
+        .hint-msg { margin: 6px 0 0; font-weight: 500; padding: 6px 12px; border-radius: 30px; display: inline-block; background: #e2e8f0; }
+        .win-msg { background: #c6f6d5; color: #22543d; }
+        .fail-msg { background: #fed7d7; color: #9b2c2c; }
+        .confound-note { font-size: 0.8rem; color: #4a5568; background: #edf2f7; padding: 6px 14px; border-radius: 30px; display: inline-block; margin: 4px 0 0; }
+        .footer { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 0.75rem; color: #718096; display: flex; justify-content: space-between; }
+        .irrelevant-placeholder { opacity: 0.4; pointer-events: none; display: none; } /* I1 仅埋点用，不展示UI */
+        @media (max-width: 600px) { .slider-group { min-width: 100%; } }
+    
+/* === essence-sidebar-shell (auto) === */
+html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
+body { display:block !important; align-items:stretch !important; justify-content:stretch !important; min-height:0 !important; }
+#essence-app {
+  display:flex; flex-direction:row; width:100%; height:100%; min-height:0;
+  background:inherit;
+}
+#essence-stage {
+  position:relative; flex:1; min-width:0; min-height:0;
+  display:flex; flex-direction:column; background:#0f172a;
+}
+#essence-stage canvas {
+  display:block; width:100% !important; height:100% !important; max-width:none !important;
+  margin:0 !important; border-radius:0 !important; flex:1; min-height:0;
+}
+#essence-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:5; pointer-events:none;
+  display:flex; flex-direction:column; gap:4px; max-width:min(420px, calc(100% - 20px));
+}
+#essence-hud .essence-title {
+  pointer-events:none; padding:8px 12px; border-radius:12px;
+  background:rgba(15,23,42,0.88); color:#e2e8f0; font-size:14px; font-weight:600;
+  border:1px solid rgba(148,163,184,0.35);
+}
+#essence-hud .essence-sub {
+  pointer-events:none; padding:6px 12px; border-radius:10px;
+  background:rgba(15,23,42,0.75); color:#94a3b8; font-size:12px;
+  border:1px solid rgba(148,163,184,0.25);
+}
+#essence-bench {
+  width:clamp(280px, 28vw, 340px); flex-shrink:0; min-height:0;
+  display:flex; flex-direction:column;
+  background:#fff; border-left:1px solid #e2e8f0;
+  color:#1a202c;
+}
+#essence-bench .essence-scroll {
+  flex:1; overflow-y:auto; padding:14px 16px 8px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+#essence-bench .essence-ft {
+  padding:10px 16px 14px; border-top:1px solid #e2e8f0; flex-shrink:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+#essence-bench .slider-group input[type=range],
+#essence-bench input[type=range] {
+  width:100%; height:28px; margin:0;
+}
+@media (max-width:720px) {
+  #essence-app { flex-direction:column; }
+  #essence-stage { flex:1 1 0; min-height:48vh; }
+  #essence-bench { width:100%; max-height:min(42vh,360px); border-left:none; border-top:1px solid #e2e8f0; }
+}
+
+#essence-stage .canvas-wrap,
+#essence-stage .canvas-area,
+#essence-stage > div:not(#essence-hud):not(#dual-mode-hud) {
+  flex:1; min-height:0; width:100%; height:100%;
+  margin:0 !important; padding:0 !important; border-radius:0 !important;
+  background:transparent !important; display:flex; align-items:stretch;
+}
+#essence-stage > #dual-mode-hud {
+  position:absolute !important; top:10px !important; left:10px !important; right:10px !important;
+  width:auto !important; height:auto !important; max-width:none !important;
+  flex:none !important; margin:0 !important; padding:0 !important;
+  background:transparent !important; align-items:flex-start !important;
+  justify-content:flex-start !important; z-index:9; pointer-events:none !important;
+}
+#essence-stage > #dual-mode-hud .dual-chip,
+#essence-stage > #dual-mode-hud #challengeStats {
+  height:auto !important; align-self:flex-start !important; flex:none !important;
+  pointer-events:auto !important;
+}
+#essence-bench .essence-scroll > .app,
+#essence-bench .essence-scroll > .card,
+#essence-bench .essence-scroll > .container,
+#essence-bench .essence-scroll > .game {
+  display:contents;
+}
+
+/* hide original card chrome when wrapped */
+.essence-legacy-hide-outer > .app,
+.essence-legacy-hide-outer > .card,
+.essence-legacy-hide-outer > .container,
+.essence-legacy-hide-outer > .game,
+.essence-legacy-hide-outer > #app { display:contents; }
+
+
+/* === dual-mode-shell (auto) === */
+#dual-mode-hud {
+  position:absolute; top:10px; left:10px; right:10px; z-index:8;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:8px; pointer-events:none;
+}
+#dual-mode-hud .dual-chip {
+  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
+#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#challengeStats {
+  pointer-events:auto; display:none; align-items:center; gap:8px;
+  padding:8px 14px; border-radius:999px;
+  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
+  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
+}
+#challengeStats.is-visible { display:inline-flex; }
+#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
+#essence-bench-hd, .dual-bench-hd {
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
+}
+#essence-bench-hd h1, .dual-bench-hd h1 {
+  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
+}
+#modeSelect {
+  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
+  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
+}
+#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
+button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+
+/* === craft-gold-shell === */
+:root{--craft-accent:#f472b6;--craft-bg:#1a0a14;--craft-panel:#2a1524;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+/* === batch2 audit fixes === */
+#craft-gauge{display:none!important;}
+#essence-bench .value-badge,
+#essence-bench .observe-box,
+#essence-bench .observe-item,
+#essence-bench .hint-msg,
+#essence-bench .confound-note{color:#e8eef5!important;}
+#essence-bench .value-badge{
+  background:rgba(0,0,0,.45)!important;
+}
+#essence-bench .observe-box{
+  background:rgba(0,0,0,.28)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench .observe-item strong{color:var(--craft-accent)!important;}
+#essence-bench .hint-msg.win-msg{background:rgba(34,197,94,.2)!important;color:#bbf7d0!important;}
+#essence-bench .hint-msg.fail-msg{background:rgba(248,113,113,.2)!important;color:#fecaca!important;}
+#dual-mode-hud .dual-chip,
+#challengeStats{
+  background:#0f172a!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 55%,transparent)!important;
+  color:#f8fafc!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.4)!important;
+}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
+#dual-mode-hud #timerDisplay{
+  font-family:ui-monospace,Consolas,monospace!important;
+  font-weight:700!important;color:#fbcfe8!important;letter-spacing:.5px;
+}
+#attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
+#essence-hud{
+  top:10px!important;left:auto!important;right:12px!important;
+  max-width:min(240px,42%)!important;z-index:6;
+  align-items:flex-end!important;
+}
+#essence-hud .essence-title{
+  background:rgba(15,23,42,.9)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  font-size:13px!important;padding:6px 10px!important;
+}
+#essence-hud .essence-sub{display:none!important;}
+#modeSelect{
+  background:rgba(0,0,0,.35)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>夜班分拣 · 对撞投递</h2>
+    <p>货运滑轨上，试着让包件1撞上包件2，把它推进右侧接货口。先自由对撞，看看末速怎么变；再接急单——接货口本局锁定。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛口位进入后固定，未投进只扣次数。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">m1v1 + m2v2 = 守恒（一维）</div>
+    <p id="craftWinText">对撞前后，你对照了两包件的质量、速度与是否进区，摸清了动量如何分配。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+<div id="essence-app" class="essence-legacy-hide-outer">
+  <div id="essence-stage">
+    <div class="canvas-wrap">
+        <canvas id="collisionCanvas" width="760" height="360"></canvas>
+    </div>
+
+    
+    <div id="essence-hud">
+      <div class="essence-title">夜班分拣 · 对撞投递</div>
+      <div class="essence-sub" id="goalMission">目标：自由对撞，看末速与是否进区</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll">
+    <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
+    <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">试着弄清：调质量与初速时，包件2何时能进接货口。竞赛另有限次急单。</p>
+      <!-- 调节变量 (4个滑条) -->
+    <div class="control-panel">
+        <div class="slider-group">
+            <label>包件1质量 m₁ <span class="value-badge" id="mass1Val">1.0 kg</span></label>
+            <input type="range" id="s-mass1" min="0.1" max="10" step="0.1" value="1.0">
+        </div>
+        <div class="slider-group">
+            <label>包件2质量 m₂ <span class="value-badge" id="mass2Val">1.0 kg</span></label>
+            <input type="range" id="s-mass2" min="0.1" max="10" step="0.1" value="1.0">
+        </div>
+        <div class="slider-group">
+            <label>包件1初速 v₁ <span class="value-badge" id="vel1Val">2.0 m/s</span></label>
+            <input type="range" id="s-vel1" min="0" max="10" step="0.1" value="2.0">
+        </div>
+        <div class="slider-group">
+            <label>包件2初速 v₂ <span class="value-badge" id="vel2Val">0.0 m/s</span></label>
+            <input type="range" id="s-vel2" min="0" max="10" step="0.1" value="0.0">
+        </div>
+        <div class="slider-group">
+            <label>导轨温度 T <span class="value-badge" id="railTempVal">22 °C</span></label>
+            <input type="range" id="s-rail-temp" min="5" max="60" step="1" value="22">
+        </div>
+    </div>
+
+    <!-- 操作按钮 + 混淆变量说明 -->
+    <!-- 观测区 (输出变量) -->
+    <div class="observe-box" id="observePanel">
+        <span class="observe-item"><strong>v₁'</strong> (包件1末速): <span id="ov1Display">—</span> m/s</span>
+        <span class="observe-item"><strong>v₂'</strong> (包件2末速): <span id="ov2Display">—</span> m/s</span>
+        <span class="observe-item"><strong>包件2进区?</strong> <span id="ov3Display">未检测</span></span>
+        <div id="hintMessage" class="hint-msg">包件2尚未进区 · 调参后点发射</div>
+    </div>
+
+    <div class="footer">
+        <span id="footerGoal">目标：试着让包件2进入接货口</span>
+    </div>
+    </div>
+    <div class="essence-ft">
+      <div class="action-row">
+        <button class="btn" id="btn-fire">发射</button>
+        <button class="btn btn-reset" id="btn-reset">重置</button>
+        <span class="confound-note">碰撞过程很短 · 可先忽略外力冲量</span>
+        <!-- 隐藏的 I1 占位 (仅用于埋点 irrelevant_touch 但不展示) -->
+        <input type="hidden" id="I1" value="irrelevant">
+    </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function() {
+    // ----- 物理常量 & DOM 引用 -----
+    const canvas = document.getElementById('collisionCanvas');
+    const ctx = canvas.getContext('2d');
+    const DESIGN_W = 760, DESIGN_H = 360;
+    let W = DESIGN_W, H = DESIGN_H;
+
+    function syncCanvasSize() {
+        var stage = document.getElementById('essence-stage') || canvas.parentElement;
+        var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || DESIGN_W);
+        var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || DESIGN_H);
+        var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        var bw = Math.round(cssW * dpr);
+        var bh = Math.round(cssH * dpr);
+        if (canvas.width !== bw || canvas.height !== bh) {
+            canvas.width = bw;
+            canvas.height = bh;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        W = cssW;
+        H = cssH;
+    }
+
+    let layoutMom = null;
+    let playMode = 'explore';
+    let targetCenterFrac = 0.75;
+    let targetWidthFrac = 0.18; // 探究宽接货口；竞赛锁定时收窄
+    let exploreShots = 0;
+    let sawIn = false;
+    let sawMiss = false;
+    let exploreWon = false;
+    let challengeWon = false;
+
+    const MODE_GOALS = {
+      explore: {
+        hud: '目标：自由对撞几轮，同时见过「进区」与「未进」',
+        side: '探究·分拣试投：试着弄清 m、v 怎样影响进区；先对比进区与未进即可。'
+      },
+      challenge: {
+        hud: '目标：限次把包件2送进接货口（口位本局固定）',
+        side: '竞赛·急单投递：限次把包件2送进本局锁定接货口；打偏不换口。'
+      }
+    };
+
+    function refreshGoalUI() {
+      const mission = document.getElementById('goalMission');
+      const side = document.getElementById('sideGoal');
+      const foot = document.getElementById('footerGoal');
+      if (playMode === 'challenge') {
+        const pct = Math.round(targetCenterFrac * 100);
+        if (mission) mission.textContent = '当前接货口：约轨道 ' + pct + '% 处 · 本局固定';
+        if (side) side.textContent = '竞赛急单：限次把包件2送进约轨道 ' + pct + '% 处接货口（本局固定，打偏不换口）。';
+        if (foot) foot.textContent = '急单：投进约 ' + pct + '% 处接货口（固定）';
+      } else {
+        const g = MODE_GOALS.explore;
+        if (mission) mission.textContent = g.hud;
+        if (side) side.textContent = g.side;
+        if (foot) foot.textContent = '试投：观察末速与是否进区';
+      }
+    }
+
+    /** FixedChallenge：仅进入竞赛时锁定一次接货口（更窄，目视可辨） */
+    function lockChallengeBay(reasonHint) {
+      targetCenterFrac = 0.62 + Math.random() * 0.22;
+      targetWidthFrac = 0.07 + Math.random() * 0.025; // 明显窄于探究 0.18
+      // 开局张力：默认参数往往投不进
+      sVel1.value = '2.0';
+      sMass1.value = '1.0';
+      sMass2.value = '1.5';
+      sVel2.value = '0.0';
+      updateSliderLabels();
+      resetSim(true);
+      refreshGoalUI();
+      if (reasonHint) hintMsg.textContent = reasonHint + ' → 接货口已锁定在约 ' + Math.round(targetCenterFrac * 100) + '% 处（本局不变）';
+    }
+
+    window.__momApplyMode = function(mode) {
+      playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      exploreWon = false;
+      challengeWon = false;
+      window.__legacyWinEmitted = false;
+      exploreShots = 0;
+      sawIn = false;
+      sawMiss = false;
+      if (playMode === 'challenge') {
+        lockChallengeBay('急单已下发');
+      } else {
+        targetCenterFrac = 0.75;
+        targetWidthFrac = 0.18;
+        sMass1.value = '1.0';
+        sMass2.value = '1.0';
+        sVel1.value = '2.0';
+        sVel2.value = '0.0';
+        updateSliderLabels();
+        resetSim(true);
+        refreshGoalUI();
+        hintMsg.textContent = '包件2尚未进区 · 调参后点发射';
+      }
+    };
+
+    function layoutMetrics() {
+        const GROUND_Y = Math.round(H * 0.78);
+        const BALL_R = Math.max(14, Math.min(20, Math.round(H * 0.045)));
+        const BALL1_INIT_X = Math.max(150, Math.round(W * 0.18));
+        const BALL2_INIT_X = Math.max(BALL1_INIT_X + 120, Math.round(W * 0.36));
+        const bayW = Math.round(W * targetWidthFrac);
+        const bayC = Math.round(W * targetCenterFrac);
+        const TARGET_LEFT = Math.max(BALL2_INIT_X + 80, bayC - Math.round(bayW / 2));
+        const TARGET_RIGHT = Math.min(W - 40, TARGET_LEFT + bayW);
+        const TARGET_Y_TOP = GROUND_Y - 70;
+        const TARGET_Y_BOT = GROUND_Y + 8;
+        const PX_PER_M = Math.max(28, Math.min(48, W / 18));
+        layoutMom = { GROUND_Y, BALL_R, BALL1_INIT_X, BALL2_INIT_X, TARGET_LEFT, TARGET_RIGHT, TARGET_Y_TOP, TARGET_Y_BOT, PX_PER_M };
+        return layoutMom;
+    }
+
+    const sMass1 = document.getElementById('s-mass1');
+    const sMass2 = document.getElementById('s-mass2');
+    const sVel1  = document.getElementById('s-vel1');
+    const sVel2  = document.getElementById('s-vel2');
+    const sRailTemp = document.getElementById('s-rail-temp');
+    const mass1Val = document.getElementById('mass1Val');
+    const mass2Val = document.getElementById('mass2Val');
+    const vel1Val  = document.getElementById('vel1Val');
+    const vel2Val  = document.getElementById('vel2Val');
+    const railTempVal = document.getElementById('railTempVal');
+    const btnFire  = document.getElementById('btn-fire');
+    const btnReset = document.getElementById('btn-reset');
+    const ov1Display = document.getElementById('ov1Display');
+    const ov2Display = document.getElementById('ov2Display');
+    const ov3Display = document.getElementById('ov3Display');
+    const hintMsg    = document.getElementById('hintMessage');
+
+    let m1 = 1.0, m2 = 1.0, v1 = 2.0, v2 = 0.0;
+    let v1f = null, v2f = null;
+    let ball1X = 120, ball2X = 280;
+    let ball1Y = 300, ball2Y = 300;
+    let hasFired = false;
+    let winOk = false;
+    let hintKey = 'initial';
+    let animating = false;
+
+    function computeCollision(m1, m2, v1, v2) {
+        const sum = m1 + m2;
+        if (sum === 0) return { v1f: 0, v2f: 0 };
+        const v1f = ((m1 - m2) * v1 + 2 * m2 * v2) / sum;
+        const v2f = ((m2 - m1) * v2 + 2 * m1 * v1) / sum;
+        return { v1f, v2f };
+    }
+
+    function updateSliderLabels() {
+        mass1Val.textContent = parseFloat(sMass1.value).toFixed(1) + ' kg';
+        mass2Val.textContent = parseFloat(sMass2.value).toFixed(1) + ' kg';
+        vel1Val.textContent  = parseFloat(sVel1.value).toFixed(1) + ' m/s';
+        vel2Val.textContent  = parseFloat(sVel2.value).toFixed(1) + ' m/s';
+        if (railTempVal && sRailTemp) railTempVal.textContent = parseFloat(sRailTemp.value).toFixed(0) + ' °C';
+    }
+
+    function readControls() {
+        m1 = parseFloat(sMass1.value);
+        m2 = parseFloat(sMass2.value);
+        v1 = parseFloat(sVel1.value);
+        v2 = parseFloat(sVel2.value);
+    }
+
+    function ballRadius(mass) {
+        var L = layoutMom || layoutMetrics();
+        return L.BALL_R * (0.75 + 0.08 * Math.min(10, mass));
+    }
+
+    function resetSim(keepControls = true) {
+        if (keepControls) readControls();
+        syncCanvasSize();
+        var L = layoutMetrics();
+        ball1X = L.BALL1_INIT_X;
+        ball2X = L.BALL2_INIT_X;
+        ball1Y = L.GROUND_Y - ballRadius(m1);
+        ball2Y = L.GROUND_Y - ballRadius(m2);
+        v1f = null;
+        v2f = null;
+        hasFired = false;
+        winOk = false;
+        animating = false;
+        hintKey = 'reset';
+        ov1Display.textContent = '—';
+        ov2Display.textContent = '—';
+        ov3Display.textContent = '未检测';
+        hintMsg.textContent = '包件2尚未进区 · 调参后点发射';
+        hintMsg.className = 'hint-msg';
+        drawScene();
+    }
+
+    function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    function drawScene() {
+        syncCanvasSize();
+        var L = layoutMetrics();
+        ctx.clearRect(0, 0, W, H);
+        var GROUND_Y = L.GROUND_Y;
+        var TARGET_LEFT = L.TARGET_LEFT, TARGET_RIGHT = L.TARGET_RIGHT;
+        var TARGET_Y_TOP = L.TARGET_Y_TOP, TARGET_Y_BOT = L.TARGET_Y_BOT;
+
+        // 夜班分拣仓
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#0c1222');
+        bg.addColorStop(0.5, '#1e293b');
+        bg.addColorStop(1, '#0f172a');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // 高位货架
+        for (var rack = 0; rack < 3; rack++) {
+            var rx = 40 + rack * Math.max(120, W / 4.5);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(rx, 40, 70, GROUND_Y - 70);
+            ctx.strokeStyle = '#64748b';
+            ctx.strokeRect(rx, 40, 70, GROUND_Y - 70);
+            for (var sh = 0; sh < 4; sh++) {
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(rx + 6, 55 + sh * 42, 58, 8);
+                ctx.fillStyle = rack % 2 ? '#f59e0b' : '#38bdf8';
+                ctx.fillRect(rx + 12, 66 + sh * 42, 22, 18);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(rx + 38, 66 + sh * 42, 18, 18);
+            }
+        }
+        ctx.fillStyle = '#fde68a';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('货架区', 48, 32);
+
+        // 左侧气泵柜
+        ctx.fillStyle = '#1e3a5f';
+        ctx.fillRect(12, GROUND_Y - 90, 70, 90);
+        ctx.fillStyle = '#7dd3fc';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('气泵', 30, GROUND_Y - 98);
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(24, GROUND_Y - 70, 46, 18);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(30, GROUND_Y - 48, 34, 28);
+
+        // 地坪
+        const floor = ctx.createLinearGradient(0, GROUND_Y + 10, 0, H);
+        floor.addColorStop(0, '#334155');
+        floor.addColorStop(1, '#0f172a');
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, GROUND_Y + 10, W, H - GROUND_Y - 10);
+
+        // 分拣滑轨
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(40, GROUND_Y - 14, W - 80, 18);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(40, GROUND_Y - 6, W - 80, 5);
+        ctx.fillStyle = 'rgba(226,232,240,0.35)';
+        for (var p = 50; p < W - 50; p += 18) {
+            ctx.beginPath();
+            ctx.arc(p, GROUND_Y - 3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(32, GROUND_Y + 4, 18, 32);
+        ctx.fillRect(W - 50, GROUND_Y + 4, 18, 32);
+        ctx.fillStyle = '#fde68a';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('夜班分拣滑轨', 150, 56);
+
+        // 接货口（与终点几何对齐）
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.18)';
+        ctx.fillRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
+        ctx.strokeStyle = '#86efac';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
+        ctx.fillStyle = '#b45309';
+        roundRect(TARGET_LEFT + 8, GROUND_Y - 8, TARGET_RIGHT - TARGET_LEFT - 16, 12, 2);
+        ctx.fill();
+        // 扫码灯
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(TARGET_LEFT + 4, TARGET_Y_TOP + 4, TARGET_RIGHT - TARGET_LEFT - 8, 4);
+        ctx.fillStyle = '#bbf7d0';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText(playMode === 'challenge' ? '急单接货口' : '接货口', TARGET_LEFT + 10, TARGET_Y_TOP - 8);
+
+        var r1 = ballRadius(m1), r2 = ballRadius(m2);
+        if (!animating && !hasFired) {
+            ball1X = L.BALL1_INIT_X;
+            ball2X = L.BALL2_INIT_X;
+            ball1Y = GROUND_Y - r1;
+            ball2Y = GROUND_Y - r2;
+        }
+
+        function drawBlock(x, y, r, fill, stroke, label) {
+            roundRect(x - r, y - r * 0.7, r * 2, r * 1.4, 4);
+            ctx.fillStyle = fill;
+            ctx.fill();
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, x, y + 4);
+            ctx.textAlign = 'left';
+        }
+        drawBlock(ball1X, ball1Y, r1, '#60a5fa', '#93c5fd', '1');
+        drawBlock(ball2X, ball2Y, r2, '#f472b6', '#f9a8d4', '2');
+
+        // 初速箭头（初始张力）
+        if (!hasFired) {
+            ctx.strokeStyle = '#93c5fd';
+            ctx.fillStyle = '#93c5fd';
+            ctx.lineWidth = 2;
+            var ax = ball1X + r1 + 6;
+            var ay = ball1Y - r1 - 10;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(ax + 28 + v1 * 4, ay);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(ax + 28 + v1 * 4, ay);
+            ctx.lineTo(ax + 20 + v1 * 4, ay - 5);
+            ctx.lineTo(ax + 20 + v1 * 4, ay + 5);
+            ctx.fill();
+            ctx.fillStyle = '#fce7f3';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('v₁', ax + 8, ay - 8);
+        }
+
+        if (hasFired && !animating && v1f !== null) {
+            roundRect(16, H - 72, 148, 48, 10);
+            ctx.fillStyle = 'rgba(26,16,32,0.88)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(244,114,182,0.45)';
+            ctx.stroke();
+            ctx.fillStyle = '#fce7f3';
+            ctx.font = '12px ui-monospace,Consolas,sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`v₁' = ${v1f.toFixed(2)} m/s`, 28, H - 52);
+            ctx.fillText(`v₂' = ${v2f.toFixed(2)} m/s`, 28, H - 34);
+        }
+        ctx.textAlign = 'left';
+    }
+
+    function fire() {
+        if (animating) return;
+        readControls();
+        syncCanvasSize();
+        var L = layoutMetrics();
+        var r1 = ballRadius(m1), r2 = ballRadius(m2);
+        ball1X = L.BALL1_INIT_X;
+        ball2X = L.BALL2_INIT_X;
+        ball1Y = L.GROUND_Y - r1;
+        ball2Y = L.GROUND_Y - r2;
+
+        const result = computeCollision(m1, m2, v1, v2);
+        v1f = result.v1f;
+        v2f = result.v2f;
+
+        let collisionTime = 0;
+        let collided = false;
+        if (v1 > v2) {
+            const dx = (ball2X - ball1X - r1 - r2) / L.PX_PER_M;
+            const dv = v1 - v2;
+            if (dv > 0 && dx > 0) {
+                collisionTime = dx / dv;
+                collided = true;
+            }
+        }
+
+        const postTime = 0.65;
+        let end1, end2;
+        if (collided && collisionTime > 0) {
+            const c1 = L.BALL1_INIT_X + v1 * collisionTime * L.PX_PER_M;
+            const c2 = L.BALL2_INIT_X + v2 * collisionTime * L.PX_PER_M;
+            end1 = c1 + v1f * postTime * L.PX_PER_M;
+            end2 = c2 + v2f * postTime * L.PX_PER_M;
+        } else {
+            // 不相撞：各自按初速匀速一小段（v2=0 时物块2保持静止）
+            v1f = v1;
+            v2f = v2;
+            collisionTime = 0;
+            const t = 0.55;
+            end1 = L.BALL1_INIT_X + v1 * t * L.PX_PER_M;
+            end2 = L.BALL2_INIT_X + v2 * t * L.PX_PER_M;
+        }
+        function clampX(x, r) {
+            if (x > W - r) return W - r;
+            if (x < r) return r;
+            return x;
+        }
+        end1 = clampX(end1, r1);
+        end2 = clampX(end2, r2);
+
+        const inTarget = (end2 >= L.TARGET_LEFT && end2 <= L.TARGET_RIGHT);
+        winOk = inTarget;
+        hasFired = true;
+        animating = true;
+
+        // 末速与进区结果在动画结束后再揭示（过程中侧栏保持 —）
+        ov1Display.textContent = '—';
+        ov2Display.textContent = '—';
+        ov3Display.textContent = '运动中…';
+        hintKey = winOk ? 'win' : (collided ? 'collide_no_win' : 'no_collide');
+        hintMsg.textContent = collided ? '包件1前冲 · 接触后分配速度…' : '包件1前冲中…';
+        hintMsg.className = 'hint-msg';
+
+        ball1X = L.BALL1_INIT_X;
+        ball2X = L.BALL2_INIT_X;
+        let t0 = null;
+        const totalDur = collided
+          ? Math.max(0.35, collisionTime) + postTime
+          : 0.55;
+        function step(ts) {
+            if (!t0) t0 = ts;
+            const elapsed = Math.min(totalDur, (ts - t0) / 1000);
+            if (collided && collisionTime > 0) {
+                if (elapsed < collisionTime) {
+                    // 碰前：仅按初速运动；v2=0 时物块2静止
+                    ball1X = L.BALL1_INIT_X + v1 * elapsed * L.PX_PER_M;
+                    ball2X = L.BALL2_INIT_X + v2 * elapsed * L.PX_PER_M;
+                } else {
+                    const te = elapsed - collisionTime;
+                    const c1 = L.BALL1_INIT_X + v1 * collisionTime * L.PX_PER_M;
+                    const c2 = L.BALL2_INIT_X + v2 * collisionTime * L.PX_PER_M;
+                    ball1X = c1 + v1f * te * L.PX_PER_M;
+                    ball2X = c2 + v2f * te * L.PX_PER_M;
+                }
+            } else {
+                ball1X = L.BALL1_INIT_X + v1 * elapsed * L.PX_PER_M;
+                ball2X = L.BALL2_INIT_X + v2 * elapsed * L.PX_PER_M;
+            }
+            ball1X = clampX(ball1X, r1);
+            ball2X = clampX(ball2X, r2);
+            ball1Y = L.GROUND_Y - r1;
+            ball2Y = L.GROUND_Y - r2;
+            drawScene();
+            if (elapsed < totalDur) requestAnimationFrame(step);
+            else {
+                animating = false;
+                ball1X = end1;
+                ball2X = end2;
+                ov1Display.textContent = v1f.toFixed(2);
+                ov2Display.textContent = v2f.toFixed(2);
+                ov3Display.textContent = winOk ? '已进入' : '未进入';
+                if (winOk) {
+                    hintMsg.textContent = playMode === 'challenge'
+                      ? '包件2进入急单接货口！投递成功！'
+                      : '包件2进入接货口。再试一次未进区的参数作对比。';
+                    hintMsg.className = 'hint-msg win-msg';
+                } else if (collided) {
+                    const missSide = end2 < L.TARGET_LEFT ? '偏近（口左侧）' : '偏远（口右侧）';
+                    hintMsg.textContent = playMode === 'challenge'
+                      ? ('碰撞后' + missSide + '，口位不变，对照停距再调参…')
+                      : ('碰撞已发生，包件2' + missSide + '，请对照接货口调参');
+                    hintMsg.className = 'hint-msg fail-msg';
+                    hintKey = end2 < L.TARGET_LEFT ? 'miss_short' : 'miss_long';
+                } else {
+                    hintMsg.textContent = '尚未相撞 · 可增大包件1相对速度后再发射';
+                    hintMsg.className = 'hint-msg fail-msg';
+                }
+                drawScene();
+                const controlsSnapshot = {
+                    's-mass1': sMass1.value,
+                    's-mass2': sMass2.value,
+                    's-vel1': sVel1.value,
+                    's-vel2': sVel2.value
+                };
+                if (playMode === 'challenge') {
+                  if (winOk) {
+                    if (!challengeWon) {
+                      challengeWon = true;
+                      emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'mom_rush' });
+                      emit('win', { winOk: true });
+                      if (typeof window.__craftShowWin === 'function') {
+                        window.__craftShowWin('急单接货口本局锁定，你用动量守恒把包件2投进了指定口位。');
+                      }
+                    }
+                  } else {
+                    emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+                    // FixedChallenge：失败不换口，只复位再试
+                    sVel1.value = '2.0';
+                    sMass1.value = '1.0';
+                    sMass2.value = '1.5';
+                    sVel2.value = '0.0';
+                    updateSliderLabels();
+                    resetSim(true);
+                    refreshGoalUI();
+                    hintMsg.textContent = '未投进 · 接货口仍在约 ' + Math.round(targetCenterFrac * 100) + '% 处（本局固定）';
+                  }
+                  return;
+                }
+                exploreShots += 1;
+                if (winOk) sawIn = true; else sawMiss = true;
+                emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+                if (!exploreWon && exploreShots >= 3 && sawIn && sawMiss) {
+                  exploreWon = true;
+                  hintMsg.textContent = '已见过进区与未进 · 可切换竞赛接急单（口位本局固定）';
+                  emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'mom_explore' });
+                  emit('win', { winOk: true });
+                  if (typeof window.__craftShowWin === 'function') {
+                    window.__craftShowWin('你通过对比进区与未进，归纳了一维碰撞中的动量分配规律。');
+                  }
+                }
+            }
+        }
+        requestAnimationFrame(step);
+    }
+
+    function emit(type, payload) {
+        try {
+            if (window.PlatformTraceAdapter) {
+                window.PlatformTraceAdapter.record(type, payload || {});
+                return;
+            }
+        } catch (e) {}
+        try {
+            if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+                window.parent.PlatformTraceAdapter.record(type, payload || {});
+            }
+        } catch (e) {}
+    }
+
+    function snapControls() {
+        var o = {};
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+            var id = el.id || el.name; if (id) o[id] = el.value;
+        });
+        return o;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        emit('puzzle_open', {});
+        document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+            el.addEventListener('input', function() {
+                emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+            });
+        });
+        var i1 = document.getElementById('I1');
+        if (i1) {
+            i1.addEventListener('change', function() {
+                emit('irrelevant_touch', { control: 'I1', value: i1.value });
+            });
+        }
+    });
+
+    updateSliderLabels();
+    refreshGoalUI();
+    resetSim(true);
+    drawScene();
+    window.__momRedraw = drawScene;
+
+    sMass1.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });
+    sMass2.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });
+    sVel1.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });
+    sVel2.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });
+    if (sRailTemp) sRailTemp.addEventListener('input', function() { updateSliderLabels(); });
+    btnFire.addEventListener('click', fire);
+    btnReset.addEventListener('click', function() { resetSim(true); emit('snapshot', { controls: snapControls(), winOk: false, hintKey: 'manual_reset' }); });
+
+    window.__physics = { computeCollision, fire, resetSim };
+})();
+</script>
+
+<!-- trace-adapter-hook (内联，仅一次) -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+  });
+})();
+</script>
+<!-- trace-adapter-hook -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  if (window.__essenceStageResize) return;
+  window.__essenceStageResize = true;
+  function fit(){
+    if (typeof window.__momRedraw === 'function') {
+      window.__momRedraw();
+      return;
+    }
+    var stage = document.getElementById('essence-stage');
+    var cvs = stage && stage.querySelector('canvas');
+    if (!stage || !cvs) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 2 || h < 2) return;
+  }
+  window.addEventListener('resize', fit);
+  if (typeof ResizeObserver !== 'undefined') {
+    var st = document.getElementById('essence-stage');
+    if (st) new ResizeObserver(fit).observe(st);
+  }
+  fit();
+})();
+</script>
+
+<script>
+/* === dual-mode-shell runtime (auto) === */
+(function(){
+  if (window.__dualModeShell) return;
+  window.__dualModeShell = true;
+
+  var MAX_ATTEMPTS = 5;
+  var EXPLORE_SECONDS = 10 * 60;
+  var state = {
+    mode: 'explore',
+    attempts: MAX_ATTEMPTS,
+    timeLeft: EXPLORE_SECONDS,
+    timerId: null
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function setPhase(phase){
+    try {
+      if (typeof window.__platformTraceSetPhase === 'function') {
+        window.__platformTraceSetPhase(phase);
+      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(phase);
+      }
+    } catch (e) { /* offline */ }
+  }
+
+  function fmt(sec){
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderAttempts(){
+    var el = $('attemptsDisplay');
+    if (el) el.textContent = String(state.attempts);
+  }
+
+  function primaryButtons(){
+    return Array.prototype.slice.call(document.querySelectorAll(
+      '#essence-bench .essence-ft button, #essence-bench button.btn, #essence-bench button[id^="btn"]'
+    ));
+  }
+
+  function gateActions(){
+    var disable = state.mode === 'challenge' && state.attempts <= 0;
+    primaryButtons().forEach(function(btn){
+      if (/reset|清除|重置|再来/i.test(btn.textContent || '') || /reset|clear/i.test(btn.id || '')) return;
+      btn.classList.toggle('dual-disabled', disable);
+      if (disable) btn.setAttribute('disabled', 'disabled');
+      else btn.removeAttribute('disabled');
+    });
+  }
+
+  function stopTimer(){
+    if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+  }
+
+  function startExploreTimer(){
+    stopTimer();
+    state.timeLeft = EXPLORE_SECONDS;
+    var td = $('timerDisplay');
+    if (td) td.textContent = fmt(state.timeLeft);
+    state.timerId = setInterval(function(){
+      if (state.mode !== 'explore') return;
+      state.timeLeft -= 1;
+      if (td) td.textContent = fmt(Math.max(0, state.timeLeft));
+      if (state.timeLeft <= 0) {
+        stopTimer();
+        var sel = $('modeSelect');
+        if (sel) {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }, 1000);
+  }
+
+  function applyMode(mode){
+    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var label = $('modeLabel');
+    var stats = $('challengeStats');
+    var timerChip = $('dual-timer-chip');
+    if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (stats) {
+      if (state.mode === 'challenge') stats.classList.add('is-visible');
+      else stats.classList.remove('is-visible');
+    }
+    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (state.mode === 'challenge') {
+      stopTimer();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+    } else {
+      startExploreTimer();
+    }
+    setPhase(state.mode);
+    gateActions();
+    if (typeof window.__momApplyMode === 'function') {
+      try { window.__momApplyMode(state.mode); } catch (e) {}
+    }
+  }
+
+  function onPrimaryClick(e){
+    if (state.mode !== 'challenge') return;
+    var t = e.target.closest('button');
+    if (!t) return;
+    if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
+    if (state.attempts <= 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    state.attempts -= 1;
+    renderAttempts();
+    gateActions();
+  }
+
+  function ensureUi(){
+    var stage = $('essence-stage') || document.querySelector('#proj-stage, #stage, #canvasContainer, .canvas-wrap')?.parentElement;
+    var bench = $('essence-bench');
+    if (!stage) return false;
+
+    if (!$('dual-mode-hud')) {
+      var hud = document.createElement('div');
+      hud.id = 'dual-mode-hud';
+      hud.innerHTML =
+        '<div id="dual-timer-chip" class="dual-chip">' +
+          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
+          '<span id="timerDisplay">10:00</span>' +
+        '</div>' +
+        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+      stage.style.position = stage.style.position || 'relative';
+      stage.appendChild(hud);
+    }
+
+    if (bench && !$('modeSelect')) {
+      bench.classList.add('dual-mode-ready');
+      var hd = document.createElement('div');
+      hd.id = 'essence-bench-hd';
+      hd.className = 'dual-bench-hd';
+      var title = '环境控制台';
+      var tEl = stage.querySelector('.essence-title, h1');
+      if (tEl) title = (tEl.textContent || title).trim() || title;
+      hd.innerHTML =
+        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<select id="modeSelect" aria-label="探究阶段">' +
+          '<option value="explore">自由探究</option>' +
+          '<option value="challenge">竞赛挑战</option>' +
+        '</select>';
+      bench.insertBefore(hd, bench.firstChild);
+    } else if (!$('modeSelect')) {
+      // Fallback: floating select in hud
+      var chip = $('dual-timer-chip');
+      if (chip && !$('modeSelect')) {
+        var sel = document.createElement('select');
+        sel.id = 'modeSelect';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        chip.appendChild(sel);
+      }
+    }
+    return !!$('modeSelect');
+  }
+
+  function boot(){
+    if (!ensureUi()) return;
+    var sel = $('modeSelect');
+    sel.addEventListener('change', function(){ applyMode(sel.value); });
+    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
+    ft.addEventListener('click', onPrimaryClick, true);
+    applyMode(sel.value || 'explore');
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

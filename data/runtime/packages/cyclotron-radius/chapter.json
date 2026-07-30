@@ -1,0 +1,979 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 初始状态 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调节B和v | O1 | operation | 调节磁感应强度B和入射速度v |\n| 发射粒子 | O2 | operation | 点击发射按钮 |\n| 观察半径偏大/偏小? | C5 | constraint | 观察反馈 |\n| 否→继续观察 | C4 | constraint | 半径在目标环带? |\n| 是→过关 | R1 | result | 过关 |\n| 否→重试 | retry | retry | skip retry |\n| 探究: 观察半径变化 | S1 | core | 教学节点 |\n| 竞赛: 限次命中环带 | S2 | core | 教学节点 |\n| 验证探究 | verify | verify | 验证边 |\n| 验证竞赛 | verify | verify | 验证边 |\n| 腔室气压p | I1 | irrelevant | 无关控件 |\n| 读数显示 | I2 | irrelevant | 无关控件 |",
+  "kg": {
+    "title": "回旋加速器 · 探究轨道半径",
+    "sub": "第1关",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始回旋加速器束流提取探究"
+      },
+      {
+        "id": "C1",
+        "label": "选择模式",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择自由探究或竞赛挑战模式，决定后续判定规则",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C2",
+        "label": "探究模式",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "自由探究模式，无命中要求，观察半径随B、v变化",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "竞赛模式",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "竞赛挑战模式，限次将轨道半径调至锁定提取环带内",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节B和v",
+        "group": "operation",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "调节磁感应强度B和入射速度v滑条，改变轨道半径"
+      },
+      {
+        "id": "O2",
+        "label": "发射粒子",
+        "group": "operation",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "点击发射按钮，观察轨道半径与反馈"
+      },
+      {
+        "id": "C5",
+        "label": "观察半径偏大/偏小",
+        "group": "constraint",
+        "layer": "play",
+        "level": 5,
+        "r": 22,
+        "desc": "发射后观察半径与目标环带的偏差方向，指导调节",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C4",
+        "label": "半径在目标环带?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 6,
+        "r": 22,
+        "desc": "竞赛模式下轨道半径是否在锁定提取环带内",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 7,
+        "r": 22,
+        "desc": "竞赛模式下轨道半径命中提取环带，显示过关界面"
+      },
+      {
+        "id": "S1",
+        "label": "探究: 观察半径变化",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "自由探究模式下，通过调节B和v观察轨道半径的变化规律"
+      },
+      {
+        "id": "S2",
+        "label": "竞赛: 限次命中环带",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "竞赛模式下，在有限次数内将轨道半径调至锁定提取环带内"
+      },
+      {
+        "id": "I1",
+        "label": "腔室气压p",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "腔室气压滑条，不影响轨道半径判定"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "O2",
+        "tp": "method"
+      },
+      {
+        "s": "O2",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "C5",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "回旋加速器 · 探究轨道半径",
+    "sub": "第1关",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始回旋加速器束流提取探究",
+      "children": [
+        {
+          "n": "选择模式?",
+          "t": "decision",
+          "d": "选择自由探究或竞赛挑战模式",
+          "children": [
+            {
+              "_e": "是",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究模式，观察半径随B、v变化",
+              "children": [
+                {
+                  "n": "调节B和v",
+                  "t": "step",
+                  "d": "调节磁感应强度B和入射速度v滑条",
+                  "children": [
+                    {
+                      "n": "发射粒子",
+                      "t": "step",
+                      "d": "点击发射按钮，观察轨道半径",
+                      "children": [
+                        {
+                          "n": "观察半径偏大/偏小?",
+                          "t": "decision",
+                          "d": "发射后观察半径与目标环带的偏差方向",
+                          "children": [
+                            {
+                              "_e": "否",
+                              "n": "未达标重试",
+                              "t": "retry",
+                              "d": "半径偏大或偏小，需重新调节，回到调节B和v后重试",
+                              "children": [
+                                {
+                                  "n": "调节B和v",
+                                  "t": "step",
+                                  "d": "调节磁感应强度B和入射速度v滑条，改变轨道半径",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "_e": "是",
+                              "n": "继续观察",
+                              "t": "step",
+                              "d": "半径在目标环带内或继续探究",
+                              "children": [
+                                {
+                                  "n": "过关",
+                                  "t": "result",
+                                  "d": "竞赛模式下轨道半径命中提取环带，过关"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_e": "否",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "竞赛挑战模式，限次命中锁定提取环",
+              "children": [
+                {
+                  "n": "调节B和v",
+                  "t": "step",
+                  "d": "调节磁感应强度B和入射速度v滑条",
+                  "children": [
+                    {
+                      "n": "发射粒子",
+                      "t": "step",
+                      "d": "点击发射按钮，观察轨道半径",
+                      "children": [
+                        {
+                          "n": "观察半径偏大/偏小?",
+                          "t": "decision",
+                          "d": "发射后观察半径与目标环带的偏差方向",
+                          "children": [
+                            {
+                              "_e": "否",
+                              "n": "未达标重试",
+                              "t": "retry",
+                              "d": "半径偏大或偏小，需重新调节，回到调节B和v后重试",
+                              "children": [
+                                {
+                                  "n": "调节B和v",
+                                  "t": "step",
+                                  "d": "调节磁感应强度B和入射速度v滑条，改变轨道半径",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "_e": "是",
+                              "n": "半径在目标环带?",
+                              "t": "decision",
+                              "d": "竞赛模式下轨道半径是否在锁定提取环带内",
+                              "children": [
+                                {
+                                  "_e": "否",
+                                  "n": "未命中重试",
+                                  "t": "retry",
+                                  "d": "半径不在环带内，需重新调节，回到调节B和v后重试",
+                                  "children": [
+                                    {
+                                      "n": "调节B和v",
+                                      "t": "step",
+                                      "d": "调节磁感应强度B和入射速度v滑条，改变轨道半径",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "_e": "是",
+                                  "n": "过关",
+                                  "t": "result",
+                                  "d": "竞赛模式下轨道半径命中提取环带，过关"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关",
+    "sub": "束流对齐提取环"
+  },
+  "traceMap": {
+    "controls": {
+      "s-magnetic": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-velocity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-chamber-p": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "val-pressure": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "回旋加速器 · 探究轨道半径",
+    "sub": "第1关",
+    "mermaid": "graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[同时调多个参数]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·速度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ModeSelect",
+          "ExploreCore",
+          "Tune1",
+          "Adjust",
+          "Retest",
+          "ChallengeCore",
+          "Win2",
+          "Win1"
+        ],
+        "highlightEdges": [
+          [
+            "Tune1",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Retest"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreCore"
+          ],
+          [
+            "ExploreCore",
+            "Tune1"
+          ],
+          [
+            "Retest",
+            "Observe"
+          ],
+          [
+            "StrategySelect",
+            "Tune1"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-magnetic",
+        "label": "单变量·磁场",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ModeSelect",
+          "ChallengeCore",
+          "Tune2",
+          "Adjust",
+          "Retest",
+          "Win2",
+          "Win1"
+        ],
+        "highlightEdges": [
+          [
+            "Tune2",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Retest"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ChallengeCore"
+          ],
+          [
+            "ChallengeCore",
+            "Tune2"
+          ],
+          [
+            "Retest",
+            "Observe"
+          ],
+          [
+            "StrategySelect",
+            "Tune2"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-chamber-p",
+        "label": "单变量·腔室气压",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "ChallengeCore",
+          "Win2",
+          "Win1"
+        ],
+        "highlightEdges": [],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ProbeCV"
+        ],
+        "highlightEdges": [],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.55,
+        "weight": 0.55,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [],
+        "priorityRank": 4
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "回旋加速器 · 探究轨道半径",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "回旋加速器 · 探究轨道半径",
+        "formulas": [
+          "E = 1.0",
+          "R = r"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-velocity",
+        "label": "速度",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-magnetic",
+        "label": "磁场",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-chamber-p",
+        "label": "腔室气压",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：探究: 观察半径变化、竞赛: 限次命中环带",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：探究: 观察半径变化；竞赛: 限次命中环带",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节B和v、调节B和v、选择模式；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：腔室气压p（腔室气压滑条，不影响轨道半径判定）；腔室气压p（腔室气压滑条，不影响轨道半径判定）",
+          "mapsToKg": [
+            "I1",
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "过关结果",
+        "symbol": "",
+        "unit": "",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "circular"
+  },
+  "physicsModel": {
+    "formulas": [
+      "E = 1.0",
+      "R = r"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "E = 1.0",
+        "R = r"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "命中/过关判定函数驱动 win 事件",
+      "domain": "circular"
+    }
+  },
+  "gameSpec": {
+    "title": "回旋加速器 · 探究轨道半径",
+    "subtitle": "第1关",
+    "winCondition": "竞赛模式下轨道半径命中提取环带，显示过关界面",
+    "knowledgeSummary": "回旋加速器 · 探究轨道半径",
+    "controls": [
+      {
+        "id": "s-velocity",
+        "type": "range",
+        "label": "速度",
+        "symbol": "速度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-magnetic",
+        "type": "range",
+        "label": "磁场",
+        "symbol": "磁场",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-chamber-p",
+        "type": "range",
+        "label": "腔室气压",
+        "symbol": "腔室气压",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "选择模式",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "选择模式",
+        "desc": "选择自由探究或竞赛挑战模式，决定后续判定规则"
+      },
+      {
+        "kgId": "C2",
+        "label": "探究模式",
+        "desc": "自由探究模式，无命中要求，观察半径随B、v变化"
+      },
+      {
+        "kgId": "C3",
+        "label": "竞赛模式",
+        "desc": "竞赛挑战模式，限次将轨道半径调至锁定提取环带内"
+      },
+      {
+        "kgId": "C5",
+        "label": "观察半径偏大/偏小",
+        "desc": "发射后观察半径与目标环带的偏差方向，指导调节"
+      },
+      {
+        "kgId": "C4",
+        "label": "半径在目标环带?",
+        "desc": "竞赛模式下轨道半径是否在锁定提取环带内"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-magnetic": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-velocity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-chamber-p": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "val-pressure": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": {
+      "type": "generic_motion",
+      "needsContinuousSim": true
+    },
+    "needsContinuousSim": true,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "速度",
+        "symbol": "速度",
+        "unit": "",
+        "source": "state.s-velocity"
+      },
+      {
+        "label": "磁场",
+        "symbol": "磁场",
+        "unit": "",
+        "source": "state.s-magnetic"
+      },
+      {
+        "label": "腔室气压",
+        "symbol": "腔室气压",
+        "unit": "",
+        "source": "state.s-chamber-p"
+      },
+      {
+        "label": "过关结果",
+        "symbol": "过关结果",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry",
+      "运动类须实时显示 ≥2 个物理量读数",
+      "须 RAF 驱动连续动画，dt 限幅 ≤50ms"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "运动类须 requestAnimationFrame + update/draw 分离 + dt 限幅，禁止调参即过关"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-magnetic",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-magnetic → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-velocity",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-velocity → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-chamber-p",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 s-chamber-p"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "val-pressure",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 val-pressure"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "选择模式?",
+        "type": "decision",
+        "desc": "选择自由探究或竞赛挑战模式"
+      },
+      {
+        "name": "观察半径偏大/偏小?",
+        "type": "decision",
+        "desc": "发射后观察半径与目标环带的偏差方向"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "竞赛模式下轨道半径命中提取环带，过关"
+      },
+      {
+        "name": "提示偏差",
+        "type": "retry",
+        "desc": "半径偏大或偏小，需重新调节，回到调节B和v后重试"
+      },
+      {
+        "name": "观察半径偏大/偏小?",
+        "type": "decision",
+        "desc": "发射后观察半径与目标环带的偏差方向"
+      },
+      {
+        "name": "半径在目标环带?",
+        "type": "decision",
+        "desc": "竞赛模式下轨道半径是否在锁定提取环带内"
+      },
+      {
+        "name": "未命中重试",
+        "type": "retry",
+        "desc": "半径不在环带内，需重新调节，回到调节B和v后重试"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "竞赛模式下轨道半径命中提取环带，过关"
+      },
+      {
+        "name": "提示偏差",
+        "type": "retry",
+        "desc": "半径偏大或偏小，需重新调节，回到调节B和v后重试"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "_expertMeta": {
+    "id": "capacitor-confound-ui",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.522Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "电容 · 平行板探究",
+    "sub": "探究极板面积与间距对电容读数的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C0",
+        "label": "选择模式",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节极板面积/间距并测试",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "读数在目标区间?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "读数偏低?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "探究模式：自由调参观察",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "竞赛模式：限次达标",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "极板色调",
+        "group": "irrelevant",
+        "layer": "play"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach"
+      },
+      {
+        "id": "C_OUTCOME_1",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C0",
+        "tp": "premise"
+      },
+      {
+        "s": "C0",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C0",
+        "tp": "premise"
+      },
+      {
+        "s": "C0",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "电容 · 平行板探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容 · 平行板探究",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "C = C_pF"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-distance",
+        "label": "极板间距",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-area",
+        "label": "极板面积",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "monotone"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-plateTone",
+        "label": "外观色调",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·极板间距",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-area",
+        "label": "单变量·极板面积",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_s_plateTone",
+        "label": "试探混淆·外观色调",
+        "priorityRank": 3,
+        "score": 0.7
+      }
+    ]
+  }
+}

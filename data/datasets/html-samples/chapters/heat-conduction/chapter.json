@@ -1,0 +1,630 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节导热系数或温差 | O1 | operation | 调参操作 |\n| 导热系数在范围? | C1 | constraint | 参数范围约束 |\n| 温差在范围? | C2 | constraint | 参数范围约束 |\n| 热流速率达标? | C3 | constraint | 结果判定 |\n| 过关 | R1 | result | 过关节点 |\n| 提示重试 | (retry) | - | skip retry 回到 O1 |\n| 提示参数范围 | (retry) | - | skip retry 回到 O1 |\n| 未达标重试 | (retry) | - | skip retry 回到 O1 |\n| 热传导公式 | S1 | core | teach 节点 |\n| 正比关系验证 | S2 | method | teach 节点 |",
+  "kg": {
+    "title": "热传导",
+    "sub": "探究材料导热系数和温差对热流速率的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始热传导探究实验"
+      },
+      {
+        "id": "O1",
+        "label": "调节导热系数或温差",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节导热系数k和温差ΔT"
+      },
+      {
+        "id": "C1",
+        "label": "导热系数在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "导热系数k必须在0.1~400 W/(m·K)之间"
+      },
+      {
+        "id": "C2",
+        "label": "温差在范围?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "温差ΔT必须在10~100 K之间"
+      },
+      {
+        "id": "C3",
+        "label": "热流速率达标?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "热流速率Q/t达到目标值即过关"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "成功验证热传导公式的正比关系"
+      },
+      {
+        "id": "S1",
+        "label": "热传导公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "Q/t = kAΔT/d，热流速率与导热系数和温差成正比"
+      },
+      {
+        "id": "S2",
+        "label": "正比关系验证",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "通过控制变量法，每次只改变一个参数，观察热流速率变化"
+      },
+      {
+        "id": "I1",
+        "label": "截面积滑条",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "固定不变的混淆变量，不影响探究"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "热传导",
+    "sub": "探究材料导热系数和温差对热流速率的影响",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始热传导探究实验",
+      "children": [
+        {
+          "n": "调节导热系数或温差",
+          "t": "step",
+          "d": "通过滑条调节导热系数k和温差ΔT",
+          "children": []
+        },
+        {
+          "n": "导热系数在范围?",
+          "t": "decision",
+          "d": "导热系数k必须在0.1~400 W/(m·K)之间",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示参数范围",
+              "t": "retry",
+              "d": "导热系数超出范围，请重新调节"
+            },
+            {
+              "_e": "是",
+              "n": "温差在范围?",
+              "t": "decision",
+              "d": "温差ΔT必须在10~100 K之间",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示参数范围",
+                  "t": "retry",
+                  "d": "温差超出范围，请重新调节"
+                },
+                {
+                  "_e": "是",
+                  "n": "热流速率达标?",
+                  "t": "decision",
+                  "d": "热流速率Q/t达到目标值即过关",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "热流速率未达标，请重新调节参数"
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "成功验证热传导公式的正比关系"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "热传导",
+    "sub": "探究材料导热系数和温差对热流速率的影响"
+  },
+  "traceMap": {
+    "controls": {
+      "s-thermal-conductivity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-temperature-diff": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-area": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "热传导",
+    "sub": "探究材料导热系数和温差对热流速率的影响",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[观察热流速率]\nAdjust2 --> Fire2[观察热流速率]\nFire1 --> Observe1{热流速率达标?}:::stratCond\nFire2 --> Observe2{热流速率达标?}:::stratCond\nObserve1 -->|否| Adjust1\nObserve1 -->|参数超范围| Retry1[重新调参]:::stratRetry\nObserve1 -->|是| Win[过关]:::stratResult\nObserve2 -->|否| Adjust2\nObserve2 -->|参数超范围| Retry2[重新调参]:::stratRetry\nObserve2 -->|是| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| ControlVar[每次只改一个参数]\nStrategySelect -->|多参盲调| MultiBlind[同时调多个参数]\nStart([开始实验]):::stratStart\nControlVar --> Adjust1[调整一个参数]\nMultiBlind --> Adjust2[固定其余，只调s-thermal-conductivity]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetry1 --> Adjust1\nRetry2 --> Adjust2",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ControlVar",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ControlVar"
+          ],
+          [
+            "ControlVar",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MultiBlind",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MultiBlind"
+          ],
+          [
+            "MultiBlind",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究材料导热系数和温差对热流速率的影响",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "热传导公式",
+        "formulas": [
+          "Q/t = kAΔT/d"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-thermal-conductivity",
+        "label": "导热系数",
+        "symbol": "k",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 0.1,
+          "max": 400,
+          "step": 0.1,
+          "unit": "W/(m·K)"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-temperature-diff",
+        "label": "温差",
+        "symbol": "ΔT",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "K"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-area",
+        "label": "截面积",
+        "reason": "固定不变，不影响导热系数和温差对热流速率的相对影响"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-thickness",
+        "label": "厚度",
+        "reason": "固定不变，不影响导热系数和温差对热流速率的相对影响"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "Q/t",
+        "label": "热流速率",
+        "unit": "W",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验通过调节导热系数和温差，观察热流速率的变化，验证热传导公式中的正比关系。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "使用滑条调节导热系数k或温差ΔT，观察热流速率Q/t的变化。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察结果",
+          "body": "记录热流速率数值，判断是否达到目标值。",
+          "mapsToKg": [
+            "C3"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "验证关系",
+          "body": "通过控制变量法，验证Q/t与k和ΔT的正比关系。",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "Q/t = kAΔT/d"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1",
+      "CV2"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "热传导",
+    "subtitle": "探究材料导热系数和温差对热流速率的影响",
+    "winCondition": "成功验证热传导公式的正比关系",
+    "knowledgeSummary": "热传导公式",
+    "controls": [
+      {
+        "id": "s-thermal-conductivity",
+        "type": "range",
+        "label": "导热系数",
+        "symbol": "k",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0.1,
+          "max": 400,
+          "step": 0.1,
+          "unit": "W/(m·K)"
+        }
+      },
+      {
+        "id": "s-temperature-diff",
+        "type": "range",
+        "label": "温差",
+        "symbol": "ΔT",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "unit": "K"
+        }
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "s-area",
+        "label": "截面积",
+        "reason": "固定不变，不影响导热系数和温差对热流速率的相对影响",
+        "uiStrategy": "teach_only"
+      },
+      {
+        "controlId": "s-thickness",
+        "label": "厚度",
+        "reason": "固定不变，不影响导热系数和温差对热流速率的相对影响",
+        "uiStrategy": "teach_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "导热系数在范围?",
+        "desc": "导热系数k必须在0.1~400 W/(m·K)之间"
+      },
+      {
+        "kgId": "C2",
+        "label": "温差在范围?",
+        "desc": "温差ΔT必须在10~100 K之间"
+      },
+      {
+        "kgId": "C3",
+        "label": "热流速率达标?",
+        "desc": "热流速率Q/t达到目标值即过关"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-thermal-conductivity": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-temperature-diff": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-area": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "热流速率",
+        "symbol": "Q/t",
+        "unit": "W"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-thermal-conductivity",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-thermal-conductivity → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-temperature-diff",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-temperature-diff → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-area",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 s-area"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "导热系数在范围?",
+        "type": "decision",
+        "desc": "导热系数k必须在0.1~400 W/(m·K)之间"
+      },
+      {
+        "name": "提示参数范围",
+        "type": "retry",
+        "desc": "导热系数超出范围，请重新调节"
+      },
+      {
+        "name": "温差在范围?",
+        "type": "decision",
+        "desc": "温差ΔT必须在10~100 K之间"
+      },
+      {
+        "name": "提示参数范围",
+        "type": "retry",
+        "desc": "温差超出范围，请重新调节"
+      },
+      {
+        "name": "热流速率达标?",
+        "type": "decision",
+        "desc": "热流速率Q/t达到目标值即过关"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "热流速率未达标，请重新调节参数"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功验证热传导公式的正比关系"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

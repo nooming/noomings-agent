@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斜抛运动探究与挑战</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #f3f4f6; font-family:"PingFang SC","Microsoft YaHei",sans-serif; }
+        canvas { display: block; width: 100%; height: 100%; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        input[type=range] {
+            accent-color: #3b82f6;
+            width: 100%;
+            height: 32px;
+            cursor: pointer;
+        }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 767px) {
+            #proj-stage { min-height: 48vh !important; height: auto !important; flex: 1 1 0 !important; }
+            #proj-side { max-height: min(42vh, 360px); height: auto !important; }
+        }
+    
+/* === craft-gold-shell === */
+:root{--craft-accent:#3b82f6;--craft-bg:#0f172a;--craft-panel:#1e293b;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
+  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+#essence-app,#app{background:var(--craft-bg)!important;}
+#essence-stage,#stage,#proj-stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#essence-bench,.control-panel,#controls-area,#bench,#proj-side{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd,#proj-side > .p-3,#proj-side > .border-t{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;border-color:color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,#proj-side h1{color:var(--craft-accent)!important;}
+#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
+#essence-bench label,.slider-group label,.slabel,#proj-side label{color:var(--craft-muted)!important;}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
+/* 清掉 Tailwind 白底蓝条残留 */
+#proj-stage.bg-blue-50{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
+#proj-side.glass-panel,#proj-side .glass-panel{background:transparent!important;box-shadow:none!important;}
+#proj-side .bg-white{background:rgba(0,0,0,.25)!important;}
+#proj-side .text-gray-800,#proj-side .text-gray-700,#proj-side .text-gray-600{color:var(--craft-text)!important;}
+#proj-side .text-gray-500,#proj-side .text-gray-400{color:var(--craft-muted)!important;}
+#proj-side .text-blue-600,#proj-side .border-gray-200,#proj-side .border-gray-300{color:var(--craft-accent)!important;border-color:color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;}
+#proj-side #modeSelect{background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;}
+#proj-side #btnClear{background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;}
+#dual-mode-hud.glass-panel{background:rgba(15,23,42,.88)!important;color:var(--craft-text)!important;}
+#dual-mode-hud #modeLabel{color:var(--craft-accent)!important;}
+#dual-mode-hud #timerDisplay{color:var(--craft-text)!important;}
+#dual-mode-hud #goalMission,
+#dual-mode-hud .text-gray-800,
+#dual-mode-hud .text-gray-700,
+#dual-mode-hud .text-gray-600{color:var(--craft-text)!important;}
+#dual-mode-hud .text-gray-500,
+#dual-mode-hud .text-gray-400{color:var(--craft-muted)!important;}
+#sideGoalBox > div{
+  background:rgba(0,0,0,.35)!important;
+  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+}
+#sideGoalBox .text-blue-700{color:var(--craft-accent)!important;}
+#sideGoal,p#sideGoal,#proj-side #sideGoal{color:var(--craft-text)!important;}
+#craft-intro,#craft-win{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
+}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+.craft-card{
+  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
+.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+#craft-gauge{
+  margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
+}
+#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:8px 0;}
+.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+
+
+/* === craft-sidebar-contrast === */
+.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+#essence-bench .hint,
+#essence-bench .hint-msg,
+#essence-bench .hint-area,
+#essence-bench #hintMessage,
+#essence-bench #hintMsg,
+#essence-bench #observeText,
+#essence-bench #feedbackArea,
+#essence-bench .hint-bar,
+#essence-bench #hintBar,
+#proj-side .hint,
+#controls-area .hint-msg,
+#bench .hint,
+#bench .hint-msg{
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .confound-note,
+#controls-area .confound-note,
+#bench .confound-note{
+  background:rgba(0,0,0,.28)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench .hint-msg.win-msg,
+#essence-bench .hint.win-msg{
+  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
+  border-color:rgba(34,197,94,.45)!important;
+}
+#essence-bench .hint-msg.fail-msg,
+#essence-bench .hint.fail-msg{
+  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
+  border-color:rgba(248,113,113,.45)!important;
+}
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
+  color:var(--craft-text)!important;
+}
+#essence-bench .footer,
+#essence-bench .footer span,
+#essence-bench .text-sm,
+#essence-bench .observe-unit,
+#essence-bench .unit,
+#essence-bench .note{
+  color:var(--craft-muted)!important;
+}
+
+</style>
+</head>
+<body class="h-screen w-screen flex flex-col md:flex-row min-h-0">
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>野战炮兵 · 斜抛试射</h2>
+    <p>郊外靶场上，试着调炮口参数打几发，弄清落点怎么变；再接靶心挑战——限次打中本局锁定距离的靶。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；侧栏与顶部会写明当前要做什么。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula" id="craftWinFormula">x = v₀cosθ · t；y = v₀sinθ · t − ½gt²</div>
+    <p id="craftWinText">对照落点标尺，你摸清了初速、角度与高度如何影响射程。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+
+
+    <div id="proj-stage" class="relative flex-1 min-h-0 h-[48vh] md:h-full bg-blue-50">
+        <!-- Canvas -->
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- HUD Overlay -->
+        <div class="absolute top-3 left-3 right-3 pointer-events-none z-10">
+            <div id="dual-mode-hud" class="glass-panel inline-flex flex-col gap-1 px-4 py-2 rounded-2xl pointer-events-auto max-w-[min(420px,calc(100%-8px))]">
+                <div id="hud-mode-row" class="flex items-center gap-3 flex-wrap">
+                    <span id="modeLabel" class="font-bold text-blue-600">探究模式</span>
+                    <span id="timerSep" class="w-px h-4 bg-gray-300 hidden sm:block"></span>
+                    <span id="timerDisplay" class="font-mono text-gray-700">10:00</span>
+                    <div id="challengeStats" class="hidden items-center gap-2 transition-opacity">
+                        <span class="text-gray-500 text-sm">剩余机会</span>
+                        <span id="attemptsDisplay" class="font-bold text-red-500 text-lg">6</span>
+                    </div>
+                </div>
+                <div id="goalMission" class="text-xs text-gray-700 leading-snug mt-1 max-w-[360px]">目标：自由试射，读落点，对比角度/速度/高度的影响</div>
+            </div>
+        </div>
+
+        <!-- 居中消息提示框 -->
+        <div id="messageBox" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel px-8 py-4 rounded-xl text-center hidden fade-in z-50">
+            <h2 id="msgTitle" class="text-2xl font-bold mb-2"></h2>
+            <p id="msgDesc" class="text-gray-600"></p>
+            <button id="msgBtn" class="mt-4 px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition hidden pointer-events-auto">继续</button>
+        </div>
+    </div>
+
+    <div id="proj-side" class="w-full md:w-80 md:max-w-[340px] h-[42vh] md:h-full glass-panel flex flex-col z-10 border-t md:border-t-0 md:border-l border-gray-200 min-h-0">
+        <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
+            <div>
+                <h1 class="text-base font-bold text-gray-800 leading-tight">野战炮台</h1>
+                <p class="text-xs text-gray-500 mt-0.5">角度 · 速度 · 高度</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <select id="modeSelect" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 focus:outline-none focus:border-blue-500">
+                    <option value="explore">自由探究</option>
+                    <option value="challenge">靶心挑战</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="sideGoalBox" class="px-4 pt-3 pb-1 shrink-0">
+            <div class="rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2">
+                <div class="text-[11px] font-semibold text-blue-700 tracking-wide">当前目标</div>
+                <p id="sideGoal" class="text-xs mt-0.5 leading-relaxed" style="color:var(--craft-text)">探究·靶场试射：试着弄清落点规律；不必先打固定靶。竞赛另有靶心任务。</p>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-5 min-h-0">
+            <!-- 角度控制 -->
+            <div>
+                <div class="flex justify-between mb-1">
+                    <label class="text-sm font-semibold text-gray-700">发射角度 (度)</label>
+                    <span id="valAngle" class="text-sm text-blue-600 font-mono">45°</span>
+                </div>
+                <input type="range" id="s-angle" min="0" max="90" value="45" class="w-full">
+            </div>
+
+            <!-- 速度控制 -->
+            <div>
+                <div class="flex justify-between mb-1">
+                    <label class="text-sm font-semibold text-gray-700">初速度 (m/s)</label>
+                    <span id="valSpeed" class="text-sm text-blue-600 font-mono">15</span>
+                </div>
+                <input type="range" id="s-speed" min="5" max="35" value="15" step="1" class="w-full">
+            </div>
+
+            <!-- 高度控制 -->
+            <div>
+                <div class="flex justify-between mb-1">
+                    <label class="text-sm font-semibold text-gray-700">发射高度 (m)</label>
+                    <span id="valHeight" class="text-sm text-blue-600 font-mono">10</span>
+                </div>
+                <input type="range" id="s-height" min="0" max="30" value="10" step="1" class="w-full">
+            </div>
+
+            <!-- 质量控制（教学陷阱） -->
+            <div>
+                <div class="flex justify-between mb-1">
+                    <label class="text-sm font-semibold text-gray-700">小球质量 (kg)</label>
+                    <span id="valMass" class="text-sm text-blue-600 font-mono">5</span>
+                </div>
+                <input type="range" id="s-mass" min="1" max="20" value="5" step="1" class="w-full">
+                <p class="text-xs text-gray-400 mt-1">注: 改变质量会影响小球大小。</p>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3">
+            <button id="btnLaunch" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-transform active:scale-95">
+                发射！
+            </button>
+            <button id="btnClear" class="col-span-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg transition">
+                清空轨迹
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 游戏核心状态
+        const state = {
+            mode: 'explore', // explore | challenge
+            angle: 45,
+            speed: 15,
+            height: 10,
+            mass: 5,
+            
+            // 物理常量 (缩放比例: 1米 = 15像素)
+            PPM: 15, 
+            g: 9.8,
+            
+            // 场景数据（viewW/viewH 为 CSS 逻辑像素，供绘制；canvas 缓冲另按 DPR 设置）
+            viewW: 0,
+            viewH: 0,
+            groundY: 0, 
+            cannonBaseX: 100,
+            
+            // 动画列表
+            projectiles: [],
+            currentBall: null,
+            clouds: [],
+            birds: [],
+            sparks: [],
+            hitFlash: 0,
+            
+            // 挑战模式数据
+            targetX: 0,
+            targetWidth: 40, // 物理宽度(约2.6米)
+            attempts: 6,
+            timeLeft: 600, // 10分钟
+            timerInterval: null
+        };
+
+        // DOM 元素绑定
+        const ui = {
+            modeSelect: document.getElementById('modeSelect'),
+            sliderAngle: document.getElementById('s-angle'),
+            sliderSpeed: document.getElementById('s-speed'),
+            sliderHeight: document.getElementById('s-height'),
+            sliderMass: document.getElementById('s-mass'),
+            valAngle: document.getElementById('valAngle'),
+            valSpeed: document.getElementById('valSpeed'),
+            valHeight: document.getElementById('valHeight'),
+            valMass: document.getElementById('valMass'),
+            btnLaunch: document.getElementById('btnLaunch'),
+            btnClear: document.getElementById('btnClear'),
+            
+            modeLabel: document.getElementById('modeLabel'),
+            timerDisplay: document.getElementById('timerDisplay'),
+            challengeStats: document.getElementById('challengeStats'),
+            attemptsDisplay: document.getElementById('attemptsDisplay'),
+            goalMission: document.getElementById('goalMission'),
+            sideGoal: document.getElementById('sideGoal'),
+            
+            msgBox: document.getElementById('messageBox'),
+            msgTitle: document.getElementById('msgTitle'),
+            msgDesc: document.getElementById('msgDesc'),
+            msgBtn: document.getElementById('msgBtn')
+        };
+
+        /* ═══════════════════════════════════════════════════════════
+         * 【竞赛 FixedChallenge·旗舰样板】他样本请对齐同一套衔接，勿只改文案：
+         * 1) MODE_GOALS：explore / challenge 目标文案与成功判据必须不同
+         * 2) 进入 challenge → spawnTarget() 生成一次挑战目标并 refreshModeGoals()
+         * 3) 未命中 → 只扣次数/清场，禁止再 spawnTarget()（竞赛期内靶距固定）
+         * 4) modeSelect.change → __platformTraceSetPhase(mode)（或 PlatformTraceAdapter）
+         * 5) explore 宽松（无靶/只观察）；challenge 用另一组固定目标检验迁移
+         * ═══════════════════════════════════════════════════════════ */
+        const MODE_GOALS = {
+            explore: {
+                hud: '目标：自由试射，读落点，对比角度/速度/高度的影响',
+                side: '探究·靶场试射：试着弄清落点规律；不必先打固定靶。'
+            },
+            challenge: {
+                hud: '目标：限次命中指定距离靶心（靶距本局固定）',
+                side: '竞赛·靶心挑战：限次命中本局锁定靶距；打偏不换靶。'
+            }
+        };
+
+        function refreshModeGoals() {
+            const g = MODE_GOALS[state.mode] || MODE_GOALS.explore;
+            if (state.mode === 'challenge' && state.targetX > 0) {
+                const distM = ((state.targetX - state.cannonBaseX) / state.PPM).toFixed(1);
+                if (ui.goalMission) ui.goalMission.textContent = `当前靶距：${distM} m · 限次命中（本局固定，打偏不换靶）`;
+                if (ui.sideGoal) ui.sideGoal.textContent = `竞赛目标：限次命中约 ${distM} m 处靶心（本局固定，打偏不换靶）。`;
+            } else {
+                if (ui.goalMission) ui.goalMission.textContent = g.hud;
+                if (ui.sideGoal) ui.sideGoal.textContent = g.side;
+            }
+        }
+
+        function resizeCanvas() {
+            var parent = canvas.parentElement;
+            var cssW = Math.max(1, parent.clientWidth);
+            var cssH = Math.max(1, parent.clientHeight);
+            var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            var bw = Math.round(cssW * dpr);
+            var bh = Math.round(cssH * dpr);
+            if (canvas.width !== bw || canvas.height !== bh) {
+                canvas.width = bw;
+                canvas.height = bh;
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            state.viewW = cssW;
+            state.viewH = cssH;
+            // 重新计算地面位置 (距离底部 50px)
+            state.groundY = cssH - 50;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function initClouds() {
+            state.clouds = [];
+            for (let i = 0; i < 5; i++) {
+                state.clouds.push({
+                    x: Math.random() * state.viewW,
+                    y: Math.random() * (state.viewH / 2),
+                    speed: 0.2 + Math.random() * 0.5,
+                    scale: 0.5 + Math.random() * 1
+                });
+            }
+        }
+        initClouds();
+
+        function initBirds() {
+            state.birds = [];
+            for (let i = 0; i < 3; i++) { // 生成3只小鸟
+                state.birds.push({
+                    x: Math.random() * state.viewW,
+                    y: 30 + Math.random() * (state.viewH / 3), // 飞行高度在天空上部
+                    speed: 0.8 + Math.random() * 1.5, // 速度比云朵快
+                    scale: 0.4 + Math.random() * 0.4, // 大小差异
+                    flapOffset: Math.random() * Math.PI * 2 // 翅膀扑腾的独立相位，防止同步动作
+                });
+            }
+        }
+        initBirds();
+
+        function spawnTarget() {
+            // FixedChallenge：仅在进入竞赛时调用一次；靶距在 15m～场地上限内随机，此后本局固定
+            const minMeters = 15;
+            const maxMeters = (state.viewW - state.cannonBaseX) / state.PPM - 2;
+            const span = Math.max(minMeters + 1, Math.max(minMeters, maxMeters));
+            const distMeters = minMeters + Math.random() * (span - minMeters);
+            state.targetX = state.cannonBaseX + distMeters * state.PPM;
+            refreshModeGoals();
+        }
+
+        // 绘制炮兵和控制台
+        function drawArtilleryman(ctx, x, y) {
+            // 腿 (深蓝色裤子)
+            ctx.fillStyle = '#1e3a8a'; 
+            ctx.fillRect(x - 5, y - 15, 4, 15);
+            ctx.fillRect(x + 3, y - 15, 4, 15);
+
+            // 身体 (绿色制服)
+            ctx.fillStyle = '#166534'; 
+            ctx.fillRect(x - 8, y - 35, 18, 20);
+
+            // 手臂与火把 (如果刚发射不到 0.2 秒，向大炮伸出火把)
+            ctx.beginPath();
+            ctx.moveTo(x + 5, y - 30);
+            let torchX, torchY;
+            if (state.currentBall && state.currentBall.t < 0.2) {
+                ctx.lineTo(x + 22, y - 25); // 点火姿势 (向右前方伸出)
+                torchX = x + 22;
+                torchY = y - 25;
+            } else {
+                ctx.lineTo(x + 15, y - 35); // 待命姿势 (收在身前)
+                torchX = x + 15;
+                torchY = y - 35;
+            }
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#166534';
+            ctx.stroke();
+            
+            // 画火把杆
+            ctx.beginPath();
+            ctx.moveTo(torchX, torchY);
+            ctx.lineTo(torchX + 6, torchY - 10);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#78350f'; // 深木色
+            ctx.stroke();
+            
+            // 火炬的火焰
+            ctx.fillStyle = '#ef4444'; // 红底
+            ctx.beginPath(); ctx.arc(torchX + 6, torchY - 12, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#f59e0b'; // 黄心
+            ctx.beginPath(); ctx.arc(torchX + 6, torchY - 12, 2, 0, Math.PI * 2); ctx.fill();
+
+            // 脸
+            ctx.fillStyle = '#fcd34d';
+            ctx.beginPath();
+            ctx.arc(x + 1, y - 42, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 头盔 (深绿)
+            ctx.fillStyle = '#14532d'; 
+            ctx.beginPath();
+            ctx.arc(x + 1, y - 43, 8, Math.PI, Math.PI * 2);
+            ctx.fill();
+            // 头盔帽檐
+            ctx.fillRect(x + 1, y - 44, 10, 2);
+        }
+
+        function bindEvents() {
+            // 滑块绑定
+            const bindSlider = (slider, valElement, stateKey, suffix = '') => {
+                slider.addEventListener('input', (e) => {
+                    let val = parseFloat(e.target.value);
+                    state[stateKey] = val;
+                    valElement.textContent = val + suffix;
+                });
+            };
+            bindSlider(ui.sliderAngle, ui.valAngle, 'angle', '°');
+            bindSlider(ui.sliderSpeed, ui.valSpeed, 'speed');
+            bindSlider(ui.sliderHeight, ui.valHeight, 'height');
+            bindSlider(ui.sliderMass, ui.valMass, 'mass');
+
+            // 模式切换：同时刷新目标文案与判据（靶心仅竞赛出现）
+            ui.modeSelect.addEventListener('change', (e) => {
+                state.mode = e.target.value;
+                ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+                refreshModeGoals();
+                try {
+                  if (typeof window.__platformTraceSetPhase === 'function') window.__platformTraceSetPhase(state.mode);
+                  else if (window.PlatformTraceAdapter && window.PlatformTraceAdapter.setPhase) window.PlatformTraceAdapter.setPhase(state.mode);
+                } catch (_) {}
+                
+                if (state.mode === 'challenge') {
+                    ui.challengeStats.classList.remove('hidden');
+                    ui.challengeStats.classList.add('flex');
+                    state.attempts = 6;
+                    ui.attemptsDisplay.textContent = state.attempts;
+                    spawnTarget();
+                    // 只隐藏计时器本身，勿隐藏父级（否则 modeLabel/剩余机会一并消失）
+                    ui.timerDisplay.classList.add('hidden');
+                    var sep = document.getElementById('timerSep');
+                    if (sep) sep.classList.add('hidden');
+                } else {
+                    ui.challengeStats.classList.add('hidden');
+                    ui.challengeStats.classList.remove('flex');
+                    ui.timerDisplay.classList.remove('hidden');
+                    var sep2 = document.getElementById('timerSep');
+                    if (sep2) { sep2.classList.remove('hidden'); sep2.classList.add('sm:block'); }
+                    state.targetX = 0; // 探究无靶
+                }
+                // 切换模式时清空场地
+                state.projectiles = [];
+                state.currentBall = null;
+                hideMessage();
+            });
+
+            // 发射按钮绑定
+            ui.btnLaunch.addEventListener('click', () => {
+                if (state.currentBall || (state.mode === 'challenge' && state.attempts <= 0)) return;
+                
+                // 计算炮口坐标，确保小球是从大炮最前端射出
+                const pivotX = state.cannonBaseX;
+                const pivotY = state.groundY - (state.height * state.PPM) - 20;
+                const rad = state.angle * Math.PI / 180;
+                const barrelLength = 50;
+                const tipX = pivotX + barrelLength * Math.cos(rad);
+                const tipY = pivotY - barrelLength * Math.sin(rad);
+
+                const speedPx = state.speed * state.PPM;
+                
+                state.currentBall = {
+                    x0: tipX,
+                    y0: tipY,
+                    x: tipX,
+                    y: tipY,
+                    v0x: speedPx * Math.cos(rad),
+                    v0y: -speedPx * Math.sin(rad),
+                    t: 0,
+                    path: [],
+                    radius: 3 + state.mass // 质量影响视觉大小，不影响物理轨迹 (教学陷阱)
+                };
+
+                ui.btnLaunch.disabled = true;
+                ui.btnLaunch.classList.add('opacity-50', 'cursor-not-allowed');
+
+                if (state.mode === 'challenge') {
+                    state.attempts--;
+                    ui.attemptsDisplay.textContent = state.attempts;
+                }
+            });
+
+            // 清空轨迹绑定
+            ui.btnClear.addEventListener('click', () => {
+                state.projectiles = [];
+            });
+        }
+
+        // --- 核心渲染函数 ---
+        function drawScene() {
+            // 1. 绘制天空背景 (SVG质感渐变色)
+            const gradient = ctx.createLinearGradient(0, 0, 0, state.viewH);
+            gradient.addColorStop(0, '#7dd3fc');
+            gradient.addColorStop(0.45, '#bae6fd');
+            gradient.addColorStop(1, '#f0f9ff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, state.viewW, state.viewH);
+
+            // 太阳光晕（静景氛围，不干扰读数）
+            const sunX = state.viewW * 0.78, sunY = state.viewH * 0.14;
+            const sunGlow = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 70);
+            sunGlow.addColorStop(0, 'rgba(254,243,199,0.85)');
+            sunGlow.addColorStop(0.35, 'rgba(253,224,71,0.35)');
+            sunGlow.addColorStop(1, 'rgba(253,224,71,0)');
+            ctx.fillStyle = sunGlow;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, 70, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 远山剪影（两层）
+            ctx.fillStyle = 'rgba(100,116,139,0.28)';
+            ctx.beginPath();
+            ctx.moveTo(0, state.groundY);
+            ctx.lineTo(0, state.groundY - 55);
+            ctx.quadraticCurveTo(state.viewW * 0.22, state.groundY - 120, state.viewW * 0.42, state.groundY - 70);
+            ctx.quadraticCurveTo(state.viewW * 0.62, state.groundY - 140, state.viewW * 0.85, state.groundY - 65);
+            ctx.lineTo(state.viewW, state.groundY - 90);
+            ctx.lineTo(state.viewW, state.groundY);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(71,85,105,0.22)';
+            ctx.beginPath();
+            ctx.moveTo(0, state.groundY);
+            ctx.quadraticCurveTo(state.viewW * 0.3, state.groundY - 80, state.viewW * 0.55, state.groundY - 45);
+            ctx.quadraticCurveTo(state.viewW * 0.75, state.groundY - 95, state.viewW, state.groundY - 50);
+            ctx.lineTo(state.viewW, state.groundY);
+            ctx.fill();
+
+            // 2. 绘制云朵
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            state.clouds.forEach(c => {
+                ctx.save();
+                ctx.translate(c.x, c.y);
+                ctx.scale(c.scale, c.scale);
+                ctx.beginPath();
+                ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                ctx.arc(15, -10, 25, 0, Math.PI * 2);
+                ctx.arc(35, 0, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // 3. 绘制飞行的小鸟
+            const now = performance.now();
+            state.birds.forEach(bird => {
+                ctx.save();
+                ctx.translate(bird.x, bird.y);
+                ctx.scale(bird.scale, bird.scale);
+                
+                // 挥动幅度从 -1 到 1 (0.015 调整了拍翅膀的频率)
+                const flap = Math.sin(now * 0.015 + bird.flapOffset);
+                
+                // 1) 后翅膀 (较暗，在身体后方)
+                ctx.save();
+                ctx.translate(2, -2); // 翅膀根部
+                ctx.scale(0.9, flap * 0.9); // 利用 Y 轴缩放实现 2D 拍翅透视翻转
+                ctx.fillStyle = '#9ca3af';
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-5, -20, -15, -25);
+                ctx.quadraticCurveTo(10, -15, 12, 0);
+                ctx.fill();
+                ctx.restore();
+
+                // 2) 尾巴
+                ctx.fillStyle = '#d1d5db';
+                ctx.beginPath();
+                ctx.moveTo(-10, 2);
+                ctx.lineTo(-22, -2);
+                ctx.lineTo(-20, 6);
+                ctx.closePath();
+                ctx.fill();
+
+                // 3) 身体 (微微向上倾斜的椭圆)
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.ellipse(0, 2, 14, 7, -Math.PI / 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#e5e7eb';
+                ctx.stroke();
+
+                // 4) 头部
+                ctx.beginPath();
+                ctx.arc(12, -2, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 5) 鸟喙 (黄色)
+                ctx.fillStyle = '#fbbf24'; 
+                ctx.beginPath();
+                ctx.moveTo(17, -4);
+                ctx.lineTo(25, -1);
+                ctx.lineTo(16, 2);
+                ctx.fill();
+
+                // 6) 眼睛
+                ctx.fillStyle = '#111827';
+                ctx.beginPath();
+                ctx.arc(14, -3, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 7) 前翅膀 (较亮，在身体前方)
+                ctx.save();
+                ctx.translate(0, 2);
+                ctx.scale(1, flap); 
+                ctx.fillStyle = '#f3f4f6';
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-5, -20, -15, -30);
+                ctx.quadraticCurveTo(10, -15, 12, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.restore();
+            });
+
+            // 4. 绘制远山和地面
+            const grass = ctx.createLinearGradient(0, state.groundY, 0, state.viewH);
+            grass.addColorStop(0, '#84cc16');
+            grass.addColorStop(0.35, '#65a30d');
+            grass.addColorStop(1, '#3f6212');
+            ctx.fillStyle = grass;
+            ctx.fillRect(0, state.groundY, state.viewW, state.viewH - state.groundY);
+            // 草地纹理条
+            ctx.strokeStyle = 'rgba(22,101,52,0.28)';
+            ctx.lineWidth = 1;
+            for (let gx = 0; gx < state.viewW; gx += 18) {
+                ctx.beginPath();
+                ctx.moveTo(gx, state.groundY + 4);
+                ctx.lineTo(gx + 8, state.groundY + 14 + (gx % 36) * 0.15);
+                ctx.stroke();
+            }
+            
+            // 绘制左侧小山丘 (作为基座底盘)
+            ctx.beginPath();
+            ctx.moveTo(0, state.groundY);
+            ctx.quadraticCurveTo(state.cannonBaseX, state.groundY - 60, state.cannonBaseX + 80, state.groundY);
+            ctx.fillStyle = '#4d7c0f';
+            ctx.fill();
+
+            // 风向袋（炮台旁，微摆）
+            const sockX = state.cannonBaseX + 70;
+            const sockBase = state.groundY;
+            const sockWave = Math.sin(performance.now() * 0.004) * 0.35;
+            ctx.strokeStyle = '#78716c';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(sockX, sockBase);
+            ctx.lineTo(sockX, sockBase - 42);
+            ctx.stroke();
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(sockX, sockBase - 40);
+            ctx.quadraticCurveTo(sockX + 22, sockBase - 36 + sockWave * 10, sockX + 34, sockBase - 32 + sockWave * 14);
+            ctx.quadraticCurveTo(sockX + 22, sockBase - 28 + sockWave * 8, sockX, sockBase - 26);
+            ctx.fill();
+
+            // 5. 绘制升降台和炮台
+            const pivotX = state.cannonBaseX;
+            const currentLiftH = state.height * state.PPM;
+            const pivotY = state.groundY - currentLiftH - 20;
+
+            // 升降柱（金属光影）
+            const mast = ctx.createLinearGradient(pivotX - 10, 0, pivotX + 10, 0);
+            mast.addColorStop(0, '#6b7280');
+            mast.addColorStop(0.45, '#d1d5db');
+            mast.addColorStop(1, '#4b5563');
+            ctx.fillStyle = mast;
+            ctx.fillRect(pivotX - 10, state.groundY, 20, -currentLiftH);
+            ctx.fillStyle = '#374151';
+            ctx.fillRect(pivotX - 3, state.groundY, 6, -currentLiftH);
+            
+            // 升降台托盘
+            ctx.fillStyle = '#4b5563';
+            ctx.fillRect(pivotX - 55, pivotY + 10, 90, 10);
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fillRect(pivotX - 55, pivotY + 10, 90, 2);
+
+            // 将炮兵移到升降台上
+            drawArtilleryman(ctx, pivotX - 35, pivotY + 10);
+
+            // 旋转炮管
+            ctx.save();
+            ctx.translate(pivotX, pivotY);
+            ctx.rotate(-state.angle * Math.PI / 180); // 负号因为Canvas Y轴向下
+            
+            // 画炮管
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, -10, 50, 20); 
+            ctx.fillStyle = '#eab308'; // 黄色装饰
+            ctx.fillRect(40, -10, 5, 20);
+            
+            // 绘制炮管尾部的引线
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(-15, -5, -20, 10);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#d1d5db';
+            ctx.stroke();
+
+            // 发射瞬间引线燃烧爆出火花
+            if (state.currentBall && state.currentBall.t < 0.2) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.arc(-20, 10, 3 + Math.random() * 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+
+            // 炮台中心转轴
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 6. 绘制挑战模式的靶子
+            if (state.mode === 'challenge') {
+                drawTarget();
+            }
+        }
+
+        function drawTarget() {
+            const ty = state.groundY;
+            const tx = state.targetX;
+            const w = state.targetWidth;
+
+            // 靶子草地垫
+            ctx.fillStyle = '#166534';
+            ctx.beginPath();
+            ctx.ellipse(tx, ty, w, w/3, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // 靶心同心圆 (平铺在地上，做透视变形)
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.scale(1, 0.3); // 压扁产生 3D 感
+            
+            ctx.fillStyle = 'red';
+            ctx.beginPath(); ctx.arc(0, 0, w*0.8, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(0, 0, w*0.5, 0, Math.PI*2); ctx.fill();
+            
+            ctx.fillStyle = 'red';
+            ctx.beginPath(); ctx.arc(0, 0, w*0.2, 0, Math.PI*2); ctx.fill();
+            
+            ctx.restore();
+            
+            // 距离标尺（白字压草地对比不足，加深色底板）
+            let distM = ((tx - state.cannonBaseX) / state.PPM).toFixed(1);
+            let distLabel = `${distM}m`;
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            let dw = ctx.measureText(distLabel).width;
+            ctx.fillStyle = 'rgba(15,23,42,0.82)';
+            ctx.fillRect(tx - dw / 2 - 5, ty + 8, dw + 10, 16);
+            ctx.fillStyle = '#ffe0c2';
+            ctx.fillText(distLabel, tx, ty + 20);
+
+            // 命中瞬间金光环（短暂，不改判据）
+            if (state.hitFlash > 0) {
+                const a = Math.min(1, state.hitFlash);
+                ctx.strokeStyle = `rgba(250,204,21,${0.85 * a})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(tx, ty, w * (1.1 + (1 - a) * 0.6), w / 3 * (1.1 + (1 - a) * 0.4), 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = `rgba(254,243,199,${0.25 * a})`;
+                ctx.beginPath();
+                ctx.ellipse(tx, ty, w * 0.9, w / 3.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            const dt = (timestamp - lastTime) / 1000 || 0;
+            lastTime = timestamp;
+
+            // 更新云朵
+            state.clouds.forEach(c => {
+                c.x += c.speed;
+                if (c.x > state.viewW + 50) c.x = -50;
+            });
+
+            // 更新小鸟位置
+            state.birds.forEach(b => {
+                b.x += b.speed;
+                // 飞出右边屏幕后，从左边重新随机高度进入
+                if (b.x > state.viewW + 30) {
+                    b.x = -30;
+                    b.y = 30 + Math.random() * (state.viewH / 3);
+                }
+            });
+
+            // 物理更新当前小球
+            if (state.currentBall) {
+                const b = state.currentBall;
+                // 固定时间步长以防掉帧导致物理穿模
+                const physicsDt = 1/60; 
+                b.t += physicsDt;
+
+                // 运动学方程: x = x0 + v0x * t
+                b.x = b.x0 + b.v0x * b.t;
+                // y = y0 + v0y * t + 0.5 * g * t^2 
+                b.y = b.y0 + b.v0y * b.t + 0.5 * (state.g * state.PPM) * b.t * b.t;
+
+                // 记录轨迹，限制点数防卡顿
+                if (b.t * 60 % 3 < 1 && b.path.length < 300) { 
+                    b.path.push({x: b.x, y: b.y});
+                }
+
+                // 飞行火花尾迹（过程可见，非落点预览）
+                if (Math.random() < 0.55) {
+                    state.sparks.push({
+                        x: b.x, y: b.y,
+                        vx: -b.v0x * 0.02 + (Math.random() - 0.5) * 1.2,
+                        vy: (Math.random() - 0.2) * 1.4,
+                        life: 0.55 + Math.random() * 0.35,
+                        r: 1.2 + Math.random() * 1.8
+                    });
+                }
+
+                // 落地检测
+                if (b.y + b.radius >= state.groundY) {
+                    b.y = state.groundY - b.radius;
+                    // 落地尘土
+                    for (let i = 0; i < 8; i++) {
+                        state.sparks.push({
+                            x: b.x, y: state.groundY - 2,
+                            vx: (Math.random() - 0.5) * 3.5,
+                            vy: -Math.random() * 2.2,
+                            life: 0.45 + Math.random() * 0.3,
+                            r: 1.5 + Math.random() * 2
+                        });
+                    }
+                    // 加入历史轨迹数组
+                    state.projectiles.push({...b, active: false});
+                    
+                    // 挑战模式判定
+                    if (state.mode === 'challenge') {
+                        checkHit(b.x);
+                    }
+
+                    state.currentBall = null;
+                    ui.btnLaunch.disabled = false;
+                    ui.btnLaunch.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            if (state.hitFlash > 0) state.hitFlash = Math.max(0, state.hitFlash - dt * 1.6);
+            for (let si = state.sparks.length - 1; si >= 0; si--) {
+                const s = state.sparks[si];
+                s.x += s.vx;
+                s.y += s.vy;
+                s.vy += 0.06;
+                s.life -= dt * 1.8;
+                if (s.life <= 0) state.sparks.splice(si, 1);
+            }
+
+            // --- 渲染部分 ---
+            ctx.clearRect(0, 0, state.viewW, state.viewH);
+            drawScene();
+
+            // 绘制历史轨迹 (幽灵线)
+            ctx.lineWidth = 2;
+            state.projectiles.forEach(p => {
+                ctx.strokeStyle = 'rgba(156, 163, 175, 0.4)'; // 灰色半透明
+                ctx.beginPath();
+                if (p.path.length > 0) {
+                    ctx.moveTo(p.path[0].x, p.path[0].y);
+                    for (let i = 1; i < p.path.length; i++) {
+                        ctx.lineTo(p.path[i].x, p.path[i].y);
+                    }
+                }
+                ctx.stroke();
+                // 落点标记
+                ctx.fillStyle = 'rgba(107, 114, 128, 0.5)';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 探究模式下显示落点水平距离的具体数值
+                if (state.mode === 'explore') {
+                    let landDistM = ((p.x - state.cannonBaseX) / state.PPM).toFixed(2);
+                    let label = `${landDistM} m`;
+                    ctx.font = '12px sans-serif';
+                    ctx.textAlign = 'center';
+                    let textWidth = ctx.measureText(label).width;
+                    
+                    // 绘制文字背景半透明色块，防止被草地颜色干扰导致看不清
+                    ctx.fillStyle = 'rgba(15,23,42,0.82)';
+                    ctx.fillRect(p.x - textWidth/2 - 4, p.y - p.radius - 22, textWidth + 8, 16);
+                    
+                    // 绘制文字（高对比暖白）
+                    ctx.fillStyle = '#ffe0c2';
+                    ctx.fillText(label, p.x, p.y - p.radius - 10);
+                }
+            });
+
+            // 绘制当前飞行的小球
+            if (state.currentBall) {
+                const b = state.currentBall;
+                
+                // 绘制当前轨迹
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)'; // 红色虚线
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                if (b.path.length > 0) {
+                    ctx.moveTo(b.path[0].x, b.path[0].y);
+                    for (let i = 1; i < b.path.length; i++) {
+                        ctx.lineTo(b.path[i].x, b.path[i].y);
+                    }
+                }
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 绘制实体球
+                ctx.fillStyle = '#ef4444'; // 亮红色
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+                // 高光立体感
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath();
+                ctx.arc(b.x - b.radius/3, b.y - b.radius/3, b.radius/3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 火花层（在弹体之上，短暂）
+            state.sparks.forEach(s => {
+                ctx.globalAlpha = Math.max(0, Math.min(1, s.life));
+                ctx.fillStyle = s.life > 0.35 ? '#fde68a' : '#f97316';
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function checkHit(landX) {
+            const hitMargin = state.targetWidth; // 允许的误差范围
+            const distance = Math.abs(landX - state.targetX);
+            
+            if (distance <= hitMargin) {
+                state.hitFlash = 1.0;
+                if (window.__emit) {
+                  var c = window.__snapControls ? window.__snapControls() : {
+                    's-angle': state.angle, 's-speed': state.speed, 's-height': state.height, 's-mass': state.mass
+                  };
+                  window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'hit_target' });
+                  window.__emit('win', { winOk: true });
+                }
+                const hitDist = ((state.targetX - state.cannonBaseX) / state.PPM).toFixed(1);
+                showMessage("命中靶心！", `完美击中约 ${hitDist} m 靶心！本局挑战完成。`, false, () => {
+                    state.projectiles = []; // 清空场地；靶距保持至切回探究再进竞赛
+                });
+            } else {
+                let diffMeters = (distance / state.PPM).toFixed(1);
+                let dir = landX > state.targetX ? "远了" : "近了";
+                const lockDist = ((state.targetX - state.cannonBaseX) / state.PPM).toFixed(1);
+                // FixedChallenge：失败只扣次数，靶距不变
+                if (state.attempts > 0) {
+                    showMessage(
+                        `偏${dir} ${diffMeters}m`,
+                        `靶距仍为约 ${lockDist} m（本局固定）。剩余机会 ${state.attempts}。`,
+                        false,
+                        () => { state.projectiles = []; }
+                    );
+                } else {
+                    showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true, () => {
+                        state.projectiles = [];
+                    });
+                }
+            }
+        }
+
+        function showMessage(title, desc, showBtn = false, callback = null) {
+            ui.msgTitle.textContent = title;
+            ui.msgDesc.textContent = desc;
+            ui.msgBox.classList.remove('hidden');
+            if (showBtn) {
+                ui.msgBtn.classList.remove('hidden');
+                ui.msgBtn.onclick = () => {
+                    hideMessage();
+                    if (callback) callback();
+                };
+            } else {
+                ui.msgBtn.classList.add('hidden');
+                setTimeout(() => {
+                    hideMessage();
+                    if (callback) callback();
+                }, 2000);
+            }
+        }
+
+        function hideMessage() {
+            ui.msgBox.classList.add('hidden');
+        }
+
+        // 倒计时系统
+        function startTimer() {
+            state.timerInterval = setInterval(() => {
+                if (state.mode === 'explore') {
+                    state.timeLeft--;
+                    let m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+                    let s = (state.timeLeft % 60).toString().padStart(2, '0');
+                    ui.timerDisplay.textContent = `${m}:${s}`;
+                    
+                    if (state.timeLeft <= 0) {
+                        clearInterval(state.timerInterval);
+                        showMessage("探究时间到", "现在进入挑战模式！", true, () => {
+                            ui.modeSelect.value = 'challenge';
+                            ui.modeSelect.dispatchEvent(new Event('change'));
+                        });
+                    }
+                }
+            }, 1000);
+        }
+
+        // 启动应用
+        bindEvents();
+        refreshModeGoals();
+        startTimer();
+        requestAnimationFrame(gameLoop);
+
+    </script>
+<!-- trace-adapter-hook -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('input', function() {
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  });
+})();
+</script>
+<!-- legacy-win-bridge -->
+<script>
+(function(){
+  function emitWin(hintKey) {
+    if (window.__legacyWinEmitted) return;
+    window.__legacyWinEmitted = true;
+    var emit = window.__emit;
+    if (!emit) return;
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    emit('snapshot', { controls: controls, winOk: true, hintKey: hintKey || 'legacy_win' });
+    emit('win', { winOk: true });
+  }
+  var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  function scanWinText() {
+    var text = document.body ? document.body.innerText : '';
+    for (var i = 0; i < WIN_TEXT.length; i++) {
+      if (WIN_TEXT[i].test(text)) {
+        emitWin('text_' + i);
+        return true;
+      }
+    }
+    return false;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var obs = new MutationObserver(function() { scanWinText(); });
+    if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
+    setInterval(scanWinText, 800);
+  });
+})();
+</script>
+<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;try{if(window.__platformTraceSetPhase)window.__platformTraceSetPhase(s.value||'explore');}catch(e){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+
+<script>
+/* === craft-gold-runtime === */
+(function(){
+  if (window.__craftGold) return; window.__craftGold = true;
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function replayLevel(){
+    if (typeof window.__craftReplay === 'function') {
+      try { window.__craftReplay(); return; } catch (e) {}
+    }
+    var rbtn = document.getElementById('btn-reset')
+      || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
+    if (rbtn) { try { rbtn.click(); } catch (e) {} }
+  }
+  if (wbtn) wbtn.addEventListener('click', function(){
+    window.__craftWinDismissed = true;
+    if (win) win.hidden = true;
+    replayLevel();
+  });
+
+  // gauge into hud
+  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
+  if (hud && !document.getElementById('craft-gauge')) {
+    var g = document.createElement('div');
+    g.id = 'craft-gauge';
+    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
+    hud.appendChild(g);
+  }
+function showWin(extra){
+    if (win) {
+      window.__craftWinDismissed = false;
+      win.hidden = false;
+      var t = document.getElementById('craftWinText');
+      if (t && extra) t.textContent = extra;
+    }
+  }
+  window.__craftShowWin = showWin;
+
+  // Hook common win paths
+  var _emit = window.__emit;
+  window.__emit = function(type, payload){
+    if (typeof _emit === 'function') _emit(type, payload);
+    if (type === 'win') showWin();
+  };
+  // Observe win banners
+  var obs = new MutationObserver(function(){
+    if (window.__craftWinDismissed) return;
+    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (el && el.offsetParent !== null) showWin();
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
+
+  // Live gauge from first range readout if possible
+  function tick(){
+    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var gval = document.getElementById('craftGaugeVal');
+    if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+
+</body>
+</html>

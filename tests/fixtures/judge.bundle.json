@@ -1,0 +1,1155 @@
+{
+  "generic": {
+    "version": 2,
+    "kind": "single",
+    "ch": 0,
+    "title": "通用契约演示关",
+    "chapter": {
+      "inquiryProfile": "generic",
+      "traceMap": {
+        "controls": {
+          "step_0": {
+            "kgId": "O1",
+            "role": "operation"
+          },
+          "step_1": {
+            "kgId": "O1",
+            "role": "operation"
+          },
+          "irrelevant_ctrl": {
+            "kgId": "I1",
+            "role": "irrelevant"
+          }
+        },
+        "legacyTypes": {
+          "set_legacy_a": {
+            "canonical": "tuning",
+            "control": "legacy_a"
+          },
+          "set_legacy_b": {
+            "canonical": "tuning",
+            "control": "legacy_b"
+          },
+          "set_irrelevant_ctrl": {
+            "canonical": "irrelevant_touch",
+            "control": "irrelevant_ctrl"
+          }
+        }
+      },
+      "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| 进入 | P1 | premise | |\n| 调节 | O1 | operation | |\n| 约束1 | C1 | constraint | |\n| 约束2 | C2 | constraint | skip retry |\n| 过关 | R1 | result | |",
+      "kg": {
+        "title": "通用演示 · 双约束过关",
+        "sub": "规范 tuning/snapshot 轨迹",
+        "nodes": [
+          {
+            "id": "P1",
+            "label": "P1 目标",
+            "group": "premise",
+            "layer": "play",
+            "level": 0,
+            "r": 22,
+            "desc": "满足两项约束后过关"
+          },
+          {
+            "id": "O1",
+            "label": "O1 操作",
+            "group": "operation",
+            "layer": "play",
+            "level": 1,
+            "r": 22,
+            "desc": "调节主控变量"
+          },
+          {
+            "id": "C1",
+            "label": "C1 约束一",
+            "group": "constraint",
+            "layer": "play",
+            "level": 2,
+            "r": 22,
+            "desc": "第一约束须满足"
+          },
+          {
+            "id": "C2",
+            "label": "C2 约束二",
+            "group": "constraint",
+            "layer": "play",
+            "level": 3,
+            "r": 22,
+            "desc": "第二约束须满足"
+          },
+          {
+            "id": "I1",
+            "label": "I1 无关",
+            "group": "irrelevant",
+            "layer": "play",
+            "level": 0,
+            "r": 18,
+            "desc": "无关控件"
+          },
+          {
+            "id": "R1",
+            "label": "R1 过关",
+            "group": "result",
+            "layer": "play",
+            "level": 4,
+            "r": 22,
+            "desc": "达成目标"
+          },
+          {
+            "id": "S1",
+            "label": "S1 要点",
+            "group": "core",
+            "layer": "teach",
+            "level": 1,
+            "r": 20,
+            "desc": "教学要点一"
+          },
+          {
+            "id": "S2",
+            "label": "S2 要点",
+            "group": "core",
+            "layer": "teach",
+            "level": 2,
+            "r": 20,
+            "desc": "教学要点二"
+          }
+        ],
+        "links": [
+          {
+            "s": "P1",
+            "t": "O1",
+            "tp": "premise"
+          },
+          {
+            "s": "O1",
+            "t": "C1",
+            "tp": "method"
+          },
+          {
+            "s": "C1",
+            "t": "C2",
+            "tp": "core"
+          },
+          {
+            "s": "C2",
+            "t": "R1",
+            "tp": "core"
+          },
+          {
+            "s": "S1",
+            "t": "O1",
+            "tp": "verify"
+          },
+          {
+            "s": "S2",
+            "t": "O1",
+            "tp": "verify"
+          }
+        ]
+      },
+      "dt": {
+        "title": "演示 DT",
+        "sub": "两约束",
+        "tree": {
+          "n": "根",
+          "t": "root",
+          "d": "进入关卡",
+          "children": [
+            {
+              "n": "C1 满足?",
+              "t": "decision",
+              "d": "是否满足约束一",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "提示重试",
+                  "t": "retry",
+                  "d": "调整后再试"
+                },
+                {
+                  "_e": "是",
+                  "n": "C2 满足?",
+                  "t": "decision",
+                  "d": "是否满足约束二",
+                  "children": [
+                    {
+                      "_e": "否",
+                      "n": "再试",
+                      "t": "retry",
+                      "d": "未满足约束二"
+                    },
+                    {
+                      "_e": "是",
+                      "n": "过关",
+                      "t": "result",
+                      "d": "演示过关"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "winSync": {
+        "title": "演示过关",
+        "sub": "两约束均满足"
+      },
+      "strategy": {
+        "title": "策略演示",
+        "sub": "主推 vs 误区",
+        "mermaid": "graph TD\n  Start([开始]) --> Main[主路径] --> Win[过关]\n  Start --> Trap[误触无关] --> Main",
+        "routes": [
+          {
+            "id": "main",
+            "label": "途径 M",
+            "mapsTo": [
+              "O1",
+              "C1",
+              "C2",
+              "R1"
+            ],
+            "highlightNodes": [
+              "Start",
+              "Main",
+              "Win"
+            ],
+            "highlightEdges": [
+              [
+                "Start",
+                "Main"
+              ],
+              [
+                "Main",
+                "Win"
+              ]
+            ]
+          },
+          {
+            "id": "trap",
+            "label": "途径 T",
+            "mapsTo": [
+              "I1"
+            ],
+            "warn": "irrelevant",
+            "highlightNodes": [
+              "Trap"
+            ],
+            "highlightEdges": [
+              [
+                "Start",
+                "Trap"
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "coupled": {
+    "version": 2,
+    "kind": "single",
+    "ch": 0,
+    "title": "耦合模式 · 条件无效操作",
+    "chapter": {
+      "inquiryProfile": "generic",
+      "traceMap": {
+        "controls": {
+          "modeToggle": {
+            "kgId": "O1",
+            "role": "operation"
+          },
+          "paramA": {
+            "kgId": "O1",
+            "role": "operation"
+          },
+          "paramB": {
+            "kgId": "O1",
+            "role": "operation"
+          },
+          "paramC": {
+            "kgId": "O1",
+            "role": "operation"
+          }
+        }
+      },
+      "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| 进入 | P1 | premise | |\n| 调节 | O1 | operation | |\n| 模式 | C5 | constraint | 环境/模式 |\n| 主约束 | C1 | constraint | |\n| 过关 | R1 | result | |",
+      "kg": {
+        "title": "耦合演示 · 关态误调参数 B",
+        "sub": "模式开关 + stratInvalid",
+        "nodes": [
+          {
+            "id": "P1",
+            "label": "P1",
+            "group": "premise",
+            "layer": "play",
+            "level": 0,
+            "r": 22,
+            "desc": "进入关卡并理解得分目标与模式开关作用"
+          },
+          {
+            "id": "O1",
+            "label": "O1",
+            "group": "operation",
+            "layer": "play",
+            "level": 1,
+            "r": 22,
+            "desc": "调节模式开关与参数 A/B/C 滑条"
+          },
+          {
+            "id": "C5",
+            "label": "C5 模式",
+            "group": "constraint",
+            "layer": "play",
+            "level": 2,
+            "r": 22,
+            "desc": "高级模式开关决定参数 B 是否参与得分"
+          },
+          {
+            "id": "C4",
+            "label": "C4 参数 B",
+            "group": "constraint",
+            "layer": "play",
+            "level": 3,
+            "r": 22,
+            "desc": "关态下参数 B 不参与得分（仅 UI 范围）；开态下须满足范围约束"
+          },
+          {
+            "id": "C1",
+            "label": "C1",
+            "group": "constraint",
+            "layer": "play",
+            "level": 4,
+            "r": 22,
+            "desc": "总分须达到目标区间方可过关"
+          },
+          {
+            "id": "R1",
+            "label": "R1",
+            "group": "result",
+            "layer": "play",
+            "level": 5,
+            "r": 22,
+            "desc": "达成目标得分过关"
+          },
+          {
+            "id": "S1",
+            "label": "S1",
+            "group": "core",
+            "layer": "teach",
+            "level": 1,
+            "r": 20,
+            "desc": "关态下参数 B 与得分无关，误调属于无效操作"
+          },
+          {
+            "id": "S2",
+            "label": "S2",
+            "group": "core",
+            "layer": "teach",
+            "level": 2,
+            "r": 20,
+            "desc": "开态下参数 B 升级为有效变量，须纳入调参策略"
+          }
+        ],
+        "links": [
+          {
+            "s": "P1",
+            "t": "O1",
+            "tp": "premise"
+          },
+          {
+            "s": "O1",
+            "t": "C5",
+            "tp": "method"
+          },
+          {
+            "s": "C5",
+            "t": "C4",
+            "tp": "method"
+          },
+          {
+            "s": "C4",
+            "t": "C1",
+            "tp": "method"
+          },
+          {
+            "s": "C1",
+            "t": "R1",
+            "tp": "core"
+          },
+          {
+            "s": "S1",
+            "t": "O1",
+            "tp": "verify"
+          },
+          {
+            "s": "S2",
+            "t": "O1",
+            "tp": "verify"
+          }
+        ]
+      },
+      "dt": {
+        "title": "耦合 DT",
+        "sub": "模式 + 得分",
+        "tree": {
+          "n": "根",
+          "t": "root",
+          "d": "进入",
+          "children": [
+            {
+              "n": "C1?",
+              "t": "decision",
+              "d": "得分达标?",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "重试",
+                  "t": "retry",
+                  "d": "调整后再试"
+                },
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "达标过关"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "winSync": {
+        "title": "演示过关",
+        "sub": "目标得分达成"
+      },
+      "strategy": {
+        "title": "策略",
+        "sub": "关态误调 paramB vs 开态调 paramB",
+        "mermaid": "graph TD\n  Start([开始]):::stratStart --> Env{高级模式?}:::stratCond\n  Env -->|否| ModeOff[关态：参数 B 无效]:::stratCore\n  ModeOff --> CheckB{调整参数 B?}:::stratCond\n  CheckB -->|是| InvalidOp[\"无效: 关态误调参数 B\"]:::stratInvalid --> ModeOff\n  CheckB -->|否| MainA[调参数 A/C]:::stratCore --> Win[过关]:::stratResult\n  Env -->|是| ModeOn[开态：参数 B 有效]:::stratCore\n  ModeOn --> MainB[调参数 B 有效]:::stratCore --> Win",
+        "routes": [
+          {
+            "id": "main",
+            "label": "开态主路径",
+            "mapsTo": [
+              "O1",
+              "C5",
+              "C4",
+              "C1",
+              "R1"
+            ],
+            "highlightNodes": [
+              "Env",
+              "ModeOn",
+              "MainB",
+              "Win"
+            ],
+            "highlightEdges": [
+              [
+                "Env",
+                "ModeOn"
+              ],
+              [
+                "ModeOn",
+                "MainB"
+              ]
+            ]
+          },
+          {
+            "id": "trap_mode_off_paramB",
+            "label": "关态误调参数 B 迷思",
+            "mapsTo": [
+              "O1",
+              "C5",
+              "C4"
+            ],
+            "highlightNodes": [
+              "InvalidOp",
+              "CheckB",
+              "ModeOff"
+            ],
+            "highlightEdges": [
+              [
+                "CheckB",
+                "InvalidOp"
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "coupledAligned": {
+    "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调整参数 | O1 | operation | 操作控件 |\n| 高级模式开启? | C5 | constraint | 模式判定，与 strategy Env 对齐 |\n| 参数 A 在范围? | C1 | constraint | 主参数 A 范围 |\n| 参数 C 在范围? | C3 | constraint | 主参数 C 范围 |\n| 参数 B 约束 | C4 | constraint | 开态有效；关态仅 UI 范围 |\n| 得分达标? | C6 | constraint | 总分判定 |\n| 偏出重试 | retry | retry | skip retry |\n| 过关 | R1 | result | 达标 |\n| 教学：关态 B 无关 | S0 | core | teach |\n| 教学：开态 B 有效 | S1 | core | teach |",
+    "kg": {
+      "title": "通用调参挑战",
+      "sub": "调整参数，使总分达到目标",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "进入关卡",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "开始通用调参挑战并理解得分规则"
+        },
+        {
+          "id": "O1",
+          "label": "调整参数",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节模式开关与参数 A/B/C 滑条"
+        },
+        {
+          "id": "I1",
+          "label": "装饰参数",
+          "group": "irrelevant",
+          "layer": "play",
+          "level": 0,
+          "r": 18,
+          "desc": "decoyCtrl 不影响过关得分"
+        },
+        {
+          "id": "C5",
+          "label": "模式开关",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "高级模式决定参数 B 是否计入得分"
+        },
+        {
+          "id": "C1",
+          "label": "参数 A 约束",
+          "group": "constraint",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "参数 A 须在有效范围内"
+        },
+        {
+          "id": "C3",
+          "label": "参数 C 约束",
+          "group": "constraint",
+          "layer": "play",
+          "level": 4,
+          "r": 22,
+          "desc": "参数 C 须在有效范围内"
+        },
+        {
+          "id": "C4",
+          "label": "参数 B 约束",
+          "group": "constraint",
+          "layer": "play",
+          "level": 5,
+          "r": 22,
+          "desc": "关态下参数 B 不参与得分（仅校验滑条范围）；开态下须满足范围"
+        },
+        {
+          "id": "C6",
+          "label": "得分判定",
+          "group": "constraint",
+          "layer": "play",
+          "level": 6,
+          "r": 22,
+          "desc": "总分与目标分差在容差内即过关"
+        },
+        {
+          "id": "R1",
+          "label": "过关",
+          "group": "result",
+          "layer": "play",
+          "level": 7,
+          "r": 22,
+          "desc": "总分达到目标区间，判定为过关成功"
+        },
+        {
+          "id": "S0",
+          "label": "教学：关态 B 无关",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "高级模式关闭时，调节参数 B 不改变得分"
+        },
+        {
+          "id": "S1",
+          "label": "教学：开态 B 有效",
+          "group": "core",
+          "layer": "teach",
+          "level": 2,
+          "r": 22,
+          "desc": "高级模式开启时，参数 B 须纳入调参策略"
+        },
+        {
+          "id": "S2",
+          "label": "教学：控制变量",
+          "group": "core",
+          "layer": "teach",
+          "level": 3,
+          "r": 22,
+          "desc": "先固定部分参数，再单变量调整以提高得分"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C5",
+          "tp": "method"
+        },
+        {
+          "s": "C5",
+          "t": "C1",
+          "tp": "method"
+        },
+        {
+          "s": "C1",
+          "t": "C3",
+          "tp": "method"
+        },
+        {
+          "s": "C3",
+          "t": "C4",
+          "tp": "method"
+        },
+        {
+          "s": "C4",
+          "t": "C6",
+          "tp": "method"
+        },
+        {
+          "s": "C6",
+          "t": "R1",
+          "tp": "core"
+        },
+        {
+          "s": "S0",
+          "t": "O1",
+          "tp": "verify"
+        },
+        {
+          "s": "S1",
+          "t": "O1",
+          "tp": "verify"
+        },
+        {
+          "s": "S2",
+          "t": "O1",
+          "tp": "verify"
+        }
+      ]
+    },
+    "dt": {
+      "title": "通用调参挑战",
+      "sub": "模式 + 多参数",
+      "tree": {
+        "n": "进入关卡",
+        "t": "root",
+        "d": "开始通用调参挑战",
+        "children": [
+          {
+            "n": "高级模式开启?",
+            "t": "decision",
+            "d": "检查高级模式开关状态",
+            "children": [
+              {
+                "_e": "否",
+                "n": "参数 A 在范围?",
+                "t": "decision",
+                "d": "关态支：参数 A 约束",
+                "children": [
+                  {
+                    "_e": "否",
+                    "n": "提示参数 A",
+                    "t": "retry",
+                    "d": "调整参数 A 后再试"
+                  },
+                  {
+                    "_e": "是",
+                    "n": "参数 B 仅 UI 范围?",
+                    "t": "decision",
+                    "d": "关态下参数 B 不影响得分，仅校验滑条",
+                    "children": [
+                      {
+                        "_e": "否",
+                        "n": "提示参数 B",
+                        "t": "retry",
+                        "d": "参数 B 超出 UI 范围"
+                      },
+                      {
+                        "_e": "是",
+                        "n": "得分达标?",
+                        "t": "decision",
+                        "d": "提交并检测总分",
+                        "children": [
+                          {
+                            "_e": "否",
+                            "n": "未达标重试",
+                            "t": "retry",
+                            "d": "继续调整 A/C"
+                          },
+                          {
+                            "_e": "是",
+                            "n": "过关",
+                            "t": "result",
+                            "d": "目标得分达成"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "_e": "是",
+                "n": "参数 A 在范围?",
+                "t": "decision",
+                "d": "开态支：参数 A 约束",
+                "children": [
+                  {
+                    "_e": "否",
+                    "n": "提示参数 A",
+                    "t": "retry",
+                    "d": "调整参数 A"
+                  },
+                  {
+                    "_e": "是",
+                    "n": "参数 B 在范围?",
+                    "t": "decision",
+                    "d": "开态下参数 B 参与得分",
+                    "children": [
+                      {
+                        "_e": "否",
+                        "n": "提示参数 B",
+                        "t": "retry",
+                        "d": "调整参数 B"
+                      },
+                      {
+                        "_e": "是",
+                        "n": "得分达标?",
+                        "t": "decision",
+                        "d": "提交并检测总分",
+                        "children": [
+                          {
+                            "_e": "否",
+                            "n": "未达标重试",
+                            "t": "retry",
+                            "d": "组合调整后再提交"
+                          },
+                          {
+                            "_e": "是",
+                            "n": "过关",
+                            "t": "result",
+                            "d": "目标得分达成"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "通用调参挑战",
+      "sub": "目标得分达成！"
+    },
+    "traceMap": {
+      "controls": {
+        "modeToggle": {
+          "kgId": "O1",
+          "role": "operation"
+        },
+        "paramA": {
+          "kgId": "O1",
+          "role": "operation"
+        },
+        "paramB": {
+          "kgId": "O1",
+          "role": "operation"
+        },
+        "paramC": {
+          "kgId": "O1",
+          "role": "operation"
+        },
+        "decoyCtrl": {
+          "kgId": "I1",
+          "role": "irrelevant"
+        }
+      }
+    },
+    "strategy": {
+      "title": "通用调参挑战策略全景",
+      "sub": "关态 / 开态多途径",
+      "mermaid": "graph TD\nStart([开始挑战]):::stratStart\nStart --> Env{高级模式开启?}:::stratCond\nEnv -->|否| ModeOff[关态：参数 B 对得分无影响]:::stratCore\nModeOff --> CheckB{是否调整了参数 B?}:::stratCond\nCheckB -->|是| InvalidOp[\"关态误调参数 B 迷思\"]:::stratInvalid\nInvalidOp --> ModeOff\nCheckB -->|否| StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|途径A 控制变量| StratA[固定 C 调 A]\nStratA --> TestA[提交测试]\nTestA --> ObserveA{观察得分}:::stratCond\nObserveA -->|偏低| IncA[增大 A]\nObserveA -->|偏高| DecA[减小 A]\nIncA --> TestA\nDecA --> TestA\nObserveA -->|达标| Win[过关]:::stratResult\nStrategySelect -->|途径B 盲调| StratB[凭经验同时调参]\nStratB --> TestB[提交测试]\nTestB --> ObserveB{观察结果}:::stratCond\nObserveB -->|未达标| RetryB[再试]:::stratRetry\nRetryB --> StratB\nObserveB -->|达标| Win\nEnv -->|是| ModeOn[开态：参数 B 升级为有效变量]:::stratCore\nModeOn --> DragSelect{选择调参策略?}:::stratCond\nDragSelect -->|途径D 含 B 补偿| StratD[固定 A/C 调 B]\nStratD --> TestD[提交测试]\nTestD --> ObserveD{观察得分}:::stratCond\nObserveD -->|偏低| IncB[增大 B]\nIncB --> TestD\nObserveD -->|达标| Win",
+      "routes": [
+        {
+          "id": "main",
+          "label": "途径A 控制变量",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C5",
+            "C1",
+            "C3",
+            "C4",
+            "C6",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "Env",
+            "ModeOff",
+            "CheckB",
+            "StrategySelect",
+            "StratA",
+            "TestA",
+            "ObserveA",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Env",
+              "ModeOff"
+            ],
+            [
+              "CheckB",
+              "StrategySelect"
+            ],
+            [
+              "ObserveA",
+              "Win"
+            ]
+          ],
+          "warn": "关态勿误调 B"
+        },
+        {
+          "id": "trap_mode_off_paramB",
+          "label": "关态误调 B 迷思",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C5",
+            "C4"
+          ],
+          "highlightNodes": [
+            "InvalidOp",
+            "CheckB",
+            "ModeOff"
+          ],
+          "highlightEdges": [
+            [
+              "CheckB",
+              "InvalidOp"
+            ],
+            [
+              "InvalidOp",
+              "ModeOff"
+            ]
+          ],
+          "warn": "关态下 B 无效"
+        },
+        {
+          "id": "main_mode_on",
+          "label": "开态含 B 主路径",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C5",
+            "C4",
+            "C6",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Env",
+            "ModeOn",
+            "StratD",
+            "TestD",
+            "ObserveD",
+            "IncB",
+            "Win"
+          ],
+          "highlightEdges": [
+            [
+              "Env",
+              "ModeOn"
+            ],
+            [
+              "ObserveD",
+              "IncB"
+            ]
+          ],
+          "warn": "开态须调 B"
+        },
+        {
+          "id": "blind",
+          "label": "途径B 盲调",
+          "mapsTo": [
+            "O1",
+            "C6",
+            "R1"
+          ],
+          "highlightNodes": [
+            "StratB",
+            "ObserveB",
+            "RetryB"
+          ],
+          "highlightEdges": [
+            [
+              "ObserveB",
+              "RetryB"
+            ]
+          ],
+          "warn": "盲调效率低"
+        },
+        {
+          "id": "observe_loop",
+          "label": "观察驱动调整",
+          "mapsTo": [
+            "O1",
+            "C1",
+            "C6"
+          ],
+          "highlightNodes": [
+            "TestA",
+            "ObserveA",
+            "IncA"
+          ],
+          "highlightEdges": [
+            [
+              "ObserveA",
+              "IncA"
+            ],
+            [
+              "IncA",
+              "TestA"
+            ]
+          ],
+          "warn": "缺少观察闭环"
+        }
+      ]
+    }
+  },
+  "parallelExit": {
+    "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节参数 | O1 | operation | 操作控件 |\n| 约束判定 | C1 | constraint | 主约束 |\n| 次要约束 | C2 | constraint | 出界判定 |\n| 过关 | R1 | result | 达标 |\n| 未命中重试 | - | - | skip retry |\n| 出界重试 | - | - | skip retry |\n| 教学要点一 | S1 | core | teach |\n| 教学要点二 | S2 | core | teach |",
+    "kg": {
+      "title": "通用并列退出演示",
+      "sub": "命中与出界独立判定",
+      "nodes": [
+        {
+          "id": "P1",
+          "label": "进入关卡",
+          "group": "premise",
+          "layer": "play",
+          "level": 0,
+          "r": 22,
+          "desc": "进入演示关卡并开始第一次操作"
+        },
+        {
+          "id": "O1",
+          "label": "调节参数",
+          "group": "operation",
+          "layer": "play",
+          "level": 1,
+          "r": 22,
+          "desc": "调节主控参数并提交一次测试"
+        },
+        {
+          "id": "C1",
+          "label": "命中目标?",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "判定是否命中目标区域"
+        },
+        {
+          "id": "C2",
+          "label": "飞出边界?",
+          "group": "constraint",
+          "layer": "play",
+          "level": 2,
+          "r": 22,
+          "desc": "判定是否飞出有效区域导致失败"
+        },
+        {
+          "id": "R1",
+          "label": "过关",
+          "group": "result",
+          "layer": "play",
+          "level": 3,
+          "r": 22,
+          "desc": "满足全部约束后判定为过关成功"
+        },
+        {
+          "id": "S1",
+          "label": "教学要点一",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "讲解观察结果与参数调整的关系"
+        },
+        {
+          "id": "S2",
+          "label": "教学要点二",
+          "group": "core",
+          "layer": "teach",
+          "level": 1,
+          "r": 22,
+          "desc": "讲解并列退出条件的建模方式"
+        }
+      ],
+      "links": [
+        {
+          "s": "P1",
+          "t": "O1",
+          "tp": "premise"
+        },
+        {
+          "s": "O1",
+          "t": "C1",
+          "tp": "premise"
+        },
+        {
+          "s": "C1",
+          "t": "C2",
+          "tp": "core"
+        },
+        {
+          "s": "C2",
+          "t": "R1",
+          "tp": "premise"
+        },
+        {
+          "s": "S1",
+          "t": "O1",
+          "tp": "verify"
+        },
+        {
+          "s": "S2",
+          "t": "O1",
+          "tp": "verify"
+        }
+      ]
+    },
+    "dt": {
+      "title": "通用并列退出演示",
+      "sub": "嵌套失败判定样例",
+      "tree": {
+        "n": "进入关卡",
+        "t": "root",
+        "d": "开始演示关卡",
+        "children": [
+          {
+            "n": "命中目标?",
+            "t": "decision",
+            "d": "检查是否命中目标区域",
+            "children": [
+              {
+                "_e": "否",
+                "n": "未命中重试",
+                "t": "retry",
+                "d": "未命中目标，请调整参数后再试"
+              },
+              {
+                "_e": "是",
+                "n": "飞出边界?",
+                "t": "decision",
+                "d": "检查是否飞出有效区域",
+                "children": [
+                  {
+                    "_e": "否",
+                    "n": "命中过关",
+                    "t": "result",
+                    "d": "成功命中且未出界"
+                  },
+                  {
+                    "_e": "是",
+                    "n": "出界重试",
+                    "t": "retry",
+                    "d": "飞出边界，请调整参数重新测试"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "winSync": {
+      "title": "通用并列退出演示",
+      "sub": "过关"
+    },
+    "traceMap": {
+      "controls": {
+        "paramA": {
+          "kgId": "O1",
+          "role": "operation"
+        },
+        "paramB": {
+          "kgId": "O1",
+          "role": "operation"
+        }
+      }
+    },
+    "strategy": {
+      "title": "策略全景",
+      "sub": "双宏策略 + 多跳反馈环",
+      "mermaid": "graph TD\nStart([开始]):::stratStart\nStart --> StrategySelect{选择策略?}:::stratCond\nStrategySelect -->|途径A| StratA[参数A策略]:::stratCore\nStrategySelect -->|途径B| StratB[参数B策略]:::stratCore\nStratA --> Launch1[执行测试]\nLaunch1 --> Observe1{观察结果?}:::stratCond\nObserve1 -->|未达标| Adjust1[调整参数A]\nAdjust1 --> Launch1\nObserve1 -->|达标| Win[过关]:::stratResult\nStratB --> Launch2[执行测试]\nLaunch2 --> Observe2{观察结果?}:::stratCond\nObserve2 -->|未达标| Adjust2[调整参数B]\nAdjust2 --> Launch2\nObserve2 -->|达标| Win\nObserve1 -->|出界| Retry[重置重试]:::stratRetry",
+      "routes": [
+        {
+          "id": "route_a",
+          "label": "参数A策略",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "StratA",
+            "Launch1",
+            "Observe1",
+            "Adjust1",
+            "Win"
+          ],
+          "highlightEdges": []
+        },
+        {
+          "id": "route_b",
+          "label": "参数B策略",
+          "mapsTo": [
+            "P1",
+            "O1",
+            "C1",
+            "R1"
+          ],
+          "highlightNodes": [
+            "Start",
+            "StrategySelect",
+            "StratB",
+            "Launch2",
+            "Observe2",
+            "Adjust2",
+            "Win"
+          ],
+          "warn": "注意未达标风险"
+        }
+      ]
+    }
+  }
+}

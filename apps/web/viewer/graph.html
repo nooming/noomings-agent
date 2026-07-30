@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent · 图谱预览壳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+  window.MathJax = { tex:{inlineMath:[['$','$'],['\\(','\\)']]}, svg:{fontCache:'global'} };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="/static/viewer/js/graph-shell.css">
+<style>
+body{height:100vh;overflow:hidden;}
+#batch-warn{color:var(--text-muted);font-size:10px;margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-left">
+    <h1 id="preview-title">Agent · 图谱预览</h1>
+    <p id="preview-sub">AGENT · KNOWLEDGE GRAPH &amp; DECISION TREE</p>
+    <span id="batch-warn"></span>
+  </div>
+  <div id="view-toggle">
+    <div class="vtab active" id="vt-dt">决策树</div>
+    <div class="vtab" id="vt-kg">事理图谱</div>
+    <div class="vtab" id="vt-strategy">策略全景</div>
+  </div>
+</div>
+<div id="tabs"></div>
+<div id="main">
+  <div id="graph">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="strategy-panel"><div id="strategy-viewport"><div id="strategy-mermaid"></div></div></div>
+    <div class="gctrl" id="gctrl">
+      <button class="gbtn" id="btn-zoom">重置视图</button>
+      <button class="gbtn graph-only" id="btn-hl">清除高亮</button>
+    </div>
+  </div>
+  <div id="panel">
+    <div id="panel-hd">
+      <h2 id="p-title">—</h2>
+      <div class="psub" id="p-sub">点击节点查看细节</div>
+    </div>
+    <div id="legend">
+      <div class="ltitle" id="legend-title">节点类型</div>
+      <div id="legend-items"></div>
+      <div id="kg-filter" class="hidden">
+        <button type="button" class="fbtn active" data-kg-filter="all">全部</button>
+        <button type="button" class="fbtn" data-kg-filter="play">仅游玩</button>
+        <button type="button" class="fbtn" data-kg-filter="teach">仅教案</button>
+      </div>
+      <div class="legend-hint hidden" id="legend-hint">实心 = 游玩子图 · 实心+虚线描边 = 教案子图 · 空心 = 无关变量</div>
+    </div>
+    <div id="info"><div class="info-empty">← 点击节点查看细节</div></div>
+  </div>
+</div>
+<script src="/static/viewer/js/strategy-mermaid-theme.js"></script>
+<script src="/static/shared/strategy-mermaid-parse.js"></script>
+<script src="/static/shared/strategy-priority-mermaid.js"></script>
+<script src="/static/shared/tab-label.js"></script>
+<script src="/static/viewer/js/viewer.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const graphId = params.get('graphId');
+  // audience=student|teacher — student hides CV spoilers & optimal-priority wording
+  const audience = params.get('audience') === 'student' ? 'student' : 'teacher';
+  window.__GRAPH_AUDIENCE__ = audience;
+  document.body.dataset.audience = audience;
+
+  function showPlaceholder() {
+    GraphViewer.init({
+      kgChapters: [{ title: '（无数据）', sub: '请打开 output 草稿预览', nodes: [], links: [] }],
+      dtChapters: [{ title: '（无数据）', sub: '', tree: { n: '—', t: 'root', d: '请从 Agent A 生成并保存草稿' } }],
+      metaChapters: [{}],
+      features: { trace: false, agent: false },
+    });
+  }
+
+  function showError(msg) {
+    document.getElementById('preview-title').textContent = '图谱预览失败';
+    document.getElementById('preview-sub').textContent = msg || '未知错误';
+    GraphViewer.init({
+      kgChapters: [{ title: msg || '加载失败', sub: graphId || '', nodes: [], links: [] }],
+      dtChapters: [{ title: '—', sub: '', tree: { n: '—', t: 'root', d: msg || '无法加载图谱数据' } }],
+      metaChapters: [{}],
+      features: { trace: false, agent: false },
+    });
+  }
+
+  if (!graphId) {
+    showPlaceholder();
+    return;
+  }
+
+  fetch('/api/graph-preview?graphId=' + encodeURIComponent(graphId))
+    .then(async function (r) {
+      const text = await r.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        if (r.status === 404 && /not found/i.test(text)) {
+          throw new Error('预览 API 不可用，请重启服务 (npm run agent:stop && npm start)');
+        }
+        throw new Error('HTTP ' + r.status + ': ' + text.slice(0, 120));
+      }
+      return { ok: r.ok, data: data };
+    })
+    .then(({ ok, data }) => {
+      if (!ok || !data.ok) {
+        showError(data.error === 'graph_not_found'
+          ? '未找到图谱：' + graphId
+          : (data.error || '加载失败'));
+        return;
+      }
+      document.title = (data.title || '图谱预览') + ' · Agent';
+      document.getElementById('preview-title').textContent = data.title || 'Agent · 图谱预览';
+      document.getElementById('preview-sub').textContent = data.headerTag || 'AGENT · KNOWLEDGE GRAPH & DECISION TREE';
+      if (data.batchWarn) {
+        document.getElementById('batch-warn').textContent = data.batchWarn;
+      }
+      if (!data.kgChapters?.length) {
+        showError('无可用章节数据');
+        return;
+      }
+      GraphViewer.init({
+        kgChapters: data.kgChapters,
+        dtChapters: data.dtChapters,
+        metaChapters: data.metaChapters,
+        features: { trace: false, agent: false },
+      });
+    })
+    .catch(err => showError(String(err.message || err)));
+})();
+</script>
+</body>
+</html>

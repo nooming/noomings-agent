@@ -1,0 +1,1038 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式 |\n| 否(探究) | O1 | operation | 探究模式 |\n| 调节压强/体积/温度并测试 | O1 | operation | 调节s-pressure/s-volume/s-temp并点击测试 |\n| 乘积在标定带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 乘积偏低? | C3 | constraint | 偏低提示 |\n| 是 | — | — | skip retry |\n| 否(偏高) | — | — | skip retry |\n| 探究: 观察乘积变化 | S1 | core | teach 节点 |\n| 竞赛: 限次命中标定带 | S2 | core | teach 节点 |\n| verify 边 | — | — | 连回 O1 |",
+  "kg": {
+    "title": "气体 · 玻意耳定律",
+    "sub": "深潜器 · 压舱气室",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究或竞赛"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究模式或竞赛模式 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节压强/体积/温度并测试",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积"
+      },
+      {
+        "id": "C2",
+        "label": "乘积在标定带内",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛模式下乘积落入本局锁定的标定带内 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "乘积偏低或偏高",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛模式下乘积低于或高于标定带 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛模式下乘积落入标定带，显示过关"
+      },
+      {
+        "id": "S1",
+        "label": "探究: 观察乘积变化",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "自由调节压强和体积，观察乘积 pV 的变化"
+      },
+      {
+        "id": "S2",
+        "label": "竞赛: 限次命中标定带",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "竞赛模式下限次将乘积调至本局锁定的标定带内"
+      },
+      {
+        "id": "I1",
+        "label": "无关按钮",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中的无关控件，不影响过关"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "desc": "每次只改一个调节量",
+        "level": 0,
+        "r": 18
+      },
+      {
+        "id": "C_OUTCOME_1",
+        "label": "命中目标区域?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "结果/边界类过关约束"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "气体 · 玻意耳定律",
+    "sub": "深潜器 · 压舱气室",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究或竞赛",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择探究或竞赛模式",
+          "children": [
+            {
+              "_e": "否",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究"
+            },
+            {
+              "_e": "是",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次挑战"
+            }
+          ]
+        },
+        {
+          "n": "调节压强/体积/温度并测试",
+          "t": "step",
+          "d": "调参后点击测试按钮",
+          "children": [
+            {
+              "n": "乘积在标定带内?",
+              "t": "decision",
+              "d": "竞赛模式下判断乘积是否落入标定带",
+              "children": [
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "乘积落入标定带，过关"
+                },
+                {
+                  "_e": "否",
+                  "n": "乘积达标?",
+                  "t": "decision",
+                  "d": "判断偏低或偏高",
+                  "children": [
+                    {
+                      "_e": "是",
+                      "n": "乘积偏低",
+                      "t": "junction",
+                      "d": "提示偏低，重试，回到调节压强/体积/温度并测试后重试",
+                      "children": [
+                        {
+                          "n": "调节压强/体积/温度并测试",
+                          "t": "step",
+                          "d": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积",
+                          "children": []
+                        }
+                      ]
+                    },
+                    {
+                      "_e": "否",
+                      "n": "未达标重试",
+                      "t": "retry",
+                      "d": "提示偏高，重试，回到调节压强/体积/温度并测试后重试",
+                      "children": [
+                        {
+                          "n": "调节压强/体积/温度并测试",
+                          "t": "step",
+                          "d": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 你学到了什么",
+    "sub": "气体 · 玻意耳定律"
+  },
+  "traceMap": {
+    "controls": {
+      "s-pressure": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-volume": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-temp": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "pValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "vValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "tValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "pvDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "hintMessage": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-pressure"
+      },
+      "irrelevant_touch": {
+        "canonical": "irrelevant_touch",
+        "control": "I1"
+      }
+    }
+  },
+  "strategy": {
+    "title": "气体 · 玻意耳定律",
+    "sub": "深潜器 · 压舱气室",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nAdjust3 --> Fire3\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nFire3 --> Observe3{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大温度]\nObserve2a -->|偏高| Adjust2a2[减小温度]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserve3 -->|未达标| Adjust3[盲目调整]\nObserve3 -->|达标| Win3[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·温度| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nTune2a --> Fire2a[点击测试]\nTune3 --> Fire3[点击测试]\nExploreCore --> Tune[调整压强/体积/温度]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[同时调多个参数]\nChallengeCore --> Tune2[调整压强/体积/温度]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nRoute1 --> Tune1a[调整压强]\nRoute2 --> Tune2a[调整温度]\nRoute3 --> Tune3[固定其余，只调s-pressure]\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·压强",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Tune1a",
+          "Fire1a",
+          "Observe1a",
+          "Adjust1a",
+          "Adjust1a2",
+          "Win1",
+          "Tune2a",
+          "Fire2a",
+          "Observe2a",
+          "Adjust2a",
+          "Adjust2a2",
+          "Win2a",
+          "Win",
+          "Win2",
+          "Win3",
+          "ChallengeCore",
+          "Tune3",
+          "Fire3",
+          "Observe3",
+          "Adjust3"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "Route1",
+            "Tune1a"
+          ],
+          [
+            "Tune1a",
+            "Fire1a"
+          ],
+          [
+            "Fire1a",
+            "Observe1a"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a"
+          ],
+          [
+            "Observe1a",
+            "Adjust1a2"
+          ],
+          [
+            "Adjust1a",
+            "Fire1a"
+          ],
+          [
+            "Adjust1a2",
+            "Fire1a"
+          ],
+          [
+            "Observe1a",
+            "Win1"
+          ],
+          [
+            "Route2",
+            "Tune2a"
+          ],
+          [
+            "Tune2a",
+            "Fire2a"
+          ],
+          [
+            "Fire2a",
+            "Observe2a"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a"
+          ],
+          [
+            "Observe2a",
+            "Adjust2a2"
+          ],
+          [
+            "Adjust2a",
+            "Fire2a"
+          ],
+          [
+            "Adjust2a2",
+            "Fire2a"
+          ],
+          [
+            "Observe2a",
+            "Win2a"
+          ],
+          [
+            "Observe3",
+            "Win3"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Route3",
+            "Tune3"
+          ],
+          [
+            "Tune3",
+            "Fire3"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-temp",
+        "label": "单变量·温度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Win1",
+          "Win2",
+          "Win2a",
+          "Win3",
+          "ChallengeCore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-volume",
+        "label": "单变量·体积",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Win",
+          "Win1",
+          "Win2",
+          "Win2a",
+          "Win3",
+          "ChallengeCore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Tune3",
+          "Fire3",
+          "Observe3",
+          "Adjust3"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "Route3",
+            "Tune3"
+          ],
+          [
+            "Tune3",
+            "Fire3"
+          ],
+          [
+            "Fire3",
+            "Observe3"
+          ],
+          [
+            "Observe3",
+            "Adjust3"
+          ],
+          [
+            "Adjust3",
+            "Fire3"
+          ],
+          [
+            "Observe3",
+            "Win3"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探混淆·无关控件",
+        "mapsTo": [],
+        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.55,
+        "weight": 0.55,
+        "highlightNodes": [
+          "StrategySelect",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "priorityRank": 4
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "气体 · 玻意耳定律",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "气体 · 玻意耳定律",
+        "formulas": [
+          "C = ε₀εᵣA / d",
+          "E = V/d（击穿：E > Ebd）"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-pressure",
+        "label": "压强",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-temp",
+        "label": "温度",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 2
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-volume",
+        "label": "体积",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "unknown",
+        "affects": [],
+        "notes": "",
+        "priorityRank": 3
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "下潜前压舱气室读数飘了。试着弄清压强与体积如何关联；再接限次急单——标定带本局固定。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "自由探究",
+          "body": "调节压强和体积滑条，点击测试观察乘积 pV 的变化，感受反比关系。",
+          "mapsToKg": [
+            "O1",
+            "S1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "竞赛挑战",
+          "body": "切换至竞赛模式，限次将乘积调至本局锁定的标定带内。",
+          "mapsToKg": [
+            "C1",
+            "C2",
+            "S2"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "过关结果",
+        "symbol": "",
+        "unit": "",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "gas"
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "C = ε₀εᵣA / d",
+      "E = V/d（击穿：E > Ebd）"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "C = ε₀εᵣA / d",
+        "E = V/d（击穿：E > Ebd）"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "命中/过关判定函数驱动 win 事件",
+      "domain": "gas"
+    }
+  },
+  "gameSpec": {
+    "title": "气体 · 玻意耳定律",
+    "subtitle": "深潜器 · 压舱气室",
+    "winCondition": "竞赛模式下乘积落入标定带，显示过关",
+    "knowledgeSummary": "气体 · 玻意耳定律",
+    "controls": [
+      {
+        "id": "s-pressure",
+        "type": "range",
+        "label": "压强",
+        "symbol": "压强",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-temp",
+        "type": "range",
+        "label": "温度",
+        "symbol": "温度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-volume",
+        "type": "range",
+        "label": "体积",
+        "symbol": "体积",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "无关控件",
+        "reason": "与过关判定无关的装饰或误导项",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "选择探究模式或竞赛模式 〔物理核心〕"
+      },
+      {
+        "kgId": "C2",
+        "label": "乘积在标定带内",
+        "desc": "竞赛模式下乘积落入本局锁定的标定带内 〔物理核心〕"
+      },
+      {
+        "kgId": "C3",
+        "label": "乘积偏低或偏高",
+        "desc": "竞赛模式下乘积低于或高于标定带 〔物理核心〕"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-pressure": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-volume": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-temp": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "pValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "vValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "tValDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "pvDisplay": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "hintMessage": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "压强",
+        "symbol": "压强",
+        "unit": "",
+        "source": "state.s-pressure"
+      },
+      {
+        "label": "温度",
+        "symbol": "温度",
+        "unit": "",
+        "source": "state.s-temp"
+      },
+      {
+        "label": "体积",
+        "symbol": "体积",
+        "unit": "",
+        "source": "state.s-volume"
+      },
+      {
+        "label": "过关结果",
+        "symbol": "过关结果",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-pressure",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-pressure → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-volume",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-volume → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-temp",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-temp → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "pValDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 pValDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "vValDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 vValDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "tValDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 tValDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "pvDisplay",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 pvDisplay"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "hintMessage",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 hintMessage"
+      },
+      {
+        "type": "tuning",
+        "canonical": "tuning",
+        "control": "s-pressure",
+        "required": true
+      },
+      {
+        "type": "irrelevant_touch",
+        "canonical": "irrelevant_touch",
+        "control": "I1",
+        "required": false
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "选择探究或竞赛模式"
+      },
+      {
+        "name": "乘积在标定带内?",
+        "type": "decision",
+        "desc": "竞赛模式下判断乘积是否落入标定带"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "乘积落入标定带，过关"
+      },
+      {
+        "name": "乘积偏低或偏高",
+        "type": "decision",
+        "desc": "判断偏低或偏高"
+      },
+      {
+        "name": "乘积偏低",
+        "type": "retry",
+        "desc": "提示偏低，重试，回到调节压强/体积/温度并测试后重试"
+      },
+      {
+        "name": "乘积偏高",
+        "type": "retry",
+        "desc": "提示偏高，重试，回到调节压强/体积/温度并测试后重试"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

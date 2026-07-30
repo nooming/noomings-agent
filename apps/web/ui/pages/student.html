@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d9488">
+<title>学生探究区 · 物理探究教学平台</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+</head>
+<body class="platform-page">
+
+<div id="platformHeader"></div>
+
+<main class="platform-main">
+  <section class="platform-hero" style="padding-top:16px;padding-bottom:24px">
+    <h1 style="font-size:1.4rem">探究游戏</h1>
+    <p>选择任务开始实验。你的操作会自动记录，供教师分析探究过程。</p>
+  </section>
+
+  <div class="form-row" style="max-width:320px;margin-bottom:12px">
+    <label for="studentName">显示名称（可选）</label>
+    <input type="text" id="studentName" placeholder="例如：张三 / 第 3 组" maxlength="32">
+  </div>
+  <div class="form-row" style="max-width:320px;margin-bottom:12px">
+    <label for="studentId">学号（可选，课堂实测用）</label>
+    <input type="text" id="studentId" placeholder="例如：20260101" maxlength="32" autocomplete="off">
+  </div>
+  <div class="form-row" style="max-width:320px;margin-bottom:24px">
+    <label for="taskCode">任务码 / 班级码（可选）</label>
+    <input type="text" id="taskCode" placeholder="教师发放的任务码" maxlength="48" autocomplete="off">
+    <p class="hint" style="margin-top:6px;font-size:0.82rem">学号与任务码会随轨迹上报，便于教师看板筛选与 CSV 导出。</p>
+  </div>
+
+  <div id="gameGrid">
+    <div class="empty-state">加载中…</div>
+  </div>
+</main>
+
+<script src="/static/ui/platform-nav.js"></script>
+<script>
+document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('student');
+
+const nameInput = document.getElementById('studentName');
+const idInput = document.getElementById('studentId');
+const taskInput = document.getElementById('taskCode');
+const savedName = localStorage.getItem('platform-student-name');
+if (savedName) nameInput.value = savedName;
+const savedId = localStorage.getItem('platform-student-id');
+if (savedId) idInput.value = savedId;
+const savedTask = localStorage.getItem('platform-task-code');
+if (savedTask) taskInput.value = savedTask;
+nameInput.addEventListener('change', () => {
+  localStorage.setItem('platform-student-name', nameInput.value.trim());
+});
+idInput.addEventListener('change', () => {
+  localStorage.setItem('platform-student-id', idInput.value.trim());
+});
+taskInput.addEventListener('change', () => {
+  localStorage.setItem('platform-task-code', taskInput.value.trim());
+});
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+const MACRO_ORDER = [
+  { id: 'macro-mechanics', name: '力学' },
+  { id: 'macro-em', name: '电磁学' },
+  { id: 'macro-optics', name: '光学' },
+  { id: 'macro-thermal', name: '热学' },
+  { id: 'macro-other', name: '近代与其它' },
+];
+
+function renderGameCard(item) {
+  const topic = item.topicKey || '';
+  return `
+    <article class="game-card">
+      <div class="game-card-body">
+        <h3>${esc(item.title)}${topic ? `<span class="game-card-topic">${esc(topic)}</span>` : ''}</h3>
+        <p>${esc(item.description || '物理探究实验')}</p>
+        <a class="game-card-play" href="/student-play.html?id=${encodeURIComponent(item.id)}">开始探究</a>
+      </div>
+    </article>`;
+}
+
+const CATEGORY_OPEN_KEY = 'platform-student-category-open';
+
+function readOpenCategories() {
+  try {
+    const raw = localStorage.getItem(CATEGORY_OPEN_KEY);
+    if (raw === null) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveOpenCategories() {
+  const grid = document.getElementById('gameGrid');
+  const open = [...grid.querySelectorAll('details.student-category-section[open]')]
+    .map(el => el.dataset.categoryId ?? '');
+  localStorage.setItem(CATEGORY_OPEN_KEY, JSON.stringify(open));
+}
+
+function isCategoryOpen(catId, savedOpen) {
+  if (savedOpen === null) return true;
+  return savedOpen.includes(catId);
+}
+
+function renderCategorySection(catId, title, group, savedOpen) {
+  const openAttr = isCategoryOpen(catId, savedOpen) ? ' open' : '';
+  return `<details class="student-category-section" data-category-id="${esc(catId)}"${openAttr}>
+    <summary class="student-category-title">
+      <span class="student-category-label">${esc(title)}</span>
+      <span class="student-category-count">${group.length}</span>
+    </summary>
+    <div class="student-grid">${group.map(renderGameCard).join('')}</div>
+  </details>`;
+}
+
+function bindCategoryTogglePersistence() {
+  const grid = document.getElementById('gameGrid');
+  if (grid.dataset.toggleBound) return;
+  grid.dataset.toggleBound = '1';
+  grid.addEventListener('toggle', (e) => {
+    if (!e.target.matches('details.student-category-section')) return;
+    saveOpenCategories();
+  }, true);
+}
+
+function renderGameGrid(items, macroNames) {
+  const grid = document.getElementById('gameGrid');
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty-state">教师尚未发布探究任务</div>';
+    return;
+  }
+
+  const byCategory = new Map();
+  for (const item of items) {
+    const key = item.categoryId || '';
+    if (!byCategory.has(key)) byCategory.set(key, []);
+    byCategory.get(key).push(item);
+  }
+
+  const savedOpen = readOpenCategories();
+  const sections = [];
+  const rendered = new Set();
+
+  for (const { id, name } of MACRO_ORDER) {
+    const group = byCategory.get(id);
+    if (!group?.length) continue;
+    rendered.add(id);
+    const title = macroNames[id] || name;
+    sections.push(renderCategorySection(id, title, group, savedOpen));
+  }
+
+  for (const [catId, group] of byCategory) {
+    if (rendered.has(catId)) continue;
+    const title = catId ? (macroNames[catId] || '其它') : '未分类';
+    sections.push(renderCategorySection(catId, title, group, savedOpen));
+  }
+
+  grid.innerHTML = sections.join('');
+}
+
+async function loadGames() {
+  const grid = document.getElementById('gameGrid');
+  try {
+    const [catResult, macroResult] = await Promise.allSettled([
+      fetch('/api/platform/catalog'),
+      fetch('/api/platform/categories?kind=macro'),
+    ]);
+    if (catResult.status !== 'fulfilled' || !catResult.value.ok) {
+      throw new Error('catalog fetch failed');
+    }
+    const data = await catResult.value.json();
+    let macroNames = Object.fromEntries(MACRO_ORDER.map(m => [m.id, m.name]));
+    if (macroResult.status === 'fulfilled' && macroResult.value.ok) {
+      const catData = await macroResult.value.json();
+      for (const c of catData.items || []) {
+        macroNames[c.id] = c.name;
+      }
+    }
+    renderGameGrid(data.items || [], macroNames);
+  } catch (err) {
+    grid.innerHTML = '<div class="empty-state">加载失败，请刷新页面重试</div>';
+    console.error('loadGames failed', err);
+  }
+}
+
+loadGames();
+bindCategoryTogglePersistence();
+</script>
+</body>
+</html>

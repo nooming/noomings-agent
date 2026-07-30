@@ -1,0 +1,106 @@
+{
+  "id": "capacitor-era-ch1",
+  "title": "电容·介质与击穿",
+  "analyzedAt": "2026-07-30T07:58:53.900Z",
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "quality: 失败类 decision「击穿判定」嵌套在「面积上限判定」的是-分支内，疑似并列退出错排为嵌套，建议改为同级 decision 序列"
+    ],
+    "checklist": {
+      "nodeCount": true,
+      "constraints": true,
+      "teachNodes": true,
+      "verifyLinks": true,
+      "playChain": true,
+      "strategyMermaid": true,
+      "strategyMermaidSyntax": true,
+      "strategyRoutes": true,
+      "strategyPerAvRoutes": true,
+      "strategyObserveAdjustCvar": true,
+      "strategyMacroPaths": true,
+      "strategyFeedbackLoop": true,
+      "strategyRouteIsolation": true,
+      "strategyMentalBackbone": true,
+      "dtFeedbackToOperation": true,
+      "dtEnvAlignment": true,
+      "kgConditionalParamCoupling": true,
+      "kgMassEnvCoupling": true,
+      "dtConditionalParamBranch": true,
+      "strategyTeacherAlignment": true,
+      "coupledStratInvalid": true,
+      "strategyMisconceptionLoop": true,
+      "strategyMapsTo": true,
+      "strategyControlVarRoutes": true,
+      "strategySingleVarRoutes": true,
+      "kgEnvBeforeOperation": true,
+      "dtHasOperationStep": true,
+      "strategyKgPathAligned": true,
+      "optionalToggleNotConstraint": true,
+      "dtOutcomeOriented": true,
+      "chapterScope": true,
+      "routeFeedbackLoopHighlighted": true,
+      "inquiryKnowledgePoints": true,
+      "inquiryAdjustmentVars": true,
+      "inquiryFormulas": true,
+      "inquiryFormulasClean": true,
+      "inquiryOutputVars": true,
+      "inquiryNoCrossDomainOv": true,
+      "inquiryConfounding": true,
+      "inquiryFlow": true,
+      "inquiryFlowStartsKp": true,
+      "inquiryAvSemantics": true,
+      "inquiryAvLabels": true,
+      "inquiryO1Label": true,
+      "inquiryNarrativeNoHollow": true,
+      "inquiryConfoundingNotOperation": true,
+      "inquiryOutputNotOperation": true,
+      "physicsModel": true,
+      "gameSpec": true,
+      "telemetrySpec": true,
+      "inquiryRouteScores": true,
+      "inquiryScript": true,
+      "strategyRouteScores": true
+    },
+    "score": 100,
+    "total": 53,
+    "passed": 53
+  },
+  "analyzeSteps": [
+    {
+      "id": "physics_model",
+      "label": "剥离物理模型",
+      "status": "done",
+      "summary": "6 条公式 · 源码含 requestAnimationFram…"
+    },
+    {
+      "id": "variables",
+      "label": "确定变量",
+      "status": "done",
+      "summary": "AV×3 CV×2 OV×2"
+    },
+    {
+      "id": "priority",
+      "label": "单变量优先级",
+      "status": "done",
+      "summary": "介质材料(rank=1, discrete；离散介质：εᵣ 与击穿极限同时变，与 A/d 连续滑条不等价) ｜ 极板间距(rank=2, monotone；d 双作用：抬高 C（∝1/d）同时改 E=V/d 击穿风险) ｜ 极板面积(rank=3, monotone；A 单调改 C，不直接改击穿场强)"
+    },
+    {
+      "id": "graph",
+      "label": "生成事理图谱",
+      "status": "pending",
+      "summary": "等待 LLM 生成 DT/KG/strategy"
+    }
+  ],
+  "repairedAt": "2026-07-30T09:34:44.274Z",
+  "repair": "quality-surgical-v1",
+  "narrativeSurgicalAt": "2026-07-30T10:43:35.465Z",
+  "narrativeBaseline": "narrative-v2",
+  "narrativeCleanBefore": 0.35,
+  "narrativeCleanAfter": 1
+}

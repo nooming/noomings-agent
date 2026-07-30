@@ -1,0 +1,624 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始校准钟摆 |\n| 调节摆长/摆角/质量并启动计时 | O1 | operation | 调参操作 |\n| 周期在目标带? | C1 | constraint | 2.000±0.005 s |\n| 摆幅≥15°? | C2 | constraint | 擒纵约束 |\n| 过关 | R1 | result | 校准完成 |\n| 周期未达标重试 | — | — | skip retry |\n| 摆幅不足重试 | — | — | skip retry |",
+  "kg": {
+    "title": "钟表铺·校时",
+    "sub": "单摆秒摆",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始校准钟摆，目标周期2.000±0.005 s"
+      },
+      {
+        "id": "O1",
+        "label": "调节摆长与摆角并测量周期",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "优先调摆长逼近秒摆，再用摆角精校；质量为混淆项"
+      },
+      {
+        "id": "C1",
+        "label": "周期在目标带?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "实测周期在2.000±0.005 s范围内"
+      },
+      {
+        "id": "C2",
+        "label": "摆幅≥15°?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "摆幅不低于15°以驱动擒纵机构"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "校准完成，钟声归位，周期和摆幅均达标"
+      },
+      {
+        "id": "S1",
+        "label": "周期公式 T=2π√(L/g)·(1+θ²/16)",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "单摆周期由摆长主导，摆角仅二阶修正，质量无关"
+      },
+      {
+        "id": "S2",
+        "label": "擒纵机构需最小摆幅",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "摆幅低于15°时擒纵无法维持摆动，钟会停摆"
+      },
+      {
+        "id": "S3",
+        "label": "控制变量法探究周期影响因素",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "每次只改变一个参数，观察周期变化，归因影响"
+      },
+      {
+        "id": "C3",
+        "label": "摆长主导周期?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "通过调节摆长观察周期变化，确认摆长是主要影响因素"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S3",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "C3",
+        "t": "C1",
+        "tp": "premise"
+      }
+    ]
+  },
+  "dt": {
+    "title": "钟表铺·校时",
+    "sub": "单摆秒摆",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始校准钟摆",
+      "children": [
+        {
+          "n": "调节摆长/摆角/质量并启动计时",
+          "t": "step",
+          "d": "通过滑条调节摆长、摆角、质量，点击启动计时测周期",
+          "children": []
+        },
+        {
+          "n": "周期在目标带?",
+          "t": "decision",
+          "d": "实测周期是否在2.000±0.005 s内",
+          "children": [
+            {
+              "_e": "否",
+              "n": "周期未达标重试",
+              "t": "retry",
+              "d": "调整参数后重新计时"
+            },
+            {
+              "_e": "是",
+              "n": "摆幅≥15°?",
+              "t": "decision",
+              "d": "摆幅是否不低于15°",
+              "children": [
+                {
+                  "_e": "否",
+                  "n": "摆幅不足重试",
+                  "t": "retry",
+                  "d": "增大摆角后重新计时"
+                },
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "校准完成"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "钟表铺·校时",
+    "sub": "单摆秒摆"
+  },
+  "traceMap": {
+    "controls": {
+      "s-len": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-len"
+      },
+      "action": {
+        "canonical": "tuning",
+        "control": "btn-measure"
+      }
+    }
+  },
+  "strategy": {
+    "title": "单变量校时策略",
+    "sub": "单摆秒摆",
+    "mermaid": "graph TD\nAdjustAngle --> Fire\nAdjustLen --> Fire\nAdjustLen2 --> Fire\nCheckGoal -->|否| AdjustAngle\nCheckGoal -->|是| Win[过关]:::stratResult\nFire --> Observe{观察周期?}:::stratCond\nObserve -->|达标但摆幅不足| AdjustAngle[增大摆角]\nObserve -->|偏慢| AdjustLen[调长摆长]\nObserve -->|偏快| AdjustLen2[调短摆长]\nObserve -->|达标| CheckGoal{摆幅≥15°?}:::stratCond\nObserve -->|未达标| Retry[重试]:::stratRetry\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|多参盲调| TuneAll[固定其余，只调s-len]\nStrategySelect -->|控制变量：每次只改一项| TuneAngle[固定摆长和质量，只调摆角]\nStrategySelect -->|控制变量：每次只改一项| TuneLen[固定摆角和质量，只调摆长]\nStrategySelect -->|控制变量：每次只改一项| TuneMass[固定摆长和摆角，只调质量]\nTuneAll --> Fire\nTuneAngle --> Fire\nTuneLen --> Fire[启动计时]:::stratCond\nTuneMass --> Fire\nStart([开始校准]):::stratStart",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·摆长",
+        "tier": "preferred",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightNodes": [
+          "Start",
+          "StrategySelect"
+        ],
+        "highlightEdges": []
+      },
+      {
+        "id": "main_s-angle",
+        "label": "单变量·摆角",
+        "tier": "preferred",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightNodes": [
+          "Start",
+          "StrategySelect"
+        ],
+        "highlightEdges": []
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "tier": "suboptimal",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightNodes": [
+          "Start",
+          "StrategySelect"
+        ],
+        "highlightEdges": []
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "调节摆长与摆角使周期接近 2.000s；摆锤质量为混淆变量。",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "单摆周期公式",
+        "formulas": [
+          "T = 2π√(L/g)·(1 + θ²/16)"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-len",
+        "label": "摆长",
+        "symbol": "L",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "monotone",
+        "mapsToKg": "O1"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-angle",
+        "label": "摆角",
+        "symbol": "θ",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "non-monotone",
+        "mapsToKg": "O1"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-mass",
+        "label": "摆锤质量",
+        "reason": "理想单摆周期与质量无关，可操作验证",
+        "mapsToKg": "I1"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "CV1",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本关探究：周期公式 T=2π√(L/g)·(1+θ²/16)、擒纵机构需最小摆幅、控制变量法探究周期影响因素",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "回顾：周期公式 T=2π√(L/g)·(1+θ²/16)；擒纵机构需最小摆幅；控制变量法探究周期影响因素",
+          "mapsToKg": [
+            "S1",
+            "S2",
+            "S3"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：调节摆长/摆角/质量并启动计时、调节摆长/摆角/质量并启动计时、调节摆长/摆角/质量并启动计时；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1",
+            "O1",
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "观察—调整—再测",
+          "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
+          "mapsToKg": [
+            "O1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "周期",
+        "symbol": "T",
+        "unit": "s",
+        "role": "primary",
+        "mapsToKg": "R1",
+        "source": "observe"
+      }
+    ]
+  },
+  "physicsModel": {
+    "formulas": [
+      "T = 2π√(L/g)·(1 + θ²/16)"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "T = 2π√(L/g)·(1 + θ²/16)"
+      ],
+      "constants": [
+        {
+          "name": "g",
+          "value": "9.81",
+          "unit": "m/s²"
+        }
+      ],
+      "updateLoopSummary": "requestAnimationFrame 驱动摆动相位与周期测量",
+      "winConditionSummary": "周期 T=2.000±0.005s 且摆角≥15°"
+    }
+  },
+  "gameSpec": {
+    "title": "钟表铺·校时",
+    "subtitle": "单摆秒摆",
+    "winCondition": "校准完成，钟声归位，周期和摆幅均达标",
+    "knowledgeSummary": "钟表铺·校时",
+    "controls": [
+      {
+        "id": "s-angle",
+        "type": "range",
+        "label": "发射角度",
+        "symbol": "发射角度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-len",
+        "type": "range",
+        "label": "s-len",
+        "symbol": "s-len",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-mass",
+        "type": "range",
+        "label": "质量",
+        "symbol": "质量",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      }
+    ],
+    "confoundingUi": [],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "周期在目标带?",
+        "desc": "实测周期在2.000±0.005 s范围内"
+      },
+      {
+        "kgId": "C2",
+        "label": "摆幅≥15°?",
+        "desc": "摆幅不低于15°以驱动擒纵机构"
+      },
+      {
+        "kgId": "C3",
+        "label": "摆长主导周期?",
+        "desc": "通过调节摆长观察周期变化，确认摆长是主要影响因素"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-len": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass": {
+        "kgId": "O1",
+        "role": "operation"
+      }
+    },
+    "simHints": null,
+    "needsContinuousSim": false,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "发射角度",
+        "symbol": "发射角度",
+        "unit": "",
+        "source": "state.s-angle"
+      },
+      {
+        "label": "s-len",
+        "symbol": "s-len",
+        "unit": "",
+        "source": "state.s-len"
+      },
+      {
+        "label": "质量",
+        "symbol": "质量",
+        "unit": "",
+        "source": "state.s-mass"
+      },
+      {
+        "label": "射程",
+        "symbol": "R",
+        "unit": "m",
+        "source": "computed"
+      },
+      {
+        "label": "最大高度",
+        "symbol": "H",
+        "unit": "m",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win",
+      "力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-len",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-len → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-angle",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-angle → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-mass",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-mass → KG O1"
+      },
+      {
+        "type": "tuning",
+        "canonical": "tuning",
+        "control": "s-len",
+        "required": true
+      },
+      {
+        "type": "action",
+        "canonical": "tuning",
+        "control": "btn-measure",
+        "required": true
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "周期在目标带?",
+        "type": "decision",
+        "desc": "实测周期是否在2.000±0.005 s内"
+      },
+      {
+        "name": "周期未达标重试",
+        "type": "retry",
+        "desc": "调整参数后重新计时"
+      },
+      {
+        "name": "摆幅≥15°?",
+        "type": "decision",
+        "desc": "摆幅是否不低于15°"
+      },
+      {
+        "name": "摆幅不足重试",
+        "type": "retry",
+        "desc": "增大摆角后重新计时"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "校准完成"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "analyze",
+    "craft": "gold"
+  }
+}

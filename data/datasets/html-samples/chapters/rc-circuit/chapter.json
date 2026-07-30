@@ -1,0 +1,487 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节电阻和电容 | O1 | operation | 调参操作 |\n| 时间常数达标? | C1 | constraint | 结果判定 |\n| 过关 | R1 | result | 过关 |\n| 提示重试 | - | - | skip retry |\n| 再试 | - | - | skip retry |\n| 未达标重试 | - | - | skip retry |",
+  "kg": {
+    "title": "RC电路",
+    "sub": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入RC充电实验",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始RC充电实验，调节电阻和电容观察时间常数"
+      },
+      {
+        "id": "O1",
+        "label": "调节电阻和电容",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节电阻R和电容C的值"
+      },
+      {
+        "id": "C1",
+        "label": "时间常数达标?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断时间常数τ是否达到目标值（例如τ=RC=50）"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "时间常数达标，成功完成实验"
+      },
+      {
+        "id": "S1",
+        "label": "时间常数公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "时间常数τ=RC，其中R为电阻，C为电容"
+      },
+      {
+        "id": "S2",
+        "label": "充电曲线形状",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "充电曲线V(t)=V0*(1-e^(-t/τ))，τ越大充电越慢"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "method"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "RC电路",
+    "sub": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始RC充电实验",
+      "children": [
+        {
+          "n": "时间常数达标?",
+          "t": "decision",
+          "d": "判断时间常数τ是否达到目标值（例如τ=RC=50）",
+          "children": [
+            {
+              "_e": "否",
+              "n": "未达标重试",
+              "t": "retry",
+              "d": "时间常数未达标，重新调节电阻和电容"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "时间常数达标，成功过关"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "RC电路",
+    "sub": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响"
+  },
+  "traceMap": {
+    "controls": {
+      "s-resistance": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-capacitance": {
+        "kgId": "O1",
+        "role": "operation"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "RC电路",
+    "sub": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[启动充电]\nAdjust2 --> Fire2[启动充电]\nFire1 --> Observe1{观察时间常数?}:::stratCond\nFire2 --> Observe2{观察时间常数?}:::stratCond\nObserve1 -->|未达标| Adjust1\nObserve1 -->|偏出| Retry1[重新调节]:::stratRetry\nObserve1 -->|达标| Win[过关]:::stratResult\nObserve2 -->|未达标| Adjust2\nObserve2 -->|偏出| Retry2[重新调节]:::stratRetry\nObserve2 -->|达标| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| ControlVar[每次只调一个滑条]\nStrategySelect -->|多参盲调| MultiBlind[同时调两个滑条]\nStart([开始实验]):::stratStart\nControlVar --> Adjust1[调整一个参数]\nMultiBlind --> Adjust2[固定其余，只调s-resistance]\nRetry1 --> Adjust1\nRetry2 --> Adjust2",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ControlVar",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win",
+          "Retry1"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ControlVar"
+          ],
+          [
+            "ControlVar",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Retry1"
+          ],
+          [
+            "Retry1",
+            "Adjust1"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "MultiBlind",
+          "Adjust2",
+          "Fire2",
+          "Observe2",
+          "Retry2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MultiBlind"
+          ],
+          [
+            "MultiBlind",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ],
+          [
+            "Observe2",
+            "Retry2"
+          ],
+          [
+            "Retry2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "RC充电时间常数",
+        "formulas": [
+          "τ = RC"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-resistance",
+        "label": "电阻",
+        "symbol": "R",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "kΩ"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-capacitance",
+        "label": "电容",
+        "symbol": "C",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "μF"
+        }
+      }
+    ],
+    "confoundingVariables": [],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "τ",
+        "label": "时间常数",
+        "unit": "s",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      },
+      {
+        "id": "OV2",
+        "symbol": "V(t)",
+        "label": "充电曲线",
+        "unit": "V",
+        "role": "secondary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节电阻和电容",
+          "body": "使用滑条调节电阻R和电容C的值，观察时间常数τ的变化。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察时间常数",
+          "body": "观察时间常数τ是否达到目标值，若未达标则重新调节。",
+          "mapsToKg": [
+            "C1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "τ = RC"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [],
+    "dependentVariables": [
+      "OV1",
+      "OV2"
+    ]
+  },
+  "gameSpec": {
+    "title": "RC电路",
+    "subtitle": "探究RC充电电路中电阻R和电容C对时间常数τ及充电曲线的影响",
+    "winCondition": "时间常数达标，成功完成实验",
+    "knowledgeSummary": "RC充电时间常数",
+    "controls": [
+      {
+        "id": "s-resistance",
+        "type": "range",
+        "label": "电阻",
+        "symbol": "R",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "kΩ"
+        }
+      },
+      {
+        "id": "s-capacitance",
+        "type": "range",
+        "label": "电容",
+        "symbol": "C",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 100,
+          "step": 1,
+          "unit": "μF"
+        }
+      }
+    ],
+    "confoundingUi": [],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "时间常数达标?",
+        "desc": "判断时间常数τ是否达到目标值（例如τ=RC=50）"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-resistance": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-capacitance": {
+        "kgId": "O1",
+        "role": "operation"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "时间常数",
+        "symbol": "τ",
+        "unit": "s"
+      },
+      {
+        "label": "充电曲线",
+        "symbol": "V(t)",
+        "unit": "V"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-resistance",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-resistance → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-capacitance",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-capacitance → KG O1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "时间常数达标?",
+        "type": "decision",
+        "desc": "判断时间常数τ是否达到目标值（例如τ=RC=50）"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "时间常数未达标，重新调节电阻和电容"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "时间常数达标，成功过关"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

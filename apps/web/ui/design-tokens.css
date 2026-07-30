@@ -1,0 +1,51 @@
+/* 全平台设计令牌 — platform + Agent A/B 共用 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
+:root {
+  /* 色彩 */
+  --edu-primary: #007baa;
+  --edu-primary-dark: #005f87;
+  --edu-accent: #fffa00;
+  --edu-accent-ink: #1a1a1a;
+  --edu-bg: #f4f7fb;
+  --edu-surface: #ffffff;
+  --edu-border: rgba(0, 90, 130, 0.12);
+  --edu-text: #1e293b;
+  --edu-muted: #64748b;
+  --edu-teacher: #007baa;
+  --edu-student: #0d9488;
+  --agent-accent: #fffa00;
+
+  /* 间距（8px 栅格） */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* 圆角 / 阴影 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --shadow-edu: 0 4px 24px rgba(0, 90, 130, 0.08);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 32px rgba(0, 0, 0, 0.06);
+
+  /* Agent 页 legacy 别名 */
+  --color-theme: var(--agent-accent);
+  --color-theme-secondary: var(--edu-text);
+  --color-theme-deep: #d4c800;
+  --color-theme-hover: #ebe300;
+  --color-theme-ink: var(--edu-accent-ink);
+  --color-body: var(--edu-text);
+  --color-muted: var(--edu-muted);
+  --color-canvas: var(--edu-bg);
+  --color-card: var(--edu-surface);
+  --line-ins: var(--edu-border);
+  --shadow-card-float: var(--shadow-card);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--edu-primary);
+  outline-offset: 2px;
+}

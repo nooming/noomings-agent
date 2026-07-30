@@ -1,0 +1,488 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节压强或体积 | O1 | operation | 调参操作 |\n| 乘积是否恒定? | C1 | constraint | 结果判定 |\n| 过关 | R1 | result | 过关 |\n| 提示重试 | - | - | skip retry |",
+  "kg": {
+    "title": "气体",
+    "sub": "探究玻意耳定律",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究气体压强与体积的关系"
+      },
+      {
+        "id": "O1",
+        "label": "调节压强或体积",
+        "group": "operation",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "通过滑条调节压强或体积参数"
+      },
+      {
+        "id": "C1",
+        "label": "乘积是否恒定?",
+        "group": "constraint",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "判断压强与体积的乘积是否保持恒定"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "成功验证玻意耳定律，乘积恒定"
+      },
+      {
+        "id": "S1",
+        "label": "玻意耳定律公式",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "pV = constant，温度恒定时压强与体积成反比"
+      },
+      {
+        "id": "S2",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "每次只改变一个变量，保持其他变量不变"
+      },
+      {
+        "id": "I1",
+        "label": "无关控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "界面中与实验无关的装饰控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
+    ]
+  },
+  "dt": {
+    "title": "气体",
+    "sub": "探究玻意耳定律",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始探究气体压强与体积的关系",
+      "children": [
+        {
+          "n": "调节压强或体积",
+          "t": "step",
+          "d": "通过滑条调节压强或体积参数",
+          "children": []
+        },
+        {
+          "n": "乘积是否恒定?",
+          "t": "decision",
+          "d": "判断压强与体积的乘积是否保持恒定",
+          "children": [
+            {
+              "_e": "否",
+              "n": "提示重试",
+              "t": "retry",
+              "d": "乘积不恒定，请重新调节参数"
+            },
+            {
+              "_e": "是",
+              "n": "过关",
+              "t": "result",
+              "d": "成功验证玻意耳定律"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "气体",
+    "sub": "探究玻意耳定律"
+  },
+  "traceMap": {
+    "controls": {
+      "s-pressure": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-volume": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "气体",
+    "sub": "探究玻意耳定律",
+    "mermaid": "graph TD\nAdjust1 --> Fire1[记录数据]\nAdjust2 --> Fire2[记录数据]\nFire1 --> Observe1{观察乘积?}:::stratCond\nFire2 --> Observe2{观察乘积?}:::stratCond\nObserve1 -->|不恒定| Adjust1\nObserve1 -->|恒定| Win[过关]:::stratResult\nObserve2 -->|不恒定| Adjust2\nObserve2 -->|恒定| Win\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|控制变量：每次只改一项| Adjust1[调整一个参数]\nStrategySelect -->|多参盲调| Adjust2[固定其余，只调s-pressure]\nStart([开始探究]):::stratStart\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win",
+    "routes": [
+      {
+        "id": "main",
+        "label": "控制变量：每次只改一项",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "R1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Adjust1",
+          "Fire1",
+          "Observe1",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Adjust1"
+          ],
+          [
+            "Adjust1",
+            "Fire1"
+          ],
+          [
+            "Fire1",
+            "Observe1"
+          ],
+          [
+            "Observe1",
+            "Adjust1"
+          ],
+          [
+            "Observe1",
+            "Win"
+          ]
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1"
+        ],
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Adjust2",
+          "Fire2",
+          "Observe2"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Adjust2"
+          ],
+          [
+            "Adjust2",
+            "Fire2"
+          ],
+          [
+            "Fire2",
+            "Observe2"
+          ],
+          [
+            "Observe2",
+            "Adjust2"
+          ]
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "highlightFailureBranches": true
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "探究温度恒定时，理想气体压强与体积的关系",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "玻意耳定律",
+        "formulas": [
+          "pV = constant"
+        ],
+        "mapsToKg": []
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-pressure",
+        "label": "压强",
+        "symbol": "p",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 10,
+          "step": 0.1,
+          "unit": "atm"
+        }
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-volume",
+        "label": "体积",
+        "symbol": "V",
+        "type": "range",
+        "role": "primary",
+        "suggestedRange": {
+          "min": 1,
+          "max": 10,
+          "step": 0.1,
+          "unit": "L"
+        }
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": null,
+        "label": "温度",
+        "reason": "温度恒定，不影响结论"
+      }
+    ],
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "symbol": "pV",
+        "label": "压强与体积的乘积",
+        "unit": "atm·L",
+        "role": "primary",
+        "mapsToKg": null,
+        "source": "formula"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "本实验探究温度恒定时，理想气体压强与体积的关系。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "调节参数",
+          "body": "调节压强或体积滑条，观察乘积变化。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "观察结果",
+          "body": "判断压强与体积的乘积是否恒定。",
+          "mapsToKg": [
+            "C1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "得出结论",
+          "body": "若乘积恒定，则验证玻意耳定律。",
+          "mapsToKg": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "pV = constant"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ]
+  },
+  "gameSpec": {
+    "title": "气体",
+    "subtitle": "探究玻意耳定律",
+    "winCondition": "成功验证玻意耳定律，乘积恒定",
+    "knowledgeSummary": "玻意耳定律",
+    "controls": [
+      {
+        "id": "s-pressure",
+        "type": "range",
+        "label": "压强",
+        "symbol": "p",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      },
+      {
+        "id": "s-volume",
+        "type": "range",
+        "label": "体积",
+        "symbol": "V",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": null
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": null,
+        "label": "温度",
+        "reason": "温度恒定，不影响结论",
+        "uiStrategy": "narrative_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": false,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "乘积是否恒定?",
+        "desc": "判断压强与体积的乘积是否保持恒定"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "s-pressure": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-volume": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖",
+      "UI 可极简，优先保证公式与变量逻辑正确，勿追求美观",
+      "每个 adjustment control 须有唯一 id，与 traceMapExpected 一致",
+      "混淆变量仅 teach 区文案或只读展示，勿与调节滑条同等强调",
+      "输出变量以读数/结果显示，勿做成可调滑条",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "过关时显示 winSync.title 或等效文案",
+      "物理模拟与 Observe 读数共用同一函数，禁止两套缩放",
+      "可见目标区域与 win 判定几何一致"
+    ],
+    "simHints": null,
+    "outputVariables": [
+      {
+        "label": "压强与体积的乘积",
+        "symbol": "pV",
+        "unit": "atm·L"
+      }
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-pressure",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-pressure → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-volume",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-volume → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "I1",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 I1"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "乘积是否恒定?",
+        "type": "decision",
+        "desc": "判断压强与体积的乘积是否保持恒定"
+      },
+      {
+        "name": "提示重试",
+        "type": "retry",
+        "desc": "乘积不恒定，请重新调节参数"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "成功验证玻意耳定律"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。"
+  },
+  "meta": {
+    "generationMode": "design"
+  }
+}

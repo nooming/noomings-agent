@@ -1,0 +1,654 @@
+{
+  "generatedAt": "2026-07-30T10:44:41.632Z",
+  "matchRules": "1. controlId 精确相等（最高优先）\n2. 语义归一 label：去空白/下划线/间隔符后小写；去掉「单变量·」「试探混淆·」前缀\n3. 同义词桶（速度/初速度、角度/倾角、音量/主音量等）\n4. KG 节点：优先 id；其次归一 label；再同义词\n5. AV/CV 角色：adjustment / confounding / operation / irrelevant 辅助配对 priority\n说明：不以「仅 label 字符串全等」为唯一依据；报告中的 matchedBy 标明规则。",
+  "honesty": {
+    "handAuthoredIds": [
+      "projectile-basic",
+      "pendulum-clock"
+    ],
+    "curatedIsNotHumanExpert": true,
+    "fullSetForEngineeringOnly": true
+  },
+  "rows": [
+    {
+      "id": "capacitor-confound-ui",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 4
+      },
+      "prioritySpearman": 0.5,
+      "priorityPearson": 0.775,
+      "priorityPairCount": 4,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 13
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 1
+      },
+      "prioritySpearman": null,
+      "priorityPearson": null,
+      "priorityPairCount": 1,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "circular-motion",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 12
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "cyclotron-radius",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 12
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "efield-charge",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "friction-incline",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "gas-ideal",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "heat-conduction",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "magnetic-force",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 13
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "momentum-collision",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 12
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 5
+      },
+      "prioritySpearman": 0.9,
+      "priorityPearson": 0.938,
+      "priorityPairCount": 5,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "multi-kp",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "pendulum-clock",
+      "ok": true,
+      "provenance": "hand-authored",
+      "nodeLabelF1": 0.667,
+      "nodeMatch": {
+        "f1": 0.667,
+        "precision": 0.5,
+        "recall": 1,
+        "matched": 9
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 0,
+      "priorityPearson": null,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "pendulum-target",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "photoelectric",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "projectile-basic",
+      "ok": true,
+      "provenance": "hand-authored",
+      "nodeLabelF1": 0.667,
+      "nodeMatch": {
+        "f1": 0.667,
+        "precision": 0.5,
+        "recall": 1,
+        "matched": 7
+      },
+      "avF1": 0.8,
+      "avMatch": {
+        "f1": 0.8,
+        "precision": 0.667,
+        "recall": 1,
+        "matched": 2
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 2,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "projectile-cannon",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 5
+      },
+      "prioritySpearman": 0.95,
+      "priorityPearson": 0.972,
+      "priorityPairCount": 5,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "rc-circuit",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "refraction-snell",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 12
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "series-parallel",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 10
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "thin-lens-implicit",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 12
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 3
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 3,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    },
+    {
+      "id": "transformer-turns",
+      "ok": true,
+      "provenance": "curated-from-package-chapter",
+      "nodeLabelF1": 1,
+      "nodeMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 11
+      },
+      "avF1": 1,
+      "avMatch": {
+        "f1": 1,
+        "precision": 1,
+        "recall": 1,
+        "matched": 4
+      },
+      "prioritySpearman": 1,
+      "priorityPearson": 1,
+      "priorityPairCount": 4,
+      "perAvRouteRecall": 1,
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "narrativeIssues": []
+    }
+  ],
+  "subsets": {
+    "handAuthored": {
+      "covered": 2,
+      "meanNodeLabelF1": 0.667,
+      "meanAvF1": 0.9,
+      "meanSpearman": 0.5,
+      "meanPearson": 1,
+      "meanRouteRecall": 1,
+      "meanNarrativeClean": 1,
+      "dirtyCount": 0
+    },
+    "curated": {
+      "covered": 21,
+      "meanNodeLabelF1": 1,
+      "meanAvF1": 1,
+      "meanSpearman": 0.968,
+      "meanPearson": 0.984,
+      "meanRouteRecall": 1,
+      "meanNarrativeClean": 1,
+      "dirtyCount": 0
+    },
+    "all": {
+      "covered": 23,
+      "meanNodeLabelF1": 0.971,
+      "meanAvF1": 0.991,
+      "meanSpearman": 0.925,
+      "meanPearson": 0.985,
+      "meanRouteRecall": 1,
+      "meanNarrativeClean": 1,
+      "dirtyCount": 0
+    }
+  },
+  "summary": {
+    "covered": 23,
+    "meanNodeLabelF1": 0.971,
+    "meanAvF1": 0.991,
+    "meanSpearman": 0.925,
+    "meanPearson": 0.985,
+    "meanRouteRecall": 1,
+    "meanNarrativeClean": 1,
+    "dirtyCount": 0
+  }
+}

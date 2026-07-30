@@ -1,0 +1,242 @@
+{
+  "_expertMeta": {
+    "id": "capacitor-era-ch2",
+    "provenance": "curated-from-package-chapter",
+    "seededAt": "2026-07-30T10:44:40.532Z",
+    "note": "可复现金标：自 packages chapter 固化 inquiryScript+KG 节点；非真人专家重画。手写金标见 projectile-basic / pendulum-clock。"
+  },
+  "kg": {
+    "title": "电容实验二：串并联配置",
+    "sub": "第二章 · 储能电站重启",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "O1",
+        "label": "调节电容与馈线",
+        "group": "operation",
+        "layer": "play"
+      },
+      {
+        "id": "C2",
+        "label": "总电容在目标带?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C3",
+        "label": "过载?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "C4",
+        "label": "击穿?",
+        "group": "constraint",
+        "layer": "play"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play"
+      },
+      {
+        "id": "S1",
+        "label": "并联公式",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "S2",
+        "label": "串联公式",
+        "group": "core",
+        "layer": "teach"
+      },
+      {
+        "id": "I1",
+        "label": "音量",
+        "group": "irrelevant",
+        "layer": "play"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "电容实验二：串并联配置",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "电容实验二：串并联配置",
+        "formulas": [
+          "C = ΣCᵢ；串联 1/C = Σ(1/Cᵢ)",
+          "R    = [100, 400]",
+          "E = 500",
+          "R  = 1000"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-c1",
+        "label": "电容C1",
+        "type": "range",
+        "role": "primary",
+        "priorityRank": 1,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-c2",
+        "label": "电容C2",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 2,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-c3",
+        "label": "电容C3",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 3,
+        "monotonicity": "unknown"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "type": "range",
+        "role": "secondary",
+        "priorityRank": 4,
+        "monotonicity": "unknown"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "audio-volume",
+        "label": "音量",
+        "reason": "混淆/装饰控件：不参与核心过关归因"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1"
+    ]
+  },
+  "strategy": {
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·电容C1",
+        "priorityRank": 1,
+        "score": 1
+      },
+      {
+        "id": "main_s-c2",
+        "label": "单变量·电容C2",
+        "priorityRank": 2,
+        "score": 0.85
+      },
+      {
+        "id": "main_s-c3",
+        "label": "单变量·电容C3",
+        "priorityRank": 3,
+        "score": 0.7
+      },
+      {
+        "id": "main_s-cable",
+        "label": "单变量·馈线长度",
+        "priorityRank": 4,
+        "score": 0.55
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "score": 0.2
+      },
+      {
+        "id": "confound_audio_volume",
+        "label": "试探混淆·音量",
+        "priorityRank": 5,
+        "score": 0.47000000000000003
+      }
+    ]
+  }
+}

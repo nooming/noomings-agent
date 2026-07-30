@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>局后探究路径类型 · 演示</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+<style>
+  .demo-box { max-width: 640px; margin: 2rem auto; }
+  .demo-chip {
+    margin-top: 1rem; padding: 12px 16px; border-radius: 8px;
+    background: rgba(0, 123, 170, 0.08); border: 1px solid rgba(0, 123, 170, 0.25);
+    color: var(--edu-text, #1e293b); font-size: 0.95rem;
+  }
+  .demo-note { font-size: 0.85rem; color: var(--edu-muted, #64748b); margin-top: 0.75rem; }
+  label.demo-toggle { display: flex; align-items: center; gap: 8px; margin: 1rem 0; }
+</style>
+</head>
+<body class="platform-page">
+<main class="platform-main demo-box">
+  <h1>局后「探究路径类型」演示</h1>
+  <p class="hint">默认<strong>不剧透最优路径</strong>。学生侧用「你的探究路径类型」表述；可用 URL <code>?showPathType=1</code> 在游玩页开启（见 student-play）。</p>
+  <label class="demo-toggle">
+    <input type="checkbox" id="showScore"> 同时显示策略吻合度分数
+  </label>
+  <button type="button" class="edu-btn edu-btn-primary" id="runDemo">用样例轨迹打分</button>
+  <div class="demo-chip" id="out" hidden></div>
+  <p class="demo-note">底层：<code>packages/judge/strategy-segment-score</code> → <code>primaryStrategy</code> → <code>strategy-path-summary.js</code> 人话标签。不改动游戏内「再玩一次 / Fixed」。</p>
+  <p><a href="/teacher.html?tab=resources">← 返回教师台</a></p>
+</main>
+<script src="/static/ui/strategy-path-summary.js"></script>
+<script>
+document.getElementById('runDemo').addEventListener('click', async () => {
+  const out = document.getElementById('out');
+  out.hidden = false;
+  out.textContent = '请求演示 API…';
+  try {
+    const r = await fetch('/api/demo/strategy-path-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        packageId: 'capacitor-confound-ui',
+        showScore: document.getElementById('showScore').checked,
+      }),
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error || 'failed');
+    out.textContent = data.summary?.text || JSON.stringify(data);
+  } catch (e) {
+    // Offline fallback: local formatter only
+    const fake = { primaryStrategy: '单变量·极板间距', score: 0.82 };
+    const summary = StrategyPathSummary.formatSummary(fake, {
+      showScore: document.getElementById('showScore').checked,
+    });
+    out.textContent = summary.text + '（本地演示回退；服务端 API 未就绪时）';
+  }
+});
+</script>
+</body>
+</html>
