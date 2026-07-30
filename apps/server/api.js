@@ -926,7 +926,7 @@ async function routeApi(req, res) {
     res.end(JSON.stringify({
       ok: true,
       llm: !!process.env.DEEPSEEK_API_KEY,
-      port: Number(process.env.AGENT_PORT) || 3001,
+      port: Number(process.env.PORT || process.env.AGENT_PORT) || 3001,
       judge: true,
       generate: true,
       platform: true,

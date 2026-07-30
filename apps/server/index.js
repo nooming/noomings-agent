@@ -7,7 +7,7 @@ const { routeApi } = require('./api');
 
 loadEnv(getAgentDir());
 
-const PORT = Number(process.env.AGENT_PORT) || 3001;
+const PORT = Number(process.env.PORT || process.env.AGENT_PORT) || 3001;
 
 http.createServer(async (req, res) => {
   cors(res);
