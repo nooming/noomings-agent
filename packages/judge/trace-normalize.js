@@ -147,20 +147,96 @@ function filterEventsByChallengePhase(events) {
 }
 
 /**
- * ????????????? phase ????? phase_change ???? challenge ? tuning/action?
+ * 探究段事件：有 phase_change 时仅保留 phase===explore 期间的事件（含 phase_change 标记）。
+ * 无 phase_change 时回退为全量（与 challenge 过滤对称）。
+ */
+function filterEventsByExplorePhase(events) {
+  const list = events || [];
+  if (!list.some(e => e.type === 'phase_change')) return list;
+  let inExplore = false;
+  const out = [];
+  for (const e of list) {
+    if (e.type === 'phase_change') {
+      inExplore = e.payload?.phase === 'explore';
+      out.push(e);
+      continue;
+    }
+    if (inExplore) out.push(e);
+  }
+  return out;
+}
+
+function isTuningOrFireEvent(e) {
+  return e?.type === 'tuning' || e?.type === 'action';
+}
+
+/**
+ * 路径类型浮层 / strategy-path-summary 评分范围（对齐 Agent B：策略与 switchKind 看竞赛段）。
+ * - 有 phase_change 且竞赛段存在 tuning/fire → 仅竞赛段，mode=compete
+ * - 无竞赛操作（探究段即过关）或无 phase_change → 全量回退，mode 默认 explore
+ * @param {object[]} events
+ * @param {{ phaseScope?: string, mode?: string }} [opts]
+ * @returns {{ events: object[], mode: 'compete'|'explore', scoredPhase: 'challenge'|'full'|'explore' }}
+ */
+function resolveStrategyPathScoreScope(events, opts = {}) {
+  const list = Array.isArray(events) ? events : [];
+  const phaseScope = String(opts.phaseScope || '').trim();
+  const preferMode = opts.mode === 'compete' ? 'compete' : 'explore';
+
+  if (phaseScope === 'full') {
+    return { events: list, mode: preferMode, scoredPhase: 'full' };
+  }
+
+  if (phaseScope === 'explore') {
+    const explore = filterEventsByExplorePhase(list);
+    if (explore.some(isTuningOrFireEvent)) {
+      return { events: explore, mode: 'explore', scoredPhase: 'explore' };
+    }
+    return { events: list, mode: 'explore', scoredPhase: 'full' };
+  }
+
+  const hasPhaseChange = list.some(e => e.type === 'phase_change');
+  if (hasPhaseChange) {
+    const challenge = filterEventsByChallengePhase(list);
+    if (challenge.some(isTuningOrFireEvent)) {
+      return { events: challenge, mode: 'compete', scoredPhase: 'challenge' };
+    }
+    // 竞赛段无调参/发射（探究段即过关等）→ 全量回退
+    return { events: list, mode: 'explore', scoredPhase: 'full' };
+  }
+
+  // 无 phase_change：无法按段过滤，评全量（mode 可跟客户端/会话提示）
+  return { events: list, mode: preferMode, scoredPhase: 'full' };
+}
+
+/**
+ * @param {object} trace
+ * @param {object} [chapter]
+ * @param {number} ch
+ * @param {object} [opts]
+ * @param {boolean|'challenge'|'explore'} [opts.phaseFilter=true]
+ *   true/'challenge' → 竞赛段；'explore' → 探究段；false → 本章全量事件
  */
 function normalizeTraceForChapter(trace, chapter, ch, opts = {}) {
   const chapterFiltered = filterEventsForChapter(trace, ch);
-  const phaseFilter = opts.phaseFilter !== false;
-  const events = phaseFilter
-    ? filterEventsByChallengePhase(chapterFiltered)
-    : chapterFiltered;
+  const pf = opts.phaseFilter;
+  let events = chapterFiltered;
+  if (pf === false) {
+    events = chapterFiltered;
+  } else if (pf === 'explore') {
+    events = filterEventsByExplorePhase(chapterFiltered);
+  } else {
+    // true | 'challenge' | undefined
+    events = filterEventsByChallengePhase(chapterFiltered);
+  }
   return normalizeTraceEvents({ events }, chapter);
 }
 
 module.exports = {
   filterEventsForChapter,
   filterEventsByChallengePhase,
+  filterEventsByExplorePhase,
+  resolveStrategyPathScoreScope,
   getLegacyTypeMap,
   normalizeTraceEvents,
   normalizeTraceForChapter,

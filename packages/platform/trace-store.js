@@ -1,6 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const { getTracesRoot } = require('./paths');
+const {
+  filterEventsByChallengePhase,
+  filterEventsByExplorePhase,
+} = require('../judge/trace-normalize');
 
 function ensureTracesRoot() {
   fs.mkdirSync(getTracesRoot(), { recursive: true });
@@ -86,6 +90,32 @@ function aggregateSessionMetrics(events, chapter) {
     variableAdjustCounts,
     currentPhase,
     sawPhaseChange,
+  };
+}
+
+/**
+ * 按探究/竞赛段拆分变量调节次数；无 phase_change 时 phaseSplit=false，仅提供全会话。
+ */
+function buildPhaseVariableAdjustCounts(events, chapter) {
+  const list = Array.isArray(events) ? events : [];
+  const full = aggregateSessionMetrics(list, chapter);
+  if (!full.sawPhaseChange) {
+    return {
+      phaseSplit: false,
+      scopeNote: 'no_phase_change',
+      explore: null,
+      challenge: null,
+      full: full.variableAdjustCounts,
+    };
+  }
+  const explore = aggregateSessionMetrics(filterEventsByExplorePhase(list), chapter);
+  const challenge = aggregateSessionMetrics(filterEventsByChallengePhase(list), chapter);
+  return {
+    phaseSplit: true,
+    scopeNote: null,
+    explore: explore.variableAdjustCounts,
+    challenge: challenge.variableAdjustCounts,
+    full: full.variableAdjustCounts,
   };
 }
 
@@ -333,6 +363,7 @@ function summarizeSessionEvents(session, chapter) {
   const variableAdjustCounts = metrics.variableAdjustCounts?.length
     ? metrics.variableAdjustCounts
     : buildVariableAdjustCounts(metrics.controlTuningCounts || byControl, chapter);
+  const variableAdjustCountsByPhase = buildPhaseVariableAdjustCounts(events, chapter);
   const topControls = Object.entries(metrics.controlTuningCounts || byControl)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8)
@@ -346,6 +377,7 @@ function summarizeSessionEvents(session, chapter) {
     total: events.length,
     controlTuningCounts: metrics.controlTuningCounts,
     variableAdjustCounts,
+    variableAdjustCountsByPhase,
     actionCounts: metrics.actionCounts,
     currentPhase: metrics.currentPhase,
     sawPhaseChange: metrics.sawPhaseChange,
@@ -569,6 +601,7 @@ module.exports = {
   listTraceStudents,
   summarizeSessionEvents,
   aggregateSessionMetrics,
+  buildPhaseVariableAdjustCounts,
   enrichRecordMetrics,
   buildVariableAdjustCounts,
   resolveControlMeta,

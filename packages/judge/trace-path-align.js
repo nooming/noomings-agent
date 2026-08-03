@@ -14,6 +14,40 @@ const {
   isOperationTuning,
   snapshotPayloadFromEvent,
 } = require('./trace-normalize');
+
+/**
+ * 参数覆盖度事件选择：
+ * - 无 phase_change → 全量（与 challenge 过滤结果相同）
+ * - 有 phase_change → 优先探究段（explore）；探究段无 operation 调参时回退 explore∪challenge（本章全量）
+ * 竞赛策略类指标仍用 challenge 事件，不走此选择器。
+ */
+function resolveCoverageEvents(trace, chapter, ch, challengeEvents) {
+  const chapterFiltered = filterEventsForChapter(trace, ch);
+  const hasPhase = chapterFiltered.some(e => e.type === 'phase_change');
+  if (!hasPhase) {
+    return {
+      coverageEvents: challengeEvents,
+      coverageSource: 'full',
+    };
+  }
+  const { events: exploreEvents } = normalizeTraceForChapter(trace, chapter, ch, {
+    phaseFilter: 'explore',
+  });
+  const exploreHasOpTuning = exploreEvents.some(e => isOperationTuning(e, chapter));
+  if (exploreHasOpTuning) {
+    return {
+      coverageEvents: exploreEvents,
+      coverageSource: 'explore',
+    };
+  }
+  const { events: unionEvents } = normalizeTraceForChapter(trace, chapter, ch, {
+    phaseFilter: false,
+  });
+  return {
+    coverageEvents: unionEvents,
+    coverageSource: 'union',
+  };
+}
 const {
   scoreTraceStrategy,
   detectPlayMode,
@@ -325,7 +359,13 @@ function tracePathAlign(trace, chapter, ch) {
   const misconceptionCount = coupled.misconceptionControls.length;
   const cvStats = metricCvTouchStats(events, chapter);
   const singleVariableRate = metricSingleVariableRate(events, chapter, cvStats);
-  const paramCoverage = metricParameterCoverage(events, chapter);
+
+  // 覆盖度看探究段（explore-primary）；其余策略指标仍基于 challenge 过滤后的 events
+  const { coverageEvents, coverageSource } = resolveCoverageEvents(trace, chapter, ch, events);
+  const paramCoverage = metricParameterCoverage(coverageEvents, chapter);
+  const paramCoverageChallenge = coverageSource === 'full'
+    ? paramCoverage
+    : metricParameterCoverage(events, chapter);
 
   const priorityAvs = (chapter?.inquiryScript?.adjustmentVariables || [])
     .filter(a => a.priorityRank != null)
@@ -365,6 +405,8 @@ function tracePathAlign(trace, chapter, ch) {
       tunedControls: paramCoverage.tunedControls,
       operationControlCount: paramCoverage.operationControlCount,
       parameterCoverage: paramCoverage.parameterCoverage,
+      parameterCoverageChallenge: paramCoverageChallenge.parameterCoverage,
+      parameterCoverageSource: coverageSource,
       strategyScore: strategySegmentScore.score,
       primaryStrategy: strategySegmentScore.primaryStrategy,
       switchKind: strategySegmentScore.switchKind || strategySegmentScore.breakdown?.switchKind || null,
@@ -385,6 +427,7 @@ function tracePathAlign(trace, chapter, ch) {
 
 module.exports = {
   filterEventsForChapter,
+  resolveCoverageEvents,
   tracePathAlign,
   guessStrategyRoute,
   metricParameterCoverage,

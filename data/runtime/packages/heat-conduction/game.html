@@ -684,7 +684,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             emit('puzzle_open', {});
             // tuning 绑定：所有 range / number
             document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
-                el.addEventListener('input', function() {
+                el.addEventListener('change', function() {
+                    if (window.__platformTraceControlsBound) return;
                     emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
                 });
             });

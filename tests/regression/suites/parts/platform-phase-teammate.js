@@ -4,7 +4,10 @@ const path = require('path');
 const assert = require('assert');
 const { getPackagesRoot } = require('../../../../packages/shared/data-paths');
 const { hasWinEmit, hasExecutableTraceHook } = require('../../../../packages/platform/legacy-trace-inject');
-const { filterEventsByChallengePhase } = require('../../../../packages/judge/trace-normalize');
+const {
+  filterEventsByChallengePhase,
+  filterEventsByExplorePhase,
+} = require('../../../../packages/judge/trace-normalize');
 const { aggregateSessionMetrics } = require('../../../../packages/platform/trace-store');
 
 const ROOT = path.resolve(__dirname, '../../../..');
@@ -64,6 +67,21 @@ function run() {
     'challenge filter should drop explore tuning',
   );
   assert.ok(challengeOnly.some(e => e.type === 'win'), 'win kept in challenge');
+
+  const exploreOnly = filterEventsByExplorePhase(events);
+  assert.strictEqual(
+    exploreOnly.filter(e => e.type === 'tuning').length,
+    1,
+    'explore filter should keep explore tuning',
+  );
+  assert.ok(
+    exploreOnly.some(e => e.type === 'tuning' && e.payload.control === 's-length'),
+    'explore keeps s-length',
+  );
+  assert.ok(
+    !exploreOnly.some(e => e.type === 'tuning' && e.payload.control === 's-angle'),
+    'explore drops challenge angle',
+  );
 
   const metrics = aggregateSessionMetrics(events);
   assert.strictEqual(metrics.currentPhase, 'challenge');

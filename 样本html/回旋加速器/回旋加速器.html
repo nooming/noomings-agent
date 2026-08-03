@@ -1030,6 +1030,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // 滑条事件绑定 (双向同步 + 埋点)
     // 调参时收回实测半径虚线，避免边拖边看到 r 结论
+    // UI stays live on input; telemetry only on change (one event per gesture).
     function onTuneControl(controlId, value) {
         if (simRunning) stopSim();
         measuredR = null;
@@ -1038,21 +1039,34 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         trailTick = 0;
         syncUI();
         recalcPhysics();
-        emit('tuning', { controlId: controlId, value: value, timestamp: Date.now() });
         drawStatic();
         feedbackMsg.innerHTML = '调节中… 点「发射」后显示轨道半径';
+    }
+    function emitTune(controlId, value) {
+        if (window.__platformTraceControlsBound) return;
+        emit('tuning', { controlId: controlId, value: value, timestamp: Date.now() });
     }
     sMag.addEventListener('input', function() {
         onTuneControl('s-magnetic', parseFloat(this.value));
     });
+    sMag.addEventListener('change', function() {
+        emitTune('s-magnetic', parseFloat(this.value));
+    });
     sVel.addEventListener('input', function() {
         onTuneControl('s-velocity', parseFloat(this.value));
     });
-    if (sPress) sPress.addEventListener('input', function() {
-        syncUI();
-        emit('tuning', { controlId: 's-chamber-p', value: parseFloat(this.value), timestamp: Date.now() });
-        if (!simRunning) drawStatic();
+    sVel.addEventListener('change', function() {
+        emitTune('s-velocity', parseFloat(this.value));
     });
+    if (sPress) {
+      sPress.addEventListener('input', function() {
+        syncUI();
+        if (!simRunning) drawStatic();
+      });
+      sPress.addEventListener('change', function() {
+        emitTune('s-chamber-p', parseFloat(this.value));
+      });
+    }
 
     // ---------- 绘制 (静态/动态) ----------
     function drawChamber(w, h) {

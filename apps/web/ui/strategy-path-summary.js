@@ -9,8 +9,9 @@
  *     alignmentOk: boolean,     // false → degrade copy when trace align failed
  *     degradeReason: string,    // 'events_empty'|'align_failed'|'mode_switch'|'missing_trace'
  *     nearTies: [{ label, score }], // optional equivalent high routes
+ *     scoredPhase: 'challenge'|'full'|'explore', // path-summary 评分段；challenge 时建议加轻前缀
  *   })
- *   → { text, type, advice, primary, score, audience, degraded, teacherDetail? }
+ *   → { text, type, advice, primary, score, audience, degraded, scoredPhase, teacherDetail? }
  */
 (function (root) {
   function pathTypeLabel(primaryStrategy) {
@@ -88,8 +89,12 @@
     if (!tips.length) {
       tips.push('继续用控制变量的思路：一次改一项，对照观察结果是否跟着变。');
     }
-    // One-liner for chip; keep short
-    return tips[0];
+    // One-liner for chip; keep short. Challenge-scored: frame lightly, never blame explore sweep.
+    let tip = tips[0];
+    if (o.scoredPhase === 'challenge' && tip && !/竞赛段/.test(tip)) {
+      tip = `竞赛段里，${tip}`;
+    }
+    return tip;
   }
 
   function degradeAdvice(reason) {
@@ -119,6 +124,7 @@
       effectiveTrials: bd.effectiveTrials,
       segmentCounts: bd.segmentCounts || {},
       nearTies: opts?.nearTies || [],
+      scoredPhase: opts?.scoredPhase || null,
     };
   }
 
@@ -162,9 +168,10 @@
       audience,
       degraded: !!degraded,
       degradeReason: o.degradeReason || null,
+      scoredPhase: o.scoredPhase || null,
     };
     if (audience === 'teacher') {
-      out.teacherDetail = teacherDetail(scoreResult, { nearTies });
+      out.teacherDetail = teacherDetail(scoreResult, { nearTies, scoredPhase: o.scoredPhase });
     }
     return out;
   }

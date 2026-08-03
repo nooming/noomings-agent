@@ -694,7 +694,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // 所有滑条 tuning (统一绑定)
     document.querySelectorAll('input[type="range"]').forEach(function(el) {
-      el.addEventListener('input', function() {
+      el.addEventListener('change', function() {
+        if (window.__platformTraceControlsBound) return;
         emit('tuning', { control: el.id, value: el.value });
       });
     });

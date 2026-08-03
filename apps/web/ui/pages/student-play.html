@@ -155,6 +155,8 @@ async function boot() {
           graphId: item.graphId,
           packageId: pkgGuess,
           mode: currentPhase === 'challenge' ? 'compete' : 'explore',
+          // 提示偏好；服务端仍按 phase_change 过滤事件，不单信 mode
+          phaseScope: currentPhase === 'challenge' ? 'challenge' : undefined,
           showScore: false,
           audience: 'student',
         }),

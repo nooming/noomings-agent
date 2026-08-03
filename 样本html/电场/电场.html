@@ -1138,10 +1138,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (gapValDisplay) gapValDisplay.textContent = state.plateGap.toFixed(1) + ' cm';
         roField.textContent = state.fieldStrength;
         roCharge.textContent = state.charge;
-        // 埋点 tuning
-        emit('tuning', { controlId: 's-fieldStrength', value: state.fieldStrength, kgId: 'O1', ts: Date.now() });
-        emit('tuning', { controlId: 's-charge', value: state.charge, kgId: 'O1', ts: Date.now() });
-        if (gapSlider) emit('tuning', { controlId: 's-plate-gap', value: state.plateGap, kgId: 'O1', ts: Date.now() });
+        // tuning telemetry: TRACE_HOOK / platform adapter on `change` (not every input)
     }
 
     // 发射
@@ -1624,7 +1621,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   document.addEventListener('DOMContentLoaded', function() {
     emit('puzzle_open', {});
     document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
-      el.addEventListener('input', function() {
+      el.addEventListener('change', function() {
+        if (window.__platformTraceControlsBound) return;
         emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
       });
     });

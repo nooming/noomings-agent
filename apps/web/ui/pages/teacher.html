@@ -1547,6 +1547,92 @@ async function loadCrossGameSummary(student) {
   box.innerHTML = `<table class="edu-table edu-table-compact"><thead><tr><th>任务</th><th>会话</th><th>变量调节次数</th><th>评判</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+function scoredPhaseLabel(phase) {
+  if (phase === 'challenge') return '竞赛段';
+  if (phase === 'explore') return '探究段';
+  if (phase === 'full') return '全会话';
+  return null;
+}
+
+function renderTuningTableRows(rows) {
+  if (!rows?.length) return '';
+  return rows.map(row =>
+    `<tr><td>${esc(row.label || row.controlId)}</td><td><code>${esc(row.controlId)}</code></td><td>${row.adjustCount}</td><td>${esc(row.role || '—')}</td></tr>`).join('');
+}
+
+function fallbackTuningRows(summary) {
+  return Object.entries(summary.controlTuningCounts || summary.topControls?.reduce((m, t) => ({ ...m, [t.control]: t.count }), {}) || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([ctrl, n]) => `<tr><td>${esc(ctrl)}</td><td><code>${esc(ctrl)}</code></td><td>${n}</td><td>—</td></tr>`).join('');
+}
+
+function tuningTableHtml(tbody) {
+  return `<table class="edu-table edu-table-compact"><thead><tr><th>变量</th><th>控件 id</th><th>次数</th><th>角色</th></tr></thead><tbody>${tbody}</tbody></table>`;
+}
+
+function buildSessionTuningBlock(summary) {
+  const byPhase = summary.variableAdjustCountsByPhase;
+  if (byPhase?.phaseSplit) {
+    const parts = [];
+    const exploreRows = renderTuningTableRows(byPhase.explore);
+    const challengeRows = renderTuningTableRows(byPhase.challenge);
+    if (exploreRows) {
+      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">探究段调节</h4>${tuningTableHtml(exploreRows)}</div>`);
+    }
+    if (challengeRows) {
+      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">竞赛段调节</h4>${tuningTableHtml(challengeRows)}</div>`);
+    }
+    const fullRows = renderTuningTableRows(byPhase.full || summary.variableAdjustCounts) || fallbackTuningRows(summary);
+    if (fullRows && (exploreRows || challengeRows)) {
+      parts.push(`<details class="session-tuning-block"><summary class="session-section-label">全会话合计</summary>${tuningTableHtml(fullRows)}</details>`);
+    } else if (fullRows) {
+      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数（全会话）</h4>${tuningTableHtml(fullRows)}</div>`);
+    }
+    return parts.join('');
+  }
+  const rows = renderTuningTableRows(summary.variableAdjustCounts) || fallbackTuningRows(summary);
+  if (!rows) return '';
+  const note = byPhase?.scopeNote === 'no_phase_change'
+    ? '<p class="hint">未上报 phase_change，以下为全会话统计</p>'
+    : '';
+  return `<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数（全会话）</h4>${note}${tuningTableHtml(rows)}</div>`;
+}
+
+async function refreshTeacherPathSummary(session, reqId) {
+  const cached = session.strategyPathSummary || null;
+  try {
+    const r = await fetch('/api/platform/strategy-path-summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: session.sessionId,
+        graphId: session.graphId,
+        audience: 'teacher',
+        // 不传 phaseScope:'full'，跟随服务端默认（有竞赛操作时评竞赛段）
+      }),
+    });
+    if (reqId !== detailRequestSeq) return { aborted: true };
+    const data = await r.json();
+    if (data.ok && data.summary) {
+      const pathSummary = {
+        ...data.summary,
+        score: data.score != null ? data.score : data.summary.score,
+        scoredPhase: data.scoredPhase || data.summary.scoredPhase || null,
+        primaryStrategy: data.primaryStrategy || data.summary.primary || data.summary.type || null,
+      };
+      session.strategyPathSummary = pathSummary;
+      return { pathSummary, scoredPhase: pathSummary.scoredPhase };
+    }
+  } catch (_) {
+    /* fall back to cache */
+  }
+  if (reqId !== detailRequestSeq) return { aborted: true };
+  return {
+    pathSummary: cached,
+    scoredPhase: cached?.scoredPhase || null,
+  };
+}
+
 async function loadSessionDetail(sessionId) {
   selectedSessionId = sessionId;
   const reqId = ++detailRequestSeq;
@@ -1569,6 +1655,10 @@ async function loadSessionDetail(sessionId) {
   }
   const session = data.session;
   const summary = data.summary || {};
+  const pathRefresh = await refreshTeacherPathSummary(session, reqId);
+  if (pathRefresh.aborted || reqId !== detailRequestSeq) return;
+  const pathSummary = pathRefresh.pathSummary;
+  const pathScopeLabel = scoredPhaseLabel(pathRefresh.scoredPhase);
   const cat = catalogItems.find(c => c.id === session.catalogId);
   const taskTitle = cat?.title || session.catalogId || '—';
   const graphFilter = document.getElementById('filterGraph').value;
@@ -1592,21 +1682,14 @@ async function loadSessionDetail(sessionId) {
   const phaseLine = summary.currentPhase
     ? `<p class="hint">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
     : '';
-  const tuningRows = (summary.variableAdjustCounts || []).length
-    ? summary.variableAdjustCounts.map(row =>
-      `<tr><td>${esc(row.label || row.controlId)}</td><td><code>${esc(row.controlId)}</code></td><td>${row.adjustCount}</td><td>${esc(row.role || '—')}</td></tr>`).join('')
-    : Object.entries(summary.controlTuningCounts || summary.topControls?.reduce((m, t) => ({ ...m, [t.control]: t.count }), {}) || {})
-      .sort((a, b) => b[1] - a[1])
-      .map(([ctrl, n]) => `<tr><td>${esc(ctrl)}</td><td><code>${esc(ctrl)}</code></td><td>${n}</td><td>—</td></tr>`).join('');
-  const pathLine = session.strategyPathSummary?.text
-    ? `<p class="hint">探究路径：<strong>${esc(session.strategyPathSummary.text)}</strong>
-       ${session.strategyPathSummary.advice ? `<br>建议：${esc(session.strategyPathSummary.advice)}` : ''}
-       ${session.strategyPathSummary.score != null ? `<br>策略分（教师）：<strong>${Number(session.strategyPathSummary.score).toFixed(2)}</strong>` : ''}
+  const pathLine = pathSummary?.text
+    ? `<p class="hint">探究路径：<strong>${esc(pathSummary.text)}</strong>
+       ${pathScopeLabel ? `<br>评分范围：${esc(pathScopeLabel)}` : ''}
+       ${pathSummary.advice ? `<br>建议：${esc(pathSummary.advice)}` : ''}
+       ${pathSummary.score != null ? `<br>策略分（教师）：<strong>${Number(pathSummary.score).toFixed(2)}</strong>` : ''}
        </p>`
     : '';
-  const tuningBlock = tuningRows
-    ? `<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数</h4><table class="edu-table edu-table-compact"><thead><tr><th>变量</th><th>控件 id</th><th>次数</th><th>角色</th></tr></thead><tbody>${tuningRows}</tbody></table></div>`
-    : '';
+  const tuningBlock = buildSessionTuningBlock(summary);
 
   if (reqId !== detailRequestSeq) return;
   loadCrossGameSummary(student);

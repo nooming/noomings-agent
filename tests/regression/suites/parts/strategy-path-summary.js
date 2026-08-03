@@ -86,6 +86,16 @@ function run() {
   });
   assert(/散|连续/.test(thrashAdvice), 'thrash tip');
 
+  const challengeFramed = studentAdvice(
+    {
+      primaryStrategy: '单变量·A',
+      breakdown: { switchKind: 'stable', nSwitch: 0, segmentCounts: {}, mainClarityBonus: 0.06 },
+    },
+    { scoredPhase: 'challenge' },
+  );
+  assert(/竞赛段/.test(challengeFramed), 'challenge scoredPhase prefixes advice');
+  assert(!/探究扫参/.test(challengeFramed), 'no explore-sweep blame');
+
   console.log('strategy-path-summary-check: ok');
 }
 

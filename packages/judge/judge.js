@@ -153,9 +153,11 @@ function applySingleVariablePolicy(result, summary) {
     out.teacherSummary.level = 3;
   }
 
+  // parameterCoverage = 探究段广度；勿把竞赛段未换参说成「探索失败」
   const coverage = summary.inquiryPath?.metrics?.parameterCoverage;
+  const challengeCoverage = summary.inquiryPath?.metrics?.parameterCoverageChallenge;
   if (coverage != null && coverage < 1 && out.gaps.length < 2) {
-    out.gaps.push('当前维度扫值后仍未命中，可切换至另一参数继续单变量');
+    out.gaps.push('探究段维度尚未扫全，可换另一单参继续对照');
   }
   out.gaps = out.gaps.slice(0, 2);
 
@@ -169,9 +171,18 @@ function applySingleVariablePolicy(result, summary) {
     out.teacherSummary.gaps = out.gaps.map(s => truncateText(s, 30));
     out.teacherSummary.strengths = out.strengths;
     if (out.teacherSummary.suggestion && DUAL_PARAM_SUGGESTION_RE.test(out.teacherSummary.suggestion)) {
-      out.teacherSummary.suggestion = '可固定已试参数，单独探索另一维度';
+      out.teacherSummary.suggestion = coverage != null && coverage >= 1
+        ? '探究已较全，竞赛段可固定单参继续收敛'
+        : '可固定已试参数，单独探索另一维度';
     } else if (!out.teacherSummary.suggestion && coverage != null && coverage < 1) {
       out.teacherSummary.suggestion = '可固定已试参数，单独探索另一维度';
+    } else if (
+      !out.teacherSummary.suggestion
+      && coverage != null && coverage >= 1
+      && challengeCoverage != null && challengeCoverage < 1
+    ) {
+      // 探究已覆盖、竞赛只盯一参：谈收敛而非「未探索」
+      out.teacherSummary.suggestion = '探究已较全，竞赛段可固定单参继续收敛';
     }
     if (ANTI_SINGLE_VAR_GAP_RE.test(out.teacherSummary.summary)
       && !/混调|盲调|无关/.test(out.teacherSummary.summary)) {

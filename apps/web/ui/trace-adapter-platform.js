@@ -57,12 +57,15 @@
 
   function bindControls(root) {
     const doc = root || document;
+    // Mark so game-level TRACE_HOOK / self-emit can skip and avoid double-count
+    // when the platform adapter is the source of truth (e.g. student-play iframe).
+    try { global.__platformTraceControlsBound = true; } catch (e) { /* window may be restricted */ }
+    // Range/number: record tuning on `change` only (pointer/keyboard commit).
+    // Do not bind `input` — dragging a range fires many intermediate values.
     doc.querySelectorAll('input[type="range"], input[type="number"]').forEach(el => {
-      const fire = () => {
+      el.addEventListener('change', () => {
         record('tuning', { control: el.id || el.name || 'slider', value: el.value });
-      };
-      el.addEventListener('input', fire);
-      el.addEventListener('change', fire);
+      });
     });
     doc.querySelectorAll('button, [role="button"]').forEach(el => {
       el.addEventListener('click', () => {

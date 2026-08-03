@@ -44,6 +44,7 @@ const SUITES = {
     { name: 'strategy-segment-score', module: './parts/strategy-segment-score' },
     { name: 'strategy-switch-awareness', module: './parts/strategy-switch-awareness' },
     { name: 'strategy-path-summary', module: './parts/strategy-path-summary' },
+    { name: 'strategy-path-summary-challenge-scope', module: './parts/strategy-path-summary-challenge-scope' },
     { name: 'strategy-layout', module: './parts/strategy-layout' },
   ],
   export: [

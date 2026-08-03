@@ -43,6 +43,7 @@ const {
 } = require('../../packages/platform/trace-store');
 const { getPackageGamePath, getPackageChapterPath } = require('../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../packages/judge/strategy-segment-score');
+const { resolveStrategyPathScoreScope } = require('../../packages/judge/trace-normalize');
 const { formatSummary, detectNearTies } = require('../web/ui/strategy-path-summary');
 const { loadAdapter } = require('../../packages/platform/adapters');
 const { generateGameHtml } = require('../../packages/generate/html-codegen');
@@ -909,14 +910,22 @@ async function handleSessionStrategyPathSummary(req, res) {
       return;
     }
     enrichRecordMetrics(session, chapter);
-    const mode = body.mode
-      || (session.currentPhase === 'challenge' ? 'compete' : 'explore');
-    const events = Array.isArray(session.events) ? session.events : [];
+    const allEvents = Array.isArray(session.events) ? session.events : [];
     const audience = body.audience === 'teacher' ? 'teacher' : 'student';
-    if (!events.length) {
+    // 事件范围由服务端按 phase 决定，不单信 body.mode（对齐 Agent B：策略看竞赛段）
+    const hintedMode = body.mode
+      || (session.currentPhase === 'challenge' ? 'compete' : 'explore');
+    const scope = resolveStrategyPathScoreScope(allEvents, {
+      phaseScope: body.phaseScope,
+      mode: hintedMode,
+    });
+    const mode = scope.mode;
+    const scoredPhase = scope.scoredPhase;
+    const events = scope.events;
+    if (!allEvents.length) {
       const summary = formatSummary(
         { primaryStrategy: null, score: null, breakdown: {} },
-        { audience, showScore: false, alignmentOk: false, degradeReason: 'events_empty' },
+        { audience, showScore: false, alignmentOk: false, degradeReason: 'events_empty', scoredPhase },
       );
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({
@@ -924,6 +933,7 @@ async function handleSessionStrategyPathSummary(req, res) {
         sessionId: session.sessionId,
         graphId,
         mode,
+        scoredPhase,
         summary,
         degraded: true,
         variableAdjustCounts: session.variableAdjustCounts,
@@ -933,7 +943,7 @@ async function handleSessionStrategyPathSummary(req, res) {
     }
     const scoreResult = scoreTraceStrategy(events, chapter, { mode });
     const nearTies = detectNearTies(scoreResult, chapter);
-    const sawModeSwitch = (events || []).some(e =>
+    const sawModeSwitch = allEvents.some(e =>
       e.type === 'phase_change' || e.type === 'mode');
     const degradeReason = body.degradeReason
       || (sawModeSwitch && body.strictModeAlign ? 'mode_switch' : null);
@@ -943,6 +953,7 @@ async function handleSessionStrategyPathSummary(req, res) {
       nearTies,
       alignmentOk: degradeReason ? false : true,
       degradeReason,
+      scoredPhase,
     });
     // Persist path summary on session for teacher view (always keep score)
     session.strategyPathSummary = {
@@ -950,6 +961,7 @@ async function handleSessionStrategyPathSummary(req, res) {
       primaryStrategy: scoreResult.primaryStrategy,
       score: scoreResult.score,
       mode,
+      scoredPhase,
       nearTies,
       scoredAt: new Date().toISOString(),
     };
@@ -960,6 +972,7 @@ async function handleSessionStrategyPathSummary(req, res) {
       sessionId: session.sessionId,
       graphId,
       mode,
+      scoredPhase,
       primaryStrategy: scoreResult.primaryStrategy,
       score: scoreResult.score,
       summary,
@@ -967,8 +980,8 @@ async function handleSessionStrategyPathSummary(req, res) {
       variableAdjustCounts: session.variableAdjustCounts,
       source: 'session-events',
       contract: {
-        student: 'summary.text + summary.advice（不剧透最优；默认无分数）',
-        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail',
+        student: 'summary.text + summary.advice（不剧透最优；默认无分数；竞赛过关按竞赛段评分）',
+        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段',
       },
     }));
   } catch (e) {

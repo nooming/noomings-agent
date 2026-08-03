@@ -679,7 +679,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
       // 绑定 tuning 事件 (滑条)
       document.querySelectorAll('input[type="range"]').forEach(function(el) {
-        el.addEventListener('input', function() {
+        el.addEventListener('change', function() {
+          if (window.__platformTraceControlsBound) return;
           emit('tuning', { control: el.id || 'slider', value: el.value });
         });
       });

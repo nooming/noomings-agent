@@ -27,7 +27,8 @@ const TRACE_HOOK = `<!-- trace-adapter-hook -->
   document.addEventListener('DOMContentLoaded', function() {
     emit('puzzle_open', {});
     document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
-      el.addEventListener('input', function() {
+      el.addEventListener('change', function() {
+        if (window.__platformTraceControlsBound) return;
         emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
       });
     });
