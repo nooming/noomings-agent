@@ -50,12 +50,13 @@ function buildStandaloneExportHtml({ chapter, title, viewerJs, graphCss, escapeH
   // AGENT A · 探究策略图（优先级可视）
   const tHeaderTag = 'AGENT A \u00b7 \u63a2\u7a76\u7b56\u7565\u56fe\uff08\u4f18\u5148\u7ea7\u53ef\u89c6\uff09';
 
-  // Offline strategy render: relative vendor/ (D3 + Mermaid). MathJax stays optional CDN.
+  // Offline strategy render: relative vendor/ (D3 + Mermaid + MathJax). MathJax async/fail-soft.
   const base = (vendorBase == null || vendorBase === '')
     ? '../vendor'
     : String(vendorBase).replace(/\/$/, '');
   const d3Src = `${base}/d3.v7.min.js`;
   const mermaidSrc = `${base}/mermaid.min.js`;
+  const mathjaxSrc = `${base}/tex-mml-svg.js`;
   // System font stack — avoid Google Fonts CDN dependency for offline file://
   const fontStack = "'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif";
   const serifStack = "'Noto Serif SC','Songti SC','SimSun',serif";
@@ -71,7 +72,7 @@ function buildStandaloneExportHtml({ chapter, title, viewerJs, graphCss, escapeH
 <script>
   window.MathJax = { tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']]}, svg:{fontCache:'global'} };
 <\/script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"><\/script>
+<script async src="${mathjaxSrc}"><\/script>
 <style>
 :root{--font-ui:${fontStack};--font-formula:${serifStack};}
 ${graphCss}

@@ -2,8 +2,7 @@
  * Build Strategy-first standalone 图谱.html with priority mermaid annotate bundled.
  * Does not mutate chapter.json mermaid on disk.
  *
- * Offline: D3 + Mermaid loaded from relative ../vendor/ (copied beside packages / 样本html).
- * MathJax remains optional CDN.
+ * Offline: D3 + Mermaid + MathJax loaded from relative ../vendor/ (copied beside packages / 样本html).
  */
 const fs = require('fs');
 const path = require('path');
@@ -14,7 +13,7 @@ const ROOT = path.resolve(__dirname, '../../..');
 const JS_DIR = path.join(ROOT, 'apps/web/viewer/js');
 const SHARED_DIR = path.join(ROOT, 'packages/shared');
 const VENDOR_SRC = path.join(ROOT, 'apps/web/viewer/vendor');
-const VENDOR_FILES = ['d3.v7.min.js', 'mermaid.min.js'];
+const VENDOR_FILES = ['d3.v7.min.js', 'mermaid.min.js', 'tex-mml-svg.js'];
 const VENDOR_COPY_README = [
   '# Offline graph preview vendor（导出副本）',
   '',
@@ -41,7 +40,7 @@ function loadViewerAssets() {
 }
 
 function assertVendorPresent(srcDir) {
-  for (const name of ['d3.v7.min.js', 'mermaid.min.js']) {
+  for (const name of VENDOR_FILES) {
     const p = path.join(srcDir, name);
     if (!fs.existsSync(p) || fs.statSync(p).size < 1000) {
       throw new Error(`offline vendor missing or empty: ${p}`);
@@ -95,8 +94,14 @@ function assertGraphHtmlSane(graphHtml) {
   if (/cdn\.jsdelivr\.net\/npm\/mermaid/.test(graphHtml)) {
     throw new Error('mermaid still points at CDN');
   }
+  if (/cdn\.jsdelivr\.net\/npm\/mathjax/.test(graphHtml)) {
+    throw new Error('mathjax still points at CDN');
+  }
   if (!graphHtml.includes('d3.v7.min.js') || !graphHtml.includes('mermaid.min.js')) {
     throw new Error('missing local vendor script refs');
+  }
+  if (!graphHtml.includes('tex-mml-svg.js')) {
+    throw new Error('missing local mathjax vendor script ref');
   }
   if (!/src="[^"]*vendor\/d3\.v7\.min\.js"/.test(graphHtml)
     && !/src='[^']*vendor\/d3\.v7\.min\.js'/.test(graphHtml)) {

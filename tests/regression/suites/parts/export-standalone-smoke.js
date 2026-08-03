@@ -57,7 +57,8 @@ function run() {
   assert(!html.includes('gen-banner'), 'no gen-banner UI');
   assert(!html.includes('单文件预览'), 'no export subtitle banner');
   assert(html.includes('d3.v7.min.js'), 'd3 vendor script kept');
-  assert(html.includes('mathjax@3'), 'mathjax CDN script kept (optional formulas)');
+  assert(html.includes('tex-mml-svg.js'), 'mathjax local vendor script (optional formulas)');
+  assert(!/cdn\.jsdelivr\.net\/npm\/mathjax/.test(html), 'no mathjax CDN');
   assert(!/\?\?\/(?:div|h2|button)>/.test(html), 'no corrupted closers like ??/div>');
   assert(!/CDN\?D3/.test(html), 'no CDN?D3 mojibake');
 
@@ -65,6 +66,7 @@ function run() {
   const vendorDir = path.join(__dirname, '../../../../apps/web/viewer/vendor');
   assert(fs.existsSync(path.join(vendorDir, 'd3.v7.min.js')), 'vendor d3 present');
   assert(fs.existsSync(path.join(vendorDir, 'mermaid.min.js')), 'vendor mermaid present');
+  assert(fs.existsSync(path.join(vendorDir, 'tex-mml-svg.js')), 'vendor mathjax present');
 
   console.log('export-standalone-smoke-check: OK', html.length, 'chars');
 }
