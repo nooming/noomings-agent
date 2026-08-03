@@ -1339,8 +1339,41 @@ body.play-page {
   margin-bottom: 4px;
 }
 
+.session-detail-section + .session-detail-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--edu-border);
+}
+
+.session-detail-summary .hint {
+  margin: 4px 0;
+}
+
 .session-task-line {
-  margin-bottom: 12px;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+}
+
+.session-phase-line {
+  font-size: 0.82rem;
+}
+
+.session-path-block {
+  margin-top: 8px;
+}
+
+.session-path-type {
+  margin-bottom: 2px;
+}
+
+.session-path-meta {
+  margin: 2px 0 4px;
+  font-size: 0.78rem;
+  color: var(--edu-muted);
+}
+
+.session-path-advice {
+  margin-top: 4px;
   font-size: 0.82rem;
 }
 
@@ -1354,7 +1387,8 @@ body.play-page {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 12px;
+  margin-bottom: 8px;
 }
 
 .session-action-hint {
@@ -1666,8 +1700,8 @@ td.empty-state,
 .session-timeline {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-bottom: 4px;
 }
 
 .session-list-head {
@@ -1693,8 +1727,8 @@ td.empty-state,
 .session-timeline-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 7px 10px;
   border: 1px solid var(--edu-border);
   border-radius: 8px;
   cursor: pointer;

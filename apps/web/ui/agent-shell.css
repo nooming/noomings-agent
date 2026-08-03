@@ -430,6 +430,22 @@ button.tool-btn-secondary {
 .analyze-step-summary { color: var(--edu-muted, #667); margin-left: 6px; }
 
 .cross-game-panel { margin-top: 16px; }
-.session-tuning-block { margin: 12px 0; }
+.session-tuning-block { margin: 0 0 12px; }
+.session-tuning-block:last-child { margin-bottom: 0; }
+.session-tuning-block > summary.session-section-label {
+  cursor: pointer;
+  list-style-position: outside;
+}
+.session-tuning-table {
+  width: 100%;
+  max-width: 540px;
+}
+.session-tuning-table th,
+.session-tuning-table td {
+  word-break: break-word;
+}
+.session-tuning-table code {
+  font-size: 0.78em;
+}
 .edu-table-compact { font-size: 0.85rem; }
 .edu-table-compact th, .edu-table-compact td { padding: 6px 10px; }

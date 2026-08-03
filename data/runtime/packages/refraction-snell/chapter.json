@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 入射角在范围? | C2 | constraint | 0°–89° |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C3 | constraint | 折射率在范围? 1.0–2.5 |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C4 | constraint | 光路有效? (非全反射) |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C5 | constraint | 命中靶? |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | R1 | result | 过关 |\n| 飞出边界? | C6 | constraint | 独立失败判定 |\n| 否→继续 | step | step | 继续 |\n| 是→重试 | skip retry | skip retry | skip retry |\n| 水槽水深 | I1 | irrelevant | 只改填充观感，不改变折射角 |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 入射角在范围? | C2 | constraint | 0°–89° |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C3 | constraint | 折射率在范围? 1.0–2.5 |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C4 | constraint | 光路有效? (非全反射) |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C5 | constraint | 命中靶? |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | R1 | result | 过关 |\n| 飞出边界? | C6 | constraint | 独立失败判定 |\n| 否→继续 | step | step | 继续 |\n| 是→重试 | skip retry | skip retry | skip retry |\n| 水温 | I1 | irrelevant | 只改水色观感，不改变折射角 |",
   "kg": {
     "title": "折射 · 探究",
     "sub": "光学台 · 水槽折射",
@@ -111,12 +111,12 @@
       },
       {
         "id": "I1",
-        "label": "水槽水深",
+        "label": "水温",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "水槽水深滑条：只改填充观感，不改变折射角与命中判定"
+        "desc": "水温滑条：只改水色观感，不改变折射角与命中判定"
       }
     ],
     "links": [
@@ -321,7 +321,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-water-depth": {
+      "s-water-temp": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -348,7 +348,7 @@
   "strategy": {
     "title": "折射 · 探究",
     "sub": "光学台 · 水槽折射",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| Retry\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·水槽水深| ProbeCV\nStrategySelect -->|单变量·入射角| Route_main\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探·水槽水深]\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| Retry\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·水温| ProbeCV\nStrategySelect -->|单变量·入射角| Route_main\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探·水温]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -595,8 +595,8 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_s_water_depth",
-        "label": "试探·水槽水深",
+        "id": "confound_s_water_temp",
+        "label": "试探·水温",
         "mapsTo": [],
         "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -699,9 +699,9 @@
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": "s-water-depth",
-        "label": "水槽水深",
-        "reason": "只改变水槽填充观感；不进入折射角与命中判定（本关 n₂ 已给定）"
+        "controlId": "s-water-temp",
+        "label": "水温",
+        "reason": "只改变水色冷暖与雾气观感；不进入折射角与命中判定（本关 n₂ 已给定）"
       }
     ],
     "inquiryFlow": [
@@ -735,7 +735,7 @@
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "可观察水槽水深变化；是否影响折射需自行测量对比。",
+          "body": "可观察水温变化；是否影响折射需自行测量对比。",
           "mapsToKg": [
             "I1"
           ]
@@ -834,9 +834,9 @@
     ],
     "confoundingUi": [
       {
-        "controlId": "s-water-depth",
-        "label": "水槽水深",
-        "reason": "只改变水槽填充观感；不进入折射角与命中判定",
+        "controlId": "s-water-temp",
+        "label": "水温",
+        "reason": "只改变水色冷暖与雾气观感；不进入折射角与命中判定",
         "uiStrategy": "teach_only"
       }
     ],
@@ -883,7 +883,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-water-depth": {
+      "s-water-temp": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -925,10 +925,10 @@
         "source": "state.s-refractive-index"
       },
       {
-        "label": "水槽水深",
-        "symbol": "h",
-        "unit": "cm",
-        "source": "state.s-water-depth"
+        "label": "水温",
+        "symbol": "T",
+        "unit": "°C",
+        "source": "state.s-water-temp"
       },
       {
         "label": "过关结果",
@@ -982,10 +982,10 @@
       },
       {
         "type": "irrelevant_touch",
-        "controlId": "s-water-depth",
+        "controlId": "s-water-temp",
         "kgId": "I1",
         "required": false,
-        "description": "混淆/无关控件触碰 s-water-depth"
+        "description": "混淆/无关控件触碰 s-water-temp"
       },
       {
         "type": "irrelevant_touch",
@@ -1003,7 +1003,7 @@
       {
         "type": "irrelevant_touch",
         "canonical": "irrelevant_touch",
-        "control": "s-water-depth",
+        "control": "s-water-temp",
         "required": false
       }
     ],

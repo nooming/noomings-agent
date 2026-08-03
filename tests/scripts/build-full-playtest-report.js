@@ -75,7 +75,7 @@ async function main() {
     browserDeep: {
       'projectile-basic': { smoke: true, phase_change: true, traceGrew: true, S1_win: 'timebox miss', note: '质量CV可见；列表提混淆' },
       'series-parallel': { smoke: true, phase_change: true, note: 'R1/R2/仪表内阻清晰' },
-      'refraction-snell': { smoke: true, phase_change: true, note: '水深CV可见未标无关' },
+      'refraction-snell': { smoke: true, phase_change: true, note: '水温CV可见未标无关' },
       'pendulum-clock': { smoke: true, phase_change: true, traceGrew: true, S1_win: 'reachability/timebox miss', note: '目标T≈2.045严公差' },
       'multi-kp': { smoke: true, phase_change: true, S2: true, traceGrew: true, note: '局内无公式；目录有mgh剧透' },
       'rc-circuit': { http: true, note: 'legacyTypes snapshot/win→tuning' },

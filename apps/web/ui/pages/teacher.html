@@ -1554,10 +1554,11 @@ function scoredPhaseLabel(phase) {
   return null;
 }
 
-function renderTuningTableRows(rows) {
+function renderTuningTableRows(rows, phaseLabel) {
   if (!rows?.length) return '';
+  const phaseCell = phaseLabel ? `<td>${esc(phaseLabel)}</td>` : '';
   return rows.map(row =>
-    `<tr><td>${esc(row.label || row.controlId)}</td><td><code>${esc(row.controlId)}</code></td><td>${row.adjustCount}</td><td>${esc(row.role || '—')}</td></tr>`).join('');
+    `<tr>${phaseCell}<td>${esc(row.label || row.controlId)}</td><td><code>${esc(row.controlId)}</code></td><td>${row.adjustCount}</td><td>${esc(row.role || '—')}</td></tr>`).join('');
 }
 
 function fallbackTuningRows(summary) {
@@ -1566,28 +1567,28 @@ function fallbackTuningRows(summary) {
     .map(([ctrl, n]) => `<tr><td>${esc(ctrl)}</td><td><code>${esc(ctrl)}</code></td><td>${n}</td><td>—</td></tr>`).join('');
 }
 
-function tuningTableHtml(tbody) {
-  return `<table class="edu-table edu-table-compact"><thead><tr><th>变量</th><th>控件 id</th><th>次数</th><th>角色</th></tr></thead><tbody>${tbody}</tbody></table>`;
+function tuningTableHtml(tbody, withPhase) {
+  const phaseTh = withPhase ? '<th>阶段</th>' : '';
+  return `<table class="edu-table edu-table-compact session-tuning-table"><thead><tr>${phaseTh}<th>变量</th><th>控件 id</th><th>次数</th><th>角色</th></tr></thead><tbody>${tbody}</tbody></table>`;
 }
 
 function buildSessionTuningBlock(summary) {
   const byPhase = summary.variableAdjustCountsByPhase;
   if (byPhase?.phaseSplit) {
+    const exploreRows = renderTuningTableRows(byPhase.explore, '探究');
+    const challengeRows = renderTuningTableRows(byPhase.challenge, '竞赛');
+    const phaseBody = [exploreRows, challengeRows].filter(Boolean).join('');
     const parts = [];
-    const exploreRows = renderTuningTableRows(byPhase.explore);
-    const challengeRows = renderTuningTableRows(byPhase.challenge);
-    if (exploreRows) {
-      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">探究段调节</h4>${tuningTableHtml(exploreRows)}</div>`);
-    }
-    if (challengeRows) {
-      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">竞赛段调节</h4>${tuningTableHtml(challengeRows)}</div>`);
+    if (phaseBody) {
+      parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">探究 / 竞赛段调节</h4>${tuningTableHtml(phaseBody, true)}</div>`);
     }
     const fullRows = renderTuningTableRows(byPhase.full || summary.variableAdjustCounts) || fallbackTuningRows(summary);
-    if (fullRows && (exploreRows || challengeRows)) {
+    if (fullRows && phaseBody) {
       parts.push(`<details class="session-tuning-block"><summary class="session-section-label">全会话合计</summary>${tuningTableHtml(fullRows)}</details>`);
     } else if (fullRows) {
       parts.push(`<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数（全会话）</h4>${tuningTableHtml(fullRows)}</div>`);
     }
+    if (!parts.length) return '';
     return parts.join('');
   }
   const rows = renderTuningTableRows(summary.variableAdjustCounts) || fallbackTuningRows(summary);
@@ -1680,41 +1681,48 @@ async function loadSessionDetail(sessionId) {
   const judgeBlock = jr ? buildJudgeBlock(jr) : '';
   const taskLine = graphFilter ? '' : `<p class="hint session-task-line">任务：${esc(taskTitle)}</p>`;
   const phaseLine = summary.currentPhase
-    ? `<p class="hint">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
+    ? `<p class="hint session-phase-line">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
     : '';
+  const pathMetaParts = [];
+  if (pathScopeLabel) pathMetaParts.push(`评分范围：${esc(pathScopeLabel)}`);
+  if (pathSummary?.score != null) pathMetaParts.push(`策略分：<strong>${Number(pathSummary.score).toFixed(2)}</strong>`);
   const pathLine = pathSummary?.text
-    ? `<p class="hint">探究路径：<strong>${esc(pathSummary.text)}</strong>
-       ${pathScopeLabel ? `<br>评分范围：${esc(pathScopeLabel)}` : ''}
-       ${pathSummary.advice ? `<br>建议：${esc(pathSummary.advice)}` : ''}
-       ${pathSummary.score != null ? `<br>策略分（教师）：<strong>${Number(pathSummary.score).toFixed(2)}</strong>` : ''}
-       </p>`
+    ? `<div class="session-path-block">
+         <p class="hint session-path-type">探究路径：<strong>${esc(pathSummary.text)}</strong></p>
+         ${pathMetaParts.length ? `<p class="session-path-meta">${pathMetaParts.join(' · ')}</p>` : ''}
+         ${pathSummary.advice ? `<p class="hint session-path-advice">建议：${esc(pathSummary.advice)}</p>` : ''}
+       </div>`
     : '';
   const tuningBlock = buildSessionTuningBlock(summary);
 
   if (reqId !== detailRequestSeq) return;
   loadCrossGameSummary(student);
   panel.innerHTML = `
-    <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel))}</h3>
-    ${taskLine}
-    ${phaseLine}
-    ${pathLine}
-    ${tuningBlock}
-    <div class="session-list-head">
-      <h4 class="session-section-label">游玩会话</h4>
-      <div class="session-list-head-actions">
-        <span class="hint sessions-select-count" id="selectedSessionCountLocal"></span>
-        <label class="sessions-select-all">
-          <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
-          <span>全选</span>
-        </label>
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
+    <section class="session-detail-section session-detail-summary">
+      <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel))}</h3>
+      ${taskLine}
+      ${phaseLine}
+      ${pathLine}
+    </section>
+    <section class="session-detail-section session-detail-play">
+      <div class="session-list-head">
+        <h4 class="session-section-label">游玩会话</h4>
+        <div class="session-list-head-actions">
+          <span class="hint sessions-select-count" id="selectedSessionCountLocal"></span>
+          <label class="sessions-select-all">
+            <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
+            <span>全选</span>
+          </label>
+          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
+        </div>
       </div>
-    </div>
-    <div class="session-timeline">${sessionRows}</div>
-    <div class="session-actions">
-      <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新评判' : 'Agent B 评判'}</button>
-    </div>
-    <div id="judgeResult">${judgeBlock}</div>`;
+      <div class="session-timeline">${sessionRows}</div>
+      <div class="session-actions">
+        <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新评判' : 'Agent B 评判'}</button>
+      </div>
+      <div id="judgeResult">${judgeBlock}</div>
+    </section>
+    ${tuningBlock ? `<section class="session-detail-section session-detail-tuning">${tuningBlock}</section>` : ''}`;
 
   syncSessionCheckboxes();
   updateSelectionUi();
