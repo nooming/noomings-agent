@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#007baa">
+<title>教师登录 · 物理探究教学平台</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+</head>
+<body class="platform-page">
+
+<header class="platform-header">
+  <div class="platform-header-inner">
+    <a class="platform-brand" href="/">
+      <span class="platform-brand-mark">PE</span>
+      <span>
+        <span class="platform-brand-text">物理探究教学平台</span>
+        <span class="platform-brand-sub">Physics Inquiry Platform</span>
+      </span>
+    </a>
+  </div>
+</header>
+
+<main class="platform-main">
+  <section class="platform-hero" style="padding-bottom:20px">
+    <h1 style="font-size:1.4rem">教师登录</h1>
+    <p>输入课堂通行码后进入教师工作台。通行码由部署环境配置，请向管理员索取。</p>
+  </section>
+
+  <form class="edu-panel platform-auth-panel" id="loginForm" autocomplete="off">
+    <div class="form-row">
+      <label for="accessCode">通行码</label>
+      <input type="password" id="accessCode" name="code" placeholder="请输入教师通行码" required maxlength="128" autocomplete="current-password">
+    </div>
+    <p class="hint" id="loginError" hidden></p>
+    <div class="tool-link-row" style="margin-top:8px">
+      <button type="submit" class="edu-btn edu-btn-primary" id="loginBtn">进入工作台</button>
+      <a class="edu-btn edu-btn-outline" href="/">返回首页</a>
+    </div>
+  </form>
+</main>
+
+<script>
+const TOKEN_KEY = 'platform-teacher-token';
+if (sessionStorage.getItem(TOKEN_KEY)) {
+  location.replace('/teacher.html');
+}
+
+const form = document.getElementById('loginForm');
+const errEl = document.getElementById('loginError');
+const btn = document.getElementById('loginBtn');
+
+function showError(msg) {
+  errEl.hidden = !msg;
+  errEl.textContent = msg || '';
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showError('');
+  const code = document.getElementById('accessCode').value.trim();
+  if (!code) {
+    showError('请输入通行码');
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/platform/teacher-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok || !data.token) {
+      if (data.error === 'teacher_access_not_configured') {
+        showError('服务端未配置教师通行码（TEACHER_ACCESS_CODE）');
+      } else {
+        showError('通行码不正确，请重试');
+      }
+      return;
+    }
+    sessionStorage.setItem(TOKEN_KEY, data.token);
+    location.replace('/teacher.html');
+  } catch {
+    showError('网络错误，请稍后重试');
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

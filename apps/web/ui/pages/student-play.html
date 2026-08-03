@@ -29,13 +29,16 @@
   </div>
 </div>
 
+<script src="/static/ui/platform-nav.js"></script>
 <script src="/static/ui/trace-adapter-platform.js"></script>
 <script src="/static/ui/strategy-path-summary.js"></script>
 <script>
+if (!PlatformNav.requireStudentSession()) { throw new Error('redirect_student_join'); }
+
 const params = new URLSearchParams(location.search);
 const catalogId = params.get('id');
-const studentLabel = localStorage.getItem('platform-student-name') || '匿名学生';
-const studentId = localStorage.getItem('platform-student-id') || params.get('studentId') || '';
+const studentId = (localStorage.getItem('platform-student-id') || '').trim();
+const studentLabel = (localStorage.getItem('platform-student-name') || '').trim() || studentId || '学生';
 const taskCode = localStorage.getItem('platform-task-code') || params.get('taskCode') || catalogId || '';
 const pathTypeEnabled = params.get('showPathType') === '1'
   || localStorage.getItem('platform-show-path-type') === '1';

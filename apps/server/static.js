@@ -45,7 +45,9 @@ const STATIC_MAP = {
   '/': path.join(UI_PAGES, 'platform.html'),
   '/index.html': path.join(UI_PAGES, 'platform.html'),
   '/teacher.html': path.join(UI_PAGES, 'teacher.html'),
+  '/teacher-login.html': path.join(UI_PAGES, 'teacher-login.html'),
   '/student.html': path.join(UI_PAGES, 'student.html'),
+  '/student-join.html': path.join(UI_PAGES, 'student-join.html'),
   '/student-play.html': path.join(UI_PAGES, 'student-play.html'),
   '/strategy-summary-demo.html': path.join(UI_PAGES, 'strategy-summary-demo.html'),
   '/graph.html': path.join(GRAPH_ROOT, 'graph.html'),
@@ -256,7 +258,7 @@ function serveStatic(req, res) {
 function cors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 module.exports = {

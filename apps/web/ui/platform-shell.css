@@ -97,6 +97,73 @@ body.platform-page {
 
 .platform-role-btn.is-student.is-active { color: var(--edu-student); }
 
+.platform-session-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.platform-role-badge {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  background: rgba(0, 123, 170, 0.12);
+  color: var(--edu-teacher);
+}
+
+.platform-role-badge.is-student {
+  background: rgba(13, 148, 136, 0.12);
+  color: var(--edu-student);
+}
+
+.platform-session-id {
+  font-size: 0.82rem;
+  color: var(--edu-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-session-link {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--edu-primary);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.platform-session-link:hover { text-decoration: underline; }
+
+.platform-auth-panel {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.platform-auth-panel .hint {
+  color: #b45309;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.platform-req {
+  color: #b45309;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.platform-opt {
+  color: var(--edu-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
 .platform-main {
   max-width: 1100px;
   margin: 0 auto;
@@ -154,7 +221,8 @@ body.platform-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.15rem;
+  font-weight: 700;
   margin-bottom: 16px;
 }
 

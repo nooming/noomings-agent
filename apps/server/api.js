@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { judge } = require('../../packages/judge/judge');
 const { buildJudgeRequest, normalizeTrace } = require('../../packages/judge/game-trace');
 const { generateGraph } = require('../../packages/generate/pipeline');
@@ -65,6 +66,63 @@ const LLM_OPTS = () => ({
   apiKey: process.env.DEEPSEEK_API_KEY,
   apiUrl: process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
 });
+
+function getTeacherAccessCode() {
+  return String(process.env.TEACHER_ACCESS_CODE || process.env.PLATFORM_TEACHER_PASS || '').trim();
+}
+
+function deriveTeacherToken(code) {
+  return crypto.createHmac('sha256', 'platform-teacher-v1').update(String(code)).digest('hex');
+}
+
+function safeEqualStr(a, b) {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
+function extractBearerToken(req) {
+  const header = req.headers.authorization || req.headers.Authorization || '';
+  const m = String(header).match(/^Bearer\s+(\S+)/i);
+  return m ? m[1].trim() : '';
+}
+
+/** When TEACHER_ACCESS_CODE is set, mutating teacher routes require Bearer token from login. */
+function requireTeacherAuth(req, res) {
+  const code = getTeacherAccessCode();
+  if (!code) return true;
+  const expected = deriveTeacherToken(code);
+  const token = extractBearerToken(req);
+  if (token && safeEqualStr(token, expected)) return true;
+  cors(res);
+  res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({ ok: false, error: 'teacher_auth_required' }));
+  return false;
+}
+
+async function handleTeacherLogin(req, res) {
+  cors(res);
+  const configured = getTeacherAccessCode();
+  if (!configured) {
+    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: 'teacher_access_not_configured' }));
+    return;
+  }
+  try {
+    const body = await readBody(req);
+    const code = String(body.code || '').trim();
+    if (!code || !safeEqualStr(code, configured)) {
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'invalid_code' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: true, token: deriveTeacherToken(configured) }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -939,19 +997,26 @@ async function routeApi(req, res) {
     await handleDemoStrategyPathSummary(req, res);
     return true;
   }
+  if (req.method === 'POST' && req.url === '/api/platform/teacher-login') {
+    await handleTeacherLogin(req, res);
+    return true;
+  }
   if (req.method === 'POST' && req.url === '/api/platform/strategy-path-summary') {
     await handleSessionStrategyPathSummary(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/judge') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleJudge(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/preview-hints') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePreviewHints(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/generate-graph') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleGenerateGraph(req, res);
     return true;
   }
@@ -968,22 +1033,27 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/game-pages/delete') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleGamePageDelete(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/generated-graphs/delete') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleGeneratedGraphDelete(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/save-graph-draft') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleSaveGraphDraft(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/create-graph-project') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleCreateGraphProject(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/append-graph-chapter') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleAppendGraphChapter(req, res);
     return true;
   }
@@ -1000,14 +1070,17 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/publish') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformPublish(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/set-published') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformSetPublished(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/catalog/delete') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformCatalogDelete(req, res);
     return true;
   }
@@ -1020,18 +1093,22 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/categories') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformCategoryCreate(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/categories/delete') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformCategoryDelete(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/catalog/set-category') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformCatalogSetCategory(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/traces/delete') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformTraceDelete(req, res);
     return true;
   }
@@ -1069,6 +1146,7 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/generate-game-html') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handleGenerateGameHtml(req, res);
     return true;
   }
@@ -1077,6 +1155,7 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/judge-session') {
+    if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformJudgeSession(req, res);
     return true;
   }

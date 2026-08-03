@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d9488">
+<title>进入课堂 · 物理探究教学平台</title>
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+</head>
+<body class="platform-page">
+
+<header class="platform-header">
+  <div class="platform-header-inner">
+    <a class="platform-brand" href="/">
+      <span class="platform-brand-mark">PE</span>
+      <span>
+        <span class="platform-brand-text">物理探究教学平台</span>
+        <span class="platform-brand-sub">Physics Inquiry Platform</span>
+      </span>
+    </a>
+  </div>
+</header>
+
+<main class="platform-main">
+  <section class="platform-hero" style="padding-bottom:20px">
+    <h1 style="font-size:1.4rem">学生进入课堂</h1>
+    <p>填写学号后即可查看探究任务。姓名选填，填写后便于教师识别你的轨迹。</p>
+  </section>
+
+  <form class="edu-panel platform-auth-panel" id="joinForm" autocomplete="on">
+    <div class="form-row">
+      <label for="studentId">学号 <span class="platform-req">必填</span></label>
+      <input type="text" id="studentId" name="studentId" placeholder="例如：20260101" required maxlength="32" autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label for="studentName">姓名 <span class="platform-opt">选填，鼓励填写</span></label>
+      <input type="text" id="studentName" name="studentName" placeholder="例如：张三" maxlength="32" autocomplete="name">
+    </div>
+    <p class="hint" id="joinError" hidden></p>
+    <div class="tool-link-row" style="margin-top:8px">
+      <button type="submit" class="edu-btn edu-btn-primary" id="joinBtn">进入探究区</button>
+      <a class="edu-btn edu-btn-outline" href="/">返回首页</a>
+    </div>
+  </form>
+</main>
+
+<script>
+const ID_KEY = 'platform-student-id';
+const NAME_KEY = 'platform-student-name';
+
+const savedId = localStorage.getItem(ID_KEY);
+if (savedId && savedId.trim()) {
+  location.replace('/student.html');
+}
+
+const form = document.getElementById('joinForm');
+const errEl = document.getElementById('joinError');
+const idInput = document.getElementById('studentId');
+const nameInput = document.getElementById('studentName');
+
+const savedName = localStorage.getItem(NAME_KEY);
+if (savedName) nameInput.value = savedName;
+
+function showError(msg) {
+  errEl.hidden = !msg;
+  errEl.textContent = msg || '';
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  showError('');
+  const id = idInput.value.trim();
+  const name = nameInput.value.trim();
+  if (!id) {
+    showError('请填写学号后再进入课堂');
+    idInput.focus();
+    return;
+  }
+  localStorage.setItem(ID_KEY, id);
+  if (name) localStorage.setItem(NAME_KEY, name);
+  else localStorage.removeItem(NAME_KEY);
+  location.replace('/student.html');
+});
+</script>
+</body>
+</html>

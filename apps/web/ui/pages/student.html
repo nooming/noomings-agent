@@ -17,20 +17,6 @@
     <p>选择任务开始实验。你的操作会自动记录，供教师分析探究过程。</p>
   </section>
 
-  <div class="form-row" style="max-width:320px;margin-bottom:12px">
-    <label for="studentName">显示名称（可选）</label>
-    <input type="text" id="studentName" placeholder="例如：张三 / 第 3 组" maxlength="32">
-  </div>
-  <div class="form-row" style="max-width:320px;margin-bottom:12px">
-    <label for="studentId">学号（可选，课堂实测用）</label>
-    <input type="text" id="studentId" placeholder="例如：20260101" maxlength="32" autocomplete="off">
-  </div>
-  <div class="form-row" style="max-width:320px;margin-bottom:24px">
-    <label for="taskCode">任务码 / 班级码（可选）</label>
-    <input type="text" id="taskCode" placeholder="教师发放的任务码" maxlength="48" autocomplete="off">
-    <p class="hint" style="margin-top:6px;font-size:0.82rem">学号与任务码会随轨迹上报，便于教师看板筛选与 CSV 导出。</p>
-  </div>
-
   <div id="gameGrid">
     <div class="empty-state">加载中…</div>
   </div>
@@ -38,26 +24,9 @@
 
 <script src="/static/ui/platform-nav.js"></script>
 <script>
+if (!PlatformNav.requireStudentSession()) { throw new Error('redirect_student_join'); }
 document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('student');
-
-const nameInput = document.getElementById('studentName');
-const idInput = document.getElementById('studentId');
-const taskInput = document.getElementById('taskCode');
-const savedName = localStorage.getItem('platform-student-name');
-if (savedName) nameInput.value = savedName;
-const savedId = localStorage.getItem('platform-student-id');
-if (savedId) idInput.value = savedId;
-const savedTask = localStorage.getItem('platform-task-code');
-if (savedTask) taskInput.value = savedTask;
-nameInput.addEventListener('change', () => {
-  localStorage.setItem('platform-student-name', nameInput.value.trim());
-});
-idInput.addEventListener('change', () => {
-  localStorage.setItem('platform-student-id', idInput.value.trim());
-});
-taskInput.addEventListener('change', () => {
-  localStorage.setItem('platform-task-code', taskInput.value.trim());
-});
+PlatformNav.bindHeaderActions(document);
 
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');

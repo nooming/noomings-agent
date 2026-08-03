@@ -297,7 +297,10 @@
 <script src="/static/ui/catalog-badges.js"></script>
 <script src="/static/ui/graph-preview-url.js"></script>
 <script>
+if (!PlatformNav.requireTeacherSession()) { throw new Error('redirect_teacher_login'); }
+PlatformNav.installTeacherFetchAuth();
 document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('teacher');
+PlatformNav.bindHeaderActions(document);
 
 const tabs = document.querySelectorAll('.teacher-tab');
 const panels = document.querySelectorAll('.teacher-panel');
