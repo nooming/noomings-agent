@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(探究) | C1 | constraint | 探究模式 |\n| 否(竞赛) | C2 | constraint | 竞赛模式 |\n| 调节物距/焦距 | O1 | operation | 调节物距 u 和焦距 f |\n| 测试成像 | J1 | junction | 触发观察 |\n| 像在光屏上? | C3 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否 | C4 | constraint | 提示重试 |\n| 重试 | skip retry | skip retry | 回到调参 |\n| 竞赛机会耗尽? | C5 | constraint | 独立失败判定 |\n| 是 | skip retry | skip retry | 竞赛失败重试 |\n| 否 | skip retry | skip retry | 继续 |\n| 透镜成像公式 | S1 | core | 教学节点 |\n| 像距与物距关系 | S2 | core | 教学节点 |",
   "kg": {
     "title": "透镜 · 凸透镜成像实验",
-    "sub": "探究物距与焦距对成像位置的影响",
+    "sub": "光具座 · 薄透镜",
     "nodes": [
       {
         "id": "P1",
@@ -192,7 +192,7 @@
   },
   "dt": {
     "title": "透镜 · 凸透镜成像实验",
-    "sub": "探究物距与焦距对成像位置的影响",
+    "sub": "光具座 · 薄透镜",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -361,7 +361,7 @@
   },
   "strategy": {
     "title": "透镜 · 凸透镜成像实验",
-    "sub": "探究物距与焦距对成像位置的影响",
+    "sub": "光具座 · 薄透镜",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustF --> Fire\nAdjustU --> Fire[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[多参盲调]\nAdjustF[按观察单变量微调]\nAdjustU[按观察单变量微调]\nRetry --> AdjustU\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
@@ -897,7 +897,7 @@
   },
   "gameSpec": {
     "title": "透镜 · 凸透镜成像实验",
-    "subtitle": "探究物距与焦距对成像位置的影响",
+    "subtitle": "光具座 · 薄透镜",
     "winCondition": "实验完成，像成在光屏上，显示胜利消息",
     "knowledgeSummary": "透镜 · 凸透镜成像实验",
     "controls": [

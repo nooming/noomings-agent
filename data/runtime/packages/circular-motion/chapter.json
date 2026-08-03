@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 初始状态 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | — | — | skip retry |\n| 否→竞赛模式 | — | — | skip retry |\n| 探究模式: 调参并测试 | O1 | operation | 调节滑条并点击测试 |\n| 竞赛模式: 调参并测试 | O1 | operation | 调节滑条并点击测试 |\n| 探究: 已对比多组? | C2 | constraint | 探究完成条件 |\n| 是→探究完成 | R1 | result | 过关 |\n| 否→继续探究 | — | — | skip retry |\n| 竞赛: v在安全带内? | C3 | constraint | 线速度判定 |\n| 否→超速飞出或偏慢掉转 | — | — | retry |\n| 是→F在安全带内? | C4 | constraint | 向心力判定 |\n| 否→超速飞出或偏慢掉转 | — | — | retry |\n| 是→巡检过关 | R1 | result | 过关 |\n| 超速飞出? | C5 | constraint | 独立失败判定 |\n| 否→继续 | — | — | skip retry |\n| 是→出界重试 | — | — | retry |\n| 偏慢掉转? | C6 | constraint | 独立失败判定 |\n| 否→继续 | — | — | skip retry |\n| 是→掉转重试 | — | — | retry |",
   "kg": {
     "title": "夜市飞椅 · 圆周运动",
-    "sub": "探究与竞赛模式",
+    "sub": "夜市 · 转盘工位",
     "nodes": [
       {
         "id": "P1",
@@ -199,7 +199,7 @@
   },
   "dt": {
     "title": "夜市飞椅 · 圆周运动",
-    "sub": "探究与竞赛模式",
+    "sub": "夜市 · 转盘工位",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -365,7 +365,7 @@
   },
   "strategy": {
     "title": "夜市飞椅 · 圆周运动",
-    "sub": "探究与竞赛模式",
+    "sub": "夜市 · 转盘工位",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustDown --> Fire\nAdjustOmega --> Fire[测试/发射]\nAdjustRadius --> Fire\nAdjustTilt --> Fire\nAdjustUp --> Fire\nBackFromCV --> StrategySelect\nChallengeCore --> StrategySelect\nExploreCore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛模式：限次巡检]:::stratCore\nModeSelect -->|探究模式| ExploreCore[探究模式：自由调参观察]:::stratCore\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|v/F 偏大| AdjustDown[按观察结果单变量微调]\nObserve -->|v/F 偏小| AdjustUp[按观察结果单变量微调]\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·角速度| Route_main\nStrategySelect -->|单变量·倾角| Route_main_s_base_tilt\nStrategySelect -->|单变量·半径| Route_main_s_radius\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改角速度]\nRoute_main_s_radius[控制变量：只改半径]\nRoute_main_s_base_tilt[控制变量：只改倾角]\nAdjustOmega[按观察单变量微调]\nAdjustRadius[按观察单变量微调]\nAdjustTilt[按观察单变量微调]\nRoute_main --> AdjustDown\nRoute_main_s_base_tilt --> AdjustDown\nRoute_main_s_radius --> AdjustDown\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
     "routes": [
       {
@@ -903,7 +903,7 @@
   },
   "gameSpec": {
     "title": "夜市飞椅 · 圆周运动",
-    "subtitle": "探究与竞赛模式",
+    "subtitle": "夜市 · 转盘工位",
     "winCondition": "探究完成或竞赛巡检通过",
     "knowledgeSummary": "夜市飞椅 · 圆周运动",
     "controls": [

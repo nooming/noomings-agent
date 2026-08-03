@@ -8,6 +8,7 @@
 </head>
 <body class="platform-page play-page">
 
+<div id="playEnterOverlay" class="play-enter-overlay" aria-hidden="true"></div>
 <div class="play-shell">
   <div id="playIdleHint" class="play-idle-hint" hidden>💡 请先调节参数，再点击页面内的<strong>发射</strong>或<strong>测试</strong>按钮开始模拟</div>
   <div id="pathTypeChip" class="play-path-type-chip" hidden></div>
@@ -279,11 +280,25 @@ async function boot() {
     }
   }
 
-  frame.addEventListener('load', injectGameTrace);
+  const enterOverlay = document.getElementById('playEnterOverlay');
+  function dismissEnterOverlay() {
+    if (!enterOverlay || enterOverlay.dataset.done) return;
+    enterOverlay.dataset.done = '1';
+    enterOverlay.classList.add('is-done');
+    setTimeout(() => enterOverlay.remove(), 380);
+  }
+
+  frame.addEventListener('load', () => {
+    injectGameTrace();
+    dismissEnterOverlay();
+  });
   frame.src = item.playUrl;
   if (frame.contentDocument?.readyState === 'complete') {
     injectGameTrace();
+    dismissEnterOverlay();
   }
+  // Failsafe: never leave overlay stuck over iframe
+  setTimeout(dismissEnterOverlay, 1200);
 
   document.getElementById('exportTraceBtn')?.addEventListener('click', () => {
     const iframeAdapter = frame.contentWindow?.PlatformTraceAdapter;

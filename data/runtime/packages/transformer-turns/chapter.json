@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 调节s-n1、s-n2、s-U1 | O1 | operation | 调节滑条 |\n| 测试按钮 | O1 | operation | 点击测试 |\n| U₂在目标区间? | C2 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 次数耗尽? | C3 | constraint | 竞赛模式次数判定 |\n| 是 | — | — | skip retry |\n| 否 | — | — | skip retry |\n| 探究观察 | S1 | core | teach 节点 |\n| 验证公式 | S2 | method | teach 节点 |",
   "kg": {
     "title": "变压器 · 探究",
-    "sub": "营地供电 · 变压器柜",
+    "sub": "工地 · 变压器台架",
     "nodes": [
       {
         "id": "P1",
@@ -167,7 +167,7 @@
   },
   "dt": {
     "title": "变压器 · 探究",
-    "sub": "营地供电 · 变压器柜",
+    "sub": "工地 · 变压器台架",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -290,7 +290,7 @@
   },
   "strategy": {
     "title": "变压器 · 探究",
-    "sub": "营地供电 · 变压器柜",
+    "sub": "工地 · 变压器台架",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察U₂?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust2\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·原边匝数| Route_main\nStrategySelect -->|单变量·副边匝数| Route_main_s_n2\nStrategySelect -->|单变量·原边电压| Route_main_s_U1\nStrategySelect -->|单变量·绕组温度| Route_main_s_winding_temp\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式]:::stratCore\nEnv -->|探究| Explore[探究模式]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改原边匝数]\nRoute_main_s_n2[控制变量：只改副边匝数]\nRoute_main_s_U1[控制变量：只改原边电压]\nRoute_main_s_winding_temp[控制变量：只改绕组温度]\nRetry --> Adjust1\nRoute_main --> Adjust\nRoute_main_s_n2 --> Adjust\nRoute_main_s_U1 --> Adjust\nRoute_main_s_winding_temp --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
@@ -933,7 +933,7 @@
   },
   "gameSpec": {
     "title": "变压器 · 探究",
-    "subtitle": "营地供电 · 变压器柜",
+    "subtitle": "工地 · 变压器台架",
     "winCondition": "成功将输出电压U₂调至目标区间内，完成挑战",
     "knowledgeSummary": "变压器 · 探究",
     "controls": [

@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节介质/间距/面积并读取电容 | O1 | operation | 调参+读取 |\n| 介质选择判定 | C1 | constraint | 非空气介质 |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 间距下限判定 | C2 | constraint | d≥3.5mm |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 面积上限判定 | C3 | constraint | A≤100cm² |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 击穿判定 | C4 | constraint | E>Ebd击穿 |\n| 是→击穿重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 电容目标带判定 | C5 | constraint | 49-52pF |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | - | - | skip retry |",
   "kg": {
     "title": "电容实验一：介质与击穿",
-    "sub": "第一章 · 信号塔危机",
+    "sub": "介质台 · 击穿探究",
     "nodes": [
       {
         "id": "P1",
@@ -164,7 +164,7 @@
   },
   "dt": {
     "title": "电容实验一：介质与击穿",
-    "sub": "第一章 · 信号塔危机",
+    "sub": "介质台 · 击穿探究",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -297,7 +297,7 @@
   },
   "strategy": {
     "title": "电容实验一：介质与击穿",
-    "sub": "第一章 · 信号塔危机",
+    "sub": "介质台 · 击穿探究",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjust4 --> Fire4\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果?}:::stratCond\nFire4 --> Observe4{观察结果?}:::stratCond\nMat --> Fire[调节并读取电容]\nObserve -->|未达标| Adjust[调整介质]\nObserve -->|击穿| Retry[击穿重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve4 -->|未达标| Adjust4[盲目调整]\nObserve4 -->|击穿| Retry4[击穿重试]:::stratRetry\nObserve4 -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nRetry4 --> Fire4\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|单变量·极板间距| Route_main_s_dist\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire4[调节并读取电容]\nStart([开始]):::stratStart\nRoute_main_s_dist[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main_s_area --> Adjust\nRoute_main_s_dist --> Adjust\nArea[单变量·面积]\nDist[单变量·间距]\nMat[单变量·介质]\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\n",
     "routes": [
       {
@@ -695,7 +695,7 @@
   },
   "gameSpec": {
     "title": "电容实验一：介质与击穿",
-    "subtitle": "第一章 · 信号塔危机",
+    "subtitle": "介质台 · 击穿探究",
     "winCondition": "电容达标且未击穿，信号塔重建完成",
     "knowledgeSummary": "电容实验一：介质与击穿",
     "controls": [

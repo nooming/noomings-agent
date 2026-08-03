@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 初始状态 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调参发射 | O1 | operation | 调节 h/v/m 并发射 |\n| 飞出边界? | C4 | constraint | 独立失败判定 |\n| 否→继续 | - | - | skip retry |\n| 是→出界重试 | - | - | skip retry |\n| 超时? | C5 | constraint | 竞赛模式剩余机会为0或探究模式时间耗尽 |\n| 否→继续 | - | - | skip retry |\n| 是→超时重试 | - | - | skip retry |\n| 过环? | C2 | constraint | 能量是否足够翻越环顶 |\n| 否→掉落重试 | - | - | skip retry |\n| 是→停在减速带内? | C3 | constraint | 过环后是否停在减速带内 |\n| 否→冲出重试 | - | - | skip retry |\n| 是→过关 | R1 | result | 成功停稳 |\n| 机械能守恒 | S1 | core | ½mv² + mgh = 常量 |\n| 能量与过环关系 | S2 | core | 过环所需最小能量由环顶高度和速度决定 |\n| 验证机械能 | - | - | verify 边连回 O1 |\n| 验证能量关系 | - | - | verify 边连回 O1 |",
   "kg": {
     "title": "机械能 · 过山车环路",
-    "sub": "探究过山车翻越环顶的条件",
+    "sub": "环轨台 · 机械能",
     "nodes": [
       {
         "id": "P1",
@@ -174,7 +174,7 @@
   },
   "dt": {
     "title": "机械能 · 过山车环路",
-    "sub": "探究过山车翻越环顶的条件",
+    "sub": "环轨台 · 机械能",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -341,7 +341,7 @@
   },
   "strategy": {
     "title": "机械能 · 过山车环路",
-    "sub": "探究过山车翻越环顶的条件",
+    "sub": "环轨台 · 机械能",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nHeightStrat[单变量·起始高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n",
     "routes": [
       {
@@ -677,7 +677,7 @@
       "OV2"
     ],
     "narrative": {
-      "intro": "首班试车卡在出发台——试着弄清怎样才能翻过环顶。过环后看小车停在减速带哪里：能量不够会掉落，过大则冲出带外；对照停靠远近再调参。",
+      "intro": "环轨试车卡在出发台——怎样才能稳稳过环顶？调起始高度与释放速度，看能否过环并停在减速带。",
       "steps": [
         {
           "order": 1,
@@ -758,7 +758,7 @@
   },
   "gameSpec": {
     "title": "机械能 · 过山车环路",
-    "subtitle": "探究过山车翻越环顶的条件",
+    "subtitle": "环轨台 · 机械能",
     "winCondition": "小车成功翻越环顶并停在减速带内，达成过关条件",
     "knowledgeSummary": "机械能 · 过山车环路",
     "controls": [

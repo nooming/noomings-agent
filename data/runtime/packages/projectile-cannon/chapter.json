@@ -1,8 +1,8 @@
 {
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | skip retry |\n| 调节参数并发射 | O1 | operation | skip retry |\n| 飞出边界? | C1 | constraint | 是→retry, 否→继续 |\n| 撞到障碍物? | C2 | constraint | 是→retry, 否→继续 |\n| 命中要塞目标? | C3 | constraint | 是→result, 否→retry |\n| 过关 | R1 | result | skip retry |\n| 重试 | - | - | skip retry |\n| 阻力与风影响弹道 | S1 | core | teach |\n| 质量影响惯性 | S2 | core | teach |",
   "kg": {
-    "title": "海防炮台 · 野战试射",
-    "sub": "试射场",
+    "title": "炮台 · 抛体",
+    "sub": "炮台 · 抛体",
     "nodes": [
       {
         "id": "P1",
@@ -142,8 +142,8 @@
     ]
   },
   "dt": {
-    "title": "海防炮台 · 野战试射",
-    "sub": "试射场",
+    "title": "炮台 · 抛体",
+    "sub": "炮台 · 抛体",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -280,8 +280,8 @@
     }
   },
   "strategy": {
-    "title": "海防炮台 · 野战试射",
-    "sub": "试射场",
+    "title": "炮台 · 抛体",
+    "sub": "炮台 · 抛体",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|偏近| Adjust1[调整参数]\nObserve -->|偏远| Adjust1\nObserve -->|出界| Retry1[出界重试]:::stratRetry\nObserve -->|碰撞| Retry2[碰撞重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry1 --> Fire\nRetry2 --> Fire\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·初速度| Tune1\nStrategySelect -->|单变量·重力加速度| Tune2\nStrategySelect -->|单变量·风速| Tune3\nStrategySelect -->|单变量·发射角度| Tune4\nStrategySelect -->|单变量·空气阻力| Tune5\nTune1 --> Fire[发射炮弹]\nTune2 --> Fire\nTune3 --> Fire\nTune4 --> Fire\nTune5 --> Fire\nStart([开始试射]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nTune1[单变量·初速度]\nTune2[单变量·重力加速度]\nTune3[单变量·风速]\nTune4[单变量·发射角度]\nTune5[单变量·空气阻力]\nTrap --> Fire\n",
     "routes": [
       {
@@ -763,11 +763,11 @@
   },
   "inquiryProfile": "generic",
   "inquiryScript": {
-    "summary": "海防炮台 · 野战试射",
+    "summary": "炮台 · 抛体",
     "knowledgePoints": [
       {
         "id": "KP1",
-        "label": "海防炮台 · 野战试射",
+        "label": "炮台 · 抛体",
         "formulas": [
           "F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用",
           "v0 = parseFloat(this.dom.inputs.power.value)"
@@ -966,10 +966,10 @@
     }
   },
   "gameSpec": {
-    "title": "海防炮台 · 野战试射",
-    "subtitle": "试射场",
+    "title": "炮台 · 抛体",
+    "subtitle": "炮台 · 抛体",
     "winCondition": "成功命中要塞目标，获得积分并进入下一关",
-    "knowledgeSummary": "海防炮台 · 野战试射",
+    "knowledgeSummary": "炮台 · 抛体",
     "controls": [
       {
         "id": "in-power",

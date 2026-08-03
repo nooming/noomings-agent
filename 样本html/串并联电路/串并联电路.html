@@ -6,7 +6,7 @@
     <title>配电间 · 接线板</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
+        body { font-family:var(--font-sans); background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
         .app { max-width: 700px; width: 100%; background: white; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
         h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
         .subtitle { color: #4a5568; font-size: 0.95rem; margin-bottom: 20px; border-left: 4px solid #3182ce; padding-left: 12px; }
@@ -142,7 +142,7 @@ body { display:block !important; align-items:stretch !important; justify-content
   box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
 }
 #dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
-#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#dual-mode-hud #timerDisplay { font-family:var(--font-mono); font-weight:600; color:#334155; }
 #challengeStats {
   pointer-events:auto; display:none; align-items:center; gap:8px;
   padding:8px 14px; border-radius:999px;
@@ -167,9 +167,9 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#d08040;--craft-bg:#12100c;--craft-panel:#221a12;--craft-text:#f0e8d8;--craft-muted:#a09078;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#d08040;--craft-bg:#12100c;--craft-panel:#221a12;--craft-text:#f0e8d8;--craft-muted:#a09078;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
 #essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
@@ -189,11 +189,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
 #craft-gauge{display:none!important;}
-#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
 #craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:8px 0;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
@@ -367,6 +367,205 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   align-items:flex-end!important;
 }
 
+/* === craft-bench-unify === */
+/* HUD: TL dual-mode only · TR essence / legacy gauge */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  flex-wrap:wrap!important;
+  z-index:12!important;
+  pointer-events:none!important;
+}
+#dual-mode-hud .dual-chip,
+#dual-mode-hud #challengeStats,
+#challengeStats{pointer-events:auto!important;}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+  pointer-events:none!important;
+}
+/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
+#hud{
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;left:0!important;right:0!important;bottom:0!important;
+  max-width:none!important;
+  display:block!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  z-index:10!important;
+  gap:0!important;
+}
+#hud > #dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;left:10px!important;right:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+}
+#hud > .hud-chip,
+#hud > .gauge,
+#hud > .hud-chip.gauge{
+  position:absolute!important;
+  top:10px!important;right:12px!important;left:auto!important;
+  align-items:flex-end!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+}
+#craft-gauge{display:none!important;}
+#dual-mode-hud #goalMission{display:none!important;}
+
+/* Slider track / thumb */
+#essence-bench input[type=range],
+.slider-group input[type=range],
+.slider-row input[type=range],
+#bench input[type=range],
+#controls-area input[type=range],
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:28px;margin:2px 0 8px;background:transparent;
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track,
+.slider-row input[type=range]::-webkit-slider-runnable-track,
+#bench input[type=range]::-webkit-slider-runnable-track,
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:999px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--craft-bg,#0c1218) 80%,#000),color-mix(in srgb,var(--craft-panel,#162028) 70%,#fff));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb,
+.slider-row input[type=range]::-webkit-slider-thumb,
+#bench input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;margin-top:-6px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--craft-accent) 55%,#fff),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 55%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.45);
+  cursor:pointer;
+}
+
+/* Label + value badge */
+#essence-bench label,
+.slider-group label,
+.slider-row label,
+.slabel,
+#bench label{
+  color:var(--craft-muted)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  letter-spacing:.02em;
+}
+#essence-bench .value-badge,
+.slider-row .value-badge,
+.slider-row .value,
+.slider-group .value,
+.value-badge,
+.sval,
+.value-tag,
+#essence-bench .value{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-width:52px;padding:2px 10px!important;border-radius:999px!important;
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  color:var(--scene-hi,var(--craft-accent))!important;
+  font-family:var(--font-mono)!important;font-size:12px!important;font-weight:600!important;
+}
+
+/* Observe-box states: pending / measured / hit(ok) / miss */
+#essence-bench .observe-box,
+.observe-box,#observePanel{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent)!important;
+  border-left:3px solid color-mix(in srgb,var(--craft-muted) 70%,var(--craft-accent))!important;
+  border-radius:8px!important;
+  color:var(--craft-text)!important;
+  padding:12px 14px!important;
+}
+.observe-box.is-pending,.observe-box.pending,
+.observe-box[data-state="pending"]{
+  border-left-color:color-mix(in srgb,var(--craft-muted) 80%,transparent)!important;
+  opacity:.92;
+}
+.observe-box.is-measured,.observe-box.measured,
+.observe-box[data-state="measured"]{
+  border-left-color:var(--craft-accent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--craft-accent) 18%,transparent);
+}
+.observe-box.is-hit,.observe-box.hit,.observe-box.ok,.observe-box.win,
+.observe-box[data-state="hit"],.observe-box[data-state="ok"]{
+  border-left-color:var(--scene-ok,#6fae8f)!important;
+  background:rgba(34,197,94,.14)!important;
+  border-color:rgba(34,197,94,.35)!important;
+}
+.observe-box.is-miss,.observe-box.miss,.observe-box.fail,
+.observe-box[data-state="miss"],.observe-box[data-state="fail"]{
+  border-left-color:#f87171!important;
+  background:rgba(248,113,113,.14)!important;
+  border-color:rgba(248,113,113,.35)!important;
+}
+.observe-box .label,.observe-box .state,.observe-box .val,.observe-box .reading{
+  color:inherit;
+}
+.observe-box .state,.observe-box .reading,.observe-box .val{
+  font-family:var(--font-mono);
+  font-weight:700;
+}
+
+/* Primary action button */
+#essence-bench .btn,button.btn,.pixel-btn,
+#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn{
+  padding:11px 16px!important;
+  border-radius:10px!important;
+  font-weight:700!important;
+  letter-spacing:.02em;
+  transition:opacity .15s,filter .15s,transform .12s;
+}
+#essence-bench .btn:disabled,button.btn:disabled,.pixel-btn:disabled,
+#btnLaunch:disabled,#btn-test:disabled,#btn-fire:disabled,#btnFire:disabled,#btnTest:disabled,#fireBtn:disabled,
+button.dual-disabled,.dual-disabled,
+button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
+  opacity:.45!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.15);
+  transform:none!important;
+}
+
+/* De-emphasize confound / irrelevant zones */
+.confound-note,
+.irrelevant-area,
+.srow-irrelevant,
+.irrelevant-touch,
+#essence-bench .confound-note,
+#bench .confound-note,
+#controls-area .confound-note{
+  opacity:.7!important;
+  font-size:.8rem!important;
+  transform:scale(.98);
+  transform-origin:left top;
+  filter:saturate(.75);
+}
+.irrelevant-area button,
+.irrelevant-touch{
+  padding:3px 10px!important;
+  font-size:.75rem!important;
+  opacity:.75!important;
+}
 </style>
 </head>
 <body>
@@ -374,7 +573,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 <div id="craft-intro">
   <div class="craft-card">
     <h2>配电间 · 接线板</h2>
-    <p>后台电源板要给灯带配流。试着弄清串并联如何改变总电流；再接限次急单——目标电流本局固定。</p>
+    <p>灯带电流不稳——串并联接法差一截。切换串/并联并调电阻，看总电流怎么变。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标电流本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -398,13 +597,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     
     <div id="essence-hud">
       <div class="essence-title">串并联接线板</div>
-      <div class="essence-sub" id="goalMission">探究：切换串/并联，观察电流如何变</div>
+      <div class="essence-sub" id="goalMission">切换串/并联，对比总电流</div>
     </div>
   </div>
   <aside id="essence-bench">
     <div class="essence-scroll">
       <div class="app">
-    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：串/并联与电阻怎样改变总电流。竞赛另有限次急单。</p>
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">切换串/并联并调电阻，看总电流怎么变。</p>
 
     <!-- canvas 示意电路 (极简) -->
     <!-- 调节控件 -->
@@ -543,12 +742,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
         const MODE_GOALS = {
           explore: {
-            hud: '探究：切换串/并联，对比总电流如何变',
-            side: '探究·后台试配：试着弄清串并联如何改变总电流；不必先盯固定目标。'
+            hud: '切换串/并联，对比总电流',
+            side: '切换串/并联并调电阻，看总电流怎么变。'
           },
           challenge: {
-            hud: '竞赛：限次把电流对准本局锁定目标（本局固定）',
-            side: '竞赛·开演急单：限次把电流对准本局锁定目标；打偏不换目标。'
+            hud: '限次把电流对准本局目标（打偏不换标）',
+            side: '限次把电流对准本局目标（打偏不换标）。'
           }
         };
 
@@ -594,7 +793,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           refreshSeriesGoals();
           updateAll();
           feedback.className = 'feedback info';
-          feedback.textContent = '自由试配：切换串/并联，观察电流变化。';
+          feedback.textContent = '切换串/并联，读总电流。';
         }
 
         window.__seriesApplyMode = function(m) {
@@ -696,7 +895,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.lineWidth = 1.5;
             ctx.stroke();
             ctx.fillStyle = '#f0e8d8';
-            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+            ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             ctx.fillText(label + ' ' + ohms + 'Ω', x, y - 8);
         }
 
@@ -992,7 +1191,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 }
             }
             ctx.fillStyle = HI;
-            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+            ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             ctx.fillText('胶木接线板 · ' + (mode === 'series' ? '串联' : '并联'), bx + 12, by - 10);
 
             const px = 22, py = benchY - 128;
@@ -1006,10 +1205,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fillStyle = 'rgba(232,136,48,0.12)';
             ctx.fillRect(px + 4, py + 4, 92, 20);
             ctx.fillStyle = HI;
-            ctx.font = 'bold 15px "Microsoft YaHei",sans-serif';
+            ctx.font = 'bold 15px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             ctx.fillText('12V', px + 32, py + 40);
             ctx.fillStyle = '#a09078';
-            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.font = '11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             ctx.fillText('直流电源', px + 22, py + 60);
             // 端子阴影立体感
             ctx.fillStyle = 'rgba(0,0,0,0.35)';
@@ -1060,7 +1259,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.font = 'bold 20px ui-monospace,monospace';
             ctx.fillText(showI != null ? showI.toFixed(3) : '—', mx + 16, my + 44);
             ctx.fillStyle = '#a09078';
-            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.font = '12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             ctx.fillText(playMode === 'challenge' ? ('A  目标 ' + targetCurrent.toFixed(2)) : 'A  待测', mx + 14, my + 72);
             ctx.fillStyle = showI != null ? (onTarget ? '#a8d4b0' : '#e8b090') : '#a09078';
             ctx.fillText(showI != null ? (onTarget ? '已对准' : '未对准') : '待测', mx + 14, my + 96);
@@ -1137,7 +1336,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.strokeStyle = 'rgba(208,128,64,0.45)';
             ctx.strokeRect(16, benchY - 40, 290, 32);
             ctx.fillStyle = '#f0e8d8';
-            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.font = '12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
             const tgtLabel = playMode === 'challenge'
               ? ('急单 ' + targetCurrent.toFixed(2) + 'A')
               : '探究对比';
@@ -1161,7 +1360,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
             if (playMode === 'explore') {
                 feedback.className = 'feedback info';
-                feedback.textContent = '当前电流 · 继续对比串并联（探究）';
+                feedback.textContent = '电流已出 · 对照接法与电阻再测';
                 try {
                     (function() {
                         function emit(type, payload) {

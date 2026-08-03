@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 选择模式? | C0 | constraint | 环境/模式判定 |\n| 探究模式 | C1 | constraint | 探究模式 |\n| 竞赛模式 | C2 | constraint | 竞赛模式 |\n| 调参并测试 | O1 | operation | 调节滑条并点击测试 |\n| 电流在范围? | C3 | constraint | 0~5A |\n| 磁场在范围? | C4 | constraint | 0~2T |\n| 探究观察 | C5 | constraint | 探究模式仅观察 |\n| 托力达标? | C6 | constraint | 竞赛模式判定 |\n| 过关 | R1 | result | 过关！安培力达标 |\n| 电流超范围重试 | retry | skip retry | 提示重试 |\n| 磁场超范围重试 | retry | skip retry | 提示重试 |\n| 探究观察重试 | retry | skip retry | 继续探究 |\n| 托力未达标重试 | retry | skip retry | 提示重试 |\n| 安培力公式 | S1 | core | F = BIL |\n| 控制变量法 | S2 | method | 每次只改一个变量 |\n| 无关控件 | I1 | irrelevant | 装饰按钮 |",
   "kg": {
     "title": "磁场 · 安培力探究",
-    "sub": "电磁吊运 · 磁轨货厢",
+    "sub": "磁轨 · 安培力台",
     "nodes": [
       {
         "id": "P1",
@@ -214,7 +214,7 @@
   },
   "dt": {
     "title": "磁场 · 安培力探究",
-    "sub": "电磁吊运 · 磁轨货厢",
+    "sub": "磁轨 · 安培力台",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -360,7 +360,7 @@
   },
   "winSync": {
     "title": "过关！安培力达标",
-    "sub": "电磁吊运 · 磁轨货厢"
+    "sub": "磁轨 · 安培力台"
   },
   "traceMap": {
     "controls": {
@@ -426,7 +426,7 @@
   },
   "strategy": {
     "title": "磁场 · 安培力探究",
-    "sub": "电磁吊运 · 磁轨货厢",
+    "sub": "磁轨 · 安培力台",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustI --> Fire[点击测试]\nAdjustT --> Fire\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[多参盲调]\nAdjustB[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustT[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
@@ -918,7 +918,7 @@
   },
   "gameSpec": {
     "title": "磁场 · 安培力探究",
-    "subtitle": "电磁吊运 · 磁轨货厢",
+    "subtitle": "磁轨 · 安培力台",
     "winCondition": "过关！安培力达标，显示胜利界面",
     "knowledgeSummary": "磁场 · 安培力探究",
     "controls": [

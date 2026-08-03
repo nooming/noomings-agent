@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 选择模式? | M1 | premise | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 选择 C 和 V? | O1 | operation | 调参 |\n| 提示选择 | — | — | skip retry |\n| 放电操作 | O4 | operation | 操作 |\n| 储能达标? | C1 | constraint | 结果判定 |\n| 能量不足或过载 | — | — | skip retry |\n| 过关 | R1 | result | 过关 |\n| 电源耗尽? | C2 | constraint | 次数判定 |\n| 电源耗尽重试 | — | — | skip retry |\n| 储能公式 | S1 | core | teach |\n| 验证公式 | — | — | verify 连回 O1 |",
   "kg": {
     "title": "电容实验三：储能与充电",
-    "sub": "能量之门",
+    "sub": "储能台 · 充放电",
     "nodes": [
       {
         "id": "P1",
@@ -209,7 +209,7 @@
   },
   "dt": {
     "title": "电容实验三：储能与充电",
-    "sub": "能量之门",
+    "sub": "储能台 · 充放电",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -320,7 +320,7 @@
   },
   "strategy": {
     "title": "电容实验三：储能与充电",
-    "sub": "能量之门",
+    "sub": "储能台 · 充放电",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探混淆·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n",
     "routes": [
       {
@@ -681,7 +681,7 @@
   },
   "gameSpec": {
     "title": "电容实验三：储能与充电",
-    "subtitle": "能量之门",
+    "subtitle": "储能台 · 充放电",
     "winCondition": "储能落入目标区间，门缓缓开启，光芒从门缝溢出，过关",
     "knowledgeSummary": "电容实验三：储能与充电",
     "controls": [

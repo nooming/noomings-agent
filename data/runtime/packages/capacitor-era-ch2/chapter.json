@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C1 | constraint | 开态 |\n| 否→竞赛模式 | C1 | constraint | 关态 |\n| 调节 C₁ | O1 | operation | 调参 |\n| 调节 C₂ | O1 | operation | 调参 |\n| 调节 C₃ | O1 | operation | 调参 |\n| 调节 L | O1 | operation | 调参 |\n| 确认配置 | O1 | operation | 触发读数 |\n| 总电容在目标带? | C2 | constraint | 过关判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | skip retry | skip retry | 回到调参 |\n| 过载? | C3 | constraint | 安全判定 |\n| 是→重试 | skip retry | skip retry | 过载提示 |\n| 否→继续 | step | junction | 继续 |\n| 击穿? | C4 | constraint | 安全判定 |\n| 是→重试 | skip retry | skip retry | 击穿提示 |\n| 否→继续 | step | junction | 继续 |\n| 并联公式 | S1 | core | teach 节点 |\n| 串联公式 | S2 | core | teach 节点 |\n| 验证 | verify | verify | 连回 O1 |",
   "kg": {
     "title": "电容实验二：串并联配置",
-    "sub": "第二章 · 储能电站重启",
+    "sub": "串并联 · 电容台",
     "nodes": [
       {
         "id": "P1",
@@ -159,7 +159,7 @@
   },
   "dt": {
     "title": "电容实验二：串并联配置",
-    "sub": "第二章 · 储能电站重启",
+    "sub": "串并联 · 电容台",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -294,7 +294,7 @@
   },
   "strategy": {
     "title": "电容实验二：串并联配置",
-    "sub": "第二章 · 储能电站重启",
+    "sub": "串并联 · 电容台",
     "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|未达标| Adjust\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetest --> Observe\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nObserve{观察偏高/偏低/达标?}:::stratCond\nAdjust[单变量微调]\nRetest[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjust --> Retest\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
     "routes": [
       {
@@ -836,7 +836,7 @@
   },
   "gameSpec": {
     "title": "电容实验二：串并联配置",
-    "subtitle": "第二章 · 储能电站重启",
+    "subtitle": "串并联 · 电容台",
     "winCondition": "总电容达标且无过载击穿，电站重启成功",
     "knowledgeSummary": "电容实验二：串并联配置",
     "controls": [

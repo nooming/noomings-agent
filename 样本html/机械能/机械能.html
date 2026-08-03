@@ -6,7 +6,7 @@
     <title>环轨台 · 机械能</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
+        body { font-family:var(--font-sans); background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
         .card { max-width: 720px; width: 100%; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 20px 24px 28px; }
         h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
         .sub { color: #4a5568; font-size: 0.95rem; margin-bottom: 16px; border-left: 3px solid #3182ce; padding-left: 10px; }
@@ -132,7 +132,7 @@ body { display:block !important; align-items:stretch !important; justify-content
   box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
 }
 #dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
-#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#dual-mode-hud #timerDisplay { font-family:var(--font-mono); font-weight:600; color:#334155; }
 #challengeStats {
   pointer-events:auto; display:none; align-items:center; gap:8px;
   padding:8px 14px; border-radius:999px;
@@ -157,9 +157,9 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#5088c8;--craft-bg:#0c1218;--craft-panel:#162028;--craft-text:#e4ecf4;--craft-muted:#8898a8;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#5088c8;--craft-bg:#0c1218;--craft-panel:#162028;--craft-text:#e4ecf4;--craft-muted:#8898a8;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
 #essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
@@ -179,14 +179,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
 #craft-gauge{
   margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
   border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
 }
-#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
 #craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:8px 0;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
@@ -212,7 +212,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 #dual-mode-hud #modeLabel{color:var(--craft-accent)!important;font-weight:700!important;}
 #dual-mode-hud #timerDisplay{
-  font-family:ui-monospace,Consolas,monospace!important;
+  font-family:var(--font-mono)!important;
   font-weight:700!important;color:#bfdbfe!important;letter-spacing:.5px;
 }
 #attemptsDisplay{color:#fda4af!important;font-weight:800!important;}
@@ -393,6 +393,205 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   align-items:flex-end!important;
 }
 
+/* === craft-bench-unify === */
+/* HUD: TL dual-mode only · TR essence / legacy gauge */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  flex-wrap:wrap!important;
+  z-index:12!important;
+  pointer-events:none!important;
+}
+#dual-mode-hud .dual-chip,
+#dual-mode-hud #challengeStats,
+#challengeStats{pointer-events:auto!important;}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+  pointer-events:none!important;
+}
+/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
+#hud{
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;left:0!important;right:0!important;bottom:0!important;
+  max-width:none!important;
+  display:block!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  z-index:10!important;
+  gap:0!important;
+}
+#hud > #dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;left:10px!important;right:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+}
+#hud > .hud-chip,
+#hud > .gauge,
+#hud > .hud-chip.gauge{
+  position:absolute!important;
+  top:10px!important;right:12px!important;left:auto!important;
+  align-items:flex-end!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+}
+#craft-gauge{display:none!important;}
+#dual-mode-hud #goalMission{display:none!important;}
+
+/* Slider track / thumb */
+#essence-bench input[type=range],
+.slider-group input[type=range],
+.slider-row input[type=range],
+#bench input[type=range],
+#controls-area input[type=range],
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:28px;margin:2px 0 8px;background:transparent;
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track,
+.slider-row input[type=range]::-webkit-slider-runnable-track,
+#bench input[type=range]::-webkit-slider-runnable-track,
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:999px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--craft-bg,#0c1218) 80%,#000),color-mix(in srgb,var(--craft-panel,#162028) 70%,#fff));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb,
+.slider-row input[type=range]::-webkit-slider-thumb,
+#bench input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;margin-top:-6px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--craft-accent) 55%,#fff),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 55%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.45);
+  cursor:pointer;
+}
+
+/* Label + value badge */
+#essence-bench label,
+.slider-group label,
+.slider-row label,
+.slabel,
+#bench label{
+  color:var(--craft-muted)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  letter-spacing:.02em;
+}
+#essence-bench .value-badge,
+.slider-row .value-badge,
+.slider-row .value,
+.slider-group .value,
+.value-badge,
+.sval,
+.value-tag,
+#essence-bench .value{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-width:52px;padding:2px 10px!important;border-radius:999px!important;
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  color:var(--scene-hi,var(--craft-accent))!important;
+  font-family:var(--font-mono)!important;font-size:12px!important;font-weight:600!important;
+}
+
+/* Observe-box states: pending / measured / hit(ok) / miss */
+#essence-bench .observe-box,
+.observe-box,#observePanel{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent)!important;
+  border-left:3px solid color-mix(in srgb,var(--craft-muted) 70%,var(--craft-accent))!important;
+  border-radius:8px!important;
+  color:var(--craft-text)!important;
+  padding:12px 14px!important;
+}
+.observe-box.is-pending,.observe-box.pending,
+.observe-box[data-state="pending"]{
+  border-left-color:color-mix(in srgb,var(--craft-muted) 80%,transparent)!important;
+  opacity:.92;
+}
+.observe-box.is-measured,.observe-box.measured,
+.observe-box[data-state="measured"]{
+  border-left-color:var(--craft-accent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--craft-accent) 18%,transparent);
+}
+.observe-box.is-hit,.observe-box.hit,.observe-box.ok,.observe-box.win,
+.observe-box[data-state="hit"],.observe-box[data-state="ok"]{
+  border-left-color:var(--scene-ok,#6fae8f)!important;
+  background:rgba(34,197,94,.14)!important;
+  border-color:rgba(34,197,94,.35)!important;
+}
+.observe-box.is-miss,.observe-box.miss,.observe-box.fail,
+.observe-box[data-state="miss"],.observe-box[data-state="fail"]{
+  border-left-color:#f87171!important;
+  background:rgba(248,113,113,.14)!important;
+  border-color:rgba(248,113,113,.35)!important;
+}
+.observe-box .label,.observe-box .state,.observe-box .val,.observe-box .reading{
+  color:inherit;
+}
+.observe-box .state,.observe-box .reading,.observe-box .val{
+  font-family:var(--font-mono);
+  font-weight:700;
+}
+
+/* Primary action button */
+#essence-bench .btn,button.btn,.pixel-btn,
+#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn{
+  padding:11px 16px!important;
+  border-radius:10px!important;
+  font-weight:700!important;
+  letter-spacing:.02em;
+  transition:opacity .15s,filter .15s,transform .12s;
+}
+#essence-bench .btn:disabled,button.btn:disabled,.pixel-btn:disabled,
+#btnLaunch:disabled,#btn-test:disabled,#btn-fire:disabled,#btnFire:disabled,#btnTest:disabled,#fireBtn:disabled,
+button.dual-disabled,.dual-disabled,
+button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
+  opacity:.45!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.15);
+  transform:none!important;
+}
+
+/* De-emphasize confound / irrelevant zones */
+.confound-note,
+.irrelevant-area,
+.srow-irrelevant,
+.irrelevant-touch,
+#essence-bench .confound-note,
+#bench .confound-note,
+#controls-area .confound-note{
+  opacity:.7!important;
+  font-size:.8rem!important;
+  transform:scale(.98);
+  transform-origin:left top;
+  filter:saturate(.75);
+}
+.irrelevant-area button,
+.irrelevant-touch{
+  padding:3px 10px!important;
+  font-size:.75rem!important;
+  opacity:.75!important;
+}
 </style>
 </head>
 <body>
@@ -400,7 +599,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 <div id="craft-intro">
   <div class="craft-card">
     <h2>环轨台 · 机械能</h2>
-    <p>首班试车卡在出发台——试着弄清怎样才能翻过环顶。过环后看小车停在减速带哪里：能量不够会掉落，过大则冲出带外；对照停靠远近再调参。</p>
+    <p>环轨试车卡在出发台——怎样才能稳稳过环顶？调起始高度与释放速度，看能否过环并停在减速带。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；顶部与侧栏会写明当前任务。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -424,14 +623,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     
     <div id="essence-hud">
       <div class="essence-title">过山车环轨台</div>
-      <div class="essence-sub" id="goalMission">目标：自由试车，对照减速带停靠位置，同时见过「过环停稳」与失败（掉落或冲出）；竞赛停稳区另有布置</div>
+      <div class="essence-sub" id="goalMission">试车：对照减速带停靠远近</div>
     </div>
   </div>
   <aside id="essence-bench">
     <div class="essence-scroll">
       <div class="card">
     <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
-    <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">试着弄清：调 h / v 时小车停在减速带前/中/末端，还是掉落或冲出带外。竞赛轨道/停稳区与探究不同。</p>
+    <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">调 h、v，看能否过环并停在减速带内。</p>
 
     <div class="control-grid">
         <div class="slider-group">
@@ -576,12 +775,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     const MODE_GOALS = {
       explore: {
-        hud: '目标：自由试车几轮，对照减速带停靠远近，见过「停稳」与失败（掉落或冲出）',
-        side: '探究·夜场试车：过环后看停在减速带哪里；过慢掉落、过猛冲出带外，用目视距离调参。竞赛轨道/停稳区与探究不同。'
+        hud: '试车：对照减速带停靠远近',
+        side: '调 h、v，看能否过环并停在减速带内。'
       },
       challenge: {
-        hud: '目标：限次内翻过环顶并停在竞赛停稳区内（环路与停稳区本局固定，失败不换题）',
-        side: '竞赛·首班发车：竞赛轨道/停稳区与探究不同；限次翻过环顶并停在带内（本局固定）；掉落或冲出都不换题。'
+        hud: '限次过环并停在竞赛停稳区（本局固定）',
+        side: '限次过环并停在竞赛停稳区（掉落/冲出都不换题）。'
       }
     };
 
@@ -857,7 +1056,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('环轨台', boothX + 10, groundY - 72);
         ctx.fillStyle = 'rgba(144,184,232,0.25)';
         ctx.fillRect(boothX + 10, groundY - 48, 36, 14);
@@ -916,7 +1115,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('出发台', startX - 18, deckY - 10);
 
         // 高度标尺（与滑条 h 视觉绑定）
@@ -1013,12 +1212,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = 'rgba(12,18,24,0.82)';
         ctx.fillRect((bz0 + bz1) / 2 - 30, bzTop - 20, 60, 14);
         ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('停稳区', (bz0 + bz1) / 2 - 18, bzTop - 8);
         ctx.fillStyle = 'rgba(12,18,24,0.75)';
         ctx.fillRect(bz1 - 22, bzTop - 34, 40, 12);
         ctx.fillStyle = '#e8a0a0';
-        ctx.font = '10px "Microsoft YaHei",sans-serif';
+        ctx.font = '10px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('末端', bz1 - 12, bzTop - 24);
 
         // 最高点标记
@@ -1029,7 +1228,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = 'rgba(12,18,24,0.82)';
         ctx.fillRect(loopCenterX - 18, loopTopY - 26, 36, 16);
         ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('环顶', loopCenterX - 14, loopTopY - 12);
 
         // 读数徽章
@@ -1042,7 +1241,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = SC.hi;
-        ctx.font = '12px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
+        ctx.font = '12px ui-monospace,Consolas,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('v₀ = ' + parseFloat(speedSlider.value).toFixed(1) + ' m/s', badgeX + 12, badgeY + 22);
 
         if (!launched && !animating && !simulationDone) {

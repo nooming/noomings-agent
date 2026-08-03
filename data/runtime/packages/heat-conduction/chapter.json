@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | C1 | constraint | 竞赛模式 |\n| 否(探究) | C1 | constraint | 探究模式 |\n| 调节参数并测试热流 | O1 | operation | 调节导热系数k、温差ΔT、截面积A，点击测试热流 |\n| 热流在安全带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否(过热) | C3 | constraint | 过热失败 |\n| 否(不足) | C4 | constraint | 不足失败 |\n| 重试(过热) | skip retry | - | retry |\n| 重试(不足) | skip retry | - | retry |\n| 重试(模式) | skip retry | - | retry |\n| 导热系数与温差影响热流 | S1 | core | teach |\n| 验证公式 | verify | - | 连回O1 |",
   "kg": {
     "title": "热传导 · 探究",
-    "sub": "极地科考站 · 保温墙",
+    "sub": "热工台 · 导热棒",
     "nodes": [
       {
         "id": "P1",
@@ -159,7 +159,7 @@
   },
   "dt": {
     "title": "热传导 · 探究",
-    "sub": "极地科考站 · 保温墙",
+    "sub": "热工台 · 导热棒",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -279,7 +279,7 @@
   },
   "strategy": {
     "title": "热传导 · 探究",
-    "sub": "极地科考站 · 保温墙",
+    "sub": "热工台 · 导热棒",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[多参盲调]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
@@ -797,7 +797,7 @@
   },
   "gameSpec": {
     "title": "热传导 · 探究",
-    "subtitle": "极地科考站 · 保温墙",
+    "subtitle": "热工台 · 导热棒",
     "winCondition": "热流落在安全带区间内，竞赛急单完成，显示过关",
     "knowledgeSummary": "热传导 · 探究",
     "controls": [

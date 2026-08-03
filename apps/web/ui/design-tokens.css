@@ -30,6 +30,19 @@
   --shadow-edu: 0 4px 24px rgba(0, 90, 130, 0.08);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 32px rgba(0, 0, 0, 0.06);
 
+  /* 字体栈（统一平台壳 + craft；不引入外链 / 自托管 woff2） */
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  /* 标题与正文同栈；优先 PingFang / YaHei，避免另起一套 display 字库 */
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --font-formula: "Cambria Math", "Times New Roman", serif;
+
+  /* 字号阶梯（可选令牌；壳层现有 rem 规则未强制改绑） */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.25rem;    /* 20px */
+  --text-xl: 1.75rem;    /* 28px */
+
   /* Agent 页 legacy 别名 */
   --color-theme: var(--agent-accent);
   --color-theme-secondary: var(--edu-text);

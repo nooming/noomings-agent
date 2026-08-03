@@ -144,7 +144,7 @@
   box-shadow:0 4px 12px rgba(0,0,0,.15);color:#1e293b;
 }
 #modeLabel{color:#2563eb;font-weight:700}
-#timerDisplay{font-family:ui-monospace,monospace}
+#timerDisplay{font-family:var(--font-mono)}
 #challengeStats{display:none}
 #challengeStats.is-visible{display:inline-flex}
 #attemptsDisplay{color:#dc2626;font-weight:800}
@@ -171,9 +171,9 @@ body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#c9973f;--craft-bg:#1a1410;--craft-panel:#2a2118;--craft-text:#f0e8d8;--craft-muted:#a09070;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#c9973f;--craft-bg:#1a1410;--craft-panel:#2a2118;--craft-text:#f0e8d8;--craft-muted:#a09070;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
 #essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
@@ -193,11 +193,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
 #craft-gauge{display:none!important;}
-#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
 #craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:8px 0;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
@@ -383,6 +383,205 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 #hud{display:none!important;}
 
+/* === craft-bench-unify === */
+/* HUD: TL dual-mode only · TR essence / legacy gauge */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  flex-wrap:wrap!important;
+  z-index:12!important;
+  pointer-events:none!important;
+}
+#dual-mode-hud .dual-chip,
+#dual-mode-hud #challengeStats,
+#challengeStats{pointer-events:auto!important;}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+  pointer-events:none!important;
+}
+/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
+#hud{
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;left:0!important;right:0!important;bottom:0!important;
+  max-width:none!important;
+  display:block!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  z-index:10!important;
+  gap:0!important;
+}
+#hud > #dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;left:10px!important;right:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+}
+#hud > .hud-chip,
+#hud > .gauge,
+#hud > .hud-chip.gauge{
+  position:absolute!important;
+  top:10px!important;right:12px!important;left:auto!important;
+  align-items:flex-end!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+}
+#craft-gauge{display:none!important;}
+#dual-mode-hud #goalMission{display:none!important;}
+
+/* Slider track / thumb */
+#essence-bench input[type=range],
+.slider-group input[type=range],
+.slider-row input[type=range],
+#bench input[type=range],
+#controls-area input[type=range],
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:28px;margin:2px 0 8px;background:transparent;
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track,
+.slider-row input[type=range]::-webkit-slider-runnable-track,
+#bench input[type=range]::-webkit-slider-runnable-track,
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:999px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--craft-bg,#0c1218) 80%,#000),color-mix(in srgb,var(--craft-panel,#162028) 70%,#fff));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb,
+.slider-row input[type=range]::-webkit-slider-thumb,
+#bench input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;margin-top:-6px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--craft-accent) 55%,#fff),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 55%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.45);
+  cursor:pointer;
+}
+
+/* Label + value badge */
+#essence-bench label,
+.slider-group label,
+.slider-row label,
+.slabel,
+#bench label{
+  color:var(--craft-muted)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  letter-spacing:.02em;
+}
+#essence-bench .value-badge,
+.slider-row .value-badge,
+.slider-row .value,
+.slider-group .value,
+.value-badge,
+.sval,
+.value-tag,
+#essence-bench .value{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-width:52px;padding:2px 10px!important;border-radius:999px!important;
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  color:var(--scene-hi,var(--craft-accent))!important;
+  font-family:var(--font-mono)!important;font-size:12px!important;font-weight:600!important;
+}
+
+/* Observe-box states: pending / measured / hit(ok) / miss */
+#essence-bench .observe-box,
+.observe-box,#observePanel{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent)!important;
+  border-left:3px solid color-mix(in srgb,var(--craft-muted) 70%,var(--craft-accent))!important;
+  border-radius:8px!important;
+  color:var(--craft-text)!important;
+  padding:12px 14px!important;
+}
+.observe-box.is-pending,.observe-box.pending,
+.observe-box[data-state="pending"]{
+  border-left-color:color-mix(in srgb,var(--craft-muted) 80%,transparent)!important;
+  opacity:.92;
+}
+.observe-box.is-measured,.observe-box.measured,
+.observe-box[data-state="measured"]{
+  border-left-color:var(--craft-accent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--craft-accent) 18%,transparent);
+}
+.observe-box.is-hit,.observe-box.hit,.observe-box.ok,.observe-box.win,
+.observe-box[data-state="hit"],.observe-box[data-state="ok"]{
+  border-left-color:var(--scene-ok,#6fae8f)!important;
+  background:rgba(34,197,94,.14)!important;
+  border-color:rgba(34,197,94,.35)!important;
+}
+.observe-box.is-miss,.observe-box.miss,.observe-box.fail,
+.observe-box[data-state="miss"],.observe-box[data-state="fail"]{
+  border-left-color:#f87171!important;
+  background:rgba(248,113,113,.14)!important;
+  border-color:rgba(248,113,113,.35)!important;
+}
+.observe-box .label,.observe-box .state,.observe-box .val,.observe-box .reading{
+  color:inherit;
+}
+.observe-box .state,.observe-box .reading,.observe-box .val{
+  font-family:var(--font-mono);
+  font-weight:700;
+}
+
+/* Primary action button */
+#essence-bench .btn,button.btn,.pixel-btn,
+#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn{
+  padding:11px 16px!important;
+  border-radius:10px!important;
+  font-weight:700!important;
+  letter-spacing:.02em;
+  transition:opacity .15s,filter .15s,transform .12s;
+}
+#essence-bench .btn:disabled,button.btn:disabled,.pixel-btn:disabled,
+#btnLaunch:disabled,#btn-test:disabled,#btn-fire:disabled,#btnFire:disabled,#btnTest:disabled,#fireBtn:disabled,
+button.dual-disabled,.dual-disabled,
+button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
+  opacity:.45!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.15);
+  transform:none!important;
+}
+
+/* De-emphasize confound / irrelevant zones */
+.confound-note,
+.irrelevant-area,
+.srow-irrelevant,
+.irrelevant-touch,
+#essence-bench .confound-note,
+#bench .confound-note,
+#controls-area .confound-note{
+  opacity:.7!important;
+  font-size:.8rem!important;
+  transform:scale(.98);
+  transform-origin:left top;
+  filter:saturate(.75);
+}
+.irrelevant-area button,
+.irrelevant-touch{
+  padding:3px 10px!important;
+  font-size:.75rem!important;
+  opacity:.75!important;
+}
 </style>
 </head>
 <body>
@@ -390,7 +589,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 <div id="craft-intro">
   <div class="craft-card">
     <h2>投靶台 · 单摆</h2>
-    <p>矿车沿铁轨往返。试着摆几次，弄清落点与释放角的关系；再接急单——矿车工况本局锁定，打偏不换车。</p>
+    <p>接矿车在轨上往返——落点跟释放角怎么对齐？调摆长与释放角，看落点与矿车的相对位置。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛工况进入后固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -413,8 +612,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
 </div>
         <div id="essence-hud">
-            <div class="essence-title">矿井投递 · <strong id="hudModeTag">自由试摆</strong></div>
-            <div class="essence-sub" id="goalMission">目标：自由试摆，观察落点与矿车的相对位置</div>
+            <div class="essence-title">单摆投靶台 · <strong id="hudModeTag">自由试摆</strong></div>
+            <div class="essence-sub" id="goalMission">试摆：观察落点与矿车相对位置</div>
             <div class="hud-chip" id="healthDisplay"><span>生命</span> <strong id="healthCount">5</strong></div>
         </div>
     </div>
@@ -427,7 +626,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
         </div>
         <div class="bench-scroll">
-            <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：摆长与释放角怎样影响落点。竞赛另有限次急单。</p>
+            <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">调摆长与释放角，看落点怎么变。</p>
             <div class="slider-group">
                 <div class="slider-item">
                     <div class="row"><label>摆长</label><span class="slider-value" id="lengthValue">150</span></div>
@@ -529,14 +728,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     const MODE_GOALS = {
       explore: {
-        hud: '目标：自由试摆几轮，对比命中与未中',
-        side: '探究·矿井试投：试着弄清落点与释放角的关系；可先换工况多试几次。',
+        hud: '试摆：观察落点与矿车相对位置',
+        side: '调摆长与释放角，看落点怎么变。',
         tag: '自由试摆',
         sub: '探究：摸清释放角与落点'
       },
       challenge: {
-        hud: '目标：限次命中本局锁定工况的接矿车（打偏不换车）',
-        side: '竞赛·急单投递：限次把矿石摆进本局锁定工况的矿车；打偏不换车。',
+        hud: '限次命中本局锁定工况的接矿车',
+        side: '限次命中本局锁定工况的接矿车（打偏不换车）。',
         tag: '急单投递',
         sub: '竞赛：矿车工况本局固定'
       }
@@ -911,7 +1110,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.stroke();
         }
         ctx.fillStyle = '#86efac';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.textAlign = 'left';
         /* scene title lives in #essence-hud / sidebar */
         // 加大支点座
@@ -984,7 +1183,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.arc(right-14, GROUND_Y-2, 10, 0, 2*Math.PI);
         ctx.fill();
         ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText('接矿车', (left+right)/2, GROUND_Y-38);

@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 频率在范围? | C2 | constraint | 频率 1e14~1e15 Hz |\n| 逸出功在范围? | C3 | constraint | 逸出功 1~5 eV |\n| 调节参数 | O1 | operation | 调节s-frequency、s-workfunction、s-intensity |\n| 发射光 | O1 | operation | 发射动作 |\n| 光电流>0? | C4 | constraint | 结果判定 |\n| 过关 | R1 | result | — |\n| 提示重试 | — | — | skip retry |\n| 再试 | — | — | skip retry |\n| 未达标重试 | — | — | skip retry |\n| 提示频率范围 | — | — | skip retry |\n| 提示逸出功范围 | — | — | skip retry |\n| 探究模式 | S1 | core | teach |\n| 竞赛模式 | S2 | core | teach |\n| 光电效应公式 | S3 | core | teach |\n| 无关控件 | I1 | irrelevant | — |",
   "kg": {
     "title": "光电效应 · 探究",
-    "sub": "探究频率与逸出功对光电流的影响",
+    "sub": "暗箱 · 光电门禁",
     "nodes": [
       {
         "id": "P1",
@@ -178,7 +178,7 @@
   },
   "dt": {
     "title": "光电效应 · 探究",
-    "sub": "探究频率与逸出功对光电流的影响",
+    "sub": "暗箱 · 光电门禁",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -339,7 +339,7 @@
   },
   "strategy": {
     "title": "光电效应 · 探究",
-    "sub": "探究频率与逸出功对光电流的影响",
+    "sub": "暗箱 · 光电门禁",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq\nProbeCV[试探混淆·无关控件]\nPathFreq[单变量·频率]\nPathIntensity[单变量·光强]\nPathWork[单变量·逸出功]\nTrap --> Fire\n",
     "routes": [
       {
@@ -867,7 +867,7 @@
   },
   "gameSpec": {
     "title": "光电效应 · 探究",
-    "subtitle": "探究频率与逸出功对光电流的影响",
+    "subtitle": "暗箱 · 光电门禁",
     "winCondition": "成功观察到光电流，满足过关条件",
     "knowledgeSummary": "光电效应 · 探究",
     "controls": [

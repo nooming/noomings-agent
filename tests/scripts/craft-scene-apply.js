@@ -43,7 +43,8 @@ const MIRROR = {
   'photoelectric': '光电效应/光电效应.html',
 };
 
-const SCENE_RE = /\/\* === craft-scene-tokens[\s\S]*?(?=\n\/\* ===|\n<\/style>)/;
+/* Consume tokens + trailing hud-safezone / bench-unify so re-apply does not duplicate */
+const SCENE_RE = /\/\* === craft-scene-tokens[\s\S]*?(?=\n<\/style>)/;
 const CRAFT_ROOT_RE = /:root\{--craft-accent:[^}]+\}/;
 
 function injectCss(html, pkg) {

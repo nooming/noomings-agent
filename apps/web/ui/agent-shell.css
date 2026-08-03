@@ -1,11 +1,12 @@
 /* Agent A/B 工具页 — 对齐 platform-shell（方案 A：平台蓝为主，黄色作 Agent 强调） */
+@import url('design-tokens.css');
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body.agent-tool-page {
-  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--edu-bg);
   color: var(--edu-text);
   line-height: 1.6;
@@ -387,14 +388,14 @@ button.tool-btn-secondary {
   border: 1px solid var(--edu-border);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
-  font-family: Consolas, "Courier New", monospace;
+  font-family: var(--font-mono);
   white-space: pre-wrap;
   line-height: 1.6;
   color: var(--edu-text);
 }
 
 .agent-report .mode {
-  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 0.8rem;
   color: var(--edu-muted);
   margin-bottom: 10px;

@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始 |\n| 模式选择? | C1 | constraint | 环境判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调节摆长/角度 | O1 | operation | 调参 |\n| 释放摆锤 | O1 | operation | 操作 |\n| 落点命中矿车? | C2 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→落点偏近/偏远? | C3 | constraint | 观察反馈 |\n| 偏近→提示偏近 | - | - | skip retry |\n| 偏远→提示偏远 | - | - | skip retry |\n| 重试 | - | - | skip retry |\n| 竞赛模式机会用尽? | C4 | constraint | 失败判定 |\n| 是→失败重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 摆长与释放角影响落点 | S1 | core | teach |\n| 验证摆长影响 | S2 | method | teach |",
   "kg": {
     "title": "单摆投靶 · 第1关",
-    "sub": "探究摆长与释放角对落点的影响",
+    "sub": "投靶台 · 单摆",
     "nodes": [
       {
         "id": "P1",
@@ -169,7 +169,7 @@
   },
   "dt": {
     "title": "单摆投靶 · 第1关",
-    "sub": "探究摆长与释放角对落点的影响",
+    "sub": "投靶台 · 单摆",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -278,7 +278,7 @@
   },
   "strategy": {
     "title": "单摆投靶 · 第1关",
-    "sub": "探究摆长与释放角对落点的影响",
+    "sub": "投靶台 · 单摆",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustLen --> Fire[释放摆锤]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFail --> Start\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|未达标| Adjust\nObserve -->|机会用尽| Fail[失败]:::stratRetry\nObserve -->|偏远| RetryFar[偏远：按观察结果单变量微调]:::stratRetry\nObserve -->|偏近| RetryNear[偏近：按观察结果单变量微调]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·摆长| Len\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·摆角| Route_main_s_angle\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式：限5次机会]:::stratCore\nEnv -->|探究| Explore[探究模式：不限次数]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main_s_angle[控制变量：只改摆角]\nLen --> AdjustLen[调整摆长]\nRetryFar --> Adjust\nRetryNear --> AdjustLen\nRoute_main_s_angle --> Adjust\nRoute_main_s_angle --> AdjustAng[调整角度]\nAdjustAng --> Fire\nRetryFar --> AdjustAng\nProbeCV[试探混淆·质量]\nLen[单变量·摆长]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
@@ -733,7 +733,7 @@
   },
   "gameSpec": {
     "title": "单摆投靶 · 第1关",
-    "subtitle": "探究摆长与释放角对落点的影响",
+    "subtitle": "投靶台 · 单摆",
     "winCondition": "摆锤命中矿车，显示过关信息",
     "knowledgeSummary": "单摆投靶 · 探究游戏",
     "controls": [

@@ -4,6 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { benchUnifyCss } = require('./craft-scene-themes');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '样本html');
@@ -60,9 +61,9 @@ function dualModeBundle(theme) {
   return {
     css: `
 /* === craft-gold-shell === */
-:root{--craft-accent:${a};--craft-bg:${theme.bg};--craft-panel:${theme.panel};--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:${a};--craft-bg:${theme.bg};--craft-panel:${theme.panel};--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
 #essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
@@ -82,16 +83,17 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
 #craft-gauge{
   margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
   border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-text);
 }
-#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
 .sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
+${benchUnifyCss()}
 `,
     overlays: `
 <div id="craft-intro">
@@ -213,9 +215,9 @@ function upgradeWithTheme(html, pkgId) {
   }
 
   // Kill obvious system font stacks in body style first occurrence
-  out = out.replace(/font-family:\s*system-ui[^;"]*;/gi, 'font-family:"PingFang SC","Microsoft YaHei",sans-serif;');
-  out = out.replace(/font-family:\s*'Inter'[^;"]*;/gi, 'font-family:"PingFang SC","Microsoft YaHei",sans-serif;');
-  out = out.replace(/font-family:\s*['"]?Roboto[^;"]*;/gi, 'font-family:"PingFang SC","Microsoft YaHei",sans-serif;');
+  out = out.replace(/font-family:\s*system-ui[^;"]*;/gi, 'font-family:var(--font-sans);');
+  out = out.replace(/font-family:\s*'Inter'[^;"]*;/gi, 'font-family:var(--font-sans);');
+  out = out.replace(/font-family:\s*['"]?Roboto[^;"]*;/gi, 'font-family:var(--font-sans);');
 
   return { html: out, skipped: null };
 }

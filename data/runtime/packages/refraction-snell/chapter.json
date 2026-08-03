@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 入射角在范围? | C2 | constraint | 0°–89° |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C3 | constraint | 折射率在范围? 1.0–2.5 |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C4 | constraint | 光路有效? (非全反射) |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C5 | constraint | 命中靶? |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | R1 | result | 过关 |\n| 飞出边界? | C6 | constraint | 独立失败判定 |\n| 否→继续 | step | step | 继续 |\n| 是→重试 | skip retry | skip retry | skip retry |",
   "kg": {
     "title": "折射 · 探究",
-    "sub": "夜潜探照 · 水下打靶",
+    "sub": "光学台 · 水槽折射",
     "nodes": [
       {
         "id": "P1",
@@ -11,7 +11,7 @@
         "layer": "play",
         "level": 0,
         "r": 22,
-        "desc": "开始夜潜探照水下打靶探究"
+        "desc": "开始光学水槽折射探究"
       },
       {
         "id": "C1",
@@ -189,7 +189,7 @@
   },
   "dt": {
     "title": "折射 · 探究",
-    "sub": "夜潜探照 · 水下打靶",
+    "sub": "光学台 · 水槽折射",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -309,7 +309,7 @@
   },
   "winSync": {
     "title": "过关 · 你学到了什么",
-    "sub": "夜潜探照 · 水下打靶"
+    "sub": "光学台 · 水槽折射"
   },
   "traceMap": {
     "controls": {
@@ -347,7 +347,7 @@
   },
   "strategy": {
     "title": "折射 · 探究",
-    "sub": "夜潜探照 · 水下打靶",
+    "sub": "光学台 · 水槽折射",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nAdjustWave --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| AdjustWave\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·波长| Route_main\nStrategySelect -->|单变量·入射角| Route_main_s_incident_angle\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改波长]\nRoute_main_s_incident_angle[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nAdjustWave[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_incident_angle --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
     "routes": [
       {
@@ -917,7 +917,7 @@
   },
   "gameSpec": {
     "title": "折射 · 探究",
-    "subtitle": "夜潜探照 · 水下打靶",
+    "subtitle": "光学台 · 水槽折射",
     "winCondition": "竞赛模式下命中锁定靶，显示过关信息",
     "knowledgeSummary": "折射 · 探究",
     "controls": [

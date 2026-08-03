@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | skip retry |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(探究) | C1 | constraint | skip retry |\n| 否(竞赛) | C1 | constraint | skip retry |\n| 调参发射 | O1 | operation | skip retry |\n| 碰撞发生? | C2 | constraint | 过程判定 |\n| 是 | C2 | constraint | skip retry |\n| 否(未碰撞) | C2 | constraint | 是→retry |\n| 包件2进区? | C3 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否(未进区) | C3 | constraint | 是→retry |\n| 探究见过进区与未进? | C4 | constraint | 探究模式特殊过关 |\n| 是 | R1 | result | 过关 |\n| 否 | C4 | constraint | 是→retry |\n| 竞赛剩余机会>0? | C5 | constraint | 竞赛模式次数判定 |\n| 是 | C5 | constraint | skip retry |\n| 否(机会耗尽) | C5 | constraint | 是→retry |\n| 导轨温度在范围? | C6 | constraint | 无关约束，仅UI校验 |\n| 是 | C6 | constraint | skip retry |\n| 否 | C6 | constraint | 是→retry |\n| 动量守恒定律 | S1 | core | teach |\n| 验证动量守恒 | S2 | method | teach |",
   "kg": {
     "title": "动量守恒 · 碰撞实验",
-    "sub": "夜班分拣 · 对撞投递",
+    "sub": "气垫导轨 · 碰撞",
     "nodes": [
       {
         "id": "P1",
@@ -11,7 +11,7 @@
         "layer": "play",
         "level": 0,
         "r": 22,
-        "desc": "开始夜班分拣对撞投递实验"
+        "desc": "开始气垫导轨碰撞探究"
       },
       {
         "id": "O1",
@@ -189,7 +189,7 @@
   },
   "dt": {
     "title": "动量守恒 · 碰撞实验",
-    "sub": "夜班分拣 · 对撞投递",
+    "sub": "气垫导轨 · 碰撞",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -348,7 +348,7 @@
   },
   "strategy": {
     "title": "动量守恒 · 碰撞实验",
-    "sub": "夜班分拣 · 对撞投递",
+    "sub": "气垫导轨 · 碰撞",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustC --> FireC\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nModeSelect -->|竞赛| ChallengeMode[竞赛模式]:::stratCore\nModeSelect -->|探究| ExploreMode[探究模式]:::stratCore\nObserve -->|碰撞但未进区| Adjust[调整参数]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|未碰撞| RetryCollide[未碰撞重试]:::stratRetry\nObserve -->|进区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveC -->|碰撞但未进区| AdjustC[调整参数]\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|未碰撞| RetryCollideC[未碰撞重试]:::stratRetry\nObserveC -->|进区| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetryCollide --> Fire\nRetryCollideC --> FireC\nSingleMass --> Fire\nSingleMassC --> FireC\nSingleTemp --> Fire\nSingleVel1 --> Fire[发射]\nSingleVel1C --> FireC[发射]\nSingleVel2 --> Fire\nSingleVel2C --> FireC\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·导轨温度| SingleMass\nStrategySelect -->|单变量·质量| SingleMassC\nStrategySelect -->|单变量·速度1| SingleVel1C\nStrategySelect -->|单变量·速度2| SingleVel2C\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nProbeCV[拧混淆控件]:::stratInvalid\nSingleMass[单变量·导轨温度]\nSingleMassC[单变量·质量]\nSingleTemp[单变量·温度]\nSingleVel1[单变量·速度1]\nSingleVel1C[单变量·速度1]\nSingleVel2[单变量·速度2]\nSingleVel2C[单变量·速度2]\nTrap[多参盲调]\n",
     "routes": [
       {
@@ -1136,7 +1136,7 @@
   },
   "gameSpec": {
     "title": "动量守恒 · 碰撞实验",
-    "subtitle": "夜班分拣 · 对撞投递",
+    "subtitle": "气垫导轨 · 碰撞",
     "winCondition": "达成过关条件：包件2进区或探究完成对比",
     "knowledgeSummary": "动量守恒 · 碰撞实验",
     "controls": [

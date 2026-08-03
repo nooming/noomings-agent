@@ -32,9 +32,12 @@
       </div>
       <p class="sessions-stats-sub" id="statsSub"></p>
 
-      <div class="edu-panel classroom-board" id="classroomBoard">
+      <details class="edu-panel classroom-board catalog-panel-details" id="classroomBoard">
+        <summary class="catalog-panel-summary classroom-board-summary">
+          <span>课堂探究一页看板</span>
+          <span class="classroom-board-summary-hint">默认折叠 · 需要时展开</span>
+        </summary>
         <div class="classroom-board-head">
-          <h4>课堂探究一页看板</h4>
           <div class="tool-link-row">
             <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomRefresh">刷新看板</button>
             <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomExportJson">导出 JSON</button>
@@ -51,10 +54,10 @@
                 <th>AV调节</th><th>CV试探</th><th>路径类型</th><th>策略分</th><th>更新</th>
               </tr>
             </thead>
-            <tbody id="classroomTbody"><tr><td colspan="9">暂无数据</td></tr></tbody>
+            <tbody id="classroomTbody"><tr><td colspan="9" class="empty-state">暂无数据</td></tr></tbody>
           </table>
         </div>
-      </div>
+      </details>
 
       <div class="judged-overview" id="judgedOverview" hidden>
         <div class="judged-overview-head">
@@ -97,7 +100,7 @@
   </section>
 
   <section class="teacher-panel" id="panel-catalog">
-    <details class="edu-panel catalog-panel-details" id="catalogPanelDetails" open>
+    <details class="edu-panel catalog-panel-details" id="catalogPanelDetails">
       <summary class="catalog-panel-summary">探究任务</summary>
       <p class="hint">每个任务关联 Agent A 生成的事理图谱（graphId）与学生游玩的 HTML。可上/下架任务；试玩 HTML 与图谱预览请至「资源管理」Tab。样本集默认已上架。</p>
       <div class="catalog-toolbar">

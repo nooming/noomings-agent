@@ -12,8 +12,8 @@
 <div id="platformHeader"></div>
 
 <main class="platform-main">
-  <section class="platform-hero" style="padding-top:16px;padding-bottom:24px">
-    <h1 style="font-size:1.4rem">探究游戏</h1>
+  <section class="platform-hero student-hero">
+    <h1>探究游戏</h1>
     <p>选择任务开始实验。你的操作会自动记录，供教师分析探究过程。</p>
   </section>
 
@@ -40,12 +40,27 @@ const MACRO_ORDER = [
   { id: 'macro-other', name: '近代与其它' },
 ];
 
+const MACRO_CARD = {
+  'macro-mechanics': { accent: '#0d9488', hint: '力与运动台' },
+  'macro-em': { accent: '#007baa', hint: '电路与场台' },
+  'macro-optics': { accent: '#0891b2', hint: '光路实验台' },
+  'macro-thermal': { accent: '#0f766e', hint: '热学实验台' },
+  'macro-other': { accent: '#64748b', hint: '近代物理台' },
+};
+
 function renderGameCard(item) {
   const topic = item.topicKey || '';
+  const cat = item.categoryId || '';
+  const meta = MACRO_CARD[cat] || { accent: 'var(--edu-student)', hint: '物理探究台' };
   return `
-    <article class="game-card">
+    <article class="game-card" data-macro="${esc(cat)}" style="--card-accent:${meta.accent}">
+      <div class="game-card-accent" aria-hidden="true"></div>
       <div class="game-card-body">
-        <h3>${esc(item.title)}${topic ? `<span class="game-card-topic">${esc(topic)}</span>` : ''}</h3>
+        <div class="game-card-meta">
+          ${topic ? `<span class="game-card-topic">${esc(topic)}</span>` : ''}
+          <span class="game-card-hint">${esc(meta.hint)}</span>
+        </div>
+        <h3>${esc(item.title)}</h3>
         <p>${esc(item.description || '物理探究实验')}</p>
         <a class="game-card-play" href="/student-play.html?id=${encodeURIComponent(item.id)}">开始探究</a>
       </div>

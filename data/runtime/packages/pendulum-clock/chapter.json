@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调摆长/摆角/质量 | O1 | operation | 调节摆长/摆角/质量 |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→摆幅≥15°? | C6 | constraint | 擒纵约束 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示摆幅 | retry | skip retry | 重试 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |",
   "kg": {
     "title": "钟表铺·校时",
-    "sub": "单摆秒摆",
+    "sub": "钟表铺 · 校时",
     "nodes": [
       {
         "id": "P1",
@@ -281,7 +281,7 @@
   },
   "dt": {
     "title": "钟表铺·校时",
-    "sub": "单摆秒摆",
+    "sub": "钟表铺 · 校时",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -503,7 +503,7 @@
   },
   "strategy": {
     "title": "钟表铺·校时",
-    "sub": "单摆秒摆",
+    "sub": "钟表铺 · 校时",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAdjust[单变量微调]\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nCheckAngle -->|是| Win[过关]:::stratResult\nProbeCV[试探混淆·质量]\nAngleRoute[单变量·摆角]\nLenRoute[单变量·摆长]\nTrapRoute[多参盲调]\nTrapRoute --> Fire\n",
     "routes": [
       {
@@ -934,7 +934,7 @@
   },
   "gameSpec": {
     "title": "钟表铺·校时",
-    "subtitle": "单摆秒摆",
+    "subtitle": "钟表铺 · 校时",
     "winCondition": "周期在目标带且摆幅≥15°，钟声归位，校准完成",
     "knowledgeSummary": "钟表铺·校时",
     "controls": [

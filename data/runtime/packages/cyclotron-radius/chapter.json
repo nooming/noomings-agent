@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 初始状态 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调节B和v | O1 | operation | 调节磁感应强度B和入射速度v |\n| 发射粒子 | O2 | operation | 点击发射按钮 |\n| 观察半径偏大/偏小? | C5 | constraint | 观察反馈 |\n| 否→继续观察 | C4 | constraint | 半径在目标环带? |\n| 是→过关 | R1 | result | 过关 |\n| 否→重试 | retry | retry | skip retry |\n| 探究: 观察半径变化 | S1 | core | 教学节点 |\n| 竞赛: 限次命中环带 | S2 | core | 教学节点 |\n| 验证探究 | verify | verify | 验证边 |\n| 验证竞赛 | verify | verify | 验证边 |\n| 腔室气压p | I1 | irrelevant | 无关控件 |\n| 读数显示 | I2 | irrelevant | 无关控件 |",
   "kg": {
     "title": "回旋加速器 · 探究轨道半径",
-    "sub": "第1关",
+    "sub": "加速舱 · 回旋半径",
     "nodes": [
       {
         "id": "P1",
@@ -178,7 +178,7 @@
   },
   "dt": {
     "title": "回旋加速器 · 探究轨道半径",
-    "sub": "第1关",
+    "sub": "加速舱 · 回旋半径",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -352,7 +352,7 @@
   },
   "strategy": {
     "title": "回旋加速器 · 探究轨道半径",
-    "sub": "第1关",
+    "sub": "加速舱 · 回旋半径",
     "mermaid": "graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探混淆·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[多参盲调]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Retest\n",
     "routes": [
       {
@@ -824,7 +824,7 @@
   },
   "gameSpec": {
     "title": "回旋加速器 · 探究轨道半径",
-    "subtitle": "第1关",
+    "subtitle": "加速舱 · 回旋半径",
     "winCondition": "竞赛模式下轨道半径命中提取环带，显示过关界面",
     "knowledgeSummary": "回旋加速器 · 探究轨道半径",
     "controls": [

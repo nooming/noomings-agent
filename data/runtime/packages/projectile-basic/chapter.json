@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究/挑战 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是(挑战) | C2 | constraint | 挑战模式 |\n| 否(探究) | C3 | constraint | 探究模式 |\n| 调参发射 | O1 | operation | 调节角度/速度/高度/质量并发射 |\n| 落地? | C4 | constraint | 小球落地检测 |\n| 命中靶心? | C5 | constraint | 挑战模式命中判定 |\n| 过关 | R1 | result | 命中靶心 |\n| 偏近/偏远 | C6 | constraint | 未命中提示 |\n| 机会用尽 | C7 | constraint | 挑战失败 |\n| 探究时间到 | C8 | constraint | 探究超时 |\n| 斜抛运动公式 | S1 | core | 教学知识 |\n| 控制变量法 | S2 | method | 教学知识 |\n| 重试 | - | - | skip retry |",
   "kg": {
     "title": "斜抛运动探究与挑战",
-    "sub": "野战炮兵 · 斜抛试射",
+    "sub": "靶场 · 斜抛",
     "nodes": [
       {
         "id": "P1",
@@ -229,7 +229,7 @@
   },
   "dt": {
     "title": "斜抛运动探究与挑战",
-    "sub": "野战炮兵 · 斜抛试射",
+    "sub": "靶场 · 斜抛",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -373,7 +373,7 @@
   },
   "strategy": {
     "title": "斜抛运动探究与挑战",
-    "sub": "野战炮兵 · 斜抛试射",
+    "sub": "靶场 · 斜抛",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[发射]\nAdjust2 --> Fire\nAdjust3 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察落点?}:::stratCond\nMode -->|挑战| Challenge[靶心挑战]\nMode -->|探究| Explore[自由探究]\nObserve -->|偏近| Adjust1\nObserve -->|偏远| Adjust1\nObserve -->|机会用尽| Retry[重试]:::stratRetry\nObserve -->|超时| Retry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·发射角度| AngleStrat\nStrategySelect -->|单变量·发射高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleStrat --> Adjust3[调整发射角度]\nHeightStrat --> Adjust2[调整发射高度]\nSpeedStrat --> Adjust1[调整初速度]\nAngleStrat[单变量·发射角度]\nHeightStrat[单变量·发射高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n",
     "routes": [
       {
@@ -873,7 +873,7 @@
   },
   "gameSpec": {
     "title": "斜抛运动探究与挑战",
-    "subtitle": "野战炮兵 · 斜抛试射",
+    "subtitle": "靶场 · 斜抛",
     "winCondition": "挑战模式下命中靶心，完成本局挑战",
     "knowledgeSummary": "斜抛运动探究与挑战",
     "controls": [

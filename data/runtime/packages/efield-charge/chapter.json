@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节场强/电荷 | O1 | operation | 调节s-fieldStrength、s-charge（有效 AV） |\n| 飞出边界? | C1 | constraint | 飞出电场区域判定 |\n| 命中靶区? | C2 | constraint | 光点到达荧光屏时是否在靶区内 |\n| 过关 | R1 | result | 命中靶区 |\n| 提示重试 | (skip retry) | — | retry 不进 KG |\n| 再试 | (skip retry) | — | retry 不进 KG |\n| 出界重试 | (skip retry) | — | retry 不进 KG |\n| 偏转原理 | S1 | core | teach 节点 |\n| 控制变量法 | S2 | method | teach 节点 |\n| 电场力公式 | S3 | core | teach 节点 |\n| 极板间距（示意） | I1 | irrelevant | 仅改示意间距，不改变偏转 |",
   "kg": {
     "title": "电场 · 带电粒子偏转",
-    "sub": "探究场强、电荷量对偏转的影响",
+    "sub": "偏转舱 · 电场实验",
     "nodes": [
       {
         "id": "P1",
@@ -161,7 +161,7 @@
   },
   "dt": {
     "title": "电场 · 带电粒子偏转",
-    "sub": "探究场强、电荷量对偏转的影响",
+    "sub": "偏转舱 · 电场实验",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -259,7 +259,7 @@
   },
   "strategy": {
     "title": "电场 · 带电粒子偏转",
-    "sub": "探究场强、电荷量对偏转的影响；极板间距仅为示意",
+    "sub": "偏转舱 · 电场实验",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nObserve -->|偏低| AdjustE\nObserve -->|偏高| AdjustE\nObserve -->|偏低| AdjustQ\nObserve -->|偏高| AdjustQ\nObserve -->|偏低| AdjustMulti\nObserve -->|偏高| AdjustMulti\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -.->|试探混淆·极板间距| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nRetry --> AdjustE\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nSingleE[单变量·场强]\nSingleQ[单变量·电荷量]\nProbeCV[试探混淆·极板间距（示意无效）]\nTrap --> Fire\nAdjustMulti[同时调多个参数]\n",
     "routes": [
       {
@@ -701,7 +701,7 @@
   },
   "gameSpec": {
     "title": "电场 · 带电粒子偏转",
-    "subtitle": "探究场强、电荷量对偏转的影响；极板间距仅为示意",
+    "subtitle": "偏转舱 · 电场实验",
     "winCondition": "光点成功进入目标区域，获得胜利",
     "knowledgeSummary": "电场 · 带电粒子偏转",
     "controls": [

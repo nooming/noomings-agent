@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 调节电阻与测试 | O1 | operation | 调参+测试 |\n| 电流达标? | C2 | constraint | 结果判定 |\n| 未达标重试 | — | — | skip retry |\n| 过关 | R1 | result | 胜利 |\n| 竞赛限次判定 | C3 | constraint | 竞赛模式剩余机会判定 |\n| 机会耗尽失败 | — | — | skip retry |\n| 继续尝试 | — | — | skip retry |\n| 串联与并联原理 | S1 | core | teach |\n| 电流与电阻关系 | S2 | core | teach |\n| 欧姆定律验证 | S3 | core | teach |",
   "kg": {
     "title": "串联与并联电路 · 调节电阻使电流达标",
-    "sub": "舞台灯电源板",
+    "sub": "配电间 · 接线板",
     "nodes": [
       {
         "id": "P1",
@@ -163,7 +163,7 @@
   },
   "dt": {
     "title": "串联与并联电路 · 调节电阻使电流达标",
-    "sub": "舞台灯电源板",
+    "sub": "配电间 · 接线板",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -236,7 +236,7 @@
   },
   "winSync": {
     "title": "过关 · 你学到了什么",
-    "sub": "舞台灯电源板"
+    "sub": "配电间 · 接线板"
   },
   "traceMap": {
     "controls": {
@@ -294,7 +294,7 @@
   },
   "strategy": {
     "title": "串联与并联电路 · 调节电阻使电流达标",
-    "sub": "舞台灯电源板",
+    "sub": "配电间 · 接线板",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustMeter --> Fire\nAdjustR1 --> Fire[测试/发射]\nAdjustR2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察电流?}:::stratCond\nModeSelect -->|探究模式| Explore[自由探究]:::stratCore\nObserve -->|偏大| AdjustR1\nObserve -->|偏小| AdjustR1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电阻R1| Route_main\nStrategySelect -->|单变量·电表内阻| Route_main_s_meter_r\nStrategySelect -->|单变量·电阻R2| Route_main_s_r2\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电阻R1]\nRoute_main_s_r2[控制变量：只改电阻R2]\nRoute_main_s_meter_r[控制变量：只改电表内阻]\nRetry --> AdjustMeter\nRetry --> AdjustR1\nRetry --> AdjustR2\nRoute_main --> Adjust\nRoute_main_s_meter_r --> Adjust\nRoute_main_s_r2 --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
@@ -792,7 +792,7 @@
   },
   "gameSpec": {
     "title": "串联与并联电路 · 调节电阻使电流达标",
-    "subtitle": "舞台灯电源板",
+    "subtitle": "配电间 · 接线板",
     "winCondition": "竞赛模式下电流对准目标，显示过关信息",
     "knowledgeSummary": "串联与并联电路 · 调节电阻使电流达标",
     "controls": [

@@ -11,7 +11,7 @@
             padding: 0;
         }
         body {
-            font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+            font-family:var(--font-sans);
             background: #f5f7fb;
             min-height: 100vh;
             display: flex;
@@ -333,7 +333,7 @@ body { display:block !important; min-height:0 !important; align-items:stretch !i
   box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
 }
 #dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
-#dual-mode-hud #timerDisplay { font-family:ui-monospace,monospace; font-weight:600; color:#334155; }
+#dual-mode-hud #timerDisplay { font-family:var(--font-mono); font-weight:600; color:#334155; }
 #challengeStats {
   pointer-events:auto; display:none; align-items:center; gap:8px;
   padding:8px 14px; border-radius:999px;
@@ -358,9 +358,9 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#8a9ee0;--craft-bg:#0c1018;--craft-panel:#161e2c;--craft-text:#e4eaf4;--craft-muted:#8898b0;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#8a9ee0;--craft-bg:#0c1018;--craft-panel:#161e2c;--craft-text:#e4eaf4;--craft-muted:#8898b0;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
+  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
 #essence-bench,.control-panel,#controls-area,#bench,#controlsPanel{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
@@ -406,11 +406,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
+.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
 #craft-gauge{display:none!important;}
-#craft-gauge strong{color:var(--craft-accent);font-family:ui-monospace,monospace;font-size:16px;display:block;margin-top:2px;}
+#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
 #craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:8px 0;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
@@ -579,6 +579,205 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   align-items:flex-end!important;
 }
 
+/* === craft-bench-unify === */
+/* HUD: TL dual-mode only · TR essence / legacy gauge */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  flex-wrap:wrap!important;
+  z-index:12!important;
+  pointer-events:none!important;
+}
+#dual-mode-hud .dual-chip,
+#dual-mode-hud #challengeStats,
+#challengeStats{pointer-events:auto!important;}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+  pointer-events:none!important;
+}
+/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
+#hud{
+  position:absolute!important;
+  inset:0!important;
+  top:0!important;left:0!important;right:0!important;bottom:0!important;
+  max-width:none!important;
+  display:block!important;
+  background:transparent!important;
+  pointer-events:none!important;
+  z-index:10!important;
+  gap:0!important;
+}
+#hud > #dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;left:10px!important;right:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+}
+#hud > .hud-chip,
+#hud > .gauge,
+#hud > .hud-chip.gauge{
+  position:absolute!important;
+  top:10px!important;right:12px!important;left:auto!important;
+  align-items:flex-end!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+}
+#craft-gauge{display:none!important;}
+#dual-mode-hud #goalMission{display:none!important;}
+
+/* Slider track / thumb */
+#essence-bench input[type=range],
+.slider-group input[type=range],
+.slider-row input[type=range],
+#bench input[type=range],
+#controls-area input[type=range],
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:28px;margin:2px 0 8px;background:transparent;
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track,
+.slider-row input[type=range]::-webkit-slider-runnable-track,
+#bench input[type=range]::-webkit-slider-runnable-track,
+input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:999px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--craft-bg,#0c1218) 80%,#000),color-mix(in srgb,var(--craft-panel,#162028) 70%,#fff));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb,
+.slider-row input[type=range]::-webkit-slider-thumb,
+#bench input[type=range]::-webkit-slider-thumb,
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;margin-top:-6px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--craft-accent) 55%,#fff),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 55%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.45);
+  cursor:pointer;
+}
+
+/* Label + value badge */
+#essence-bench label,
+.slider-group label,
+.slider-row label,
+.slabel,
+#bench label{
+  color:var(--craft-muted)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  letter-spacing:.02em;
+}
+#essence-bench .value-badge,
+.slider-row .value-badge,
+.slider-row .value,
+.slider-group .value,
+.value-badge,
+.sval,
+.value-tag,
+#essence-bench .value{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  min-width:52px;padding:2px 10px!important;border-radius:999px!important;
+  background:rgba(0,0,0,.35)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  color:var(--scene-hi,var(--craft-accent))!important;
+  font-family:var(--font-mono)!important;font-size:12px!important;font-weight:600!important;
+}
+
+/* Observe-box states: pending / measured / hit(ok) / miss */
+#essence-bench .observe-box,
+.observe-box,#observePanel{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent)!important;
+  border-left:3px solid color-mix(in srgb,var(--craft-muted) 70%,var(--craft-accent))!important;
+  border-radius:8px!important;
+  color:var(--craft-text)!important;
+  padding:12px 14px!important;
+}
+.observe-box.is-pending,.observe-box.pending,
+.observe-box[data-state="pending"]{
+  border-left-color:color-mix(in srgb,var(--craft-muted) 80%,transparent)!important;
+  opacity:.92;
+}
+.observe-box.is-measured,.observe-box.measured,
+.observe-box[data-state="measured"]{
+  border-left-color:var(--craft-accent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--craft-accent) 18%,transparent);
+}
+.observe-box.is-hit,.observe-box.hit,.observe-box.ok,.observe-box.win,
+.observe-box[data-state="hit"],.observe-box[data-state="ok"]{
+  border-left-color:var(--scene-ok,#6fae8f)!important;
+  background:rgba(34,197,94,.14)!important;
+  border-color:rgba(34,197,94,.35)!important;
+}
+.observe-box.is-miss,.observe-box.miss,.observe-box.fail,
+.observe-box[data-state="miss"],.observe-box[data-state="fail"]{
+  border-left-color:#f87171!important;
+  background:rgba(248,113,113,.14)!important;
+  border-color:rgba(248,113,113,.35)!important;
+}
+.observe-box .label,.observe-box .state,.observe-box .val,.observe-box .reading{
+  color:inherit;
+}
+.observe-box .state,.observe-box .reading,.observe-box .val{
+  font-family:var(--font-mono);
+  font-weight:700;
+}
+
+/* Primary action button */
+#essence-bench .btn,button.btn,.pixel-btn,
+#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn{
+  padding:11px 16px!important;
+  border-radius:10px!important;
+  font-weight:700!important;
+  letter-spacing:.02em;
+  transition:opacity .15s,filter .15s,transform .12s;
+}
+#essence-bench .btn:disabled,button.btn:disabled,.pixel-btn:disabled,
+#btnLaunch:disabled,#btn-test:disabled,#btn-fire:disabled,#btnFire:disabled,#btnTest:disabled,#fireBtn:disabled,
+button.dual-disabled,.dual-disabled,
+button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
+  opacity:.45!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.15);
+  transform:none!important;
+}
+
+/* De-emphasize confound / irrelevant zones */
+.confound-note,
+.irrelevant-area,
+.srow-irrelevant,
+.irrelevant-touch,
+#essence-bench .confound-note,
+#bench .confound-note,
+#controls-area .confound-note{
+  opacity:.7!important;
+  font-size:.8rem!important;
+  transform:scale(.98);
+  transform-origin:left top;
+  filter:saturate(.75);
+}
+.irrelevant-area button,
+.irrelevant-touch{
+  padding:3px 10px!important;
+  font-size:.75rem!important;
+  opacity:.75!important;
+}
 </style>
 </head>
 <body>
@@ -586,7 +785,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 <div id="craft-intro">
   <div class="craft-card">
     <h2>偏转舱 · 电场实验</h2>
-    <p>招牌管里的光点偏了。试着调场强与电荷量，看偏转怎么变；再接急单——靶区本局锁定，打偏不换靶。</p>
+    <p>偏转舱里光点偏了——场强与电荷谁在拽它？调场强与电荷量，看偏转轨迹怎么变。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛靶区进入后固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -628,7 +827,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
               <strong style="font-size:13px;color:#e2e8f0">霓虹控制台</strong>
               <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
             </div>
-            <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">试着弄清：E、q 怎样改变光点偏转。竞赛另有限次急单。</p>
+            <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">调 E、q，看光点偏转怎么变。</p>
             <!-- 调节变量 -->
             <div class="ctrl-group">
                 <div class="ctrl-label">
@@ -740,13 +939,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     let challengeWon = false;
     const MODE_GOALS = {
       explore: {
-        hud: '目标：自由发射几轮，观察光点偏转随 E、q 的变化',
-        side: '探究·霓虹试写：试着弄清场强与电荷量如何改变偏转；不必先打固定靶。',
+        hud: '试射：观察光点偏转随 E、q 变化',
+        side: '调 E、q，看光点偏转怎么变。',
         hint: '自由试射：对比不同 E、q 的偏转'
       },
       challenge: {
-        hud: '目标：限次把光点打进本局锁定靶区（打偏不换靶）',
-        side: '竞赛·招牌急修：限次把光点打进本局锁定靶区；打偏不换靶。',
+        hud: '限次把光点打进本局靶区（打偏不换靶）',
+        side: '限次把光点打进本局靶区（打偏不换靶）。',
         hint: '急单：靶区已锁定，限次命中'
       }
     };
@@ -1151,7 +1350,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         rr(Math.max(6, gunX), gunLabelY - 16, 52, 20, 3);
         ctx.fill();
         ctx.fillStyle = HI;
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText('电子枪', Math.max(10, gunX + 4), gunLabelY);
 
         // 平行板偏转区（HERO）
@@ -1219,7 +1418,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         rr(fieldX + 10, plateLabelY - 14, 52, 18, 3);
         ctx.fill();
         ctx.fillStyle = HI;
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText('偏转板', fieldX + 16, plateLabelY);
 
@@ -1252,7 +1451,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillRect(tz.x, tz.y, tz.w, tz.h);
         ctx.strokeRect(tz.x, tz.y, tz.w, tz.h);
         ctx.fillStyle = '#a8d4b8';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
         ctx.fillText(playMode === 'challenge' ? '急单靶' : '试写区', tz.x + 6, tz.y - 8);
         ctx.fillStyle = 'rgba(12,16,24,0.78)';
         rr(tz.x - 10, 58, 78, 18, 3);

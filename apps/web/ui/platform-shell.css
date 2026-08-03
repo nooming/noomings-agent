@@ -4,7 +4,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body.platform-page {
-  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--edu-bg);
   color: var(--edu-text);
   line-height: 1.6;
@@ -177,7 +177,7 @@ body.platform-page {
 }
 
 .platform-hero h1 {
-  font-size: 1.75rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   color: var(--edu-text);
   margin-bottom: 8px;
@@ -186,9 +186,25 @@ body.platform-page {
 
 .platform-hero p {
   color: var(--edu-muted);
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   max-width: 520px;
   margin: 0 auto 32px;
+}
+
+.student-hero {
+  padding-top: 16px;
+  padding-bottom: 24px;
+  text-align: left;
+}
+
+.student-hero h1 {
+  font-size: var(--text-lg);
+}
+
+.student-hero p {
+  margin: 0;
+  max-width: none;
+  font-size: var(--text-sm);
 }
 
 .platform-cards {
@@ -230,12 +246,12 @@ body.platform-page {
 .platform-card.student .platform-card-icon { background: rgba(13, 148, 136, 0.12); color: var(--edu-student); }
 
 .platform-card h2 {
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
   margin-bottom: 8px;
 }
 
 .platform-card p {
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   color: var(--edu-muted);
   line-height: 1.55;
 }
@@ -256,7 +272,7 @@ body.platform-page {
 .teacher-tabs {
   display: flex;
   gap: 4px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   border-bottom: 1px solid var(--edu-border);
   padding-bottom: 0;
 }
@@ -328,15 +344,15 @@ a.teacher-tab {
 }
 
 .edu-panel h3 {
-  font-size: 1rem;
-  margin-bottom: 12px;
+  font-size: var(--text-base);
+  margin-bottom: 10px;
   color: var(--edu-primary);
 }
 
 .edu-panel p.hint {
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--edu-muted);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .catalog-panel-details > .catalog-panel-summary,
@@ -645,7 +661,7 @@ a.teacher-tab {
   margin-top: 12px;
   padding: 12px;
   font-size: 0.82rem;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-family: var(--font-mono);
   white-space: pre-wrap;
   background: var(--edu-bg);
   border: 1px solid var(--edu-border);
@@ -879,12 +895,18 @@ a.teacher-tab {
 }
 
 .game-card h3 {
-  font-size: 1rem;
+  font-size: var(--text-base);
   margin-bottom: 6px;
+  line-height: 1.35;
+  color: var(--edu-text);
+}
+
+.game-card-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .game-card-topic {
@@ -893,27 +915,50 @@ a.teacher-tab {
   font-weight: 500;
   padding: 1px 8px;
   border-radius: 4px;
-  background: rgba(14, 116, 144, 0.1);
-  color: #0e7490;
+  background: color-mix(in srgb, var(--card-accent, var(--edu-student)) 14%, transparent);
+  color: var(--card-accent, #0e7490);
   vertical-align: middle;
 }
 
-.game-card {
-  background: var(--edu-surface);
-  border: 1px solid var(--edu-border);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.15s;
+.game-card-hint {
+  font-size: 0.72rem;
+  color: var(--edu-muted);
+  letter-spacing: 0.02em;
 }
 
-.game-card:hover { transform: translateY(-2px); }
+.game-card {
+  --card-accent: var(--edu-student);
+  position: relative;
+  display: flex;
+  background: var(--edu-surface);
+  border: 1px solid var(--edu-border);
+  border-left: none;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
 
-.game-card-body { padding: 20px; }
+.game-card-accent {
+  width: 5px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--card-accent), color-mix(in srgb, var(--card-accent) 55%, var(--edu-primary)));
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-edu);
+}
+
+.game-card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 18px 16px;
+}
 
 .game-card p {
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--edu-muted);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   min-height: 2.5em;
 }
 
@@ -922,22 +967,38 @@ a.teacher-tab {
   width: 100%;
   text-align: center;
   padding: 10px;
-  background: var(--edu-student);
+  background: var(--card-accent, var(--edu-student));
   color: #fff;
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   text-decoration: none;
   border: none;
   cursor: pointer;
   font-family: inherit;
+  border-radius: var(--radius-sm);
 }
 
-.game-card-play:hover { background: #0f766e; }
+.game-card-play:hover { filter: brightness(0.92); }
 
 /* 学生游玩页 */
 body.play-page {
   margin: 0;
   overflow: hidden;
+}
+
+.play-enter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--edu-student) 22%, #f4f7fb), #0f172a 72%);
+  opacity: 1;
+  transition: opacity 320ms ease;
+}
+
+.play-enter-overlay.is-done {
+  opacity: 0;
 }
 
 .play-shell {
@@ -948,6 +1009,19 @@ body.play-page {
   height: 100vh;
   height: 100dvh;
   background: #0f172a;
+}
+
+.play-shell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 15;
+  background: linear-gradient(90deg, var(--edu-student), var(--edu-primary));
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .play-idle-hint {
@@ -1289,8 +1363,26 @@ body.play-page {
 
 .empty-state {
   text-align: center;
-  padding: 48px 20px;
+  padding: 40px 20px;
   color: var(--edu-muted);
+  font-size: var(--text-sm);
+  background: color-mix(in srgb, var(--edu-bg) 65%, var(--edu-surface));
+  border: 1px dashed var(--edu-border);
+  border-radius: var(--radius-md);
+}
+
+#gameGrid > .empty-state,
+.student-list > .empty-state,
+.student-list li.empty-state {
+  background: color-mix(in srgb, var(--edu-bg) 65%, var(--edu-surface));
+}
+
+td.empty-state,
+.edu-table .empty-state {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 28px 16px;
 }
 
 .sessions-stats {
@@ -1323,15 +1415,27 @@ body.play-page {
   margin: 0 0 16px;
   padding: 12px 14px;
 }
+.classroom-board-summary {
+  width: 100%;
+  justify-content: space-between !important;
+}
+.classroom-board-summary-hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--edu-muted);
+}
+.classroom-board:not([open]) {
+  padding-bottom: 10px;
+}
 .classroom-board-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
-  margin-bottom: 6px;
+  margin: 10px 0 6px;
 }
-.classroom-board-head h4 { margin: 0; font-size: 0.95rem; }
+.classroom-board-head h4 { margin: 0; font-size: var(--text-sm); }
 .classroom-summary {
   display: flex;
   flex-wrap: wrap;

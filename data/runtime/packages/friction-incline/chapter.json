@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 调参（μ/θ/m） | O1 | operation | 调节滑条 |\n| 测试卸货 | — | — | skip retry |\n| 卡在滑道上? | C2 | constraint | 是否下滑 |\n| 是→提示重试 | — | — | skip retry |\n| 否→继续 | — | — | skip retry |\n| 冲过接货区? | C3 | constraint | 是否冲过 |\n| 是→提示重试 | — | — | skip retry |\n| 否→继续 | — | — | skip retry |\n| 停在接货区? | C4 | constraint | 是否达标 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | — | — | skip retry |\n| 竞赛模式·次数耗尽? | C5 | constraint | 竞赛模式失败判定 |\n| 是→失败重试 | — | — | skip retry |\n| 否→继续 | — | — | skip retry |",
   "kg": {
     "title": "仓库卸货滑道 · 摩擦探究",
-    "sub": "斜面摩擦",
+    "sub": "斜面台 · 摩擦探究",
     "nodes": [
       {
         "id": "P1",
@@ -174,7 +174,7 @@
   },
   "dt": {
     "title": "仓库卸货滑道 · 摩擦探究",
-    "sub": "斜面摩擦",
+    "sub": "斜面台 · 摩擦探究",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -405,7 +405,7 @@
   },
   "strategy": {
     "title": "仓库卸货滑道 · 摩擦探究",
-    "sub": "斜面摩擦",
+    "sub": "斜面台 · 摩擦探究",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustFriction --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nAngleRoute[单变量·斜面倾角]\nFrictionRoute[单变量·摩擦系数]\nTrap --> Fire\n",
     "routes": [
       {
@@ -852,7 +852,7 @@
   },
   "gameSpec": {
     "title": "仓库卸货滑道 · 摩擦探究",
-    "subtitle": "斜面摩擦",
+    "subtitle": "斜面台 · 摩擦探究",
     "winCondition": "货箱停在接货区，达成目标，显示过关信息",
     "knowledgeSummary": "仓库卸货滑道 · 摩擦探究",
     "controls": [

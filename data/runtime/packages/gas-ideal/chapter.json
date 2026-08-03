@@ -2,7 +2,7 @@
   "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式 |\n| 否(探究) | O1 | operation | 探究模式 |\n| 调节压强/体积/温度并测试 | O1 | operation | 调节s-pressure/s-volume/s-temp并点击测试 |\n| 乘积在标定带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 乘积偏低? | C3 | constraint | 偏低提示 |\n| 是 | — | — | skip retry |\n| 否(偏高) | — | — | skip retry |\n| 探究: 观察乘积变化 | S1 | core | teach 节点 |\n| 竞赛: 限次命中标定带 | S2 | core | teach 节点 |\n| verify 边 | — | — | 连回 O1 |",
   "kg": {
     "title": "气体 · 玻意耳定律",
-    "sub": "深潜器 · 压舱气室",
+    "sub": "气室 · 活塞实验桌",
     "nodes": [
       {
         "id": "P1",
@@ -162,7 +162,7 @@
   },
   "dt": {
     "title": "气体 · 玻意耳定律",
-    "sub": "深潜器 · 压舱气室",
+    "sub": "气室 · 活塞实验桌",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -306,7 +306,7 @@
   },
   "strategy": {
     "title": "气体 · 玻意耳定律",
-    "sub": "深潜器 · 压舱气室",
+    "sub": "气室 · 活塞实验桌",
     "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大温度]\nObserve2a -->|偏高| Adjust2a2[减小温度]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·温度| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nExploreCore --> Tune[调整压强/体积/温度]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[多参盲调]\nChallengeCore --> Tune2[调整压强/体积/温度]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
@@ -689,7 +689,7 @@
       "OV1"
     ],
     "narrative": {
-      "intro": "下潜前压舱气室读数飘了。试着弄清压强与体积如何关联；再接限次急单——标定带本局固定。",
+      "intro": "压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。",
       "steps": [
         {
           "order": 1,
@@ -754,7 +754,7 @@
   },
   "gameSpec": {
     "title": "气体 · 玻意耳定律",
-    "subtitle": "深潜器 · 压舱气室",
+    "subtitle": "气室 · 活塞实验桌",
     "winCondition": "竞赛模式下乘积落入标定带，显示过关",
     "knowledgeSummary": "气体 · 玻意耳定律",
     "controls": [
