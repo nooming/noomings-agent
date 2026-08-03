@@ -2,6 +2,9 @@ const SUITES = {
   contract: [
     { name: 'trace-contract', module: './parts/trace-contract' },
     { name: 'trace-phase-metrics', module: './parts/trace-phase-metrics' },
+    { name: 'judge-cv-heavy', module: './parts/judge-cv-heavy' },
+    { name: 'judge-single-variable', module: './parts/judge-single-variable' },
+    { name: 'judge-win-detect', module: './parts/judge-win-detect' },
     { name: 'chapter-enrich-quality', module: './parts/chapter-enrich-quality' },
     { name: 'draft-quality', module: './parts/draft-quality' },
     { name: 'conditional-param', module: './parts/conditional-param' },
@@ -39,6 +42,7 @@ const SUITES = {
     { name: 'strategy-sparse-highlight-seed', module: './parts/strategy-sparse-highlight-seed' },
     { name: 'strategy-confound-visual-repair', module: './parts/strategy-confound-visual-repair' },
     { name: 'strategy-segment-score', module: './parts/strategy-segment-score' },
+    { name: 'strategy-switch-awareness', module: './parts/strategy-switch-awareness' },
     { name: 'strategy-path-summary', module: './parts/strategy-path-summary' },
     { name: 'strategy-layout', module: './parts/strategy-layout' },
   ],

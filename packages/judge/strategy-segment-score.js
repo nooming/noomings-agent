@@ -3,11 +3,19 @@
  *
  * S = Σ α_i * s(route_i)
  *     + β_main * 1[主策略清晰]
- *     - λ_switch * N_switch
+ *     - λ_switch * N_switch_eff   （按 switchKind 调节有效切换惩罚）
  *     - λ_cv * f(N_cv)
  *     + β_probe * 1[偶尔探测 CV]
+ *     + β_converge * 1[探索收敛且后期清晰]
+ *
+ * 换向感知（switchKind）：
+ *   - focused_redirect：连续块聚焦换向（轻惩罚）
+ *   - explore_converge：早期陷阱/CV → 后期单变量（软惩罚 / 小奖励）
+ *   - thrash：散乱横跳（保留/加强切换惩罚）
+ *   - stable / unknown
  *
  * 探究模式更宽容切换/CV；竞赛模式更严多参/乱切/拧 CV。
+ * 「两 AV 之间切换」≠ 陷阱；陷阱仍是同一试次内多 AV。
  */
 
 const { isTrapRoute } = require('./coupled-invalid');
@@ -23,6 +31,11 @@ const MODE = {
     cvOverRatio: 0.55,
     emptyWeight: 0.15,
     confoundWeight: 0.25,
+    redirectSwitchFactor: 0.3,
+    convergeSwitchFactor: 0.45,
+    thrashSwitchFactor: 1.15,
+    convergeClarityBonus: 0.02,
+    convergeLateShare: 0.6,
   },
   compete: {
     mainClarityBonus: 0.08,
@@ -34,6 +47,11 @@ const MODE = {
     cvOverRatio: 0.35,
     emptyWeight: 0.1,
     confoundWeight: 0.15,
+    redirectSwitchFactor: 0.3,
+    convergeSwitchFactor: 0.5,
+    thrashSwitchFactor: 1.2,
+    convergeClarityBonus: 0.015,
+    convergeLateShare: 0.65,
   },
 };
 
@@ -224,6 +242,101 @@ function countMeaningfulSwitches(segmentLabels) {
   return n;
 }
 
+function isSingleVarLabel(lab) {
+  return !!lab && /^单变量·/.test(lab);
+}
+
+/**
+ * 折叠连续相同标签；跳过空操作；混淆触碰标为旁路（bypass）。
+ * @returns {{ label: string, count: number, bypass: boolean }[]}
+ */
+function buildStrategySequence(segmentLabels) {
+  const seq = [];
+  for (const lab of segmentLabels) {
+    if (!lab || lab === LABEL.empty) continue;
+    const bypass = lab === LABEL.confound;
+    if (seq.length && seq[seq.length - 1].label === lab) {
+      seq[seq.length - 1].count += 1;
+    } else {
+      seq.push({ label: lab, count: 1, bypass });
+    }
+  }
+  return seq;
+}
+
+function lateDominantSingleShare(effective) {
+  if (!effective.length) return 0;
+  const start = Math.floor(effective.length * 0.4);
+  const late = effective.slice(start);
+  if (!late.length) return 0;
+  const weights = new Map();
+  for (const seg of late) {
+    if (!isSingleVarLabel(seg.label)) continue;
+    weights.set(seg.label, (weights.get(seg.label) || 0) + 1);
+  }
+  let bestW = 0;
+  for (const w of weights.values()) bestW = Math.max(bestW, w);
+  return bestW / late.length;
+}
+
+/**
+ * @returns {'focused_redirect'|'explore_converge'|'thrash'|'stable'|'unknown'}
+ */
+function classifySwitchKind(strategySequence, effective) {
+  const seq = Array.isArray(strategySequence) ? strategySequence : [];
+  const stratBlocks = seq.filter(b => !b.bypass);
+  const earlyNoiseCount = effective
+    .slice(0, Math.max(1, Math.ceil(effective.length * 0.4)))
+    .filter(s => s.label === LABEL.trap || s.label === LABEL.confound).length;
+  const last = stratBlocks[stratBlocks.length - 1];
+  const earlierHasTrap = stratBlocks.slice(0, -1).some(b => b.label === LABEL.trap);
+  const leadingBypassHeavy = seq.length > 0 && seq[0].bypass && seq[0].count >= 2;
+
+  // 探索收敛：早期陷阱/较重 CV → 后期稳定单变量
+  if (
+    last &&
+    isSingleVarLabel(last.label) &&
+    last.count >= 2 &&
+    (earlierHasTrap || leadingBypassHeavy || earlyNoiseCount >= 2)
+  ) {
+    return 'explore_converge';
+  }
+
+  if (stratBlocks.length <= 1) return 'stable';
+
+  // 聚焦换向：各策略块均为单变量，且换出块长度 ≥ 2
+  const allSingle = stratBlocks.every(b => isSingleVarLabel(b.label));
+  const qualifiedBlocks = stratBlocks.slice(0, -1).every(b => b.count >= 2);
+  if (allSingle && qualifiedBlocks) return 'focused_redirect';
+
+  // 散乱横跳：多块且大量长度为 1 的块
+  const unitBlocks = stratBlocks.filter(b => b.count === 1).length;
+  const nBlockSwitch = Math.max(0, stratBlocks.length - 1);
+  if (nBlockSwitch >= 2 && unitBlocks >= Math.ceil(stratBlocks.length * 0.5)) {
+    return 'thrash';
+  }
+  // 单次短跳（如 1×A→多×B）也偏散乱
+  if (nBlockSwitch >= 1 && unitBlocks >= 2 && !qualifiedBlocks) return 'thrash';
+
+  return 'unknown';
+}
+
+function switchPenaltyForKind(switchKind, nSwitch, nBlockSwitch, C) {
+  const base = C.switchPenalty;
+  switch (switchKind) {
+    case 'stable':
+      return 0;
+    case 'focused_redirect':
+      return nBlockSwitch * base * (C.redirectSwitchFactor ?? 0.3);
+    case 'explore_converge':
+      return nSwitch * base * (C.convergeSwitchFactor ?? 0.45);
+    case 'thrash':
+      return nSwitch * base * (C.thrashSwitchFactor ?? 1.15);
+    default:
+      return nSwitch * base;
+  }
+}
+
 function pickDominantSingleVar(segments) {
   const weights = new Map();
   for (const seg of segments) {
@@ -292,7 +405,16 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
 
   const switchLabels = effective.map(s => s.label);
   const nSwitch = countMeaningfulSwitches(switchLabels);
-  const switchPen = nSwitch * C.switchPenalty;
+  const strategySequence = buildStrategySequence(switchLabels);
+  const stratBlocks = strategySequence.filter(b => !b.bypass);
+  const nBlockSwitch = Math.max(0, stratBlocks.length - 1);
+  const switchKind = classifySwitchKind(strategySequence, effective);
+  const switchPen = switchPenaltyForKind(switchKind, nSwitch, nBlockSwitch, C);
+  const lateShare = lateDominantSingleShare(effective);
+  const convergeBonus = (
+    switchKind === 'explore_converge' &&
+    lateShare >= (C.convergeLateShare ?? 0.6)
+  ) ? (C.convergeClarityBonus || 0) : 0;
 
   // CV 记账：全轨迹调节次数（含非 effective 段，避免漏计）
   const cvIds = new Set(listCvControls(chapter));
@@ -321,7 +443,7 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
     if (!avLabs.includes(dom.label)) cvRaised = true;
   }
 
-  let score = base + mainBonus - switchPen - cvPen + cvBonus;
+  let score = base + mainBonus - switchPen - cvPen + cvBonus + convergeBonus;
   if (cvRaised) score = Math.min(score, trapScore + 0.05);
   score = clamp01(score);
 
@@ -334,7 +456,12 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
       switchPenalty: round3(switchPen),
       cvPenalty: round3(cvPen),
       cvProbeBonus: round3(cvBonus),
+      convergeBonus: round3(convergeBonus),
       nSwitch,
+      nBlockSwitch,
+      switchKind,
+      strategySequence,
+      lateDominantShare: round3(lateShare),
       dominantLabel: dom.label,
       dominantShare: round3(dominantShare),
       cvTunings,
@@ -347,6 +474,8 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
       effectiveTrials: totalEff,
     },
     segments,
+    strategySequence,
+    switchKind,
     // 显式拒绝「最后一发定局」：主策略取加权主导，而非最后一段
     primaryStrategy: dom.label || (byLabel[LABEL.trap] ? LABEL.trap : null),
     lastSegmentLabel: segments.filter(s => s.effective).slice(-1)[0]?.label || null,
@@ -387,4 +516,7 @@ module.exports = {
   listAvControls,
   listCvControls,
   countMeaningfulSwitches,
+  buildStrategySequence,
+  classifySwitchKind,
+  isSingleVarLabel,
 };

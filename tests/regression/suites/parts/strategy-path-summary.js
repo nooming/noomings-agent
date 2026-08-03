@@ -67,6 +67,25 @@ function run() {
   });
   assert(/无关|装饰|旁路/.test(cvAdvice), 'cv over advice');
 
+  const redirectAdvice = studentAdvice({
+    primaryStrategy: '单变量·A',
+    breakdown: { switchKind: 'focused_redirect', nSwitch: 1, nBlockSwitch: 1, segmentCounts: {}, mainClarityBonus: 0.06 },
+  });
+  assert(/聚焦换向/.test(redirectAdvice), 'redirect tip');
+  assert(!/最优/.test(redirectAdvice), 'redirect no spoiler');
+
+  const convergeAdvice = studentAdvice({
+    primaryStrategy: '单变量·A',
+    breakdown: { switchKind: 'explore_converge', nSwitch: 1, segmentCounts: { '多参盲调': 2 }, mainClarityBonus: 0 },
+  });
+  assert(/收敛|收束/.test(convergeAdvice), 'converge tip');
+
+  const thrashAdvice = studentAdvice({
+    primaryStrategy: '单变量·A',
+    breakdown: { switchKind: 'thrash', nSwitch: 5, nBlockSwitch: 5, segmentCounts: {}, mainClarityBonus: 0 },
+  });
+  assert(/散|连续/.test(thrashAdvice), 'thrash tip');
+
   console.log('strategy-path-summary-check: ok');
 }
 

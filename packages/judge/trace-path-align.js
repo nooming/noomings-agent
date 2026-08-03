@@ -90,6 +90,12 @@ function buildPathSteps(events, chapter) {
   return { pathSteps: steps, align, lastPayload: payload };
 }
 
+function isConfoundProbeRoute(r) {
+  if (!r) return false;
+  if (r.kind === 'confoundProbe' || r.warn === 'irrelevant') return true;
+  return /试探|旁路|confound|irrelevant/i.test(`${r.id || ''}${r.label || ''}`);
+}
+
 function guessStrategyRoute(touchedIds, irrelevantCount, misconceptionCount, strategy, opts = {}) {
   const routes = strategy?.routes || [];
   if (!routes.length) {
@@ -97,6 +103,7 @@ function guessStrategyRoute(touchedIds, irrelevantCount, misconceptionCount, str
   }
   const singleVariableRate = opts.singleVariableRate;
   const priorityAvs = opts.priorityAvs || [];
+  const cvHeavy = !!opts.cvHeavy;
   const scores = {};
   for (const r of routes) {
     const maps = new Set(r.mapsTo || []);
@@ -107,11 +114,16 @@ function guessStrategyRoute(touchedIds, irrelevantCount, misconceptionCount, str
     if (r.warn === 'irrelevant' && irrelevantCount > 0) score += 3;
     if (isTrapRoute(r) && misconceptionCount > 0) score += 3;
     if (r.id === 'main' && touchedIds.has('R1')) score += 2;
-    if (r.id === 'main' && singleVariableRate != null && singleVariableRate >= 0.8) score += 2;
+    // CV 重度时不得因「AV 自身单参」抬主路径
+    if (r.id === 'main' && singleVariableRate != null && singleVariableRate >= 0.8 && !cvHeavy) {
+      score += 2;
+    }
     if (singleVariableRate != null && singleVariableRate < 0.5 && isTrapRoute(r)) score += 2;
+    if (cvHeavy && isConfoundProbeRoute(r) && irrelevantCount > 0) score += 4;
+    if (cvHeavy && (r.id === 'main' || /^main[_-]/i.test(String(r.id || '')))) score -= 3;
     for (const av of priorityAvs) {
       const lab = av.label || '';
-      if (lab && String(r.label || '').includes(lab)) {
+      if (lab && String(r.label || '').includes(lab) && !cvHeavy) {
         score += Math.max(1, 4 - (av.priorityRank || 4));
       }
     }
@@ -139,10 +151,47 @@ function collectRetryHints(events) {
   return hints;
 }
 
-function metricSingleVariableRate(events, chapter) {
+/**
+ * CV / 无关控件触碰统计（challenge 段归一化后事件）。
+ * cvHeavy：竞赛段拧无关量占比高，不得当作清晰单变量主路径。
+ */
+function metricCvTouchStats(events, chapter) {
+  let avTunings = 0;
+  let cvTunings = 0;
+  for (const e of events || []) {
+    if (isIrrelevantEvent(e, chapter)) {
+      cvTunings += 1;
+      continue;
+    }
+    if (isOperationTuning(e, chapter)) avTunings += 1;
+  }
+  const total = avTunings + cvTunings;
+  const cvRatio = total > 0 ? cvTunings / total : 0;
+  const cvOverAv = avTunings > 0 ? cvTunings / avTunings : (cvTunings > 0 ? 1 : 0);
+  const cvHeavy = cvTunings > 0 && (
+    avTunings === 0
+    || cvOverAv >= 0.35
+    || (cvTunings >= 3 && cvTunings >= avTunings)
+  );
+  return {
+    avTunings,
+    cvTunings,
+    cvRatio: Math.round(cvRatio * 100) / 100,
+    cvOverAv: Math.round(cvOverAv * 100) / 100,
+    cvHeavy,
+  };
+}
+
+function metricSingleVariableRate(events, chapter, cvStats = null) {
   const tuning = events.filter(e => e.type === 'tuning' && isOperationTuning(e, chapter));
-  if (!tuning.length) return null;
-  if (tuning.length === 1) return 1;
+  const cv = cvStats || metricCvTouchStats(events, chapter);
+
+  // 只有 CV、没有 AV：不算「单变量成功」
+  if (!tuning.length) {
+    if (cv.cvTunings > 0) return 0;
+    return null;
+  }
+  if (tuning.length === 1 && !cv.cvHeavy) return 1;
 
   let rapidMix = 0;
   for (let k = 2; k < tuning.length; k++) {
@@ -164,7 +213,13 @@ function metricSingleVariableRate(events, chapter) {
     i = j;
   }
   const burstScore = bursts ? 1 : 1;
-  const rate = Math.max(0, Math.min(1, burstScore * (1 - mixPenalty * 0.5)));
+  let rate = Math.max(0, Math.min(1, burstScore * (1 - mixPenalty * 0.5)));
+
+  // CV 重度：压低 singleVariableRate，避免 S3 看起来像 S1
+  if (cv.cvHeavy) {
+    const damp = Math.max(0.15, 1 - Math.min(1, cv.cvOverAv));
+    rate = Math.min(rate, 0.4) * damp;
+  }
   return Math.round(rate * 100) / 100;
 }
 
@@ -268,7 +323,8 @@ function tracePathAlign(trace, chapter, ch) {
     .filter(id => touched.has(id));
 
   const misconceptionCount = coupled.misconceptionControls.length;
-  const singleVariableRate = metricSingleVariableRate(events, chapter);
+  const cvStats = metricCvTouchStats(events, chapter);
+  const singleVariableRate = metricSingleVariableRate(events, chapter, cvStats);
   const paramCoverage = metricParameterCoverage(events, chapter);
 
   const priorityAvs = (chapter?.inquiryScript?.adjustmentVariables || [])
@@ -280,7 +336,7 @@ function tracePathAlign(trace, chapter, ch) {
     permanentIrrelevantCount,
     misconceptionCount,
     chapter?.strategy,
-    { singleVariableRate, priorityAvs },
+    { singleVariableRate, priorityAvs, cvHeavy: cvStats.cvHeavy },
   );
 
   const irrelevantTouches = irrelevantKg.length
@@ -311,7 +367,16 @@ function tracePathAlign(trace, chapter, ch) {
       parameterCoverage: paramCoverage.parameterCoverage,
       strategyScore: strategySegmentScore.score,
       primaryStrategy: strategySegmentScore.primaryStrategy,
+      switchKind: strategySegmentScore.switchKind || strategySegmentScore.breakdown?.switchKind || null,
+      strategySequence: strategySegmentScore.strategySequence || strategySegmentScore.breakdown?.strategySequence || [],
+      nSwitch: strategySegmentScore.breakdown?.nSwitch ?? null,
+      nBlockSwitch: strategySegmentScore.breakdown?.nBlockSwitch ?? null,
       playMode,
+      cvTunings: cvStats.cvTunings,
+      avTunings: cvStats.avTunings,
+      cvRatio: cvStats.cvRatio,
+      cvOverAv: cvStats.cvOverAv,
+      cvHeavy: cvStats.cvHeavy,
     },
     align,
     normalizeMeta: meta,
@@ -324,6 +389,7 @@ module.exports = {
   guessStrategyRoute,
   metricParameterCoverage,
   metricSingleVariableRate,
+  metricCvTouchStats,
   scoreTraceStrategy,
   detectPlayMode,
 };

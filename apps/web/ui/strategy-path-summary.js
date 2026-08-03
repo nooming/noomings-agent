@@ -27,6 +27,23 @@
     return `探究路径：${s}`;
   }
 
+  function switchKindAdvice(switchKind, bd) {
+    const kind = String(switchKind || '');
+    if (kind === 'focused_redirect') {
+      return '你先围绕一个量连续试了几发，再换到另一个量——这是聚焦换向，方向清楚即可。';
+    }
+    if (kind === 'explore_converge') {
+      return '前几轮有些混杂试探，后面逐渐收束到单一变量，收敛感不错；继续保持一次只改一项。';
+    }
+    if (kind === 'thrash') {
+      return '策略切换较散、缺少连续对照块；先选定一个量连续试几发，看清趋势再换方向。';
+    }
+    if (kind === 'stable' && bd && bd.mainClarityBonus > 0) {
+      return null; // let the single-var clarity tip handle it
+    }
+    return null;
+  }
+
   function studentAdvice(scoreResult, opts) {
     const o = opts || {};
     if (o.alignmentOk === false || o.degradeReason) {
@@ -36,9 +53,15 @@
     const primary = scoreResult?.primaryStrategy || '';
     const tips = [];
 
-    if (bd.segmentCounts && bd.segmentCounts['多参盲调'] >= 2) {
+    // 换向感知优先：收敛/聚焦换向比笼统「多参」更贴过程
+    const switchTip = switchKindAdvice(bd.switchKind, bd);
+    if (switchTip) {
+      tips.push(switchTip);
+    }
+
+    if (bd.switchKind !== 'explore_converge' && bd.segmentCounts && bd.segmentCounts['多参盲调'] >= 2) {
       tips.push('这几轮里经常同时拧多个量，现象很难归因；下次可以试着每次只动一个控件再发射。');
-    } else if (/盲调|多参/.test(primary)) {
+    } else if (bd.switchKind !== 'explore_converge' && /盲调|多参/.test(primary)) {
       tips.push('本局主路径像「多量一起拧」。想看清因果时，固定其余、只改一项再观察。');
     }
 
@@ -48,7 +71,7 @@
       tips.push('你有试探一些旁路控件——可以，但主探究仍宜围绕会改变结果的量。');
     }
 
-    if (bd.nSwitch >= 3) {
+    if (!switchTip && bd.nSwitch >= 3) {
       tips.push('策略切换较频繁，试次有点散；选定一个量连续试几发，再考虑换方向。');
     }
 
@@ -58,7 +81,7 @@
 
     if (o.nearTies && o.nearTies.length >= 2) {
       tips.push('有好几条探究路径表现接近，不必执着「唯一标准答案」；关键是能说清你控制了什么。');
-    } else if (/单变量/.test(primary) && bd.mainClarityBonus > 0) {
+    } else if (/单变量/.test(primary) && bd.mainClarityBonus > 0 && bd.switchKind !== 'thrash') {
       tips.push('你大体保持了单变量节奏，继续用「改一项→观察→再决定」即可。');
     }
 
@@ -86,6 +109,9 @@
       score: scoreResult?.score ?? null,
       primaryStrategy: scoreResult?.primaryStrategy || null,
       nSwitch: bd.nSwitch,
+      nBlockSwitch: bd.nBlockSwitch,
+      switchKind: bd.switchKind || scoreResult?.switchKind || null,
+      strategySequence: bd.strategySequence || scoreResult?.strategySequence || [],
       cvTunings: bd.cvTunings,
       avTunings: bd.avTunings,
       cvOver: !!bd.cvOver,
@@ -146,6 +172,7 @@
   const api = {
     pathTypeLabel,
     studentAdvice,
+    switchKindAdvice,
     degradeAdvice,
     detectNearTies,
     formatSummary,

@@ -23,15 +23,30 @@ function gapFromHint(hintKey, chapter) {
 const ROUTE_LABELS = { main: '主推途径 M', trap: '误区途径 T', teach: '教案途径 L' };
 
 function isPassed(summary) {
-  return summary.align?.dtPath?.includes('R1') || summary.lastSnapshot?.winOk;
+  return summary.align?.dtPath?.includes('R1')
+    || summary.lastSnapshot?.winOk
+    || summary.hasWinEvent;
+}
+
+function isCvHeavyInquiry(summary) {
+  const m = summary?.inquiryPath?.metrics || {};
+  if (m.cvHeavy) return true;
+  if ((summary?.irrelevantTouches || 0) > 0 && m.cvOverAv != null && m.cvOverAv >= 0.35) {
+    return true;
+  }
+  return false;
 }
 
 function isMainSingleVariableExploration(summary) {
   const ip = summary.inquiryPath;
   if (!ip) return false;
+  // CV 重度拧旁路：不得当作主推单变量成功
+  if (isCvHeavyInquiry(summary)) return false;
   const rate = ip.metrics?.singleVariableRate;
   return ip.strategyRouteGuess === 'main' && rate != null && rate >= 0.8;
 }
+
+const SINGLE_VAR_PRAISE_RE = /控制变量途径|坚持单参|主推控制变量|单参调节优于|符合主推/;
 
 function parseJudgeJson(text) {
   if (!text || typeof text !== 'string') return null;
@@ -84,6 +99,39 @@ function filterSingleVariableGaps(gaps) {
     if (!ANTI_SINGLE_VAR_GAP_RE.test(g)) return true;
     return /混调|盲调|交替|无关|忽视|无效调参/.test(g);
   });
+}
+
+function applyCvHeavyPolicy(result, summary) {
+  if (!isCvHeavyInquiry(summary)) return result;
+
+  const out = {
+    ...result,
+    strengths: [...(result.strengths || [])].filter(s => !SINGLE_VAR_PRAISE_RE.test(s)),
+    gaps: [...(result.gaps || [])],
+    teacherSummary: result.teacherSummary ? { ...result.teacherSummary } : undefined,
+  };
+
+  const bypassGap = '竞赛段偏重拧无关量，更像试探旁路';
+  if (!out.gaps.some(g => /无关|旁路|混淆触碰|永久无关/.test(g))) {
+    out.gaps.unshift(bypassGap);
+  }
+  out.gaps = out.gaps.slice(0, 2).map(s => truncateText(s, 30));
+  out.strengths = out.strengths.slice(0, 2).map(s => truncateText(s, 30));
+
+  if (out.teacherSummary) {
+    out.teacherSummary.strengths = out.strengths;
+    out.teacherSummary.gaps = out.gaps;
+    if (SINGLE_VAR_PRAISE_RE.test(out.teacherSummary.summary || '')) {
+      out.teacherSummary.summary = truncateText(bypassGap, 40);
+    }
+    if (!out.teacherSummary.suggestion || SINGLE_VAR_PRAISE_RE.test(out.teacherSummary.suggestion)) {
+      out.teacherSummary.suggestion = '先停拧无关控件，回到单一有效参量';
+    }
+  }
+  if (out.comment && SINGLE_VAR_PRAISE_RE.test(out.comment)) {
+    out.comment = `[规则模式] ${bypassGap}`;
+  }
+  return out;
 }
 
 function applySingleVariablePolicy(result, summary) {
@@ -151,6 +199,8 @@ function ruleJudge(summary, chapter) {
   if (winAttempts > 1) gaps.push('多次触发过关判定，说明约束可能未同时满足。');
   if (irrelevantTouches > 0) gaps.push('操作了与过关永久无关的控件，理解可能有偏差。');
 
+  const cvHeavy = isCvHeavyInquiry(summary);
+
   if (inquiryPath) {
     const m = inquiryPath.metrics || {};
     const route = inquiryPath.strategyRouteGuess;
@@ -161,19 +211,30 @@ function ruleJudge(summary, chapter) {
     if (route === 'trap' || (inquiryPath.irrelevantTouches?.length && route !== 'main' && !misconceptions.length)) {
       gaps.push(`路径更接近${ROUTE_LABELS.trap || '误区途径'}（${(inquiryPath.irrelevantTouches || []).join('、')}），控制变量意识可能不足。`);
     }
-    if (route === 'main' && inquiryPath.pathSteps?.includes('R1')) {
+    if (cvHeavy) {
+      gaps.push('竞赛段偏重拧无关量，更像试探旁路。');
+    }
+    if (route === 'main' && inquiryPath.pathSteps?.includes('R1') && !cvHeavy) {
       strengths.push(`与${ROUTE_LABELS.main}一致，已沿 O1→约束链→R1 收敛。`);
     }
-    if (route === 'main' && m.singleVariableRate != null && m.singleVariableRate >= 0.8) {
+    if (route === 'main' && m.singleVariableRate != null && m.singleVariableRate >= 0.8 && !cvHeavy) {
       strengths.push('符合控制变量途径，坚持单参调节。');
     }
-    if (m.singleVariableRate != null && m.singleVariableRate < 0.5) {
+    if (m.singleVariableRate != null && m.singleVariableRate < 0.5 && !cvHeavy) {
       gaps.push('多控件交替调节过频，单变量控制习惯较弱。');
+    }
+    // 换向感知：两 AV 间切换≠陷阱；按 switchKind 给过程评语（优先插入，避免被 slice 挤掉）
+    if (m.switchKind === 'focused_redirect' && !cvHeavy) {
+      strengths.unshift('先聚焦再换向，策略切换有节奏。');
+    } else if (m.switchKind === 'explore_converge' && !cvHeavy) {
+      strengths.unshift('探索后逐渐收敛到单变量。');
+    } else if (m.switchKind === 'thrash') {
+      gaps.unshift('策略块切换偏散，缺少连续单变量对照。');
     }
     if (m.rationalCorrectionRate != null && m.rationalCorrectionRate >= 0.5) {
       strengths.push('失败后快照显示约束有向过关方向修正。');
     }
-    if (m.boundaryAware === true) {
+    if (m.boundaryAware === true && !cvHeavy) {
       strengths.push('能识别无关变量或介质边界并回到主路径。');
     }
     if (m.boundaryAware === false) {
@@ -181,18 +242,24 @@ function ruleJudge(summary, chapter) {
     }
   }
 
-  let verdict = align.dtPath.includes('R1') || lastSnapshot?.winOk ? 'pass' : brokenCount > 2 ? 'learning' : 'in_progress';
+  let verdict = align.dtPath.includes('R1') || lastSnapshot?.winOk || summary.hasWinEvent
+    ? 'pass'
+    : brokenCount > 2 ? 'learning' : 'in_progress';
   if (isMainSingleVariableExploration(summary) && verdict === 'learning') verdict = 'in_progress';
   const level = verdict === 'pass' ? 4 : verdict === 'learning' ? 2 : 3;
+  // CV 重度时不要用「单变量表扬」作摘要首句
+  const strengthsClean = cvHeavy
+    ? strengths.filter(s => !SINGLE_VAR_PRAISE_RE.test(s))
+    : strengths;
   const teacherSummary = {
     level,
-    summary: truncateText(strengths[0] || '有基本操作记录', 40),
-    strengths: strengths.slice(0, 2).map(s => truncateText(s, 30)),
+    summary: truncateText(strengthsClean[0] || (cvHeavy ? '竞赛段偏重拧无关量' : '有基本操作记录'), 40),
+    strengths: strengthsClean.slice(0, 2).map(s => truncateText(s, 30)),
     gaps: gaps.slice(0, 2).map(s => truncateText(s, 30)),
     suggestion: truncateText(gaps[0] || gapFromHint('ok', chapter), 40),
   };
   const comment = `[规则模式] ${teacherSummary.summary}${gaps.length ? '；待改进：' + teacherSummary.gaps.join('；') : ''}`;
-  return applySingleVariablePolicy({
+  return applyCvHeavyPolicy(applySingleVariablePolicy({
     mode: 'rule',
     verdict,
     strengths: teacherSummary.strengths,
@@ -201,7 +268,7 @@ function ruleJudge(summary, chapter) {
     inquiryPath: inquiryPath || undefined,
     teacherSummary,
     comment,
-  }, summary);
+  }, summary), summary);
 }
 
 function buildLlmJudgeResult(text, summary) {
@@ -249,7 +316,7 @@ function buildLlmJudgeResult(text, summary) {
       comment: truncateText(text, 200),
     };
   }
-  return applySingleVariablePolicy(result, summary);
+  return applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary);
 }
 
 async function judge(body, opts = {}) {
@@ -285,5 +352,8 @@ module.exports = {
   verdictFromLevel,
   buildLlmJudgeResult,
   applySingleVariablePolicy,
+  applyCvHeavyPolicy,
   isMainSingleVariableExploration,
+  isCvHeavyInquiry,
+  isPassed,
 };

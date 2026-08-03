@@ -136,9 +136,12 @@ function run() {
   assert(sw.score < pure.score, 'switch score below pure');
   assert(sw.score > 0.7, `switch still decent got ${sw.score}`);
   assert(sw.breakdown.nSwitch >= 1, 'records switch');
+  assert(sw.switchKind === 'focused_redirect' || sw.breakdown.switchKind === 'focused_redirect', '3A→2B is focused redirect');
+  assert(sw.breakdown.nBlockSwitch === 1, 'one block switch');
 
   const swCompete = scoreTraceStrategy(switchAtoB(), CHAPTER, { mode: 'compete' });
   assert(swCompete.score < sw.score, 'compete penalizes switch more');
+  assert(pure.switchKind === 'stable' || pure.breakdown.switchKind === 'stable', 'pure is stable');
 
   const cv = scoreTraceStrategy(aWithOccasionalCv(), CHAPTER, { mode: 'explore' });
   assert(cv.primaryStrategy === '单变量·A', 'occasional CV keeps A');

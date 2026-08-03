@@ -1,6 +1,19 @@
 /**
- * ?????????????tuning / snapshot / irrelevant_touch �?
+ * 轨迹事件归一化：legacyTypes / set_* → tuning / irrelevant_touch
+ * 注意：win / snapshot 等规范类型不可被 legacyTypes 改写成 tuning。
  */
+
+/** 已是规范语义的事件类型：禁止被 legacyTypes 重映射（否则 win→tuning 会丢通关） */
+const IMMUTABLE_EVENT_TYPES = new Set([
+  'win',
+  'snapshot',
+  'phase_change',
+  'puzzle_open',
+  'outcome',
+  'win_attempt',
+  'action',
+  'irrelevant_touch',
+]);
 
 function filterEventsForChapter(trace, ch) {
   const events = trace?.events || [];
@@ -17,6 +30,8 @@ function getLegacyTypeMap(chapter) {
 }
 
 function normalizeOneEvent(e, legacyMap) {
+  if (!e?.type || IMMUTABLE_EVENT_TYPES.has(e.type)) return e;
+
   const rule = legacyMap[e.type];
   if (rule) {
     if (rule.canonical === 'tuning') {
@@ -156,4 +171,5 @@ module.exports = {
   isIrrelevantEvent,
   isOperationTuning,
   snapshotPayloadFromEvent,
+  IMMUTABLE_EVENT_TYPES,
 };

@@ -1,0 +1,1623 @@
+{
+  "generatedAt": "2026-08-03T09:48:14.362Z",
+  "formula": "S = Σ α_i s(route_i) + β_main 1[主策略清晰] - λ_switch N_switch - λ_cv f(N_cv) + β_probe",
+  "note": "禁止最后一发定局：primaryStrategy 取有效试次主导单变量，而非 lastSegmentLabel",
+  "round1": {
+    "constants": {
+      "mainClarityBonus": 0.06,
+      "mainClarityThreshold": 0.55,
+      "switchPenalty": 0.03,
+      "cvOverPenalty": 0.12,
+      "cvProbeBonus": 0.02,
+      "cvProbeMax": 2,
+      "cvOverRatio": 0.55,
+      "emptyWeight": 0.15,
+      "confoundWeight": 0.25
+    },
+    "summary": {
+      "samples": 5,
+      "cases": 25,
+      "passed": 25,
+      "rate": 1
+    },
+    "rows": [
+      {
+        "id": "projectile-basic",
+        "title": "斜抛运动探究与挑战",
+        "avs": [
+          "1:初速度",
+          "2:发射高度",
+          "3:发射角度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.97,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·发射高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·发射高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "friction-incline",
+        "title": "仓库卸货滑道 · 摩擦探究",
+        "avs": [
+          "1:斜面倾角",
+          "2:摩擦系数"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.97,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·摩擦系数",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 3,
+              "单变量·摩擦系数": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "multi-kp",
+        "title": "机械能 · 过山车环路",
+        "avs": [
+          "1:初速度",
+          "2:起始高度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.97,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·起始高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·起始高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "capacitor-era-ch1",
+        "title": "电容实验一：介质与击穿",
+        "avs": [
+          "1:极板间距",
+          "2:极板面积"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.97,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板面积",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 3,
+              "单变量·极板面积": 2
+            },
+            "rlReward": 0.39,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "circular-motion",
+        "title": "夜市飞椅 · 圆周运动",
+        "avs": [
+          "1:角速度",
+          "2:半径",
+          "3:倾角"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.97,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·半径",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 3,
+              "单变量·半径": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      }
+    ]
+  },
+  "round2": {
+    "constants": {
+      "mainClarityBonus": 0.06,
+      "mainClarityThreshold": 0.5,
+      "switchPenalty": 0.025,
+      "cvOverPenalty": 0.12,
+      "cvProbeBonus": 0.025,
+      "cvProbeMax": 2,
+      "cvOverRatio": 0.55,
+      "emptyWeight": 0.15,
+      "confoundWeight": 0.25
+    },
+    "summary": {
+      "samples": 5,
+      "cases": 25,
+      "passed": 25,
+      "rate": 1
+    },
+    "rows": [
+      {
+        "id": "projectile-basic",
+        "title": "斜抛运动探究与挑战",
+        "avs": [
+          "1:初速度",
+          "2:发射高度",
+          "3:发射角度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.975,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·发射高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·发射高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "friction-incline",
+        "title": "仓库卸货滑道 · 摩擦探究",
+        "avs": [
+          "1:斜面倾角",
+          "2:摩擦系数"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.975,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·摩擦系数",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 3,
+              "单变量·摩擦系数": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "multi-kp",
+        "title": "机械能 · 过山车环路",
+        "avs": [
+          "1:初速度",
+          "2:起始高度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.975,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·起始高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·起始高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "capacitor-era-ch1",
+        "title": "电容实验一：介质与击穿",
+        "avs": [
+          "1:极板间距",
+          "2:极板面积"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.975,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板面积",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 3,
+              "单变量·极板面积": 2
+            },
+            "rlReward": 0.39,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.88,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "circular-motion",
+        "title": "夜市飞椅 · 圆周运动",
+        "avs": [
+          "1:角速度",
+          "2:半径",
+          "3:倾角"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.975,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·半径",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 3,
+              "单变量·半径": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      }
+    ],
+    "tuned": true
+  },
+  "competeProbe": {
+    "constants": {
+      "mainClarityBonus": 0.08,
+      "mainClarityThreshold": 0.65,
+      "switchPenalty": 0.07,
+      "cvOverPenalty": 0.22,
+      "cvProbeBonus": 0,
+      "cvProbeMax": 1,
+      "cvOverRatio": 0.35,
+      "emptyWeight": 0.1,
+      "confoundWeight": 0.15
+    },
+    "summary": {
+      "samples": 5,
+      "cases": 25,
+      "passed": 25,
+      "rate": 1
+    },
+    "rows": [
+      {
+        "id": "projectile-basic",
+        "title": "斜抛运动探究与挑战",
+        "avs": [
+          "1:初速度",
+          "2:发射高度",
+          "3:发射角度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.87,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·发射高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·发射高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.75,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "friction-incline",
+        "title": "仓库卸货滑道 · 摩擦探究",
+        "avs": [
+          "1:斜面倾角",
+          "2:摩擦系数"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.87,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·摩擦系数",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 3,
+              "单变量·摩擦系数": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.75,
+            "primaryStrategy": "单变量·斜面倾角",
+            "lastSegmentLabel": "单变量·斜面倾角",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·斜面倾角": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "multi-kp",
+        "title": "机械能 · 过山车环路",
+        "avs": [
+          "1:初速度",
+          "2:起始高度"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.87,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·起始高度",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 3,
+              "单变量·起始高度": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.75,
+            "primaryStrategy": "单变量·初速度",
+            "lastSegmentLabel": "单变量·初速度",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·初速度": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "capacitor-era-ch1",
+        "title": "电容实验一：介质与击穿",
+        "avs": [
+          "1:极板间距",
+          "2:极板面积"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.87,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板面积",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 3,
+              "单变量·极板面积": 2
+            },
+            "rlReward": 0.39,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": true,
+            "segmentCounts": {
+              "混淆触碰": 1,
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.4,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 0.75,
+            "primaryStrategy": "单变量·极板间距",
+            "lastSegmentLabel": "单变量·极板间距",
+            "nSwitch": 0,
+            "cvOver": true,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·极板间距": 4
+            },
+            "rlReward": 0.35,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      },
+      {
+        "id": "circular-motion",
+        "title": "夜市飞椅 · 圆周运动",
+        "avs": [
+          "1:角速度",
+          "2:半径",
+          "3:倾角"
+        ],
+        "results": [
+          {
+            "kind": "pure_high_av",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "switch_a_to_b",
+            "verdict": "in_progress",
+            "strategyScore": 0.87,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·半径",
+            "nSwitch": 1,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 3,
+              "单变量·半径": 2
+            },
+            "rlReward": 0.89,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "single_plus_cv_probe",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "multi_param_blind",
+            "verdict": "in_progress",
+            "strategyScore": 0.2,
+            "primaryStrategy": "多参盲调",
+            "lastSegmentLabel": "多参盲调",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "多参盲调": 4
+            },
+            "rlReward": 0.08,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          },
+          {
+            "kind": "over_cv",
+            "verdict": "in_progress",
+            "strategyScore": 1,
+            "primaryStrategy": "单变量·角速度",
+            "lastSegmentLabel": "单变量·角速度",
+            "nSwitch": 0,
+            "cvOver": false,
+            "cvProbe": false,
+            "segmentCounts": {
+              "单变量·角速度": 4
+            },
+            "rlReward": 0.9,
+            "okBand": true,
+            "okPrimary": true,
+            "okNoLastShot": true,
+            "pass": true
+          }
+        ],
+        "passCount": 5
+      }
+    ]
+  },
+  "comparison": {
+    "round1PassRate": 1,
+    "round2PassRate": 1,
+    "competePassRate": 1,
+    "deltaPass": 0
+  }
+}

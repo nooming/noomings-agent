@@ -77,7 +77,7 @@ function judgeSingleVariableCheck() {
   assert(result.teacherSummary.level >= 3, 'level at least 3');
   assert(!result.gaps.some(g => /未尝试调节角度/.test(g)), 'anti-single-var gaps removed');
   assert(!/同时/.test(result.teacherSummary.suggestion || ''), 'no dual-param suggestion');
-  assert(result.strengths.some(s => /控制变量|单参/.test(s)), 'single-var strength added');
+  assert(result.strengths.some(s => /控制变量|单参|单变量/.test(s)), 'single-var strength added');
 
   const policyOnly = applySingleVariablePolicy({
     mode: 'llm',

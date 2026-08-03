@@ -2,7 +2,7 @@
 (function (global) {
   const TAG_BADGES = {
     'existing-html': { label: 'legacy', cls: 'badge-legacy' },
-    'has-confounding': { label: '混淆', cls: 'badge-confound' },
+    'has-confounding': { label: '多控件', cls: 'badge-confound' },
     'button-action': { label: '按钮', cls: 'badge-action' },
     'implicit-formula': { label: '隐式公式', cls: 'badge-implicit' },
     'multi-kp': { label: '多 KP', cls: 'badge-multikp' },
