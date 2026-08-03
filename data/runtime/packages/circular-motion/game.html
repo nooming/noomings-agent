@@ -993,8 +993,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         x: x0, y: y0, vx: tx * speed * 0.15, vy: 0, spin: a0
       };
     } else {
+      // 探究模式短 ride（0.55–0.85s），竞赛完整 1.1s
+      var okDur = (typeof playMode !== 'undefined' && playMode === 'explore')
+        ? (0.55 + Math.min(0.3, Math.abs(omega) * 0.08))
+        : 1.1;
       rideAnim = {
-        kind: 'ok', t: 0, dur: 1.1, onDone: onDone || null,
+        kind: 'ok', t: 0, dur: okDur, onDone: onDone || null,
         r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale
       };
     }

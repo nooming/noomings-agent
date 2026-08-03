@@ -527,9 +527,82 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const testBtn = document.getElementById('btn-test');
         const resetBtn = document.getElementById('btn-reset');
 
-        let W = 600, H = 320, animT = 0, flowPulse = 0;
+        let W = 600, H = 320, animT = 0, ambientT = 0;
+        /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+        let eventAnim = null;
+        let rafLastTs = 0;
         /** 仅「测试热流」后揭示精确 Q；调参中显示待测 */
         let measuredQ = null;
+
+        function computeBand(Q) {
+            if (playMode !== 'challenge') {
+                if (Q > TARGET_Q_HI) return 'high';
+                if (Q >= TARGET_Q && Q <= TARGET_Q_HI) return 'ok';
+                return 'low';
+            }
+            if (Q >= TARGET_Q && Q <= TARGET_Q_HI) return 'ok';
+            if (Q > TARGET_Q_HI) return 'high';
+            return 'low';
+        }
+
+        function mapQToDur(Q) {
+            const q = Math.max(200, Math.min(5000, Q || 200));
+            return Math.max(0.4, Math.min(1.5, 0.42 + (q / 5000) * 1.08));
+        }
+
+        function startEventAnim(k, dt, Q, aUi, band) {
+            const totalDur = mapQToDur(Q);
+            eventAnim = {
+                phase: 'windup',
+                t: 0,
+                drivers: {
+                    k: k, dt: dt, Q: Q, aUi: aUi, band: band,
+                    surgeAmp: Math.min(1, Q / 5000),
+                    totalDur: totalDur
+                }
+            };
+        }
+
+        function getEventPhaseDurs() {
+            if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+            const d = eventAnim.drivers;
+            const windupDur = Math.max(0.12, d.totalDur * 0.28);
+            const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+            const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+            return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+        }
+
+        function stepEventAnim(dt) {
+            if (!eventAnim) return;
+            eventAnim.t += dt;
+            const ph = getEventPhaseDurs();
+            if (eventAnim.phase === 'windup') {
+                if (eventAnim.t >= ph.windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'peak') {
+                if (eventAnim.t >= ph.peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'settle') {
+                if (eventAnim.t >= ph.settleDur) eventAnim = null;
+            }
+        }
+
+        function getEventSurge() {
+            if (!eventAnim) return 0;
+            const d = eventAnim.drivers;
+            const ph = getEventPhaseDurs();
+            if (eventAnim.phase === 'windup') {
+                return Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur)) * d.surgeAmp;
+            }
+            if (eventAnim.phase === 'peak') return d.surgeAmp;
+            return d.surgeAmp * Math.exp(-eventAnim.t * 2.6);
+        }
+
+        function getBandFlash() {
+            if (!eventAnim) return 0;
+            const ph = getEventPhaseDurs();
+            if (eventAnim.phase === 'peak') return 1 - eventAnim.t / Math.max(0.05, ph.peakDur);
+            if (eventAnim.phase === 'settle') return Math.max(0, 0.55 - eventAnim.t * 0.75);
+            return 0;
+        }
 
         const MODE_GOALS = {
           explore: {
@@ -637,6 +710,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.clearRect(0, 0, W, H);
             const INK = '#140c0c', MID = '#342020', HI = '#f0a090', GLOW = '#ff6040';
             const METAL = '#8a7870', PANEL = '#241616', ACCENT = '#e07060', OK = '#6fae8f';
+            const drv = eventAnim ? eventAnim.drivers : null;
+            if (drv) {
+                k = drv.k; dt = drv.dt; Qlive = drv.Q; aUi = drv.aUi;
+            }
+            const surge = getEventSurge();
+            const bandFlash = getBandFlash();
+            const band = drv ? drv.band : null;
+            const timeBase = eventAnim ? animT : ambientT;
             const intensity = Math.min(Qlive / 5000, 1);
             const dtNorm = Math.min(1, dt / 80);
             const coolFactor = Math.min(1, (1 - intensity) * 0.55 + dtNorm * 0.35);
@@ -728,7 +809,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 ctx.strokeStyle = `rgba(255,160,120,${0.28 + intensity * 0.4})`;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.arc(srcX + srcW * 0.65, rodY, 10 + c * 6 + Math.sin(animT * 3 + c) * 3, 0, Math.PI * 2);
+                ctx.arc(srcX + srcW * 0.65, rodY, 10 + c * 6 + Math.sin(timeBase * 3 + c) * 3, 0, Math.PI * 2);
                 ctx.stroke();
             }
             ctx.fillStyle = HI;
@@ -791,17 +872,29 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.font = '12px "Microsoft YaHei",sans-serif';
             ctx.fillText('导热棒 · IR 示意', rodX0, rodY - rodH / 2 - 12);
 
-            const n = 8 + Math.floor(intensity * 12);
+            const n = Math.max(8, Math.round((8 + intensity * 12) * (eventAnim ? (1 + surge * 2.5) : 1)));
+            const flowSpeed = eventAnim ? (0.55 + intensity * 0.85 + surge * 1.6) : (0.35 + intensity * 0.6);
             for (let i = 0; i < n; i++) {
-                const t = (animT * (0.35 + intensity * 0.6) + i / n) % 1;
+                const t = (timeBase * flowSpeed + i / n) % 1;
                 const x = rodX0 + t * rodLen;
-                const y = rodY + Math.sin(animT * 2 + i) * (rodH * 0.45);
-                const alpha = 0.3 + intensity * 0.65;
+                const y = rodY + Math.sin(timeBase * 2 + i) * (rodH * 0.45);
+                let pr = 3 + intensity * 2.5 + surge * 3;
+                let pR = 255, pG = 96, pB = 64;
+                if (band === 'ok' && bandFlash > 0) {
+                    pR = Math.round(pR + (111 - pR) * bandFlash * 0.55);
+                    pG = Math.round(pG + (174 - pG) * bandFlash * 0.55);
+                    pB = Math.round(pB + (143 - pB) * bandFlash * 0.55);
+                } else if (band === 'high' && bandFlash > 0) {
+                    pR = Math.round(pR + (255 - pR) * bandFlash * 0.35);
+                    pG = Math.round(pG + (40 - pG) * bandFlash * 0.4);
+                    pB = Math.round(pB + (40 - pB) * bandFlash * 0.35);
+                }
+                const alpha = 0.3 + intensity * 0.65 + surge * 0.25;
                 ctx.beginPath();
-                ctx.fillStyle = 'rgba(255,96,64,' + alpha + ')';
-                ctx.shadowColor = GLOW;
-                ctx.shadowBlur = 6 + intensity * 8;
-                ctx.arc(x, y, 3 + intensity * 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(' + pR + ',' + pG + ',' + pB + ',' + alpha + ')';
+                ctx.shadowColor = band === 'ok' && bandFlash > 0 ? OK : GLOW;
+                ctx.shadowBlur = 6 + intensity * 8 + surge * 14;
+                ctx.arc(x, y, pr, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
@@ -829,33 +922,63 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
               ctx.fillText('穿墙热流 ' + Qshown.toFixed(0) + ' W · 本次测量', boxX + 10, boxY + 42);
             }
 
-            if (flowPulse > 0) {
-                ctx.globalAlpha = Math.min(1, flowPulse);
-                const halo = ctx.createRadialGradient(rodX0 + rodLen * 0.35, rodY, 8, rodX0 + rodLen * 0.35, rodY, rodLen * 0.55);
-                halo.addColorStop(0, 'rgba(255,96,64,0.45)');
-                halo.addColorStop(1, 'rgba(255,96,64,0)');
+            if (eventAnim && surge > 0.02) {
+                const waveX = rodX0 + rodLen * (0.22 + surge * 0.18);
+                const waveW = rodLen * (0.35 + surge * 0.45);
+                const waveH = rodH * (2.2 + surge * 1.8);
+                let haloC0, haloC1, strokeC;
+                if (band === 'ok') {
+                    haloC0 = 'rgba(111,174,143,' + (0.22 + bandFlash * 0.35 + surge * 0.25) + ')';
+                    haloC1 = 'rgba(111,174,143,0)';
+                    strokeC = OK;
+                } else if (band === 'high') {
+                    haloC0 = 'rgba(255,80,40,' + (0.35 + bandFlash * 0.45 + surge * 0.3) + ')';
+                    haloC1 = 'rgba(255,80,40,0)';
+                    strokeC = GLOW;
+                } else {
+                    haloC0 = 'rgba(255,96,64,' + (0.28 + surge * 0.35) + ')';
+                    haloC1 = 'rgba(255,96,64,0)';
+                    strokeC = ACCENT;
+                }
+                ctx.globalAlpha = Math.min(1, 0.55 + surge * 0.45);
+                const halo = ctx.createRadialGradient(waveX, rodY, 8, waveX, rodY, waveW * 0.65);
+                halo.addColorStop(0, haloC0);
+                halo.addColorStop(1, haloC1);
                 ctx.fillStyle = halo;
-                ctx.fillRect(rodX0 - 20, rodY - rodH * 2, rodLen + 40, rodH * 4);
-                ctx.strokeStyle = GLOW;
-                ctx.lineWidth = 5;
-                ctx.shadowColor = GLOW;
-                ctx.shadowBlur = 16;
+                ctx.fillRect(rodX0 - 20, rodY - waveH, rodLen + 40, waveH * 2);
+                ctx.strokeStyle = strokeC;
+                ctx.lineWidth = 3 + surge * 5 + (band === 'high' ? bandFlash * 4 : 0);
+                ctx.shadowColor = strokeC;
+                ctx.shadowBlur = 12 + surge * 20 + (band === 'high' ? bandFlash * 18 : 0);
                 ctx.beginPath();
                 ctx.moveTo(rodX0 - 10, rodY);
                 ctx.lineTo(rodX1 + 10, rodY);
                 ctx.stroke();
+                if (band === 'high' && (eventAnim.phase === 'peak' || eventAnim.phase === 'settle')) {
+                    const ripple = 8 + bandFlash * 16 + surge * 12;
+                    ctx.strokeStyle = 'rgba(255,60,40,' + (0.35 + bandFlash * 0.5) + ')';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(rodX0 + rodLen * 0.42, rodY, ripple, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(rodX0 + rodLen * 0.58, rodY, ripple * 0.72, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
                 ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1;
             }
         }
 
         function fireTest() {
+            if (eventAnim) return;
             const k = parseFloat(kSlider.value);
             const dt = parseFloat(dtSlider.value);
             const Q = computeHeatRate(k, dt);
+            const band = computeBand(Q);
             measuredQ = Q;
-            flowPulse = 1;
             heatDisplay.textContent = Q.toFixed(2);
+            startEventAnim(k, dt, Q, parseFloat(aSlider.value), band);
             const controls = {
                 's-thermal-conductivity': k.toString(),
                 's-temperature-diff': dt.toString(),
@@ -864,7 +987,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             if (playMode === 'explore') {
                 feedback.innerHTML = '本次测量 ' + Q.toFixed(0) + ' W · 继续对比导热与温差';
                 winArea.innerHTML = '';
-                drawCanvas(k, dt, Q, parseFloat(aSlider.value), measuredQ);
                 if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
                 return;
             }
@@ -880,15 +1002,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 }
                 winArea.innerHTML = '<span class="win-badge">🏆 过关！</span>';
             } else if (tooHot) {
-                // FixedChallenge：失败不换阈值；过热与不足可区分
                 feedback.innerHTML = '<strong>炉墙过热</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 上限 ' + TARGET_Q_HI + ' W</span>';
                 winArea.innerHTML = '<span class="fail-badge" style="color:#fb7185;">未过关·过热</span>';
             } else {
-                // FixedChallenge：失败不换阈值
                 feedback.innerHTML = '<strong>供暖不足</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 下限 ' + TARGET_Q + ' W</span>';
                 winArea.innerHTML = '<span class="fail-badge" style="color:#fda4af;">未过关·不足</span>';
             }
-            drawCanvas(k, dt, Q, parseFloat(aSlider.value), measuredQ);
             if (window.__emit) {
                 window.__emit('snapshot', { controls: controls, winOk: winOk, hintKey: winOk ? 'win_ok' : (tooHot ? 'retry_overheat' : 'retry_low_heat') });
                 if (winOk) window.__emit('win', { winOk: true });
@@ -896,6 +1015,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function resetSim() {
+            eventAnim = null;
             kSlider.value = '25';
             dtSlider.value = '20';
             aSlider.value = '0.05';
@@ -913,6 +1033,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         resetBtn.addEventListener('click', resetSim);
         [kSlider, dtSlider, aSlider].forEach(function(el) {
             el.addEventListener('input', function() {
+                if (eventAnim) return;
                 measuredQ = null;
                 updateReadings();
                 feedback.innerHTML = '调节中… 点击「测试热流」查看结果。';
@@ -920,9 +1041,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             });
         });
 
-        function tick() {
-            animT += 0.016;
-            if (flowPulse > 0) flowPulse = Math.max(0, flowPulse - 0.02);
+        function tick(ts) {
+            const dt = rafLastTs ? Math.min(0.05, (ts - rafLastTs) / 1000) : 0.016;
+            rafLastTs = ts;
+            if (!eventAnim) ambientT += dt;
+            animT += dt;
+            stepEventAnim(dt);
             updateReadings();
             requestAnimationFrame(tick);
         }

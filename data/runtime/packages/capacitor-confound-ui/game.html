@@ -507,6 +507,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     let W = 600, H = 400, dpr = 1;
     let glowPulse = 0;
     let meterNeedle = 0;
+    /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+    let eventAnim = null;
+    let rafLastTs = 0;
     let playMode = 'explore';
     let lockedBand = null;
     let challengeWon = false;
@@ -633,6 +636,52 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     function getD() { return parseFloat(distSlider.value); }
     function getTone() { return parseInt(toneSlider.value, 10) || 0; }
 
+    function computeCapBand(C) {
+      if (playMode !== 'challenge') return null;
+      if (C >= TARGET_LO && C <= TARGET_HI) return 'ok';
+      return C < TARGET_LO ? 'low' : 'high';
+    }
+
+    function mapCToDur(C) {
+      const cNorm = Math.min(1, C / 300);
+      return Math.max(0.4, Math.min(1.5, 0.45 + cNorm * 0.9));
+    }
+
+    function startEventAnim(A, d, C_pF, tone) {
+      eventAnim = {
+        phase: 'windup',
+        t: 0,
+        drivers: {
+          A: A, d: d, C: C_pF, tone: tone,
+          band: computeCapBand(C_pF),
+          surgeAmp: Math.min(1, C_pF / 300),
+          totalDur: mapCToDur(C_pF)
+        }
+      };
+    }
+
+    function getEventPhaseDurs() {
+      if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+      const d = eventAnim.drivers;
+      const windupDur = Math.max(0.12, d.totalDur * 0.28);
+      const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+      const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+      return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+    }
+
+    function stepEventAnim(dt) {
+      if (!eventAnim) return;
+      eventAnim.t += dt;
+      const ph = getEventPhaseDurs();
+      if (eventAnim.phase === 'windup') {
+        if (eventAnim.t >= ph.windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'peak') {
+        if (eventAnim.t >= ph.peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'settle') {
+        if (eventAnim.t >= ph.settleDur) eventAnim = null;
+      }
+    }
+
     function resizeCanvas() {
       const rect = wrap.getBoundingClientRect();
       dpr = window.devicePixelRatio || 1;
@@ -669,6 +718,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
       if (emitSnapshot) {
         measuredC = C_pF;
+        startEventAnim(A, d, C_pF, tone);
         capDisplay.textContent = measuredC.toFixed(2);
         const controls = {
           's-area': A.toString(),
@@ -725,9 +775,33 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     }
 
     function drawScene(A, d, tone, C_pF) {
+      const drv = eventAnim ? eventAnim.drivers : null;
+      if (drv) { A = drv.A; d = drv.d; C_pF = drv.C; tone = drv.tone; }
+
       ctx.clearRect(0, 0, W, H);
       const INK = '#141008', MID = '#2e2414', HI = '#f0c878', GLOW = '#e09030';
       const METAL = '#7a8490', PANEL = '#241c10', ACCENT = '#d4a050', OK = '#6fae8f';
+
+      const visC = drv ? drv.C : C_pF;
+      const band = drv ? drv.band : (measuredC != null ? computeCapBand(measuredC) : null);
+      let fieldPulse = 0, meterPulse = 0;
+      if (eventAnim) {
+        const dEv = eventAnim.drivers;
+        const ph = getEventPhaseDurs();
+        if (eventAnim.phase === 'windup') {
+          fieldPulse = Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur)) * dEv.surgeAmp * 0.55;
+        } else if (eventAnim.phase === 'peak') {
+          fieldPulse = dEv.surgeAmp;
+          meterPulse = 1 - eventAnim.t / Math.max(0.05, ph.peakDur);
+        } else if (eventAnim.phase === 'settle') {
+          fieldPulse = dEv.surgeAmp * Math.exp(-eventAnim.t * 2.2);
+          if (band === 'ok') meterPulse = Math.max(0, 0.55 - eventAnim.t * 0.75);
+        }
+      }
+
+      const capNorm = Math.min(1, visC / 300);
+      const capOk = band === 'ok' || (band == null && measuredC != null && winOkColor(measuredC));
+      const capMatch = capOk ? 1 : (measuredC != null ? Math.max(0, 1 - Math.abs((measuredC - (TARGET_LO + TARGET_HI) / 2)) / ((TARGET_HI - TARGET_LO) * 2)) : capNorm * 0.3);
 
       const wall = ctx.createLinearGradient(0, 0, 0, H);
       wall.addColorStop(0, '#1a140c');
@@ -750,11 +824,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillRect(40 + cc * (W / 3.5), 10, 6, 24);
       }
 
-      const capNorm = Math.min(1, (measuredC != null ? measuredC : C_pF) / 300);
-      const capOk = measuredC != null && winOkColor(measuredC);
-      const capMatch = capOk ? 1 : (measuredC != null ? Math.max(0, 1 - Math.abs((measuredC - (TARGET_LO + TARGET_HI) / 2)) / ((TARGET_HI - TARGET_LO) * 2)) : capNorm * 0.3);
-      const lampA = 0.10 + capNorm * 0.12 + capMatch * 0.10;
-      const lampCore = capOk ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(224,144,48,' + lampA + ')';
+      const lampA = 0.10 + capNorm * 0.12 + capMatch * 0.10 + fieldPulse * 0.14;
+      let lampCore = capOk ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(224,144,48,' + lampA + ')';
+      if (band === 'high' || band === 'low') lampCore = 'rgba(224,112,64,' + lampA + ')';
+      else if (band === 'ok') lampCore = 'rgba(111,174,143,' + lampA + ')';
       const lamp = ctx.createRadialGradient(W * 0.35, H * 0.06, 8, W * 0.35, H * 0.06, W * 0.55);
       lamp.addColorStop(0, lampCore);
       lamp.addColorStop(1, 'rgba(224,144,48,0)');
@@ -808,8 +881,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillRect(meterX, meterY, meterW, meterH);
       ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 2.5;
-      ctx.shadowColor = capOk ? OK : GLOW;
-      ctx.shadowBlur = 3 + capNorm * 8 + capMatch * 6;
+      let meterShadow = capOk ? OK : GLOW;
+      if (band === 'ok') meterShadow = OK;
+      else if (band === 'high' || band === 'low') meterShadow = '#e07060';
+      ctx.shadowColor = meterShadow;
+      ctx.shadowBlur = 3 + capNorm * 8 + capMatch * 6 + fieldPulse * 12 + meterPulse * 14;
       ctx.strokeRect(meterX, meterY, meterW, meterH);
       ctx.shadowBlur = 0;
       ctx.fillStyle = 'rgba(20,16,8,0.85)';
@@ -825,9 +901,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.font = '13px "Microsoft YaHei",sans-serif';
       ctx.fillStyle = '#a09070';
       ctx.fillText('pF', meterX + meterW - 42, meterY + 56);
-      ctx.fillStyle = measuredC != null ? (winOkColor(measuredC) ? OK : '#e07060') : '#a09070';
+      ctx.fillStyle = measuredC != null ? ((band === 'ok' || winOkColor(measuredC)) ? OK : '#e07060') : '#a09070';
       ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
-      ctx.fillText(measuredC != null ? (winOkColor(measuredC) ? '区间内' : '偏离目标') : '待测', meterX + 22, meterY + 74);
+      ctx.fillText(measuredC != null ? ((band === 'ok' || winOkColor(measuredC)) ? '区间内' : '偏离目标') : '待测', meterX + 22, meterY + 74);
       ctx.strokeStyle = METAL;
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -872,12 +948,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
       ctx.fillText('平行板压装夹具', leftX - 4, midY - gap / 2 - 68);
 
-      glowPulse = (glowPulse + 0.02) % 1;
-      const fieldAlpha = 0.14 + capNorm * 0.22 + capMatch * 0.18;
-      ctx.strokeStyle = capOk
-        ? 'rgba(111,174,143,' + (fieldAlpha + 0.08 * Math.sin(glowPulse * Math.PI * 2)) + ')'
-        : 'rgba(224,144,48,' + (fieldAlpha + 0.08 * Math.sin(glowPulse * Math.PI * 2)) + ')';
-      ctx.lineWidth = 2;
+      const fieldAlpha = 0.14 + capNorm * 0.22 + capMatch * 0.18 + fieldPulse * 0.28;
+      let fieldRgb = capOk ? '111,174,143' : '224,144,48';
+      if (band === 'ok') fieldRgb = '111,174,143';
+      else if (band === 'high' || band === 'low') fieldRgb = '224,112,64';
+      ctx.strokeStyle = 'rgba(' + fieldRgb + ',' + (fieldAlpha + 0.08 * Math.sin(glowPulse * Math.PI * 2)) + ')';
+      ctx.lineWidth = 2 + fieldPulse * 2.2;
       for (let i = 0; i < 9; i++) {
         const x = leftX + 20 + i * (plateW - 40) / 8;
         ctx.beginPath();
@@ -886,9 +962,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.stroke();
       }
       // 极板间场雾
-      ctx.fillStyle = capOk
-        ? 'rgba(111,174,143,' + (0.04 + capNorm * 0.08) + ')'
-        : 'rgba(224,144,48,' + (0.04 + capNorm * 0.10) + ')';
+      ctx.fillStyle = 'rgba(' + fieldRgb + ',' + (0.04 + capNorm * 0.08 + fieldPulse * 0.12) + ')';
       ctx.fillRect(leftX + 8, midY - gap / 2 + 4, plateW - 16, gap - 8);
 
       ctx.fillStyle = colors.top;
@@ -950,6 +1024,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function onTest() { updateUI(true); }
     function onReset() {
+      eventAnim = null;
       measuredC = null;
       areaSlider.value = '0.05';
       distSlider.value = '0.005';
@@ -959,9 +1034,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       winContainer.innerHTML = '';
     }
 
-    areaSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
-    distSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
-    toneSlider.addEventListener('input', function() { measuredC = null; updateUI(false); });
+    areaSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
+    distSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
+    toneSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
     testBtn.addEventListener('click', onTest);
     resetBtn.addEventListener('click', onReset);
     document.getElementById('I1').addEventListener('click', function() {
@@ -975,11 +1050,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     resizeCanvas();
     updateUI(false);
 
-    (function loop() {
+    (function loop(ts) {
+      const dt = rafLastTs ? Math.min(0.05, (ts - rafLastTs) / 1000) : 0.016;
+      rafLastTs = ts;
       glowPulse += 0.015;
+      stepEventAnim(dt);
+      if (measuredC != null) meterNeedle += (measuredC - meterNeedle) * 0.35;
+      else meterNeedle += (0 - meterNeedle) * 0.2;
       drawScene(getA(), getD(), getTone(), pF(computeCapacitance(getA(), getD())));
       requestAnimationFrame(loop);
-    })();
+    })(0);
   })();
 </script>
 

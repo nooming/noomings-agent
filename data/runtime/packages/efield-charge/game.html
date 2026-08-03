@@ -734,6 +734,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         targetZone: { x: 340, y: 120, w: 70, h: 70 }, // 目标区域 (canvas 坐标)
         fieldRect: { x: 50, y: 30, w: 380, h: 260 },  // 电场区域
         lockedTargetYFrac: null, // FixedChallenge：竞赛锁定的靶区纵向比例
+        hitSpark: null, // {x,y,t,dur,intensity,ok} 命中/落点火花 ∝ |ay|
     };
     let playMode = 'explore';
     let challengeWon = false;
@@ -923,6 +924,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         state.finished = false;
         state.trail = [];
         state.time = 0;
+        state.hitSpark = null;
         winOverlay.classList.remove('show');
     }
 
@@ -1017,6 +1019,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             state.launched = false;
             state.x = tz.x + Math.min(tz.w * 0.45, 12);
             const inTarget = state.y >= tz.y && state.y <= tz.y + tz.h;
+            // 命中火花强度 ∝ |ay|（偏转越强越亮）
+            const ayAbs = Math.abs(state.ay || 0);
+            const sparkInt = Math.max(0.25, Math.min(1.2, ayAbs / 420));
+            state.hitSpark = {
+                x: state.x, y: state.y, t: 0, dur: 0.45 + sparkInt * 0.35,
+                intensity: sparkInt, ok: inTarget
+            };
             if (inTarget) {
                 observeMsg.innerHTML = playMode === 'challenge'
                   ? '<span class="win">急单完成：光点打进锁定靶区！</span>'
@@ -1116,8 +1125,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         rr(chX + 2, chY + 2, chW - 4, 22, 6);
         ctx.fill();
 
-        // 电子枪
-        var gunX = 18, gunY = H * 0.55, gunW = 48, gunH = H * 0.22;
+        // 电子枪 — 枪口对齐发射点 (x=70, y=H*LAUNCH_Y_FRAC)，与 resetParticle/launch 一致
+        var launchX = 70, launchY = H * LAUNCH_Y_FRAC;
+        var gunW = 48, gunH = Math.max(40, Math.min(H * 0.18, launchY - 20));
+        var muzzleW = 34, muzzleH = 10;
+        var muzzleX = launchX - muzzleW;
+        var gunX = Math.max(6, muzzleX - gunW + 4);
+        var gunY = launchY - gunH * 0.32 - muzzleH / 2;
         var gunG = ctx.createLinearGradient(gunX, gunY, gunX + gunW, gunY);
         gunG.addColorStop(0, '#3a4458');
         gunG.addColorStop(0.5, METAL);
@@ -1130,14 +1144,15 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         rr(gunX, gunY, gunW, gunH, 4);
         ctx.stroke();
         ctx.fillStyle = ACCENT;
-        rr(gunX + gunW - 4, gunY + gunH * 0.32, 34, 10, 2);
+        rr(muzzleX, launchY - muzzleH / 2, muzzleW, muzzleH, 2);
         ctx.fill();
+        var gunLabelY = Math.max(18, gunY - 6);
         ctx.fillStyle = 'rgba(12,16,24,0.78)';
-        rr(16, H * 0.54 - 16, 52, 20, 3);
+        rr(Math.max(6, gunX), gunLabelY - 16, 52, 20, 3);
         ctx.fill();
         ctx.fillStyle = HI;
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('电子枪', 20, H * 0.54);
+        ctx.fillText('电子枪', Math.max(10, gunX + 4), gunLabelY);
 
         // 平行板偏转区（HERO）
         var fr = state.fieldRect;
@@ -1303,6 +1318,27 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.font = 'bold 12px sans-serif';
             ctx.fillText('v₀', state.x + 20, state.y - 10);
         }
+
+        // 落点火花：强度 ∝ |ay|
+        if (state.hitSpark) {
+            const hs = state.hitSpark;
+            const u = Math.min(1, hs.t / hs.dur);
+            const fade = 1 - u;
+            const n = 6 + Math.floor(hs.intensity * 8);
+            const col = hs.ok ? '125,186,140' : '255,140,80';
+            for (let i = 0; i < n; i++) {
+                const a = (i / n) * Math.PI * 2 + u * 2;
+                const r = (8 + hs.intensity * 22) * (0.35 + 0.65 * u);
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(' + col + ',' + (0.55 * fade * hs.intensity) + ')';
+                ctx.arc(hs.x + Math.cos(a) * r, hs.y + Math.sin(a) * r, 2 + hs.intensity * 1.5 * fade, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(255,245,220,' + (0.35 * fade * hs.intensity) + ')';
+            ctx.arc(hs.x, hs.y, 6 + hs.intensity * 10 * (1 - u), 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     // RAF 循环
@@ -1310,6 +1346,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const dt = Math.min(50, now - lastTime);
         lastTime = now;
         update(dt);
+        if (state.hitSpark) {
+            state.hitSpark.t += dt / 1000;
+            if (state.hitSpark.t >= state.hitSpark.dur) state.hitSpark = null;
+        }
         draw();
         animId = requestAnimationFrame(loop);
     }

@@ -1058,9 +1058,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             sp.life -= 0.04;
             if (sp.life <= 0) { carSparks.splice(si, 1); continue; }
             ctx.globalAlpha = Math.max(0, sp.life);
-            ctx.fillStyle = sp.hot ? SC.hi : SC.glow;
+            ctx.fillStyle = sp.col || (sp.hot ? SC.hi : SC.glow);
             ctx.beginPath();
-            ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
+            ctx.arc(sp.x, sp.y, sp.r || 2.2, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -1185,20 +1185,46 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             winMessage.innerHTML = '<span class="win-badge">' + stopDesc.short + '</span>';
             hintKey = 'pass';
         } else if (failKind === 'fly') {
-            failGlow = 1.0;
+            failGlow = 1.25;
             winGlow = 0;
+            // 冲出：更多火花、偏橙红
+            for (var fi = 0; fi < 14; fi++) {
+              carSparks.push({
+                x: carX + (Math.random() - 0.5) * 18,
+                y: carY - Math.random() * 10,
+                vx: 2 + Math.random() * 4,
+                vy: -1 - Math.random() * 3,
+                life: 0.7 + Math.random() * 0.5,
+                r: 2 + Math.random() * 2.5,
+                hot: true,
+                col: 'rgba(255,140,80,0.9)'
+              });
+            }
             observeText.textContent = playMode === 'challenge'
               ? ('过环后' + stopDesc.where + '。轨道不变，试着略降能量再停进带内。')
               : ('过环后' + stopDesc.where + '。对照末端红标看冲出多远，再略降 h 或 v。');
-            winMessage.innerHTML = '<span class="fail-badge">' + stopDesc.short + '</span>';
+            winMessage.innerHTML = '<span class="fail-badge" style="background:#ea580c;">过环·冲出减速带</span>';
             hintKey = 'fail_speed';
         } else {
-            failGlow = 0.85;
+            failGlow = 0.95;
             winGlow = 0;
+            // 掉落：少量暗红火花、下坠感
+            for (var di = 0; di < 8; di++) {
+              carSparks.push({
+                x: carX + (Math.random() - 0.5) * 12,
+                y: carY + Math.random() * 8,
+                vx: (Math.random() - 0.5) * 2,
+                vy: 1 + Math.random() * 2.5,
+                life: 0.5 + Math.random() * 0.4,
+                r: 1.5 + Math.random() * 1.5,
+                hot: false,
+                col: 'rgba(220,80,80,0.85)'
+              });
+            }
             observeText.textContent = playMode === 'challenge'
               ? '未能过环。轨道不变，继续调参再试。'
               : '掉落了。能量不够过环顶，先加大再观察减速带停靠。';
-            winMessage.innerHTML = '<span class="fail-badge">未过环·掉落</span>';
+            winMessage.innerHTML = '<span class="fail-badge" style="background:#b91c1c;">未过环·掉落</span>';
             hintKey = 'fail_energy';
         }
         drawTrack();

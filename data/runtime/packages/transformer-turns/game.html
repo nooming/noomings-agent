@@ -545,7 +545,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   }
 
   const wrap = canvas.parentElement;
-  let W = 600, H = 360, dpr = 1, spark = 0;
+  let W = 600, H = 360, dpr = 1, spark = 0, lastFrameTs = 0;
+  /** 事件动画 FSM：idle | windup | peak | settle；点击时冻结 drivers */
+  let eventAnim = null;
   let U2_LO = 8.0, U2_HI = 12.0;
   let playMode = 'explore';
   let lockedBand = null;
@@ -611,6 +613,56 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     if (typeof window.__xfmrApplyMode === 'function') window.__xfmrApplyMode(m);
   });
   /* BATCH5-FIXED-20260724 FixedChallenge */
+  function classifyBand(U2) {
+    if (!isFinite(U2)) return null;
+    if (U2 < U2_LO) return 'low';
+    if (U2 > U2_HI) return 'high';
+    return 'ok';
+  }
+  function buildDrivers(n1, n2, U1, U2) {
+    const ratio = n1 > 0 ? n2 / n1 : 1;
+    return {
+      n1: n1, n2: n2, U1: U1, U2: U2, ratio: ratio,
+      band: classifyBand(U2),
+      surgeAmp: Math.min(1, Math.abs(U2) / 12)
+    };
+  }
+  function mapU2ToDur(absU2) {
+    const u = Math.max(0.1, Math.min(20, Math.abs(absU2) || 0.1));
+    return 0.5 + (u / 20) * 0.8;
+  }
+  function stepEventAnim(dt) {
+    if (!eventAnim) return;
+    eventAnim.t += dt;
+    const d = eventAnim.drivers;
+    const windupDur = d.windupDur;
+    const peakDur = 0.12;
+    const settleDur = Math.max(0.18, d.totalDur - windupDur - peakDur);
+    if (eventAnim.phase === 'windup') {
+      if (eventAnim.t >= windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+    } else if (eventAnim.phase === 'peak') {
+      if (eventAnim.t >= peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+    } else if (eventAnim.phase === 'settle') {
+      if (eventAnim.t >= settleDur) eventAnim = null;
+    }
+  }
+  function getEventSurge() {
+    if (!eventAnim) return 0;
+    const d = eventAnim.drivers;
+    const t = eventAnim.t;
+    if (eventAnim.phase === 'windup') {
+      return Math.min(1, t / Math.max(0.05, d.windupDur)) * d.surgeAmp;
+    }
+    if (eventAnim.phase === 'peak') return d.surgeAmp;
+    return d.surgeAmp * Math.exp(-t * 3);
+  }
+  function getBandFlash() {
+    if (!eventAnim) return 0;
+    const t = eventAnim.t;
+    if (eventAnim.phase === 'peak') return 1 - t / 0.12;
+    if (eventAnim.phase === 'settle') return Math.max(0, 0.45 - t * 0.55);
+    return 0;
+  }
   function resizeCanvas() {
     const rect = wrap.getBoundingClientRect();
     dpr = window.devicePixelRatio || 1;
@@ -622,22 +674,53 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  function drawTransformer(n1, n2, U1, U2) {
+  function drawTransformer(n1, n2, U1, U2shown, U2live) {
     ctx.clearRect(0, 0, W, H);
     const INK = '#14110e', MID = '#3a2e22', HI = '#e8b070', GLOW = '#e09040';
     const METAL = '#6a7068', PANEL = '#241c16', ACCENT = '#c4783a', OK = '#7dba8c';
+    const frozen = eventAnim ? eventAnim.drivers : null;
+    const n1d = frozen ? frozen.n1 : n1;
+    const n2d = frozen ? frozen.n2 : n2;
+    const U1d = frozen ? frozen.U1 : U1;
+    const ratio = frozen ? frozen.ratio : (n1d > 0 ? n2d / n1d : 1);
+    const preview = !isFinite(U2shown) && isFinite(U2live);
+    const U2 = frozen ? frozen.U2 : (isFinite(U2shown) ? U2shown : (isFinite(U2live) ? U2live : NaN));
+    const band = frozen ? frozen.band : classifyBand(U2);
+    const surge = getEventSurge();
+    const bandFlash = getBandFlash();
+    const previewScale = preview ? 0.72 : 1;
+    const loadLevel = isFinite(U2) ? Math.min(1, Math.max(0, Math.abs(U2) / 12)) * previewScale : 0;
     const midBand = (U2_LO + U2_HI) / 2;
     const halfBand = Math.max(0.5, (U2_HI - U2_LO) / 2);
-    const loadLevel = isFinite(U2) ? Math.min(1, Math.max(0, U2 / 12)) : 0;
-    const bandProx = isFinite(U2) ? Math.max(0, 1 - Math.abs(U2 - midBand) / (halfBand * 2.5)) : 0;
-    const faultHot = isFinite(U2) && bandProx < 0.25 && U2 > midBand + halfBand;
-    const wireR = bandProx > 0.45 ? 125 : (faultHot ? 240 : 224);
-    const wireG = bandProx > 0.45 ? 186 : (faultHot ? 90 : 144);
-    const wireB = bandProx > 0.45 ? 140 : (faultHot ? 50 : 64);
-    const topLampA = 0.12 + loadLevel * 0.28 + bandProx * 0.08;
-    const topLampR = bandProx > 0.45 ? 125 : (faultHot ? 255 : 224);
-    const topLampG = bandProx > 0.45 ? 186 : (faultHot ? 110 : 144);
-    const topLampB = bandProx > 0.45 ? 140 : (faultHot ? 60 : 64);
+    const bandProx = isFinite(U2) ? Math.max(0, 1 - Math.abs(U2 - midBand) / (halfBand * 2.5)) * previewScale : 0;
+    let wireR, wireG, wireB;
+    if (band === 'ok') {
+      wireR = 125; wireG = 186; wireB = 140;
+    } else if (band === 'low') {
+      wireR = 255; wireG = 110; wireB = 55;
+    } else if (band === 'high') {
+      wireR = 240; wireG = 85; wireB = 45;
+    } else {
+      const faultHot = isFinite(U2) && !preview && bandProx < 0.25 && U2 > midBand + halfBand;
+      wireR = bandProx > 0.45 ? 125 : (faultHot ? 240 : 224);
+      wireG = bandProx > 0.45 ? 186 : (faultHot ? 90 : 144);
+      wireB = bandProx > 0.45 ? 140 : (faultHot ? 50 : 64);
+    }
+    if (bandFlash > 0) {
+      if (band === 'ok') {
+        wireR = Math.round(wireR + (125 - wireR) * bandFlash * 0.55);
+        wireG = Math.round(wireG + (210 - wireG) * bandFlash * 0.55);
+        wireB = Math.round(wireB + (150 - wireB) * bandFlash * 0.55);
+      } else {
+        wireR = Math.round(wireR + (255 - wireR) * bandFlash * 0.65);
+        wireG = Math.round(wireG + (130 - wireG) * bandFlash * 0.5);
+        wireB = Math.round(wireB + (60 - wireB) * bandFlash * 0.4);
+      }
+    }
+    const topLampA = 0.12 + loadLevel * 0.28 + bandProx * 0.08 + surge * 0.22 + bandFlash * 0.12;
+    const topLampR = band === 'ok' ? 125 : (band === 'low' ? 255 : (band === 'high' ? 240 : (bandProx > 0.45 ? 125 : 224)));
+    const topLampG = band === 'ok' ? 186 : (band === 'low' ? 120 : (band === 'high' ? 90 : (bandProx > 0.45 ? 186 : 144)));
+    const topLampB = band === 'ok' ? 140 : (band === 'low' ? 60 : (band === 'high' ? 50 : (bandProx > 0.45 ? 140 : 64)));
 
     // 车间墙面 + 顶光
     const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -801,7 +884,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillText('AC 源', srcX + 18, srcY + 28);
     ctx.fillStyle = HI;
     ctx.font = '10px ui-monospace,monospace';
-    ctx.fillText(U1.toFixed(1) + 'V', srcX + 16, srcY + 52);
+    ctx.fillText(U1d.toFixed(1) + 'V', srcX + 16, srcY + 52);
     ctx.fillStyle = '#c04040';
     ctx.beginPath(); ctx.arc(srcX + 22, srcY + 72, 6, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#3040c0';
@@ -828,54 +911,69 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.beginPath(); ctx.arc(loadX + 36, loadY + 36, 22, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = bulbOn ? GLOW : METAL;
     ctx.lineWidth = 2;
+    if (preview) ctx.setLineDash([4, 3]);
     ctx.beginPath(); ctx.arc(loadX + 36, loadY + 36, 16, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.fillStyle = METAL;
     ctx.fillRect(loadX + 28, loadY + 54, 16, 18);
     ctx.fillStyle = HI;
     ctx.font = '10px "Microsoft YaHei",sans-serif';
     ctx.fillText('负载', loadX + 22, loadY + 82);
 
-    // 铜绕组
-    const turns1 = Math.max(4, Math.round(n1 / 180));
-    const turns2 = Math.max(4, Math.round(n2 / 180));
-    const coilRx = Math.min(32, coreW * 0.18), coilRy = 9;
+    // 铜绕组：每档匝数都改环数；螺距/线宽 ∝ n，并突出原/副相对密度
+    const n1c = Math.max(100, Math.min(1000, n1d));
+    const n2c = Math.max(100, Math.min(1000, n2d));
+    const turns1 = 3 + Math.round((n1c - 100) / 100); // 100→3 … 1000→12
+    const turns2 = 3 + Math.round((n2c - 100) / 100);
+    const dens1 = n1c / 1000, dens2 = n2c / 1000;
+    const coilRx1 = Math.min(34, coreW * 0.15 + dens1 * 10);
+    const coilRx2 = Math.min(36, coreW * 0.15 + dens2 * 12);
+    const coilRy1 = 5.2 + dens1 * 5.5;
+    const coilRy2 = 5.2 + dens2 * 5.5;
     const coilSpan = coreH - barH * 2 - 10;
+    // 相对密度：匝多一侧占满柱高，匝少一侧压缩螺距带（一眼辨升降压）
+    const densMax = Math.max(dens1, dens2, 0.1);
+    const span1 = coilSpan * (0.55 + 0.45 * (dens1 / densMax));
+    const span2 = coilSpan * (0.55 + 0.45 * (dens2 / densMax));
+    const off1 = (coilSpan - span1) * 0.5;
+    const off2 = (coilSpan - span2) * 0.5;
     for (let i = 0; i < turns1; i++) {
       const t = turns1 > 1 ? i / (turns1 - 1) : 0.5;
-      const yy = cTop + barH + 5 + t * coilSpan;
-      const g = ctx.createLinearGradient(cx - legW - coilRx, yy, cx - legW + coilRx, yy);
+      const yy = cTop + barH + 5 + off1 + t * span1;
+      const g = ctx.createLinearGradient(cx - legW - coilRx1, yy, cx - legW + coilRx1, yy);
       g.addColorStop(0, '#8b5a2b');
       g.addColorStop(0.45, ACCENT);
       g.addColorStop(1, '#6a4020');
       ctx.strokeStyle = g;
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 2.2 + dens1 * 2.8;
       ctx.beginPath();
-      ctx.ellipse(cx - legW * 0.9, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx - legW * 0.9, yy, coilRx1, coilRy1, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     for (let i = 0; i < turns2; i++) {
       const t = turns2 > 1 ? i / (turns2 - 1) : 0.5;
-      const yy = cTop + barH + 5 + t * coilSpan;
-      const g = ctx.createLinearGradient(cx + legW - coilRx, yy, cx + legW + coilRx, yy);
+      const yy = cTop + barH + 5 + off2 + t * span2;
+      const g = ctx.createLinearGradient(cx + legW - coilRx2, yy, cx + legW + coilRx2, yy);
       g.addColorStop(0, '#a06830');
       g.addColorStop(0.45, HI);
       g.addColorStop(1, '#7a5028');
       ctx.strokeStyle = g;
       ctx.globalAlpha = 0.55 + loadLevel * 0.45;
-      ctx.lineWidth = 3 + loadLevel * 2.5;
+      ctx.lineWidth = 2.2 + dens2 * 2.8 + loadLevel * 1.5;
       ctx.beginPath();
-      ctx.ellipse(cx + legW * 0.9, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + legW * 0.9, yy, coilRx2, coilRy2, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
     ctx.fillStyle = ACCENT;
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('原边 n₁=' + n1, cLeft - 4, cTop - 8);
+    ctx.fillText('原边 n₁=' + n1d, cLeft - 4, cTop - 8);
     ctx.fillStyle = HI;
-    ctx.fillText('副边 n₂=' + n2, cx + legW * 0.2, cTop - 8);
+    ctx.fillText('副边 n₂=' + n2d, cx + legW * 0.2, cTop - 8);
 
-    // 黄铜电压表
-    const on = isFinite(U2) && U2 >= U2_LO && U2 <= U2_HI;
+    // 黄铜电压表（数值仅 measured；预览时虚线框 + 待测）
+    const on = isFinite(U2shown) && U2shown >= U2_LO && U2shown <= U2_HI;
+    const faultHot = isFinite(U2shown) && U2shown > U2_HI;
     const mx = W - 178, my = Math.max(118, cTop - 8), mw = 148, mh = 82;
     ctx.fillStyle = '#8a6830';
     ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8);
@@ -883,18 +981,26 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillRect(mx - 2, my - 2, mw + 4, mh + 4);
     ctx.fillStyle = PANEL;
     ctx.fillRect(mx, my, mw, mh);
-    ctx.strokeStyle = on ? OK : (faultHot ? '#e86040' : GLOW);
+    let meterStroke = isFinite(U2shown) ? (on ? OK : (faultHot ? '#e86040' : GLOW)) : 'rgba(232,176,112,0.55)';
+    if (bandFlash > 0) {
+      meterStroke = band === 'ok'
+        ? 'rgba(' + Math.round(125 + 80 * bandFlash) + ',' + Math.round(186 + 40 * bandFlash) + ',' + Math.round(140 + 30 * bandFlash) + ',1)'
+        : 'rgba(' + Math.round(240 + 15 * bandFlash) + ',' + Math.round(90 + 40 * bandFlash) + ',' + Math.round(45 + 20 * bandFlash) + ',1)';
+    }
+    ctx.strokeStyle = meterStroke;
     ctx.lineWidth = 2;
+    if (preview) ctx.setLineDash([5, 4]);
     ctx.strokeRect(mx, my, mw, mh);
+    ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(224,144,64,0.12)';
     ctx.fillRect(mx + 6, my + 6, mw - 12, 22);
     ctx.fillStyle = HI;
     ctx.font = '10px "Microsoft YaHei",sans-serif';
     ctx.fillText('副边电压表', mx + 10, my + 20);
-    ctx.fillStyle = isFinite(U2) ? (on ? OK : '#e8a060') : '#9a8a78';
+    ctx.fillStyle = isFinite(U2shown) ? (on ? OK : '#e8a060') : '#9a8a78';
     ctx.font = 'bold 18px ui-monospace,monospace';
-    if (isFinite(U2)) {
-      ctx.fillText(U2.toFixed(2) + ' V', mx + 10, my + 50);
+    if (isFinite(U2shown)) {
+      ctx.fillText(U2shown.toFixed(2) + ' V', mx + 10, my + 50);
       ctx.fillStyle = on ? '#a8d4b0' : '#e8b090';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
       ctx.fillText(playMode === 'challenge' ? (on ? '急单区间内' : '偏离急单') : (on ? '参考带内' : '参考带外'), mx + 10, my + 70);
@@ -902,13 +1008,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('— V', mx + 10, my + 50);
       ctx.fillStyle = '#9a8a78';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('U₂ 待测', mx + 10, my + 70);
+      ctx.fillText(preview ? 'U₂ 待测 · 预览中' : 'U₂ 待测', mx + 10, my + 70);
     }
 
     // 连线：源→原边→铁芯→副边→表/负载
     const p1x = srcX + srcW, p1y = srcY + 72;
-    const coilLx = cx - legW * 0.9 - coilRx;
-    const coilRxPos = cx + legW * 0.9 + coilRx;
+    const coilLx = cx - legW * 0.9 - coilRx1;
+    const coilRxPos = cx + legW * 0.9 + coilRx2;
     ctx.strokeStyle = 'rgba(' + wireR + ',' + wireG + ',' + wireB + ',' + (0.4 + loadLevel * 0.35) + ')';
     ctx.lineWidth = 2.5;
     ctx.shadowColor = 'rgba(' + wireR + ',' + wireG + ',' + wireB + ',0.5)';
@@ -947,24 +1053,42 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.strokeRect(18, benchY - 34, 140, 26);
     ctx.fillStyle = '#efe6d8';
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('变压器台架 · U₁ ' + U1.toFixed(1) + ' V', 26, benchY - 16);
+    ctx.fillText('变压器台架 · U₁ ' + U1d.toFixed(1) + ' V', 26, benchY - 16);
 
-    // 电流流光
-    spark = (spark + 0.018) % 1;
-    function flowDot(x0, y0, x1, y1, t, col) {
+    // 电流流光（spark 仅由 rAF 推进；事件期 surge ∝ |U₂|/12）
+    const priWeight = ratio < 1 ? 1.25 : 0.7;
+    const secWeight = ratio > 1 ? 1.25 : 0.7;
+    const flowBase = eventAnim ? (1.2 + surge * 3.5) : (0.32 + loadLevel * 0.28);
+    const dotBoost = 1 + surge * (frozen ? frozen.surgeAmp : loadLevel) * 1.8;
+    function flowDot(x0, y0, x1, y1, t, col, scale) {
       const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-      const dotR = 2.2 + (0.5 + loadLevel) * 2.2;
+      const dotR = (2.2 + (0.5 + loadLevel) * 2.2) * (scale || 1) * dotBoost;
       ctx.fillStyle = col;
       ctx.shadowColor = col;
-      ctx.shadowBlur = 4 + (0.5 + loadLevel) * 8;
+      ctx.shadowBlur = 4 + (0.5 + loadLevel + surge) * 8;
       ctx.beginPath();
       ctx.arc(x, y, dotR, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
     }
-    flowDot(p1x, p1y, coilLx, cy, spark, GLOW);
-    flowDot(coilLx, cy, coilRxPos, cy, (spark + 0.33) % 1, HI);
-    flowDot(coilRxPos, cy, mx, my + mh * 0.55, (spark + 0.66) % 1, GLOW);
+    const flowT = (spark * flowBase) % 1;
+    flowDot(p1x, p1y, coilLx, cy, (flowT * priWeight) % 1, GLOW, priWeight);
+    flowDot(coilLx, cy, coilRxPos, cy, (flowT * 0.5 + 0.33 * secWeight) % 1, HI, secWeight);
+    flowDot(coilRxPos, cy, mx, my + mh * 0.55, (flowT * secWeight + 0.66) % 1, GLOW, secWeight);
+    if (surge > 0.15 || loadLevel > 0.55) {
+      const extra = eventAnim ? Math.round(1 + surge * 4) : (loadLevel > 0.7 ? 2 : 1);
+      for (let i = 0; i < extra; i++) {
+        const off = (i + 1) / (extra + 1);
+        flowDot(coilRxPos, cy, loadX + 36, loadY + 40, (flowT * secWeight + off) % 1, HI, 0.75 + secWeight * 0.2);
+      }
+    }
+    if (bandFlash > 0.2 && band !== 'ok') {
+      ctx.fillStyle = 'rgba(255,120,60,' + (bandFlash * 0.08) + ')';
+      ctx.fillRect(0, 0, W, H);
+    } else if (bandFlash > 0.2 && band === 'ok') {
+      ctx.fillStyle = 'rgba(125,186,140,' + (bandFlash * 0.07) + ')';
+      ctx.fillRect(0, 0, W, H);
+    }
   }
 
   /** 仅测试后揭示 U₂ */
@@ -979,13 +1103,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     const U2rounded = Math.round(U2 * 100) / 100;
 
     if (isTest) measuredU2 = U2rounded;
-
-    // 更新读数
-    observeU2.textContent = measuredU2 != null ? (measuredU2.toFixed(2) + ' V') : '—';
-    updateLabels();
-
-    // 绘制canvas（传 measured 或 NaN 表示待测）
-    drawTransformer(n1, n2, U1, measuredU2 != null ? measuredU2 : NaN);
 
     const inBand = U2rounded >= U2_LO && U2rounded <= U2_HI;
     let winOk = false;
@@ -1009,7 +1126,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       if (winIndicator) winIndicator.style.display = 'inline-block';
       feedback.textContent = '急单完成！U₂ 落入锁定区间 ' + U2_LO.toFixed(1) + '–' + U2_HI.toFixed(1) + ' V';
     } else {
-      // FixedChallenge：失败不换带
       if (winIndicator) winIndicator.style.display = 'none';
       hintKey = U2rounded < U2_LO ? 'u2_low' : 'u2_high';
       feedback.innerHTML = U2rounded < U2_LO
@@ -1017,7 +1133,25 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         : ('<strong>输出偏高</strong><br><span style="font-size:0.82em;opacity:.92">急单 ' + U2_LO.toFixed(1) + '–' + U2_HI.toFixed(1) + ' V</span>');
     }
 
-    // 如果是测试按钮触发，发射 snapshot 和 win (如果过关)
+    if (isTest) {
+      const band = inBand ? 'ok' : (U2rounded < U2_LO ? 'low' : 'high');
+      const totalDur = mapU2ToDur(Math.abs(U2rounded));
+      const drivers = buildDrivers(n1, n2, U1, U2rounded);
+      drivers.band = band;
+      drivers.totalDur = totalDur;
+      drivers.windupDur = totalDur * 0.55;
+      eventAnim = { phase: 'windup', t: 0, bandFlash: 0, drivers: drivers };
+    }
+
+    // 更新读数
+    observeU2.textContent = measuredU2 != null ? (measuredU2.toFixed(2) + ' V') : '—';
+    updateLabels();
+
+    if (!isTest) {
+      drawTransformer(n1, n2, U1, measuredU2 != null ? measuredU2 : NaN, U2rounded);
+    }
+
+    // 如果是测试按钮触发，立即 snapshot / win（不延迟 emit）
     if (isTest) {
       const controlsSnapshot = {
         's-n1': n1,
@@ -1050,16 +1184,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     }
   }
 
-  // 绑定滑条事件 (实时更新canvas+读数，但不发射snapshot)
+  // 绑定滑条事件（事件动画期间忽略，避免劫持冻结 drivers）
   sN1.addEventListener('input', function() {
+    if (eventAnim) return;
     measuredU2 = null;
     updateAll(false, false);
   });
   sN2.addEventListener('input', function() {
+    if (eventAnim) return;
     measuredU2 = null;
     updateAll(false, false);
   });
   sU1.addEventListener('input', function() {
+    if (eventAnim) return;
     measuredU2 = null;
     updateAll(false, false);
   });
@@ -1067,16 +1204,35 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     updateLabels();
   });
 
-  // 测试按钮：发射 snapshot + win (若过关)
+  // 测试按钮：立即 emit + 启动事件动画
   btnTest.addEventListener('click', function() {
+    if (eventAnim) return;
     updateAll(true, true);
   });
 
-  window.addEventListener('resize', function(){ resizeCanvas(); updateAll(false,false); });
-  if (typeof ResizeObserver !== 'undefined' && wrap) new ResizeObserver(function(){ resizeCanvas(); updateAll(false,false); }).observe(wrap);
+  window.addEventListener('resize', function(){ resizeCanvas(); if (!eventAnim) updateAll(false,false); });
+  if (typeof ResizeObserver !== 'undefined' && wrap) new ResizeObserver(function(){ resizeCanvas(); if (!eventAnim) updateAll(false,false); }).observe(wrap);
   resizeCanvas();
   updateAll(false, false);
-  (function loop(){ spark += 0.02; const n1=parseInt(sN1.value,10), n2=parseInt(sN2.value,10), U1=parseFloat(sU1.value); drawTransformer(n1,n2,U1, measuredU2 != null ? measuredU2 : NaN); requestAnimationFrame(loop); })();
+  (function loop(ts) {
+    const dt = lastFrameTs ? Math.min(0.05, (ts - lastFrameTs) / 1000) : 0.016;
+    lastFrameTs = ts;
+    stepEventAnim(dt);
+    const surge = getEventSurge();
+    if (eventAnim) {
+      spark = (spark + 0.02 * (1.1 + surge * 4)) % 1;
+    } else {
+      const n1l = parseInt(sN1.value, 10), n2l = parseInt(sN2.value, 10), U1l = parseFloat(sU1.value);
+      const u2a = Math.abs(computeU2(n1l, n2l, U1l));
+      spark = (spark + 0.02 * (0.3 + Math.min(1, u2a / 12) * 0.45)) % 1;
+    }
+    const n1 = eventAnim ? eventAnim.drivers.n1 : parseInt(sN1.value, 10);
+    const n2 = eventAnim ? eventAnim.drivers.n2 : parseInt(sN2.value, 10);
+    const U1 = eventAnim ? eventAnim.drivers.U1 : parseFloat(sU1.value);
+    const u2p = eventAnim ? eventAnim.drivers.U2 : Math.round(computeU2(n1, n2, U1) * 100) / 100;
+    drawTransformer(n1, n2, U1, measuredU2 != null ? measuredU2 : NaN, u2p);
+    requestAnimationFrame(loop);
+  })(0);
 
   // 暴露 emit 给埋点脚本 (如果未定义)
   if (typeof window.emit === 'undefined') {

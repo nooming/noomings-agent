@@ -358,10 +358,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   top:10px!important;
   right:12px!important;
   left:auto!important;
-  max-width:min(240px,calc(100% - 24px))!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:6px!important;
+  max-width:min(280px,calc(100% - 24px))!important;
   z-index:11!important;
   align-items:flex-end!important;
+  pointer-events:none!important;
+  text-align:right!important;
 }
+#essence-hud .essence-title{
+  padding:8px 12px!important;
+  border-radius:8px!important;
+  font-size:13px!important;
+  font-weight:600!important;
+}
+#essence-hud .essence-sub,
+#essence-hud #goalMission,
+#essence-hud #healthDisplay{
+  padding:6px 12px!important;
+  border-radius:8px!important;
+  font-size:12px!important;
+  max-width:100%!important;
+}
+#hud{display:none!important;}
 
 </style>
 </head>
@@ -388,12 +408,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 <div id="app">
     <div id="stage">
         <canvas id="simCanvas" width="800" height="400"></canvas>
-        <div id="hud"><div id="dual-mode-hud">
+        <div id="dual-mode-hud">
   <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
   <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
 </div>
-            <div class="hud-chip">矿井投递 · <strong id="hudModeTag">自由试摆</strong></div>
-            <div class="hud-chip" id="goalMission" style="max-width:min(420px,70vw)">目标：自由试摆，观察落点与矿车的相对位置</div>
+        <div id="essence-hud">
+            <div class="essence-title">矿井投递 · <strong id="hudModeTag">自由试摆</strong></div>
+            <div class="essence-sub" id="goalMission">目标：自由试摆，观察落点与矿车的相对位置</div>
             <div class="hud-chip" id="healthDisplay"><span>生命</span> <strong id="healthCount">5</strong></div>
         </div>
     </div>

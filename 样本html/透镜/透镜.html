@@ -519,6 +519,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     let challengeWon = false;
     /** 仅测试后揭示成像判定 */
     let measured = false;
+    /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+    let eventAnim = null;
+    let ambientT = 0;
+    let lastFrameTs = 0;
     const MODE_GOALS = {
       explore: {
         hud: '探究：自由试像，观察像距如何随 u、f 变化',
@@ -622,7 +626,123 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       return 'success';
     }
 
+    function computeBand(u, f) {
+      return isImageOnScreen(u, f) ? 'ok' : 'miss';
+    }
+
+    function mapDefocusToDur(defocus) {
+      const d = Math.max(0, Math.min(15, defocus || 0));
+      return 0.4 + (d / 15) * 1.1;
+    }
+
+    function getEventPhaseDurs() {
+      if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+      const d = eventAnim.drivers;
+      const windupDur = Math.max(0.12, d.totalDur * 0.28);
+      const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+      const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+      return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+    }
+
+    function stepEventAnim(dt) {
+      if (!eventAnim) return;
+      eventAnim.t += dt;
+      const ph = getEventPhaseDurs();
+      const band = eventAnim.drivers.band;
+      if (eventAnim.phase === 'windup') {
+        if (eventAnim.t >= ph.windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'peak') {
+        if (eventAnim.t >= ph.peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'settle') {
+        const p = Math.min(1, eventAnim.t / ph.settleDur);
+        if (band === 'ok') eventAnim.flashGreen = Math.max(0, 1 - p * 2.8);
+        if (eventAnim.t >= ph.settleDur) eventAnim = null;
+      }
+    }
+
+    function startEventAnim(u, f) {
+      const v = computeImageDistance(u, f);
+      const defocus = (isFinite(v) && v > 0) ? Math.abs(v - SCREEN_DIST_CM) : 15;
+      const onScreen = isImageOnScreen(u, f);
+      const focusTol = playMode === 'challenge' ? 0.85 : 2.0;
+      let focusQual = 0;
+      if (isFinite(v) && v > 0) focusQual = Math.max(0, 1 - defocus / (focusTol * 3));
+      const Dcm = sliderD ? parseFloat(sliderD.value) : 6;
+      const totalDur = Math.max(0.4, Math.min(1.5, mapDefocusToDur(defocus)));
+      eventAnim = {
+        phase: 'windup', t: 0, flashGreen: 0,
+        drivers: { u: u, f: f, v: v, defocus: defocus, band: computeBand(u, f), onScreen: onScreen, Dcm: Dcm, focusQual: focusQual, totalDur: totalDur }
+      };
+    }
+
+    function getRayWaypoints(ri, L, objX, f, onScreen) {
+      const fPx = f * L.pxPerCm;
+      const tipY = L.axisY - 60;
+      const y0 = tipY + ri * 4;
+      const pts = [{ x: objX, y: y0 }];
+      if (ri === 0) {
+        pts.push({ x: L.lensX, y: y0 });
+        pts.push({ x: L.screenX, y: L.axisY + (y0 - L.axisY) * (onScreen ? -0.35 : 0.2) });
+      } else if (ri === 1) {
+        pts.push({ x: L.lensX, y: L.axisY + (y0 - L.axisY) * 0.15 });
+        pts.push({ x: L.screenX, y: L.axisY + (y0 - L.axisY) * 0.55 });
+      } else {
+        pts.push({ x: L.lensX - fPx, y: L.axisY });
+        pts.push({ x: L.lensX, y: L.axisY + (y0 - L.axisY) * 0.4 });
+        pts.push({ x: L.screenX, y: L.axisY + 8 });
+      }
+      return pts;
+    }
+
+    function polylineLength(pts) {
+      let total = 0;
+      for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      return total;
+    }
+
+    function pointAlongPolyline(pts, t) {
+      const total = polylineLength(pts);
+      if (total < 0.001) return { x: pts[0].x, y: pts[0].y, segIdx: 0 };
+      let dist = Math.max(0, Math.min(1, t)) * total;
+      for (let i = 1; i < pts.length; i++) {
+        const seg = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+        if (dist <= seg) {
+          const r = seg ? dist / seg : 0;
+          return { x: pts[i - 1].x + (pts[i].x - pts[i - 1].x) * r, y: pts[i - 1].y + (pts[i].y - pts[i - 1].y) * r, segIdx: i - 1 };
+        }
+        dist -= seg;
+      }
+      return { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y, segIdx: pts.length - 2 };
+    }
+
+    function getRaySweepT() {
+      if (!eventAnim) return 1;
+      const ph = getEventPhaseDurs();
+      const t = eventAnim.t;
+      if (eventAnim.phase === 'windup') return Math.min(1, t / Math.max(0.05, ph.windupDur)) * 0.33;
+      if (eventAnim.phase === 'peak') return 0.33 + Math.min(1, t / Math.max(0.05, ph.peakDur)) * 0.34;
+      return 0.67 + Math.min(1, t / Math.max(0.05, ph.settleDur)) * 0.33;
+    }
+
+    function drawRayPath(pts, sweepT, style) {
+      const end = pointAlongPolyline(pts, sweepT);
+      ctx.strokeStyle = style.color;
+      ctx.lineWidth = style.width;
+      ctx.setLineDash(style.dash || []);
+      ctx.shadowColor = style.shadow || 'transparent';
+      ctx.shadowBlur = style.blur || 0;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i <= end.segIdx; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+    }
+
     function drawScene(u, f) {
+      const drv = eventAnim ? eventAnim.drivers : null;
+      if (drv) { u = drv.u; f = drv.f; }
       const L = syncCanvasSize();
       ctx.clearRect(0, 0, W, H);
       var SC = { ink:'#0c1218', mid:'#243038', hi:'#a0c0e8', glow:'#f0d080', metal:'#6a7888', accent:'#6a9ad0', ok:'#6fae8f' };
@@ -650,11 +770,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
       const vFocus = computeImageDistance(u, f);
       const focusTol = playMode === 'challenge' ? 0.85 : 2.0;
-      let focusQual = 0;
-      if (isFinite(vFocus) && vFocus > 0) {
-        focusQual = Math.max(0, 1 - Math.abs(vFocus - SCREEN_DIST_CM) / (focusTol * 3));
+      const defocus = drv ? drv.defocus : ((isFinite(vFocus) && vFocus > 0) ? Math.abs(vFocus - SCREEN_DIST_CM) : 15);
+      let focusQual = drv ? drv.focusQual : 0;
+      if (!drv && isFinite(vFocus) && vFocus > 0) {
+        focusQual = Math.max(0, 1 - defocus / (focusTol * 3));
       }
-      const lampA = 0.12 + focusQual * 0.22;
+      const ambientPulse = eventAnim ? 0 : (0.04 * Math.sin(ambientT * 2.4));
+      const lampA = 0.12 + focusQual * 0.22 + ambientPulse;
       var lamp = ctx.createRadialGradient(W * 0.18, H * 0.12, 4, W * 0.32, H * 0.45, Math.max(W, H) * 0.55);
       lamp.addColorStop(0, 'rgba(240,208,128,' + lampA + ')');
       lamp.addColorStop(0.35, 'rgba(106,154,208,0.08)');
@@ -763,7 +885,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('物', objX - 8, L.axisY - 78);
 
       // 透镜支架加大
-      var Dcm = sliderD ? parseFloat(sliderD.value) : 6;
+      var Dcm = drv ? drv.Dcm : (sliderD ? parseFloat(sliderD.value) : 6);
       var lensHalf = 48 + Dcm * 4.2;
       var standG = ctx.createLinearGradient(L.lensX - 14, L.axisY - lensHalf - 18, L.lensX + 14, L.axisY + lensHalf + 18);
       standG.addColorStop(0, '#5a5040');
@@ -811,18 +933,42 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       frost.addColorStop(1, '#c8d0d8');
       ctx.fillStyle = frost;
       ctx.fillRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
-      // 屏上像亮度（随 focusQual）
-      if (measured && isFinite(vFocus) && vFocus > 0) {
-        const imgBright = 0.08 + focusQual * 0.55;
-        ctx.fillStyle = 'rgba(240,208,128,' + imgBright + ')';
+      // 屏上像亮度（随 focusQual / defocus）：测前淡影预览，测后全彩判定
+      if (isFinite(vFocus) && vFocus > 0) {
+        const blurPx = Math.min(14, defocus * 1.6);
+        const band = drv ? drv.band : computeBand(u, f);
+        const flashG = eventAnim ? (eventAnim.flashGreen || 0) : 0;
+        const imgBright = measured
+          ? (0.08 + focusQual * 0.55)
+          : (0.03 + focusQual * 0.16 + ambientPulse * 0.5);
+        ctx.save();
+        if (eventAnim && band !== 'ok' && (eventAnim.phase === 'peak' || eventAnim.phase === 'settle')) {
+          ctx.filter = 'blur(' + blurPx + 'px)';
+        }
+        const imgColor = band === 'ok' && (flashG > 0 || (measured && focusQual > 0.65))
+          ? 'rgba(111,174,143,' + (imgBright + flashG * 0.35) + ')'
+          : (band !== 'ok' && measured ? 'rgba(253,164,175,' + (imgBright * 0.85) + ')' : 'rgba(240,208,128,' + imgBright + ')');
+        ctx.fillStyle = imgColor;
         ctx.fillRect(L.screenX - screenW/2 + 3, L.axisY - screenH/2 + 8, screenW - 6, screenH - 16);
-        if (focusQual > 0.65) {
+        ctx.filter = 'none';
+        ctx.restore();
+        if (measured && focusQual > 0.65 && band === 'ok') {
           ctx.shadowColor = SC.glow;
-          ctx.shadowBlur = 6 + focusQual * 14;
-          ctx.strokeStyle = 'rgba(111,174,143,' + (0.3 + focusQual * 0.5) + ')';
+          ctx.shadowBlur = 6 + focusQual * 14 + flashG * 18;
+          ctx.strokeStyle = 'rgba(111,174,143,' + (0.3 + focusQual * 0.5 + flashG * 0.4) + ')';
           ctx.lineWidth = 2;
           ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
           ctx.shadowBlur = 0;
+        } else if (measured && band !== 'ok') {
+          ctx.strokeStyle = 'rgba(253,164,175,' + (0.35 + (eventAnim ? 0.25 : 0)) + ')';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+        } else if (!measured && focusQual > 0.4) {
+          ctx.setLineDash([3, 3]);
+          ctx.strokeStyle = 'rgba(240,208,128,' + (0.12 + focusQual * 0.2 + ambientPulse) + ')';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+          ctx.setLineDash([]);
         }
       }
       ctx.strokeStyle = SC.accent;
@@ -832,11 +978,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('光屏', L.screenX - 12, L.axisY + screenH/2 + 22);
 
       const v = computeImageDistance(u, f);
-      const onScreen = isImageOnScreen(u, f);
-      // 测试后：像标记 + 2–3 条主光线锥
-      if (measured && isFinite(v) && v > 0) {
+      const onScreen = drv ? drv.onScreen : isImageOnScreen(u, f);
+      const band = drv ? drv.band : computeBand(u, f);
+      const sweepT = eventAnim ? getRaySweepT() : 1;
+      // 主光线：测前虚线淡预览；测后/事件中实线扫掠
+      if (isFinite(v) && v > 0) {
         const imageX = L.lensX + v * L.pxPerCm;
-        if (imageX > L.lensX && imageX < W * 0.95) {
+        if (measured && imageX > L.lensX && imageX < W * 0.95 && !eventAnim) {
           ctx.globalAlpha = onScreen ? 0.9 : 0.35;
           ctx.strokeStyle = SC.accent;
           ctx.lineWidth = 3;
@@ -849,39 +997,59 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           ctx.fillText('像', imageX - 6, L.axisY - 10);
           ctx.globalAlpha = 1;
         }
+        for (let ri = 0; ri < 3; ri++) {
+          const pts = getRayWaypoints(ri, L, objX, f, onScreen);
+          const isAnim = !!eventAnim;
+          const rayDone = !isAnim || sweepT >= 1;
+          const rayT = isAnim ? sweepT : 1;
+          const rayColor = band === 'ok'
+            ? 'rgba(111,174,143,' + (0.45 + ri * 0.12) + ')'
+            : (measured ? 'rgba(253,164,175,' + (0.4 + ri * 0.1) + ')' : 'rgba(240,208,128,' + (0.12 + ri * 0.05 + ambientPulse) + ')');
+          const rayStyle = {
+            color: isAnim ? (band === 'ok' ? 'rgba(240,208,128,0.95)' : 'rgba(253,164,175,0.9)') : rayColor,
+            width: (measured || isAnim) ? 2.2 : 1.2,
+            dash: (!measured && !isAnim) ? [5, 4] : [],
+            shadow: isAnim ? SC.glow : 'transparent',
+            blur: isAnim ? (6 + (1 - focusQual) * 10) : 0
+          };
+          if (isAnim) {
+            drawRayPath(pts, rayT, rayStyle);
+            const head = pointAlongPolyline(pts, rayT);
+            ctx.beginPath();
+            ctx.arc(head.x, head.y, 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = band === 'ok' ? SC.ok : '#fda4af';
+            ctx.shadowColor = SC.glow;
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          } else {
+            drawRayPath(pts, 1, rayStyle);
+          }
+          if (measured && rayDone) {
+            ctx.fillStyle = 'rgba(240,208,128,0.06)';
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y - 3);
+            ctx.lineTo(pts[1].x, pts[1].y - 6 + ri * 2);
+            if (pts.length > 2) ctx.lineTo(pts[2].x, pts[2].y + 6 - ri * 2);
+            ctx.lineTo(pts[0].x, pts[0].y + 3);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      } else if (!eventAnim) {
+        // 空闲环境光：物→透镜 faint shimmer
         const tipY = L.axisY - 60;
-        const rays = [
-          { y0: tipY, through: 'parallel' },
-          { y0: tipY, through: 'center' },
-          { y0: tipY, through: 'focus' }
-        ];
-        for (let ri = 0; ri < rays.length; ri++) {
-          const y0 = tipY + ri * 4;
-          ctx.strokeStyle = 'rgba(240,208,128,' + (0.35 + ri * 0.12) + ')';
-          ctx.lineWidth = 1.8;
+        for (let ri = 0; ri < 2; ri++) {
+          const y0 = tipY + ri * 6;
+          const a = 0.06 + 0.04 * Math.sin(ambientT * 2.8 + ri);
+          ctx.strokeStyle = 'rgba(240,208,128,' + a + ')';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 6]);
           ctx.beginPath();
           ctx.moveTo(objX, y0);
-          if (ri === 0) {
-            ctx.lineTo(L.lensX, y0);
-            ctx.lineTo(L.screenX, L.axisY + (y0 - L.axisY) * (onScreen ? -0.35 : 0.2));
-          } else if (ri === 1) {
-            ctx.lineTo(L.lensX, L.axisY + (y0 - L.axisY) * 0.15);
-            ctx.lineTo(L.screenX, L.axisY + (y0 - L.axisY) * 0.55);
-          } else {
-            ctx.lineTo(L.lensX - fPx, L.axisY);
-            ctx.lineTo(L.lensX, L.axisY + (y0 - L.axisY) * 0.4);
-            ctx.lineTo(L.screenX, L.axisY + 8);
-          }
+          ctx.lineTo(L.lensX, y0 + (ri ? 4 : 0));
           ctx.stroke();
-          // 光束锥淡影
-          ctx.fillStyle = 'rgba(240,208,128,0.06)';
-          ctx.beginPath();
-          ctx.moveTo(objX, y0 - 3);
-          ctx.lineTo(L.lensX, y0 - 6 + ri * 2);
-          ctx.lineTo(L.lensX, y0 + 6 - ri * 2);
-          ctx.lineTo(objX, y0 + 3);
-          ctx.closePath();
-          ctx.fill();
+          ctx.setLineDash([]);
         }
       }
 
@@ -950,6 +1118,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     // ----- 按钮事件 -----
     function handleTest() {
+      if (eventAnim) return;
       const u = getU();
       const f = getF();
       const onScreen = isImageOnScreen(u, f);
@@ -998,9 +1167,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
         }
       } catch (e) {}
+      startEventAnim(u, f);
     }
 
     function handleReset() {
+      eventAnim = null;
       measured = false;
       sliderU.value = 30;
       sliderF.value = 12;
@@ -1010,41 +1181,44 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       hintMessage.style.display = 'none';
       observeResult.innerHTML = '等待测试…';
       observeResult.style.color = '#2d3748';
-      drawScene(getU(), getF());
     }
 
-    // 滑条数值更新
+    // 滑条数值更新（事件动画期间忽略，避免劫持冻结 drivers）
     sliderU.addEventListener('input', function() {
+      if (eventAnim) return;
       measured = false;
       valU.textContent = sliderU.value + ' cm';
       observeResult.innerHTML = '等待测试…';
       observeResult.style.color = '#2d3748';
       winMessage.style.display = 'none';
-      drawScene(getU(), getF());
     });
     sliderF.addEventListener('input', function() {
+      if (eventAnim) return;
       measured = false;
       valF.textContent = sliderF.value + ' cm';
       observeResult.innerHTML = '等待测试…';
       observeResult.style.color = '#2d3748';
       winMessage.style.display = 'none';
-      drawScene(getU(), getF());
     });
     if (sliderD) sliderD.addEventListener('input', function() {
+      if (eventAnim) return;
       if (valD) valD.textContent = parseFloat(sliderD.value).toFixed(1) + ' cm';
-      drawScene(getU(), getF());
     });
 
     btnTest.addEventListener('click', handleTest);
     btnReset.addEventListener('click', handleReset);
 
-    // 初始绘制
-    drawScene(getU(), getF());
-    window.addEventListener('resize', function(){ drawScene(getU(), getF()); });
-    if (typeof ResizeObserver !== 'undefined') {
-      var st = document.getElementById('essence-stage');
-      if (st) new ResizeObserver(function(){ drawScene(getU(), getF()); }).observe(st);
-    }
+    // 连续渲染：空闲环境光 + 事件 FSM
+    (function loop(ts) {
+      const dt = lastFrameTs ? Math.min(0.05, (ts - lastFrameTs) / 1000) : 0.016;
+      lastFrameTs = ts;
+      ambientT += dt;
+      stepEventAnim(dt);
+      const u = eventAnim ? eventAnim.drivers.u : getU();
+      const f = eventAnim ? eventAnim.drivers.f : getF();
+      drawScene(u, f);
+      requestAnimationFrame(loop);
+    })(performance.now());
 
   })();
 </script>

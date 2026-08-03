@@ -517,7 +517,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const btnReset = document.getElementById('btn-reset');
         const canvas = document.getElementById('gasCanvas');
         const ctx = canvas.getContext('2d');
-        let W = 600, H = 320, animT = 0, pulse = 0;
+        let W = 600, H = 320, animT = 0;
+        /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+        let eventAnim = null;
+        let rafLastTs = 0;
+        let needleFlick = 0;
         let BAND_LO = 9.5, BAND_HI = 10.5;
         let playMode = 'explore';
         let lockedBand = null;
@@ -600,6 +604,55 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const p = parseFloat(pSlider.value) || 1;
             const V = parseFloat(vSlider.value) || 1;
             return { p, V, pv: p * V };
+        }
+
+        function computeBand(pv) {
+            if (pv >= BAND_LO && pv <= BAND_HI) return 'ok';
+            return pv < BAND_LO ? 'low' : 'high';
+        }
+
+        function mapGasToDur(p, pv) {
+            const pNorm = Math.min(1, p / 10);
+            const mid = (BAND_LO + BAND_HI) / 2;
+            const offNorm = Math.min(1, Math.abs(pv - mid) / Math.max(0.5, (BAND_HI - BAND_LO) * 2));
+            return Math.max(0.4, Math.min(1.5, 0.42 + pNorm * 0.55 + offNorm * 0.45));
+        }
+
+        function startEventAnim(p, V, pv) {
+            eventAnim = {
+                phase: 'windup',
+                t: 0,
+                drivers: {
+                    p: p, V: V, pv: pv,
+                    band: computeBand(pv),
+                    pNorm: Math.min(1, p / 10),
+                    surgeAmp: Math.min(1, p / 10),
+                    totalDur: mapGasToDur(p, pv),
+                    bandLo: BAND_LO, bandHi: BAND_HI
+                }
+            };
+        }
+
+        function getEventPhaseDurs() {
+            if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+            const d = eventAnim.drivers;
+            const windupDur = Math.max(0.12, d.totalDur * 0.28);
+            const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+            const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+            return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+        }
+
+        function stepEventAnim(dt) {
+            if (!eventAnim) return;
+            eventAnim.t += dt;
+            const ph = getEventPhaseDurs();
+            if (eventAnim.phase === 'windup') {
+                if (eventAnim.t >= ph.windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'peak') {
+                if (eventAnim.t >= ph.peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'settle') {
+                if (eventAnim.t >= ph.settleDur) eventAnim = null;
+            }
         }
 
         function drawScene(p, V, pv) {
@@ -689,8 +742,35 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 ctx.fillRect(dx - 2, 118, 14, 6);
             }
 
+            const drv = eventAnim ? eventAnim.drivers : null;
+            if (drv) { p = drv.p; V = drv.V; pv = drv.pv; }
+
             const pNorm = Math.min(1, p / 10);
-            const topGlowA = 0.10 + pNorm * 0.14;
+            const band = drv ? drv.band : (measuredPV != null ? computeBand(pv) : null);
+            let fogBoost = 0, tubePulse = 0;
+            if (eventAnim) {
+                const d = eventAnim.drivers;
+                const ph = getEventPhaseDurs();
+                if (eventAnim.phase === 'windup') {
+                    fogBoost = Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur)) * d.surgeAmp * 0.55;
+                } else if (eventAnim.phase === 'peak') {
+                    fogBoost = d.surgeAmp;
+                    tubePulse = 1 - eventAnim.t / Math.max(0.05, ph.peakDur);
+                    needleFlick = Math.sin(eventAnim.t * 48) * 0.1 * d.surgeAmp;
+                } else if (eventAnim.phase === 'settle') {
+                    fogBoost = d.surgeAmp * Math.exp(-eventAnim.t * 2.2);
+                    needleFlick *= Math.exp(-eventAnim.t * 5);
+                    if (band === 'ok') tubePulse = Math.max(0, 0.6 - eventAnim.t * 0.85);
+                }
+            } else {
+                needleFlick *= 0.88;
+            }
+            let fogRgb = '58,120,160';
+            if (band === 'ok') fogRgb = '90,170,130';
+            else if (band === 'high') fogRgb = '180,90,70';
+            else if (band === 'low') fogRgb = '70,110,180';
+
+            const topGlowA = 0.10 + pNorm * 0.14 + fogBoost * 0.08;
             const topGlow = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.22, H * 0.08, W * 0.55);
             topGlow.addColorStop(0, 'rgba(90,158,200,' + topGlowA + ')');
             topGlow.addColorStop(1, 'rgba(90,158,200,0)');
@@ -821,8 +901,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fillStyle = gasGrad;
             rr(innerX, innerY, gasW, innerH, innerH / 2);
             ctx.fill();
-            // 腔室压强雾（随 p 加深）
-            ctx.fillStyle = 'rgba(58,120,160,' + (0.04 + pNorm * 0.14) + ')';
+            // 腔室压强雾（随 p；事件时 surge ∝ P，三态着色）
+            ctx.fillStyle = 'rgba(' + fogRgb + ',' + (0.04 + pNorm * 0.14 + fogBoost * 0.24) + ')';
             rr(innerX, innerY, innerW, innerH, innerH / 2);
             ctx.fill();
             const gasGlow = ctx.createRadialGradient(innerX + gasW * 0.35, innerY + innerH * 0.5, 4, innerX + gasW * 0.35, innerY + innerH * 0.5, gasW * 0.55);
@@ -899,7 +979,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.arc(gaugeX, gaugeY, gaugeR + 2, 0, Math.PI * 2);
             ctx.stroke();
             ctx.shadowBlur = 0;
-            const ang = -Math.PI * 0.75 + (p / 10) * Math.PI * 1.5;
+            const ang = -Math.PI * 0.75 + (p / 10) * Math.PI * 1.5 + needleFlick;
             ctx.strokeStyle = '#2a343c';
             ctx.lineWidth = 2.2;
             ctx.beginPath();
@@ -918,12 +998,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.font = '10px ui-monospace,monospace';
             ctx.fillText(p.toFixed(1) + ' atm', gaugeX, gaugeY + gaugeR + 30);
 
-            const onBand = pv >= BAND_LO && pv <= BAND_HI;
+            const onBand = band === 'ok' || (band == null && pv >= BAND_LO && pv <= BAND_HI);
             const boxW = 230, boxH = 50, boxX = W - boxW - 16, boxY = H - boxH - 72;
             ctx.fillStyle = 'rgba(16,20,24,0.88)';
             rr(boxX, boxY, boxW, boxH, 6);
             ctx.fill();
-            ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.75)' : 'rgba(138,150,158,0.35)';
+            let boxStroke = onBand ? 'rgba(111,174,143,0.75)' : 'rgba(138,150,158,0.35)';
+            if (band === 'high') boxStroke = 'rgba(212,132,122,0.85)';
+            else if (band === 'low') boxStroke = 'rgba(106,144,208,0.75)';
+            else if (band === 'ok') boxStroke = 'rgba(111,174,143,0.85)';
+            ctx.strokeStyle = boxStroke;
             ctx.lineWidth = 1.5;
             ctx.stroke();
             ctx.fillStyle = C.hi;
@@ -938,9 +1022,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 ctx.fillText('当前乘积 ' + measuredPV.toFixed(2), boxX + 10, boxY + 38);
             }
 
-            if (pulse > 0) {
-                ctx.globalAlpha = pulse;
-                ctx.strokeStyle = C.glow;
+            if (tubePulse > 0) {
+                ctx.globalAlpha = tubePulse * 0.85;
+                ctx.strokeStyle = band === 'ok' ? C.ok : (band === 'high' ? '#d4847a' : (band === 'low' ? '#6a90d0' : C.glow));
                 ctx.lineWidth = 3;
                 rr(tubeX - 6, tubeY - 6, tubeW + 12, tubeH + 12, tubeH / 2 + 4);
                 ctx.stroke();
@@ -971,10 +1055,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function fireSnapshotAndWin() {
+            const { p, V, pv } = computePV();
             const { winOk, hintKey } = checkWin();
-            const { pv } = computePV();
             measuredPV = pv;
-            pulse = 1;
+            startEventAnim(p, V, pv);
             const controls = {};
             document.querySelectorAll('input[type="range"]').forEach(el => { if (el.id) controls[el.id] = el.value; });
             try { emit('snapshot', { controls, winOk: playMode==='challenge' && winOk, hintKey: playMode==='explore'?'explore_observe':hintKey }); } catch(e) {}
@@ -999,6 +1083,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function resetToDefault() {
+            eventAnim = null;
             pSlider.value = '3.0';
             vSlider.value = '5.0';
             measuredPV = null;
@@ -1008,12 +1093,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         pSlider.addEventListener('input', function() {
+            if (eventAnim) return;
             measuredPV = null;
             updateAll();
             hintMsg.textContent = '调节中… 点「测试 · 观察乘积」查看结果';
             winIndicator.innerHTML = '';
         });
         vSlider.addEventListener('input', function() {
+            if (eventAnim) return;
             measuredPV = null;
             updateAll();
             hintMsg.textContent = '调节中… 点「测试 · 观察乘积」查看结果';
@@ -1025,9 +1112,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         btnTest.addEventListener('click', fireSnapshotAndWin);
         btnReset.addEventListener('click', resetToDefault);
 
-        function tick() {
-            animT += 0.016;
-            if (pulse > 0) pulse = Math.max(0, pulse - 0.025);
+        function tick(ts) {
+            const dt = rafLastTs ? Math.min(0.05, (ts - rafLastTs) / 1000) : 0.016;
+            rafLastTs = ts;
+            animT += dt;
+            stepEventAnim(dt);
             updateAll();
             requestAnimationFrame(tick);
         }

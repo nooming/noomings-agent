@@ -493,6 +493,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     const ctx = canvas.getContext('2d');
     const wrap = canvas.parentElement;
     let W = 700, H = 360, dpr = 1, animT = 0;
+    /** 事件动画：idle | charge | flash | settle；点击时冻结 drivers */
+    let eventAnim = null;
     function resizeCanvas() {
         const rect = wrap.getBoundingClientRect();
         dpr = window.devicePixelRatio || 1;
@@ -605,16 +607,78 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         drawChargeCurve(tau_ms);
     }
 
+    function mapTauToDur(tau_s) {
+        // τ 典型 0.001–10s → 可见动画 0.45–1.4s
+        const t = Math.max(0.05, Math.min(5, tau_s || 0.05));
+        return 0.45 + (Math.log10(t + 0.05) - Math.log10(0.1)) / (Math.log10(5.05) - Math.log10(0.1)) * 0.95;
+    }
+
+    function stepEventAnim(dt) {
+        if (!eventAnim) return;
+        eventAnim.t += dt;
+        const d = eventAnim.drivers;
+        const chargeDur = d.chargeDur;
+        const flashDur = 0.12;
+        const settleDur = Math.max(0.25, d.totalDur - chargeDur - flashDur);
+        if (eventAnim.phase === 'charge') {
+            if (eventAnim.t >= chargeDur) {
+                eventAnim.phase = 'flash';
+                eventAnim.t = 0;
+            }
+        } else if (eventAnim.phase === 'flash') {
+            if (eventAnim.t >= flashDur) {
+                eventAnim.phase = 'settle';
+                eventAnim.t = 0;
+            }
+        } else if (eventAnim.phase === 'settle') {
+            if (eventAnim.t >= settleDur) {
+                eventAnim = null;
+            }
+        }
+    }
+
     function drawChargeCurve(tau_ms) {
         ctx.clearRect(0, 0, W, H);
-        const rc = computeTau();
-        const charge = tau_ms > 0 ? (1 - Math.exp(-((animT * 0.35) % 1) * 5)) : 0;
-        const tau_s_draw = tau_ms / 1000;
+        const live = computeTau();
+        const Ulive = sU ? (parseFloat(sU.value) || 9) : 9;
+        const drv = eventAnim ? eventAnim.drivers : null;
+        const tau_ms_draw = drv ? drv.tau_ms : tau_ms;
+        const U = drv ? drv.U : Ulive;
+        const uNorm = Math.max(0.2, Math.min(1, U / 15));
+        const rc = drv ? { R: drv.R, C: drv.C, tau_ms: drv.tau_ms, tau_s: drv.tau_s } : live;
+        let charge = 0;
+        let flashBoost = 0;
+        let scopeFrac = (animT * 0.4) % 1;
+        if (eventAnim) {
+            const d = eventAnim.drivers;
+            if (eventAnim.phase === 'charge') {
+                const p = Math.min(1, eventAnim.t / Math.max(0.05, d.chargeDur));
+                charge = 1 - Math.exp(-p * 4.5);
+                scopeFrac = p;
+            } else if (eventAnim.phase === 'flash') {
+                charge = 1;
+                flashBoost = 1 - eventAnim.t / 0.12;
+                scopeFrac = 1;
+            } else {
+                charge = 0.92 + 0.08 * Math.exp(-eventAnim.t * 3);
+                flashBoost = Math.max(0, 0.35 - eventAnim.t);
+                scopeFrac = Math.min(1, 0.85 + eventAnim.t * 0.3);
+            }
+        } else {
+            // idle：τ 驱动呼吸充电，U 驱动亮度
+            const breath = tau_ms_draw > 0 ? (1 - Math.exp(-((animT * (0.22 + 0.35 / Math.max(0.15, tau_ms_draw / 1000))) % 1) * 4)) : 0;
+            charge = breath * (0.55 + 0.45 * uNorm);
+        }
+        charge = Math.min(1, charge * (0.65 + 0.35 * uNorm) + flashBoost * 0.25);
         const tauNear = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < 0.03;
-        const safeAlpha = 0.1 + charge * 0.28 + (tauNear ? 0.06 : 0);
-        const safeR = tauNear ? 125 : 255;
-        const safeG = tauNear ? 186 : 90;
-        const safeB = tauNear ? 140 : 40;
+        const band = eventAnim ? eventAnim.band : (tauNear ? 'ok' : (measuredTau != null && playMode === 'challenge'
+            ? (measuredTau < TARGET_TAU_SEC ? 'low' : 'high') : null));
+        let safeR = 255, safeG = 90, safeB = 40;
+        if (band === 'ok') { safeR = 125; safeG = 186; safeB = 140; }
+        else if (band === 'low') { safeR = 255; safeG = 120; safeB = 60; }
+        else if (band === 'high') { safeR = 90; safeG = 140; safeB = 220; }
+        const bandBoost = eventAnim && eventAnim.phase !== 'charge' ? 0.1 : (tauNear ? 0.06 : 0);
+        const safeAlpha = 0.1 + charge * 0.28 * uNorm + bandBoost + flashBoost * 0.2;
         // 暗房墙面 + 红安灯
         const wall = ctx.createLinearGradient(0, 0, 0, H);
         wall.addColorStop(0, '#1a120e'); wall.addColorStop(0.55, '#100c0a'); wall.addColorStop(1, '#0a0806');
@@ -724,13 +788,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const hx = fx + fw * 0.7, hy = fy + 58;
         ctx.fillStyle = '#1a1e22';
         ctx.beginPath(); ctx.moveTo(hx - 32, hy - 10); ctx.lineTo(hx + 40, hy - 22); ctx.lineTo(hx + 40, hy + 22); ctx.lineTo(hx - 32, hy + 10); ctx.closePath(); ctx.fill();
-        const flashPulse = 0.15 + charge * 0.7 + 0.1 * Math.sin(animT * 6);
-        const beam = ctx.createRadialGradient(hx + 24, hy, 2, hx + 24, hy, 70);
-        beam.addColorStop(0, 'rgba(255,220,160,' + (0.6 * flashPulse) + ')');
+        const flashPulse = 0.15 + charge * 0.7 * uNorm + 0.1 * Math.sin(animT * 6) + flashBoost * 0.85;
+        const beamR = 55 + 40 * uNorm + flashBoost * 50;
+        const beam = ctx.createRadialGradient(hx + 24, hy, 2, hx + 24, hy, beamR);
+        beam.addColorStop(0, 'rgba(255,220,160,' + (0.55 * flashPulse) + ')');
         beam.addColorStop(1, 'rgba(255,106,40,0)');
-        ctx.fillStyle = beam; ctx.beginPath(); ctx.arc(hx + 24, hy, 70, 0, Math.PI * 2); ctx.fill();
-        // 充电流光点（R→C→闪光）
-        const flow = (animT * 0.45) % 1;
+        ctx.fillStyle = beam; ctx.beginPath(); ctx.arc(hx + 24, hy, beamR, 0, Math.PI * 2); ctx.fill();
+        if (eventAnim && eventAnim.phase === 'flash') {
+          ctx.fillStyle = 'rgba(255,245,220,' + (0.25 * flashBoost) + ')';
+          ctx.fillRect(0, 0, W, H);
+        }
+        // 充电流光点（R→C→闪光）；事件期加速
+        const flowSpeed = eventAnim ? (1.2 + uNorm) : 0.45;
+        const flow = eventAnim ? Math.min(1, (eventAnim.phase === 'charge' ? eventAnim.t / Math.max(0.05, eventAnim.drivers.chargeDur) : 1))
+          : ((animT * flowSpeed) % 1);
         const fpx = rBoxX + rBoxW + (cBoxX - rBoxX - rBoxW) * Math.min(1, flow * 2);
         const fpy = rBoxY + rBoxH / 2;
         const flowR = 2.5 + charge * 2.5;
@@ -778,33 +849,35 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           const y = plotT + (i / 4) * (plotB - plotT);
           ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
         }
-        if (tau_ms > 0) {
-          const maxT = 5 * tau_ms;
+        if (tau_ms_draw > 0) {
+          const maxT = 5 * tau_ms_draw;
           const scaleX = (plotR - plotL) / maxT;
           const scaleY = (plotB - plotT);
+          const curveCol = band === 'ok' ? '#7dba8c' : (band === 'high' ? '#6eb8e8' : (band === 'low' ? '#ff8a40' : '#7dba8c'));
           ctx.beginPath();
-          ctx.strokeStyle = '#7dba8c';
-          ctx.lineWidth = 2.4;
-          ctx.shadowColor = 'rgba(125,186,140,0.55)';
-          ctx.shadowBlur = 6;
+          ctx.strokeStyle = curveCol;
+          ctx.lineWidth = 2.4 + (eventAnim ? 0.8 : 0);
+          ctx.shadowColor = curveCol;
+          ctx.shadowBlur = 6 + flashBoost * 8;
           for (let t = 0; t <= maxT; t += Math.max(0.5, maxT / 200)) {
-            const v = 1 - Math.exp(-t / tau_ms);
+            const v = 1 - Math.exp(-t / tau_ms_draw);
             const x = plotL + t * scaleX;
             const y = plotB - v * scaleY;
             if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
           }
           ctx.stroke();
           ctx.shadowBlur = 0;
-          const tScan = ((animT * 0.4) % 1) * maxT;
-          const vScan = 1 - Math.exp(-tScan / tau_ms);
+          // 测试点击重启扫描；事件期用 scopeFrac
+          const tScan = scopeFrac * maxT;
+          const vScan = 1 - Math.exp(-tScan / tau_ms_draw);
           ctx.beginPath();
-          ctx.arc(plotL + tScan * scaleX, plotB - vScan * scaleY, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#ff6a28';
+          ctx.arc(plotL + tScan * scaleX, plotB - vScan * scaleY, 3.5 + uNorm * 2 + flashBoost * 3, 0, Math.PI * 2);
+          ctx.fillStyle = band === 'ok' ? '#7dba8c' : '#ff6a28';
           ctx.fill();
         }
-        const tau_s = tau_ms / 1000;
+        const tau_s = tau_ms_draw / 1000;
         const tauTol = playMode === 'challenge' ? 0.03 : 0.08;
-        const on = playMode === 'challenge' && Math.abs(tau_s - TARGET_TAU_SEC) < tauTol;
+        const on = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < tauTol;
         const badgeX = W - 216, badgeY = H - 112;
         ctx.fillStyle = 'rgba(20,14,10,0.88)';
         roundSoft(badgeX, badgeY, 200, 40, 6); ctx.fill();
@@ -839,43 +912,52 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         return diff < 0.03;
     }
 
-    // 测试/发射动作 (snapshot + win)
+    // 测试/发射动作 (snapshot + win)；立即 emit，动画用冻结 drivers
     function onTest() {
+        if (eventAnim) return;
         const { R, C, tau_ms, tau_s } = computeTau();
+        const U = sU ? (parseFloat(sU.value) || 9) : 9;
         measuredTau = tau_s;
         tauDisplay.textContent = measuredTau.toFixed(3);
         const controls = {};
         controls['s-resistance'] = R;
         controls['s-capacitance'] = C;
 
+        const totalDur = mapTauToDur(tau_s);
+        const chargeDur = totalDur * 0.55;
+        let band = 'explore';
+        let winOk = false;
+        let hintKey = 'explore_observe';
+
         if (playMode === 'explore') {
             hintMsg.textContent = '本次 τ=' + tau_s.toFixed(3) + ' s · 继续对比 R、C';
             winIndicator.style.display = 'none';
-            drawChargeCurve(tau_ms);
-            try { if (window.__emit_snapshot) window.__emit_snapshot(controls, false, 'explore_observe'); } catch(e) {}
-            return;
-        }
-
-        const winOk = checkWin(tau_s);
-        const hintKey = winOk ? 'win' : (tau_s < TARGET_TAU_SEC ? 'tau_low' : 'tau_high');
-
-        if (winOk) {
-            hintMsg.textContent = '急单完成 · 时间常数已对准';
-            if (!challengeWon) {
-              challengeWon = true;
-              if (typeof window.__craftShowWin === 'function') {
-                window.__craftShowWin('目标 τ 本局锁定。时间常数由 R 与 C 共同决定，乘积越大曲线上升越慢。');
-              }
-            }
-            winIndicator.style.display = 'inline-block';
         } else {
-            // FixedChallenge：失败不换目标；偏大/偏小可区分
-            const sideTxt = tau_s < TARGET_TAU_SEC ? 'τ 偏小（曲线偏快）' : 'τ 偏大（曲线偏慢）';
-            hintMsg.innerHTML = '<strong>' + sideTxt + '</strong><br><span style="font-size:0.82em;opacity:.92">目标仍锁 ≈' + TARGET_TAU_SEC.toFixed(1) + ' s · 再调 R/C</span>';
-            winIndicator.style.display = 'none';
+            winOk = checkWin(tau_s);
+            hintKey = winOk ? 'win' : (tau_s < TARGET_TAU_SEC ? 'tau_low' : 'tau_high');
+            band = winOk ? 'ok' : (tau_s < TARGET_TAU_SEC ? 'low' : 'high');
+            if (winOk) {
+                hintMsg.textContent = '急单完成 · 时间常数已对准';
+                if (!challengeWon) {
+                  challengeWon = true;
+                  if (typeof window.__craftShowWin === 'function') {
+                    window.__craftShowWin('目标 τ 本局锁定。时间常数由 R 与 C 共同决定，乘积越大曲线上升越慢。');
+                  }
+                }
+                winIndicator.style.display = 'inline-block';
+            } else {
+                const sideTxt = tau_s < TARGET_TAU_SEC ? 'τ 偏小（曲线偏快）' : 'τ 偏大（曲线偏慢）';
+                hintMsg.innerHTML = '<strong>' + sideTxt + '</strong><br><span style="font-size:0.82em;opacity:.92">目标仍锁 ≈' + TARGET_TAU_SEC.toFixed(1) + ' s · 再调 R/C</span>';
+                winIndicator.style.display = 'none';
+            }
         }
 
-        drawChargeCurve(tau_ms);
+        eventAnim = {
+            phase: 'charge',
+            t: 0,
+            band: band,
+            drivers: { R: R, C: C, U: U, tau_ms: tau_ms, tau_s: tau_s, totalDur: totalDur, chargeDur: chargeDur }
+        };
 
         try {
             if (window.__emit_snapshot) {
@@ -892,21 +974,24 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
     }
 
-    // 绑定滑条更新
+    // 绑定滑条更新（事件动画期间忽略，避免劫持冻结 drivers）
     sR.addEventListener('input', function() {
+        if (eventAnim) return;
         measuredTau = null;
         updateUI();
-        // 隐藏过关指示
         winIndicator.style.display = 'none';
         hintMsg.textContent = '调节中 · 点击测试查看 τ';
     });
     sC.addEventListener('input', function() {
+        if (eventAnim) return;
         measuredTau = null;
         updateUI();
         winIndicator.style.display = 'none';
         hintMsg.textContent = '调节中 · 点击测试查看 τ';
     });
     if (sU) sU.addEventListener('input', function() {
+        if (eventAnim) return;
+        measuredTau = null;
         updateUI();
     });
 
@@ -918,7 +1003,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     hintMsg.textContent = '偏离目标 · 调 R/C 后点测试';
     (function loop() {
       animT += 0.016;
-      drawChargeCurve(computeTau().tau_ms);
+      stepEventAnim(0.016);
+      const tauDraw = eventAnim ? eventAnim.drivers.tau_ms : computeTau().tau_ms;
+      drawChargeCurve(tauDraw);
       requestAnimationFrame(loop);
     })();
 

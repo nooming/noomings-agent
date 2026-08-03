@@ -537,6 +537,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const wrap = canvas.parentElement;
         let W = 600, H = 360, dpr = 1;
         let flowT = 0;
+        /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+        let eventAnim = null;
+        let rafLastTs = 0;
 
         const MODE_GOALS = {
           explore: {
@@ -650,34 +653,48 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function drawResistorBody(x, y, w, h, label, ohms) {
-            // 立体碳膜电阻
+            // 立体碳膜电阻：体长 + 简化四色环随 Ω 变化（1–100）
+            const DIGIT = ['#1a1a1a', '#8b4513', '#c04020', '#e08030', '#e8c040', '#3a9a50', '#3060c0', '#8030a0', '#707070', '#f0f0f0'];
+            const r = Math.max(1, Math.min(100, Math.round(ohms)));
+            let d1, d2, multColor;
+            if (r >= 100) { d1 = 1; d2 = 0; multColor = DIGIT[1]; }       // 10×10
+            else if (r >= 10) { d1 = Math.floor(r / 10); d2 = r % 10; multColor = DIGIT[0]; } // ×1
+            else { d1 = r; d2 = 0; multColor = '#d4a050'; }                 // ×0.1 金
+            const bands = [DIGIT[d1], DIGIT[d2], multColor, '#d4a050'];
+            const bodyScale = 0.55 + 0.45 * ((r - 1) / 99); // 1Ω 短、100Ω 满宽
+            const bodyW = Math.max(28, w * bodyScale);
+            const bx = x + (w - bodyW) / 2;
+            const bandW = 4 + Math.min(7, r / 16);
+
             ctx.fillStyle = 'rgba(0,0,0,0.25)';
-            ctx.fillRect(x + 3, y + 4, w, h);
-            const bodyG = ctx.createLinearGradient(x, y, x, y + h);
+            ctx.fillRect(bx + 3, y + 4, bodyW, h);
+            // 两端引脚伸到布局宽，接线点不变
+            ctx.fillStyle = '#c8b090';
+            ctx.fillRect(x - 6, y + h * 0.35, Math.max(8, bx - x + 4), h * 0.3);
+            ctx.fillRect(bx + bodyW - 2, y + h * 0.35, Math.max(8, x + w - (bx + bodyW) + 6), h * 0.3);
+
+            const bodyG = ctx.createLinearGradient(bx, y, bx, y + h);
             bodyG.addColorStop(0, '#d8b888');
             bodyG.addColorStop(0.35, '#a08058');
             bodyG.addColorStop(0.7, '#806848');
             bodyG.addColorStop(1, '#5a4830');
             ctx.fillStyle = bodyG;
             ctx.beginPath();
-            ctx.moveTo(x + 6, y);
-            ctx.lineTo(x + w - 6, y);
-            ctx.quadraticCurveTo(x + w + 2, y + h / 2, x + w - 6, y + h);
-            ctx.lineTo(x + 6, y + h);
-            ctx.quadraticCurveTo(x - 2, y + h / 2, x + 6, y);
+            ctx.moveTo(bx + 6, y);
+            ctx.lineTo(bx + bodyW - 6, y);
+            ctx.quadraticCurveTo(bx + bodyW + 2, y + h / 2, bx + bodyW - 6, y + h);
+            ctx.lineTo(bx + 6, y + h);
+            ctx.quadraticCurveTo(bx - 2, y + h / 2, bx + 6, y);
             ctx.closePath();
             ctx.fill();
-            const bands = ['#8b4513', '#1a1a1a', '#c04020', '#d4a050', '#6a7068'];
+            const gap = Math.max(bandW + 2, (bodyW - 20) / 4);
             for (let i = 0; i < 4; i++) {
                 ctx.fillStyle = bands[i];
-                ctx.fillRect(x + 12 + i * (w - 30) / 4, y + 3, 8, h - 6);
+                ctx.fillRect(bx + 10 + i * gap, y + 3, bandW, h - 6);
             }
             ctx.strokeStyle = '#e8b070';
             ctx.lineWidth = 1.5;
             ctx.stroke();
-            ctx.fillStyle = '#c8b090';
-            ctx.fillRect(x - 6, y + h * 0.35, 8, h * 0.3);
-            ctx.fillRect(x + w - 2, y + h * 0.35, 8, h * 0.3);
             ctx.fillStyle = '#f0e8d8';
             ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
             ctx.fillText(label + ' ' + ohms + 'Ω', x, y - 8);
@@ -698,7 +715,84 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fill();
         }
 
-        function drawFlowDots(points, speed) {
+        function mapIToDur(I) {
+            const i = Math.max(0.05, Math.min(0.35, I || 0.05));
+            return 0.5 + (i - 0.05) / (0.35 - 0.05) * 0.8;
+        }
+
+        function computeBand(I) {
+            if (playMode !== 'challenge') return null;
+            if (Math.abs(I - targetCurrent) < 0.004) return 'ok';
+            return I > targetCurrent ? 'high' : 'low';
+        }
+
+        function startEventAnim(r1, r2, modeVal, Rtotal, I) {
+            const totalDur = Math.max(0.4, Math.min(1.5, mapIToDur(I)));
+            eventAnim = {
+                phase: 'windup',
+                t: 0,
+                drivers: {
+                    r1: r1, r2: r2, mode: modeVal, I: I, Rtotal: Rtotal,
+                    band: computeBand(I),
+                    surgeAmp: Math.min(1, I / 0.35),
+                    totalDur: totalDur
+                }
+            };
+        }
+
+        function stepEventAnim(dt) {
+            if (!eventAnim) return;
+            eventAnim.t += dt;
+            const d = eventAnim.drivers;
+            const windupDur = Math.max(0.12, d.totalDur * 0.28);
+            const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+            const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+            if (eventAnim.phase === 'windup') {
+                if (eventAnim.t >= windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'peak') {
+                if (eventAnim.t >= peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+            } else if (eventAnim.phase === 'settle') {
+                if (eventAnim.t >= settleDur) eventAnim = null;
+            }
+        }
+
+        function getEventPhaseDurs() {
+            if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+            const d = eventAnim.drivers;
+            const windupDur = Math.max(0.12, d.totalDur * 0.28);
+            const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+            const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+            return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+        }
+
+        function getFlowDotStyle(speed) {
+            let color = '#e88830', shadow = '#e8b070', count = 10, radius = 3;
+            let blur = 4 + Math.min(14, Math.max(0, (speed - 0.3) * 12));
+            if (eventAnim) {
+                const d = eventAnim.drivers;
+                const surge = d.surgeAmp || 0;
+                const ph = getEventPhaseDurs();
+                if (eventAnim.phase === 'peak') {
+                    count = Math.round(10 + surge * 14);
+                    blur += surge * 18;
+                    radius = 3 + surge * 1.2;
+                } else if (eventAnim.phase === 'windup') {
+                    const p = Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur));
+                    count = Math.round(10 + surge * 8 * p);
+                    blur += surge * 10 * p;
+                } else if (eventAnim.phase === 'settle') {
+                    const fade = Math.exp(-eventAnim.t * 2.5);
+                    count = Math.round(10 + surge * 10 * fade);
+                    blur += surge * 12 * fade;
+                }
+                if (d.band === 'ok') { color = '#7ecf9a'; shadow = '#6fae8f'; }
+                else if (d.band === 'high') { color = '#f07040'; shadow = '#c04030'; }
+                else if (d.band === 'low') { color = '#6090d0'; shadow = '#4060a0'; }
+            }
+            return { color: color, shadow: shadow, count: count, blur: blur, radius: radius };
+        }
+
+        function drawFlowDots(points, speed, phaseOffset) {
             if (points.length < 2) return;
             let total = 0;
             const seg = [];
@@ -709,19 +803,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 seg.push(len);
                 total += len;
             }
-            const n = 10;
-            for (let k = 0; k < n; k++) {
-                let dist = ((flowT * speed + k / n) % 1) * total;
+            const st = getFlowDotStyle(speed);
+            const po = phaseOffset || 0;
+            for (let k = 0; k < st.count; k++) {
+                let dist = ((flowT * speed + po + k / st.count) % 1) * total;
                 for (let i = 0; i < seg.length; i++) {
                     if (dist <= seg[i]) {
                         const t = seg[i] ? dist / seg[i] : 0;
                         const x = points[i].x + (points[i + 1].x - points[i].x) * t;
                         const y = points[i].y + (points[i + 1].y - points[i].y) * t;
                         ctx.beginPath();
-                        ctx.arc(x, y, 3, 0, Math.PI * 2);
-                        ctx.fillStyle = '#e88830';
-                        ctx.shadowColor = '#e8b070';
-                        ctx.shadowBlur = 4 + Math.min(14, (speed - 0.3) * 12);
+                        ctx.arc(x, y, st.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = st.color;
+                        ctx.shadowColor = st.shadow;
+                        ctx.shadowBlur = st.blur;
                         ctx.fill();
                         ctx.shadowBlur = 0;
                         break;
@@ -735,6 +830,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.clearRect(0, 0, W, H);
             const INK = '#12100c', MID = '#2e2418', HI = '#e8b070', GLOW = '#e88830';
             const METAL = '#6a7068', PANEL = '#221a12', ACCENT = '#d08040', OK = '#6fae8f';
+
+            const drv = eventAnim ? eventAnim.drivers : null;
+            if (drv) {
+                r1 = drv.r1; r2 = drv.r2; mode = drv.mode;
+                Rtotal = drv.Rtotal; I = drv.I;
+            }
 
             const bg = ctx.createLinearGradient(0, 0, 0, H);
             bg.addColorStop(0, '#1a1510');
@@ -770,17 +871,49 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 ctx.fillRect(W - 48, 132 + sr * 38, 32, 4);
             }
 
-            const liveI = measuredI != null ? measuredI : I;
-            const iNorm = Math.min(1, liveI / 0.35);
+            /* idle：live I 驱动流光/辉光；读数仍由 measuredI 门控 */
+            const visI = I;
+            const iNorm = Math.min(1, visI / 0.35);
             let matchRatio = 0;
-            if (playMode === 'challenge' && liveI > 0) {
-                matchRatio = Math.max(0, 1 - Math.abs(liveI - targetCurrent) / 0.08);
-            } else if (liveI > 0) {
+            let nearTarget = false;
+            let band = drv ? drv.band : null;
+            if (band === 'ok') {
+                nearTarget = true;
+                matchRatio = 1;
+            } else if (eventAnim && band) {
+                nearTarget = false;
+                matchRatio = band === 'high' ? 0.35 : 0.25;
+            } else if (playMode === 'challenge' && visI > 0) {
+                matchRatio = Math.max(0, 1 - Math.abs(visI - targetCurrent) / 0.08);
+                nearTarget = matchRatio > 0.82;
+            } else if (visI > 0) {
                 matchRatio = iNorm * 0.35;
             }
-            const nearTarget = matchRatio > 0.82;
-            const lampA = 0.10 + iNorm * 0.22 + matchRatio * 0.12;
-            const lampCore = nearTarget ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(232,136,48,' + lampA + ')';
+            let surgeBoost = 0, pulseBoost = 0;
+            if (eventAnim) {
+                const d = eventAnim.drivers;
+                const ph = getEventPhaseDurs();
+                if (eventAnim.phase === 'windup') {
+                    surgeBoost = Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur)) * d.surgeAmp * 0.55;
+                } else if (eventAnim.phase === 'peak') {
+                    surgeBoost = d.surgeAmp;
+                    pulseBoost = 1 - eventAnim.t / Math.max(0.05, ph.peakDur);
+                } else if (eventAnim.phase === 'settle') {
+                    surgeBoost = d.surgeAmp * Math.exp(-eventAnim.t * 2.2);
+                    if (band === 'ok') pulseBoost = Math.max(0, 0.65 - eventAnim.t * 0.9);
+                }
+            }
+            const lampA = 0.10 + iNorm * 0.22 + matchRatio * 0.12 + surgeBoost * 0.18 + pulseBoost * 0.14;
+            let lampCore;
+            if (band === 'ok' && (eventAnim && (eventAnim.phase === 'peak' || eventAnim.phase === 'settle'))) {
+                lampCore = 'rgba(111,174,143,' + lampA + ')';
+            } else if (band === 'high') {
+                lampCore = 'rgba(240,112,64,' + lampA + ')';
+            } else if (band === 'low') {
+                lampCore = 'rgba(96,144,208,' + lampA + ')';
+            } else {
+                lampCore = nearTarget ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(232,136,48,' + lampA + ')';
+            }
             const lamp = ctx.createRadialGradient(W * 0.2, H * 0.06, 8, W * 0.2, H * 0.06, W * 0.55);
             lamp.addColorStop(0, lampCore);
             lamp.addColorStop(1, 'rgba(232,136,48,0)');
@@ -817,20 +950,29 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             bakG.addColorStop(1, '#1e1810');
             ctx.fillStyle = bakG;
             ctx.fillRect(bx, by, bw, bh);
-            const boardGlow = 0.28 + iNorm * 0.35 + matchRatio * 0.35;
-            ctx.strokeStyle = nearTarget
-                ? 'rgba(111,174,143,' + boardGlow + ')'
-                : 'rgba(208,128,64,' + boardGlow + ')';
+            const boardGlow = 0.28 + iNorm * 0.35 + matchRatio * 0.35 + surgeBoost * 0.4 + pulseBoost * 0.25;
+            let boardStroke = 'rgba(208,128,64,' + boardGlow + ')';
+            let boardShadow = GLOW;
+            if (band === 'ok') { boardStroke = 'rgba(111,174,143,' + boardGlow + ')'; boardShadow = OK; }
+            else if (band === 'high') { boardStroke = 'rgba(240,112,64,' + boardGlow + ')'; boardShadow = '#c04030'; }
+            else if (band === 'low') { boardStroke = 'rgba(96,144,208,' + boardGlow + ')'; boardShadow = '#4060a0'; }
+            else if (nearTarget) { boardStroke = 'rgba(111,174,143,' + boardGlow + ')'; boardShadow = OK; }
+            ctx.strokeStyle = boardStroke;
             ctx.lineWidth = 2.5;
-            ctx.shadowColor = nearTarget ? OK : GLOW;
-            ctx.shadowBlur = 4 + iNorm * 10 + matchRatio * 8;
+            ctx.shadowColor = boardShadow;
+            ctx.shadowBlur = 4 + iNorm * 10 + matchRatio * 8 + surgeBoost * 12 + pulseBoost * 10;
             ctx.strokeRect(bx, by, bw, bh);
             ctx.shadowBlur = 0;
             // 接线板缘 LED 指示（橙→绿）
             const ledX = bx + bw - 18, ledY = by - 6;
-            ctx.fillStyle = nearTarget ? OK : ('rgba(232,136,48,' + (0.45 + matchRatio * 0.45) + ')');
-            ctx.shadowColor = nearTarget ? OK : GLOW;
-            ctx.shadowBlur = nearTarget ? 10 : 4 + matchRatio * 6;
+            let ledColor = nearTarget ? OK : ('rgba(232,136,48,' + (0.45 + matchRatio * 0.45) + ')');
+            let ledShadow = nearTarget ? OK : GLOW;
+            if (band === 'ok') { ledColor = OK; ledShadow = OK; }
+            else if (band === 'high') { ledColor = '#f07040'; ledShadow = '#c04030'; }
+            else if (band === 'low') { ledColor = '#6090d0'; ledShadow = '#4060a0'; }
+            ctx.fillStyle = ledColor;
+            ctx.shadowColor = ledShadow;
+            ctx.shadowBlur = (band === 'ok' && pulseBoost > 0) ? (10 + pulseBoost * 14) : (nearTarget ? 10 : 4 + matchRatio * 6 + surgeBoost * 8);
             ctx.beginPath();
             ctx.arc(ledX, ledY, 4, 0, Math.PI * 2);
             ctx.fill();
@@ -889,10 +1031,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fillRect(mx, my, mw, mh);
             const showI = measuredI != null ? measuredI : null;
             const onTarget = showI != null && Math.abs(showI - targetCurrent) < 0.001;
-            ctx.strokeStyle = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.45)';
+            let meterStroke = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.45)';
+            let meterShadow = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.3)';
+            if (eventAnim && band === 'ok' && (eventAnim.phase === 'peak' || eventAnim.phase === 'settle')) {
+                meterStroke = OK;
+                meterShadow = OK;
+            } else if (eventAnim && band === 'high') {
+                meterStroke = '#f07040'; meterShadow = '#c04030';
+            } else if (eventAnim && band === 'low') {
+                meterStroke = '#6090d0'; meterShadow = '#4060a0';
+            }
+            ctx.strokeStyle = meterStroke;
             ctx.lineWidth = 2;
-            ctx.shadowColor = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.3)';
-            ctx.shadowBlur = showI != null ? (4 + iNorm * 8 + (onTarget ? 6 : 0)) : 0;
+            ctx.shadowColor = meterShadow;
+            ctx.shadowBlur = showI != null ? (4 + iNorm * 8 + (onTarget ? 6 : 0) + surgeBoost * 10 + pulseBoost * 12) : (surgeBoost * 6);
             ctx.strokeRect(mx, my, mw, mh);
             ctx.shadowBlur = 0;
             // 表盘缘 LED
@@ -922,6 +1074,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const ry = by + bh * 0.42;
             const rw = Math.min(70, bw * 0.18), rh = 28;
             const wireHot = '#c04030', wireRet = '#1a1208', wireBus = '#806040';
+            const flowSpeed = 0.35 + Math.min(0.85, visI);
             if (mode === 'series') {
                 drawResistorBody(r1x, ry, rw, rh, 'R₁', r1);
                 drawResistorBody(r2x, ry, rw, rh, 'R₂', r2);
@@ -934,19 +1087,26 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 drawFlowDots([
                     { x: px + 94, y: py + 50 },
                     { x: r1x, y: ry + rh / 2 },
+                    { x: r1x + rw, y: ry + rh / 2 },
+                    { x: r2x, y: ry + rh / 2 },
                     { x: r2x + rw, y: ry + rh / 2 },
                     { x: mx, y: my + 40 }
-                ], 0.35 + Math.min(0.8, I));
+                ], flowSpeed, 0);
             } else {
                 const y1 = ry - 36, y2 = ry + 36;
-                drawResistorBody(r1x + 40, y1, rw, rh, 'R₁', r1);
-                drawResistorBody(r1x + 40, y2, rw, rh, 'R₂', r2);
+                const r1bx = r1x + 40;
+                const I1 = r1 > 0 ? U_SOURCE / r1 : 0;
+                const I2 = r2 > 0 ? U_SOURCE / r2 : 0;
+                const speed1 = 0.35 + Math.min(0.95, I1);
+                const speed2 = 0.35 + Math.min(0.95, I2);
+                drawResistorBody(r1bx, y1, rw, rh, 'R₁', r1);
+                drawResistorBody(r1bx, y2, rw, rh, 'R₂', r2);
                 drawPatchCord(px + 94, py + 50, r1x, ry + rh / 2, wireHot);
                 drawPatchCord(r1x, y1 + rh / 2, r1x, y2 + rh / 2, wireBus);
-                drawPatchCord(r1x, y1 + rh / 2, r1x + 40, y1 + rh / 2, wireHot);
-                drawPatchCord(r1x + 40 + rw, y1 + rh / 2, r2x + rw, y1 + rh / 2, wireBus);
-                drawPatchCord(r1x, y2 + rh / 2, r1x + 40, y2 + rh / 2, wireHot);
-                drawPatchCord(r1x + 40 + rw, y2 + rh / 2, r2x + rw, y2 + rh / 2, wireBus);
+                drawPatchCord(r1x, y1 + rh / 2, r1bx, y1 + rh / 2, wireHot);
+                drawPatchCord(r1bx + rw, y1 + rh / 2, r2x + rw, y1 + rh / 2, wireBus);
+                drawPatchCord(r1x, y2 + rh / 2, r1bx, y2 + rh / 2, wireHot);
+                drawPatchCord(r1bx + rw, y2 + rh / 2, r2x + rw, y2 + rh / 2, wireBus);
                 drawPatchCord(r2x + rw, y1 + rh / 2, r2x + rw, y2 + rh / 2, wireBus);
                 drawPatchCord(r2x + rw, y1 + rh / 2, mx, my + 40, wireHot);
                 drawPatchCord(mx + 64, my + mh, mx + 64, benchY - 8, wireRet);
@@ -954,10 +1114,22 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 drawPatchCord(px + 45, benchY - 8, px + 45, py + 102, wireRet);
                 drawFlowDots([
                     { x: px + 94, y: py + 50 },
-                    { x: r1x, y: ry + rh / 2 },
-                    { x: r2x + rw, y: ry + rh / 2 },
+                    { x: r1x, y: ry + rh / 2 }
+                ], flowSpeed, 0);
+                drawFlowDots([
+                    { x: r1x, y: y1 + rh / 2 },
+                    { x: r1bx, y: y1 + rh / 2 },
+                    { x: r1bx + rw, y: y1 + rh / 2 }
+                ], speed1, 0);
+                drawFlowDots([
+                    { x: r1x, y: y2 + rh / 2 },
+                    { x: r1bx, y: y2 + rh / 2 },
+                    { x: r1bx + rw, y: y2 + rh / 2 }
+                ], speed2, 0.5);
+                drawFlowDots([
+                    { x: r2x + rw, y: y1 + rh / 2 },
                     { x: mx, y: my + 40 }
-                ], 0.45 + Math.min(1, I));
+                ], flowSpeed, 0.25);
             }
 
             ctx.fillStyle = 'rgba(34,26,18,0.88)';
@@ -981,6 +1153,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const r1 = parseFloat(sR1.value) || 1;
             const r2 = parseFloat(sR2.value) || 1;
             const { Rtotal, I } = computeCircuit(r1, r2, mode);
+            startEventAnim(r1, r2, mode, Rtotal, I);
             measuredI = I;
             measuredRtotal = Rtotal;
             var controlsSnapshot = snapControls();
@@ -1049,12 +1222,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
         // ----- 事件绑定 -----
         // 滑条 input 更新 (tuning 已在 adapter 中绑定，这里只做UI)
-        sR1.addEventListener('input', function() { measuredI = null; measuredRtotal = null; updateAll(); });
-        sR2.addEventListener('input', function() { measuredI = null; measuredRtotal = null; updateAll(); });
+        sR1.addEventListener('input', function() {
+            if (eventAnim) return;
+            measuredI = null; measuredRtotal = null; updateAll();
+        });
+        sR2.addEventListener('input', function() {
+            if (eventAnim) return;
+            measuredI = null; measuredRtotal = null; updateAll();
+        });
         if (sMeterR) sMeterR.addEventListener('input', function() { updateAll(); });
 
         // 连接切换
         btnConnect.addEventListener('click', function() {
+            if (eventAnim) return;
             mode = (mode === 'series') ? 'parallel' : 'series';
             measuredI = null; measuredRtotal = null;
             // 更新按钮文字
@@ -1090,14 +1270,17 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             new ResizeObserver(resizeCanvas).observe(wrap);
         }
         resizeCanvas();
-        (function loop() {
+        (function loop(ts) {
+            const dt = rafLastTs ? Math.min(0.05, (ts - rafLastTs) / 1000) : 0.016;
+            rafLastTs = ts;
             flowT += 0.008;
+            stepEventAnim(dt);
             const r1 = parseFloat(sR1.value) || 1;
             const r2 = parseFloat(sR2.value) || 1;
             const out = computeCircuit(r1, r2, mode);
             drawWorkbench(r1, r2, mode, out.Rtotal, out.I);
             requestAnimationFrame(loop);
-        })();
+        })(0);
     })();
 </script>
 <script>

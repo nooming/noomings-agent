@@ -566,10 +566,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     lockedF = candidates[Math.floor(Math.random() * candidates.length)];
     F_TARGET = lockedF;
     challengeWon = false;
+    eventAnim = null;
+    measuredF = null;
     sCurrent.value = '1.0';
     sMagnetic.value = '0.5';
     refreshMagGoals();
     updateAll();
+    displayLift = liftFromF(computeForce(parseFloat(sCurrent.value) || 0, parseFloat(sMagnetic.value) || 0));
     feedback.textContent = '急单已锁定托力 ' + F_TARGET.toFixed(1) + ' N（本局不变）';
     winIndicator.style.display = 'none';
   }
@@ -577,10 +580,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     lockedF = null;
     F_TARGET = 2.4;
     challengeWon = false;
+    eventAnim = null;
+    measuredF = null;
     sCurrent.value = '2.0';
     sMagnetic.value = '1.0';
     refreshMagGoals();
     updateAll();
+    displayLift = liftFromF(computeForce(parseFloat(sCurrent.value) || 0, parseFloat(sMagnetic.value) || 0));
     feedback.textContent = '自由试吊：调 I、B 观察托力';
     winIndicator.style.display = 'none';
   }
@@ -602,6 +608,91 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   /** 仅测试后揭示 F */
   let measuredF = null;
+
+  /** 事件动画 FSM：idle → windup → peak → settle；点击时冻结 drivers */
+  let eventAnim = null;
+  /** 空闲时平滑托力位移；事件中由 FSM 驱动 */
+  let displayLift = 0;
+  let lastFrameTime = performance.now();
+
+  function liftFromF(F) {
+    return Math.min(50, F * 12);
+  }
+
+  function mapFToDur(F) {
+    const fNorm = Math.max(0, Math.min(1, (F || 0) / 8));
+    return 0.45 + fNorm * 0.85;
+  }
+
+  function classifyBand(F) {
+    if (Math.abs(F - F_TARGET) <= forceTol()) return 'ok';
+    return F > F_TARGET + forceTol() ? 'high' : 'low';
+  }
+
+  function stepEventAnim(dt) {
+    if (!eventAnim) {
+      const I = parseFloat(sCurrent.value) || 0;
+      const B = parseFloat(sMagnetic.value) || 0;
+      const targetLift = liftFromF(computeForce(I, B));
+      displayLift += (targetLift - displayLift) * Math.min(1, dt * 4.2);
+      return;
+    }
+    eventAnim.t += dt;
+    const d = eventAnim.drivers;
+    const windupDur = d.totalDur * 0.38;
+    const peakDur = d.totalDur * 0.22;
+    const settleDur = Math.max(0.12, d.totalDur - windupDur - peakDur);
+    const liftTarget = d.liftTarget;
+    const band = d.band;
+
+    if (eventAnim.phase === 'windup') {
+      const p = Math.min(1, eventAnim.t / Math.max(0.05, windupDur));
+      const ease = 1 - Math.pow(1 - p, 2.4);
+      const windTarget = band === 'low' ? liftTarget * 0.62 : liftTarget;
+      displayLift = eventAnim.windupStartLift + (windTarget - eventAnim.windupStartLift) * ease;
+      eventAnim.springOffset = (windTarget - eventAnim.windupStartLift) * ease * 0.06;
+      if (eventAnim.t >= windupDur) {
+        eventAnim.phase = 'peak';
+        eventAnim.t = 0;
+        eventAnim.peakBase = displayLift;
+      }
+    } else if (eventAnim.phase === 'peak') {
+      const p = Math.min(1, eventAnim.t / Math.max(0.05, peakDur));
+      let overshoot = 0;
+      if (band === 'ok') overshoot = liftTarget * 0.09 * Math.sin(p * Math.PI);
+      else if (band === 'high') overshoot = liftTarget * 0.38 * Math.sin(p * Math.PI);
+      else overshoot = liftTarget * 0.05 * Math.sin(p * Math.PI);
+      displayLift = liftTarget + overshoot;
+      eventAnim.springOffset = overshoot * 0.22;
+      if (eventAnim.t >= peakDur) {
+        eventAnim.phase = 'settle';
+        eventAnim.t = 0;
+        eventAnim.settleStartLift = displayLift;
+      }
+    } else if (eventAnim.phase === 'settle') {
+      const p = Math.min(1, eventAnim.t / settleDur);
+      if (band === 'high') {
+        const decay = Math.exp(-p * 3.8);
+        const bounce = Math.sin(p * Math.PI * 3.2) * decay * liftTarget * 0.28;
+        displayLift = liftTarget + bounce;
+        eventAnim.springOffset = bounce * 0.28;
+      } else if (band === 'low') {
+        const ease = 1 - Math.exp(-p * 7);
+        const lowTarget = liftTarget * 0.72;
+        displayLift = eventAnim.settleStartLift + (lowTarget - eventAnim.settleStartLift) * ease;
+        eventAnim.springOffset = (1 - ease) * liftTarget * 0.04;
+      } else {
+        const ease = 1 - Math.exp(-p * 5.5);
+        displayLift = eventAnim.settleStartLift + (liftTarget - eventAnim.settleStartLift) * ease;
+        eventAnim.springOffset = (1 - ease) * liftTarget * 0.05;
+        eventAnim.flashGreen = Math.max(0, 1 - p * 2.8);
+      }
+      if (eventAnim.t >= settleDur) {
+        displayLift = band === 'low' ? liftTarget * 0.72 : liftTarget;
+        eventAnim = null;
+      }
+    }
+  }
 
   // ----- 更新UI + canvas + 判定 -----
   function updateAll() {
@@ -649,9 +740,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.clearRect(0, 0, W, H);
     var INK = '#0a1410', MID = '#1e3428', ACCENT = '#4aaa78';
     var GLOW = '#40c878', METAL = '#6a7870', HI = '#80d0a0', OK = '#6fae8f';
-    const power = Math.min(1, (I * B) / 8);
-    const fNorm = Math.min(1, F / 8);
-    const onBand = Math.abs(F - F_TARGET) <= forceTol();
+    const drv = eventAnim ? eventAnim.drivers : null;
+    const drawI = drv ? drv.I : I;
+    const drawB = drv ? drv.B : B;
+    const drawF = drv ? drv.F : F;
+    const band = drv ? drv.band : classifyBand(drawF);
+    const onBand = band === 'ok';
+    const animActive = !!eventAnim;
+    const power = Math.min(1, (drawI * drawB) / 8);
+    const fNorm = Math.min(1, drawF / 8);
+    const lift = displayLift;
+    const springOff = eventAnim ? (eventAnim.springOffset || 0) : 0;
+    const flashG = eventAnim ? (eventAnim.flashGreen || 0) : 0;
+    const bandColor = onBand ? OK : (band === 'high' ? '#f87171' : '#fb923c');
 
     function rr(x, y, w, h, r) {
       r = Math.min(r, w * 0.5, h * 0.5);
@@ -694,7 +795,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     }
 
     var ambGlow = ctx.createRadialGradient(W * 0.5, H * 0.45, 30, W * 0.5, H * 0.45, W * 0.6);
-    ambGlow.addColorStop(0, 'rgba(64,200,120,' + (0.03 + power * 0.14) + ')');
+    const ambScale = animActive ? 0.22 : 1;
+    ambGlow.addColorStop(0, 'rgba(64,200,120,' + ((0.03 + power * 0.14) * ambScale + flashG * 0.18) + ')');
     ambGlow.addColorStop(1, 'rgba(64,200,120,0)');
     ctx.fillStyle = ambGlow;
     ctx.fillRect(0, 0, W, H);
@@ -763,15 +865,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.stroke();
     }
 
-    // B × 标记（轻微脉动）
-    const dens = Math.max(4, Math.round(B * 7));
-    const bPulse = 0.3 + 0.15 * Math.sin((typeof pulse === 'number' ? pulse : 0) * 6 + Date.now() * 0.003) + B * 0.06;
+    // B × 标记（轻微脉动；事件中让位）
+    const dens = Math.max(4, Math.round(drawB * 7));
+    const bPulseBase = animActive ? 0.18 : (0.3 + 0.15 * Math.sin((typeof pulse === 'number' ? pulse : 0) * 6 + Date.now() * 0.003));
+    const bPulse = bPulseBase + drawB * 0.06;
     for (let i = 0; i < dens; i++) {
       for (let j = 0; j < 5; j++) {
         const x = W * 0.18 + i * (W * 0.64) / dens;
         const y = yokeY + poleH + 18 + j * ((yokeH - poleH * 2 - 36) / 4);
-        ctx.strokeStyle = 'rgba(64,200,120,' + Math.min(0.95, bPulse + B * 0.2 + power * 0.1) + ')';
-        ctx.lineWidth = 1.2 + B * 0.35;
+        ctx.strokeStyle = 'rgba(64,200,120,' + Math.min(0.95, bPulse + drawB * 0.2 + power * 0.1) + ')';
+        ctx.lineWidth = 1.2 + drawB * 0.35;
         ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = ACCENT;
         ctx.font = '13px sans-serif';
@@ -795,7 +898,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     // 磁轨 + 载流导线
     const yWire = H * 0.44;
-    const lift = Math.min(50, F * 12);
     var railG = ctx.createLinearGradient(0, yWire + 28, 0, yWire + 40);
     railG.addColorStop(0, '#889890');
     railG.addColorStop(0.5, METAL);
@@ -832,8 +934,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.strokeStyle = wireG;
     ctx.lineWidth = 10;
     ctx.lineCap = 'round';
-    ctx.shadowColor = 'rgba(232,176,96,' + (0.25 + Math.min(1, I / 5) * 0.55) + ')';
-    ctx.shadowBlur = 6 + I * 3;
+    ctx.shadowColor = 'rgba(232,176,96,' + (0.25 + Math.min(1, drawI / 5) * 0.55) + ')';
+    ctx.shadowBlur = 6 + drawI * 3;
     ctx.beginPath();
     ctx.moveTo(52, wireY);
     ctx.lineTo(W * 0.82, wireY);
@@ -867,14 +969,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.lineWidth = 2;
     rr(scaleX - 22, scaleY - 36, 44, 72, 5);
     ctx.stroke();
-    // 弹簧圈
-    var tickH = Math.min(44, F * 11);
+    // 弹簧圈（springOffset 调制椭圆）
+    var tickH = Math.min(44, drawF * 11);
     for (var sp = 0; sp < 6; sp++) {
-      var sy = scaleY - 20 + sp * 8 + (F > 0.05 ? tickH * 0.08 : 0);
+      var sy = scaleY - 20 + sp * 8 + (drawF > 0.05 ? tickH * 0.08 : 0) + springOff * (1 + sp * 0.12);
       ctx.strokeStyle = '#a8b0a8';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.ellipse(scaleX, sy, 10, 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(scaleX, sy, 10 + Math.abs(springOff) * 0.15, 3 + Math.abs(springOff) * 0.08, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.strokeStyle = METAL;
@@ -883,7 +985,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.moveTo(scaleX, scaleY - 36);
     ctx.lineTo(W * 0.82, wireY);
     ctx.stroke();
-    ctx.fillStyle = onBand ? OK : (F > F_TARGET + forceTol() ? '#f87171' : '#fb923c');
+    ctx.fillStyle = bandColor;
     ctx.fillRect(scaleX - 7, scaleY + 24 - tickH, 14, tickH);
     ctx.fillStyle = HI;
     ctx.font = '11px "Microsoft YaHei",sans-serif';
@@ -891,22 +993,23 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillText('测力', scaleX, scaleY + 48);
 
     // 安培力箭头
-    if (F > 0.05) {
+    if (drawF > 0.05) {
       const ax = W * 0.5;
-      ctx.strokeStyle = onBand ? OK : GLOW;
+      const arrowPulse = animActive ? 0 : pulse * 4;
+      ctx.strokeStyle = onBand ? OK : (flashG > 0 ? OK : GLOW);
       ctx.lineWidth = 2 + fNorm * 5;
-      ctx.shadowColor = onBand ? OK : GLOW;
-      ctx.shadowBlur = 4 + fNorm * 14;
+      ctx.shadowColor = onBand ? OK : (flashG > 0 ? OK : GLOW);
+      ctx.shadowBlur = 4 + fNorm * 14 + flashG * 10;
       ctx.beginPath();
       ctx.moveTo(ax, wireY + 10);
-      ctx.lineTo(ax, wireY + 10 + 36 + pulse * 4);
+      ctx.lineTo(ax, wireY + 10 + 36 + arrowPulse);
       ctx.stroke();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = onBand ? OK : GLOW;
+      ctx.fillStyle = onBand ? OK : (flashG > 0 ? OK : GLOW);
       ctx.beginPath();
-      ctx.moveTo(ax, wireY + 52 + pulse * 4);
-      ctx.lineTo(ax - 8, wireY + 40 + pulse * 4);
-      ctx.lineTo(ax + 8, wireY + 40 + pulse * 4);
+      ctx.moveTo(ax, wireY + 52 + arrowPulse);
+      ctx.lineTo(ax - 8, wireY + 40 + arrowPulse);
+      ctx.lineTo(ax + 8, wireY + 40 + arrowPulse);
       ctx.fill();
       ctx.fillStyle = HI;
       ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
@@ -918,7 +1021,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillStyle = 'rgba(10,20,16,0.85)';
     rr(16, H - 58, 260, 40, 4);
     ctx.fill();
-    ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.6)' : 'rgba(248,113,113,0.45)';
+    ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.6)' : (band === 'high' ? 'rgba(248,113,113,0.55)' : 'rgba(251,146,60,0.5)');
     ctx.lineWidth = 1.5;
     rr(16, H - 58, 260, 40, 4);
     ctx.stroke();
@@ -928,20 +1031,33 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillText((playMode==='challenge'?'急单':'参考') + ' F ≈ ' + F_TARGET.toFixed(1) + ' N (±' + forceTol() + ')', 26, H - 42);
     ctx.fillStyle = measuredF != null ? (Math.abs(measuredF - F_TARGET) <= forceTol() ? OK : '#fca5a5') : '#7a9a88';
     if (measuredF != null) {
-      ctx.fillText('当前 ' + measuredF.toFixed(2) + ' N · I=' + I.toFixed(1) + 'A B=' + B.toFixed(1) + 'T', 26, H - 26);
+      ctx.fillText('当前 ' + measuredF.toFixed(2) + ' N · I=' + drawI.toFixed(1) + 'A B=' + drawB.toFixed(1) + 'T', 26, H - 26);
     } else {
-      ctx.fillText('当前 F 待测 · I=' + I.toFixed(1) + 'A B=' + B.toFixed(1) + 'T', 26, H - 26);
+      ctx.fillText('当前 F 待测 · I=' + drawI.toFixed(1) + 'A B=' + drawB.toFixed(1) + 'T', 26, H - 26);
     }
   }
 
   // ----- 测试/发射 事件 (snapshot + win) -----
   function onTest() {
+    if (eventAnim) return;
     const I = parseFloat(sCurrent.value) || 0;
     const B = parseFloat(sMagnetic.value) || 0;
     const F = computeForce(I, B);
+    const band = classifyBand(F);
+    const totalDur = mapFToDur(F);
+    const liftTarget = liftFromF(F);
+
     measuredF = F;
     forceDisplay.textContent = measuredF.toFixed(2);
-    drawCanvas(I, B, F);
+
+    eventAnim = {
+      phase: 'windup',
+      t: 0,
+      drivers: { I: I, B: B, F: F, band: band, totalDur: totalDur, liftTarget: liftTarget },
+      springOffset: 0,
+      flashGreen: 0,
+      windupStartLift: displayLift
+    };
 
     // 约束检查
     let hintKey = '';
@@ -995,6 +1111,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   // ----- 重置 -----
   function onReset() {
     measuredF = null;
+    eventAnim = null;
+    displayLift = liftFromF(computeForce(parseFloat(sCurrent.value) || 0, parseFloat(sMagnetic.value) || 0));
     sCurrent.value = '2.0';
     sMagnetic.value = '1.0';
     winIndicator.style.display = 'none';
@@ -1003,8 +1121,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   }
 
   // ----- 绑定事件 -----
-  sCurrent.addEventListener('input', function() { measuredF = null; updateAll(); });
-  sMagnetic.addEventListener('input', function() { measuredF = null; updateAll(); });
+  sCurrent.addEventListener('input', function() {
+    if (eventAnim) return;
+    measuredF = null;
+    updateAll();
+  });
+  sMagnetic.addEventListener('input', function() {
+    if (eventAnim) return;
+    measuredF = null;
+    updateAll();
+  });
   if (sWireTemp) sWireTemp.addEventListener('input', function() { updateAll(); });
 
   document.getElementById('btn-test').addEventListener('click', onTest);
@@ -1014,13 +1140,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   if (typeof ResizeObserver !== 'undefined' && wrap) new ResizeObserver(resizeCanvas).observe(wrap);
   resizeCanvas();
   updateAll();
-  (function loop() {
-    pulse = 0.5 + 0.5 * Math.sin(performance.now() / 280);
+  (function loop(now) {
+    const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+    lastFrameTime = now;
+    if (!eventAnim) pulse = 0.5 + 0.5 * Math.sin(now / 280);
+    stepEventAnim(dt);
     const I = parseFloat(sCurrent.value) || 0;
     const B = parseFloat(sMagnetic.value) || 0;
-    drawCanvas(I, B, computeForce(I, B));
+    const F = eventAnim ? eventAnim.drivers.F : computeForce(I, B);
+    const drawI = eventAnim ? eventAnim.drivers.I : I;
+    const drawB = eventAnim ? eventAnim.drivers.B : B;
+    drawCanvas(drawI, drawB, F);
     requestAnimationFrame(loop);
-  })();
+  })(performance.now());
 })();
 </script>
 <script>

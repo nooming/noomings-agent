@@ -668,8 +668,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       if (isFire) measuredI = I;
       currentDisplay.textContent = measuredI != null ? measuredI.toFixed(1) : '—';
 
-      // 绘制 canvas (可视化)；动画可用 live I，数字用 measured
-      drawCanvas(fVal, workEv, I);
+      // 绘制 canvas (可视化)；动画可用 live I / 频率色相，数字用 measured
+      drawCanvas(fVal, workEv, I, intensity);
 
       // 判定过关条件: 产生光电流 (I > 0) 且频率/逸出功在范围内
       const freqOk = (freqHz >= 1e14 && freqHz <= 1e15);
@@ -724,7 +724,72 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
 
-    let W = 600, H = 320, animT = 0;
+    let W = 600, H = 320, animT = 0, ambientT = 0;
+    /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
+    let eventAnim = null;
+    let rafLastTs = 0;
+
+    function mapPhotoDur(intensity, I) {
+      const inten = intensity != null ? intensity : 1;
+      const iNorm = Math.min(1, Math.max(0, I / 5));
+      return Math.max(0.4, Math.min(1.5, 0.45 + (inten / 5) * 0.75 + iNorm * 0.35));
+    }
+
+    function startEventAnim(fVal, wVal, I, intensity, canEscape) {
+      const totalDur = mapPhotoDur(intensity, I);
+      eventAnim = {
+        phase: 'windup',
+        t: 0,
+        drivers: {
+          fVal: fVal, wVal: wVal, I: I, intensity: intensity != null ? intensity : 1,
+          canEscape: !!canEscape,
+          surgeAmp: Math.min(1, (intensity != null ? intensity : 1) / 5),
+          totalDur: totalDur
+        }
+      };
+    }
+
+    function getEventPhaseDurs() {
+      if (!eventAnim) return { windupDur: 0.2, peakDur: 0.12, settleDur: 0.3 };
+      const d = eventAnim.drivers;
+      const windupDur = Math.max(0.12, d.totalDur * 0.28);
+      const peakDur = Math.max(0.1, Math.min(0.18, d.totalDur * 0.15));
+      const settleDur = Math.max(0.15, d.totalDur - windupDur - peakDur);
+      return { windupDur: windupDur, peakDur: peakDur, settleDur: settleDur };
+    }
+
+    function stepEventAnim(dt) {
+      if (!eventAnim) return;
+      eventAnim.t += dt;
+      const ph = getEventPhaseDurs();
+      if (eventAnim.phase === 'windup') {
+        if (eventAnim.t >= ph.windupDur) { eventAnim.phase = 'peak'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'peak') {
+        if (eventAnim.t >= ph.peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
+      } else if (eventAnim.phase === 'settle') {
+        if (eventAnim.t >= ph.settleDur) eventAnim = null;
+      }
+    }
+
+    function getEventSurge() {
+      if (!eventAnim) return 0;
+      const d = eventAnim.drivers;
+      const ph = getEventPhaseDurs();
+      if (eventAnim.phase === 'windup') {
+        return Math.min(1, eventAnim.t / Math.max(0.05, ph.windupDur)) * d.surgeAmp;
+      }
+      if (eventAnim.phase === 'peak') return d.surgeAmp;
+      return d.surgeAmp * Math.exp(-eventAnim.t * 2.8);
+    }
+
+    function getEscapeFlash() {
+      if (!eventAnim || !eventAnim.drivers.canEscape) return 0;
+      const ph = getEventPhaseDurs();
+      if (eventAnim.phase === 'peak') return 1 - eventAnim.t / Math.max(0.05, ph.peakDur);
+      if (eventAnim.phase === 'settle') return Math.max(0, 0.5 - eventAnim.t * 0.65);
+      return 0;
+    }
+
     function syncCanvasSize() {
       var stage = document.getElementById('essence-stage') || canvas.parentElement;
       var cssW = Math.max(2, (stage && stage.clientWidth) || 600);
@@ -738,12 +803,22 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       W = cssW; H = cssH;
     }
 
-    function drawCanvas(fVal, wVal, I) {
+    function drawCanvas(fVal, wVal, I, intensity) {
       syncCanvasSize();
       ctx.clearRect(0, 0, W, H);
 
       var INK = '#0c0a12', MID = '#2a2438', ACCENT = '#d4a84b';
       var GLOW = '#6eb8e8', METAL = '#7a8494', HI = '#f0d090';
+      var OK = '#7ecf9a';
+      var drv = eventAnim ? eventAnim.drivers : null;
+      if (drv) {
+        fVal = drv.fVal; wVal = drv.wVal; I = drv.I;
+        intensity = drv.intensity;
+      }
+      var inten = intensity != null ? intensity : 1;
+      var surge = getEventSurge();
+      var escFlash = getEscapeFlash();
+      var animPhase = eventAnim ? eventAnim.phase : null;
 
       function rr(x, y, w, h, r) {
         r = Math.min(r, w * 0.5, h * 0.5);
@@ -755,6 +830,17 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.arcTo(x, y, x + w, y, r);
         ctx.closePath();
       }
+
+      // 频率 → 灯色：低频偏橙红，高频偏蓝紫（live，不依赖测量）
+      function freqToRgb(fv) {
+        var t = Math.max(0, Math.min(1, (fv - 1) / 9));
+        var r = Math.round(255 * (0.95 - t * 0.45));
+        var g = Math.round(120 + 80 * Math.sin(t * Math.PI) - t * 40);
+        var b = Math.round(60 + t * 195);
+        return { r: r, g: Math.max(40, Math.min(220, g)), b: b };
+      }
+      var lampRgb = freqToRgb(fVal);
+      var lampCss = lampRgb.r + ',' + lampRgb.g + ',' + lampRgb.b;
 
       // 暗箱腔室背景
       var bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -775,14 +861,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.stroke();
       }
 
-      const iNorm = Math.min(1, Math.max(0, I / 12));
+      const iNorm = Math.min(1, Math.max(0, I / 5));
+      var canEscape = drv ? drv.canEscape : (I > 0);
+      var timeBase = eventAnim ? animT : ambientT;
       var lampX = W * 0.11, lampY = H * 0.42;
-      var lampFlick = 0.90 + 0.10 * Math.sin(animT * 5.1) * Math.sin(animT * 3.3 + 1.2);
+      var lampFlick = eventAnim
+        ? (0.92 + surge * 0.28 + (animPhase === 'peak' ? 0.12 : 0))
+        : (0.88 + 0.12 * Math.sin(ambientT * 5.1) * Math.sin(ambientT * 3.3 + 1.2));
+      var lampBoost = 0.22 + inten * 0.18 + (canEscape ? iNorm * 0.2 : 0) + surge * 0.35;
       var lampRad = ctx.createRadialGradient(lampX, lampY, 6, lampX, lampY, W * 0.52);
-      lampRad.addColorStop(0, 'rgba(110,184,232,' + (0.32 * lampFlick + iNorm * 0.18) + ')');
-      lampRad.addColorStop(0.28, 'rgba(110,184,232,' + (0.12 * lampFlick + iNorm * 0.10) + ')');
-      lampRad.addColorStop(0.62, 'rgba(110,184,232,0.04)');
-      lampRad.addColorStop(1, 'rgba(110,184,232,0)');
+      lampRad.addColorStop(0, 'rgba(' + lampCss + ',' + (lampBoost * lampFlick) + ')');
+      lampRad.addColorStop(0.28, 'rgba(' + lampCss + ',' + (0.10 * lampFlick + inten * 0.08) + ')');
+      lampRad.addColorStop(0.62, 'rgba(' + lampCss + ',0.05)');
+      lampRad.addColorStop(1, 'rgba(' + lampCss + ',0)');
       ctx.fillStyle = lampRad;
       ctx.fillRect(0, 0, W, H);
 
@@ -847,25 +938,25 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.lineWidth = 1.5;
       rr(housX, housY, housW, housH, 5);
       ctx.stroke();
-      // 石英窗
+      // 石英窗（色相随频率）
       var winX = housX + housW * 0.18, winY = housY + housH * 0.28;
       var winW = housW * 0.64, winH = housH * 0.44;
       var winG = ctx.createLinearGradient(winX, winY, winX + winW, winY + winH);
-      winG.addColorStop(0, 'rgba(110,184,232,0.55)');
-      winG.addColorStop(0.5, 'rgba(180,220,240,0.35)');
-      winG.addColorStop(1, 'rgba(80,140,180,0.25)');
+      winG.addColorStop(0, 'rgba(' + lampCss + ',0.55)');
+      winG.addColorStop(0.5, 'rgba(' + lampCss + ',0.32)');
+      winG.addColorStop(1, 'rgba(' + lampCss + ',0.22)');
       ctx.fillStyle = winG;
       rr(winX, winY, winW, winH, 3);
       ctx.fill();
       var bulbCore = ctx.createRadialGradient(winX + winW * 0.5, winY + winH * 0.5, 1, winX + winW * 0.5, winY + winH * 0.5, winW * 0.55);
-      bulbCore.addColorStop(0, 'rgba(220,240,255,' + (0.95 * lampFlick) + ')');
-      bulbCore.addColorStop(0.45, 'rgba(110,184,232,' + (0.75 * lampFlick) + ')');
-      bulbCore.addColorStop(1, 'rgba(110,184,232,0)');
+      bulbCore.addColorStop(0, 'rgba(255,248,230,' + (0.9 * lampFlick) + ')');
+      bulbCore.addColorStop(0.45, 'rgba(' + lampCss + ',' + (0.78 * lampFlick) + ')');
+      bulbCore.addColorStop(1, 'rgba(' + lampCss + ',0)');
       ctx.fillStyle = bulbCore;
       ctx.beginPath();
-      ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 0.42, 0, Math.PI * 2);
+      ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 0.42 * (0.9 + inten * 0.12), 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(110,184,232,0.85)';
+      ctx.fillStyle = 'rgba(' + lampCss + ',0.9)';
       ctx.font = '9px "Microsoft YaHei",sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('Hg UV', winX + winW * 0.5, housY + housH + 14);
@@ -946,43 +1037,80 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('阴极', tubeX + 24, cy + ch + 16);
       ctx.fillText('阳极', tubeX + tubeW - 24 - plateW, cy + ch + 16);
 
-      // 入射光子（汞灯 → 阴极）
+      // 入射光子（数量 ∝ 光强；色相 ∝ 频率；事件 burst ∝ intensity）
       var photonStart = winX + winW;
       var photonEnd = tubeX + 24 + plateW;
-      for (var pi = 0; pi < 5; pi++) {
-        var pt = ((animT * 0.55 + pi / 5) % 1);
+      var photonN = Math.max(3, Math.round(2 + inten * 5 + surge * 14));
+      var photonSpeed = eventAnim ? (0.55 + surge * 1.8) : (0.4 + inten * 0.25);
+      for (var pi = 0; pi < photonN; pi++) {
+        var pt = ((timeBase * photonSpeed + pi / photonN) % 1);
         var px = photonStart + pt * (photonEnd - photonStart);
-        var py = tubeY + tubeH * 0.22 + pi * (tubeH * 0.11) + Math.sin(animT * 4 + pi) * 3;
-        var pRad = ctx.createRadialGradient(px, py, 0, px, py, I > 0 ? 6 : 4);
-        pRad.addColorStop(0, I > 0 ? '#f0d090' : '#a87826');
-        pRad.addColorStop(0.5, I > 0 ? '#d4a84b' : '#7a5a20');
-        pRad.addColorStop(1, 'rgba(212,168,75,0)');
+        var py = tubeY + tubeH * 0.18 + (pi / Math.max(1, photonN - 1)) * (tubeH * 0.55) + Math.sin(timeBase * 4 + pi) * 3;
+        var pSz = canEscape ? (4.5 + inten * 1.2 + surge * 2.5) : (3 + inten * 0.8 + surge * 1.2);
+        var pAlpha = canEscape ? 0.95 : (0.45 + surge * 0.35);
+        var pRad = ctx.createRadialGradient(px, py, 0, px, py, pSz + 2);
+        if (!canEscape && eventAnim && animPhase !== 'idle') {
+          pRad.addColorStop(0, 'rgba(140,150,170,' + pAlpha + ')');
+          pRad.addColorStop(0.5, 'rgba(' + lampCss + ',' + (pAlpha * 0.55) + ')');
+          pRad.addColorStop(1, 'rgba(' + lampCss + ',0)');
+        } else {
+          pRad.addColorStop(0, 'rgba(' + lampCss + ',' + pAlpha + ')');
+          pRad.addColorStop(0.5, 'rgba(' + lampCss + ',' + (pAlpha * 0.58) + ')');
+          pRad.addColorStop(1, 'rgba(' + lampCss + ',0)');
+        }
         ctx.fillStyle = pRad;
         ctx.beginPath();
-        ctx.arc(px, py, I > 0 ? 5 : 3.5, 0, Math.PI * 2);
+        ctx.arc(px, py, pSz, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = ACCENT;
+      // 未逸出：阴极吸收波纹（hf≤W）
+      if (!canEscape && eventAnim && surge > 0.05) {
+        var blockR = 14 + surge * 22;
+        ctx.strokeStyle = 'rgba(120,140,180,' + (0.25 + surge * 0.45) + ')';
+        ctx.lineWidth = 2 + surge * 2;
+        ctx.beginPath();
+        ctx.arc(tubeX + 24 + plateW * 0.5, tubeY + tubeH * 0.5, blockR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(100,120,160,' + (surge * 0.18) + ')';
+        ctx.beginPath();
+        ctx.arc(tubeX + 24 + plateW * 0.5, tubeY + tubeH * 0.5, blockR * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(' + lampCss + ',0.95)';
       ctx.font = '11px "Microsoft YaHei",sans-serif';
       ctx.fillText('入射光 f=' + fVal.toFixed(1) + '×10¹⁴ Hz', tubeX + tubeW * 0.22, tubeY + 16);
 
-      // 电子流（阴极 → 阳极）
+      // 电子流（阴极 → 阳极）：逸出时数量/速度随 (hf>W) 与强度 live 变化
       var eStart = tubeX + 24 + plateW + 6;
       var eEnd = tubeX + tubeW - 24 - plateW - 6;
-      if (I > 0) {
-        for (var ei = 0; ei < 6; ei++) {
-          var et = (animT * 0.8 + ei / 6) % 1;
+      if (canEscape) {
+        var eBoost = eventAnim ? (1 + surge * 2.2) : 1;
+        var eN = Math.max(3, Math.round((2 + iNorm * 8 + inten * 2) * eBoost));
+        for (var ei = 0; ei < eN; ei++) {
+          var eSpeed = eventAnim ? (0.75 + iNorm * 0.65 + surge * 1.4) : (0.55 + iNorm * 0.55);
+          var et = (timeBase * eSpeed + ei / eN) % 1;
           var ex = eStart + et * (eEnd - eStart);
-          var ey = tubeY + tubeH * 0.48 + Math.sin(animT * 3 + ei) * 6;
-          var eRad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 5);
-          eRad.addColorStop(0, '#ffb4b4');
+          var ey = tubeY + tubeH * 0.48 + Math.sin(timeBase * 3 + ei) * (5 + iNorm * 4 + surge * 3);
+          var eRad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 5 + surge * 4);
+          eRad.addColorStop(0, escFlash > 0 ? '#ffd0d0' : '#ffb4b4');
           eRad.addColorStop(0.6, '#e06060');
           eRad.addColorStop(1, 'rgba(224,96,96,0)');
           ctx.fillStyle = eRad;
           ctx.beginPath();
-          ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
+          ctx.arc(ex, ey, 2.8 + iNorm * 1.4 + surge * 2.2, 0, Math.PI * 2);
           ctx.fill();
         }
+        // 阴极逸出提示晕（live，不剧透 μA 数值）
+        ctx.shadowColor = escFlash > 0 ? OK : '#e06060';
+        ctx.shadowBlur = 6 + iNorm * 16 + surge * 18 + escFlash * 12;
+        ctx.strokeStyle = escFlash > 0
+          ? 'rgba(126,207,154,' + (0.35 + escFlash * 0.45) + ')'
+          : 'rgba(224,96,96,' + (0.2 + iNorm * 0.45 + surge * 0.35) + ')';
+        ctx.lineWidth = 1.5 + surge;
+        ctx.beginPath();
+        ctx.arc(tubeX + 24 + plateW * 0.5, tubeY + tubeH * 0.5, 10 + iNorm * 8 + surge * 14, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#fda4af';
         ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
         if (measuredI != null) {
@@ -993,7 +1121,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       } else {
         ctx.fillStyle = 'rgba(154,142,120,0.85)';
         ctx.font = '12px "Microsoft YaHei",sans-serif';
-        ctx.fillText(measuredI != null ? '尚无光电子逸出' : '待发射检测', tubeX + tubeW * 0.28, tubeY + tubeH * 0.52);
+        ctx.fillText(measuredI != null ? '尚无光电子逸出' : 'hf≤W · 未见逸出', tubeX + tubeW * 0.28, tubeY + tubeH * 0.52);
       }
 
       // 接线柱（琥珀点缀）
@@ -1045,12 +1173,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     // 发射动作
     function fire() {
+      if (eventAnim) return;
       hasFired = true;
-      updateUI(true, true);  // 发射 snapshot
+      const { freqHz, workEv, fVal, intensity } = getPhysicalValues();
+      const I = computePhotocurrent(freqHz, workEv, intensity);
+      const canEscape = I > 0;
+      measuredI = I;
+      startEventAnim(fVal, workEv, I, intensity, canEscape);
+      updateUI(true, true);  // 立即 snapshot / win，不延迟 emit
     }
 
     // 重置
     function resetAll() {
+      eventAnim = null;
       if (playMode === 'challenge' && lockedMat) {
         freqSlider.value = '4.0';
         workSlider.value = String(lockedMat.W);
@@ -1072,16 +1207,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     // 滑条事件 (更新UI但不发射snapshot, tuning由埋点hook处理)
     freqSlider.addEventListener('input', function() {
+      if (eventAnim) return;
       measuredI = null;
       hasFired = false;
       updateUI(false, false);
     });
     workSlider.addEventListener('input', function() {
+      if (eventAnim) return;
       measuredI = null;
       hasFired = false;
       updateUI(false, false);
     });
     if (intensitySlider) intensitySlider.addEventListener('input', function() {
+      if (eventAnim) return;
       measuredI = null;
       hasFired = false;
       updateUI(false, false);
@@ -1115,9 +1253,15 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     window.__emit = emit;
 
-    function tick() {
-      animT += 0.016;
-      updateUI(false, false);
+    function tick(ts) {
+      const dt = rafLastTs ? Math.min(0.05, (ts - rafLastTs) / 1000) : 0.016;
+      rafLastTs = ts;
+      if (!eventAnim) ambientT += dt;
+      animT += dt;
+      stepEventAnim(dt);
+      const { freqHz, workEv, fVal, intensity } = getPhysicalValues();
+      const I = computePhotocurrent(freqHz, workEv, intensity);
+      drawCanvas(fVal, workEv, I, intensity);
       requestAnimationFrame(tick);
     }
     window.addEventListener('resize', function(){ updateUI(false, false); });
