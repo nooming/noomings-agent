@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>样本html · 离线试玩与图谱</title>
+<style>
+:root {
+  --bg: #eef3f7;
+  --panel: #ffffff;
+  --text: #1a3344;
+  --muted: #5a7a8a;
+  --accent: #0a6b8a;
+  --line: #d0dde6;
+  --hover: #f3f8fb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(10, 107, 138, 0.08), transparent 42%),
+    linear-gradient(180deg, #f7fafc 0%, var(--bg) 100%);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+header {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 36px 20px 18px;
+}
+header h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+header p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 42em;
+}
+.note {
+  max-width: 920px;
+  margin: 0 auto 18px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 20px 48px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+th, td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+th {
+  background: #f4f8fb;
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--hover); }
+.name { font-weight: 600; }
+.kp { color: var(--muted); font-size: 0.9rem; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+a.btn {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.86rem;
+  background: #fff;
+}
+a.btn:hover { background: rgba(10, 107, 138, 0.08); }
+a.btn.secondary {
+  border-color: var(--line);
+  color: var(--text);
+}
+footer {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+footer a { color: var(--accent); }
+@media (max-width: 640px) {
+  th:nth-child(2), td:nth-child(2) { display: none; }
+  .links { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>样本html · 离线试玩与图谱</h1>
+  <p>本目录为可拷贝的双击包：打开游戏 HTML 试玩，或打开「图谱」查看 Agent A 策略优先级预览。无需登录、不含学情与评判。</p>
+</header>
+<div class="note">请整夹复制（含 <code>vendor/</code>）。推荐从本页进入；也可直接打开各子夹中的 HTML。若图谱 Mermaid 在 <code>file://</code> 下异常，可双击 <code>启动本地预览.bat</code>。</div>
+<main>
+  <table>
+    <thead>
+      <tr>
+        <th>样本</th>
+        <th>知识点</th>
+        <th>打开</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="name">斜抛</td><td class="kp">斜抛</td><td class="links"><a class="btn" href="斜抛/斜抛.html">试玩</a><a class="btn secondary" href="斜抛/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">抛体大炮</td><td class="kp">抛体大炮</td><td class="links"><a class="btn" href="抛体大炮/抛体大炮.html">试玩</a><a class="btn secondary" href="抛体大炮/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">斜面摩擦</td><td class="kp">斜面摩擦</td><td class="links"><a class="btn" href="斜面摩擦/斜面摩擦.html">试玩</a><a class="btn secondary" href="斜面摩擦/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">机械能</td><td class="kp">机械能</td><td class="links"><a class="btn" href="机械能/机械能.html">试玩</a><a class="btn secondary" href="机械能/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">圆周运动</td><td class="kp">圆周运动</td><td class="links"><a class="btn" href="圆周运动/圆周运动.html">试玩</a><a class="btn secondary" href="圆周运动/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">动量碰撞</td><td class="kp">动量</td><td class="links"><a class="btn" href="动量碰撞/动量碰撞.html">试玩</a><a class="btn secondary" href="动量碰撞/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">钟表铺校时</td><td class="kp">单摆秒摆</td><td class="links"><a class="btn" href="钟表铺校时/钟表铺校时.html">试玩</a><a class="btn secondary" href="钟表铺校时/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">单摆投靶</td><td class="kp">单摆投靶</td><td class="links"><a class="btn" href="单摆投靶/单摆投靶.html">试玩</a><a class="btn secondary" href="单摆投靶/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">电场</td><td class="kp">电场</td><td class="links"><a class="btn" href="电场/电场.html">试玩</a><a class="btn secondary" href="电场/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">回旋加速器</td><td class="kp">回旋加速器</td><td class="links"><a class="btn" href="回旋加速器/回旋加速器.html">试玩</a><a class="btn secondary" href="回旋加速器/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">电容混淆</td><td class="kp">电容</td><td class="links"><a class="btn" href="电容混淆/电容混淆.html">试玩</a><a class="btn secondary" href="电容混淆/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">串并联电路</td><td class="kp">电路</td><td class="links"><a class="btn" href="串并联电路/串并联电路.html">试玩</a><a class="btn secondary" href="串并联电路/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">RC电路</td><td class="kp">RC电路</td><td class="links"><a class="btn" href="RC电路/RC电路.html">试玩</a><a class="btn secondary" href="RC电路/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">安培力</td><td class="kp">安培力</td><td class="links"><a class="btn" href="安培力/安培力.html">试玩</a><a class="btn secondary" href="安培力/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">变压器</td><td class="kp">变压器</td><td class="links"><a class="btn" href="变压器/变压器.html">试玩</a><a class="btn secondary" href="变压器/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">电容 · 介质与击穿</td><td class="kp">电容·介质与击穿</td><td class="links"><a class="btn" href="电容_介质与击穿/电容_介质与击穿.html">试玩</a><a class="btn secondary" href="电容_介质与击穿/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">电容 · 串并联</td><td class="kp">电容·串并联</td><td class="links"><a class="btn" href="电容_串并联/电容_串并联.html">试玩</a><a class="btn secondary" href="电容_串并联/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">电容 · 储能与充电</td><td class="kp">电容·储能充电</td><td class="links"><a class="btn" href="电容_储能与充电/电容_储能与充电.html">试玩</a><a class="btn secondary" href="电容_储能与充电/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">热传导</td><td class="kp">热传导</td><td class="links"><a class="btn" href="热传导/热传导.html">试玩</a><a class="btn secondary" href="热传导/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">理想气体</td><td class="kp">理想气体</td><td class="links"><a class="btn" href="理想气体/理想气体.html">试玩</a><a class="btn secondary" href="理想气体/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">透镜</td><td class="kp">透镜</td><td class="links"><a class="btn" href="透镜/透镜.html">试玩</a><a class="btn secondary" href="透镜/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">折射</td><td class="kp">折射</td><td class="links"><a class="btn" href="折射/折射.html">试玩</a><a class="btn secondary" href="折射/图谱.html">图谱</a></td></tr>
+      <tr><td class="name">光电效应</td><td class="kp">光电效应</td><td class="links"><a class="btn" href="光电效应/光电效应.html">试玩</a><a class="btn secondary" href="光电效应/图谱.html">图谱</a></td></tr>
+    </tbody>
+  </table>
+</main>
+<footer>
+  映射与审查说明见 <a href="清单.md">清单.md</a> · 用法见 <a href="README-离线说明.md">README-离线说明.md</a>
+</footer>
+</body>
+</html>

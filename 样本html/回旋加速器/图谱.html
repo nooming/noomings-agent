@@ -2980,7 +2980,7 @@ function loadD3Lib() {
   if (typeof d3 !== 'undefined') return Promise.resolve();
   if (d3LoadPromise) return d3LoadPromise;
   const src = (typeof window !== 'undefined' && window.__D3_SRC__)
-    || '/static/viewer/vendor/d3.v7.min.js';
+    || (typeof location !== 'undefined' && location.protocol === 'file:' ? '../vendor/d3.v7.min.js' : '/static/viewer/vendor/d3.v7.min.js');
   d3LoadPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-d3-loader]');
     if (existing) {
@@ -3075,7 +3075,7 @@ function loadMermaidLib() {
   if (typeof mermaid !== 'undefined') return Promise.resolve();
   if (mermaidLoadPromise) return mermaidLoadPromise;
   const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
-    || '/static/viewer/vendor/mermaid.min.js';
+    || (typeof location !== 'undefined' && location.protocol === 'file:' ? '../vendor/mermaid.min.js' : '/static/viewer/vendor/mermaid.min.js');
   mermaidLoadPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-mermaid-loader]');
     if (existing) {
@@ -3106,7 +3106,7 @@ function loadMathJaxLib() {
       svg: { fontCache: 'global' },
     };
   }
-  const src = window.__MATHJAX_SRC__ || '/static/viewer/vendor/tex-mml-svg.js';
+  const src = window.__MATHJAX_SRC__ || (typeof location !== 'undefined' && location.protocol === 'file:' ? '../vendor/tex-mml-svg.js' : '/static/viewer/vendor/tex-mml-svg.js');
   mathjaxLoadPromise = new Promise((resolve, reject) => {
     const finish = () => {
       const mj = window.MathJax;

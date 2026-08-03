@@ -853,12 +853,23 @@ function clearGraphSvg() {
   else if (svgEl) svgEl.innerHTML = '';
 }
 
+/** Prefer export hook; on file:// never hit absolute /static (broken offline). */
+function resolveLazyVendorSrc(hookVal, fileName) {
+  if (hookVal) return hookVal;
+  if (typeof location !== 'undefined' && location.protocol === 'file:') {
+    return '../vendor/' + fileName;
+  }
+  return '/static/viewer/vendor/' + fileName;
+}
+
 /** Lazy-load D3 for DT/KG (and interactive strategy zoom when present). */
 function loadD3Lib() {
   if (typeof d3 !== 'undefined') return Promise.resolve();
   if (d3LoadPromise) return d3LoadPromise;
-  const src = (typeof window !== 'undefined' && window.__D3_SRC__)
-    || '/static/viewer/vendor/d3.v7.min.js';
+  const src = resolveLazyVendorSrc(
+    typeof window !== 'undefined' ? window.__D3_SRC__ : '',
+    'd3.v7.min.js'
+  );
   d3LoadPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-d3-loader]');
     if (existing) {
@@ -952,8 +963,10 @@ function ensureMermaid() {
 function loadMermaidLib() {
   if (typeof mermaid !== 'undefined') return Promise.resolve();
   if (mermaidLoadPromise) return mermaidLoadPromise;
-  const src = (typeof window !== 'undefined' && window.__MERMAID_SRC__)
-    || '/static/viewer/vendor/mermaid.min.js';
+  const src = resolveLazyVendorSrc(
+    typeof window !== 'undefined' ? window.__MERMAID_SRC__ : '',
+    'mermaid.min.js'
+  );
   mermaidLoadPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-mermaid-loader]');
     if (existing) {
@@ -984,7 +997,7 @@ function loadMathJaxLib() {
       svg: { fontCache: 'global' },
     };
   }
-  const src = window.__MATHJAX_SRC__ || '/static/viewer/vendor/tex-mml-svg.js';
+  const src = resolveLazyVendorSrc(window.__MATHJAX_SRC__, 'tex-mml-svg.js');
   mathjaxLoadPromise = new Promise((resolve, reject) => {
     const finish = () => {
       const mj = window.MathJax;

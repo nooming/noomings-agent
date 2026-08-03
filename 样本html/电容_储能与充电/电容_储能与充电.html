@@ -4401,7 +4401,7 @@ Game.register(4, { init: initCh4, frame: frameCh4, usesCanvas: true, showSummary
 const Telemetry = (function () {
   const qs = new URLSearchParams(location.search);
   const sid = qs.get('sid') || ('anon-' + Math.random().toString(36).slice(2, 8));
-  const endpoint = qs.get('ep') || 'http://127.0.0.1:8000/api/events';
+  const endpoint = qs.get('ep') || (location.protocol === 'file:' ? '' : 'http://127.0.0.1:8000/api/events');
   const session = {
     session_id: sid + '-' + Date.now().toString(36),
     student_id: sid,

@@ -4738,7 +4738,7 @@ Game.register(1, { init: initCh1, frame: frameCh1, usesCanvas: true, showSummary
 const Telemetry = (function () {
   const qs = new URLSearchParams(location.search);
   const sid = qs.get('sid') || ('anon-' + Math.random().toString(36).slice(2, 8));
-  const endpoint = qs.get('ep') || 'http://127.0.0.1:8000/api/events'; // 后端未启动时静默降级
+  const endpoint = qs.get('ep') || (location.protocol === 'file:' ? '' : 'http://127.0.0.1:8000/api/events'); // file:// / 后端未启动时静默降级
   const session = {
     session_id: sid + '-' + Date.now().toString(36),
     student_id: sid,
