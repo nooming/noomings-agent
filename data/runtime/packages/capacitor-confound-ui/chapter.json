@@ -303,7 +303,7 @@
   "strategy": {
     "title": "电容 · 平行板探究",
     "sub": "探究极板面积与间距对电容读数的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust1C --> FireC[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nEnv -->|竞赛模式| Challenge[竞赛模式：限次达标]:::stratCore\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nFireC --> ObserveC{观察读数?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveC -->|偏低| Adjust1C\nObserveC -->|偏高| Adjust1C\nObserveC -->|未达标| RetryC[重试]:::stratRetry\nObserveC -->|达标| WinC[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·外观色调| ProbeCV\nStrategySelect -->|单变量·极板间距| Route_main\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| Explore[探究模式：自由调参观察]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main --> Adjust1\nRoute_main_s_area --> Adjust2\nProbeCV[试探混淆·外观色调]\nTrap[多参盲调]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nEnv -->|竞赛模式| Challenge[竞赛模式：限次达标]:::stratCore\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·外观色调| ProbeCV\nStrategySelect -->|单变量·极板间距| Route_main\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| Explore[探究模式：自由调参观察]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main --> Adjust1\nRoute_main_s_area --> Adjust2\nProbeCV[试探混淆·外观色调]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -329,8 +329,7 @@
           "Adjust1",
           "Fire",
           "Observe",
-          "Retry",
-          "WinC"
+          "Retry"
         ],
         "highlightEdges": [
           [
@@ -401,8 +400,7 @@
           "Fire",
           "Observe",
           "Adjust1",
-          "Retry",
-          "WinC"
+          "Retry"
         ],
         "highlightEdges": [
           [

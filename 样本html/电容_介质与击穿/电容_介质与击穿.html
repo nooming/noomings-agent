@@ -805,6 +805,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body class="cap-dark">

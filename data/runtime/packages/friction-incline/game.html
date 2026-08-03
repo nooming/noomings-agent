@@ -417,6 +417,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -769,26 +793,26 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.arc(lampX + lampSwing, 85, 48, 0, Math.PI * 2);
         ctx.fill();
 
-        // 工具挂板（右后方低干扰）
-        const pegX = W - 88;
+        // 加厚工具挂板 + 侧柜
+        const pegX = W - 100;
         if (pegX > topX + 40) {
           ctx.fillStyle = SC.mid;
-          roundRect(pegX, 72, 56, groundY - 88, 3);
+          roundRect(pegX, 118, 78, Math.max(50, groundY - 140), 4);
           ctx.fill();
-          ctx.strokeStyle = 'rgba(122,112,96,0.55)';
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(122,112,96,0.6)';
+          ctx.lineWidth = 1.5;
           ctx.stroke();
-          for (let pi = 0; pi < 4; pi++) {
-            ctx.fillStyle = pi % 2 ? SC.metal : SC.accent;
-            ctx.fillRect(pegX + 10, 90 + pi * 32, 18, 4);
-            ctx.fillStyle = 'rgba(232,184,136,0.35)';
-            ctx.beginPath();
-            ctx.arc(pegX + 38, 98 + pi * 32, 5, 0, Math.PI * 2);
-            ctx.fill();
-          }
           ctx.fillStyle = SC.hi;
           ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
-          ctx.fillText('工具板', pegX + 8, 68);
+          ctx.fillText('工具板', pegX + 16, 136);
+          for (let pi = 0; pi < 5; pi++) {
+            ctx.fillStyle = pi % 2 ? SC.metal : SC.accent;
+            ctx.fillRect(pegX + 12, 148 + pi * 34, 24, 6);
+            ctx.fillStyle = 'rgba(232,184,136,0.4)';
+            ctx.beginPath();
+            ctx.arc(pegX + 52, 158 + pi * 34, 7, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
 
         // 木屑微尘
@@ -860,12 +884,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
         ctx.fillText(zc.label, palletX + Math.max(4, palletW / 2 - 22), palletY + 28);
 
-        // —— 木质滑道楔体 ——
+        // —— 木质滑道楔体（加厚） ——
+        const rampTh = 32;
         ctx.beginPath();
         ctx.moveTo(BASE_X, BASE_Y);
         ctx.lineTo(topX, topY);
-        ctx.lineTo(topX + 20, topY);
-        ctx.lineTo(topX + 20, BASE_Y);
+        ctx.lineTo(topX + rampTh, topY);
+        ctx.lineTo(topX + rampTh, BASE_Y);
         ctx.closePath();
         const rampFill = ctx.createLinearGradient(BASE_X, topY, topX, BASE_Y);
         rampFill.addColorStop(0, SC.hi);
@@ -874,7 +899,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = rampFill;
         ctx.fill();
         ctx.strokeStyle = '#3a2818';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
         // 木板条纹理
@@ -882,19 +907,19 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.beginPath();
         ctx.moveTo(BASE_X, BASE_Y);
         ctx.lineTo(topX, topY);
-        ctx.lineTo(topX + 20, topY);
-        ctx.lineTo(topX + 20, BASE_Y);
+        ctx.lineTo(topX + rampTh, topY);
+        ctx.lineTo(topX + rampTh, BASE_Y);
         ctx.closePath();
         ctx.clip();
         ctx.strokeStyle = 'rgba(58,40,24,0.45)';
-        ctx.lineWidth = 1.2;
-        for (let i = 0; i < 10; i++) {
-          const u = i / 9;
+        ctx.lineWidth = 1.4;
+        for (let i = 0; i < 12; i++) {
+          const u = i / 11;
           const x0 = BASE_X + dx * u;
           const y0 = BASE_Y - dy * u;
           ctx.beginPath();
           ctx.moveTo(x0, y0);
-          ctx.lineTo(x0 + 20 * cosA + 2, y0 + 20 * sinA);
+          ctx.lineTo(x0 + rampTh * cosA + 2, y0 + rampTh * sinA);
           ctx.stroke();
         }
         ctx.restore();
@@ -904,11 +929,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.moveTo(BASE_X, BASE_Y);
         ctx.lineTo(topX, topY);
         ctx.strokeStyle = SC.hi;
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = 5;
         ctx.stroke();
 
         // 坡顶装车台
-        const deckW = 56, deckH = 12;
+        const deckW = 68, deckH = 16;
         ctx.fillStyle = '#7a5028';
         roundRect(topX - 6, topY - deckH - 2, deckW, deckH, 2);
         ctx.fill();

@@ -376,6 +376,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -714,7 +738,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fill();
         }
 
-        // 后墙板（层次）
+        // 后墙板 + 设备柜（吃上空）
         ctx.fillStyle = 'rgba(46,36,48,0.55)';
         ctx.fillRect(0, 32, W, GROUND_Y - 80);
         ctx.strokeStyle = 'rgba(122,132,144,0.15)';
@@ -725,30 +749,47 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.lineTo(W, 50 + pv * 42);
             ctx.stroke();
         }
-
-        // 左侧气泵柜（金属质感）
-        var pumpGrad = ctx.createLinearGradient(8, GROUND_Y - 100, 88, GROUND_Y);
-        pumpGrad.addColorStop(0, '#3a4048');
-        pumpGrad.addColorStop(0.5, SC.metal);
-        pumpGrad.addColorStop(1, '#4a5058');
-        ctx.fillStyle = pumpGrad;
-        roundRect(10, GROUND_Y - 96, 76, 92, 4);
+        // 右后设备柜
+        ctx.fillStyle = '#2a2430';
+        roundRect(W - 110, 118, 96, H * 0.38, 4);
         ctx.fill();
         ctx.strokeStyle = 'rgba(200,120,160,0.35)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = SC.ink;
-        ctx.fillRect(22, GROUND_Y - 78, 52, 22);
-        ctx.fillStyle = SC.accent;
-        ctx.fillRect(28, GROUND_Y - 72, 18, 10);
         ctx.fillStyle = SC.hi;
         ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
-        ctx.fillText('气泵', 38, GROUND_Y - 102);
-        ctx.strokeStyle = 'rgba(122,132,144,0.6)';
-        ctx.lineWidth = 3;
+        ctx.fillText('设备柜', W - 88, 136);
+        for (var shelf = 0; shelf < 4; shelf++) {
+            ctx.fillStyle = '#3a3440';
+            ctx.fillRect(W - 100, 150 + shelf * 42, 76, 6);
+            ctx.fillStyle = shelf % 2 ? SC.metal : '#5a4860';
+            ctx.fillRect(W - 94, 160 + shelf * 42, 28, 22);
+            ctx.fillRect(W - 58, 160 + shelf * 42, 28, 22);
+        }
+
+        // 左侧气泵柜（金属质感）
+        var pumpGrad = ctx.createLinearGradient(8, GROUND_Y - 120, 96, GROUND_Y);
+        pumpGrad.addColorStop(0, '#3a4048');
+        pumpGrad.addColorStop(0.5, SC.metal);
+        pumpGrad.addColorStop(1, '#4a5058');
+        ctx.fillStyle = pumpGrad;
+        roundRect(10, GROUND_Y - 118, 86, 110, 5);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(200,120,160,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = SC.ink;
+        ctx.fillRect(24, GROUND_Y - 96, 58, 26);
+        ctx.fillStyle = SC.accent;
+        ctx.fillRect(30, GROUND_Y - 88, 22, 12);
+        ctx.fillStyle = SC.hi;
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('气泵', 40, GROUND_Y - 124);
+        ctx.strokeStyle = 'rgba(122,132,144,0.65)';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(86, GROUND_Y - 40);
-        ctx.quadraticCurveTo(110, GROUND_Y - 50, 130, GROUND_Y - 18);
+        ctx.moveTo(96, GROUND_Y - 48);
+        ctx.quadraticCurveTo(120, GROUND_Y - 58, 140, GROUND_Y - 22);
         ctx.stroke();
 
         // 实验台地坪
@@ -761,8 +802,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = SC.metal;
         ctx.fillRect(0, GROUND_Y + 8, W, 3);
 
-        // 气垫导轨（铝轨 + 喷气孔）
-        var trackL = 36, trackR = W - 36, trackTop = GROUND_Y - 16, trackH = 20;
+        // 加高铝轨 + 喷气孔
+        var trackL = 36, trackR = W - 36, trackTop = GROUND_Y - 28, trackH = 32;
         var railGrad = ctx.createLinearGradient(0, trackTop, 0, trackTop + trackH);
         railGrad.addColorStop(0, '#9aa4ae');
         railGrad.addColorStop(0.35, '#c8d0d8');
@@ -813,40 +854,81 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function drawBlock(x, y, r, fill, stroke, label) {
-            roundRect(x - r, y - r * 0.7, r * 2, r * 1.4, 4);
+            var rr = r * 1.25;
+            roundRect(x - rr, y - rr * 0.75, rr * 2, rr * 1.55, 5);
             ctx.fillStyle = fill;
             ctx.fill();
             ctx.strokeStyle = stroke;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.stroke();
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            roundRect(x - rr + 4, y - rr * 0.55, rr * 0.7, rr * 0.45, 3);
+            ctx.fill();
             ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 12px sans-serif';
+            ctx.font = 'bold 13px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(label, x, y + 4);
+            ctx.fillText(label, x, y + 5);
             ctx.textAlign = 'left';
         }
         drawBlock(ball1X, ball1Y, r1, '#5a7898', SC.hi, '1');
         drawBlock(ball2X, ball2Y, r2, SC.accent, '#f0b0c8', '2');
 
-        // 初速箭头
+        // 初速 / 动量箭头；碰撞火花
         if (!hasFired) {
             ctx.strokeStyle = SC.hi;
             ctx.fillStyle = SC.hi;
-            ctx.lineWidth = 2;
-            var ax = ball1X + r1 + 6;
-            var ay = ball1Y - r1 - 10;
+            ctx.lineWidth = 2.5;
+            var ax = ball1X + r1 + 8;
+            var ay = ball1Y - r1 - 14;
             ctx.beginPath();
             ctx.moveTo(ax, ay);
-            ctx.lineTo(ax + 28 + v1 * 4, ay);
+            ctx.lineTo(ax + 36 + v1 * 5, ay);
             ctx.stroke();
             ctx.beginPath();
-            ctx.moveTo(ax + 28 + v1 * 4, ay);
-            ctx.lineTo(ax + 20 + v1 * 4, ay - 5);
-            ctx.lineTo(ax + 20 + v1 * 4, ay + 5);
+            ctx.moveTo(ax + 36 + v1 * 5, ay);
+            ctx.lineTo(ax + 26 + v1 * 5, ay - 6);
+            ctx.lineTo(ax + 26 + v1 * 5, ay + 6);
             ctx.fill();
             ctx.fillStyle = SC.hi;
-            ctx.font = '11px sans-serif';
-            ctx.fillText('v₁', ax + 8, ay - 8);
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('p₁→', ax + 6, ay - 8);
+        }
+        if (animating && Math.abs(ball1X - ball2X) < (r1 + r2) * 2.2) {
+            var sx = (ball1X + ball2X) / 2, sy = (ball1Y + ball2Y) / 2;
+            var collSpeed = Math.abs(v1 - v2);
+            var speedNorm = Math.min(1, collSpeed / 8);
+            var sparkN = 4 + Math.floor(speedNorm * 10);
+            var sparkLen = 12 + speedNorm * 22;
+            // 撞击暖闪
+            ctx.fillStyle = 'rgba(255,180,100,' + (0.15 + speedNorm * 0.35) + ')';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 8 + speedNorm * 18, 0, Math.PI * 2);
+            ctx.fill();
+            for (var sp = 0; sp < sparkN; sp++) {
+                var sa = (sp / sparkN) * Math.PI * 2;
+                ctx.strokeStyle = 'rgba(255,200,120,' + (0.55 + speedNorm * 0.4) + ')';
+                ctx.lineWidth = 1.5 + speedNorm * 1.5;
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(sx + Math.cos(sa) * sparkLen, sy + Math.sin(sa) * (sparkLen * 0.75));
+                ctx.stroke();
+            }
+            ctx.fillStyle = 'rgba(255,220,160,' + (0.7 + speedNorm * 0.3) + ')';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 4 + speedNorm * 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        if (hasFired && !animating && v1f !== null) {
+            ctx.strokeStyle = SC.glow;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(ball1X, ball1Y - r1 - 20);
+            ctx.lineTo(ball1X + v1f * 18, ball1Y - r1 - 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(ball2X, ball2Y - r2 - 20);
+            ctx.lineTo(ball2X + v2f * 18, ball2Y - r2 - 20);
+            ctx.stroke();
         }
 
         if (hasFired && !animating && v1f !== null) {

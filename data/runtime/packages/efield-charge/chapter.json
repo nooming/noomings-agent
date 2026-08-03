@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节场强/电荷/间距 | O1 | operation | 调节s-fieldStrength、s-charge、s-plate-gap |\n| 飞出边界? | C1 | constraint | 飞出电场区域判定 |\n| 命中靶区? | C2 | constraint | 光点到达荧光屏时是否在靶区内 |\n| 过关 | R1 | result | 命中靶区 |\n| 提示重试 | (skip retry) | — | retry 不进 KG |\n| 再试 | (skip retry) | — | retry 不进 KG |\n| 出界重试 | (skip retry) | — | retry 不进 KG |\n| 偏转原理 | S1 | core | teach 节点 |\n| 控制变量法 | S2 | method | teach 节点 |\n| 电场力公式 | S3 | core | teach 节点 |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节场强/电荷 | O1 | operation | 调节s-fieldStrength、s-charge（有效 AV） |\n| 飞出边界? | C1 | constraint | 飞出电场区域判定 |\n| 命中靶区? | C2 | constraint | 光点到达荧光屏时是否在靶区内 |\n| 过关 | R1 | result | 命中靶区 |\n| 提示重试 | (skip retry) | — | retry 不进 KG |\n| 再试 | (skip retry) | — | retry 不进 KG |\n| 出界重试 | (skip retry) | — | retry 不进 KG |\n| 偏转原理 | S1 | core | teach 节点 |\n| 控制变量法 | S2 | method | teach 节点 |\n| 电场力公式 | S3 | core | teach 节点 |\n| 极板间距（示意） | I1 | irrelevant | 仅改示意间距，不改变偏转 |",
   "kg": {
     "title": "电场 · 带电粒子偏转",
     "sub": "探究场强、电荷量对偏转的影响",
@@ -15,12 +15,12 @@
       },
       {
         "id": "O1",
-        "label": "调节场强/电荷/间距",
+        "label": "调节场强/电荷",
         "group": "operation",
         "layer": "play",
         "level": 1,
         "r": 22,
-        "desc": "通过滑条调节电场强度、粒子电荷量和极板间距"
+        "desc": "通过滑条调节电场强度与粒子电荷量；极板间距仅为示意，不参与偏转物理"
       },
       {
         "id": "C1",
@@ -67,7 +67,7 @@
         "layer": "teach",
         "level": 1,
         "r": 22,
-        "desc": "每次只改变一个变量（场强、电荷量或间距），观察偏转变化"
+        "desc": "每次只改变一个有效变量（场强或电荷量），观察偏转变化；勿把示意间距当有效控制"
       },
       {
         "id": "S3",
@@ -95,6 +95,15 @@
         "desc": "每次只改一个调节量",
         "level": 0,
         "r": 18
+      },
+      {
+        "id": "I1",
+        "label": "极板间距（示意）",
+        "group": "irrelevant",
+        "layer": "teach",
+        "level": 1,
+        "r": 18,
+        "desc": "滑条仅改变极板示意间距，E 独立设定，不改变偏转"
       }
     ],
     "links": [
@@ -159,9 +168,9 @@
       "d": "开始探究电场偏转",
       "children": [
         {
-          "n": "调节场强/电荷/间距",
+          "n": "调节场强/电荷",
           "t": "step",
-          "d": "通过滑条调节电场强度、粒子电荷量和极板间距",
+          "d": "通过滑条调节电场强度与粒子电荷量",
           "children": []
         },
         {
@@ -182,9 +191,9 @@
               "d": "粒子飞出边界，需重新调节参数，回到调节场强/电荷/间距后重试",
               "children": [
                 {
-                  "n": "调节场强/电荷/间距",
+                  "n": "调节场强/电荷",
                   "t": "step",
-                  "d": "通过滑条调节电场强度、粒子电荷量和极板间距",
+                  "d": "通过滑条调节电场强度与粒子电荷量",
                   "children": []
                 }
               ]
@@ -229,125 +238,32 @@
         "role": "operation"
       },
       "s-plate-gap": {
-        "kgId": "O1",
-        "role": "operation"
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "O1",
         "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
       }
     },
-    "legacyTypes": {}
+    "legacyTypes": {
+      "irrelevant_touch": {
+        "canonical": "irrelevant_touch",
+        "control": "I1"
+      }
+    }
   },
   "strategy": {
     "title": "电场 · 带电粒子偏转",
-    "sub": "探究场强、电荷量对偏转的影响",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustD --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nObserve -->|偏近| AdjustD\nObserve -->|偏远| AdjustD\nObserve -->|偏近| AdjustE\nObserve -->|偏远| AdjustE\nObserve -->|偏近| AdjustMulti\nObserve -->|偏远| AdjustMulti\nObserve -->|偏近| AdjustQ\nObserve -->|偏远| AdjustQ\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·极板间距| SingleD\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nRetry --> AdjustE\nSingleD --> AdjustD[调整间距]\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nSingleD[单变量·极板间距]\nSingleE[单变量·场强]\nSingleQ[单变量·电荷量]\nTrap --> Fire\nAdjustMulti[同时调多个参数]\n",
+    "sub": "探究场强、电荷量对偏转的影响；极板间距仅为示意",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustE --> Fire[发射电子束]\nAdjustMulti --> Fire\nAdjustQ --> Fire\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察偏转?}:::stratCond\nModeSelect -->|自由探究| ExploreMode[自由探究：不限次数观察偏转]:::stratCore\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛挑战：限5次命中锁定靶区]:::stratResult\nObserve -->|偏低| AdjustE\nObserve -->|偏高| AdjustE\nObserve -->|偏低| AdjustQ\nObserve -->|偏高| AdjustQ\nObserve -->|偏低| AdjustMulti\nObserve -->|偏高| AdjustMulti\nObserve -->|出界| Retry[出界重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·场强| SingleE\nStrategySelect -->|单变量·电荷量| SingleQ\nStrategySelect -.->|试探混淆·极板间距| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nRetry --> AdjustE\nSingleE --> AdjustE[调整场强]\nSingleQ --> AdjustQ[调整电荷]\nSingleE[单变量·场强]\nSingleQ[单变量·电荷量]\nProbeCV[试探混淆·极板间距（示意无效）]\nTrap --> Fire\nAdjustMulti[同时调多个参数]\n",
     "routes": [
       {
         "id": "main",
-        "label": "单变量·极板间距",
-        "mapsTo": [
-          "P1",
-          "O1",
-          "C1",
-          "C2",
-          "R1"
-        ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 1,
-        "weight": 1,
-        "priorityRank": 1,
-        "highlightNodes": [
-          "Start",
-          "StrategySelect",
-          "ModeSelect",
-          "ExploreMode",
-          "AdjustE",
-          "Fire",
-          "Observe",
-          "Win",
-          "AdjustQ",
-          "AdjustD",
-          "AdjustMulti",
-          "Retry",
-          "ChallengeMode",
-          "SingleD"
-        ],
-        "highlightEdges": [
-          [
-            "Start",
-            "ModeSelect"
-          ],
-          [
-            "ModeSelect",
-            "ExploreMode"
-          ],
-          [
-            "ExploreMode",
-            "StrategySelect"
-          ],
-          [
-            "AdjustE",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "AdjustQ",
-            "Fire"
-          ],
-          [
-            "StrategySelect",
-            "SingleD"
-          ],
-          [
-            "SingleD",
-            "AdjustD"
-          ],
-          [
-            "AdjustD",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustQ"
-          ],
-          [
-            "Observe",
-            "AdjustD"
-          ],
-          [
-            "Observe",
-            "AdjustE"
-          ],
-          [
-            "Observe",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustE"
-          ]
-        ],
-        "highlightFailureBranches": true
-      },
-      {
-        "id": "main_s-fieldStrength",
         "label": "单变量·场强",
         "mapsTo": [
           "P1",
@@ -356,67 +272,24 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.85,
-        "weight": 0.85,
-        "priorityRank": 2,
+        "warn": "每次只改场强，观察偏转；极板间距为示意无效控件",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
-          "Win",
-          "ChallengeMode",
           "ModeSelect",
           "ExploreMode",
-          "AdjustD",
+          "StrategySelect",
+          "SingleE",
+          "AdjustE",
           "Fire",
           "Observe",
-          "AdjustE",
-          "AdjustMulti",
-          "AdjustQ",
+          "Win",
           "Retry",
-          "SingleE"
+          "ChallengeMode"
         ],
         "highlightEdges": [
-          [
-            "AdjustD",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustD"
-          ],
-          [
-            "Observe",
-            "AdjustE"
-          ],
-          [
-            "AdjustE",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustQ"
-          ],
-          [
-            "AdjustQ",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -430,20 +303,44 @@
             "StrategySelect"
           ],
           [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Retry",
-            "AdjustE"
+            "StrategySelect",
+            "SingleE"
           ],
           [
             "SingleE",
             "AdjustE"
           ],
           [
-            "StrategySelect",
-            "SingleE"
+            "AdjustE",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustE"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustE"
+          ],
+          [
+            "ModeSelect",
+            "ChallengeMode"
+          ],
+          [
+            "ChallengeMode",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -458,71 +355,24 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.7,
-        "weight": 0.7,
-        "priorityRank": 3,
+        "warn": "每次只改电荷量，观察偏转；勿把示意间距当有效控制",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
-          "Win",
-          "ChallengeMode",
           "ModeSelect",
           "ExploreMode",
-          "AdjustE",
+          "StrategySelect",
+          "SingleQ",
+          "AdjustQ",
           "Fire",
           "Observe",
-          "AdjustD",
-          "AdjustMulti",
-          "AdjustQ",
+          "Win",
           "Retry",
-          "SingleQ"
+          "ChallengeMode"
         ],
         "highlightEdges": [
-          [
-            "AdjustE",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustE"
-          ],
-          [
-            "Observe",
-            "AdjustD"
-          ],
-          [
-            "AdjustD",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustQ"
-          ],
-          [
-            "AdjustQ",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "AdjustE"
-          ],
           [
             "Start",
             "ModeSelect"
@@ -536,16 +386,44 @@
             "StrategySelect"
           ],
           [
-            "Fire",
-            "Observe"
+            "StrategySelect",
+            "SingleQ"
           ],
           [
             "SingleQ",
             "AdjustQ"
           ],
           [
-            "StrategySelect",
-            "SingleQ"
+            "AdjustQ",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "AdjustQ"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "AdjustE"
+          ],
+          [
+            "ModeSelect",
+            "ChallengeMode"
+          ],
+          [
+            "ChallengeMode",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -559,17 +437,19 @@
           "C1",
           "C2"
         ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
         "highlightNodes": [
           "Start",
           "ModeSelect",
           "ExploreMode",
           "StrategySelect",
+          "Trap",
           "Fire",
           "Observe",
           "Retry",
-          "Trap",
-          "Adjust",
-          "AdjustD",
+          "AdjustMulti",
           "AdjustE",
           "AdjustQ"
         ],
@@ -591,7 +471,7 @@
             "Trap"
           ],
           [
-            "Adjust",
+            "Trap",
             "Fire"
           ],
           [
@@ -600,10 +480,10 @@
           ],
           [
             "Observe",
-            "AdjustD"
+            "AdjustMulti"
           ],
           [
-            "AdjustD",
+            "AdjustMulti",
             "Fire"
           ],
           [
@@ -625,16 +505,59 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Trap",
-            "Fire"
           ]
         ],
-        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
-        "score": 0.2,
-        "weight": 0.2,
         "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_s_plate_gap",
+        "label": "试探混淆·极板间距",
+        "mapsTo": [],
+        "warn": "极板间距仅示意、不改变偏转；拧过后应回到场强/电荷主路径",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "ExploreMode",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          [
+            "ExploreMode",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": false
       }
     ]
   },
@@ -657,47 +580,46 @@
     "adjustmentVariables": [
       {
         "id": "AV1",
-        "controlId": "s-plate-gap",
-        "label": "极板间距",
+        "controlId": "s-fieldStrength",
+        "label": "场强",
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
         "monotonicity": "monotone",
-        "affects": [],
-        "notes": "",
+        "affects": [
+          "deflection"
+        ],
+        "notes": "有效主控：改 E 直接改偏转",
         "priorityRank": 1
       },
       {
         "id": "AV2",
-        "controlId": "s-fieldStrength",
-        "label": "场强",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 2
-      },
-      {
-        "id": "AV3",
         "controlId": "s-charge",
         "label": "电荷量",
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "monotonicity": "monotone",
+        "affects": [
+          "deflection"
+        ],
+        "notes": "有效次控：改 q 改偏转",
+        "priorityRank": 2
       }
     ],
-    "confoundingVariables": [],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-plate-gap",
+        "label": "极板间距（示意）",
+        "reason": "仅改变极板示意间距，E 独立设定，不参与偏转归因"
+      }
+    ],
     "inquiryFlow": [
       "KP1",
       "AV1",
       "AV2",
-      "AV3"
+      "CV1"
     ],
     "narrative": {
       "intro": "本关探究：偏转原理、控制变量法、电场力公式",
@@ -715,16 +637,22 @@
         {
           "order": 2,
           "title": "识别调节变量",
-          "body": "可调节：调节场强/电荷/间距、调节场强/电荷/间距、调节场强/电荷/间距、调节场强/电荷/间距；建议控制变量法，每次只改一项。",
+          "body": "可调节：场强、电荷量；极板间距仅为示意无效控件。建议控制变量法，每次只改一项有效变量。",
           "mapsToKg": [
-            "O1",
-            "O1",
             "O1",
             "O1"
           ]
         },
         {
           "order": 3,
+          "title": "识别混淆变量",
+          "body": "混淆项：极板间距（示意无效，不改变偏转）",
+          "mapsToKg": [
+            "I1"
+          ]
+        },
+        {
+          "order": 4,
           "title": "观察—调整—再测",
           "body": "操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。",
           "mapsToKg": [
@@ -752,10 +680,11 @@
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
-    "confoundingVariables": [],
+    "confoundingVariables": [
+      "CV1"
+    ],
     "dependentVariables": [
       "OV1"
     ],
@@ -772,25 +701,10 @@
   },
   "gameSpec": {
     "title": "电场 · 带电粒子偏转",
-    "subtitle": "探究场强、电荷量对偏转的影响",
+    "subtitle": "探究场强、电荷量对偏转的影响；极板间距仅为示意",
     "winCondition": "光点成功进入目标区域，获得胜利",
     "knowledgeSummary": "电场 · 带电粒子偏转",
     "controls": [
-      {
-        "id": "s-plate-gap",
-        "type": "range",
-        "label": "极板间距",
-        "symbol": "极板间距",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
       {
         "id": "s-fieldStrength",
         "type": "range",
@@ -824,13 +738,20 @@
       {
         "id": "modeSelect",
         "type": "discrete",
-        "label": "调节场强/电荷/间距",
+        "label": "调节场强/电荷",
         "mapsToKg": "O1",
         "role": "adjustment"
       }
     ],
-    "confoundingUi": [],
-    "confoundingMustNotBePrimarySlider": false,
+    "confoundingUi": [
+      {
+        "controlId": "s-plate-gap",
+        "label": "极板间距（示意）",
+        "reason": "仅改变极板示意间距，不改变偏转（E 独立设定）",
+        "uiStrategy": "cosmetic_slider"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
     "constraints": [
       {
         "kgId": "C1",
@@ -854,12 +775,16 @@
         "role": "operation"
       },
       "s-plate-gap": {
-        "kgId": "O1",
-        "role": "operation"
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "O1",
         "role": "operation"
+      },
+      "I1": {
+        "kgId": "I1",
+        "role": "irrelevant"
       }
     },
     "simHints": null,
@@ -941,17 +866,17 @@
       },
       {
         "type": "tuning",
-        "controlId": "s-plate-gap",
-        "kgId": "O1",
-        "required": true,
-        "description": "学生调节 s-plate-gap → KG O1"
-      },
-      {
-        "type": "tuning",
         "controlId": "modeSelect",
         "kgId": "O1",
         "required": true,
         "description": "学生调节 modeSelect → KG O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-plate-gap",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/示意控件触碰 s-plate-gap（不改变偏转）"
       }
     ],
     "dtCheckpoints": [
@@ -963,7 +888,7 @@
       {
         "name": "出界重试",
         "type": "retry",
-        "desc": "粒子飞出边界，需重新调节参数，回到调节场强/电荷/间距后重试"
+        "desc": "粒子飞出边界，需重新调节参数，回到调节场强/电荷后重试"
       },
       {
         "name": "命中靶区?",

@@ -382,6 +382,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -658,6 +682,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     syncCanvasSize();
     ctx.clearRect(0, 0, W, H);
 
+    const { F } = computePhysics(r, omega);
+    const fNorm = Math.min(1, Math.max(0, (F - F_TARGET) / Math.max(0.01, F_HI - F_TARGET)));
+    const wNorm = Math.min(1, omega / 12);
+    const danger = F > F_HI * 0.88 || omega > 9;
+
     // 暖夜炭黑 + 琥珀投光（转盘工位）
     const SC = { ink: '#12100c', mid: '#2e2618', hi: '#f0c870', glow: '#ff8a30', metal: '#7a8490', accent: '#e0a040', ok: '#7dba8c' };
     const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -668,7 +697,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
     const flood = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.38, H * 0.55, Math.max(W, H) * 0.72);
-    flood.addColorStop(0, 'rgba(255,138,48,0.22)');
+    flood.addColorStop(0, 'rgba(255,138,48,' + (0.14 + wNorm * 0.14) + ')');
     flood.addColorStop(0.35, 'rgba(224,160,64,0.10)');
     flood.addColorStop(1, 'rgba(18,16,12,0)');
     ctx.fillStyle = flood;
@@ -701,7 +730,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.lineWidth = 1;
       ctx.stroke();
       var lg = ctx.createRadialGradient(lx, 48, 1, lx, 52, 14);
-      lg.addColorStop(0, 'rgba(255,138,48,0.25)');
+      lg.addColorStop(0, 'rgba(255,138,48,' + (0.15 + wNorm * 0.18) + ')');
       lg.addColorStop(1, 'rgba(255,138,48,0)');
       ctx.fillStyle = lg;
       ctx.beginPath();
@@ -733,86 +762,72 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillStyle = 'rgba(224,160,64,0.18)';
     for (var g = 0; g < 10; g++) ctx.fillRect(16 + g * 70, H - 20, 28, 3);
 
-    // 飞椅中枢：避开左上双模式条
-    const cx = Math.max(210, Math.min(W * 0.46, W - 200));
-    const cy = Math.max(145, Math.min(H * 0.46, H - 115));
-    const maxR = Math.min(cx - 50, cy - 70, W - cx - 100, H - cy - 55);
-    const scale = Math.min(110, maxR / 2.05);
+    // 飞椅中枢：转盘直径 ≥50% min(W,H)
+    const cx = Math.max(200, Math.min(W * 0.48, W - 180));
+    const cy = Math.max(138, Math.min(H * 0.48, H - 100));
+    const targetDia = Math.min(W, H) * 0.52;
+    const maxR = Math.min(cx - 36, cy - 56, W - cx - 70, H - cy - 48, targetDia * 0.55);
+    const scale = Math.max(maxR / 2.05, Math.min(140, targetDia / 3.6));
 
-    // 钢制底座 + 立柱（工位装置感）
-    const baseGrad = ctx.createLinearGradient(cx - 78, H - 58, cx + 78, H - 22);
+    // 加大钢制底座 + 立柱
+    const baseRx = Math.max(110, maxR * 0.55), baseRy = 28;
+    const baseGrad = ctx.createLinearGradient(cx - baseRx, H - 64, cx + baseRx, H - 18);
     baseGrad.addColorStop(0, '#4a5058');
     baseGrad.addColorStop(0.5, SC.metal);
     baseGrad.addColorStop(1, '#5a626a');
     ctx.fillStyle = baseGrad;
     ctx.beginPath();
-    ctx.ellipse(cx, H - 40, 82, 20, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, H - 38, baseRx, baseRy, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(224,160,64,0.35)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(224,160,64,0.4)';
+    ctx.lineWidth = 2;
     ctx.stroke();
-    for (var bolt = 0; bolt < 6; bolt++) {
-      var baBolt = (bolt / 6) * Math.PI * 2;
+    for (var bolt = 0; bolt < 8; bolt++) {
+      var baBolt = (bolt / 8) * Math.PI * 2;
       ctx.fillStyle = '#5a6268';
       ctx.beginPath();
-      ctx.arc(cx + Math.cos(baBolt) * 68, H - 40 + Math.sin(baBolt) * 14, 3, 0, Math.PI * 2);
+      ctx.arc(cx + Math.cos(baBolt) * (baseRx - 14), H - 38 + Math.sin(baBolt) * (baseRy - 6), 4, 0, Math.PI * 2);
       ctx.fill();
     }
-    const colGrad = ctx.createLinearGradient(cx - 16, cy, cx + 16, cy);
+    const colGrad = ctx.createLinearGradient(cx - 22, cy, cx + 22, cy);
     colGrad.addColorStop(0, '#4a5058');
-    colGrad.addColorStop(0.45, '#8a9298');
+    colGrad.addColorStop(0.45, '#9aa2a8');
     colGrad.addColorStop(1, '#4a5058');
     ctx.fillStyle = colGrad;
-    roundRect(cx - 15, cy - 8, 30, H - 48 - (cy - 8), 3);
+    roundRect(cx - 20, cy - 10, 40, H - 46 - (cy - 10), 5);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(122,132,144,0.6)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(122,132,144,0.65)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
-    // 转台顶盖：钢环 + 琥珀灯泡
+    // 转台顶盖
     ctx.fillStyle = '#3a4048';
     ctx.beginPath();
-    ctx.arc(cx, cy - 8, 24, Math.PI, 0);
+    ctx.arc(cx, cy - 10, 34, Math.PI, 0);
     ctx.fill();
     ctx.strokeStyle = SC.accent;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(cx, cy - 8, 24, Math.PI, 0);
+    ctx.arc(cx, cy - 10, 34, Math.PI, 0);
     ctx.stroke();
-    for (var bulb = 0; bulb < 6; bulb++) {
-      var ba = -Math.PI + (bulb / 5) * Math.PI;
-      var blx = cx + Math.cos(ba) * 20;
-      var bly = cy - 8 + Math.sin(ba) * 11;
+    for (var bulb = 0; bulb < 8; bulb++) {
+      var ba = -Math.PI + (bulb / 7) * Math.PI;
+      var blx = cx + Math.cos(ba) * 28;
+      var bly = cy - 10 + Math.sin(ba) * 14;
       ctx.fillStyle = bulb % 2 ? SC.hi : SC.glow;
       ctx.beginPath();
-      ctx.arc(blx, bly, 3.5, 0, Math.PI * 2);
+      ctx.arc(blx, bly, 4.5, 0, Math.PI * 2);
       ctx.fill();
       if (bulb % 2 === 0) {
-        var bulbGlow = ctx.createRadialGradient(blx, bly, 0, blx, bly, 8);
-        bulbGlow.addColorStop(0, 'rgba(255,138,48,0.35)');
+        var bulbGlow = ctx.createRadialGradient(blx, bly, 0, blx, bly, 12);
+        bulbGlow.addColorStop(0, 'rgba(255,138,48,0.4)');
         bulbGlow.addColorStop(1, 'rgba(255,138,48,0)');
         ctx.fillStyle = bulbGlow;
         ctx.beginPath();
-        ctx.arc(blx, bly, 8, 0, Math.PI * 2);
+        ctx.arc(blx, bly, 12, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // 标题牌（暖炭底 + 琥珀描边）
-    ctx.fillStyle = 'rgba(18,16,12,0.88)';
-    ctx.fillRect(148, 54, 268, 40);
-    ctx.strokeStyle = 'rgba(224,160,64,0.45)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(148, 54, 268, 40);
-    ctx.fillStyle = SC.hi;
-    ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-    ctx.fillText('庙会飞椅', 156, 72);
-    ctx.fillStyle = '#e8dcc8';
-    ctx.font = '11px "Microsoft YaHei",sans-serif';
-    if (playMode === 'challenge') {
-      ctx.fillText('巡检：v ' + V_TARGET.toFixed(1) + '–' + V_HI.toFixed(1) + ' 且 F ' + F_TARGET.toFixed(1) + '–' + F_HI.toFixed(1), 156, 88);
-    } else {
-      ctx.fillText('试转中 · 观察读数如何随 r、ω 变化', 156, 88);
-    }
 
     const drawR = rideAnim ? rideAnim.r0 : r;
     const drawOmega = rideAnim ? rideAnim.omega0 : omega;
@@ -874,8 +889,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(bx, by);
-      ctx.strokeStyle = rideAnim && rideAnim.kind === 'ok' ? SC.ok : SC.accent;
-      ctx.lineWidth = 2.5;
+      const cableColor = danger
+        ? ('rgba(224,80,60,' + (0.65 + fNorm * 0.35) + ')')
+        : (fNorm > 0.55 ? ('rgba(224,160,64,' + (0.55 + fNorm * 0.35) + ')') : SC.ok);
+      ctx.strokeStyle = rideAnim && rideAnim.kind === 'ok' ? SC.ok : cableColor;
+      ctx.lineWidth = rideAnim && rideAnim.kind === 'ok' ? 2.5 : (2 + fNorm * 1.5);
       ctx.stroke();
       if (rideAnim && rideAnim.kind === 'ok') {
         ctx.beginPath();
@@ -886,18 +904,21 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
 
-    // 座舱
+    // 座舱（加大可见）
     ctx.fillStyle = rideAnim && rideAnim.kind === 'fly' ? '#e06040'
       : (rideAnim && rideAnim.kind === 'drop' ? '#c08060' : SC.accent);
-    roundRect(bx - 13, by - 8, 26, 20, 5);
+    roundRect(bx - 20, by - 12, 40, 28, 7);
     ctx.fill();
     ctx.strokeStyle = rideAnim && rideAnim.kind === 'fly' ? '#8a3020' : '#a07020';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
+    ctx.fillStyle = 'rgba(255,240,200,0.35)';
+    roundRect(bx - 12, by - 6, 14, 10, 3);
+    ctx.fill();
     ctx.fillStyle = SC.ink;
-    ctx.font = 'bold 10px sans-serif';
+    ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('座', bx, by + 5);
+    ctx.fillText('座', bx + 4, by + 8);
     ctx.textAlign = 'left';
 
     // 飞出火花 / 掉转尘土
@@ -943,10 +964,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   }
 
   function startRideAnim(kind, r, omega, onDone) {
-    const cx = Math.max(210, Math.min(W * 0.46, W - 200));
-    const cy = Math.max(145, Math.min(H * 0.46, H - 115));
-    const maxR = Math.min(cx - 50, cy - 70, W - cx - 100, H - cy - 55);
-    const scale = Math.min(110, maxR / 2.05);
+    const cx = Math.max(200, Math.min(W * 0.48, W - 180));
+    const cy = Math.max(138, Math.min(H * 0.48, H - 100));
+    const targetDia = Math.min(W, H) * 0.52;
+    const maxR = Math.min(cx - 36, cy - 56, W - cx - 70, H - cy - 48, targetDia * 0.55);
+    const scale = Math.max(maxR / 2.05, Math.min(140, targetDia / 3.6));
     const radiusPx = Math.max(18, r * scale);
     const a0 = angle;
     const x0 = cx + radiusPx * Math.cos(a0);

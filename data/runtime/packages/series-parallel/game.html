@@ -203,10 +203,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   right:auto!important;width:auto!important;max-width:min(420px,calc(100% - 24px))!important;
   justify-content:flex-start!important;
 }
-#essence-hud{
-  top:56px!important;left:10px!important;right:auto!important;
-  max-width:min(420px,calc(100% - 24px))!important;
-}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #essence-hud .essence-title{color:var(--craft-text)!important;}
 #essence-hud .essence-sub{color:var(--craft-muted)!important;}
 
@@ -346,6 +343,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -629,20 +650,34 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function drawResistorBody(x, y, w, h, label, ohms) {
+            // 立体碳膜电阻
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.fillRect(x + 3, y + 4, w, h);
             const bodyG = ctx.createLinearGradient(x, y, x, y + h);
-            bodyG.addColorStop(0, '#c8a878');
-            bodyG.addColorStop(0.5, '#a08058');
-            bodyG.addColorStop(1, '#806848');
+            bodyG.addColorStop(0, '#d8b888');
+            bodyG.addColorStop(0.35, '#a08058');
+            bodyG.addColorStop(0.7, '#806848');
+            bodyG.addColorStop(1, '#5a4830');
             ctx.fillStyle = bodyG;
-            ctx.fillRect(x, y, w, h);
+            ctx.beginPath();
+            ctx.moveTo(x + 6, y);
+            ctx.lineTo(x + w - 6, y);
+            ctx.quadraticCurveTo(x + w + 2, y + h / 2, x + w - 6, y + h);
+            ctx.lineTo(x + 6, y + h);
+            ctx.quadraticCurveTo(x - 2, y + h / 2, x + 6, y);
+            ctx.closePath();
+            ctx.fill();
             const bands = ['#8b4513', '#1a1a1a', '#c04020', '#d4a050', '#6a7068'];
             for (let i = 0; i < 4; i++) {
                 ctx.fillStyle = bands[i];
-                ctx.fillRect(x + 10 + i * (w - 28) / 4, y + 4, 7, h - 8);
+                ctx.fillRect(x + 12 + i * (w - 30) / 4, y + 3, 8, h - 6);
             }
             ctx.strokeStyle = '#e8b070';
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(x, y, w, h);
+            ctx.stroke();
+            ctx.fillStyle = '#c8b090';
+            ctx.fillRect(x - 6, y + h * 0.35, 8, h * 0.3);
+            ctx.fillRect(x + w - 2, y + h * 0.35, 8, h * 0.3);
             ctx.fillStyle = '#f0e8d8';
             ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
             ctx.fillText(label + ' ' + ohms + 'Ω', x, y - 8);
@@ -686,7 +721,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                         ctx.arc(x, y, 3, 0, Math.PI * 2);
                         ctx.fillStyle = '#e88830';
                         ctx.shadowColor = '#e8b070';
-                        ctx.shadowBlur = 6;
+                        ctx.shadowBlur = 4 + Math.min(14, (speed - 0.3) * 12);
                         ctx.fill();
                         ctx.shadowBlur = 0;
                         break;
@@ -707,22 +742,58 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             bg.addColorStop(1, INK);
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, W, H);
+
+            // FAR：天花板管槽 + 侧墙线缆架（y≥118 / 顶 y<50）
+            ctx.fillStyle = 'rgba(18,14,10,0.72)';
+            ctx.fillRect(0, 0, W, 46);
+            ctx.strokeStyle = 'rgba(106,112,104,0.35)';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(0, 18);
+            ctx.lineTo(W, 18);
+            ctx.stroke();
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 32);
+            ctx.lineTo(W * 0.72, 32);
+            ctx.stroke();
+            for (let cp = 0; cp < 4; cp++) {
+                ctx.fillStyle = 'rgba(106,112,104,0.28)';
+                ctx.fillRect(48 + cp * (W / 4.5), 8, 10, 28);
+            }
+            ctx.fillStyle = 'rgba(34,26,18,0.55)';
+            ctx.fillRect(W - 54, 118, 44, H * 0.38);
+            ctx.strokeStyle = 'rgba(208,128,64,0.18)';
+            ctx.strokeRect(W - 54, 118, 44, H * 0.38);
+            for (let sr = 0; sr < 3; sr++) {
+                ctx.fillStyle = 'rgba(106,112,104,0.22)';
+                ctx.fillRect(W - 48, 132 + sr * 38, 32, 4);
+            }
+
+            const liveI = measuredI != null ? measuredI : I;
+            const iNorm = Math.min(1, liveI / 0.35);
+            let matchRatio = 0;
+            if (playMode === 'challenge' && liveI > 0) {
+                matchRatio = Math.max(0, 1 - Math.abs(liveI - targetCurrent) / 0.08);
+            } else if (liveI > 0) {
+                matchRatio = iNorm * 0.35;
+            }
+            const nearTarget = matchRatio > 0.82;
+            const lampA = 0.10 + iNorm * 0.22 + matchRatio * 0.12;
+            const lampCore = nearTarget ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(232,136,48,' + lampA + ')';
             const lamp = ctx.createRadialGradient(W * 0.2, H * 0.06, 8, W * 0.2, H * 0.06, W * 0.55);
-            lamp.addColorStop(0, 'rgba(232,136,48,0.20)');
+            lamp.addColorStop(0, lampCore);
             lamp.addColorStop(1, 'rgba(232,136,48,0)');
             ctx.fillStyle = lamp;
             ctx.fillRect(0, 0, W, H);
 
             ctx.fillStyle = PANEL;
-            ctx.fillRect(14, 48, 62, 92);
+            ctx.fillRect(14, 128, 62, 92);
             ctx.strokeStyle = 'rgba(208,128,64,0.35)';
             ctx.lineWidth = 1;
-            ctx.strokeRect(14, 48, 62, 92);
+            ctx.strokeRect(14, 128, 62, 92);
             ctx.fillStyle = METAL;
-            for (let i = 0; i < 3; i++) ctx.fillRect(24, 64 + i * 24, 42, 5);
-            ctx.fillStyle = 'rgba(160,144,120,0.55)';
-            ctx.font = '10px "Microsoft YaHei",sans-serif';
-            ctx.fillText('配电挂板', 20, 60);
+            for (let i = 0; i < 3; i++) ctx.fillRect(24, 144 + i * 24, 42, 5);
 
             const benchY = H - 58;
             ctx.fillStyle = '#1a1208';
@@ -739,16 +810,31 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 ctx.stroke();
             }
 
-            const bx = W * 0.10, by = H * 0.26, bw = W * 0.54, bh = H * 0.40;
+            const bx = W * 0.09, by = H * 0.22, bw = W * 0.58, bh = H * 0.46;
             const bakG = ctx.createLinearGradient(bx, by, bx, by + bh);
             bakG.addColorStop(0, '#3a3028');
             bakG.addColorStop(0.5, '#2a2218');
             bakG.addColorStop(1, '#1e1810');
             ctx.fillStyle = bakG;
             ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = 'rgba(208,128,64,0.45)';
-            ctx.lineWidth = 2;
+            const boardGlow = 0.28 + iNorm * 0.35 + matchRatio * 0.35;
+            ctx.strokeStyle = nearTarget
+                ? 'rgba(111,174,143,' + boardGlow + ')'
+                : 'rgba(208,128,64,' + boardGlow + ')';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = nearTarget ? OK : GLOW;
+            ctx.shadowBlur = 4 + iNorm * 10 + matchRatio * 8;
             ctx.strokeRect(bx, by, bw, bh);
+            ctx.shadowBlur = 0;
+            // 接线板缘 LED 指示（橙→绿）
+            const ledX = bx + bw - 18, ledY = by - 6;
+            ctx.fillStyle = nearTarget ? OK : ('rgba(232,136,48,' + (0.45 + matchRatio * 0.45) + ')');
+            ctx.shadowColor = nearTarget ? OK : GLOW;
+            ctx.shadowBlur = nearTarget ? 10 : 4 + matchRatio * 6;
+            ctx.beginPath();
+            ctx.arc(ledX, ledY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
             for (let row = 0; row < 6; row++) {
                 for (let col = 0; col < 16; col++) {
                     const tx = bx + 16 + col * (bw - 32) / 15;
@@ -767,26 +853,32 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
             ctx.fillText('胶木接线板 · ' + (mode === 'series' ? '串联' : '并联'), bx + 12, by - 10);
 
-            const px = 22, py = benchY - 118;
+            const px = 22, py = benchY - 128;
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(px + 4, py + 6, 100, 108);
             ctx.fillStyle = PANEL;
-            ctx.fillRect(px, py, 94, 102);
+            ctx.fillRect(px, py, 100, 110);
             ctx.strokeStyle = ACCENT;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(px, py, 94, 102);
-            ctx.fillStyle = 'rgba(232,136,48,0.10)';
-            ctx.fillRect(px + 4, py + 4, 86, 18);
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(px, py, 100, 110);
+            ctx.fillStyle = 'rgba(232,136,48,0.12)';
+            ctx.fillRect(px + 4, py + 4, 92, 20);
             ctx.fillStyle = HI;
-            ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
-            ctx.fillText('12V', px + 30, py + 36);
+            ctx.font = 'bold 15px "Microsoft YaHei",sans-serif';
+            ctx.fillText('12V', px + 32, py + 40);
             ctx.fillStyle = '#a09078';
             ctx.font = '11px "Microsoft YaHei",sans-serif';
-            ctx.fillText('直流电源', px + 20, py + 58);
+            ctx.fillText('直流电源', px + 22, py + 60);
+            // 端子阴影立体感
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.beginPath(); ctx.arc(px + 30, py + 86, 8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + 68, py + 86, 8, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#c04030';
-            ctx.beginPath(); ctx.arc(px + 28, py + 80, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + 28, py + 84, 7, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#1a1208';
-            ctx.beginPath(); ctx.arc(px + 64, py + 80, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(px + 66, py + 84, 7, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#806040';
-            ctx.fillRect(px + 22, py + 88, 50, 8);
+            ctx.fillRect(px + 22, py + 96, 54, 8);
 
             const mx = W - 158, my = benchY - 138, mw = 128, mh = 118;
             ctx.fillStyle = '#8a6830';
@@ -799,7 +891,17 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const onTarget = showI != null && Math.abs(showI - targetCurrent) < 0.001;
             ctx.strokeStyle = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.45)';
             ctx.lineWidth = 2;
+            ctx.shadowColor = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.3)';
+            ctx.shadowBlur = showI != null ? (4 + iNorm * 8 + (onTarget ? 6 : 0)) : 0;
             ctx.strokeRect(mx, my, mw, mh);
+            ctx.shadowBlur = 0;
+            // 表盘缘 LED
+            if (showI != null) {
+                ctx.fillStyle = onTarget ? OK : ('rgba(232,136,48,' + (0.5 + iNorm * 0.4) + ')');
+                ctx.beginPath();
+                ctx.arc(mx + mw - 10, my + 8, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.fillStyle = 'rgba(18,16,12,0.85)';
             ctx.fillRect(mx + 10, my + 14, mw - 20, 42);
             ctx.fillStyle = showI != null ? (onTarget ? OK : HI) : '#a09078';

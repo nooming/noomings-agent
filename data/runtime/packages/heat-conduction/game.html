@@ -179,7 +179,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 #essence-bench .observe-box .big{color:#ffe0c2!important;}
 #essence-bench .feedback{color:var(--craft-text)!important;}
 #essence-bench .value{color:var(--craft-accent)!important;}
-#essence-hud{top:56px!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #craft-intro,#craft-win{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
@@ -351,6 +351,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -614,6 +638,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const INK = '#140c0c', MID = '#342020', HI = '#f0a090', GLOW = '#ff6040';
             const METAL = '#8a7870', PANEL = '#241616', ACCENT = '#e07060', OK = '#6fae8f';
             const intensity = Math.min(Qlive / 5000, 1);
+            const dtNorm = Math.min(1, dt / 80);
+            const coolFactor = Math.min(1, (1 - intensity) * 0.55 + dtNorm * 0.35);
 
             const bg = ctx.createLinearGradient(0, 0, 0, H);
             bg.addColorStop(0, '#1a1010');
@@ -621,98 +647,167 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             bg.addColorStop(1, INK);
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, W, H);
+
+            // FAR: 天花板横管 + 悬吊 IR 灯罩（y=8–50 避 TL HUD）
+            ctx.fillStyle = 'rgba(28,20,18,0.75)';
+            for (let p = 0; p < 3; p++) {
+              const py = 10 + p * 13;
+              ctx.fillRect(W * 0.08, py, W * 0.84, 7);
+              ctx.fillStyle = METAL;
+              ctx.fillRect(W * 0.06, py - 2, 10, 11);
+              ctx.fillRect(W * 0.9, py - 2, 10, 11);
+              ctx.fillStyle = 'rgba(28,20,18,0.75)';
+            }
+            ctx.fillStyle = 'rgba(36,28,24,0.88)';
+            ctx.fillRect(W * 0.36, 8, W * 0.28, 20);
+            ctx.fillRect(W * 0.42, 28, 5, 16);
+            ctx.fillRect(W * 0.51, 28, 5, 16);
+            ctx.strokeStyle = 'rgba(80,60,50,0.35)';
+            ctx.strokeRect(W * 0.36, 8, W * 0.28, 20);
+
             const lamp = ctx.createRadialGradient(W * 0.5, H * 0.05, 8, W * 0.5, H * 0.05, W * 0.6);
-            lamp.addColorStop(0, 'rgba(255,96,64,0.14)');
+            lamp.addColorStop(0, 'rgba(255,96,64,' + (0.06 + intensity * 0.24) + ')');
             lamp.addColorStop(1, 'rgba(255,96,64,0)');
             ctx.fillStyle = lamp;
             ctx.fillRect(0, 0, W, H);
 
-            const benchY = H - 56;
+            const benchY = H - 52;
             ctx.fillStyle = '#1a1008';
-            ctx.fillRect(0, benchY + 4, W, 56);
+            ctx.fillRect(0, benchY + 4, W, 52);
             ctx.fillStyle = '#2e2014';
-            ctx.fillRect(0, benchY, W, 56);
+            ctx.fillRect(0, benchY, W, 52);
             ctx.fillStyle = '#4a3524';
-            ctx.fillRect(0, benchY, W, 10);
+            ctx.fillRect(0, benchY, W, 12);
 
-            const rodY = H * 0.44, rodH = Math.max(14, H * 0.06);
-            const rodX0 = W * 0.18, rodX1 = W * 0.78, rodLen = rodX1 - rodX0;
+            // 砖墙/管道墙（吃上空，避开 TL）
+            for (let by = 118; by < H * 0.32; by += 18) {
+              for (let bx = 0; bx < W; bx += 36) {
+                const ox = ((by / 18) | 0) % 2 ? 18 : 0;
+                ctx.fillStyle = (bx + by) % 72 < 36 ? '#2a1816' : '#241410';
+                ctx.fillRect(bx + ox, by, 34, 16);
+                ctx.strokeStyle = 'rgba(80,40,32,0.45)';
+                ctx.strokeRect(bx + ox, by, 34, 16);
+              }
+            }
+            // 竖管剪影
+            ctx.fillStyle = '#3a2a28';
+            ctx.fillRect(W * 0.08, 120, 14, H * 0.22);
+            ctx.fillRect(W * 0.9, 120, 14, H * 0.22);
+            ctx.fillStyle = METAL;
+            ctx.fillRect(W * 0.08 - 4, 120, 22, 8);
+            ctx.fillRect(W * 0.9 - 4, 120, 22, 8);
 
-            const srcW = W * 0.12, srcH = H * 0.22;
-            const srcX = W * 0.06, srcY = rodY - srcH * 0.35;
+            const rodY = H * 0.48, rodH = Math.max(22, H * 0.09);
+            const rodX0 = W * 0.22, rodX1 = W * 0.74, rodLen = rodX1 - rodX0;
+
+            // 炉膛体积
+            const srcW = W * 0.16, srcH = H * 0.36;
+            const srcX = W * 0.04, srcY = rodY - srcH * 0.42;
             const srcG = ctx.createLinearGradient(srcX, srcY, srcX + srcW, srcY + srcH);
-            srcG.addColorStop(0, `rgba(255,96,64,${0.55 + intensity * 0.35})`);
-            srcG.addColorStop(1, `rgba(180,40,20,${0.35 + intensity * 0.25})`);
+            srcG.addColorStop(0, `rgba(255,96,64,${0.6 + intensity * 0.35})`);
+            srcG.addColorStop(0.5, `rgba(200,50,20,${0.45 + intensity * 0.3})`);
+            srcG.addColorStop(1, `rgba(80,24,16,${0.5 + intensity * 0.2})`);
             ctx.fillStyle = srcG;
-            ctx.fillRect(srcX, srcY, srcW, srcH);
+            ctx.beginPath();
+            ctx.moveTo(srcX + 8, srcY);
+            ctx.lineTo(srcX + srcW, srcY + 12);
+            ctx.lineTo(srcX + srcW, srcY + srcH - 12);
+            ctx.lineTo(srcX + 8, srcY + srcH);
+            ctx.closePath();
+            ctx.fill();
             ctx.strokeStyle = ACCENT;
-            ctx.lineWidth = 2;
-            ctx.strokeRect(srcX, srcY, srcW, srcH);
-            for (let c = 0; c < 4; c++) {
-                ctx.strokeStyle = `rgba(255,160,120,${0.25 + intensity * 0.35})`;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            // 炉口火光
+            const fireG = ctx.createRadialGradient(srcX + srcW * 0.7, rodY, 4, srcX + srcW * 0.7, rodY, srcW * 0.7);
+            fireG.addColorStop(0, `rgba(255,180,80,${0.55 + intensity * 0.4})`);
+            fireG.addColorStop(1, 'rgba(255,80,40,0)');
+            ctx.fillStyle = fireG;
+            ctx.fillRect(srcX, srcY, srcW + 20, srcH);
+            for (let c = 0; c < 5; c++) {
+                ctx.strokeStyle = `rgba(255,160,120,${0.28 + intensity * 0.4})`;
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.arc(srcX + srcW * 0.5, srcY + srcH * 0.55, 8 + c * 5 + Math.sin(animT * 3 + c) * 2, 0, Math.PI * 2);
+                ctx.arc(srcX + srcW * 0.65, rodY, 10 + c * 6 + Math.sin(animT * 3 + c) * 3, 0, Math.PI * 2);
                 ctx.stroke();
             }
             ctx.fillStyle = HI;
-            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('热源', srcX + 8, srcY - 8);
+            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+            ctx.fillText('炉膛', srcX + 14, srcY - 8);
 
-            const sinkW = W * 0.10, sinkH = H * 0.20;
-            const sinkX = W * 0.82, sinkY = rodY - sinkH * 0.32;
+            // 散热翅片冷端
+            const sinkW = W * 0.14, sinkH = H * 0.32;
+            const sinkX = W * 0.78, sinkY = rodY - sinkH * 0.38;
             const sinkG = ctx.createLinearGradient(sinkX, sinkY, sinkX + sinkW, sinkY + sinkH);
-            sinkG.addColorStop(0, '#6a7870');
-            sinkG.addColorStop(1, '#4a5458');
+            const sR0 = Math.round(90 - coolFactor * 35);
+            const sG0 = Math.round(136 + coolFactor * 45);
+            const sB0 = Math.round(128 + coolFactor * 55);
+            const sR1 = Math.round(58 - coolFactor * 22);
+            const sG1 = Math.round(68 + coolFactor * 38);
+            const sB1 = Math.round(72 + coolFactor * 48);
+            sinkG.addColorStop(0, 'rgb(' + sR0 + ',' + sG0 + ',' + sB0 + ')');
+            sinkG.addColorStop(1, 'rgb(' + sR1 + ',' + sG1 + ',' + sB1 + ')');
             ctx.fillStyle = sinkG;
-            ctx.fillRect(sinkX, sinkY, sinkW, sinkH);
+            ctx.fillRect(sinkX, sinkY, sinkW * 0.45, sinkH);
+            ctx.fillStyle = 'rgba(80,150,210,' + (coolFactor * 0.22) + ')';
+            ctx.fillRect(sinkX, sinkY, sinkW * 0.45, sinkH);
+            for (let f = 0; f < 7; f++) {
+              const fy = sinkY + 6 + f * (sinkH - 12) / 6;
+              const finR = Math.round(106 - coolFactor * 40);
+              const finG = Math.round(120 + coolFactor * 50);
+              const finB = Math.round(112 + coolFactor * 55);
+              ctx.fillStyle = f % 2 ? 'rgb(' + finR + ',' + finG + ',' + finB + ')' : 'rgb(' + (finR + 20) + ',' + (finG + 24) + ',' + (finB + 18) + ')';
+              ctx.fillRect(sinkX + sinkW * 0.4, fy, sinkW * 0.55, 8);
+            }
             ctx.strokeStyle = METAL;
             ctx.lineWidth = 2;
-            ctx.strokeRect(sinkX, sinkY, sinkW, sinkH);
+            ctx.strokeRect(sinkX, sinkY, sinkW * 0.45, sinkH);
             ctx.fillStyle = '#a09078';
-            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('冷端', sinkX + 6, sinkY - 8);
+            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+            ctx.fillText('散热端', sinkX + 4, sinkY - 8);
 
+            // 粗导热棒（≥8%H）+ 管套
+            ctx.fillStyle = '#3a3028';
+            ctx.fillRect(rodX0 - 6, rodY - rodH / 2 - 6, rodLen + 12, rodH + 12);
             const irG = ctx.createLinearGradient(rodX0, 0, rodX1, 0);
-            irG.addColorStop(0, `rgba(255,96,64,${0.75 + intensity * 0.2})`);
-            irG.addColorStop(0.35, `rgba(240,160,120,${0.45 + intensity * 0.35})`);
-            irG.addColorStop(0.65, `rgba(180,120,100,${0.25 + intensity * 0.2})`);
-            irG.addColorStop(1, `rgba(120,100,96,${0.15 + intensity * 0.08})`);
-            ctx.fillStyle = irG;
-            ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
+            irG.addColorStop(0, `rgba(255,96,64,${0.8 + intensity * 0.2})`);
+            irG.addColorStop(0.35, `rgba(240,160,120,${0.5 + intensity * 0.35})`);
+            irG.addColorStop(0.65, `rgba(180,120,100,${0.3 + intensity * 0.2})`);
+            irG.addColorStop(1, `rgba(120,100,96,${0.18 + intensity * 0.1})`);
             const rodMetal = ctx.createLinearGradient(0, rodY - rodH / 2, 0, rodY + rodH / 2);
-            rodMetal.addColorStop(0, '#a89890');
+            rodMetal.addColorStop(0, '#b8a898');
             rodMetal.addColorStop(0.5, METAL);
-            rodMetal.addColorStop(1, '#6a6058');
+            rodMetal.addColorStop(1, '#5a5048');
             ctx.fillStyle = rodMetal;
             ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
-            ctx.globalAlpha = 0.55 + intensity * 0.35;
+            ctx.globalAlpha = 0.6 + intensity * 0.35;
             ctx.fillStyle = irG;
             ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
             ctx.globalAlpha = 1;
-            ctx.strokeStyle = 'rgba(240,160,144,0.45)';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(240,160,144,0.55)';
+            ctx.lineWidth = 2;
             ctx.strokeRect(rodX0, rodY - rodH / 2, rodLen, rodH);
             ctx.fillStyle = HI;
-            ctx.font = '11px "Microsoft YaHei",sans-serif';
-            ctx.fillText('导热棒 · IR 示意', rodX0, rodY - rodH / 2 - 10);
+            ctx.font = '12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('导热棒 · IR 示意', rodX0, rodY - rodH / 2 - 12);
 
-            const n = 6 + Math.floor(intensity * 10);
+            const n = 8 + Math.floor(intensity * 12);
             for (let i = 0; i < n; i++) {
                 const t = (animT * (0.35 + intensity * 0.6) + i / n) % 1;
                 const x = rodX0 + t * rodLen;
-                const y = rodY + Math.sin(animT * 2 + i) * (rodH * 0.6);
-                const alpha = 0.25 + intensity * 0.65;
+                const y = rodY + Math.sin(animT * 2 + i) * (rodH * 0.45);
+                const alpha = 0.3 + intensity * 0.65;
                 ctx.beginPath();
                 ctx.fillStyle = 'rgba(255,96,64,' + alpha + ')';
                 ctx.shadowColor = GLOW;
-                ctx.shadowBlur = 4 + intensity * 6;
-                ctx.arc(x, y, 2.5 + intensity * 2, 0, Math.PI * 2);
+                ctx.shadowBlur = 6 + intensity * 8;
+                ctx.arc(x, y, 3 + intensity * 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
 
-            const boxW = 240, boxH = 52, boxX = W - boxW - 16, boxY = H - boxH - 28;
-            ctx.fillStyle = 'rgba(36,22,22,0.88)';
+            const boxW = 250, boxH = 52, boxX = W - boxW - 16, boxY = H - boxH - 68;
+            ctx.fillStyle = 'rgba(36,22,22,0.9)';
             ctx.fillRect(boxX, boxY, boxW, boxH);
             ctx.strokeStyle = intensity >= 0.4 ? 'rgba(255,96,64,0.55)' : 'rgba(224,112,96,0.4)';
             ctx.strokeRect(boxX, boxY, boxW, boxH);
@@ -736,12 +831,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
             if (flowPulse > 0) {
                 ctx.globalAlpha = Math.min(1, flowPulse);
+                const halo = ctx.createRadialGradient(rodX0 + rodLen * 0.35, rodY, 8, rodX0 + rodLen * 0.35, rodY, rodLen * 0.55);
+                halo.addColorStop(0, 'rgba(255,96,64,0.45)');
+                halo.addColorStop(1, 'rgba(255,96,64,0)');
+                ctx.fillStyle = halo;
+                ctx.fillRect(rodX0 - 20, rodY - rodH * 2, rodLen + 40, rodH * 4);
                 ctx.strokeStyle = GLOW;
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 5;
+                ctx.shadowColor = GLOW;
+                ctx.shadowBlur = 16;
                 ctx.beginPath();
                 ctx.moveTo(rodX0 - 10, rodY);
                 ctx.lineTo(rodX1 + 10, rodY);
                 ctx.stroke();
+                ctx.shadowBlur = 0;
                 ctx.globalAlpha = 1;
             }
         }

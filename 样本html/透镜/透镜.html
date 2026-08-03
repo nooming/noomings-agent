@@ -176,7 +176,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 #essence-bench .observe-box{background:rgba(0,0,0,.32)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;color:var(--craft-text)!important;}
 #essence-bench .value{color:var(--craft-accent)!important;}
 #essence-bench .irrelevant-area{display:none!important;}
-#essence-hud{top:56px!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #craft-intro,#craft-win{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
@@ -346,6 +346,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -563,9 +587,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       W = cssW; H = cssH;
-      layout.axisY = Math.round(H * 0.58);
+      layout.axisY = Math.round(H * 0.55);
       layout.lensX = Math.round(W * 0.48);
-      layout.pxPerCm = Math.min(14, Math.max(7, W / 72));
+      layout.pxPerCm = Math.min(15, Math.max(8, W / 68));
       layout.screenX = layout.lensX + SCREEN_DIST_CM * layout.pxPerCm;
       return layout;
     }
@@ -610,59 +634,89 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       bg.addColorStop(1, '#080c10');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
+
+      // FAR：暗室顶管 + 遮光挡板（顶 y<50）
+      ctx.fillStyle = 'rgba(8,12,16,0.72)';
+      ctx.fillRect(0, 0, W, 36);
+      ctx.strokeStyle = 'rgba(106,120,136,0.28)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.12, 16);
+      ctx.lineTo(W * 0.88, 16);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(20,28,36,0.55)';
+      ctx.fillRect(W * 0.04, 118, 18, H * 0.18);
+      ctx.fillRect(W * 0.92, 118, 18, H * 0.18);
+
+      const vFocus = computeImageDistance(u, f);
+      const focusTol = playMode === 'challenge' ? 0.85 : 2.0;
+      let focusQual = 0;
+      if (isFinite(vFocus) && vFocus > 0) {
+        focusQual = Math.max(0, 1 - Math.abs(vFocus - SCREEN_DIST_CM) / (focusTol * 3));
+      }
+      const lampA = 0.12 + focusQual * 0.22;
       var lamp = ctx.createRadialGradient(W * 0.18, H * 0.12, 4, W * 0.32, H * 0.45, Math.max(W, H) * 0.55);
-      lamp.addColorStop(0, 'rgba(240,208,128,0.22)');
+      lamp.addColorStop(0, 'rgba(240,208,128,' + lampA + ')');
       lamp.addColorStop(0.35, 'rgba(106,154,208,0.08)');
       lamp.addColorStop(1, 'rgba(12,18,24,0)');
       ctx.fillStyle = lamp;
       ctx.fillRect(0, 0, W, H);
 
-      // 顶灯（柔光台灯）
-      var lampX = W * 0.16, lampY = 36;
+      // 暗室侧墙剪影（吃上空）
+      ctx.fillStyle = 'rgba(8,12,16,0.55)';
+      ctx.fillRect(0, 100, 36, H * 0.55);
+      ctx.fillRect(W - 36, 100, 36, H * 0.55);
+      for (let sh = 0; sh < 3; sh++) {
+        ctx.fillStyle = 'rgba(20,28,36,0.65)';
+        ctx.fillRect(8, 130 + sh * 48, 22, 36);
+        ctx.fillRect(W - 30, 130 + sh * 48, 22, 36);
+      }
+
+      // 顶灯
+      var lampX = W * 0.16, lampY = 40;
       ctx.strokeStyle = 'rgba(106,120,136,0.55)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(lampX, 8);
       ctx.lineTo(lampX, lampY);
       ctx.stroke();
-      var shadeG = ctx.createLinearGradient(lampX - 22, lampY, lampX + 22, lampY + 18);
+      var shadeG = ctx.createLinearGradient(lampX - 28, lampY, lampX + 28, lampY + 22);
       shadeG.addColorStop(0, '#8a7344');
       shadeG.addColorStop(0.5, SC.glow);
       shadeG.addColorStop(1, SC.metal);
       ctx.fillStyle = shadeG;
       ctx.beginPath();
-      ctx.moveTo(lampX - 24, lampY);
-      ctx.lineTo(lampX + 24, lampY);
-      ctx.lineTo(lampX + 14, lampY + 20);
-      ctx.lineTo(lampX - 14, lampY + 20);
+      ctx.moveTo(lampX - 30, lampY);
+      ctx.lineTo(lampX + 30, lampY);
+      ctx.lineTo(lampX + 16, lampY + 24);
+      ctx.lineTo(lampX - 16, lampY + 24);
       ctx.closePath();
       ctx.fill();
-      var lampGlow = ctx.createRadialGradient(lampX, lampY + 28, 2, lampX, L.axisY, 80);
-      lampGlow.addColorStop(0, 'rgba(240,208,128,0.18)');
+      var lampGlow = ctx.createRadialGradient(lampX, lampY + 28, 2, lampX, L.axisY, 110);
+      lampGlow.addColorStop(0, 'rgba(240,208,128,' + (0.14 + focusQual * 0.22) + ')');
       lampGlow.addColorStop(1, 'rgba(240,208,128,0)');
       ctx.fillStyle = lampGlow;
-      ctx.fillRect(0, lampY, W * 0.55, L.axisY - lampY + 20);
+      ctx.fillRect(0, lampY, W * 0.6, L.axisY - lampY + 30);
 
       // 实验台台面
       ctx.fillStyle = SC.mid;
-      ctx.fillRect(0, H * 0.78, W, H * 0.22);
-      const benchG = ctx.createLinearGradient(0, L.axisY + 30, 0, L.axisY + 50);
+      ctx.fillRect(0, H * 0.76, W, H * 0.24);
+      const benchG = ctx.createLinearGradient(0, L.axisY + 36, 0, L.axisY + 58);
       benchG.addColorStop(0, '#3a4858');
       benchG.addColorStop(0.5, SC.metal);
       benchG.addColorStop(1, '#4a5868');
       ctx.fillStyle = benchG;
-      ctx.fillRect(W * 0.04, L.axisY + 32, W * 0.92, 16);
-      // 光具座导轨刻度
+      ctx.fillRect(W * 0.04, L.axisY + 36, W * 0.92, 20);
       ctx.fillStyle = 'rgba(160,192,232,0.35)';
       for (let i = 0; i < 16; i++) {
         const x = W * 0.06 + i * (W * 0.055);
-        ctx.fillRect(x, L.axisY + 32, 1, i % 5 === 0 ? 16 : 10);
+        ctx.fillRect(x, L.axisY + 36, 1, i % 5 === 0 ? 20 : 12);
       }
-      ctx.fillStyle = 'rgba(12,18,24,0.75)';
-      ctx.fillRect(W * 0.06, H * 0.9 - 14, 96, 18);
+      ctx.fillStyle = 'rgba(12,18,24,0.8)';
+      ctx.fillRect(W * 0.06, H * 0.9 - 14, 110, 20);
       ctx.fillStyle = SC.hi;
       ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('透镜光具座', W * 0.06, H * 0.9);
+      ctx.fillText('透镜光具座', W * 0.07, H * 0.9);
 
       // 主光轴
       ctx.beginPath();
@@ -674,80 +728,112 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 物（光具座滑块 + 物高箭头）
+      // 物：发光箭头板
       const objX = L.lensX - u * L.pxPerCm;
-      var mountG = ctx.createLinearGradient(objX - 14, L.axisY + 8, objX + 14, L.axisY + 36);
+      var mountG = ctx.createLinearGradient(objX - 18, L.axisY + 8, objX + 18, L.axisY + 42);
       mountG.addColorStop(0, '#3a4858');
       mountG.addColorStop(0.5, SC.metal);
       mountG.addColorStop(1, '#4a5868');
       ctx.fillStyle = mountG;
-      ctx.fillRect(objX - 12, L.axisY + 8, 24, 30);
-      ctx.strokeStyle = SC.accent;
-      ctx.lineWidth = 3;
+      ctx.fillRect(objX - 16, L.axisY + 8, 32, 36);
+      ctx.fillStyle = '#1a2430';
+      ctx.fillRect(objX - 14, L.axisY - 72, 28, 72);
+      ctx.strokeStyle = SC.glow;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(objX - 14, L.axisY - 72, 28, 72);
+      const arrowGlow = ctx.createLinearGradient(objX, L.axisY - 72, objX, L.axisY);
+      arrowGlow.addColorStop(0, 'rgba(240,208,128,0.95)');
+      arrowGlow.addColorStop(1, 'rgba(106,154,208,0.55)');
+      ctx.fillStyle = arrowGlow;
+      ctx.shadowColor = SC.glow;
+      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.moveTo(objX, L.axisY);
-      ctx.lineTo(objX, L.axisY - 48);
-      ctx.stroke();
-      ctx.fillStyle = SC.accent;
-      ctx.beginPath();
-      ctx.moveTo(objX - 7, L.axisY - 38);
-      ctx.lineTo(objX, L.axisY - 52);
-      ctx.lineTo(objX + 7, L.axisY - 38);
+      ctx.moveTo(objX, L.axisY - 68);
+      ctx.lineTo(objX + 10, L.axisY - 52);
+      ctx.lineTo(objX + 4, L.axisY - 52);
+      ctx.lineTo(objX + 4, L.axisY - 8);
+      ctx.lineTo(objX - 4, L.axisY - 8);
+      ctx.lineTo(objX - 4, L.axisY - 52);
+      ctx.lineTo(objX - 10, L.axisY - 52);
+      ctx.closePath();
       ctx.fill();
+      ctx.shadowBlur = 0;
       ctx.fillStyle = SC.hi;
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('物', objX - 8, L.axisY - 58);
+      ctx.fillText('物', objX - 8, L.axisY - 78);
 
-      // 透镜支架（黄铜座 + 玻璃透镜）
+      // 透镜支架加大
       var Dcm = sliderD ? parseFloat(sliderD.value) : 6;
-      var lensHalf = 36 + Dcm * 3.5;
-      var standG = ctx.createLinearGradient(L.lensX - 8, L.axisY - lensHalf - 14, L.lensX + 8, L.axisY + lensHalf + 14);
+      var lensHalf = 48 + Dcm * 4.2;
+      var standG = ctx.createLinearGradient(L.lensX - 14, L.axisY - lensHalf - 18, L.lensX + 14, L.axisY + lensHalf + 18);
       standG.addColorStop(0, '#5a5040');
-      standG.addColorStop(0.45, '#a08858');
+      standG.addColorStop(0.45, '#b89858');
       standG.addColorStop(1, '#5a5040');
       ctx.fillStyle = standG;
-      ctx.fillRect(L.lensX - 7, L.axisY - lensHalf - 14, 14, lensHalf * 2 + 28);
-      ctx.fillStyle = 'rgba(106,154,208,0.12)';
+      ctx.fillRect(L.lensX - 12, L.axisY - lensHalf - 18, 24, lensHalf * 2 + 36);
+      ctx.fillStyle = '#3a3428';
+      ctx.fillRect(L.lensX - 22, L.axisY + 36, 44, 14);
+      ctx.fillStyle = 'rgba(106,154,208,0.18)';
       ctx.beginPath();
-      ctx.ellipse(L.lensX, L.axisY, 11, lensHalf, 0, 0, Math.PI * 2);
+      ctx.ellipse(L.lensX, L.axisY, 16, lensHalf, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = SC.hi;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.ellipse(L.lensX, L.axisY, 10, lensHalf, 0, 0, Math.PI * 2);
+      ctx.ellipse(L.lensX, L.axisY, 14, lensHalf, 0, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(160,192,232,0.35)';
+      ctx.strokeStyle = 'rgba(160,192,232,0.4)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(L.lensX - 8, L.axisY - lensHalf * 0.85);
-      ctx.lineTo(L.lensX + 8, L.axisY + lensHalf * 0.85);
-      ctx.moveTo(L.lensX + 8, L.axisY - lensHalf * 0.85);
-      ctx.lineTo(L.lensX - 8, L.axisY + lensHalf * 0.85);
+      ctx.moveTo(L.lensX - 10, L.axisY - lensHalf * 0.85);
+      ctx.lineTo(L.lensX + 10, L.axisY + lensHalf * 0.85);
+      ctx.moveTo(L.lensX + 10, L.axisY - lensHalf * 0.85);
+      ctx.lineTo(L.lensX - 10, L.axisY + lensHalf * 0.85);
       ctx.stroke();
       ctx.fillStyle = SC.hi;
-      ctx.fillText('透镜', L.lensX - 14, L.axisY + lensHalf + 22);
+      ctx.fillText('透镜', L.lensX - 14, L.axisY + lensHalf + 28);
 
       // 焦点标记
       const fPx = f * L.pxPerCm;
       ctx.fillStyle = SC.glow;
-      ctx.beginPath(); ctx.arc(L.lensX - fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(L.lensX + fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(L.lensX - fPx, L.axisY, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(L.lensX + fPx, L.axisY, 4, 0, Math.PI * 2); ctx.fill();
 
-      // 光屏（磨砂屏 + 金属框）
-      const screenW = 18, screenH = 90;
-      ctx.fillStyle = '#2a3848';
-      ctx.fillRect(L.screenX - screenW/2 - 3, L.axisY - screenH/2 - 6, screenW + 6, screenH + 12);
-      ctx.fillStyle = '#e8eef4';
+      // 磨砂光屏（加框）
+      const screenW = 26, screenH = 120;
+      ctx.fillStyle = '#1a2430';
+      ctx.fillRect(L.screenX - screenW/2 - 8, L.axisY - screenH/2 - 12, screenW + 16, screenH + 24);
+      ctx.fillStyle = '#3a4858';
+      ctx.fillRect(L.screenX - screenW/2 - 5, L.axisY - screenH/2 - 8, screenW + 10, screenH + 16);
+      const frost = ctx.createLinearGradient(L.screenX - screenW/2, 0, L.screenX + screenW/2, 0);
+      frost.addColorStop(0, '#d0d8e0');
+      frost.addColorStop(0.5, '#f0f4f8');
+      frost.addColorStop(1, '#c8d0d8');
+      ctx.fillStyle = frost;
       ctx.fillRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+      // 屏上像亮度（随 focusQual）
+      if (measured && isFinite(vFocus) && vFocus > 0) {
+        const imgBright = 0.08 + focusQual * 0.55;
+        ctx.fillStyle = 'rgba(240,208,128,' + imgBright + ')';
+        ctx.fillRect(L.screenX - screenW/2 + 3, L.axisY - screenH/2 + 8, screenW - 6, screenH - 16);
+        if (focusQual > 0.65) {
+          ctx.shadowColor = SC.glow;
+          ctx.shadowBlur = 6 + focusQual * 14;
+          ctx.strokeStyle = 'rgba(111,174,143,' + (0.3 + focusQual * 0.5) + ')';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
+          ctx.shadowBlur = 0;
+        }
+      }
       ctx.strokeStyle = SC.accent;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
       ctx.fillStyle = SC.hi;
-      ctx.fillText('光屏', L.screenX - 12, L.axisY + screenH/2 + 18);
+      ctx.fillText('光屏', L.screenX - 12, L.axisY + screenH/2 + 22);
 
       const v = computeImageDistance(u, f);
       const onScreen = isImageOnScreen(u, f);
-      // 像距结论线仅测试后揭示，避免拖滑条即见答案
+      // 测试后：像标记 + 2–3 条主光线锥
       if (measured && isFinite(v) && v > 0) {
         const imageX = L.lensX + v * L.pxPerCm;
         if (imageX > L.lensX && imageX < W * 0.95) {
@@ -763,10 +849,44 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           ctx.fillText('像', imageX - 6, L.axisY - 10);
           ctx.globalAlpha = 1;
         }
+        const tipY = L.axisY - 60;
+        const rays = [
+          { y0: tipY, through: 'parallel' },
+          { y0: tipY, through: 'center' },
+          { y0: tipY, through: 'focus' }
+        ];
+        for (let ri = 0; ri < rays.length; ri++) {
+          const y0 = tipY + ri * 4;
+          ctx.strokeStyle = 'rgba(240,208,128,' + (0.35 + ri * 0.12) + ')';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(objX, y0);
+          if (ri === 0) {
+            ctx.lineTo(L.lensX, y0);
+            ctx.lineTo(L.screenX, L.axisY + (y0 - L.axisY) * (onScreen ? -0.35 : 0.2));
+          } else if (ri === 1) {
+            ctx.lineTo(L.lensX, L.axisY + (y0 - L.axisY) * 0.15);
+            ctx.lineTo(L.screenX, L.axisY + (y0 - L.axisY) * 0.55);
+          } else {
+            ctx.lineTo(L.lensX - fPx, L.axisY);
+            ctx.lineTo(L.lensX, L.axisY + (y0 - L.axisY) * 0.4);
+            ctx.lineTo(L.screenX, L.axisY + 8);
+          }
+          ctx.stroke();
+          // 光束锥淡影
+          ctx.fillStyle = 'rgba(240,208,128,0.06)';
+          ctx.beginPath();
+          ctx.moveTo(objX, y0 - 3);
+          ctx.lineTo(L.lensX, y0 - 6 + ri * 2);
+          ctx.lineTo(L.lensX, y0 + 6 - ri * 2);
+          ctx.lineTo(objX, y0 + 3);
+          ctx.closePath();
+          ctx.fill();
+        }
       }
 
       // 读数放右下，避开顶栏 dual-mode / essence-hud
-      const boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
+      const boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 72;
       ctx.fillStyle = 'rgba(12,18,24,0.85)';
       ctx.fillRect(boxX, boxY, boxW, boxH);
       ctx.strokeStyle = measured

@@ -181,7 +181,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 #essence-bench .slider-value{color:var(--craft-accent)!important;}
 #essence-bench .hint-area{color:var(--craft-text)!important;background:rgba(0,0,0,.25)!important;}
 #essence-bench .irrelevant-area{display:none!important;}
-#essence-hud{top:56px!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #craft-intro,#craft-win{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
@@ -357,6 +357,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -740,12 +764,23 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      // 汞灯冷光（左侧）
+      // FAR：外架剪影（顶 y<50）
+      ctx.fillStyle = 'rgba(12,10,18,0.55)';
+      ctx.fillRect(W * 0.86, 118, 38, H * 0.32);
+      ctx.strokeStyle = 'rgba(122,132,148,0.18)';
+      for (let rs = 0; rs < 3; rs++) {
+        ctx.beginPath();
+        ctx.moveTo(W * 0.87, 130 + rs * 34);
+        ctx.lineTo(W * 0.98, 130 + rs * 34);
+        ctx.stroke();
+      }
+
+      const iNorm = Math.min(1, Math.max(0, I / 12));
       var lampX = W * 0.11, lampY = H * 0.42;
       var lampFlick = 0.90 + 0.10 * Math.sin(animT * 5.1) * Math.sin(animT * 3.3 + 1.2);
       var lampRad = ctx.createRadialGradient(lampX, lampY, 6, lampX, lampY, W * 0.52);
-      lampRad.addColorStop(0, 'rgba(110,184,232,' + (0.42 * lampFlick) + ')');
-      lampRad.addColorStop(0.28, 'rgba(110,184,232,' + (0.16 * lampFlick) + ')');
+      lampRad.addColorStop(0, 'rgba(110,184,232,' + (0.32 * lampFlick + iNorm * 0.18) + ')');
+      lampRad.addColorStop(0.28, 'rgba(110,184,232,' + (0.12 * lampFlick + iNorm * 0.10) + ')');
       lampRad.addColorStop(0.62, 'rgba(110,184,232,0.04)');
       lampRad.addColorStop(1, 'rgba(110,184,232,0)');
       ctx.fillStyle = lampRad;
@@ -873,6 +908,15 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillStyle = cathG;
       rr(tubeX + 24, cy, plateW, ch, 2);
       ctx.fill();
+      if (iNorm > 0.05) {
+        ctx.shadowColor = '#e06060';
+        ctx.shadowBlur = 4 + iNorm * 14;
+        ctx.strokeStyle = 'rgba(224,96,96,' + (0.25 + iNorm * 0.55) + ')';
+        ctx.lineWidth = 1.5;
+        rr(tubeX + 24, cy, plateW, ch, 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
       ctx.strokeStyle = 'rgba(240,208,144,0.25)';
       ctx.lineWidth = 1;
       rr(tubeX + 24, cy, plateW, ch, 2);
@@ -884,6 +928,15 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillStyle = anG;
       rr(tubeX + tubeW - 24 - plateW, cy, plateW, ch, 2);
       ctx.fill();
+      if (iNorm > 0.05) {
+        ctx.shadowColor = ACCENT;
+        ctx.shadowBlur = 3 + iNorm * 12;
+        ctx.strokeStyle = 'rgba(212,168,75,' + (0.3 + iNorm * 0.5) + ')';
+        ctx.lineWidth = 1.5;
+        rr(tubeX + tubeW - 24 - plateW, cy, plateW, ch, 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
       ctx.strokeStyle = 'rgba(240,208,144,0.30)';
       rr(tubeX + tubeW - 24 - plateW, cy, plateW, ch, 2);
       ctx.stroke();
@@ -953,7 +1006,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
 
       // 状态铭牌（右下，逻辑不变）
-      var boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
+      var boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 72;
       var badgeG = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
       badgeG.addColorStop(0, 'rgba(26,22,36,0.92)');
       badgeG.addColorStop(1, 'rgba(12,10,18,0.95)');
@@ -961,9 +1014,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       rr(boxX, boxY, boxW, boxH, 4);
       ctx.fill();
       ctx.strokeStyle = I > 0 ? 'rgba(212,168,75,0.65)' : 'rgba(122,132,148,0.35)';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.5 + iNorm * 1.5;
+      ctx.shadowColor = ACCENT;
+      ctx.shadowBlur = I > 0 ? (4 + iNorm * 10) : 0;
       rr(boxX, boxY, boxW, boxH, 4);
       ctx.stroke();
+      ctx.shadowBlur = 0;
       ctx.fillStyle = '#f0e8d0';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
       ctx.textAlign = 'left';

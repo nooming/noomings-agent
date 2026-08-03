@@ -173,7 +173,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 #essence-bench .value,.observe-box .reading{color:#ffe0c2!important;}
 #essence-bench .formula-note,.irrelevant-area{display:none!important;}
 #essence-bench .feedback{color:var(--craft-text)!important;}
-#essence-hud{top:56px!important;max-width:min(360px,calc(100% - 24px))!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #essence-hud .essence-title,#essence-hud .essence-sub{text-shadow:none!important;}
 #craft-intro,#craft-win{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
@@ -344,6 +344,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -591,7 +615,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.clearRect(0, 0, W, H);
 
     var SC = { accent:'#3a9e9a', bg:'#0a1414', hi:'#8ad4c8', glow:'#f0d060', metal:'#6a7880', mid:'#1e3430' };
-    var tankL = 10, tankR = W - 10, tankBot = H - 16, benchTh = 12;
+    var tankL = 18, tankR = W - 18, tankBot = H - 14, benchTh = 16;
 
     // 空气层
     const air = ctx.createLinearGradient(0, 0, 0, groundY);
@@ -602,6 +626,41 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillRect(0, 0, W, groundY);
     ctx.fillStyle = 'rgba(138,212,200,0.04)';
     ctx.fillRect(0, 0, W, Math.round(groundY * 0.45));
+
+    // 对准度（发射后光路距靶心）
+    const pathRevealedEarly = measuredTheta2 != null;
+    let alignQual = 0;
+    const theta2Pre = calcRefractionAngle(theta1Deg, n2);
+    const validPre = !(isNaN(theta2Pre) || theta2Pre < 0 || theta2Pre > 89);
+    if (pathRevealedEarly && validPre) {
+      const theta2RadP = theta2Pre * Math.PI / 180;
+      const lenP = Math.min(H - groundY - 20, W * 0.35);
+      const ixP = launchX + (groundY - launchY) * Math.tan(theta1Deg * Math.PI / 180);
+      const endXP = ixP + lenP * Math.sin(theta2RadP);
+      const endYP = groundY + lenP * Math.cos(theta2RadP);
+      const dxP = endXP - ixP, dyP = endYP - groundY;
+      const l2P = dxP * dxP + dyP * dyP;
+      if (l2P > 0.0001) {
+        let tP = ((target.x - ixP) * dxP + (target.y - groundY) * dyP) / l2P;
+        tP = Math.max(0, Math.min(1, tP));
+        const cxP = ixP + tP * dxP, cyP = groundY + tP * dyP;
+        const distP = Math.hypot(cxP - target.x, cyP - target.y);
+        alignQual = Math.max(0, 1 - distP / (target.radius * 3));
+      }
+    } else if (!pathRevealedEarly) {
+      alignQual = 0.25;
+    }
+    const beamAlpha = 0.55 + alignQual * 0.45;
+    const causticAlpha = 0.12 + alignQual * 0.28;
+
+    // 木架剪影（水槽后方，吃上空）
+    ctx.fillStyle = 'rgba(60,40,24,0.55)';
+    ctx.fillRect(W * 0.72, 110, 28, groundY - 118);
+    ctx.fillRect(W * 0.88, 110, 28, groundY - 118);
+    ctx.fillRect(W * 0.72, 110, W * 0.18, 14);
+    for (var rs = 0; rs < 3; rs++) {
+      ctx.fillRect(W * 0.74, 140 + rs * 40, W * 0.14, 6);
+    }
 
     // 光学木台（承托水槽）
     var benchY = groundY - 1;
@@ -637,7 +696,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.beginPath();
     ctx.rect(tankL + 2, groundY + 4, tankR - tankL - 4, tankBot - groundY - 6);
     ctx.clip();
-    ctx.globalAlpha = 0.22;
+    ctx.globalAlpha = causticAlpha;
     ctx.strokeStyle = SC.hi;
     ctx.lineWidth = 1.1;
     for (var ci = 0; ci < 14; ci++) {
@@ -648,7 +707,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.bezierCurveTo(cx0 + 14, cy0 - 6, cx0 + 28, cy0 + 10, cx0 + 42, cy0 + 2);
       ctx.stroke();
     }
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = causticAlpha * 0.55;
     ctx.fillStyle = SC.glow;
     for (var si = 0; si < 9; si++) {
       var sx = tankL + 20 + (si * 53) % (tankR - tankL - 40);
@@ -659,24 +718,36 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     }
     ctx.restore();
 
-    // 玻璃槽壁 + 金属底框
+    // 加厚玻璃槽壁 + 金属底框
     function drawGlassWall(x, w, inner) {
       var g = ctx.createLinearGradient(x, groundY, inner ? x + w : x - w, groundY);
-      g.addColorStop(0, 'rgba(106,120,128,0.72)');
-      g.addColorStop(0.35, 'rgba(138,212,200,0.18)');
-      g.addColorStop(0.65, 'rgba(58,158,154,0.28)');
-      g.addColorStop(1, 'rgba(30,52,48,0.55)');
+      g.addColorStop(0, 'rgba(106,120,128,0.82)');
+      g.addColorStop(0.35, 'rgba(138,212,200,0.22)');
+      g.addColorStop(0.65, 'rgba(58,158,154,0.35)');
+      g.addColorStop(1, 'rgba(30,52,48,0.65)');
       ctx.fillStyle = g;
       ctx.fillRect(x, groundY, w, tankBot - groundY);
-      ctx.strokeStyle = inner ? 'rgba(138,212,200,0.55)' : 'rgba(106,120,128,0.45)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = inner ? 'rgba(138,212,200,0.65)' : 'rgba(106,120,128,0.55)';
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.moveTo(inner ? x + w - 1 : x + 1, groundY);
       ctx.lineTo(inner ? x + w - 1 : x + 1, tankBot);
       ctx.stroke();
     }
     drawGlassWall(0, tankL, true);
-    drawGlassWall(tankR, tankL, false);
+    drawGlassWall(tankR, W - tankR, false);
+    // 水面涟漪
+    ctx.strokeStyle = 'rgba(138,212,200,0.35)';
+    ctx.lineWidth = 1.2;
+    for (var rip = 0; rip < 5; rip++) {
+      var ry = groundY + 8 + rip * 10;
+      ctx.beginPath();
+      ctx.moveTo(tankL + 8, ry);
+      for (var rx = tankL + 8; rx < tankR - 8; rx += 24) {
+        ctx.quadraticCurveTo(rx + 12, ry + (rip % 2 ? 3 : -3) * Math.sin(Date.now() * 0.003 + rip), rx + 24, ry);
+      }
+      ctx.stroke();
+    }
     const floorG = ctx.createLinearGradient(0, tankBot - 16, 0, tankBot);
     floorG.addColorStop(0, 'rgba(58,158,154,0.35)');
     floorG.addColorStop(0.5, 'rgba(106,120,128,0.5)');
@@ -707,56 +778,64 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillStyle = 'rgba(138,212,200,0.85)';
     ctx.fillText('水槽介质 n₂=' + n2.toFixed(1), 18, groundY + 22);
 
-    // 探照灯 — 黄铜灯室 + 暖光
+    // 探照灯 — 加大灯座 + 黄铜灯室
+    ctx.fillStyle = SC.metal;
+    ctx.fillRect(launchX - 16, launchY + 14, 32, 10);
+    ctx.fillRect(launchX - 6, launchY + 8, 12, 8);
     ctx.save();
     ctx.shadowColor = SC.glow;
-    ctx.shadowBlur = 22;
+    ctx.shadowBlur = 28;
     ctx.beginPath();
-    ctx.arc(launchX, launchY, 9, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(240,208,96,0.35)';
+    ctx.arc(launchX, launchY, 14, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(240,208,96,0.4)';
     ctx.fill();
     ctx.restore();
-    const brass = ctx.createLinearGradient(launchX - 20, launchY - 12, launchX + 12, launchY + 12);
+    const brass = ctx.createLinearGradient(launchX - 28, launchY - 16, launchX + 16, launchY + 16);
     brass.addColorStop(0, '#8a7344');
     brass.addColorStop(0.45, SC.glow);
     brass.addColorStop(0.75, SC.metal);
     brass.addColorStop(1, '#4a4030');
     ctx.fillStyle = brass;
-    ctx.fillRect(launchX - 20, launchY - 11, 32, 22);
-    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    ctx.fillRect(launchX - 28, launchY - 14, 44, 28);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(launchX - 28, launchY - 14, 44, 28);
     ctx.fillStyle = '#3a3530';
-    ctx.fillRect(launchX - 6, launchY - 14, 12, 5);
-    const lensG = ctx.createRadialGradient(launchX - 2, launchY - 1, 1, launchX, launchY, 8);
+    ctx.fillRect(launchX - 8, launchY - 20, 16, 8);
+    const lensG = ctx.createRadialGradient(launchX - 2, launchY - 1, 1, launchX, launchY, 12);
     lensG.addColorStop(0, '#fff8dc');
     lensG.addColorStop(0.5, SC.glow);
     lensG.addColorStop(1, 'rgba(240,160,40,0.85)');
     ctx.beginPath();
-    ctx.arc(launchX, launchY, 7, 0, 2 * Math.PI);
+    ctx.arc(launchX, launchY, 11, 0, 2 * Math.PI);
     ctx.fillStyle = lensG;
     ctx.shadowColor = SC.glow;
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 18;
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.fillStyle = SC.glow;
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('探照灯', launchX - 18, launchY - 18);
+    ctx.fillText('探照灯', launchX - 20, launchY - 26);
 
     const theta1Rad = theta1Deg * Math.PI / 180;
     let ix = launchX + (groundY - launchY) * Math.tan(theta1Rad);
     if (ix < 16) ix = 16;
     if (ix > W - 16) ix = W - 16;
 
+    ctx.save();
+    ctx.shadowColor = beamColor;
+    ctx.shadowBlur = 6 + alignQual * 16;
+    ctx.globalAlpha = beamAlpha;
     ctx.beginPath();
     ctx.moveTo(launchX, launchY);
     ctx.lineTo(ix, groundY);
     ctx.strokeStyle = beamColor;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2 + alignQual * 1.5;
     ctx.stroke();
+    ctx.restore();
 
     ctx.beginPath();
     ctx.setLineDash([6, 6]);
@@ -789,8 +868,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.moveTo(ix, groundY);
         ctx.lineTo(refrEndX, refrEndY);
         ctx.strokeStyle = beamColor;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 2 + alignQual * 1.5;
+        ctx.globalAlpha = beamAlpha;
+        ctx.shadowColor = beamColor;
+        ctx.shadowBlur = 4 + alignQual * 12;
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
         ctx.beginPath();
         ctx.arc(ix, groundY, 26, Math.PI/2, Math.PI/2 + theta2Rad, false);
         ctx.strokeStyle = '#7dd3fc';
@@ -879,7 +963,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
 
-    const boxW = 210, boxH = 44, boxX = W - boxW - 16, boxY = H - boxH - 28;
+    const boxW = 210, boxH = 44, boxX = W - boxW - 16, boxY = H - boxH - 72;
     ctx.fillStyle = 'rgba(15,23,42,0.85)';
     ctx.fillRect(boxX, boxY, boxW, boxH);
     ctx.strokeStyle = (pathRevealed && hit) ? 'rgba(45,212,191,0.7)' : 'rgba(148,163,184,0.35)';

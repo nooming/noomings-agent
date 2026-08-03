@@ -198,7 +198,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   right:auto!important;width:auto!important;max-width:min(420px,calc(100% - 24px))!important;
   justify-content:flex-start!important;
 }
-#essence-hud{top:56px!important;left:10px!important;right:auto!important;max-width:min(420px,calc(100% - 24px))!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #essence-hud .essence-title{color:var(--craft-text)!important;}
 #essence-hud .essence-sub{color:var(--craft-muted)!important;}
 #essence-bench .observe-box,.observe-box{
@@ -346,6 +346,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -602,6 +626,18 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.clearRect(0, 0, W, H);
     const INK = '#14110e', MID = '#3a2e22', HI = '#e8b070', GLOW = '#e09040';
     const METAL = '#6a7068', PANEL = '#241c16', ACCENT = '#c4783a', OK = '#7dba8c';
+    const midBand = (U2_LO + U2_HI) / 2;
+    const halfBand = Math.max(0.5, (U2_HI - U2_LO) / 2);
+    const loadLevel = isFinite(U2) ? Math.min(1, Math.max(0, U2 / 12)) : 0;
+    const bandProx = isFinite(U2) ? Math.max(0, 1 - Math.abs(U2 - midBand) / (halfBand * 2.5)) : 0;
+    const faultHot = isFinite(U2) && bandProx < 0.25 && U2 > midBand + halfBand;
+    const wireR = bandProx > 0.45 ? 125 : (faultHot ? 240 : 224);
+    const wireG = bandProx > 0.45 ? 186 : (faultHot ? 90 : 144);
+    const wireB = bandProx > 0.45 ? 140 : (faultHot ? 50 : 64);
+    const topLampA = 0.12 + loadLevel * 0.28 + bandProx * 0.08;
+    const topLampR = bandProx > 0.45 ? 125 : (faultHot ? 255 : 224);
+    const topLampG = bandProx > 0.45 ? 186 : (faultHot ? 110 : 144);
+    const topLampB = bandProx > 0.45 ? 140 : (faultHot ? 60 : 64);
 
     // 车间墙面 + 顶光
     const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -610,52 +646,119 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     bg.addColorStop(1, INK);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    const lamp = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.22, H * 0.08, W * 0.55);
-    lamp.addColorStop(0, 'rgba(224,144,64,0.22)');
-    lamp.addColorStop(1, 'rgba(224,144,64,0)');
+
+    // FAR: 天花板线槽 + 侧墙货架剪影 + 工厂窗格（y≥118 避 HUD）
+    ctx.strokeStyle = 'rgba(40,36,32,0.55)';
+    ctx.lineWidth = 3;
+    for (let p = 0; p < 3; p++) {
+      const py = 10 + p * 11;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.22, py);
+      ctx.lineTo(W * 0.92, py);
+      ctx.stroke();
+      for (let d = 0; d < 4; d++) {
+        const dx = W * 0.3 + d * W * 0.17;
+        ctx.beginPath();
+        ctx.moveTo(dx, py);
+        ctx.lineTo(dx, py + 7 + p * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle = 'rgba(18,14,10,0.72)';
+    ctx.fillRect(6, 118, 58, 78);
+    ctx.fillRect(W - 64, 118, 58, 78);
+    ctx.strokeStyle = 'rgba(106,112,104,0.32)';
+    ctx.lineWidth = 1;
+    for (let r = 0; r < 4; r++) {
+      ctx.fillRect(12, 128 + r * 16, 46, 5);
+      ctx.fillRect(W - 58, 128 + r * 16, 46, 5);
+    }
+    ctx.strokeStyle = 'rgba(196,120,58,0.11)';
+    for (let wx = W * 0.34; wx < W * 0.66; wx += 22) {
+      for (let wy = 120; wy < 168; wy += 18) {
+        ctx.strokeRect(wx, wy, 16, 12);
+      }
+    }
+
+    const lamp = ctx.createRadialGradient(W * 0.5, H * 0.06, 10, W * 0.5, H * 0.12, W * 0.7);
+    lamp.addColorStop(0, 'rgba(' + topLampR + ',' + topLampG + ',' + topLampB + ',' + topLampA + ')');
+    lamp.addColorStop(1, 'rgba(' + topLampR + ',' + topLampG + ',' + topLampB + ',0)');
     ctx.fillStyle = lamp;
     ctx.fillRect(0, 0, W, H);
-    // 挂板与工具剪影
+
+    // 顶吊灯排（吃上空，避开 TL HUD；亮度随 U₂）
+    for (let L = 0; L < 4; L++) {
+      const lx = W * 0.28 + L * W * 0.16;
+      ctx.strokeStyle = 'rgba(106,112,104,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(lx, 8);
+      ctx.lineTo(lx, 42);
+      ctx.stroke();
+      const bulbBright = 0.35 + loadLevel * 0.65;
+      ctx.fillStyle = L % 2
+        ? 'rgba(196,120,58,' + bulbBright + ')'
+        : 'rgba(232,176,112,' + bulbBright + ')';
+      ctx.beginPath();
+      ctx.moveTo(lx - 12, 42);
+      ctx.lineTo(lx + 12, 42);
+      ctx.lineTo(lx + 7, 56);
+      ctx.lineTo(lx - 7, 56);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // 挂板 / 侧柜（y≥120）
     ctx.fillStyle = '#2a2218';
-    ctx.fillRect(14, 52, 58, 88);
-    ctx.strokeStyle = 'rgba(196,120,58,0.35)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(14, 52, 58, 88);
+    ctx.fillRect(14, 128, 72, 110);
+    ctx.strokeStyle = 'rgba(196,120,58,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(14, 128, 72, 110);
+    ctx.fillStyle = HI;
+    ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
+    ctx.fillText('匝比卡', 28, 146);
     ctx.fillStyle = METAL;
-    for (let i = 0; i < 3; i++) ctx.fillRect(24, 68 + i * 22, 38, 5);
-    ctx.fillStyle = 'rgba(154,138,120,0.55)';
-    ctx.font = '10px "Microsoft YaHei",sans-serif';
-    ctx.fillText('台架工位', 20, 64);
+    for (let i = 0; i < 4; i++) ctx.fillRect(24, 158 + i * 18, 52, 6);
+    // 右侧工具柜
+    ctx.fillStyle = '#221a12';
+    ctx.fillRect(W - 78, 128, 64, 96);
+    ctx.strokeStyle = 'rgba(196,120,58,0.3)';
+    ctx.strokeRect(W - 78, 128, 64, 96);
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(W - 66, 148, 40, 8);
+    ctx.fillRect(W - 66, 168, 40, 8);
+    ctx.fillRect(W - 66, 188, 28, 8);
 
     // 木台架（纵深）
-    const benchY = H - 58;
+    const benchY = H - 52;
     ctx.fillStyle = '#1a1208';
-    ctx.fillRect(0, benchY + 6, W, 58);
+    ctx.fillRect(0, benchY + 6, W, 52);
     ctx.fillStyle = '#2e2014';
-    ctx.fillRect(0, benchY, W, 58);
+    ctx.fillRect(0, benchY, W, 52);
     ctx.fillStyle = '#4a3524';
-    ctx.fillRect(0, benchY, W, 10);
+    ctx.fillRect(0, benchY, W, 12);
     for (let gx = 0; gx < W; gx += 28) {
       ctx.strokeStyle = 'rgba(0,0,0,0.12)';
       ctx.beginPath();
-      ctx.moveTo(gx, benchY + 10);
+      ctx.moveTo(gx, benchY + 12);
       ctx.lineTo(gx + 14, H);
       ctx.stroke();
     }
-    // 台架腿
     ctx.fillStyle = '#3a2a1c';
-    ctx.fillRect(W * 0.08, benchY + 10, 10, H - benchY - 10);
-    ctx.fillRect(W * 0.88, benchY + 10, 10, H - benchY - 10);
+    ctx.fillRect(W * 0.08, benchY + 12, 12, H - benchY - 12);
+    ctx.fillRect(W * 0.88, benchY + 12, 12, H - benchY - 12);
 
-    const cx = W * 0.46, cy = benchY - H * 0.22;
-    const coreW = Math.min(150, W * 0.28), coreH = Math.min(108, H * 0.34);
-    const legW = coreW * 0.28, barH = coreH * 0.18;
+    // 铁芯英雄尺寸：~45–55%H / ~40%W
+    const coreW = Math.min(W * 0.42, Math.max(180, W * 0.38));
+    const coreH = Math.min(H * 0.52, Math.max(160, H * 0.48));
+    const cx = W * 0.48;
+    const cy = Math.max(148 + coreH * 0.42, benchY - coreH * 0.55);
+    const legW = coreW * 0.26, barH = coreH * 0.16;
 
-    // 叠片铁芯 E/I 形
     function drawLaminations(x, y, w, h) {
-      const n = Math.max(6, Math.floor(h / 4));
+      const n = Math.max(8, Math.floor(h / 3.5));
       for (let i = 0; i < n; i++) {
-        ctx.strokeStyle = i % 2 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.18)';
+        ctx.strokeStyle = i % 2 ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.2)';
         ctx.beginPath();
         ctx.moveTo(x, y + (i + 0.5) * (h / n));
         ctx.lineTo(x + w, y + (i + 0.5) * (h / n));
@@ -664,80 +767,123 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     }
     function fillCoreBlock(x, y, w, h) {
       const g = ctx.createLinearGradient(x, y, x + w, y + h);
-      g.addColorStop(0, '#7a8078');
+      g.addColorStop(0, '#8a9088');
       g.addColorStop(0.5, METAL);
-      g.addColorStop(1, '#4a5048');
+      g.addColorStop(1, '#3a4038');
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
       drawLaminations(x, y, w, h);
-      ctx.strokeStyle = '#3a4038';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#2a3028';
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(x, y, w, h);
     }
     const cLeft = cx - coreW / 2, cTop = cy - coreH / 2;
     fillCoreBlock(cLeft, cTop, coreW, barH);
     fillCoreBlock(cLeft, cy + coreH / 2 - barH, coreW, barH);
     fillCoreBlock(cx - legW / 2, cTop + barH, legW, coreH - barH * 2);
-    ctx.fillStyle = 'rgba(224,144,64,0.08)';
+    // 两侧柱脚加厚（更像 E 芯）
+    fillCoreBlock(cLeft, cTop + barH, legW * 0.55, coreH - barH * 2);
+    fillCoreBlock(cLeft + coreW - legW * 0.55, cTop + barH, legW * 0.55, coreH - barH * 2);
+    ctx.fillStyle = 'rgba(224,144,64,0.1)';
     ctx.fillRect(cLeft + 2, cTop + 2, coreW - 4, barH - 3);
 
-    // 铭牌（台架标识，避开 HUD）
-    ctx.fillStyle = PANEL;
-    ctx.fillRect(W * 0.06, 78, 148, 32);
+    // 左：交流电源箱
+    const srcX = 18, srcY = cy - 48, srcW = 78, srcH = 96;
+    ctx.fillStyle = '#1e1812';
+    ctx.fillRect(srcX, srcY, srcW, srcH);
     ctx.strokeStyle = ACCENT;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(W * 0.06, 78, 148, 32);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(srcX, srcY, srcW, srcH);
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(srcX + 8, srcY + 10, srcW - 16, 28);
+    ctx.fillStyle = GLOW;
+    ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+    ctx.fillText('AC 源', srcX + 18, srcY + 28);
     ctx.fillStyle = HI;
-    ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('变压器台架 · 叠片铁芯', W * 0.08, 98);
+    ctx.font = '10px ui-monospace,monospace';
+    ctx.fillText(U1.toFixed(1) + 'V', srcX + 16, srcY + 52);
+    ctx.fillStyle = '#c04040';
+    ctx.beginPath(); ctx.arc(srcX + 22, srcY + 72, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3040c0';
+    ctx.beginPath(); ctx.arc(srcX + 52, srcY + 72, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#efe6d8';
+    ctx.font = '9px "Microsoft YaHei",sans-serif';
+    ctx.fillText('+', srcX + 18, srcY + 76);
+    ctx.fillText('−', srcX + 48, srcY + 76);
+
+    // 右：负载灯/电阻
+    const loadX = W - 96, loadY = cy - 40, loadW = 72, loadH = 88;
+    ctx.fillStyle = '#1e1812';
+    ctx.fillRect(loadX, loadY, loadW, loadH);
+    ctx.strokeStyle = HI;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(loadX, loadY, loadW, loadH);
+    const bulbOn = isFinite(U2) && U2 > 1;
+    const bulbCore = 0.45 + loadLevel * 0.55;
+    const bulbHalo = 0.08 + loadLevel * 0.35 + bandProx * 0.12;
+    const bulbG = ctx.createRadialGradient(loadX + 36, loadY + 36, 2, loadX + 36, loadY + 36, 28 + loadLevel * 12);
+    bulbG.addColorStop(0, bulbOn ? 'rgba(255,200,80,' + bulbCore + ')' : 'rgba(120,100,80,0.35)');
+    bulbG.addColorStop(1, bulbOn ? 'rgba(' + topLampR + ',' + topLampG + ',' + topLampB + ',' + bulbHalo + ')' : 'rgba(40,30,20,0)');
+    ctx.fillStyle = bulbG;
+    ctx.beginPath(); ctx.arc(loadX + 36, loadY + 36, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = bulbOn ? GLOW : METAL;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(loadX + 36, loadY + 36, 16, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = METAL;
+    ctx.fillRect(loadX + 28, loadY + 54, 16, 18);
+    ctx.fillStyle = HI;
+    ctx.font = '10px "Microsoft YaHei",sans-serif';
+    ctx.fillText('负载', loadX + 22, loadY + 82);
 
     // 铜绕组
-    const turns1 = Math.max(3, Math.round(n1 / 200));
-    const turns2 = Math.max(3, Math.round(n2 / 200));
-    const coilRx = Math.min(24, coreW * 0.16), coilRy = 7;
-    const coilSpan = coreH - barH * 2 - 8;
+    const turns1 = Math.max(4, Math.round(n1 / 180));
+    const turns2 = Math.max(4, Math.round(n2 / 180));
+    const coilRx = Math.min(32, coreW * 0.18), coilRy = 9;
+    const coilSpan = coreH - barH * 2 - 10;
     for (let i = 0; i < turns1; i++) {
       const t = turns1 > 1 ? i / (turns1 - 1) : 0.5;
-      const yy = cTop + barH + 4 + t * coilSpan;
+      const yy = cTop + barH + 5 + t * coilSpan;
       const g = ctx.createLinearGradient(cx - legW - coilRx, yy, cx - legW + coilRx, yy);
       g.addColorStop(0, '#8b5a2b');
       g.addColorStop(0.45, ACCENT);
       g.addColorStop(1, '#6a4020');
       ctx.strokeStyle = g;
-      ctx.lineWidth = 3.2;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.ellipse(cx - legW * 0.85, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx - legW * 0.9, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     for (let i = 0; i < turns2; i++) {
       const t = turns2 > 1 ? i / (turns2 - 1) : 0.5;
-      const yy = cTop + barH + 4 + t * coilSpan;
+      const yy = cTop + barH + 5 + t * coilSpan;
       const g = ctx.createLinearGradient(cx + legW - coilRx, yy, cx + legW + coilRx, yy);
       g.addColorStop(0, '#a06830');
       g.addColorStop(0.45, HI);
       g.addColorStop(1, '#7a5028');
       ctx.strokeStyle = g;
-      ctx.lineWidth = 3.2;
+      ctx.globalAlpha = 0.55 + loadLevel * 0.45;
+      ctx.lineWidth = 3 + loadLevel * 2.5;
       ctx.beginPath();
-      ctx.ellipse(cx + legW * 0.85, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + legW * 0.9, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
     ctx.fillStyle = ACCENT;
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('原边 n₁=' + n1, cx - coreW * 0.75, cy + coreH * 0.55);
+    ctx.fillText('原边 n₁=' + n1, cLeft - 4, cTop - 8);
     ctx.fillStyle = HI;
-    ctx.fillText('副边 n₂=' + n2, cx + coreW * 0.12, cy + coreH * 0.55);
+    ctx.fillText('副边 n₂=' + n2, cx + legW * 0.2, cTop - 8);
 
-    // 黄铜搪瓷电压表铭牌
+    // 黄铜电压表
     const on = isFinite(U2) && U2 >= U2_LO && U2 <= U2_HI;
-    const mx = W - 168, my = benchY - 132, mw = 136, mh = 78;
+    const mx = W - 178, my = Math.max(118, cTop - 8), mw = 148, mh = 82;
     ctx.fillStyle = '#8a6830';
     ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8);
     ctx.fillStyle = '#c9a040';
     ctx.fillRect(mx - 2, my - 2, mw + 4, mh + 4);
     ctx.fillStyle = PANEL;
     ctx.fillRect(mx, my, mw, mh);
-    ctx.strokeStyle = on ? OK : GLOW;
+    ctx.strokeStyle = on ? OK : (faultHot ? '#e86040' : GLOW);
     ctx.lineWidth = 2;
     ctx.strokeRect(mx, my, mw, mh);
     ctx.fillStyle = 'rgba(224,144,64,0.12)';
@@ -748,40 +894,77 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     ctx.fillStyle = isFinite(U2) ? (on ? OK : '#e8a060') : '#9a8a78';
     ctx.font = 'bold 18px ui-monospace,monospace';
     if (isFinite(U2)) {
-      ctx.fillText(U2.toFixed(2) + ' V', mx + 10, my + 48);
+      ctx.fillText(U2.toFixed(2) + ' V', mx + 10, my + 50);
       ctx.fillStyle = on ? '#a8d4b0' : '#e8b090';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText(playMode === 'challenge' ? (on ? '急单区间内' : '偏离急单') : (on ? '参考带内' : '参考带外'), mx + 10, my + 66);
+      ctx.fillText(playMode === 'challenge' ? (on ? '急单区间内' : '偏离急单') : (on ? '参考带内' : '参考带外'), mx + 10, my + 70);
     } else {
-      ctx.fillText('— V', mx + 10, my + 48);
+      ctx.fillText('— V', mx + 10, my + 50);
       ctx.fillStyle = '#9a8a78';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('U₂ 待测', mx + 10, my + 66);
+      ctx.fillText('U₂ 待测', mx + 10, my + 70);
     }
 
-    // 输入端子牌
-    ctx.fillStyle = 'rgba(36,28,22,0.88)';
-    ctx.fillRect(18, benchY - 36, 118, 28);
-    ctx.strokeStyle = 'rgba(196,120,58,0.45)';
-    ctx.strokeRect(18, benchY - 36, 118, 28);
+    // 连线：源→原边→铁芯→副边→表/负载
+    const p1x = srcX + srcW, p1y = srcY + 72;
+    const coilLx = cx - legW * 0.9 - coilRx;
+    const coilRxPos = cx + legW * 0.9 + coilRx;
+    ctx.strokeStyle = 'rgba(' + wireR + ',' + wireG + ',' + wireB + ',' + (0.4 + loadLevel * 0.35) + ')';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(' + wireR + ',' + wireG + ',' + wireB + ',0.5)';
+    ctx.shadowBlur = 2 + loadLevel * 6;
+    ctx.beginPath();
+    ctx.moveTo(p1x, p1y);
+    ctx.lineTo(coilLx - 8, p1y);
+    ctx.lineTo(coilLx - 8, cy);
+    ctx.lineTo(coilLx, cy);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(coilRxPos, cy);
+    ctx.lineTo(coilRxPos + 10, cy);
+    ctx.lineTo(coilRxPos + 10, my + mh * 0.55);
+    ctx.lineTo(mx, my + mh * 0.55);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(coilRxPos + 10, cy + 18);
+    ctx.lineTo(loadX, loadY + 40);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // 回线（底）
+    ctx.strokeStyle = 'rgba(106,112,104,0.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(srcX + 22, srcY + srcH);
+    ctx.lineTo(srcX + 22, benchY - 8);
+    ctx.lineTo(loadX + 36, benchY - 8);
+    ctx.lineTo(loadX + 36, loadY + loadH);
+    ctx.stroke();
+
+    // 台铭牌
+    ctx.fillStyle = 'rgba(36,28,22,0.9)';
+    ctx.fillRect(18, benchY - 34, 140, 26);
+    ctx.strokeStyle = 'rgba(196,120,58,0.5)';
+    ctx.strokeRect(18, benchY - 34, 140, 26);
     ctx.fillStyle = '#efe6d8';
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('U₁ ' + U1.toFixed(1) + ' V', 28, benchY - 18);
+    ctx.fillText('变压器台架 · U₁ ' + U1.toFixed(1) + ' V', 26, benchY - 16);
 
-    // 能量流光点
-    spark = (spark + 0.02) % 1;
-    ctx.fillStyle = GLOW;
-    ctx.shadowColor = GLOW;
-    ctx.shadowBlur = 6;
-    ctx.beginPath();
-    ctx.arc(cx - legW * 1.6 + spark * (legW * 1.2), cy, 3.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = HI;
-    ctx.shadowColor = HI;
-    ctx.beginPath();
-    ctx.arc(cx + legW * 0.5 + spark * (legW * 1.1), cy, 3.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    // 电流流光
+    spark = (spark + 0.018) % 1;
+    function flowDot(x0, y0, x1, y1, t, col) {
+      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
+      const dotR = 2.2 + (0.5 + loadLevel) * 2.2;
+      ctx.fillStyle = col;
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 4 + (0.5 + loadLevel) * 8;
+      ctx.beginPath();
+      ctx.arc(x, y, dotR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    flowDot(p1x, p1y, coilLx, cy, spark, GLOW);
+    flowDot(coilLx, cy, coilRxPos, cy, (spark + 0.33) % 1, HI);
+    flowDot(coilRxPos, cy, mx, my + mh * 0.55, (spark + 0.66) % 1, GLOW);
   }
 
   /** 仅测试后揭示 U₂ */

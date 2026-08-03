@@ -555,6 +555,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -1048,8 +1072,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         bg.addColorStop(1, '#060810');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
+        var eNorm = Math.min(1, Math.abs(state.fieldStrength) / 1000);
         var chamberGlow = ctx.createRadialGradient(W * 0.45, H * 0.5, 20, W * 0.45, H * 0.5, W * 0.55);
-        chamberGlow.addColorStop(0, 'rgba(96,144,232,0.08)');
+        chamberGlow.addColorStop(0, 'rgba(96,144,232,' + (0.06 + eNorm * 0.10) + ')');
         chamberGlow.addColorStop(1, 'rgba(96,144,232,0)');
         ctx.fillStyle = chamberGlow;
         ctx.fillRect(0, 0, W, H);
@@ -1090,10 +1115,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = topSheen;
         rr(chX + 2, chY + 2, chW - 4, 22, 6);
         ctx.fill();
-        ctx.fillStyle = HI;
-        ctx.font = '12px "Microsoft YaHei",sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText('静电偏转舱 · 真空室', chX + 14, chY - 8);
 
         // 电子枪
         var gunX = 18, gunY = H * 0.55, gunW = 48, gunH = H * 0.22;
@@ -1123,9 +1144,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         var plateW = fr.w * 0.55;
         var fieldX = fr.x, fieldY = fr.y, fieldH = fr.h;
         var fieldGlow = ctx.createLinearGradient(fieldX, fieldY, fieldX + plateW, fieldY);
-        fieldGlow.addColorStop(0, 'rgba(96,144,232,0.04)');
-        fieldGlow.addColorStop(0.5, 'rgba(96,144,232,0.14)');
-        fieldGlow.addColorStop(1, 'rgba(96,144,232,0.04)');
+        fieldGlow.addColorStop(0, 'rgba(96,144,232,' + (0.04 + eNorm * 0.06) + ')');
+        fieldGlow.addColorStop(0.5, 'rgba(96,144,232,' + (0.10 + eNorm * 0.18) + ')');
+        fieldGlow.addColorStop(1, 'rgba(96,144,232,' + (0.04 + eNorm * 0.06) + ')');
         ctx.fillStyle = fieldGlow;
         ctx.fillRect(fieldX, fieldY, plateW, fieldH);
         ctx.strokeStyle = 'rgba(138,158,224,0.45)';
@@ -1164,7 +1185,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.textAlign = 'center';
         ctx.fillText('+', fieldX + 18, fieldY + plateInset + 6);
         ctx.fillText('−', fieldX + 18, botY + 6);
-        ctx.strokeStyle = 'rgba(96,144,232,0.35)';
+        ctx.strokeStyle = 'rgba(96,144,232,' + (0.20 + eNorm * 0.35) + ')';
         ctx.lineWidth = 1;
         for (let i = 0; i < 6; i++) {
             const xPos = fieldX + 24 + i * (plateW / 7);
@@ -1222,7 +1243,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         rr(tz.x - 10, 58, 78, 18, 3);
         ctx.fill();
         ctx.fillStyle = HI;
-        ctx.fillText('荧光屏', tz.x - 6, Math.max(tz.y - 28, 58));
+        ctx.fillText('荧光屏', tz.x - 6, Math.max(tz.y - 28, 120));
 
         // 粒子束轨迹
         if (state.trail.length > 1) {

@@ -336,6 +336,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -711,8 +735,28 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       wall.addColorStop(1, INK);
       ctx.fillStyle = wall;
       ctx.fillRect(0, 0, W, H);
+
+      // FAR：顶沿线槽（上空留白区）
+      ctx.fillStyle = 'rgba(20,16,12,0.55)';
+      ctx.fillRect(0, 0, W, 38);
+      ctx.strokeStyle = 'rgba(212,160,80,0.14)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(12, 22);
+      ctx.lineTo(W - 12, 22);
+      ctx.stroke();
+      for (let cc = 0; cc < 3; cc++) {
+        ctx.fillStyle = 'rgba(122,132,144,0.18)';
+        ctx.fillRect(40 + cc * (W / 3.5), 10, 6, 24);
+      }
+
+      const capNorm = Math.min(1, (measuredC != null ? measuredC : C_pF) / 300);
+      const capOk = measuredC != null && winOkColor(measuredC);
+      const capMatch = capOk ? 1 : (measuredC != null ? Math.max(0, 1 - Math.abs((measuredC - (TARGET_LO + TARGET_HI) / 2)) / ((TARGET_HI - TARGET_LO) * 2)) : capNorm * 0.3);
+      const lampA = 0.10 + capNorm * 0.12 + capMatch * 0.10;
+      const lampCore = capOk ? 'rgba(111,174,143,' + lampA + ')' : 'rgba(224,144,48,' + lampA + ')';
       const lamp = ctx.createRadialGradient(W * 0.35, H * 0.06, 8, W * 0.35, H * 0.06, W * 0.55);
-      lamp.addColorStop(0, 'rgba(224,144,48,0.18)');
+      lamp.addColorStop(0, lampCore);
       lamp.addColorStop(1, 'rgba(224,144,48,0)');
       ctx.fillStyle = lamp;
       ctx.fillRect(0, 0, W, H);
@@ -723,23 +767,31 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
 
-      ctx.fillStyle = PANEL;
-      ctx.fillRect(W * 0.04, 52, W * 0.20, 100);
-      ctx.strokeStyle = 'rgba(212,160,80,0.35)';
-      ctx.strokeRect(W * 0.04, 52, W * 0.20, 100);
-      for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = i % 2 ? '#6a5030' : '#8a6838';
-        ctx.fillRect(W * 0.06 + i * 38, 72, 24, 68);
-      }
+      // 左侧介质片挂架（货架）
+      ctx.fillStyle = '#1e1810';
+      ctx.fillRect(10, 118, W * 0.22, H * 0.42);
+      ctx.strokeStyle = 'rgba(212,160,80,0.45)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, 118, W * 0.22, H * 0.42);
       ctx.fillStyle = HI;
-      ctx.font = '11px "Microsoft YaHei",sans-serif';
-      ctx.fillText('介质料架', W * 0.06, 64);
+      ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+      ctx.fillText('介质片架', 28, 138);
+      for (let row = 0; row < 3; row++) {
+        ctx.fillStyle = '#3a3020';
+        ctx.fillRect(22, 152 + row * 52, W * 0.18, 8);
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = i % 2 ? '#6a5030' : '#a07840';
+          ctx.fillRect(28 + i * 28, 162 + row * 52, 18, 36);
+          ctx.strokeStyle = 'rgba(240,200,120,0.25)';
+          ctx.strokeRect(28 + i * 28, 162 + row * 52, 18, 36);
+        }
+      }
 
-      const benchY = H - 68;
+      const benchY = H - 62;
       ctx.fillStyle = '#1a1208';
-      ctx.fillRect(0, benchY + 4, W, 68);
+      ctx.fillRect(0, benchY + 4, W, 62);
       ctx.fillStyle = '#2e2014';
-      ctx.fillRect(0, benchY, W, 68);
+      ctx.fillRect(0, benchY, W, 62);
       ctx.fillStyle = '#4a3524';
       ctx.fillRect(0, benchY, W, 12);
       for (let i = 0; i < 5; i++) ctx.fillRect(30 + i * (W / 5), benchY + 18, 12, 44);
@@ -756,7 +808,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillRect(meterX, meterY, meterW, meterH);
       ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 2.5;
+      ctx.shadowColor = capOk ? OK : GLOW;
+      ctx.shadowBlur = 3 + capNorm * 8 + capMatch * 6;
       ctx.strokeRect(meterX, meterY, meterW, meterH);
+      ctx.shadowBlur = 0;
       ctx.fillStyle = 'rgba(20,16,8,0.85)';
       ctx.fillRect(meterX + 14, meterY + 18, meterW - 28, 64);
       ctx.fillStyle = HI;
@@ -789,20 +844,26 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
       ctx.fillText('装配电容计', meterX + 28, meterY + meterH - 12);
 
-      const plateW = Math.min(W * 0.48, 120 + (A - 0.01) / 0.09 * W * 0.32);
-      const gap = Math.min(H * 0.34, 36 + (d - 0.001) / 0.009 * H * 0.26);
-      const cx = W * 0.40;
-      const midY = (benchY - 24 + 90) / 2;
+      const plateW = Math.min(W * 0.52, 150 + (A - 0.01) / 0.09 * W * 0.36);
+      const gap = Math.min(H * 0.38, 44 + (d - 0.001) / 0.009 * H * 0.28);
+      const cx = W * 0.44;
+      const midY = Math.max(H * 0.42, (benchY - 24 + 100) / 2);
       const leftX = cx - plateW / 2;
       const colors = TONE_COLORS[tone] || TONE_COLORS[0];
-      const plateT = Math.max(14, Math.min(22, H * 0.03));
+      const plateT = Math.max(18, Math.min(28, H * 0.04));
+
+      // 介质叠片道具（夹具旁）
+      for (let s = 0; s < 3; s++) {
+        ctx.fillStyle = s % 2 ? 'rgba(160,120,64,0.55)' : 'rgba(100,80,48,0.55)';
+        ctx.fillRect(leftX - 70, midY - 40 + s * 14, 36, 10);
+      }
 
       ctx.fillStyle = METAL;
-      ctx.fillRect(leftX - 40, midY - gap / 2 - 58, plateW + 80, 12);
-      ctx.fillRect(leftX - 40, midY + gap / 2 + 46, plateW + 80, 12);
+      ctx.fillRect(leftX - 48, midY - gap / 2 - 68, plateW + 96, 16);
+      ctx.fillRect(leftX - 48, midY + gap / 2 + 52, plateW + 96, 16);
       ctx.fillStyle = '#5a6068';
-      ctx.fillRect(leftX - 28, midY - gap / 2 - 58, 14, gap + 116);
-      ctx.fillRect(leftX + plateW + 14, midY - gap / 2 - 58, 14, gap + 116);
+      ctx.fillRect(leftX - 34, midY - gap / 2 - 68, 18, gap + 136);
+      ctx.fillRect(leftX + plateW + 16, midY - gap / 2 - 68, 18, gap + 136);
       ctx.fillStyle = PANEL;
       ctx.fillRect(leftX - 52, benchY - 18, plateW + 104, 18);
       ctx.fillStyle = 'rgba(212,160,80,0.12)';
@@ -812,7 +873,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('平行板压装夹具', leftX - 4, midY - gap / 2 - 68);
 
       glowPulse = (glowPulse + 0.02) % 1;
-      ctx.strokeStyle = 'rgba(224,144,48,' + (0.22 + 0.14 * Math.sin(glowPulse * Math.PI * 2)) + ')';
+      const fieldAlpha = 0.14 + capNorm * 0.22 + capMatch * 0.18;
+      ctx.strokeStyle = capOk
+        ? 'rgba(111,174,143,' + (fieldAlpha + 0.08 * Math.sin(glowPulse * Math.PI * 2)) + ')'
+        : 'rgba(224,144,48,' + (fieldAlpha + 0.08 * Math.sin(glowPulse * Math.PI * 2)) + ')';
       ctx.lineWidth = 2;
       for (let i = 0; i < 9; i++) {
         const x = leftX + 20 + i * (plateW - 40) / 8;
@@ -821,6 +885,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineTo(x, midY + gap / 2 - 2);
         ctx.stroke();
       }
+      // 极板间场雾
+      ctx.fillStyle = capOk
+        ? 'rgba(111,174,143,' + (0.04 + capNorm * 0.08) + ')'
+        : 'rgba(224,144,48,' + (0.04 + capNorm * 0.10) + ')';
+      ctx.fillRect(leftX + 8, midY - gap / 2 + 4, plateW - 16, gap - 8);
 
       ctx.fillStyle = colors.top;
       ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT);

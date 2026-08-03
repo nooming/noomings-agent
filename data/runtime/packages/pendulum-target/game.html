@@ -339,6 +339,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -868,14 +892,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillStyle = '#86efac';
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('矿井投递 · 把矿石摆进移动矿车', 160, 52);
+        /* scene title lives in #essence-hud / sidebar */
+        // 加大支点座
+        ctx.fillStyle = '#4a5564';
+        ctx.fillRect(PIVOT_X - 22, PIVOT_Y - 10, 44, 18);
         ctx.beginPath();
-        ctx.arc(PIVOT_X, PIVOT_Y, 8, 0, 2 * Math.PI);
+        ctx.arc(PIVOT_X, PIVOT_Y, 14, 0, 2 * Math.PI);
         ctx.fillStyle = '#c0d0e0';
         ctx.shadowColor = '#00000066';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
         ctx.fill();
         ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#8a9aaa';
+        ctx.lineWidth = 2;
+        ctx.stroke();
         let effL = L + (confuseOn ? elasticDelta : 0);
         let drawTheta = theta;
         let endX = PIVOT_X + effL * Math.sin(drawTheta);
@@ -884,19 +914,23 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.moveTo(PIVOT_X, PIVOT_Y);
         ctx.lineTo(endX, endY);
         ctx.strokeStyle = '#b0c8e0';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 4;
         ctx.stroke();
         if (state === STATE_READY || state === STATE_SWING) {
+            // 加大锤头
             ctx.beginPath();
-            ctx.arc(endX, endY, 16, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(endX-4, endY-4, 4, endX, endY, 20);
+            ctx.arc(endX, endY, 22, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(endX-5, endY-5, 4, endX, endY, 26);
             grad.addColorStop(0, '#f8e080');
             grad.addColorStop(1, '#c08030');
             ctx.fillStyle = grad;
             ctx.shadowColor = '#00000066';
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 14;
             ctx.fill();
             ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#8a6020';
+            ctx.lineWidth = 2;
+            ctx.stroke();
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px sans-serif';
             ctx.textAlign = 'center';
@@ -904,32 +938,35 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fillText(mass.toFixed(1)+'kg', endX, endY-2);
         } else if (state === STATE_FLYING) {
             ctx.beginPath();
-            ctx.arc(flyX, flyY, 14, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(flyX-3, flyY-3, 3, flyX, flyY, 18);
+            ctx.arc(flyX, flyY, 18, 0, 2 * Math.PI);
+            let grad = ctx.createRadialGradient(flyX-3, flyY-3, 3, flyX, flyY, 22);
             grad.addColorStop(0, '#f8d080');
             grad.addColorStop(1, '#b07030');
             ctx.fillStyle = grad;
             ctx.shadowColor = '#00000066';
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 14;
             ctx.fill();
             ctx.shadowBlur = 0;
         }
         let left = cartX, right = cartX + cartWidth;
         ctx.shadowBlur = 0;
+        // 加大接矿车
+        ctx.fillStyle = '#6a5438';
+        ctx.fillRect(left - 4, GROUND_Y - 30, cartWidth + 8, 30);
         ctx.fillStyle = '#8a6e4b';
-        ctx.fillRect(left, GROUND_Y - 22, cartWidth, 22);
+        ctx.fillRect(left, GROUND_Y - 26, cartWidth, 26);
         ctx.fillStyle = '#a08060';
-        ctx.fillRect(left+4, GROUND_Y - 28, cartWidth-8, 8);
+        ctx.fillRect(left+4, GROUND_Y - 36, cartWidth-8, 12);
         ctx.fillStyle = '#3a3a3a';
         ctx.beginPath();
-        ctx.arc(left+12, GROUND_Y-2, 8, 0, 2*Math.PI);
-        ctx.arc(right-12, GROUND_Y-2, 8, 0, 2*Math.PI);
+        ctx.arc(left+14, GROUND_Y-2, 10, 0, 2*Math.PI);
+        ctx.arc(right-14, GROUND_Y-2, 10, 0, 2*Math.PI);
         ctx.fill();
         ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillText('接矿车', (left+right)/2, GROUND_Y-30);
+        ctx.fillText('接矿车', (left+right)/2, GROUND_Y-38);
         if (state === STATE_READY) {
             ctx.strokeStyle = '#ffcc44';
             ctx.lineWidth = 2;

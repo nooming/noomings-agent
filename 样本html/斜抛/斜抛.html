@@ -222,6 +222,38 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
+
+/* craft-hud-safezone-projectile-basic */
+#dual-mode-hud #goalMission{display:none!important;}
+#craft-gauge{display:none!important;}
+#dual-mode-hud{
+  max-width:min(360px,calc(100% - 24px))!important;
+  right:auto!important;
+}
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row min-h-0">
@@ -827,21 +859,33 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const currentLiftH = state.height * state.PPM;
             const pivotY = state.groundY - currentLiftH - 20;
 
+            // 沙袋（户外靶场道具，轻触加厚）
+            ctx.fillStyle = '#6b5344';
+            ctx.beginPath();
+            ctx.ellipse(pivotX - 70, state.groundY - 8, 28, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(pivotX + 75, state.groundY - 6, 24, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#8a6a50';
+            ctx.fillRect(pivotX - 88, state.groundY - 18, 36, 12);
+            ctx.fillRect(pivotX + 58, state.groundY - 16, 32, 10);
+
             // 升降柱（金属光影）
-            const mast = ctx.createLinearGradient(pivotX - 10, 0, pivotX + 10, 0);
+            const mast = ctx.createLinearGradient(pivotX - 14, 0, pivotX + 14, 0);
             mast.addColorStop(0, '#6b7280');
             mast.addColorStop(0.45, '#d1d5db');
             mast.addColorStop(1, '#4b5563');
             ctx.fillStyle = mast;
-            ctx.fillRect(pivotX - 10, state.groundY, 20, -currentLiftH);
+            ctx.fillRect(pivotX - 14, state.groundY, 28, -currentLiftH);
             ctx.fillStyle = '#374151';
-            ctx.fillRect(pivotX - 3, state.groundY, 6, -currentLiftH);
+            ctx.fillRect(pivotX - 4, state.groundY, 8, -currentLiftH);
             
             // 升降台托盘
             ctx.fillStyle = '#4b5563';
-            ctx.fillRect(pivotX - 55, pivotY + 10, 90, 10);
+            ctx.fillRect(pivotX - 62, pivotY + 10, 104, 12);
             ctx.fillStyle = 'rgba(255,255,255,0.18)';
-            ctx.fillRect(pivotX - 55, pivotY + 10, 90, 2);
+            ctx.fillRect(pivotX - 62, pivotY + 10, 104, 3);
 
             // 将炮兵移到升降台上
             drawArtilleryman(ctx, pivotX - 35, pivotY + 10);
@@ -851,11 +895,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.translate(pivotX, pivotY);
             ctx.rotate(-state.angle * Math.PI / 180); // 负号因为Canvas Y轴向下
             
-            // 画炮管
+            // 画炮管（略加粗）
             ctx.fillStyle = '#1f2937';
-            ctx.fillRect(0, -10, 50, 20); 
-            ctx.fillStyle = '#eab308'; // 黄色装饰
-            ctx.fillRect(40, -10, 5, 20);
+            ctx.fillRect(0, -13, 62, 26); 
+            ctx.fillStyle = '#eab308';
+            ctx.fillRect(50, -13, 6, 26);
             
             // 绘制炮管尾部的引线
             ctx.beginPath();
@@ -878,7 +922,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             // 炮台中心转轴
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
-            ctx.arc(pivotX, pivotY, 12, 0, Math.PI * 2);
+            ctx.arc(pivotX, pivotY, 15, 0, Math.PI * 2);
             ctx.fill();
 
             // 6. 绘制挑战模式的靶子
@@ -1291,14 +1335,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     replayLevel();
   });
 
-  // gauge into hud
-  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
-  if (hud && !document.getElementById('craft-gauge')) {
-    var g = document.createElement('div');
-    g.id = 'craft-gauge';
-    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
-    hud.appendChild(g);
-  }
+  // gauge: reserved for sidebar; TL dual stays mode|timer|stats only
 function showWin(extra){
     if (win) {
       window.__craftWinDismissed = false;

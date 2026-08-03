@@ -87,7 +87,7 @@
         "layer": "teach",
         "level": 1,
         "r": 22,
-        "desc": "限次挑战，随机材料逸出功固定，需调频率达标"
+        "desc": "限次挑战，随机材料逸出功固定，需调频率达标；竞赛急单材料池排除不可过关的 Cu/Ag（探究仍可演示）。"
       },
       {
         "id": "S3",
@@ -369,7 +369,6 @@
           "Retry",
           "Adjust",
           "ModeChallenge",
-          "AdjustMulti",
           "Win",
           "PathFreq"
         ],
@@ -431,14 +430,6 @@
             "StrategySelect"
           ],
           [
-            "PathTrap",
-            "AdjustMulti"
-          ],
-          [
-            "AdjustMulti",
-            "Fire"
-          ],
-          [
             "Adjust",
             "Fire"
           ],
@@ -459,24 +450,40 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "warn": "逸出功仅在探究模式可调；竞赛模式材料锁定，勿把 PathWork 当作挑战主路径",
         "score": 0.85,
         "weight": 0.85,
         "priorityRank": 2,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
           "Env",
-          "ModeChallenge",
+          "ModeExplore",
+          "StrategySelect",
+          "PathWork",
           "AdjustWork",
           "Fire",
           "Observe",
           "Win",
           "Adjust",
-          "Retry",
-          "PathWork"
+          "Retry"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "PathWork"
+          ],
           [
             "PathWork",
             "AdjustWork"
@@ -484,6 +491,10 @@
           [
             "AdjustWork",
             "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -500,26 +511,6 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "ModeChallenge"
-          ],
-          [
-            "ModeChallenge",
-            "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "PathWork"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
         "highlightFailureBranches": true
@@ -534,24 +525,39 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.7,
-        "weight": 0.7,
+        "warn": "光强只缩放电流幅值，不改阈值；无法单独作为挑战过关主路径",
+        "score": 0.35,
+        "weight": 0.35,
         "priorityRank": 3,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
           "Env",
-          "ModeChallenge",
+          "ModeExplore",
+          "StrategySelect",
+          "PathIntensity",
           "AdjustIntensity",
           "Fire",
           "Observe",
           "Adjust",
-          "Retry",
-          "Win",
-          "PathIntensity"
+          "Retry"
         ],
         "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "PathIntensity"
+          ],
           [
             "PathIntensity",
             "AdjustIntensity"
@@ -561,8 +567,8 @@
             "Fire"
           ],
           [
-            "Observe",
-            "Win"
+            "Fire",
+            "Observe"
           ],
           [
             "Observe",
@@ -575,29 +581,10 @@
           [
             "Observe",
             "Retry"
-          ],
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "ModeChallenge"
-          ],
-          [
-            "ModeChallenge",
-            "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "PathIntensity"
-          ],
-          [
-            "Fire",
-            "Observe"
           ]
         ],
-        "highlightFailureBranches": true
+        "highlightFailureBranches": true,
+        "tier": "suboptimal"
       },
       {
         "id": "trap",
@@ -679,13 +666,13 @@
         "score": 0.15,
         "weight": 0.15,
         "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExplore",
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV",
-          "Start",
-          "Env",
-          "ModeChallenge"
+          "BackFromCV"
         ],
         "highlightEdges": [
           [
@@ -694,10 +681,10 @@
           ],
           [
             "Env",
-            "ModeChallenge"
+            "ModeExplore"
           ],
           [
-            "ModeChallenge",
+            "ModeExplore",
             "StrategySelect"
           ],
           [
@@ -773,7 +760,7 @@
         "mapsToKg": "O1",
         "monotonicity": "unknown",
         "affects": [],
-        "notes": "",
+        "notes": "只缩放光电流幅值，不改阈值条件；非挑战过关主控",
         "priorityRank": 3
       }
     ],
@@ -798,7 +785,7 @@
         {
           "order": 1,
           "title": "明确知识点",
-          "body": "回顾：探究模式；竞赛模式；光电效应公式",
+          "body": "回顾：探究模式；竞赛模式；光电效应公式；竞赛材料池仅含阈值可过关材料（Na/K/Cs/Zn），Cu/Ag 保留在探究演示。",
           "mapsToKg": [
             "S1",
             "S2",

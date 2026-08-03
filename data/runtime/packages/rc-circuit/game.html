@@ -194,7 +194,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   right:auto!important;width:auto!important;max-width:min(420px,calc(100% - 24px))!important;
   justify-content:flex-start!important;
 }
-#essence-hud{top:56px!important;left:10px!important;right:auto!important;max-width:min(420px,calc(100% - 24px))!important;}
+#essence-hud{top:10px!important;right:12px!important;left:auto!important;max-width:min(240px,calc(100% - 24px))!important;align-items:flex-end!important;}
 #essence-hud .essence-title{color:var(--craft-text)!important;}
 #essence-hud .essence-sub{color:var(--craft-muted)!important;}
 #essence-bench .observe-box,.observe-box{
@@ -342,6 +342,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
   color:var(--scene-hi)!important;border-radius:6px!important;
 }
+/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
+#essence-stage > #dual-mode-hud,
+#stage > #dual-mode-hud,
+#dual-mode-hud{
+  position:absolute!important;
+  top:10px!important;
+  left:10px!important;
+  right:auto!important;
+  width:auto!important;
+  max-width:min(360px,calc(100% - 24px))!important;
+  justify-content:flex-start!important;
+  align-items:flex-start!important;
+  z-index:12!important;
+}
+#essence-hud{
+  position:absolute!important;
+  top:10px!important;
+  right:12px!important;
+  left:auto!important;
+  max-width:min(240px,calc(100% - 24px))!important;
+  z-index:11!important;
+  align-items:flex-end!important;
+}
+
 </style>
 </head>
 <body>
@@ -585,6 +609,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.clearRect(0, 0, W, H);
         const rc = computeTau();
         const charge = tau_ms > 0 ? (1 - Math.exp(-((animT * 0.35) % 1) * 5)) : 0;
+        const tau_s_draw = tau_ms / 1000;
+        const tauNear = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < 0.03;
+        const safeAlpha = 0.1 + charge * 0.28 + (tauNear ? 0.06 : 0);
+        const safeR = tauNear ? 125 : 255;
+        const safeG = tauNear ? 186 : 90;
+        const safeB = tauNear ? 140 : 40;
         // 暗房墙面 + 红安灯
         const wall = ctx.createLinearGradient(0, 0, 0, H);
         wall.addColorStop(0, '#1a120e'); wall.addColorStop(0.55, '#100c0a'); wall.addColorStop(1, '#0a0806');
@@ -593,71 +623,135 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.72); ctx.stroke();
         }
+
+        // FAR: 天花板桥架/侧架 + 暗房悬罩（y≈100–130 避 HUD）
+        ctx.fillStyle = 'rgba(10,8,6,0.82)';
+        ctx.fillRect(W * 0.04, 102, W * 0.2, 26);
+        ctx.fillRect(W * 0.76, 102, W * 0.2, 26);
+        ctx.strokeStyle = 'rgba(80,60,48,0.38)';
+        ctx.lineWidth = 1;
+        for (let s = 0; s < 3; s++) {
+          ctx.strokeRect(W * 0.05 + s * 7, 108 + s * 5, W * 0.18, 5);
+          ctx.strokeRect(W * 0.77 + s * 7, 108 + s * 5, W * 0.18, 5);
+        }
+        ctx.fillStyle = 'rgba(6,4,3,0.78)';
+        ctx.beginPath();
+        ctx.moveTo(W * 0.4, 16);
+        ctx.lineTo(W * 0.6, 16);
+        ctx.lineTo(W * 0.56, 46);
+        ctx.lineTo(W * 0.44, 46);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(60,48,40,0.35)';
+        ctx.stroke();
+
         const safe = ctx.createRadialGradient(W - 48, 36, 4, W - 48, 36, 160);
-        safe.addColorStop(0, 'rgba(255,90,40,0.22)'); safe.addColorStop(1, 'rgba(255,90,40,0)');
+        safe.addColorStop(0, 'rgba(' + safeR + ',' + safeG + ',' + safeB + ',' + safeAlpha + ')');
+        safe.addColorStop(1, 'rgba(' + safeR + ',' + safeG + ',' + safeB + ',0)');
         ctx.fillStyle = safe; ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = '#3a2018'; ctx.fillRect(W - 58, 0, 6, 28);
         ctx.beginPath();
         const flick = 0.85 + 0.15 * Math.sin(animT * 2.1);
-        ctx.fillStyle = 'rgba(255,106,40,' + (0.75 * flick) + ')';
+        ctx.fillStyle = 'rgba(' + safeR + ',' + safeG + ',' + safeB + ',' + (0.35 * flick + charge * 0.55) + ')';
         ctx.arc(W - 55, 36, 8, 0, Math.PI * 2); ctx.fill();
 
         // 木工作台
         const deskY = H * 0.72;
         const desk = ctx.createLinearGradient(0, deskY, 0, H);
-        desk.addColorStop(0, '#3a2a1c'); desk.addColorStop(1, '#1a120c');
+        desk.addColorStop(0, tauNear ? '#3a3428' : '#3a2a1c'); desk.addColorStop(1, '#1a120c');
         ctx.fillStyle = desk; ctx.fillRect(0, deskY, W, H - deskY);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, deskY, W, 8);
+        ctx.fillStyle = 'rgba(' + (tauNear ? 125 : 255) + ',' + (tauNear ? 186 : 106) + ',' + (tauNear ? 140 : 40) + ',' + (0.06 + charge * 0.14) + ')';
+        ctx.fillRect(0, deskY, W, 8);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, deskY + 4, W, 4);
         ctx.strokeStyle = 'rgba(232,160,106,0.12)';
         for (let i = 1; i < 5; i++) {
           const y = deskY + 10 + i * 12;
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
         }
 
-        // ── 英雄道具：闪光电容单元（左侧主装置）──
-        const fx = 28, fy = H * 0.28, fw = Math.min(210, W * 0.32), fh = H * 0.38;
+        // ── 英雄：闪光电容单元（~40%W，勿放大示波器）──
+        const fx = 22, fy = Math.max(110, H * 0.22), fw = Math.min(280, W * 0.40), fh = H * 0.46;
         const body = ctx.createLinearGradient(fx, fy, fx + fw, fy + fh);
         body.addColorStop(0, '#4a5560'); body.addColorStop(0.45, '#2a323a'); body.addColorStop(1, '#1a2026');
         ctx.fillStyle = body;
-        roundSoft(fx, fy, fw, fh, 10); ctx.fill();
-        ctx.strokeStyle = 'rgba(232,160,106,0.45)'; ctx.lineWidth = 2;
-        roundSoft(fx, fy, fw, fh, 10); ctx.stroke();
-        // 顶盖散热栅
+        roundSoft(fx, fy, fw, fh, 12); ctx.fill();
+        ctx.strokeStyle = 'rgba(232,160,106,0.55)'; ctx.lineWidth = 2.5;
+        roundSoft(fx, fy, fw, fh, 12); ctx.stroke();
         ctx.fillStyle = '#151a1e';
-        ctx.fillRect(fx + 12, fy + 12, fw - 24, 18);
-        for (let i = 0; i < 7; i++) {
+        ctx.fillRect(fx + 14, fy + 14, fw - 28, 22);
+        for (let i = 0; i < 9; i++) {
           ctx.fillStyle = '#5a6570';
-          ctx.fillRect(fx + 18 + i * ((fw - 40) / 7), fy + 15, 4, 12);
+          ctx.fillRect(fx + 20 + i * ((fw - 48) / 9), fy + 17, 5, 16);
         }
-        // 电容罐
-        const canX = fx + fw * 0.22, canY = fy + 48, canR = 22;
-        const canG = ctx.createRadialGradient(canX - 6, canY - 6, 2, canX, canY, canR);
+        // R / C 元件块 + 连线
+        const rBoxX = fx + 16, rBoxY = fy + fh * 0.55, rBoxW = fw * 0.28, rBoxH = 28;
+        ctx.fillStyle = '#a08058';
+        roundSoft(rBoxX, rBoxY, rBoxW, rBoxH, 4); ctx.fill();
+        ctx.fillStyle = '#f0e6d8';
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('R', rBoxX + rBoxW * 0.4, rBoxY + 18);
+        const cBoxX = fx + fw * 0.38, cBoxY = rBoxY;
+        ctx.fillStyle = '#6a7888';
+        roundSoft(cBoxX, cBoxY, fw * 0.22, rBoxH, 4); ctx.fill();
+        ctx.fillStyle = '#f0e6d8';
+        ctx.fillText('C', cBoxX + 14, cBoxY + 18);
+        ctx.strokeStyle = 'rgba(232,160,106,' + (0.45 + charge * 0.45) + ')';
+        ctx.lineWidth = 2.5 + charge * 1.5;
+        ctx.shadowColor = '#ff6a28';
+        ctx.shadowBlur = 4 + charge * 10;
+        ctx.beginPath();
+        ctx.moveTo(rBoxX + rBoxW, rBoxY + rBoxH / 2);
+        ctx.lineTo(cBoxX, cBoxY + rBoxH / 2);
+        ctx.lineTo(cBoxX + fw * 0.11, fy + 70);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        // 电容罐 + 清晰充电环
+        const canX = fx + fw * 0.22, canY = fy + 58, canR = 28;
+        const canG = ctx.createRadialGradient(canX - 8, canY - 8, 2, canX, canY, canR);
         canG.addColorStop(0, '#c8d0d8'); canG.addColorStop(0.6, '#6a7888'); canG.addColorStop(1, '#2a323c');
         ctx.fillStyle = canG; ctx.beginPath(); ctx.arc(canX, canY, canR, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#8a7060'; ctx.fillRect(canX - 10, canY - canR - 6, 20, 8);
-        // 充电指示环
+        ctx.fillStyle = '#8a7060'; ctx.fillRect(canX - 12, canY - canR - 8, 24, 10);
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255,106,40,' + (0.35 + charge * 0.55) + ')';
-        ctx.lineWidth = 3; ctx.arc(canX, canY, canR + 6, -Math.PI / 2, -Math.PI / 2 + charge * Math.PI * 2);
+        ctx.strokeStyle = 'rgba(40,30,24,0.55)';
+        ctx.lineWidth = 6; ctx.arc(canX, canY, canR + 9, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,106,40,' + (0.45 + charge * 0.55) + ')';
+        ctx.lineWidth = 5; ctx.shadowColor = '#ff6a28'; ctx.shadowBlur = 8 + charge * 10;
+        ctx.arc(canX, canY, canR + 9, -Math.PI / 2, -Math.PI / 2 + charge * Math.PI * 2);
+        ctx.stroke(); ctx.shadowBlur = 0;
         // 闪光灯头
-        const hx = fx + fw * 0.68, hy = fy + 52;
+        const hx = fx + fw * 0.7, hy = fy + 58;
         ctx.fillStyle = '#1a1e22';
-        ctx.beginPath(); ctx.moveTo(hx - 28, hy - 8); ctx.lineTo(hx + 34, hy - 18); ctx.lineTo(hx + 34, hy + 18); ctx.lineTo(hx - 28, hy + 8); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(hx - 32, hy - 10); ctx.lineTo(hx + 40, hy - 22); ctx.lineTo(hx + 40, hy + 22); ctx.lineTo(hx - 32, hy + 10); ctx.closePath(); ctx.fill();
         const flashPulse = 0.15 + charge * 0.7 + 0.1 * Math.sin(animT * 6);
-        const beam = ctx.createRadialGradient(hx + 20, hy, 2, hx + 20, hy, 50);
-        beam.addColorStop(0, 'rgba(255,220,160,' + (0.55 * flashPulse) + ')');
+        const beam = ctx.createRadialGradient(hx + 24, hy, 2, hx + 24, hy, 70);
+        beam.addColorStop(0, 'rgba(255,220,160,' + (0.6 * flashPulse) + ')');
         beam.addColorStop(1, 'rgba(255,106,40,0)');
-        ctx.fillStyle = beam; ctx.beginPath(); ctx.arc(hx + 20, hy, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = beam; ctx.beginPath(); ctx.arc(hx + 24, hy, 70, 0, Math.PI * 2); ctx.fill();
+        // 充电流光点（R→C→闪光）
+        const flow = (animT * 0.45) % 1;
+        const fpx = rBoxX + rBoxW + (cBoxX - rBoxX - rBoxW) * Math.min(1, flow * 2);
+        const fpy = rBoxY + rBoxH / 2;
+        const flowR = 2.5 + charge * 2.5;
+        ctx.fillStyle = '#ff6a28'; ctx.shadowColor = '#ff6a28'; ctx.shadowBlur = 6 + charge * 12;
+        ctx.beginPath(); ctx.arc(fpx, fpy, flowR, 0, Math.PI * 2); ctx.fill();
+        if (flow > 0.5) {
+          const t2 = (flow - 0.5) * 2;
+          ctx.beginPath();
+          ctx.arc(cBoxX + fw * 0.11 * (1 - t2) + hx * t2 * 0.15, cBoxY + (hy - cBoxY) * t2, flowR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#f5c48a';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('闪光电容单元', fx + 14, fy + fh - 36);
+        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
+        ctx.fillText('闪光电容单元', fx + 16, fy + fh - 36);
         ctx.fillStyle = '#a89880';
-        ctx.font = '11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('R ' + rc.R + ' kΩ  ·  C ' + rc.C + ' μF', fx + 14, fy + fh - 16);
+        ctx.font = '12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('R ' + rc.R + ' kΩ  ·  C ' + rc.C + ' μF', fx + 16, fy + fh - 16);
 
-        // ── 次要：示波器（右侧）──
-        const ox = fx + fw + 24, oy = H * 0.16, ow = W - ox - 20, oh = H * 0.48;
+        // ── 次要：示波器面板（勿作英雄）──
+        const ox = fx + fw + 18, oy = H * 0.2, ow = Math.min(W - ox - 16, W * 0.48), oh = H * 0.42;
         ctx.fillStyle = '#12161a';
         roundSoft(ox, oy, ow, oh, 8); ctx.fill();
         ctx.strokeStyle = 'rgba(138,150,164,0.55)'; ctx.lineWidth = 2;
@@ -711,7 +805,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const tau_s = tau_ms / 1000;
         const tauTol = playMode === 'challenge' ? 0.03 : 0.08;
         const on = playMode === 'challenge' && Math.abs(tau_s - TARGET_TAU_SEC) < tauTol;
-        const badgeX = W - 216, badgeY = H - 52;
+        const badgeX = W - 216, badgeY = H - 112;
         ctx.fillStyle = 'rgba(20,14,10,0.88)';
         roundSoft(badgeX, badgeY, 200, 40, 6); ctx.fill();
         ctx.strokeStyle = on ? 'rgba(125,186,140,0.65)' : 'rgba(232,160,106,0.4)';

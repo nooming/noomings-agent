@@ -1,8 +1,8 @@
 # 控件 ↔ chapter AV/CV 对齐审计
 
-生成时间：2026-07-30T10:27:34.051Z
+生成时间：2026-08-03T06:26:16.685Z
 
-覆盖 23/23；存在合成 AV 缺失 HTML：**2**
+覆盖 23/23；存在合成 AV 缺失 HTML：**0**
 
 | id | HTML 控件数 | AV | CV | AV∉HTML | 错误数 |
 | --- | ---: | ---: | ---: | --- | ---: |
@@ -21,19 +21,14 @@
 | rc-circuit | 7 | 3 | 0 | — | 0 |
 | magnetic-force | 8 | 3 | 1 | — | 0 |
 | transformer-turns | 8 | 4 | 1 | — | 0 |
-| capacitor-era-ch1 | 9 | 3 | 2 | mat-grid | 1 |
+| capacitor-era-ch1 | 9 | 2 | 2 | — | 0 |
 | capacitor-era-ch2 | 10 | 4 | 1 | — | 0 |
-| capacitor-era-ch4 | 6 | 4 | 1 | s-c, s-volt, s-time | 3 |
+| capacitor-era-ch4 | 6 | 1 | 1 | — | 0 |
 | heat-conduction | 8 | 3 | 1 | — | 0 |
 | gas-ideal | 8 | 3 | 1 | — | 0 |
 | thin-lens-implicit | 8 | 3 | 1 | — | 0 |
 | refraction-snell | 7 | 3 | 1 | — | 0 |
 | photoelectric | 8 | 3 | 1 | — | 0 |
-
-## 自动修复
-
-- **capacitor-era-ch1**：AV 3→2，移除 mat-grid
-- **capacitor-era-ch4**：AV 4→1，移除 s-c, s-volt, s-time
 
 ## 说明
 
