@@ -824,10 +824,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     F_TARGET = Math.max(1.2, Math.min(10.0, nextF));
     // 上界落在可探究中间带：最大滑条仍可冲出带外
     // 竞赛安全带更窄于探究对照带 (v 2.5–4.0 / F 3.0–5.5)，同参未必两边同结论
-    V_HI = Math.min(9.5, Math.round((V_TARGET * 1.28 + 0.35) * 10) / 10);
-    F_HI = Math.min(22, Math.round((F_TARGET * 1.28 + 0.4) * 10) / 10);
-    if (V_HI <= V_TARGET + 0.25) V_HI = Math.min(9.5, V_TARGET + 0.7);
-    if (F_HI <= F_TARGET + 0.25) F_HI = Math.min(22, F_TARGET + 0.8);
+    // 安全带略放宽：仍须同时落入 v/F 带，避免「拉满即过」
+    V_HI = Math.min(9.5, Math.round((V_TARGET * 1.42 + 0.45) * 10) / 10);
+    F_HI = Math.min(22, Math.round((F_TARGET * 1.42 + 0.55) * 10) / 10);
+    if (V_HI <= V_TARGET + 0.35) V_HI = Math.min(9.5, V_TARGET + 0.95);
+    if (F_HI <= F_TARGET + 0.35) F_HI = Math.min(22, F_TARGET + 1.1);
     // 开局故意偏低，形成探究张力
     measured = false;
     sRadius.value = '0.5';
@@ -878,7 +879,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.closePath();
   }
 
-  function drawScene(r, omega) {
+  function drawScene(r, omega, tiltDeg) {
     syncCanvasSize();
     ctx.clearRect(0, 0, W, H);
 
@@ -886,6 +887,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     const fNorm = Math.min(1, Math.max(0, (F - F_TARGET) / Math.max(0.01, F_HI - F_TARGET)));
     const wNorm = Math.min(1, omega / 12);
     const danger = F > F_HI * 0.88 || omega > 9;
+    const tilt = Math.max(0, Math.min(15, Number(tiltDeg) || 0));
+    const tiltRad = (tilt * Math.PI) / 180;
 
     // 暖夜炭黑 + 琥珀投光（转盘工位）
     const SC = { ink: '#12100c', mid: '#2e2618', hi: '#f0c870', glow: '#ff8a30', metal: '#7a8490', accent: '#e0a040', ok: '#7dba8c' };
@@ -969,15 +972,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     const maxR = Math.min(cx - 36, cy - 56, W - cx - 70, H - cy - 48, targetDia * 0.55);
     const scale = Math.max(maxR / 2.05, Math.min(140, targetDia / 3.6));
 
-    // 加大钢制底座 + 立柱
+    // 加大钢制底座 + 立柱（底座倾角 φ 仅改观感：倾斜椭圆与楔块，不改 v/F 物理）
     const baseRx = Math.max(110, maxR * 0.55), baseRy = 28;
-    const baseGrad = ctx.createLinearGradient(cx - baseRx, H - 64, cx + baseRx, H - 18);
+    const baseCy = H - 38;
+    ctx.save();
+    ctx.translate(cx, baseCy);
+    ctx.rotate(-tiltRad * 0.55);
+    const baseGrad = ctx.createLinearGradient(-baseRx, -26, baseRx, 20);
     baseGrad.addColorStop(0, '#4a5058');
     baseGrad.addColorStop(0.5, SC.metal);
     baseGrad.addColorStop(1, '#5a626a');
     ctx.fillStyle = baseGrad;
     ctx.beginPath();
-    ctx.ellipse(cx, H - 38, baseRx, baseRy, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, baseRx, baseRy * (1 - tilt * 0.012), 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = 'rgba(224,160,64,0.4)';
     ctx.lineWidth = 2;
@@ -986,9 +993,22 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       var baBolt = (bolt / 8) * Math.PI * 2;
       ctx.fillStyle = '#5a6268';
       ctx.beginPath();
-      ctx.arc(cx + Math.cos(baBolt) * (baseRx - 14), H - 38 + Math.sin(baBolt) * (baseRy - 6), 4, 0, Math.PI * 2);
+      ctx.arc(Math.cos(baBolt) * (baseRx - 14), Math.sin(baBolt) * (baseRy - 6), 4, 0, Math.PI * 2);
       ctx.fill();
     }
+    if (tilt > 0.2) {
+      ctx.fillStyle = 'rgba(224,160,64,' + (0.18 + tilt * 0.02) + ')';
+      ctx.beginPath();
+      ctx.moveTo(-baseRx * 0.72, baseRy * 0.35);
+      ctx.lineTo(-baseRx * 0.35, baseRy * 0.9 + tilt * 0.9);
+      ctx.lineTo(baseRx * 0.2, baseRy * 0.55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = SC.hi;
+      ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
+      ctx.fillText('φ ' + tilt.toFixed(0) + '°', -22, baseRy + 14);
+    }
+    ctx.restore();
     const colGrad = ctx.createLinearGradient(cx - 22, cy, cx + 22, cy);
     colGrad.addColorStop(0, '#4a5058');
     colGrad.addColorStop(0.45, '#9aa2a8');
@@ -1399,7 +1419,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       angle += omega * dt;
     }
     updateObserve(r, omega, false);
-    drawScene(r, omega);
+    const tiltNow = sTilt ? parseFloat(sTilt.value) : 0;
+    drawScene(r, omega, tiltNow);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);

@@ -1365,22 +1365,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         ctx.setLineDash([6, 8]);
         ctx.strokeRect(fieldX, fieldY, plateW, fieldH);
         ctx.setLineDash([]);
+        // 极板固定在场区上下缘（偏转几何跟 E、q，不跟「间距」滑条）
+        // s-plate-gap 只改支架垫块厚度/刻度观感，避免假几何暗示场区高度在变
         var gapCm = state.plateGap != null ? state.plateGap : 4;
-        var plateInset = 4 + (gapCm - 2) * 1.2;
+        var gapNorm = Math.max(0, Math.min(1, (gapCm - 2) / 6));
         var plateThick = 8;
         var plateLen = fr.w * 0.5;
-        var topPlateG = ctx.createLinearGradient(fieldX, fieldY + plateInset, fieldX, fieldY + plateInset + plateThick);
+        var topPlateY = fieldY + 6;
+        var botY = fieldY + fieldH - 6 - plateThick;
+        var topPlateG = ctx.createLinearGradient(fieldX, topPlateY, fieldX, topPlateY + plateThick);
         topPlateG.addColorStop(0, '#8898b0');
         topPlateG.addColorStop(0.4, METAL);
         topPlateG.addColorStop(1, '#4a5868');
         ctx.fillStyle = topPlateG;
-        rr(fieldX + 8, fieldY + plateInset, plateLen, plateThick, 2);
+        rr(fieldX + 8, topPlateY, plateLen, plateThick, 2);
         ctx.fill();
         ctx.strokeStyle = 'rgba(176,192,240,0.35)';
         ctx.lineWidth = 1;
-        rr(fieldX + 8, fieldY + plateInset, plateLen, plateThick, 2);
+        rr(fieldX + 8, topPlateY, plateLen, plateThick, 2);
         ctx.stroke();
-        var botY = fieldY + fieldH - plateInset - plateThick;
         var botPlateG = ctx.createLinearGradient(fieldX, botY, fieldX, botY + plateThick);
         botPlateG.addColorStop(0, '#8898b0');
         botPlateG.addColorStop(0.4, METAL);
@@ -1391,17 +1394,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         ctx.strokeStyle = 'rgba(176,192,240,0.35)';
         rr(fieldX + 8, botY, plateLen, plateThick, 2);
         ctx.stroke();
+        // 支架垫块：厚度随 gap 明显变化（纯外观）
+        var spacerH = 6 + gapNorm * 28;
+        var spacerX = fieldX + plateLen - 18;
+        var midY = (topPlateY + plateThick + botY) / 2;
+        ctx.fillStyle = 'rgba(160,140,96,' + (0.35 + gapNorm * 0.45) + ')';
+        rr(spacerX, midY - spacerH / 2, 14, spacerH, 3);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(240,208,128,0.55)';
+        ctx.lineWidth = 1;
+        rr(spacerX, midY - spacerH / 2, 14, spacerH, 3);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(240,208,128,0.85)';
+        ctx.font = 'bold 10px "PingFang SC","Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('垫块 ' + gapCm.toFixed(1) + ' cm', spacerX - 2, midY - spacerH / 2 - 4);
         ctx.fillStyle = GLOW;
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('+', fieldX + 18, fieldY + plateInset + 6);
+        ctx.fillText('+', fieldX + 18, topPlateY + 6);
         ctx.fillText('−', fieldX + 18, botY + 6);
         ctx.strokeStyle = 'rgba(96,144,232,' + (0.20 + eNorm * 0.35) + ')';
         ctx.lineWidth = 1;
         for (let i = 0; i < 6; i++) {
             const xPos = fieldX + 24 + i * (plateW / 7);
             ctx.beginPath();
-            ctx.moveTo(xPos, fieldY + plateInset + plateThick + 4);
+            ctx.moveTo(xPos, topPlateY + plateThick + 4);
             ctx.lineTo(xPos, botY - 4);
             ctx.stroke();
             ctx.beginPath();

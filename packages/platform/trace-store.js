@@ -545,6 +545,7 @@ function getClassroomBoard({ graphId, catalogId, taskCode } = {}) {
       cvTendency: Math.round(cvTendency * 1000) / 1000,
       pathType,
       pathScore: score != null ? Number(score) : null,
+      scoredPhase: row.strategyPathSummary?.scoredPhase || null,
       pathText: row.strategyPathSummary?.text || null,
       advice: row.strategyPathSummary?.advice || null,
       updatedAt: row.updatedAt,

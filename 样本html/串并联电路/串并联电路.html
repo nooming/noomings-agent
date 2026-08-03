@@ -922,7 +922,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
         function computeBand(I) {
             if (playMode !== 'challenge') return null;
-            if (Math.abs(I - targetCurrent) < 0.004) return 'ok';
+            if (Math.abs(I - targetCurrent) < 0.008) return 'ok';
             return I > targetCurrent ? 'high' : 'low';
         }
 
@@ -1264,6 +1264,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             ctx.fillText(playMode === 'challenge' ? ('A  目标 ' + targetCurrent.toFixed(2)) : 'A  待测', mx + 14, my + 72);
             ctx.fillStyle = showI != null ? (onTarget ? '#a8d4b0' : '#e8b090') : '#a09078';
             ctx.fillText(showI != null ? (onTarget ? '已对准' : '未对准') : '待测', mx + 14, my + 96);
+            // 仪表内阻 rg：分流条宽度/色温随滑条变化（不进 I 计算）
+            var rg = sMeterR ? parseFloat(sMeterR.value) : 0.5;
+            var rgNorm = Math.max(0, Math.min(1, (rg - 0.1) / 4.9));
+            var shuntW = 10 + rgNorm * 42;
+            ctx.fillStyle = 'rgba(96,140,180,' + (0.25 + rgNorm * 0.45) + ')';
+            ctx.fillRect(mx + 12, my + mh - 52, shuntW, 8);
+            ctx.strokeStyle = 'rgba(160,200,230,0.55)';
+            ctx.strokeRect(mx + 12, my + mh - 52, shuntW, 8);
+            ctx.fillStyle = '#90a8b8';
+            ctx.font = '10px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.fillText('rg ' + rg.toFixed(1) + 'Ω', mx + 14, my + mh - 56);
             ctx.strokeStyle = ACCENT;
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1376,7 +1387,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             }
 
             // 探究观察不靠此容差过关；竞赛用更紧容差（分流）
-            const iTol = playMode === 'challenge' ? 0.004 : 0.012;
+            const iTol = playMode === 'challenge' ? 0.008 : 0.012;
             const winOk = (Math.abs(I - targetCurrent) < iTol);
             const hintKey = winOk ? 'win' : (I > targetCurrent ? '电流偏大，增大电阻' : '电流偏小，减小电阻');
 

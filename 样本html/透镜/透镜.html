@@ -811,7 +811,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const v = computeImageDistance(u, f);
       if (!isFinite(v) || isNaN(v)) return false;
       // 探究容差较宽；竞赛更紧，同参未必两边同结论
-      const tol = playMode === 'challenge' ? 0.85 : 2.0;
+      const tol = playMode === 'challenge' ? 1.2 : 2.0;
       return Math.abs(v - SCREEN_DIST_CM) < tol;
     }
 
@@ -819,7 +819,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const v = computeImageDistance(u, f);
       if (!isFinite(v) || isNaN(v)) return '当前参数下不成像';
       if (v < 0) return '成虚像，光屏上看不到';
-      const tol = playMode === 'challenge' ? 0.85 : 2.0;
+      const tol = playMode === 'challenge' ? 1.2 : 2.0;
       if (Math.abs(v - SCREEN_DIST_CM) >= tol) {
         return v < SCREEN_DIST_CM ? '像偏近（落在屏前）' : '像偏远（落在屏后）';
       }
@@ -864,7 +864,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const v = computeImageDistance(u, f);
       const defocus = (isFinite(v) && v > 0) ? Math.abs(v - SCREEN_DIST_CM) : 15;
       const onScreen = isImageOnScreen(u, f);
-      const focusTol = playMode === 'challenge' ? 0.85 : 2.0;
+      const focusTol = playMode === 'challenge' ? 1.2 : 2.0;
       let focusQual = 0;
       if (isFinite(v) && v > 0) focusQual = Math.max(0, 1 - defocus / (focusTol * 3));
       const Dcm = sliderD ? parseFloat(sliderD.value) : 6;
@@ -981,7 +981,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       ctx.fillRect(W * 0.92, 118, 18, H * 0.18);
 
       const vFocus = computeImageDistance(u, f);
-      const focusTol = playMode === 'challenge' ? 0.85 : 2.0;
+      const focusTol = playMode === 'challenge' ? 1.2 : 2.0;
       const defocus = drv ? drv.defocus : ((isFinite(vFocus) && vFocus > 0) ? Math.abs(vFocus - SCREEN_DIST_CM) : 15);
       let focusQual = drv ? drv.focusQual : 0;
       if (!drv && isFinite(vFocus) && vFocus > 0) {

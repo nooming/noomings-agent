@@ -1127,15 +1127,21 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.stroke();
 
     var wireY = yWire - lift;
+    // 导线温度：冷蓝→暖铜→微红晕（不进 F=BIL 计算）
+    var tWire = sWireTemp ? parseFloat(sWireTemp.value) : 25;
+    var tNorm = Math.max(0, Math.min(1, (tWire - 10) / 70));
+    var wireCool = 'rgb(' + Math.round(120 + tNorm * 80) + ',' + Math.round(150 - tNorm * 40) + ',' + Math.round(200 - tNorm * 140) + ')';
+    var wireHot = 'rgb(' + Math.round(200 + tNorm * 40) + ',' + Math.round(176 - tNorm * 60) + ',' + Math.round(96 - tNorm * 40) + ')';
+    var wireDeep = 'rgb(' + Math.round(140 + tNorm * 60) + ',' + Math.round(100 - tNorm * 30) + ',' + Math.round(60 - tNorm * 20) + ')';
     var wireG = ctx.createLinearGradient(0, wireY - 5, 0, wireY + 5);
-    wireG.addColorStop(0, '#c89050');
-    wireG.addColorStop(0.45, '#e8b060');
-    wireG.addColorStop(1, '#a87030');
+    wireG.addColorStop(0, wireCool);
+    wireG.addColorStop(0.45, wireHot);
+    wireG.addColorStop(1, wireDeep);
     ctx.strokeStyle = wireG;
     ctx.lineWidth = 10;
     ctx.lineCap = 'round';
-    ctx.shadowColor = 'rgba(232,176,96,' + (0.25 + Math.min(1, drawI / 5) * 0.55) + ')';
-    ctx.shadowBlur = 6 + drawI * 3;
+    ctx.shadowColor = 'rgba(' + Math.round(180 + tNorm * 60) + ',' + Math.round(140 - tNorm * 40) + ',' + Math.round(80 - tNorm * 40) + ',' + (0.22 + Math.min(1, drawI / 5) * 0.5 + tNorm * 0.2) + ')';
+    ctx.shadowBlur = 6 + drawI * 3 + tNorm * 4;
     ctx.beginPath();
     ctx.moveTo(52, wireY);
     ctx.lineTo(W * 0.82, wireY);

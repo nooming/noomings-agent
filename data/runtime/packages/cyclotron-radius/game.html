@@ -1157,11 +1157,36 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         ctx.arc(centerX, centerY, R + 10, 0, Math.PI * 2);
         ctx.stroke();
 
-        // 舱内真空暗区
+        // 舱内真空暗区 + 气压雾感（s-chamber-p 纯外观，不改轨道半径）
         ctx.fillStyle = 'rgba(6,12,16,0.72)';
         ctx.beginPath();
         ctx.arc(centerX, centerY, R - 4, 0, Math.PI * 2);
         ctx.fill();
+        var pAtm = sPress ? parseFloat(sPress.value) : 1;
+        var pNorm = Math.max(0, Math.min(1, (pAtm - 0.2) / 1.8));
+        if (pNorm > 0.02) {
+            var haze = ctx.createRadialGradient(centerX, centerY, R * 0.15, centerX, centerY, R - 6);
+            haze.addColorStop(0, 'rgba(160,190,200,' + (0.02 + pNorm * 0.10) + ')');
+            haze.addColorStop(0.55, 'rgba(120,160,170,' + (0.04 + pNorm * 0.16) + ')');
+            haze.addColorStop(1, 'rgba(80,120,130,' + (0.06 + pNorm * 0.22) + ')');
+            ctx.fillStyle = haze;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, R - 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(200,220,230,' + (0.12 + pNorm * 0.25) + ')';
+            ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('气压 ' + pAtm.toFixed(1) + ' atm', centerX, centerY + R - 18);
+            ctx.textAlign = 'left';
+            for (var bi = 0; bi < Math.floor(3 + pNorm * 10); bi++) {
+                var ba = (bi * 2.4 + pNorm * 3) % (Math.PI * 2);
+                var br = (R - 28) * (0.35 + (bi % 5) * 0.12);
+                ctx.fillStyle = 'rgba(180,210,220,' + (0.08 + pNorm * 0.12) + ')';
+                ctx.beginPath();
+                ctx.arc(centerX + Math.cos(ba) * br, centerY + Math.sin(ba) * br, 1.2 + (bi % 3) * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
 
         // D 形电极（半圆dee）
         ctx.fillStyle = 'rgba(64,184,200,0.14)';

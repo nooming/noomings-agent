@@ -334,12 +334,21 @@ async function judge(body, opts = {}) {
   const ch = body.ch ?? 0;
   const trace = body.trace || { events: [] };
   const summary = summarizeTrace(trace, ch, body.chapter);
+  const modeRaw = String(body.mode || opts.mode || '').toLowerCase();
+  const preferRules = modeRaw === 'rule' || modeRaw === 'rules'
+    || opts.forceRules === true
+    || body.forceRules === true;
+
+  if (preferRules || !opts.apiKey) {
+    const result = ruleJudge(summary, body.chapter);
+    if (!opts.apiKey && !preferRules) {
+      result.comment = `[规则模式·无 Key] ${String(result.comment || '').replace(/^\[规则模式\]\s*/, '')}`;
+    }
+    return result;
+  }
+
   const userPrompt = buildUserPrompt(body);
   const system = getSystem(body);
-
-  if (!opts.apiKey) {
-    return ruleJudge(summary, body.chapter);
-  }
 
   try {
     const text = await chatCompletion(opts.apiKey, opts.apiUrl, [

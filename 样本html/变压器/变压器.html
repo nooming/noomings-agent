@@ -1137,15 +1137,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     const span2 = coilSpan * (0.55 + 0.45 * (dens2 / densMax));
     const off1 = (coilSpan - span1) * 0.5;
     const off2 = (coilSpan - span2) * 0.5;
+    // 绕组温度：暖色晕与线色（不进变压比）
+    const Tw = sTw ? parseFloat(sTw.value) : 40;
+    const tHeat = Math.max(0, Math.min(1, (Tw - 20) / 70));
     for (let i = 0; i < turns1; i++) {
       const t = turns1 > 1 ? i / (turns1 - 1) : 0.5;
       const yy = cTop + barH + 5 + off1 + t * span1;
       const g = ctx.createLinearGradient(cx - legW - coilRx1, yy, cx - legW + coilRx1, yy);
-      g.addColorStop(0, '#8b5a2b');
+      g.addColorStop(0, 'rgb(' + Math.round(139 + tHeat * 60) + ',' + Math.round(90 - tHeat * 30) + ',' + Math.round(43 - tHeat * 20) + ')');
       g.addColorStop(0.45, ACCENT);
-      g.addColorStop(1, '#6a4020');
+      g.addColorStop(1, 'rgb(' + Math.round(106 + tHeat * 50) + ',' + Math.round(64 - tHeat * 20) + ',' + Math.round(32 - tHeat * 10) + ')');
       ctx.strokeStyle = g;
       ctx.lineWidth = 2.2 + dens1 * 2.8;
+      ctx.shadowColor = 'rgba(255,' + Math.round(120 - tHeat * 40) + ',40,' + (tHeat * 0.35) + ')';
+      ctx.shadowBlur = tHeat * 6;
       ctx.beginPath();
       ctx.ellipse(cx - legW * 0.9, yy, coilRx1, coilRy1, 0, 0, Math.PI * 2);
       ctx.stroke();
@@ -1154,17 +1159,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const t = turns2 > 1 ? i / (turns2 - 1) : 0.5;
       const yy = cTop + barH + 5 + off2 + t * span2;
       const g = ctx.createLinearGradient(cx + legW - coilRx2, yy, cx + legW + coilRx2, yy);
-      g.addColorStop(0, '#a06830');
+      g.addColorStop(0, 'rgb(' + Math.round(160 + tHeat * 50) + ',' + Math.round(104 - tHeat * 40) + ',' + Math.round(48 - tHeat * 20) + ')');
       g.addColorStop(0.45, HI);
-      g.addColorStop(1, '#7a5028');
+      g.addColorStop(1, 'rgb(' + Math.round(122 + tHeat * 40) + ',' + Math.round(80 - tHeat * 30) + ',' + Math.round(40 - tHeat * 15) + ')');
       ctx.strokeStyle = g;
       ctx.globalAlpha = 0.55 + loadLevel * 0.45;
       ctx.lineWidth = 2.2 + dens2 * 2.8 + loadLevel * 1.5;
+      ctx.shadowColor = 'rgba(255,' + Math.round(130 - tHeat * 50) + ',48,' + (tHeat * 0.3) + ')';
+      ctx.shadowBlur = tHeat * 5;
       ctx.beginPath();
       ctx.ellipse(cx + legW * 0.9, yy, coilRx2, coilRy2, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
+    if (tHeat > 0.05) {
+      ctx.fillStyle = 'rgba(240,180,96,' + (0.35 + tHeat * 0.4) + ')';
+      ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+      ctx.fillText('绕组 ' + Tw.toFixed(0) + '°C', cx - 28, cTop + coreH + 18);
+    }
     ctx.fillStyle = ACCENT;
     ctx.font = '12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
     ctx.fillText('原边 n₁=' + n1d, cLeft - 4, cTop - 8);

@@ -1555,6 +1555,21 @@ td.empty-state,
 .judged-chip-name { font-weight: 600; color: var(--edu-text); }
 .judged-chip-verdict { font-size: 0.75rem; color: var(--edu-muted); }
 
+.badge-phase {
+  background: rgba(14, 116, 144, 0.12);
+  color: #0e7490;
+  font-weight: 500;
+}
+.badge-path {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  font-weight: 500;
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-path-error { color: #b45309; }
 .badge-verdict {
   font-size: 0.7rem;
   font-weight: 600;

@@ -870,7 +870,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             charge = breath * (0.55 + 0.45 * uNorm);
         }
         charge = Math.min(1, charge * (0.65 + 0.35 * uNorm) + flashBoost * 0.25);
-        const tauNear = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < 0.03;
+        const tauNear = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < 0.05;
         const band = eventAnim ? eventAnim.band : (tauNear ? 'ok' : (measuredTau != null && playMode === 'challenge'
             ? (measuredTau < TARGET_TAU_SEC ? 'low' : 'high') : null));
         let safeR = 255, safeG = 90, safeB = 40;
@@ -1076,7 +1076,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           ctx.fill();
         }
         const tau_s = tau_ms_draw / 1000;
-        const tauTol = playMode === 'challenge' ? 0.03 : 0.08;
+        const tauTol = playMode === 'challenge' ? 0.05 : 0.08;
         const on = playMode === 'challenge' && measuredTau != null && Math.abs(measuredTau - TARGET_TAU_SEC) < tauTol;
         const badgeX = W - 216, badgeY = H - 112;
         ctx.fillStyle = 'rgba(20,14,10,0.88)';
@@ -1107,9 +1107,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     // 过关判定 (基于τ)
     function checkWin(tau_s) {
         if (playMode !== 'challenge') return false;
-        // 竞赛容差更紧（探究无 τ 过关带，形成分流）
+        // 竞赛容差仍紧于探究观感带，但短时可对准
         const diff = Math.abs(tau_s - TARGET_TAU_SEC);
-        return diff < 0.03;
+        return diff < 0.05;
     }
 
     // 测试/发射动作 (snapshot + win)；立即 emit，动画用冻结 drivers

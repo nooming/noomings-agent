@@ -560,7 +560,12 @@ async function handlePlatformJudgeSession(req, res) {
       chapter,
     });
     const graph = base.graph;
-    const result = await judge({ ...body, ...base, graph, chapter }, LLM_OPTS());
+    // 教师端默认规则评判（稳定可复现）；显式 mode=llm 时才走 LLM（无 Key 仍降级 rules）
+    const judgeMode = String(body.mode || 'rules').toLowerCase();
+    const result = await judge(
+      { ...body, ...base, graph, chapter, mode: judgeMode },
+      LLM_OPTS(),
+    );
     saveJudgeResult(session.sessionId, { ...result, judgedAt: new Date().toISOString() });
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: true, sessionId: session.sessionId, ch, ...result }));

@@ -1308,10 +1308,12 @@ function buildJudgeBlock(jr) {
     ? `<details class="judge-legacy-details"><summary>完整评语</summary><div class="judge-comment">${esc(jr.comment)}</div></details>`
     : '';
 
+  const modeLabel = jr.mode === 'llm' ? 'LLM' : '规则';
   return `<div class="judge-result-box">
     <div class="judge-result-head">
       <span class="judge-verdict badge-verdict ${verdictClass(jr.verdict)}">${esc(verdictLabel(jr.verdict))}</span>
       ${levelBadge}
+      <span class="badge badge-phase">${esc(modeLabel)}</span>
       ${jr.judgedAt ? `<span class="judge-time">${fmtTime(jr.judgedAt)}</span>` : ''}
     </div>
     ${pathHint ? `<p class="judge-path-hint">${esc(pathHint)}</p>` : ''}
@@ -1329,8 +1331,10 @@ function renderJudgeResult(jr) {
   const btn = document.getElementById('judgeBtn');
   if (btn) {
     btn.disabled = false;
-    btn.textContent = jr ? '重新评判' : 'Agent B 评判';
+    btn.textContent = jr ? '重新规则评判' : '规则评判';
   }
+  const llmBtn = document.getElementById('judgeLlmBtn');
+  if (llmBtn) llmBtn.disabled = false;
 }
 
 function syncSessionTimelineVerdict(sessionId, verdict) {
@@ -1449,7 +1453,7 @@ async function loadClassroomBoard() {
       <td>${esc(row.graphId || row.catalogId || '—')}</td>
       <td>${row.avAdjustCount ?? 0}</td>
       <td>${row.cvAdjustCount ?? 0}${row.cvTendency >= 0.35 ? ' ⚠' : ''}</td>
-      <td>${esc(row.pathType || '未评分')}</td>
+      <td>${esc(row.pathType || '未评分')}${row.scoredPhase ? ` <span class="hint">(${esc(scoredPhaseLabel(row.scoredPhase) || row.scoredPhase)})</span>` : ''}</td>
       <td>${row.pathScore != null ? Number(row.pathScore).toFixed(2) : '—'}</td>
       <td>${esc(fmtTime(row.updatedAt))}</td>
     </tr>`).join('');
@@ -1612,7 +1616,7 @@ async function refreshTeacherPathSummary(session, reqId) {
         // 不传 phaseScope:'full'，跟随服务端默认（有竞赛操作时评竞赛段）
       }),
     });
-    if (reqId !== detailRequestSeq) return { aborted: true };
+    if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
     const data = await r.json();
     if (data.ok && data.summary) {
       const pathSummary = {
@@ -1622,16 +1626,23 @@ async function refreshTeacherPathSummary(session, reqId) {
         primaryStrategy: data.primaryStrategy || data.summary.primary || data.summary.type || null,
       };
       session.strategyPathSummary = pathSummary;
-      return { pathSummary, scoredPhase: pathSummary.scoredPhase };
+      return { pathSummary, scoredPhase: pathSummary.scoredPhase, refreshed: true };
     }
-  } catch (_) {
-    /* fall back to cache */
+    return {
+      pathSummary: cached,
+      scoredPhase: cached?.scoredPhase || null,
+      refreshed: false,
+      error: data.error || 'path_summary_failed',
+    };
+  } catch (err) {
+    if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
+    return {
+      pathSummary: cached,
+      scoredPhase: cached?.scoredPhase || null,
+      refreshed: false,
+      error: err.message || 'path_summary_network_error',
+    };
   }
-  if (reqId !== detailRequestSeq) return { aborted: true };
-  return {
-    pathSummary: cached,
-    scoredPhase: cached?.scoredPhase || null,
-  };
 }
 
 async function loadSessionDetail(sessionId) {
@@ -1664,18 +1675,23 @@ async function loadSessionDetail(sessionId) {
   const taskTitle = cat?.title || session.catalogId || '—';
   const graphFilter = document.getElementById('filterGraph').value;
 
-  const sessionRows = student.sessions.map(s => `
+  const sessionRows = student.sessions.map(s => {
+    const phaseShort = scoredPhaseLabel(s.strategyPathSummary?.scoredPhase || s.scoredPhase);
+    return `
     <div class="session-timeline-item${s.sessionId === sessionId ? ' is-active' : ''}" data-sid="${esc(s.sessionId)}">
       <input type="checkbox" class="session-pick-cb" data-sid="${esc(s.sessionId)}"${selectedSessionIds.has(s.sessionId) ? ' checked' : ''} aria-label="选择会话">
       <span class="session-timeline-body">
         <span>${fmtTime(s.startedAt || s.updatedAt)}</span>
         <span class="session-timeline-meta">${s.eventCount || 0} 事件</span>
+        ${phaseShort ? `<span class="badge badge-phase">${esc(phaseShort)}</span>` : ''}
+        ${s.strategyPathSummary?.text ? `<span class="badge badge-path">${esc(String(s.strategyPathSummary.text).slice(0, 12))}</span>` : ''}
         ${s.judged
           ? `<span class="badge badge-verdict ${verdictClass(s.verdict)}">${esc(verdictLabel(s.verdict))}</span>`
           : '<span class="badge badge-pending">待评</span>'}
       </span>
       <button type="button" class="edu-btn edu-btn-outline edu-btn-sm session-row-delete" data-sid="${esc(s.sessionId)}">删除</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const jr = session.judgeResult;
   const judgeBlock = jr ? buildJudgeBlock(jr) : '';
@@ -1686,16 +1702,29 @@ async function loadSessionDetail(sessionId) {
   const pathMetaParts = [];
   if (pathScopeLabel) pathMetaParts.push(`评分范围：${esc(pathScopeLabel)}`);
   if (pathSummary?.score != null) pathMetaParts.push(`策略分：<strong>${Number(pathSummary.score).toFixed(2)}</strong>`);
+  const pathFailHint = (!pathRefresh.refreshed && pathRefresh.error)
+    ? `<p class="hint session-path-error">路径摘要刷新失败：${esc(pathRefresh.error)}（已显示缓存或留空）</p>`
+    : '';
   const pathLine = pathSummary?.text
     ? `<div class="session-path-block">
          <p class="hint session-path-type">探究路径：<strong>${esc(pathSummary.text)}</strong></p>
          ${pathMetaParts.length ? `<p class="session-path-meta">${pathMetaParts.join(' · ')}</p>` : ''}
          ${pathSummary.advice ? `<p class="hint session-path-advice">建议：${esc(pathSummary.advice)}</p>` : ''}
+         ${pathFailHint}
        </div>`
-    : '';
+    : (pathFailHint || '<p class="hint session-path-empty">暂无路径摘要（打开详情会按竞赛段重算）</p>');
   const tuningBlock = buildSessionTuningBlock(summary);
+  const modeBadge = jr?.mode === 'llm'
+    ? '<span class="hint">上次：LLM</span>'
+    : (jr ? '<span class="hint">上次：规则</span>' : '<span class="hint">默认规则评判（无需 API Key）</span>');
 
   if (reqId !== detailRequestSeq) return;
+  // 回写当前学生会话行的 path 缓存，便于列表短标签
+  const listSess = student.sessions.find(s => s.sessionId === sessionId);
+  if (listSess && pathSummary) {
+    listSess.strategyPathSummary = pathSummary;
+    listSess.scoredPhase = pathRefresh.scoredPhase || null;
+  }
   loadCrossGameSummary(student);
   panel.innerHTML = `
     <section class="session-detail-section session-detail-summary">
@@ -1713,12 +1742,15 @@ async function loadSessionDetail(sessionId) {
             <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
             <span>全选</span>
           </label>
+          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshPathSummariesLocal" title="按竞赛段默认 scope 重算当前学生会话路径">刷新路径摘要</button>
           <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
         </div>
       </div>
       <div class="session-timeline">${sessionRows}</div>
       <div class="session-actions">
-        <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新评判' : 'Agent B 评判'}</button>
+        <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新规则评判' : '规则评判'}</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="judgeLlmBtn">LLM 评判</button>
+        ${modeBadge}
       </div>
       <div id="judgeResult">${judgeBlock}</div>
     </section>
@@ -1734,17 +1766,22 @@ async function loadSessionsData(options = {}) {
   await loadClassroomBoard();
 }
 
-async function judgeSession(sessionId) {
+async function judgeSession(sessionId, mode = 'rules') {
   judgingSessionId = sessionId;
   const btn = document.getElementById('judgeBtn');
+  const llmBtn = document.getElementById('judgeLlmBtn');
   if (btn) { btn.disabled = true; btn.textContent = '评判中…'; }
+  if (llmBtn) llmBtn.disabled = true;
   const box = document.getElementById('judgeResult');
-  if (box) box.innerHTML = '<div class="judge-result-box judge-result-loading">Agent B 正在分析轨迹…</div>';
+  const loadingText = mode === 'llm'
+    ? 'LLM 评判中…（失败将自动降级为规则）'
+    : '规则评判中…';
+  if (box) box.innerHTML = `<div class="judge-result-box judge-result-loading">${loadingText}</div>`;
   try {
     const r = await fetch('/api/platform/judge-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId }),
+      body: JSON.stringify({ sessionId, mode }),
     });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error || '评判失败');
@@ -1773,9 +1810,32 @@ async function judgeSession(sessionId) {
     const errBox = document.getElementById('judgeResult');
     if (errBox) errBox.innerHTML = `<div class="judge-result-box">错误: ${esc(e.message)}</div>`;
     const errBtn = document.getElementById('judgeBtn');
-    if (errBtn) { errBtn.disabled = false; errBtn.textContent = 'Agent B 评判'; }
+    if (errBtn) { errBtn.disabled = false; errBtn.textContent = '规则评判'; }
+    if (llmBtn) llmBtn.disabled = false;
   } finally {
     judgingSessionId = null;
+  }
+}
+
+async function refreshPathSummariesForStudent() {
+  const student = studentItems.find(s => s.studentKey === selectedStudentKey);
+  if (!student?.sessions?.length) return;
+  const btn = document.getElementById('refreshPathSummariesLocal');
+  if (btn) { btn.disabled = true; btn.textContent = '刷新中…'; }
+  let ok = 0;
+  let fail = 0;
+  for (const sess of student.sessions) {
+    const r = await refreshTeacherPathSummary(sess, null);
+    if (r.aborted) continue;
+    if (r.refreshed) {
+      ok += 1;
+      sess.scoredPhase = r.scoredPhase || null;
+    } else fail += 1;
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '刷新路径摘要'; }
+  if (selectedSessionId) await loadSessionDetail(selectedSessionId);
+  else {
+    alert(`路径摘要：成功 ${ok}，失败 ${fail}`);
   }
 }
 
@@ -1808,7 +1868,16 @@ function bindSessionDetailDelegation() {
       return;
     }
     if (e.target.closest('#judgeBtn')) {
-      if (selectedSessionId) judgeSession(selectedSessionId);
+      if (selectedSessionId) judgeSession(selectedSessionId, 'rules');
+      return;
+    }
+    if (e.target.closest('#judgeLlmBtn')) {
+      if (selectedSessionId) judgeSession(selectedSessionId, 'llm');
+      return;
+    }
+    if (e.target.closest('#refreshPathSummariesLocal')) {
+      e.preventDefault();
+      refreshPathSummariesForStudent();
       return;
     }
     const row = e.target.closest('.session-timeline-item');

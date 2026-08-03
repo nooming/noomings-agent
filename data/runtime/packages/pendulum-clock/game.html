@@ -665,7 +665,7 @@ function lockChallengePeriod() {
   let next = 1.90 + Math.random() * 0.28;
   if (Math.abs(next - 2.000) < 0.04) next = next > 2 ? 2.08 : 1.92;
   T_TARGET = Math.round(next * 1000) / 1000;
-  T_HALF = 0.005;
+  T_HALF = 0.012;
   L = 1.31; thetaDeg = 20; mass = 1.5;
   lastMeasT = null; measStale = false; won = false;
   var elLen = document.getElementById('s-len');

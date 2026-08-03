@@ -1001,11 +1001,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         ctx.fillStyle = SC.metal;
         ctx.fillRect(0, GROUND_Y + 8, W, 3);
 
-        // 加高铝轨 + 喷气孔
+        // 加高铝轨 + 喷气孔；导轨温度只改色温雾气（不影响碰撞）
         var trackL = 36, trackR = W - 36, trackTop = GROUND_Y - 28, trackH = 32;
+        var tRail = sRailTemp ? parseFloat(sRailTemp.value) : 22;
+        var tN = Math.max(0, Math.min(1, (tRail - 5) / 55));
         var railGrad = ctx.createLinearGradient(0, trackTop, 0, trackTop + trackH);
-        railGrad.addColorStop(0, '#9aa4ae');
-        railGrad.addColorStop(0.35, '#c8d0d8');
+        railGrad.addColorStop(0, 'rgb(' + Math.round(154 + tN * 60) + ',' + Math.round(164 - tN * 40) + ',' + Math.round(174 - tN * 70) + ')');
+        railGrad.addColorStop(0.35, 'rgb(' + Math.round(200 + tN * 30) + ',' + Math.round(208 - tN * 50) + ',' + Math.round(216 - tN * 90) + ')');
         railGrad.addColorStop(0.55, SC.metal);
         railGrad.addColorStop(1, '#5a626a');
         ctx.fillStyle = railGrad;
@@ -1022,6 +1024,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         }
         ctx.fillStyle = 'rgba(232,168,200,0.06)';
         ctx.fillRect(trackL + 4, trackTop - 8, trackR - trackL - 8, 6);
+        if (tN > 0.08) {
+            ctx.fillStyle = 'rgba(255,' + Math.round(200 - tN * 80) + ',' + Math.round(160 - tN * 80) + ',' + (0.04 + tN * 0.12) + ')';
+            ctx.fillRect(trackL + 2, trackTop - 14, trackR - trackL - 4, 12);
+            ctx.fillStyle = 'rgba(240,200,160,' + (0.35 + tN * 0.4) + ')';
+            ctx.font = '10px "Microsoft YaHei",sans-serif';
+            ctx.fillText('导轨 ' + tRail.toFixed(0) + '°C', trackR - 72, trackTop - 16);
+        }
         ctx.fillStyle = '#5a6268';
         ctx.fillRect(trackL - 6, GROUND_Y + 2, 14, 28);
         ctx.fillRect(trackR - 8, GROUND_Y + 2, 14, 28);
