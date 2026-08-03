@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | C1 | constraint | 竞赛模式 |\n| 否(探究) | C1 | constraint | 探究模式 |\n| 调节参数并测试热流 | O1 | operation | 调节导热系数k、温差ΔT、截面积A，点击测试热流 |\n| 热流在安全带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否(过热) | C3 | constraint | 过热失败 |\n| 否(不足) | C4 | constraint | 不足失败 |\n| 重试(过热) | skip retry | - | retry |\n| 重试(不足) | skip retry | - | retry |\n| 重试(模式) | skip retry | - | retry |\n| 导热系数与温差影响热流 | S1 | core | teach |\n| 验证公式 | verify | - | 连回O1 |","kg":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式自由调参观察，或竞赛模式限次达标 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调节参数并测试热流","group":"operation","layer":"play","level":2,"r":22,"desc":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果"},{"id":"C2","label":"热流在安全带内?·结果判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"竞赛模式下热流需在锁定安全带区间内，过低或过高均不合格 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C3","label":"过热失败","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流超过上限导致炉墙过热，需降低导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"C4","label":"供暖不足","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流低于下限导致供暖不足，需提高导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":4,"r":22,"desc":"热流落在安全带区间内，竞赛急单完成，显示过关"},{"id":"S1","label":"导热系数与温差影响热流","group":"core","layer":"teach","level":0,"r":22,"desc":"热流速率Q/t = κAΔT/d，导热系数κ和温差ΔT越大热流越大"},{"id":"S2","label":"截面积A对热流的影响","group":"core","layer":"teach","level":0,"r":22,"desc":"截面积A增大热流增大，但竞赛中A固定为0.05m²，不影响过关判定"},{"id":"I1","label":"重置按钮","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"重置滑条至默认值，与过关判定无关"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C2","t":"C4","tp":"premise"},{"s":"C2","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","tree":{"n":"进入关卡","t":"root","d":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标","children":[{"n":"模式选择?","t":"decision","d":"选择探究模式或竞赛模式","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调参观察热流变化"},{"_e":"是","n":"竞赛模式","t":"step","d":"限次将热流调至锁定安全带区间"}]},{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮","children":[{"n":"热流在安全带内?","t":"decision","d":"竞赛模式下热流需在锁定安全带区间内","children":[{"_e":"是","n":"过关","t":"result","d":"热流落在安全带区间内，竞赛急单完成"},{"_e":"否","n":"温升达标?","t":"decision","d":"判断热流是过高还是过低","children":[{"_e":"是","n":"过热失败","t":"junction","d":"热流超过上限，需降低导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"热流低于下限，需提高导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]}]}]}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"热流随导热与温差增大；太小供暖不足，太大则炉墙过热"},"strategy":{"title":"热传导 · 探究","sub":"极地科考站 · 保温墙","mermaid":"graph TD\nAdjust --> Fire\nAdjustA --> Fire\nAdjustA --> Fire\nAdjustDT --> Fire\nAdjustDT --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[多参盲调]\nAdjustA[按观察单变量微调]\nAdjustDT[按观察单变量微调]\nAdjustK[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·截面积","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","Challenge","Fire","Observe","Win","RetryLow","RetryOverheat","Route_main","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main"],["Route_main","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"main_s-thermal-conductivity","label":"单变量·导热系数","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","Route_main_s_thermal_conductiv","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main_s_thermal_conductiv"],["Route_main_s_thermal_conductiv","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"main_s-temperature-diff","label":"单变量·温差","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","Route_main_s_temperature_diff","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main_s_temperature_diff"],["Route_main_s_temperature_diff","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","Challenge","StrategySelect","Fire","Observe","RetryLow","RetryOverheat","Trap","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","Challenge"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-thermal-conductivity":{"kgId":"O1","role":"operation"},"s-temperature-diff":{"kgId":"O1","role":"operation"},"s-area":{"kgId":"O1","role":"operation"},"modeSelect":{"kgId":"C1","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"irrelevant_touch":{"canonical":"irrelevant_touch","control":"s-area"}}},"inquiryScript":{"summary":"热传导 · 探究","knowledgePoints":[{"id":"KP1","label":"热传导 · 探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-area","label":"截面积","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-thermal-conductivity","label":"导热系数","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-temperature-diff","label":"温差","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：导热系数与温差影响热流、截面积A对热流的影响","steps":[{"order":1,"title":"明确知识点","body":"回顾：导热系数与温差影响热流；截面积A对热流的影响","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节参数并测试热流、调节参数并测试热流、调节参数并测试热流、模式选择；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：重置按钮（重置滑条至默认值，与过关判定无关）","mapsToKg":["I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"heat"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | C1 | constraint | 竞赛模式 |\n| 否(探究) | C1 | constraint | 探究模式 |\n| 调节参数并测试热流 | O1 | operation | 调节导热系数k、温差ΔT、截面积A，点击测试热流 |\n| 热流在安全带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否(过热) | C3 | constraint | 过热失败 |\n| 否(不足) | C4 | constraint | 不足失败 |\n| 重试(过热) | skip retry | - | retry |\n| 重试(不足) | skip retry | - | retry |\n| 重试(模式) | skip retry | - | retry |\n| 导热系数与温差影响热流 | S1 | core | teach |\n| 验证公式 | verify | - | 连回O1 |","kg":{"title":"热传导 · 探究","sub":"热工台 · 导热棒","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式自由调参观察，或竞赛模式限次达标 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调节参数并测试热流","group":"operation","layer":"play","level":2,"r":22,"desc":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果"},{"id":"C2","label":"热流在安全带内?·结果判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"竞赛模式下热流需在锁定安全带区间内，过低或过高均不合格 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C3","label":"过热失败","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流超过上限导致炉墙过热，需降低导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"C4","label":"供暖不足","group":"constraint","layer":"play","level":3,"r":22,"desc":"热流低于下限导致供暖不足，需提高导热或温差 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":4,"r":22,"desc":"热流落在安全带区间内，竞赛急单完成，显示过关"},{"id":"S1","label":"导热系数与温差影响热流","group":"core","layer":"teach","level":0,"r":22,"desc":"热流速率Q/t = κAΔT/d，导热系数κ和温差ΔT越大热流越大"},{"id":"S2","label":"截面积A对热流的影响","group":"core","layer":"teach","level":0,"r":22,"desc":"截面积A增大热流增大，但竞赛中A固定为0.05m²，不影响过关判定"},{"id":"I1","label":"重置按钮","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"重置滑条至默认值，与过关判定无关"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C2","t":"C4","tp":"premise"},{"s":"C2","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"热传导 · 探究","sub":"热工台 · 导热棒","tree":{"n":"进入关卡","t":"root","d":"暴风雪夜里炉膛偏热、值班舱偏凉，需调节导热与温差使穿墙热流达标","children":[{"n":"模式选择?","t":"decision","d":"选择探究模式或竞赛模式","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调参观察热流变化"},{"_e":"是","n":"竞赛模式","t":"step","d":"限次将热流调至锁定安全带区间"}]},{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮","children":[{"n":"热流在安全带内?","t":"decision","d":"竞赛模式下热流需在锁定安全带区间内","children":[{"_e":"是","n":"过关","t":"result","d":"热流落在安全带区间内，竞赛急单完成"},{"_e":"否","n":"温升达标?","t":"decision","d":"判断热流是过高还是过低","children":[{"_e":"是","n":"过热失败","t":"junction","d":"热流超过上限，需降低导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"热流低于下限，需提高导热或温差，回到调节参数并测试热流后重试","children":[{"n":"调节参数并测试热流","t":"step","d":"调节导热系数k、温差ΔT、截面积A，点击测试热流按钮观察结果","children":[]}]}]}]}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"热流随导热与温差增大；太小供暖不足，太大则炉墙过热"},"strategy":{"title":"热传导 · 探究","sub":"热工台 · 导热棒","mermaid":"graph TD\nAdjust --> Fire\nAdjustK --> Fire[点击测试热流]\nAdjustK --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察热流?}:::stratCond\nObserve -->|未达标| AdjustK\nObserve -->|不足| RetryLow[提高k或ΔT]:::stratRetry\nObserve -->|过热| RetryOverheat[降低k或ΔT]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·截面积| Route_main\nStrategySelect -->|单变量·温差| Route_main_s_temperature_diff\nStrategySelect -->|单变量·导热系数| Route_main_s_thermal_conductiv\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改截面积]\nRoute_main_s_thermal_conductiv[控制变量：只改导热系数]\nRoute_main_s_temperature_diff[控制变量：只改温差]\nTrap[多参盲调]\nAdjustK[按观察单变量微调]\nRetryLow --> AdjustK\nRetryOverheat --> AdjustK\nRoute_main --> Adjust\nRoute_main_s_temperature_diff --> Adjust\nRoute_main_s_thermal_conductiv --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·截面积","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","Challenge","Fire","Observe","Win","RetryLow","RetryOverheat","Route_main","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main"],["Route_main","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"main_s-thermal-conductivity","label":"单变量·导热系数","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","Route_main_s_thermal_conductiv","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main_s_thermal_conductiv"],["Route_main_s_thermal_conductiv","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"main_s-temperature-diff","label":"单变量·温差","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","Fire","Observe","RetryLow","RetryOverheat","Route_main_s_temperature_diff","Adjust","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Route_main_s_temperature_diff"],["Route_main_s_temperature_diff","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","Challenge","StrategySelect","Fire","Observe","RetryLow","RetryOverheat","Trap","AdjustK"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","AdjustK"],["AdjustK","Fire"],["Observe","RetryLow"],["Observe","RetryOverheat"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","Challenge"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-thermal-conductivity":{"kgId":"O1","role":"operation"},"s-temperature-diff":{"kgId":"O1","role":"operation"},"s-area":{"kgId":"O1","role":"operation"},"modeSelect":{"kgId":"C1","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"irrelevant_touch":{"canonical":"irrelevant_touch","control":"s-area"}}},"inquiryScript":{"summary":"热传导 · 探究","knowledgePoints":[{"id":"KP1","label":"热传导 · 探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-area","label":"截面积","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-thermal-conductivity","label":"导热系数","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-temperature-diff","label":"温差","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：导热系数与温差影响热流、截面积A对热流的影响","steps":[{"order":1,"title":"明确知识点","body":"回顾：导热系数与温差影响热流；截面积A对热流的影响","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节参数并测试热流、调节参数并测试热流、调节参数并测试热流、模式选择；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：重置按钮（重置滑条至默认值，与过关判定无关）","mapsToKg":["I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"heat"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

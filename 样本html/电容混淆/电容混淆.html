@@ -608,8 +608,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <input type="range" id="s-distance" min="0.001" max="0.010" step="0.001" value="0.005">
     </div>
     <div class="slider-group">
-      <label for="s-plateTone">极板色调 <span class="value-badge" id="toneDisplay">暖铜</span></label>
-      <input type="range" id="s-plateTone" min="0" max="2" step="1" value="0">
+      <label for="s-plate-mass">极板质量 <span class="value-badge" id="massDisplay">0.20 kg</span></label>
+      <input type="range" id="s-plate-mass" min="0.05" max="0.50" step="0.05" value="0.20">
     </div>
   </div>
 
@@ -692,10 +692,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     const areaSlider = document.getElementById('s-area');
     const distSlider = document.getElementById('s-distance');
-    const toneSlider = document.getElementById('s-plateTone');
+    const massSlider = document.getElementById('s-plate-mass');
     const areaDisplay = document.getElementById('areaDisplay');
     const distDisplay = document.getElementById('distDisplay');
-    const toneDisplay = document.getElementById('toneDisplay');
+    const massDisplay = document.getElementById('massDisplay');
     const capDisplay = document.getElementById('capacitanceDisplay');
     const hintMsg = document.getElementById('hintMsg');
     const winContainer = document.getElementById('winContainer');
@@ -781,7 +781,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       challengeWon = false;
       areaSlider.value = '0.03';
       distSlider.value = '0.008';
-      toneSlider.value = '0';
+      massSlider.value = '0.20';
       refreshCapGoals();
       updateUI(false);
       hintMsg.textContent = '急单已下发 · ' + TARGET_LO + '–' + TARGET_HI + ' pF（打偏换新目标）';
@@ -806,7 +806,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       TARGET_HI = 180;
       areaSlider.value = '0.05';
       distSlider.value = '0.005';
-      toneSlider.value = '0';
+      massSlider.value = '0.20';
       refreshCapGoals();
       updateUI(false);
       hintMsg.textContent = '自由试调 · 改面积或间距后观察读数';
@@ -819,12 +819,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       else applyExploreBand();
     };
 
-    const TONE_NAMES = ['暖铜', '银灰', '冷蓝'];
-    const TONE_COLORS = [
-      { top: '#b45309', topHi: '#f59e0b', bot: '#92400e', botHi: '#d97706' },
-      { top: '#64748b', topHi: '#94a3b8', bot: '#475569', botHi: '#64748b' },
-      { top: '#1d4ed8', topHi: '#60a5fa', bot: '#1e3a8a', botHi: '#3b82f6' }
-    ];
+    // 极板固定金属色；质量只改厚度/阴影（不进入 C=ε₀A/d）
+    const PLATE_METAL = { top: '#8a9098', topHi: '#c4c9d0', bot: '#5c636c', botHi: '#8a9098' };
 
     function computeCapacitance(A, d) {
       if (d <= 0) return 0;
@@ -833,7 +829,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     function pF(valFarad) { return valFarad * 1e12; }
     function getA() { return parseFloat(areaSlider.value); }
     function getD() { return parseFloat(distSlider.value); }
-    function getTone() { return parseInt(toneSlider.value, 10) || 0; }
+    function getPlateMass() { return parseFloat(massSlider.value) || 0.20; }
 
     function computeCapBand(C) {
       if (playMode !== 'challenge') return null;
@@ -846,12 +842,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       return Math.max(0.4, Math.min(1.5, 0.45 + cNorm * 0.9));
     }
 
-    function startEventAnim(A, d, C_pF, tone) {
+    function startEventAnim(A, d, C_pF, plateMass) {
       eventAnim = {
         phase: 'windup',
         t: 0,
         drivers: {
-          A: A, d: d, C: C_pF, tone: tone,
+          A: A, d: d, C: C_pF, plateMass: plateMass,
           band: computeCapBand(C_pF),
           surgeAmp: Math.min(1, C_pF / 300),
           totalDur: mapCToDur(C_pF)
@@ -891,16 +887,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawScene(getA(), getD(), getTone(), pF(computeCapacitance(getA(), getD())));
+      drawScene(getA(), getD(), getPlateMass(), pF(computeCapacitance(getA(), getD())));
     }
 
     function updateUI(emitSnapshot) {
       const A = getA();
       const d = getD();
-      const tone = getTone();
+      const plateMass = getPlateMass();
       areaDisplay.textContent = A.toFixed(2) + ' m²';
       distDisplay.textContent = d.toFixed(3) + ' m';
-      toneDisplay.textContent = TONE_NAMES[tone] || TONE_NAMES[0];
+      massDisplay.textContent = plateMass.toFixed(2) + ' kg';
 
       const C_pF = pF(computeCapacitance(A, d));
       if (measuredC != null) {
@@ -913,16 +909,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
       const inBand = C_pF >= TARGET_LO && C_pF <= TARGET_HI;
       const winOk = playMode === 'challenge' ? inBand : false;
-      drawScene(A, d, tone, C_pF);
+      drawScene(A, d, plateMass, C_pF);
 
       if (emitSnapshot) {
         measuredC = C_pF;
-        startEventAnim(A, d, C_pF, tone);
+        startEventAnim(A, d, C_pF, plateMass);
         capDisplay.textContent = measuredC.toFixed(2);
         const controls = {
           's-area': A.toString(),
           's-distance': d.toString(),
-          's-plateTone': String(tone)
+          's-plate-mass': String(plateMass)
         };
         if (playMode === 'explore') {
           hintMsg.textContent = '当前读数 · 继续对比 A、d';
@@ -952,7 +948,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
               else if (window.parent && window.parent.PlatformTraceAdapter) window.parent.PlatformTraceAdapter.record('win', { winOk: true });
             } catch (e) {}
             if (typeof window.__craftShowWin === 'function') {
-              window.__craftShowWin('换目标后仍能命中：说明你掌握了读数随面积、间距的变化，而不是背滑条。');
+              window.__craftShowWin('换目标后仍能命中：读数跟面积、间距走（C∝A/d），与极板质量无关。');
             }
           }
           hintMsg.textContent = '急单完成 · 读数已入区间';
@@ -973,9 +969,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     }
 
-    function drawScene(A, d, tone, C_pF) {
+    function drawScene(A, d, plateMass, C_pF) {
       const drv = eventAnim ? eventAnim.drivers : null;
-      if (drv) { A = drv.A; d = drv.d; C_pF = drv.C; tone = drv.tone; }
+      if (drv) { A = drv.A; d = drv.d; C_pF = drv.C; plateMass = drv.plateMass; }
 
       ctx.clearRect(0, 0, W, H);
       const INK = '#141008', MID = '#2e2414', HI = '#f0c878', GLOW = '#e09030';
@@ -1124,8 +1120,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const cx = W * 0.44;
       const midY = Math.max(H * 0.42, (benchY - 24 + 100) / 2);
       const leftX = cx - plateW / 2;
-      const colors = TONE_COLORS[tone] || TONE_COLORS[0];
-      const plateT = Math.max(18, Math.min(28, H * 0.04));
+      const colors = PLATE_METAL;
+      const massNorm = Math.min(1, Math.max(0, ((plateMass || 0.20) - 0.05) / 0.45));
+      const plateT = Math.max(14, Math.min(36, 14 + massNorm * 22));
+      const plateShadow = 0.18 + massNorm * 0.35;
 
       // 介质叠片道具（夹具旁）
       for (let s = 0; s < 3; s++) {
@@ -1164,18 +1162,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       ctx.fillStyle = 'rgba(' + fieldRgb + ',' + (0.04 + capNorm * 0.08 + fieldPulse * 0.12) + ')';
       ctx.fillRect(leftX + 8, midY - gap / 2 + 4, plateW - 16, gap - 8);
 
+      ctx.fillStyle = 'rgba(0,0,0,' + plateShadow + ')';
+      ctx.fillRect(leftX + 3, midY - gap / 2 - plateT + 4, plateW, plateT);
       ctx.fillStyle = colors.top;
       ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT);
       ctx.fillStyle = colors.topHi;
-      ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT * 0.4);
-      if (tone > 0) {
-        ctx.fillStyle = 'rgba(212,160,80,0.18)';
-        ctx.fillRect(leftX + 8, midY - gap / 2 + 4, plateW - 16, gap - 8);
-      }
+      ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT * 0.35);
+      ctx.fillStyle = 'rgba(0,0,0,' + (plateShadow * 0.85) + ')';
+      ctx.fillRect(leftX + 3, midY + gap / 2 + 4, plateW, plateT);
       ctx.fillStyle = colors.bot;
       ctx.fillRect(leftX, midY + gap / 2, plateW, plateT);
       ctx.fillStyle = colors.botHi;
-      ctx.fillRect(leftX, midY + gap / 2, plateW, plateT * 0.4);
+      ctx.fillRect(leftX, midY + gap / 2, plateW, plateT * 0.35);
 
       ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 3;
@@ -1227,7 +1225,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       measuredC = null;
       areaSlider.value = '0.05';
       distSlider.value = '0.005';
-      toneSlider.value = '0';
+      massSlider.value = '0.20';
       updateUI(false);
       hintMsg.textContent = '已重置 · 读数待测 · 调参后再测';
       winContainer.innerHTML = '';
@@ -1235,7 +1233,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     areaSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
     distSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
-    toneSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
+    massSlider.addEventListener('input', function() { if (eventAnim) return; measuredC = null; updateUI(false); });
     testBtn.addEventListener('click', onTest);
     resetBtn.addEventListener('click', onReset);
     document.getElementById('I1').addEventListener('click', function() {
@@ -1256,7 +1254,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       stepEventAnim(dt);
       if (measuredC != null) meterNeedle += (measuredC - meterNeedle) * 0.35;
       else meterNeedle += (0 - meterNeedle) * 0.2;
-      drawScene(getA(), getD(), getTone(), pF(computeCapacitance(getA(), getD())));
+      drawScene(getA(), getD(), getPlateMass(), pF(computeCapacitance(getA(), getD())));
       requestAnimationFrame(loop);
     })(0);
   })();

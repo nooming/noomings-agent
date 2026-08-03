@@ -295,7 +295,7 @@
   "strategy": {
     "title": "电容实验二：串并联配置",
     "sub": "串并联 · 电容台",
-    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|未达标| Adjust\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetest --> Observe\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nObserve{观察偏高/偏低/达标?}:::stratCond\nAdjust[单变量微调]\nRetest[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjust --> Retest\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
+    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveFB -->|达标| Win[过关]:::stratResult\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
     "routes": [
       {
         "id": "main",
@@ -355,6 +355,10 @@
           [
             "ObserveFB",
             "AdjustFB"
+          ],
+          [
+            "ObserveFB",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -417,6 +421,10 @@
           [
             "ObserveFB",
             "AdjustFB"
+          ],
+          [
+            "ObserveFB",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -479,6 +487,10 @@
           [
             "ObserveFB",
             "AdjustFB"
+          ],
+          [
+            "ObserveFB",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -541,6 +553,10 @@
           [
             "ObserveFB",
             "AdjustFB"
+          ],
+          [
+            "ObserveFB",
+            "Win"
           ]
         ],
         "highlightFailureBranches": true
@@ -562,7 +578,8 @@
           "FireT",
           "ObserveT",
           "RetryT",
-          "Trap"
+          "Trap",
+          "AdjustT"
         ],
         "highlightEdges": [
           [
@@ -595,6 +612,14 @@
           ],
           [
             "Trap",
+            "FireT"
+          ],
+          [
+            "ObserveT",
+            "AdjustT"
+          ],
+          [
+            "AdjustT",
             "FireT"
           ]
         ],

@@ -359,7 +359,7 @@ function remapTrapRouteHighlights(routes, mermaidBody, removedNodes) {
   let changed = false;
   const next = routes.map(route => {
     const isTrap = /trap|盲调|多参/i.test(`${route.id || ''}${route.label || ''}`)
-      && !/试探混淆|confound/i.test(`${route.label || ''}${route.kind || ''}`);
+      && !/试探(?:混淆)?[·•.]|confound/i.test(`${route.label || ''}${route.kind || ''}`);
     if (!isTrap) return route;
 
     const selectEdge = edges.find(e =>

@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调摆长/摆角/质量 | O1 | operation | 调节摆长/摆角/质量 |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→摆幅≥15°? | C6 | constraint | 擒纵约束 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示摆幅 | retry | skip retry | 重试 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"单摆秒摆","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究单摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调摆长/摆角/质量","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"摆幅≥15°","group":"constraint","layer":"play","level":6,"r":22,"desc":"摆角θ₀是否大于等于15°，擒纵机构才能维持摆动 〔玩法/工程限位〕","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带且摆幅≥15°，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"单摆周期公式 T ≈ 2π√(L/g)·(1+θ²/16)，摆长是主要影响因素"},{"id":"S2","label":"摆长主导","group":"core","layer":"teach","level":0,"r":22,"desc":"T ∝ √L，摆长是周期的主宰，调准秒摆先调摆长"},{"id":"S3","label":"摆角修正","group":"method","layer":"teach","level":0,"r":22,"desc":"摆角带来二阶小修正θ²/16，是精校的最后一颗螺丝"},{"id":"S4","label":"质量无关","group":"core","layer":"teach","level":0,"r":22,"desc":"质量m不出现在周期公式中，换多重的锤周期都不变"},{"id":"S5","label":"擒纵约束","group":"method","layer":"teach","level":0,"r":22,"desc":"摆幅太小(<15°)机构无法补充能量，钟会停摆"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"单摆秒摆","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调摆长/摆角/质量","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"摆幅≥15°?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"摆幅不足，需增大摆角，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"单摆秒摆","mermaid":"graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAdjust[单变量微调]\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nCheckAngle -->|是| Win[过关]:::stratResult\nProbeCV[试探混淆·质量]\nAngleRoute[单变量·摆角]\nLenRoute[单变量·摆长]\nTrapRoute[多参盲调]\nTrapRoute --> Fire\n","routes":[{"id":"main","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustLen","Fire","Observe","CheckAngle","Win","AdjustAngle","Retry","AngleRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["Observe","CheckAngle"],["CheckAngle","Win"],["StrategySelect","AngleRoute"],["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["CheckAngle","AdjustAngle"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-len","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustAngle","Fire","Observe","AdjustLen","Retry","Win","LenRoute"],"highlightEdges":[["AdjustAngle","Fire"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["Fire","Observe"],["Retry","Fire"],["LenRoute","AdjustLen"],["StrategySelect","LenRoute"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","Fire","Observe","AdjustLen","Retry","TrapRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","TrapRoute"],["Fire","Observe"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Retry","Fire"],["TrapRoute","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","Explore"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-len":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-len"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(L/g)"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-angle","label":"摆角","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":1},{"id":"AV2","controlId":"s-len","label":"摆长","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要慢上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"先自由调摆，摸清周期与摆长；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则调整摆长，若摆幅不足则增大摆角。","mapsToKg":["C5","C6","O1"]},{"order":4,"title":"过关","body":"周期在目标带且摆幅≥15°，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调摆长/摆角/质量 | O1 | operation | 调节摆长/摆角/质量 |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→摆幅≥15°? | C6 | constraint | 擒纵约束 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示摆幅 | retry | skip retry | 重试 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究单摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调摆长/摆角/质量","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"摆幅≥15°","group":"constraint","layer":"play","level":6,"r":22,"desc":"摆角θ₀是否大于等于15°，擒纵机构才能维持摆动 〔玩法/工程限位〕","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带且摆幅≥15°，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"单摆周期公式 T ≈ 2π√(L/g)·(1+θ²/16)，摆长是主要影响因素"},{"id":"S2","label":"摆长主导","group":"core","layer":"teach","level":0,"r":22,"desc":"T ∝ √L，摆长是周期的主宰，调准秒摆先调摆长"},{"id":"S3","label":"摆角修正","group":"method","layer":"teach","level":0,"r":22,"desc":"摆角带来二阶小修正θ²/16，是精校的最后一颗螺丝"},{"id":"S4","label":"质量无关","group":"core","layer":"teach","level":0,"r":22,"desc":"质量m不出现在周期公式中，换多重的锤周期都不变"},{"id":"S5","label":"擒纵约束","group":"method","layer":"teach","level":0,"r":22,"desc":"摆幅太小(<15°)机构无法补充能量，钟会停摆"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调摆长/摆角/质量","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"摆幅≥15°?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"摆幅不足，需增大摆角，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调摆长/摆角/质量后重试","children":[{"n":"调摆长/摆角/质量","t":"step","d":"玩家通过滑块调节摆长L、摆角θ₀、摆锤质量m","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","mermaid":"graph TD\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nCheckAngle -->|是| Win[过关]:::stratResult\nProbeCV[试探·质量]\nAngleRoute[单变量·摆角]\nLenRoute[单变量·摆长]\nTrapRoute[多参盲调]\nTrapRoute --> Fire\n","routes":[{"id":"main","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustLen","Fire","Observe","CheckAngle","Win","AdjustAngle","Retry","AngleRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","AdjustLen"],["Observe","CheckAngle"],["CheckAngle","Win"],["StrategySelect","AngleRoute"],["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["CheckAngle","AdjustAngle"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-len","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","AdjustAngle","Fire","Observe","AdjustLen","Retry","Win","LenRoute"],"highlightEdges":[["AdjustAngle","Fire"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["Fire","Observe"],["Retry","Fire"],["LenRoute","AdjustLen"],["StrategySelect","LenRoute"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","Fire","Observe","AdjustLen","Retry","TrapRoute"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","TrapRoute"],["Fire","Observe"],["Observe","AdjustLen"],["AdjustLen","Fire"],["Observe","Retry"],["Retry","Fire"],["TrapRoute","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探·质量","mapsTo":[],"warn":"试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","Explore"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-len":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-len"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(L/g)"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-angle","label":"摆角","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":1},{"id":"AV2","controlId":"s-len","label":"摆长","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要慢上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"先自由调摆，摸清周期与摆长；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则调整摆长，若摆幅不足则增大摆角。","mapsToKg":["C5","C6","O1"]},{"order":4,"title":"过关","body":"周期在目标带且摆幅≥15°，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

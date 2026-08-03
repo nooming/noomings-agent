@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 初始状态 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调参发射 | O1 | operation | 调节 h/v/m 并发射 |\n| 飞出边界? | C4 | constraint | 独立失败判定 |\n| 否→继续 | - | - | skip retry |\n| 是→出界重试 | - | - | skip retry |\n| 超时? | C5 | constraint | 竞赛模式剩余机会为0或探究模式时间耗尽 |\n| 否→继续 | - | - | skip retry |\n| 是→超时重试 | - | - | skip retry |\n| 过环? | C2 | constraint | 能量是否足够翻越环顶 |\n| 否→掉落重试 | - | - | skip retry |\n| 是→停在减速带内? | C3 | constraint | 过环后是否停在减速带内 |\n| 否→冲出重试 | - | - | skip retry |\n| 是→过关 | R1 | result | 成功停稳 |\n| 机械能守恒 | S1 | core | ½mv² + mgh = 常量 |\n| 能量与过环关系 | S2 | core | 过环所需最小能量由环顶高度和速度决定 |\n| 验证机械能 | - | - | verify 边连回 O1 |\n| 验证能量关系 | - | - | verify 边连回 O1 |","kg":{"title":"机械能 · 过山车环路","sub":"探究过山车翻越环顶的条件","nodes":[{"id":"P1","label":"小车停在出发台","group":"premise","layer":"play","level":0,"r":22,"desc":"过山车初始位于出发台，等待调参发射"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，影响停稳区长度与过关条件","constraintKind":"physics"},{"id":"O1","label":"调参发射","group":"operation","layer":"play","level":2,"r":22,"desc":"调节起始高度 h、释放速度 v、小车质量 m，点击发射按钮"},{"id":"C2","label":"过环判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断小车能量是否足以翻越环顶，能量不足则掉落","constraintKind":"physics"},{"id":"C3","label":"停稳判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"判断小车是否停在减速带内，冲出则失败","constraintKind":"physics"},{"id":"C4","label":"飞出边界","group":"constraint","layer":"play","level":3,"r":22,"desc":"小车冲出画布边界，独立失败判定","constraintKind":"physics"},{"id":"C5","label":"超时判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"竞赛模式剩余机会用完或探究模式时间耗尽","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":5,"r":22,"desc":"小车成功翻越环顶并停在减速带内，达成过关条件"},{"id":"S1","label":"机械能守恒","group":"core","layer":"teach","level":0,"r":22,"desc":"理想情况下，½mv² + mgh = 常量，能量决定能否过环"},{"id":"S2","label":"能量与过环关系","group":"core","layer":"teach","level":0,"r":22,"desc":"过环所需最小能量由环顶高度和速度决定，能量不足则掉落"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏输入 I1，永久无关"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"method"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"method"},{"s":"C3","t":"R1","tp":"method"},{"s":"O1","t":"C4","tp":"premise"},{"s":"O1","t":"C5","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"机械能 · 过山车环路","sub":"探究过山车翻越环顶的条件","tree":{"n":"进入关卡","t":"root","d":"小车停在出发台","children":[{"n":"模式选择?","t":"decision","d":"选择探究或竞赛模式","children":[{"_e":"否","n":"竞赛模式","t":"step","d":"进入竞赛模式，限次挑战"},{"_e":"是","n":"探究模式","t":"step","d":"进入探究模式，自由试车"}]},{"n":"调参发射","t":"step","d":"调节 h/v/m 并点击发射","children":[{"n":"飞出边界?","t":"decision","d":"独立失败判定：小车是否冲出画布","children":[{"_e":"否","n":"继续","t":"step","d":"未出界"},{"_e":"是","n":"出界重试","t":"retry","d":"小车飞出边界，重置重试"}]},{"n":"超时?","t":"decision","d":"竞赛模式剩余机会为0或探究模式时间耗尽","children":[{"_e":"否","n":"继续","t":"step","d":"未超时"},{"_e":"是","n":"超时重试","t":"retry","d":"超时，重置重试"}]},{"n":"过环?","t":"decision","d":"能量是否足够翻越环顶","children":[{"_e":"否","n":"掉落重试","t":"retry","d":"能量不足，小车掉落，调参重试","children":[]},{"_e":"是","n":"停在减速带内?","t":"decision","d":"过环后是否停在减速带内","children":[{"_e":"否","n":"冲出重试","t":"retry","d":"速度过大，冲出减速带，调参重试","children":[]},{"_e":"是","n":"过关","t":"result","d":"成功翻越环顶并停在减速带内"}]}]}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"机械能 · 过山车环路"},"strategy":{"title":"机械能 · 过山车环路","sub":"探究过山车翻越环顶的条件","mermaid":"graph TD\nAdjust --> Fire\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nHeightStrat[单变量·起始高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·初速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","Explore","AdjustV","Fire","Observe","RetryDrop","RetryOut","SpeedStrat"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","SpeedStrat"],["SpeedStrat","AdjustV"],["AdjustV","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustV"],["Observe","RetryDrop"],["Observe","RetryOut"]],"highlightFailureBranches":true},{"id":"main_s-height","label":"单变量·起始高度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","Explore","AdjustH","Fire","Observe","RetryDrop","RetryOut","HeightStrat","AdjustV"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","HeightStrat"],["HeightStrat","AdjustH"],["AdjustH","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","RetryDrop"],["Observe","RetryOut"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","Trap","Fire","Observe","AdjustV","RetryDrop","RetryOut"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","RetryDrop"],["Observe","RetryOut"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","Explore"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-height":{"kgId":"O1","role":"operation"},"s-speed":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"},"trackCanvas":{"kgId":"I1","role":"irrelevant"},"essence-stage":{"kgId":"I1","role":"irrelevant"},"goalMission":{"kgId":"I1","role":"irrelevant"},"sideGoal":{"kgId":"I1","role":"irrelevant"},"heightDisplay":{"kgId":"I1","role":"irrelevant"},"speedDisplay":{"kgId":"I1","role":"irrelevant"},"massDisplay":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{}},"inquiryScript":{"summary":"机械能 · 过山车环路","knowledgePoints":[{"id":"KP1","label":"机械能 · 过山车环路","formulas":["R = 0.55","R = 0.6","E = 3.4"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-speed","label":"初速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-height","label":"起始高度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2","OV1","OV2"],"narrative":{"intro":"首班试车卡在出发台——试着弄清怎样才能翻过环顶。过环后看小车停在减速带哪里：能量不够会掉落，过大则冲出带外；对照停靠远近再调参。","steps":[{"order":1,"title":"观察现象","body":"点击发射，观察小车能否过环以及停在减速带的位置（前段、中段、后段、末端或冲出）。","mapsToKg":["O1","C2","C3"]},{"order":2,"title":"单变量调参","body":"保持其他参数不变，只调节初速度 v 或起始高度 h，观察对过环和停靠位置的影响。","mapsToKg":["AV1","AV2"]},{"order":3,"title":"归纳条件","body":"总结出既能过环又能停在减速带内的参数范围，理解机械能守恒。","mapsToKg":["KP1","R1"]}]},"outputVariables":[{"id":"OV1","label":"过环/停稳结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"energy"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 初始状态 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调参发射 | O1 | operation | 调节 h/v/m 并发射 |\n| 飞出边界? | C4 | constraint | 独立失败判定 |\n| 否→继续 | - | - | skip retry |\n| 是→出界重试 | - | - | skip retry |\n| 超时? | C5 | constraint | 竞赛模式剩余机会为0或探究模式时间耗尽 |\n| 否→继续 | - | - | skip retry |\n| 是→超时重试 | - | - | skip retry |\n| 过环? | C2 | constraint | 能量是否足够翻越环顶 |\n| 否→掉落重试 | - | - | skip retry |\n| 是→停在减速带内? | C3 | constraint | 过环后是否停在减速带内 |\n| 否→冲出重试 | - | - | skip retry |\n| 是→过关 | R1 | result | 成功停稳 |\n| 机械能守恒 | S1 | core | ½mv² + mgh = 常量 |\n| 能量与过环关系 | S2 | core | 过环所需最小能量由环顶高度和速度决定 |\n| 验证机械能 | - | - | verify 边连回 O1 |\n| 验证能量关系 | - | - | verify 边连回 O1 |","kg":{"title":"机械能 · 过山车环路","sub":"环轨台 · 机械能","nodes":[{"id":"P1","label":"小车停在出发台","group":"premise","layer":"play","level":0,"r":22,"desc":"过山车初始位于出发台，等待调参发射"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，影响停稳区长度与过关条件","constraintKind":"physics"},{"id":"O1","label":"调参发射","group":"operation","layer":"play","level":2,"r":22,"desc":"调节起始高度 h、释放速度 v、小车质量 m，点击发射按钮"},{"id":"C2","label":"过环判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断小车能量是否足以翻越环顶，能量不足则掉落","constraintKind":"physics"},{"id":"C3","label":"停稳判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"判断小车是否停在减速带内，冲出则失败","constraintKind":"physics"},{"id":"C4","label":"飞出边界","group":"constraint","layer":"play","level":3,"r":22,"desc":"小车冲出画布边界，独立失败判定","constraintKind":"physics"},{"id":"C5","label":"超时判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"竞赛模式剩余机会用完或探究模式时间耗尽","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":5,"r":22,"desc":"小车成功翻越环顶并停在减速带内，达成过关条件"},{"id":"S1","label":"机械能守恒","group":"core","layer":"teach","level":0,"r":22,"desc":"理想情况下，½mv² + mgh = 常量，能量决定能否过环"},{"id":"S2","label":"能量与过环关系","group":"core","layer":"teach","level":0,"r":22,"desc":"过环所需最小能量由环顶高度和速度决定，能量不足则掉落"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏输入 I1，永久无关"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"method"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"C3","tp":"method"},{"s":"C3","t":"R1","tp":"method"},{"s":"O1","t":"C4","tp":"premise"},{"s":"O1","t":"C5","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"机械能 · 过山车环路","sub":"环轨台 · 机械能","tree":{"n":"进入关卡","t":"root","d":"小车停在出发台","children":[{"n":"模式选择?","t":"decision","d":"选择探究或竞赛模式","children":[{"_e":"否","n":"竞赛模式","t":"step","d":"进入竞赛模式，限次挑战"},{"_e":"是","n":"探究模式","t":"step","d":"进入探究模式，自由试车"}]},{"n":"调参发射","t":"step","d":"调节 h/v/m 并点击发射","children":[{"n":"飞出边界?","t":"decision","d":"独立失败判定：小车是否冲出画布","children":[{"_e":"否","n":"继续","t":"step","d":"未出界"},{"_e":"是","n":"出界重试","t":"retry","d":"小车飞出边界，重置重试"}]},{"n":"超时?","t":"decision","d":"竞赛模式剩余机会为0或探究模式时间耗尽","children":[{"_e":"否","n":"继续","t":"step","d":"未超时"},{"_e":"是","n":"超时重试","t":"retry","d":"超时，重置重试"}]},{"n":"过环?","t":"decision","d":"能量是否足够翻越环顶","children":[{"_e":"否","n":"掉落重试","t":"retry","d":"能量不足，小车掉落，调参重试","children":[]},{"_e":"是","n":"停在减速带内?","t":"decision","d":"过环后是否停在减速带内","children":[{"_e":"否","n":"冲出重试","t":"retry","d":"速度过大，冲出减速带，调参重试","children":[]},{"_e":"是","n":"过关","t":"result","d":"成功翻越环顶并停在减速带内"}]}]}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"机械能 · 过山车环路"},"strategy":{"title":"机械能 · 过山车环路","sub":"环轨台 · 机械能","mermaid":"graph TD\nAdjustH --> Fire\nAdjustV --> Fire[发射]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：自由试车，对照减速带停靠位置]:::stratCore\nObserve -->|偏近/偏远| AdjustV\nObserve -->|掉落| RetryDrop[掉落重试]:::stratRetry\nObserve -->|冲出| RetryOut[冲出重试]:::stratRetry\nObserve -->|停稳| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·起始高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nModeSelect -->|竞赛模式| Challenge[竞赛模式：限次挑战，停稳区更短]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nHeightStrat --> AdjustH[调整起始高度 h]\nSpeedStrat --> AdjustV[调整初速度 v]\nHeightStrat[单变量·起始高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·初速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","Explore","AdjustV","Fire","Observe","RetryDrop","RetryOut","SpeedStrat"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","SpeedStrat"],["SpeedStrat","AdjustV"],["AdjustV","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustV"],["Observe","RetryDrop"],["Observe","RetryOut"]],"highlightFailureBranches":true},{"id":"main_s-height","label":"单变量·起始高度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","ModeSelect","Explore","AdjustH","Fire","Observe","RetryDrop","RetryOut","HeightStrat","AdjustV"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","HeightStrat"],["HeightStrat","AdjustH"],["AdjustH","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","RetryDrop"],["Observe","RetryOut"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","ModeSelect","Explore","Trap","Fire","Observe","AdjustV","RetryDrop","RetryOut"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","RetryDrop"],["Observe","RetryOut"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","ModeSelect","Explore"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-height":{"kgId":"O1","role":"operation"},"s-speed":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"I1":{"kgId":"I1","role":"irrelevant"},"trackCanvas":{"kgId":"I1","role":"irrelevant"},"essence-stage":{"kgId":"I1","role":"irrelevant"},"goalMission":{"kgId":"I1","role":"irrelevant"},"sideGoal":{"kgId":"I1","role":"irrelevant"},"heightDisplay":{"kgId":"I1","role":"irrelevant"},"speedDisplay":{"kgId":"I1","role":"irrelevant"},"massDisplay":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{}},"inquiryScript":{"summary":"机械能 · 过山车环路","knowledgePoints":[{"id":"KP1","label":"机械能 · 过山车环路","formulas":["R = 0.55","R = 0.6","E = 3.4"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-speed","label":"初速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-height","label":"起始高度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2","OV1","OV2"],"narrative":{"intro":"环轨试车卡在出发台——怎样才能稳稳过环顶？调起始高度与释放速度，看能否过环并停在减速带。","steps":[{"order":1,"title":"观察现象","body":"点击发射，观察小车能否过环以及停在减速带的位置（前段、中段、后段、末端或冲出）。","mapsToKg":["O1","C2","C3"]},{"order":2,"title":"单变量调参","body":"保持其他参数不变，只调节初速度 v 或起始高度 h，观察对过环和停靠位置的影响。","mapsToKg":["AV1","AV2"]},{"order":3,"title":"归纳条件","body":"总结出既能过环又能停在减速带内的参数范围，理解机械能守恒。","mapsToKg":["KP1","R1"]}]},"outputVariables":[{"id":"OV1","label":"过环/停稳结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"energy"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 选择模式? | C0 | constraint | 环境/模式判定 |\n| 否(探究模式) | C0 | constraint | 探究模式分支 |\n| 是(竞赛模式) | C0 | constraint | 竞赛模式分支 |\n| 调节极板面积/间距并测试 | O1 | operation | 调节极板间距、极板面积、s-plateTone |\n| 读数在目标区间? | C1 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | C2 | constraint | 偏低/偏高判定 |\n| 读数偏低? | C2 | constraint | 偏低分支 |\n| 是 | retry | skip retry | 偏低重试 |\n| 否 | retry | skip retry | 偏高重试 |\n| 探究模式 | S1 | core | teach 节点 |\n| 竞赛模式 | S2 | core | teach 节点 |\n| 极板色调 | I1 | irrelevant | 无关控件 |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 选择模式? | C0 | constraint | 环境/模式判定 |\n| 否(探究模式) | C0 | constraint | 探究模式分支 |\n| 是(竞赛模式) | C0 | constraint | 竞赛模式分支 |\n| 调节极板面积/间距并测试 | O1 | operation | 调节极板间距、极板面积、s-plate-mass |\n| 读数在目标区间? | C1 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | C2 | constraint | 偏低/偏高判定 |\n| 读数偏低? | C2 | constraint | 偏低分支 |\n| 是 | retry | skip retry | 偏低重试 |\n| 否 | retry | skip retry | 偏高重试 |\n| 探究模式 | S1 | core | teach 节点 |\n| 竞赛模式 | S2 | core | teach 节点 |\n| 极板质量 | I1 | irrelevant | 无关控件 |",
   "kg": {
     "title": "电容 · 平行板探究",
     "sub": "装配台 · 平行板电容",
@@ -81,12 +81,12 @@
       },
       {
         "id": "I1",
-        "label": "极板色调",
+        "label": "极板质量",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "调节极板色调的滑条，不影响电容读数"
+        "desc": "极板质量滑条仅改视觉厚度/阴影，不进入 C=ε₀A/d"
       },
       {
         "id": "S_CV",
@@ -276,7 +276,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-plateTone": {
+      "s-plate-mass": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -303,7 +303,7 @@
   "strategy": {
     "title": "电容 · 平行板探究",
     "sub": "装配台 · 平行板电容",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nEnv -->|竞赛模式| Challenge[竞赛模式：限次达标]:::stratCore\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·外观色调| ProbeCV\nStrategySelect -->|单变量·极板间距| Route_main\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| Explore[探究模式：自由调参观察]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main --> Adjust1\nRoute_main_s_area --> Adjust2\nProbeCV[试探混淆·外观色调]\nTrap[多参盲调]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust1 --> Fire[点击测试]\nAdjust2 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nEnv -->|竞赛模式| Challenge[竞赛模式：限次达标]:::stratCore\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|偏低| Adjust1\nObserve -->|偏高| Adjust1\nObserve -->|未达标| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探·极板质量| ProbeCV\nStrategySelect -->|单变量·极板间距| Route_main\nStrategySelect -->|单变量·极板面积| Route_main_s_area\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| Explore[探究模式：自由调参观察]:::stratCore\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRoute_main[控制变量：只改极板间距]\nRoute_main_s_area[控制变量：只改极板面积]\nRoute_main --> Adjust1\nRoute_main_s_area --> Adjust2\nProbeCV[试探·极板质量]\nTrap[多参盲调]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -514,10 +514,10 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_s_plateTone",
-        "label": "试探混淆·外观色调",
+        "id": "confound_s_plate_mass",
+        "label": "试探·极板质量",
         "mapsTo": [],
-        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "highlightNodes": [
@@ -615,8 +615,8 @@
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": "s-plateTone",
-        "label": "外观色调",
+        "controlId": "s-plate-mass",
+        "label": "极板质量",
         "reason": "混淆/装饰控件：不参与核心过关归因"
       }
     ],
@@ -651,7 +651,7 @@
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "混淆项：极板色调（调节极板色调的滑条，不影响电容读数）；极板色调（调节极板色调的滑条，不影响电容读数）",
+          "body": "试探项：极板质量（仅改视觉厚度，过关后可对照：与质量无关）",
           "mapsToKg": [
             "I1",
             "I1"
@@ -760,8 +760,8 @@
     ],
     "confoundingUi": [
       {
-        "controlId": "s-plateTone",
-        "label": "外观色调",
+        "controlId": "s-plate-mass",
+        "label": "极板质量",
         "reason": "混淆/装饰控件：不参与核心过关归因",
         "uiStrategy": "teach_only"
       }
@@ -794,7 +794,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-plateTone": {
+      "s-plate-mass": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -886,10 +886,10 @@
       },
       {
         "type": "irrelevant_touch",
-        "controlId": "s-plateTone",
+        "controlId": "s-plate-mass",
         "kgId": "I1",
         "required": false,
-        "description": "混淆/无关控件触碰 s-plateTone"
+        "description": "无关控件触碰 s-plate-mass"
       },
       {
         "type": "tuning",

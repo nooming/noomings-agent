@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 频率在范围? | C2 | constraint | 频率 1e14~1e15 Hz |\n| 逸出功在范围? | C3 | constraint | 逸出功 1~5 eV |\n| 调节参数 | O1 | operation | 调节s-frequency、s-workfunction、s-intensity |\n| 发射光 | O1 | operation | 发射动作 |\n| 光电流>0? | C4 | constraint | 结果判定 |\n| 过关 | R1 | result | — |\n| 提示重试 | — | — | skip retry |\n| 再试 | — | — | skip retry |\n| 未达标重试 | — | — | skip retry |\n| 提示频率范围 | — | — | skip retry |\n| 提示逸出功范围 | — | — | skip retry |\n| 探究模式 | S1 | core | teach |\n| 竞赛模式 | S2 | core | teach |\n| 光电效应公式 | S3 | core | teach |\n| 无关控件 | I1 | irrelevant | — |","kg":{"title":"光电效应 · 探究","sub":"探究频率与逸出功对光电流的影响","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始光电效应探究实验"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调节参数并发射光","group":"operation","layer":"play","level":2,"r":22,"desc":"调节频率、逸出功、光强滑条，点击发射光按钮"},{"id":"C2","label":"命中目标区域?","group":"constraint","layer":"play","level":3,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C3","label":"命中目标区域?","group":"constraint","layer":"play","level":3,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C4","label":"光电流>0?","group":"constraint","layer":"play","level":4,"r":22,"desc":"光子能量大于逸出功时产生光电流 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":5,"r":22,"desc":"成功观察到光电流，满足过关条件"},{"id":"S1","label":"探究模式","group":"core","layer":"teach","level":1,"r":22,"desc":"自由调节参数，观察光电流阈值条件"},{"id":"S2","label":"竞赛模式","group":"core","layer":"teach","level":1,"r":22,"desc":"限次挑战，随机材料逸出功固定，需调频率达标；竞赛急单材料池排除不可过关的 Cu/Ag（探究仍可演示）。"},{"id":"S3","label":"光电效应公式","group":"core","layer":"teach","level":2,"r":22,"desc":"Eₖ = hν − W，光子能量大于逸出功才产生光电流"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏输入框 I1，点击触发 irrelevant_touch 事件"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"O1","t":"C3","tp":"premise"},{"s":"C2","t":"C4","tp":"premise"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"光电效应 · 探究","sub":"探究频率与逸出功对光电流的影响","tree":{"n":"进入关卡","t":"root","d":"开始光电效应探究","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]},{"n":"模式选择?","t":"decision","d":"选择自由探究或竞赛挑战模式","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调节参数"},{"_e":"是","n":"竞赛模式","t":"step","d":"限次挑战，逸出功固定"}]},{"n":"频率在范围?","t":"decision","d":"入射光频率须在 1e14~1e15 Hz","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"频率超出范围，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"逸出功在范围?","t":"decision","d":"逸出功须在 1~5 eV","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"逸出功超出范围，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"光电流>0?","t":"decision","d":"光子能量大于逸出功则产生光电流","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"未产生光电流，尝试增大频率或减小逸出功，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"成功观察到光电流"}]}]}]}]}},"winSync":{"title":"过关","sub":"成功观察到光电流"},"strategy":{"title":"光电效应 · 探究","sub":"探究频率与逸出功对光电流的影响","mermaid":"graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq\nProbeCV[试探混淆·无关控件]\nPathFreq[单变量·频率]\nPathIntensity[单变量·光强]\nPathWork[单变量·逸出功]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·频率","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","ModeExplore","AdjustFreq","Fire","Observe","AdjustWork","AdjustIntensity","Retry","Adjust","ModeChallenge","Win","PathFreq"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathFreq"],["PathFreq","AdjustFreq"],["AdjustFreq","Fire"],["Fire","Observe"],["AdjustWork","Fire"],["AdjustIntensity","Fire"],["Observe","Retry"],["Observe","Adjust"],["Retry","AdjustFreq"],["Env","ModeChallenge"],["ModeChallenge","StrategySelect"],["Adjust","Fire"],["Observe","Win"]],"highlightFailureBranches":true},{"id":"main_s-workfunction","label":"单变量·逸出功","mapsTo":["P1","O1","C1","C2","R1"],"warn":"逸出功仅在探究模式可调；竞赛模式材料锁定，勿把 PathWork 当作挑战主路径","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","PathWork","AdjustWork","Fire","Observe","Win","Adjust","Retry"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathWork"],["PathWork","AdjustWork"],["AdjustWork","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust"],["Adjust","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-intensity","label":"单变量·光强","mapsTo":["P1","O1","C1","C2","R1"],"warn":"光强只缩放电流幅值，不改阈值；无法单独作为挑战过关主路径","score":0.35,"weight":0.35,"priorityRank":3,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","PathIntensity","AdjustIntensity","Fire","Observe","Adjust","Retry"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathIntensity"],["PathIntensity","AdjustIntensity"],["AdjustIntensity","Fire"],["Fire","Observe"],["Observe","Adjust"],["Adjust","Fire"],["Observe","Retry"]],"highlightFailureBranches":true,"tier":"suboptimal"},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","ModeExplore","StrategySelect","Fire","Observe","Retry","ModeChallenge","Trap","Adjust"],"highlightEdges":[["Start","Env"],["Env","ModeChallenge"],["ModeChallenge","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["Observe","Adjust"],["Observe","Retry"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","ProbeCV","ObserveCV","BackFromCV"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-frequency":{"kgId":"O1","role":"operation"},"s-workfunction":{"kgId":"O1","role":"operation"},"s-intensity":{"kgId":"O1","role":"operation"},"physicsCanvas":{"kgId":"I1","role":"irrelevant"},"freqDisplay":{"kgId":"I1","role":"irrelevant"},"workDisplay":{"kgId":"I1","role":"irrelevant"},"intensityDisplay":{"kgId":"I1","role":"irrelevant"},"currentDisplay":{"kgId":"I1","role":"irrelevant"},"hintMessage":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"光电效应 · 探究","knowledgePoints":[{"id":"KP1","label":"光电效应 · 探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-frequency","label":"频率","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-workfunction","label":"逸出功","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-intensity","label":"光强","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"只缩放光电流幅值，不改阈值条件；非挑战过关主控","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：探究模式、竞赛模式、光电效应公式","steps":[{"order":1,"title":"明确知识点","body":"回顾：探究模式；竞赛模式；光电效应公式；竞赛材料池仅含阈值可过关材料（Na/K/Cs/Zn），Cu/Ag 保留在探究演示。","mapsToKg":["S1","S2","S3"]},{"order":2,"title":"识别调节变量","body":"可调节：调节参数并发射光、调节参数并发射光、调节参数并发射光、模式选择；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）","mapsToKg":["I1","I1","I1","I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"optics"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 频率在范围? | C2 | constraint | 频率 1e14~1e15 Hz |\n| 逸出功在范围? | C3 | constraint | 逸出功 1~5 eV |\n| 调节参数 | O1 | operation | 调节s-frequency、s-workfunction、s-intensity |\n| 发射光 | O1 | operation | 发射动作 |\n| 光电流>0? | C4 | constraint | 结果判定 |\n| 过关 | R1 | result | — |\n| 提示重试 | — | — | skip retry |\n| 再试 | — | — | skip retry |\n| 未达标重试 | — | — | skip retry |\n| 提示频率范围 | — | — | skip retry |\n| 提示逸出功范围 | — | — | skip retry |\n| 探究模式 | S1 | core | teach |\n| 竞赛模式 | S2 | core | teach |\n| 光电效应公式 | S3 | core | teach |\n| 无关控件 | I1 | irrelevant | — |","kg":{"title":"光电效应 · 探究","sub":"暗箱 · 光电门禁","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始光电效应探究实验"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或竞赛挑战模式 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调节参数并发射光","group":"operation","layer":"play","level":2,"r":22,"desc":"调节频率、逸出功、光强滑条，点击发射光按钮"},{"id":"C2","label":"命中目标区域?","group":"constraint","layer":"play","level":3,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C3","label":"命中目标区域?","group":"constraint","layer":"play","level":3,"r":22,"desc":"结果落入目标/边界约束带","constraintKind":"physics"},{"id":"C4","label":"光电流>0?","group":"constraint","layer":"play","level":4,"r":22,"desc":"光子能量大于逸出功时产生光电流 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":5,"r":22,"desc":"成功观察到光电流，满足过关条件"},{"id":"S1","label":"探究模式","group":"core","layer":"teach","level":1,"r":22,"desc":"自由调节参数，观察光电流阈值条件"},{"id":"S2","label":"竞赛模式","group":"core","layer":"teach","level":1,"r":22,"desc":"限次挑战，随机材料逸出功固定，需调频率达标；竞赛急单材料池排除不可过关的 Cu/Ag（探究仍可演示）。"},{"id":"S3","label":"光电效应公式","group":"core","layer":"teach","level":2,"r":22,"desc":"Eₖ = hν − W，光子能量大于逸出功才产生光电流"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏输入框 I1，点击触发 irrelevant_touch 事件"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"O1","t":"C3","tp":"premise"},{"s":"C2","t":"C4","tp":"premise"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"光电效应 · 探究","sub":"暗箱 · 光电门禁","tree":{"n":"进入关卡","t":"root","d":"开始光电效应探究","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]},{"n":"模式选择?","t":"decision","d":"选择自由探究或竞赛挑战模式","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由调节参数"},{"_e":"是","n":"竞赛模式","t":"step","d":"限次挑战，逸出功固定"}]},{"n":"频率在范围?","t":"decision","d":"入射光频率须在 1e14~1e15 Hz","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"频率超出范围，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"逸出功在范围?","t":"decision","d":"逸出功须在 1~5 eV","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"逸出功超出范围，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"光电流>0?","t":"decision","d":"光子能量大于逸出功则产生光电流","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"未产生光电流，尝试增大频率或减小逸出功，回到调节参数并发射光后重试","children":[{"n":"调节参数并发射光","t":"step","d":"调节频率、逸出功、光强滑条，点击发射光按钮","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"成功观察到光电流"}]}]}]}]}},"winSync":{"title":"过关","sub":"成功观察到光电流"},"strategy":{"title":"光电效应 · 探究","sub":"暗箱 · 光电门禁","mermaid":"graph TD\nAdjust --> Fire\nAdjustFreq --> Fire[发射光]\nAdjustIntensity --> Fire\nAdjustWork --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察光电流?}:::stratCond\nFire --> Observe\nFire --> Observe\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|无电流| CheckFreq[频率不足?]\nObserve -->|无电流| Retry[重试]:::stratRetry\nObserve -->|有电流| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|单变量·频率| PathFreq\nStrategySelect -->|单变量·光强| PathIntensity\nStrategySelect -->|单变量·逸出功| PathWork\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛挑战| ModeChallenge[竞赛挑战：逸出功固定，限次]:::stratCore\nEnv -->|自由探究| ModeExplore[自由探究：可调所有参数]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nCheckFreq --> AdjustFreq\nPathFreq --> AdjustFreq[调整频率]\nPathIntensity --> AdjustIntensity[调整光强]\nPathWork --> AdjustWork[调整逸出功]\nRetry --> AdjustFreq\nProbeCV[试探混淆·无关控件]\nPathFreq[单变量·频率]\nPathIntensity[单变量·光强]\nPathWork[单变量·逸出功]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·频率","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","ModeExplore","AdjustFreq","Fire","Observe","AdjustWork","AdjustIntensity","Retry","Adjust","ModeChallenge","Win","PathFreq"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathFreq"],["PathFreq","AdjustFreq"],["AdjustFreq","Fire"],["Fire","Observe"],["AdjustWork","Fire"],["AdjustIntensity","Fire"],["Observe","Retry"],["Observe","Adjust"],["Retry","AdjustFreq"],["Env","ModeChallenge"],["ModeChallenge","StrategySelect"],["Adjust","Fire"],["Observe","Win"]],"highlightFailureBranches":true},{"id":"main_s-workfunction","label":"单变量·逸出功","mapsTo":["P1","O1","C1","C2","R1"],"warn":"逸出功仅在探究模式可调；竞赛模式材料锁定，勿把 PathWork 当作挑战主路径","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","PathWork","AdjustWork","Fire","Observe","Win","Adjust","Retry"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathWork"],["PathWork","AdjustWork"],["AdjustWork","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust"],["Adjust","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-intensity","label":"单变量·光强","mapsTo":["P1","O1","C1","C2","R1"],"warn":"光强只缩放电流幅值，不改阈值；无法单独作为挑战过关主路径","score":0.35,"weight":0.35,"priorityRank":3,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","PathIntensity","AdjustIntensity","Fire","Observe","Adjust","Retry","Win"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","PathIntensity"],["PathIntensity","AdjustIntensity"],["AdjustIntensity","Fire"],["Fire","Observe"],["Observe","Adjust"],["Adjust","Fire"],["Observe","Retry"],["Observe","Win"]],"highlightFailureBranches":true,"tier":"suboptimal"},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","ModeExplore","StrategySelect","Fire","Observe","Retry","ModeChallenge","Trap","Adjust"],"highlightEdges":[["Start","Env"],["Env","ModeChallenge"],["ModeChallenge","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["Observe","Adjust"],["Observe","Retry"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["Start","Env","ModeExplore","StrategySelect","ProbeCV","ObserveCV","BackFromCV"],"highlightEdges":[["Start","Env"],["Env","ModeExplore"],["ModeExplore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-frequency":{"kgId":"O1","role":"operation"},"s-workfunction":{"kgId":"O1","role":"operation"},"s-intensity":{"kgId":"O1","role":"operation"},"physicsCanvas":{"kgId":"I1","role":"irrelevant"},"freqDisplay":{"kgId":"I1","role":"irrelevant"},"workDisplay":{"kgId":"I1","role":"irrelevant"},"intensityDisplay":{"kgId":"I1","role":"irrelevant"},"currentDisplay":{"kgId":"I1","role":"irrelevant"},"hintMessage":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"光电效应 · 探究","knowledgePoints":[{"id":"KP1","label":"光电效应 · 探究","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-frequency","label":"频率","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-workfunction","label":"逸出功","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-intensity","label":"光强","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"只缩放光电流幅值，不改阈值条件；非挑战过关主控","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：探究模式、竞赛模式、光电效应公式","steps":[{"order":1,"title":"明确知识点","body":"回顾：探究模式；竞赛模式；光电效应公式；竞赛材料池仅含阈值可过关材料（Na/K/Cs/Zn），Cu/Ag 保留在探究演示。","mapsToKg":["S1","S2","S3"]},{"order":2,"title":"识别调节变量","body":"可调节：调节参数并发射光、调节参数并发射光、调节参数并发射光、模式选择；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）；无关控件（隐藏输入框 I1，点击触发 irrelevant_touch 事件）","mapsToKg":["I1","I1","I1","I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"optics"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

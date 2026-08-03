@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始 |\n| 模式选择? | C1 | constraint | 环境判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调节摆长/角度 | O1 | operation | 调参 |\n| 释放摆锤 | O1 | operation | 操作 |\n| 落点命中矿车? | C2 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→落点偏近/偏远? | C3 | constraint | 观察反馈 |\n| 偏近→提示偏近 | - | - | skip retry |\n| 偏远→提示偏远 | - | - | skip retry |\n| 重试 | - | - | skip retry |\n| 竞赛模式机会用尽? | C4 | constraint | 失败判定 |\n| 是→失败重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 摆长与释放角影响落点 | S1 | core | teach |\n| 验证摆长影响 | S2 | method | teach |","kg":{"title":"单摆投靶 · 第1关","sub":"探究摆长与释放角对落点的影响","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":1,"r":22,"desc":"开始第1关，矿车在轨道上往返运动"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，影响后续规则","constraintKind":"gameLimit"},{"id":"O1","label":"调节摆参数并释放","group":"operation","layer":"play","level":1,"r":22,"desc":"通过滑条调节摆长和释放角，点击释放按钮使摆锤摆动"},{"id":"C2","label":"落点命中矿车","group":"constraint","layer":"play","level":1,"r":22,"desc":"摆锤脱钩后落点是否在矿车宽度范围内","constraintKind":"physics"},{"id":"C3","label":"落点偏近或偏远","group":"constraint","layer":"play","level":1,"r":22,"desc":"未命中时判断落点在车前（偏近）或车后（偏远）","constraintKind":"physics"},{"id":"C4","label":"竞赛机会用尽","group":"constraint","layer":"play","level":1,"r":22,"desc":"竞赛模式下剩余尝试次数为0时判定失败","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":1,"r":22,"desc":"摆锤命中矿车，显示过关信息"},{"id":"S1","label":"摆长与释放角决定落点","group":"core","layer":"teach","level":1,"r":22,"desc":"摆长影响摆动周期，释放角影响初始位置，共同决定落点"},{"id":"S2","label":"验证摆长影响","group":"method","layer":"teach","level":1,"r":22,"desc":"固定释放角，改变摆长，观察落点变化"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"R1","tp":"core"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"C1","t":"C4","tp":"premise"},{"s":"C4","t":"O1","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"单摆投靶 · 第1关","sub":"探究摆长与释放角对落点的影响","tree":{"n":"进入关卡","t":"root","d":"开始第1关","children":[{"n":"模式选择?","t":"decision","d":"选择探究或竞赛模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究，不限次数"},{"_e":"否","n":"竞赛模式","t":"step","d":"限次挑战，机会用尽则失败"}]},{"n":"调节摆长/角度并释放","t":"step","d":"调参后点击释放按钮"},{"n":"调节摆参数并释放","t":"step","d":"通过滑条调节摆长和释放角，点击释放按钮使摆锤摆动","children":[]},{"n":"落点命中矿车?","t":"decision","d":"判断落点是否在矿车范围内","children":[{"n":"未达标重试","t":"retry","d":"未命中时判断偏近或偏远","_e":"否","children":[]},{"_e":"是","n":"过关","t":"result","d":"命中矿车，过关"}]},{"n":"竞赛机会用尽?","t":"decision","d":"竞赛模式下剩余次数为0","children":[{"_e":"否","n":"继续","t":"step","d":"还有机会"},{"_e":"是","n":"失败重试","t":"retry","d":"机会用尽，可切换模式重试"}]}]}},"winSync":{"title":"过关","sub":"命中矿车"},"strategy":{"title":"单摆投靶 · 第1关","sub":"探究摆长与释放角对落点的影响","mermaid":"graph TD\nAdjust --> Fire\nAdjustLen --> Fire[释放摆锤]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFail --> Start\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|未达标| Adjust\nObserve -->|机会用尽| Fail[失败]:::stratRetry\nObserve -->|偏远| RetryFar[偏远：按观察结果单变量微调]:::stratRetry\nObserve -->|偏近| RetryNear[偏近：按观察结果单变量微调]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·摆长| Len\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·摆角| Route_main_s_angle\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式：限5次机会]:::stratCore\nEnv -->|探究| Explore[探究模式：不限次数]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main_s_angle[控制变量：只改摆角]\nLen --> AdjustLen[调整摆长]\nRetryFar --> Adjust\nRetryNear --> AdjustLen\nRoute_main_s_angle --> Adjust\nRoute_main_s_angle --> AdjustAng[调整角度]\nAdjustAng --> Fire\nRetryFar --> AdjustAng\nProbeCV[试探混淆·质量]\nLen[单变量·摆长]\nTrap[多参盲调]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","Explore","AdjustLen","Fire","Observe","Win","AdjustAng","RetryFar","RetryNear","Challenge","Adjust","Len"],"highlightEdges":[["Start","Env"],["Env","Explore"],["Explore","StrategySelect"],["StrategySelect","Len"],["Len","AdjustLen"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","Win"],["AdjustAng","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["RetryFar","AdjustAng"],["RetryNear","AdjustLen"],["Env","Challenge"],["Challenge","StrategySelect"],["Observe","Adjust"],["Adjust","Fire"]],"highlightFailureBranches":true},{"id":"main_s-angle","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","AdjustLen","Fire","Observe","Adjust","RetryFar","RetryNear","Route_main_s_angle","AdjustAng"],"highlightEdges":[["AdjustLen","Fire"],["Observe","Win"],["Observe","Adjust"],["Adjust","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["RetryNear","AdjustLen"],["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["Fire","Observe"],["Route_main_s_angle","Adjust"],["StrategySelect","Route_main_s_angle"],["Route_main_s_angle","AdjustAng"],["AdjustAng","Fire"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","Explore","StrategySelect","Fire","Observe","Adjust","RetryFar","RetryNear","Trap"],"highlightEdges":[["Start","Env"],["Env","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","Adjust"],["Adjust","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["Env","Challenge"],["Challenge","StrategySelect"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","Challenge"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-length":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"releaseBtn":{"kgId":"O1","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"单摆投靶 · 探究游戏","knowledgePoints":[{"id":"KP1","label":"单摆投靶 · 探究游戏","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-length","label":"摆长","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-angle","label":"摆角","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"non-monotone","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2"],"narrative":{"intro":"本关探究：摆长与释放角决定落点、验证摆长影响","steps":[{"order":1,"title":"明确知识点","body":"回顾：摆长与释放角决定落点；验证摆长影响","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节摆参数并释放、调节摆参数并释放、调节摆参数并释放、模式选择、调节摆参数并释放；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1","O1"]},{"order":3,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"pendulum"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始 |\n| 模式选择? | C1 | constraint | 环境判定 |\n| 是→探究模式 | - | - | skip retry |\n| 否→竞赛模式 | - | - | skip retry |\n| 调节摆长/角度 | O1 | operation | 调参 |\n| 释放摆锤 | O1 | operation | 操作 |\n| 落点命中矿车? | C2 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→落点偏近/偏远? | C3 | constraint | 观察反馈 |\n| 偏近→提示偏近 | - | - | skip retry |\n| 偏远→提示偏远 | - | - | skip retry |\n| 重试 | - | - | skip retry |\n| 竞赛模式机会用尽? | C4 | constraint | 失败判定 |\n| 是→失败重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 摆长与释放角影响落点 | S1 | core | teach |\n| 验证摆长影响 | S2 | method | teach |","kg":{"title":"单摆投靶 · 第1关","sub":"投靶台 · 单摆","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":1,"r":22,"desc":"开始第1关，矿车在轨道上往返运动"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，影响后续规则","constraintKind":"gameLimit"},{"id":"O1","label":"调节摆参数并释放","group":"operation","layer":"play","level":1,"r":22,"desc":"通过滑条调节摆长和释放角，点击释放按钮使摆锤摆动"},{"id":"C2","label":"落点命中矿车","group":"constraint","layer":"play","level":1,"r":22,"desc":"摆锤脱钩后落点是否在矿车宽度范围内","constraintKind":"physics"},{"id":"C3","label":"落点偏近或偏远","group":"constraint","layer":"play","level":1,"r":22,"desc":"未命中时判断落点在车前（偏近）或车后（偏远）","constraintKind":"physics"},{"id":"C4","label":"竞赛机会用尽","group":"constraint","layer":"play","level":1,"r":22,"desc":"竞赛模式下剩余尝试次数为0时判定失败","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":1,"r":22,"desc":"摆锤命中矿车，显示过关信息"},{"id":"S1","label":"摆长与释放角决定落点","group":"core","layer":"teach","level":1,"r":22,"desc":"摆长影响摆动周期，释放角影响初始位置，共同决定落点"},{"id":"S2","label":"验证摆长影响","group":"method","layer":"teach","level":1,"r":22,"desc":"固定释放角，改变摆长，观察落点变化"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"C2","tp":"premise"},{"s":"C2","t":"R1","tp":"core"},{"s":"C2","t":"C3","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"C1","t":"C4","tp":"premise"},{"s":"C4","t":"O1","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"单摆投靶 · 第1关","sub":"投靶台 · 单摆","tree":{"n":"进入关卡","t":"root","d":"开始第1关","children":[{"n":"模式选择?","t":"decision","d":"选择探究或竞赛模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究，不限次数"},{"_e":"否","n":"竞赛模式","t":"step","d":"限次挑战，机会用尽则失败"}]},{"n":"调节摆长/角度并释放","t":"step","d":"调参后点击释放按钮"},{"n":"调节摆参数并释放","t":"step","d":"通过滑条调节摆长和释放角，点击释放按钮使摆锤摆动","children":[]},{"n":"落点命中矿车?","t":"decision","d":"判断落点是否在矿车范围内","children":[{"n":"未达标重试","t":"retry","d":"未命中时判断偏近或偏远","_e":"否","children":[]},{"_e":"是","n":"过关","t":"result","d":"命中矿车，过关"}]},{"n":"竞赛机会用尽?","t":"decision","d":"竞赛模式下剩余次数为0","children":[{"_e":"否","n":"继续","t":"step","d":"还有机会"},{"_e":"是","n":"失败重试","t":"retry","d":"机会用尽，可切换模式重试"}]}]}},"winSync":{"title":"过关","sub":"命中矿车"},"strategy":{"title":"单摆投靶 · 第1关","sub":"投靶台 · 单摆","mermaid":"graph TD\nAdjust --> Fire\nAdjustLen --> Fire[释放摆锤]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFail --> Start\nFire --> Observe{观察落点?}:::stratCond\nObserve -->|未达标| Adjust\nObserve -->|机会用尽| Fail[失败]:::stratRetry\nObserve -->|偏远| RetryFar[偏远：按观察结果单变量微调]:::stratRetry\nObserve -->|偏近| RetryNear[偏近：按观察结果单变量微调]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·摆长| Len\nStrategySelect -.->|试探·质量| ProbeCV\nStrategySelect -->|单变量·摆角| Route_main_s_angle\nStrategySelect -->|多参盲调| Trap\nEnv -->|竞赛| Challenge[竞赛模式：限5次机会]:::stratCore\nEnv -->|探究| Explore[探究模式：不限次数]:::stratCore\nStart([开始]):::stratStart\nAdjust[单变量微调]\nRoute_main_s_angle[控制变量：只改摆角]\nLen --> AdjustLen[调整摆长]\nRetryFar --> Adjust\nRetryNear --> AdjustLen\nRoute_main_s_angle --> Adjust\nRoute_main_s_angle --> AdjustAng[调整角度]\nAdjustAng --> Fire\nRetryFar --> AdjustAng\nProbeCV[试探·质量]\nLen[单变量·摆长]\nTrap[多参盲调]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·摆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Env","Explore","AdjustLen","Fire","Observe","Win","AdjustAng","RetryFar","RetryNear","Challenge","Adjust","Len"],"highlightEdges":[["Start","Env"],["Env","Explore"],["Explore","StrategySelect"],["StrategySelect","Len"],["Len","AdjustLen"],["AdjustLen","Fire"],["Fire","Observe"],["Observe","Win"],["AdjustAng","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["RetryFar","AdjustAng"],["RetryNear","AdjustLen"],["Env","Challenge"],["Challenge","StrategySelect"],["Observe","Adjust"],["Adjust","Fire"]],"highlightFailureBranches":true},{"id":"main_s-angle","label":"单变量·摆角","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","Env","Challenge","AdjustLen","Fire","Observe","Adjust","RetryFar","RetryNear","Route_main_s_angle","AdjustAng"],"highlightEdges":[["AdjustLen","Fire"],["Observe","Win"],["Observe","Adjust"],["Adjust","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["RetryNear","AdjustLen"],["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["Fire","Observe"],["Route_main_s_angle","Adjust"],["StrategySelect","Route_main_s_angle"],["Route_main_s_angle","AdjustAng"],["AdjustAng","Fire"],["RetryFar","Adjust"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Env","Explore","StrategySelect","Fire","Observe","Adjust","RetryFar","RetryNear","Trap"],"highlightEdges":[["Start","Env"],["Env","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","Adjust"],["Adjust","Fire"],["Observe","RetryFar"],["Observe","RetryNear"],["Env","Challenge"],["Challenge","StrategySelect"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探·质量","mapsTo":[],"warn":"试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","Challenge"],"highlightEdges":[["Start","Env"],["Env","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-length":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"releaseBtn":{"kgId":"O1","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"单摆投靶 · 探究游戏","knowledgePoints":[{"id":"KP1","label":"单摆投靶 · 探究游戏","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-length","label":"摆长","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-angle","label":"摆角","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"non-monotone","affects":[],"notes":"","priorityRank":2}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2"],"narrative":{"intro":"本关探究：摆长与释放角决定落点、验证摆长影响","steps":[{"order":1,"title":"明确知识点","body":"回顾：摆长与释放角决定落点；验证摆长影响","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节摆参数并释放、调节摆参数并释放、调节摆参数并释放、模式选择、调节摆参数并释放；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","C1","O1"]},{"order":3,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"pendulum"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

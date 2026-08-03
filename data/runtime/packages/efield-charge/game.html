@@ -794,7 +794,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>过关 · 你学到了什么</h2>
     <div class="formula" id="craftWinFormula">F = qE</div>
-    <p id="craftWinText">对照光点偏转，你摸清了场强与电荷量如何影响轨迹。</p>
+    <p id="craftWinText">对照光点偏转，你摸清了场强与电荷量如何影响轨迹；极板间距不改变偏转（E 独立设定）。</p>
     <button type="button" id="craftWinBtn">再玩一次</button>
   </div>
 </div>
@@ -853,12 +853,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
             <div class="ctrl-group">
                 <div class="ctrl-label">
-                    <span>极板间距 <span class="symbol">d</span>（示意）</span>
+                    <span>极板间距 <span class="symbol">d</span></span>
                     <span class="value" id="gapValDisplay">4.0 cm</span>
                 </div>
-                <input type="range" id="s-plate-gap" min="2" max="8" step="0.1" value="4.0" title="仅改变极板示意间距，不改变偏转（E 独立设定）">
+                <input type="range" id="s-plate-gap" min="2" max="8" step="0.1" value="4.0" title="极板间距">
                 <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--craft-muted); padding:0 4px;">
-                    <span>2 cm</span><span>仅示意 · 不影响偏转</span><span>8 cm</span>
+                    <span>2 cm</span><span></span><span>8 cm</span>
                 </div>
             </div>
 
@@ -1021,7 +1021,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       updateFromSliders();
       resetParticle();
       refreshEfieldGoals();
-      observeMsg.innerHTML = '自由试写：调节后发射，观察向下偏转（间距 d 仅示意）。';
+      observeMsg.innerHTML = '自由试写：调节后发射，观察向下偏转。';
       draw();
     }
     window.__efieldApplyMode = function(mode) {
@@ -1236,7 +1236,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     emit('snapshot', { controls: { 's-fieldStrength': state.fieldStrength, 's-charge': state.charge }, winOk: true, hintKey: 'efield_rush' });
                     emit('win', { winOk: true });
                     if (typeof window.__craftShowWin === 'function') {
-                      window.__craftShowWin('急单靶区本局锁定，你用场强与电荷量把电子束打进了指定荧光靶。');
+                      window.__craftShowWin('急单靶区本局锁定：偏转由 F=qE 决定（场强与电荷量），与极板间距无关。');
                     }
                   }
                 } else {

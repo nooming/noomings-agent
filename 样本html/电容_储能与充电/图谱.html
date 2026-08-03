@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 选择模式? | M1 | premise | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 选择 C 和 V? | O1 | operation | 调参 |\n| 提示选择 | — | — | skip retry |\n| 放电操作 | O4 | operation | 操作 |\n| 储能达标? | C1 | constraint | 结果判定 |\n| 能量不足或过载 | — | — | skip retry |\n| 过关 | R1 | result | 过关 |\n| 电源耗尽? | C2 | constraint | 次数判定 |\n| 电源耗尽重试 | — | — | skip retry |\n| 储能公式 | S1 | core | teach |\n| 验证公式 | — | — | verify 连回 O1 |","kg":{"title":"电容实验三：储能与充电","sub":"能量之门","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入能量之门关卡，开始探究电容储能"},{"id":"M1","label":"选择模式","group":"premise","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛挑战模式，影响目标区间与次数限制"},{"id":"O1","label":"选择电容量 C","group":"operation","layer":"play","level":2,"r":22,"desc":"从四个电容值中选择一个，决定储能公式中的 C"},{"id":"O2","label":"选择充电电压 V","group":"operation","layer":"play","level":2,"r":22,"desc":"从四个电压值中选择一个，决定储能公式中的 V"},{"id":"O3","label":"调节馈线长度 L","group":"operation","layer":"play","level":2,"r":22,"desc":"拖动滑条调节馈线长度，不影响储能判定，仅 UI 反馈"},{"id":"O4","label":"放电操作","group":"operation","layer":"play","level":2,"r":22,"desc":"点击放电按钮，触发储能计算与门状态判定"},{"id":"C1","label":"储能达标判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断储能是否在目标区间 950~1150 J 内，决定门是否开启","constraintKind":"physics"},{"id":"C2","label":"剩余充电次数判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断剩余充电次数是否耗尽，耗尽则系统重置","constraintKind":"gameLimit"},{"id":"R1","label":"过关：能量之门开启","group":"result","layer":"play","level":4,"r":22,"desc":"储能落入目标区间，门缓缓开启，光芒从门缝溢出，过关"},{"id":"S1","label":"储能公式 E = ½ C V²","group":"core","layer":"teach","level":0,"r":22,"desc":"电容储能与电容值成正比，与电压平方成正比，电压影响更显著"},{"id":"S2","label":"电压平方效应","group":"core","layer":"teach","level":0,"r":22,"desc":"电压翻倍导致能量变为四倍，调 V 比调 C 更有效"},{"id":"I1","label":"音量调节","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"调节主音量，不影响实验参数与过关判定"},{"id":"C_OUT","label":"结果落在目标区?","group":"constraint","layer":"play","level":2,"r":22,"desc":"观测终点/读数是否落入目标带"}],"links":[{"s":"P1","t":"M1","tp":"premise"},{"s":"M1","t":"O1","tp":"method"},{"s":"O1","t":"O2","tp":"method"},{"s":"O2","t":"O3","tp":"method"},{"s":"O3","t":"O4","tp":"method"},{"s":"O4","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S1","t":"O2","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S2","t":"O2","tp":"verify"},{"s":"O1","t":"C_OUT","tp":"premise"},{"s":"C_OUT","t":"R1","tp":"core"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"}]},"dt":{"title":"电容实验三：储能与充电","sub":"能量之门","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"选择模式?","t":"decision","d":"环境/模式判定","children":[{"_e":"否","n":"竞赛模式","t":"step","d":"进入竞赛挑战模式，目标区间变窄且限次"},{"_e":"是","n":"探究模式","t":"step","d":"进入自由探究模式，宽区间无次数限制"}]},{"n":"选择 C 和 V?","t":"decision","d":"玩家是否已选择 C 和 V","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"请先选择电容量 C 和充电电压 V","children":[]},{"_e":"是","n":"放电操作","t":"step","d":"点击放电按钮，触发储能计算"}]},{"n":"储能达标?","t":"decision","d":"储能是否在 950~1150 J 范围内","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"储能未达标，重新选择 C 和 V","children":[]},{"_e":"是","n":"过关","t":"result","d":"能量之门开启，过关"}]},{"n":"电源耗尽?","t":"decision","d":"剩余充电次数是否耗尽","children":[{"_e":"否","n":"电源耗尽重试","t":"retry","d":"充电次数耗尽，系统重置并重新生成谜题","children":[]},{"_e":"是","n":"继续","t":"step","d":"还有剩余充电次数，可继续尝试"}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"通过调参与观察，你验证了本实验的核心关系。"},"strategy":{"title":"电容实验三：储能与充电","sub":"能量之门","mermaid":"graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探混淆·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n","routes":[{"id":"main","label":"单变量·馈线长度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","Env","ModeCha","Route_main","AdjustC","Fire","Observe","Adjust","AdjustV","Retry"],"highlightEdges":[["Route_main","AdjustC"],["AdjustC","Fire"],["Observe","Win"],["Observe","AdjustC"],["Observe","Adjust"],["Adjust","Fire"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","Retry"],["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","Route_main"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","Env","ModeCha","Trap","Fire","Observe","AdjustC","AdjustV","Retry","Fire3","Adjust"],"highlightEdges":[["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","Adjust"],["Observe","AdjustC"],["AdjustC","Fire"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","Retry"],["Trap","Fire3"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_audio_volume","label":"试探混淆·音量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","ModeCha"],"highlightEdges":[["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"audio-volume":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"M1","role":"operation"},"s-cable":{"kgId":"O3","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"电容实验三：储能与充电","knowledgePoints":[{"id":"KP1","label":"电容实验三：储能与充电","formulas":["E = ½ C V²","R    = [100, 400]","R = H * 0.19","C = [], ch4Choices_V = []"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-cable","label":"馈线长度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1}],"confoundingVariables":[{"id":"CV1","controlId":"audio-volume","label":"音量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","CV1"],"narrative":{"intro":"本关探究：储能公式 E = ½ C V²、电压平方效应","steps":[{"order":1,"title":"明确知识点","body":"回顾：储能公式 E = ½ C V²；电压平方效应","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：选择模式、调节馈线长度 L；建议控制变量法，每次只改一项。","mapsToKg":["M1","O3"]},{"order":3,"title":"识别混淆变量","body":"混淆项：音量调节（调节主音量，不影响实验参数与过关判定）","mapsToKg":["I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["M1"]}]},"outputVariables":[{"id":"OV1","label":"电容读数","symbol":"C","unit":"pF","role":"primary","source":"observe"},{"id":"OV2","label":"是否击穿","symbol":"E>Ebd","unit":"","role":"secondary","source":"constraint"}],"domain":"capacitor"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 选择模式? | M1 | premise | 环境/模式判定 |\n| 探究模式 | — | — | skip retry |\n| 竞赛模式 | — | — | skip retry |\n| 选择 C 和 V? | O1 | operation | 调参 |\n| 提示选择 | — | — | skip retry |\n| 放电操作 | O4 | operation | 操作 |\n| 储能达标? | C1 | constraint | 结果判定 |\n| 能量不足或过载 | — | — | skip retry |\n| 过关 | R1 | result | 过关 |\n| 电源耗尽? | C2 | constraint | 次数判定 |\n| 电源耗尽重试 | — | — | skip retry |\n| 储能公式 | S1 | core | teach |\n| 验证公式 | — | — | verify 连回 O1 |","kg":{"title":"电容实验三：储能与充电","sub":"储能台 · 充放电","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入能量之门关卡，开始探究电容储能"},{"id":"M1","label":"选择模式","group":"premise","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛挑战模式，影响目标区间与次数限制"},{"id":"O1","label":"选择电容量 C","group":"operation","layer":"play","level":2,"r":22,"desc":"从四个电容值中选择一个，决定储能公式中的 C"},{"id":"O2","label":"选择充电电压 V","group":"operation","layer":"play","level":2,"r":22,"desc":"从四个电压值中选择一个，决定储能公式中的 V"},{"id":"O3","label":"调节馈线长度 L","group":"operation","layer":"play","level":2,"r":22,"desc":"拖动滑条调节馈线长度，不影响储能判定，仅 UI 反馈"},{"id":"O4","label":"放电操作","group":"operation","layer":"play","level":2,"r":22,"desc":"点击放电按钮，触发储能计算与门状态判定"},{"id":"C1","label":"储能达标判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断储能是否在目标区间 950~1150 J 内，决定门是否开启","constraintKind":"physics"},{"id":"C2","label":"剩余充电次数判定","group":"constraint","layer":"play","level":3,"r":22,"desc":"判断剩余充电次数是否耗尽，耗尽则系统重置","constraintKind":"gameLimit"},{"id":"R1","label":"过关：能量之门开启","group":"result","layer":"play","level":4,"r":22,"desc":"储能落入目标区间，门缓缓开启，光芒从门缝溢出，过关"},{"id":"S1","label":"储能公式 E = ½ C V²","group":"core","layer":"teach","level":0,"r":22,"desc":"电容储能与电容值成正比，与电压平方成正比，电压影响更显著"},{"id":"S2","label":"电压平方效应","group":"core","layer":"teach","level":0,"r":22,"desc":"电压翻倍导致能量变为四倍，调 V 比调 C 更有效"},{"id":"I1","label":"音量调节","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"调节主音量，不影响实验参数与过关判定"},{"id":"C_OUT","label":"结果落在目标区?","group":"constraint","layer":"play","level":2,"r":22,"desc":"观测终点/读数是否落入目标带"}],"links":[{"s":"P1","t":"M1","tp":"premise"},{"s":"M1","t":"O1","tp":"method"},{"s":"O1","t":"O2","tp":"method"},{"s":"O2","t":"O3","tp":"method"},{"s":"O3","t":"O4","tp":"method"},{"s":"O4","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"R1","tp":"core"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S1","t":"O2","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S2","t":"O2","tp":"verify"},{"s":"O1","t":"C_OUT","tp":"premise"},{"s":"C_OUT","t":"R1","tp":"core"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"}]},"dt":{"title":"电容实验三：储能与充电","sub":"储能台 · 充放电","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"选择模式?","t":"decision","d":"环境/模式判定","children":[{"_e":"否","n":"竞赛模式","t":"step","d":"进入竞赛挑战模式，目标区间变窄且限次"},{"_e":"是","n":"探究模式","t":"step","d":"进入自由探究模式，宽区间无次数限制"}]},{"n":"选择 C 和 V?","t":"decision","d":"玩家是否已选择 C 和 V","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"请先选择电容量 C 和充电电压 V","children":[]},{"_e":"是","n":"放电操作","t":"step","d":"点击放电按钮，触发储能计算"}]},{"n":"储能达标?","t":"decision","d":"储能是否在 950~1150 J 范围内","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"储能未达标，重新选择 C 和 V","children":[]},{"_e":"是","n":"过关","t":"result","d":"能量之门开启，过关"}]},{"n":"电源耗尽?","t":"decision","d":"剩余充电次数是否耗尽","children":[{"_e":"否","n":"电源耗尽重试","t":"retry","d":"充电次数耗尽，系统重置并重新生成谜题","children":[]},{"_e":"是","n":"继续","t":"step","d":"还有剩余充电次数，可继续尝试"}]}]}},"winSync":{"title":"过关 · 你学到了什么","sub":"通过调参与观察，你验证了本实验的核心关系。"},"strategy":{"title":"电容实验三：储能与充电","sub":"储能台 · 充放电","mermaid":"graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探混淆·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n","routes":[{"id":"main","label":"单变量·馈线长度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Win","Env","ModeCha","Route_main","AdjustC","Fire","Observe","Adjust","AdjustV","Retry"],"highlightEdges":[["Route_main","AdjustC"],["AdjustC","Fire"],["Observe","Win"],["Observe","AdjustC"],["Observe","Adjust"],["Adjust","Fire"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","Retry"],["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","Route_main"],["Fire","Observe"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","StrategySelect","Env","ModeCha","Trap","Fire","Observe","AdjustC","AdjustV","Retry","Fire3","Adjust"],"highlightEdges":[["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","Adjust"],["Observe","AdjustC"],["AdjustC","Fire"],["Observe","AdjustV"],["AdjustV","Fire"],["Observe","Retry"],["Trap","Fire3"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true},{"id":"confound_audio_volume","label":"试探混淆·音量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Env","ModeCha"],"highlightEdges":[["Start","Env"],["Env","ModeCha"],["ModeCha","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"audio-volume":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"M1","role":"operation"},"s-cable":{"kgId":"O3","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"电容实验三：储能与充电","knowledgePoints":[{"id":"KP1","label":"电容实验三：储能与充电","formulas":["E = ½ C V²","R    = [100, 400]","R = H * 0.19","C = [], ch4Choices_V = []"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-cable","label":"馈线长度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":1}],"confoundingVariables":[{"id":"CV1","controlId":"audio-volume","label":"音量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","CV1"],"narrative":{"intro":"本关探究：储能公式 E = ½ C V²、电压平方效应","steps":[{"order":1,"title":"明确知识点","body":"回顾：储能公式 E = ½ C V²；电压平方效应","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：选择模式、调节馈线长度 L；建议控制变量法，每次只改一项。","mapsToKg":["M1","O3"]},{"order":3,"title":"识别混淆变量","body":"混淆项：音量调节（调节主音量，不影响实验参数与过关判定）","mapsToKg":["I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["M1"]}]},"outputVariables":[{"id":"OV1","label":"电容读数","symbol":"C","unit":"pF","role":"primary","source":"observe"},{"id":"OV2","label":"是否击穿","symbol":"E>Ebd","unit":"","role":"secondary","source":"constraint"}],"domain":"capacitor"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

@@ -1,26 +1,26 @@
 {
-  "generatedAt": "2026-07-30T14:22:22.318Z",
-  "total": 1,
-  "passed": 1,
+  "generatedAt": "2026-08-03T08:48:04.837Z",
+  "total": 12,
+  "passed": 12,
   "rows": [
     {
-      "id": "cyclotron-radius",
+      "id": "projectile-basic",
       "ok": true,
       "before": [
         {
           "id": "main",
-          "nodes": 12,
+          "nodes": 10,
           "edges": 10
         },
         {
-          "id": "main_s-magnetic",
+          "id": "main_s-height",
           "nodes": 11,
-          "edges": 9
+          "edges": 11
         },
         {
-          "id": "main_s-chamber-p",
-          "nodes": 12,
-          "edges": 9
+          "id": "main_s-angle",
+          "nodes": 11,
+          "edges": 11
         },
         {
           "id": "trap",
@@ -28,16 +28,1085 @@
           "edges": 9
         },
         {
-          "id": "confound_CV1",
-          "nodes": 6,
-          "edges": 6
+          "id": "confound_s_mass",
+          "nodes": 7,
+          "edges": 7
         }
       ],
       "audits": [
         {
           "id": "main",
-          "label": "单变量·速度",
+          "label": "单变量·初速度",
+          "nodeCount": 10,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Mode",
+            "Challenge",
+            "Adjust1",
+            "Fire",
+            "Observe",
+            "Win",
+            "Retry",
+            "SpeedStrat"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-height",
+          "label": "单变量·发射高度",
+          "nodeCount": 11,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Mode",
+            "Challenge",
+            "Adjust2",
+            "Fire",
+            "Observe",
+            "Win",
+            "Retry",
+            "HeightStrat",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-angle",
+          "label": "单变量·发射角度",
+          "nodeCount": 11,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Mode",
+            "Challenge",
+            "Adjust3",
+            "Fire",
+            "Observe",
+            "Win",
+            "Retry",
+            "AngleStrat",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "Mode",
+            "Challenge",
+            "StrategySelect",
+            "Trap",
+            "Fire",
+            "Observe",
+            "Retry",
+            "Adjust1"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_s_mass",
+          "label": "试探混淆·质量",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "Mode",
+            "Challenge"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 159183,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\projectile-basic\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\斜抛\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "projectile-cannon",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 9,
+          "edges": 11
+        },
+        {
+          "id": "main_in-grav",
+          "nodes": 9,
+          "edges": 11
+        },
+        {
+          "id": "main_in-wind",
+          "nodes": 9,
+          "edges": 11
+        },
+        {
+          "id": "main_in-angle",
+          "nodes": 9,
+          "edges": 11
+        },
+        {
+          "id": "main_in-drag",
+          "nodes": 9,
+          "edges": 11
+        },
+        {
+          "id": "trap",
+          "nodes": 8,
+          "edges": 10
+        },
+        {
+          "id": "confound_in_mass",
+          "nodes": 5,
+          "edges": 5
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·初速度",
+          "nodeCount": 9,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "Win",
+            "Retry1",
+            "Retry2",
+            "Tune1",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_in-grav",
+          "label": "单变量·重力加速度",
+          "nodeCount": 9,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Fire",
+            "Observe",
+            "Retry1",
+            "Retry2",
+            "Tune2",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_in-wind",
+          "label": "单变量·风速",
+          "nodeCount": 9,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Fire",
+            "Observe",
+            "Retry1",
+            "Retry2",
+            "Tune3",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_in-angle",
+          "label": "单变量·发射角度",
+          "nodeCount": 9,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Fire",
+            "Observe",
+            "Retry1",
+            "Retry2",
+            "Tune4",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_in-drag",
+          "label": "单变量·空气阻力",
+          "nodeCount": 9,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Fire",
+            "Observe",
+            "Retry1",
+            "Retry2",
+            "Tune5",
+            "Adjust1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 8,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "Retry1",
+            "Retry2",
+            "Trap",
+            "Adjust1"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_in_mass",
+          "label": "试探混淆·质量",
+          "nodeCount": 5,
+          "edgeCount": 5,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 159877,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\projectile-cannon\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\抛体大炮\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "multi-kp",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 11,
+          "edges": 11
+        },
+        {
+          "id": "main_s-height",
+          "nodes": 12,
+          "edges": 12
+        },
+        {
+          "id": "trap",
+          "nodes": 10,
+          "edges": 10
+        },
+        {
+          "id": "confound_s_mass",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·初速度",
+          "nodeCount": 11,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "Explore",
+            "AdjustV",
+            "Fire",
+            "Observe",
+            "RetryDrop",
+            "RetryOut",
+            "SpeedStrat"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-height",
+          "label": "单变量·起始高度",
           "nodeCount": 12,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "Explore",
+            "AdjustH",
+            "Fire",
+            "Observe",
+            "RetryDrop",
+            "RetryOut",
+            "HeightStrat",
+            "AdjustV"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 10,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "Explore",
+            "Trap",
+            "Fire",
+            "Observe",
+            "RetryDrop",
+            "RetryOut",
+            "AdjustV"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_s_mass",
+          "label": "试探混淆·质量",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "ModeSelect",
+            "Explore"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 158528,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\multi-kp\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\机械能\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "circular-motion",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 12,
+          "edges": 15
+        },
+        {
+          "id": "main_s-radius",
+          "nodes": 11,
+          "edges": 13
+        },
+        {
+          "id": "main_s-base-tilt",
+          "nodes": 11,
+          "edges": 13
+        },
+        {
+          "id": "explore_trap",
+          "nodes": 10,
+          "edges": 12
+        },
+        {
+          "id": "confound_CV1",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·角速度",
+          "nodeCount": 12,
+          "edgeCount": 15,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "ExploreCore",
+            "Fire",
+            "Observe",
+            "Win",
+            "ChallengeCore",
+            "AdjustDown",
+            "Route_main",
+            "Adjust",
+            "AdjustUp"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-radius",
+          "label": "单变量·半径",
+          "nodeCount": 11,
+          "edgeCount": 13,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "ExploreCore",
+            "Fire",
+            "Observe",
+            "Win",
+            "AdjustDown",
+            "Route_main_s_radius",
+            "Adjust",
+            "AdjustUp"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-base-tilt",
+          "label": "单变量·倾角",
+          "nodeCount": 11,
+          "edgeCount": 13,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "ExploreCore",
+            "Fire",
+            "Observe",
+            "AdjustDown",
+            "Route_main_s_base_tilt",
+            "Adjust",
+            "AdjustUp"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "explore_trap",
+          "label": "多参盲调",
+          "nodeCount": 10,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreCore",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "Trap",
+            "Adjust",
+            "AdjustDown",
+            "AdjustUp"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_CV1",
+          "label": "试探混淆·无关控件",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "ModeSelect",
+            "ExploreCore"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 160026,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\circular-motion\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\圆周运动\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "momentum-collision",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 15,
+          "edges": 17
+        },
+        {
+          "id": "main_s-vel2",
+          "nodes": 15,
+          "edges": 17
+        },
+        {
+          "id": "main_s-rail-temp",
+          "nodes": 11,
+          "edges": 11
+        },
+        {
+          "id": "main_s-mass1",
+          "nodes": 15,
+          "edges": 17
+        },
+        {
+          "id": "main_s-mass2",
+          "nodes": 15,
+          "edges": 17
+        },
+        {
+          "id": "trap",
+          "nodes": 9,
+          "edges": 10
+        },
+        {
+          "id": "confound_CV1",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·速度1",
+          "nodeCount": 15,
+          "edgeCount": 17,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "Win",
+            "RetryCollide",
+            "WinC",
+            "SingleVel1C",
+            "FireC",
+            "ObserveC"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-vel2",
+          "label": "单变量·速度2",
+          "nodeCount": 15,
+          "edgeCount": 17,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "WinC",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "RetryCollide",
+            "SingleVel2C",
+            "FireC",
+            "ObserveC"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-rail-temp",
+          "label": "单变量·导轨温度",
+          "nodeCount": 11,
+          "edgeCount": 11,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "WinC",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "RetryCollide",
+            "SingleMass",
+            "Adjust"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-mass1",
+          "label": "单变量·质量",
+          "nodeCount": 15,
+          "edgeCount": 17,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "WinC",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "RetryCollide",
+            "SingleMassC",
+            "FireC",
+            "ObserveC"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-mass2",
+          "label": "单变量·质量",
+          "nodeCount": 15,
+          "edgeCount": 17,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "WinC",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "RetryCollide",
+            "SingleMassC",
+            "FireC",
+            "ObserveC"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 9,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "RetryCollide",
+            "Trap",
+            "Adjust"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_CV1",
+          "label": "试探混淆·无关控件",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 162150,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\momentum-collision\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\动量碰撞\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "pendulum-clock",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 12,
+          "edges": 14
+        },
+        {
+          "id": "main_s-len",
+          "nodes": 11,
+          "edges": 11
+        },
+        {
+          "id": "trap",
+          "nodes": 9,
+          "edges": 10
+        },
+        {
+          "id": "confound_s_mass",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·摆角",
+          "nodeCount": 12,
+          "edgeCount": 14,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "Explore",
+            "Fire",
+            "Observe",
+            "CheckAngle",
+            "Win",
+            "AdjustAngle",
+            "Retry",
+            "AngleRoute",
+            "AdjustLen"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-len",
+          "label": "单变量·摆长",
+          "nodeCount": 10,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "Explore",
+            "Fire",
+            "Observe",
+            "AdjustLen",
+            "Retry",
+            "Win",
+            "LenRoute"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 9,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "Explore",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "Retry",
+            "TrapRoute",
+            "AdjustLen"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_s_mass",
+          "label": "试探混淆·质量",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "ModeSelect",
+            "Explore"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 160710,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\pendulum-clock\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\钟表铺校时\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "efield-charge",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 11,
+          "edges": 13
+        },
+        {
+          "id": "main_s-charge",
+          "nodes": 13,
+          "edges": 17
+        },
+        {
+          "id": "trap",
+          "nodes": 11,
+          "edges": 13
+        },
+        {
+          "id": "confound_s_plate_gap",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·场强",
+          "nodeCount": 11,
+          "edgeCount": 15,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "SingleE",
+            "AdjustE",
+            "Fire",
+            "Observe",
+            "Retry",
+            "AdjustQ",
+            "AdjustMulti"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-charge",
+          "label": "单变量·电荷量",
+          "nodeCount": 13,
+          "edgeCount": 17,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "SingleQ",
+            "AdjustQ",
+            "Fire",
+            "Observe",
+            "Win",
+            "Retry",
+            "ChallengeMode",
+            "AdjustE"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 11,
+          "edgeCount": 13,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "Trap",
+            "Fire",
+            "Observe",
+            "Retry",
+            "AdjustMulti",
+            "AdjustE",
+            "AdjustQ"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_s_plate_gap",
+          "label": "试探混淆·间距（示意）",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 158071,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\efield-charge\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\电场\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "capacitor-confound-ui",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 10,
+          "edges": 10
+        },
+        {
+          "id": "main_s-area",
+          "nodes": 11,
+          "edges": 11
+        },
+        {
+          "id": "trap",
+          "nodes": 9,
+          "edges": 9
+        },
+        {
+          "id": "confound_s_plateTone",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·极板间距",
+          "nodeCount": 10,
           "edgeCount": 10,
           "ok": true,
           "legacyNoSpine": false,
@@ -45,60 +1114,35 @@
             "Start",
             "StrategySelect",
             "Win",
-            "ModeSelect",
-            "ExploreCore",
-            "Tune1",
-            "Adjust",
-            "Retest",
-            "ChallengeCore",
-            "Win2",
-            "Win1",
-            "Observe"
+            "Env",
+            "Explore",
+            "Route_main",
+            "Adjust1",
+            "Fire",
+            "Observe",
+            "Retry"
           ],
           "kind": "single"
         },
         {
-          "id": "main_s-magnetic",
-          "label": "单变量·磁场",
+          "id": "main_s-area",
+          "label": "单变量·极板面积",
           "nodeCount": 11,
-          "edgeCount": 9,
+          "edgeCount": 11,
           "ok": true,
           "legacyNoSpine": false,
           "sample": [
             "Start",
             "StrategySelect",
             "Win",
-            "ModeSelect",
-            "ChallengeCore",
-            "Tune2",
-            "Adjust",
-            "Retest",
-            "Win2",
-            "Win1",
-            "Observe"
-          ],
-          "kind": "single"
-        },
-        {
-          "id": "main_s-chamber-p",
-          "label": "单变量·腔室气压",
-          "nodeCount": 12,
-          "edgeCount": 9,
-          "ok": true,
-          "legacyNoSpine": false,
-          "sample": [
-            "Start",
-            "StrategySelect",
-            "Win",
-            "ChallengeCore",
-            "Win2",
-            "Win1",
-            "ModeSelect",
-            "ExploreCore",
-            "Route_main_s_chamber_p",
-            "Adjust",
-            "Retest",
-            "Observe"
+            "Env",
+            "Explore",
+            "Route_main_s_area",
+            "Adjust2",
+            "Fire",
+            "Observe",
+            "Retry",
+            "Adjust1"
           ],
           "kind": "single"
         },
@@ -112,30 +1156,31 @@
           "sample": [
             "Start",
             "StrategySelect",
-            "ModeSelect",
-            "ExploreCore",
-            "Trap",
-            "Adjust",
-            "Retest",
+            "Env",
+            "Explore",
+            "Fire",
             "Observe",
-            "Win"
+            "Retry",
+            "Trap",
+            "Adjust1"
           ],
           "kind": "other"
         },
         {
-          "id": "confound_CV1",
-          "label": "试探混淆·无关控件",
-          "nodeCount": 6,
-          "edgeCount": 6,
+          "id": "confound_s_plateTone",
+          "label": "试探混淆·外观色调",
+          "nodeCount": 7,
+          "edgeCount": 7,
           "ok": true,
           "legacyNoSpine": false,
           "sample": [
-            "Start",
             "StrategySelect",
             "ProbeCV",
             "ObserveCV",
             "BackFromCV",
-            "ModeSelect"
+            "Start",
+            "Env",
+            "Explore"
           ],
           "kind": "confound"
         }
@@ -147,10 +1192,578 @@
       },
       "export": {
         "ok": true,
-        "bytes": 154536,
+        "bytes": 157994,
         "outs": [
-          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\cyclotron-radius\\图谱.html",
-          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\回旋加速器\\图谱.html"
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\capacitor-confound-ui\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\电容混淆\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "rc-circuit",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 9,
+          "edges": 9
+        },
+        {
+          "id": "main_s-resistance",
+          "nodes": 9,
+          "edges": 9
+        },
+        {
+          "id": "main_s-capacitance",
+          "nodes": 9,
+          "edges": 9
+        },
+        {
+          "id": "trap",
+          "nodes": 8,
+          "edges": 8
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·电源电压",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Env",
+            "Challenge",
+            "Adjust1",
+            "Fire1",
+            "Observe1",
+            "Win",
+            "Route_main"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-resistance",
+          "label": "单变量·电阻",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Env",
+            "Challenge",
+            "Route_main_s_resistance",
+            "Adjust1",
+            "Fire1",
+            "Observe1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-capacitance",
+          "label": "单变量·电容",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Env",
+            "Challenge",
+            "Route_main_s_capacitance",
+            "Adjust1",
+            "Fire1",
+            "Observe1"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 8,
+          "edgeCount": 8,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "Env",
+            "Challenge",
+            "StrategySelect",
+            "FireT",
+            "ObserveT",
+            "Trap",
+            "AdjustT"
+          ],
+          "kind": "other"
+        }
+      ],
+      "cv": {
+        "hasCv": false,
+        "mermaidHasCv": false,
+        "routeCv": false
+      },
+      "export": {
+        "ok": true,
+        "bytes": 157445,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\rc-circuit\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\RC电路\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "magnetic-force",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 11,
+          "edges": 12
+        },
+        {
+          "id": "main_s-magnetic",
+          "nodes": 10,
+          "edges": 10
+        },
+        {
+          "id": "explore_trap",
+          "nodes": 8,
+          "edges": 9
+        },
+        {
+          "id": "confound_s_wire_temp",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·电流",
+          "nodeCount": 11,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "Win",
+            "ChallengeMode",
+            "Route_main",
+            "Adjust",
+            "AdjustI"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-magnetic",
+          "label": "单变量·磁场",
+          "nodeCount": 10,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeSelect",
+            "ExploreMode",
+            "Fire",
+            "Observe",
+            "Route_main_s_magnetic",
+            "Adjust",
+            "AdjustI"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "explore_trap",
+          "label": "多参盲调",
+          "nodeCount": 8,
+          "edgeCount": 8,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "ModeSelect",
+            "ExploreMode",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "Trap",
+            "AdjustI"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_s_wire_temp",
+          "label": "试探混淆·导线温度",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "ModeSelect",
+            "ExploreMode"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 159402,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\magnetic-force\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\安培力\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 10,
+          "edges": 9
+        },
+        {
+          "id": "main_s-c2",
+          "nodes": 10,
+          "edges": 9
+        },
+        {
+          "id": "main_s-c3",
+          "nodes": 10,
+          "edges": 9
+        },
+        {
+          "id": "main_s-cable",
+          "nodes": 10,
+          "edges": 9
+        },
+        {
+          "id": "trap",
+          "nodes": 9,
+          "edges": 10
+        },
+        {
+          "id": "confound_audio_volume",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·电容C1",
+          "nodeCount": 10,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Env",
+            "ModeOn",
+            "ModeOff",
+            "Win",
+            "Route_main",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-c2",
+          "label": "单变量·电容C2",
+          "nodeCount": 10,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeOff",
+            "Env",
+            "ModeOn",
+            "Route_main_s_c2",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-c3",
+          "label": "单变量·电容C3",
+          "nodeCount": 10,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeOff",
+            "Env",
+            "ModeOn",
+            "Route_main_s_c3",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-cable",
+          "label": "单变量·馈线长度",
+          "nodeCount": 10,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "ModeOff",
+            "Env",
+            "ModeOn",
+            "Route_main_s_cable",
+            "AdjustFB",
+            "RetestFB",
+            "ObserveFB"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 9,
+          "edgeCount": 9,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "Env",
+            "ModeOn",
+            "StrategySelect",
+            "FireT",
+            "ObserveT",
+            "RetryT",
+            "Trap",
+            "AdjustT"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_audio_volume",
+          "label": "试探混淆·音量",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "Env",
+            "ModeOn"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 159789,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\capacitor-era-ch2\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\电容_串并联\\图谱.html"
+        ]
+      }
+    },
+    {
+      "id": "heat-conduction",
+      "ok": true,
+      "before": [
+        {
+          "id": "main",
+          "nodes": 12,
+          "edges": 12
+        },
+        {
+          "id": "main_s-thermal-conductivity",
+          "nodes": 12,
+          "edges": 12
+        },
+        {
+          "id": "main_s-temperature-diff",
+          "nodes": 12,
+          "edges": 12
+        },
+        {
+          "id": "trap",
+          "nodes": 10,
+          "edges": 11
+        },
+        {
+          "id": "confound_CV1",
+          "nodes": 7,
+          "edges": 7
+        }
+      ],
+      "audits": [
+        {
+          "id": "main",
+          "label": "单变量·截面积",
+          "nodeCount": 12,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Env",
+            "Challenge",
+            "Fire",
+            "Observe",
+            "Win",
+            "RetryLow",
+            "RetryOverheat",
+            "Route_main",
+            "Adjust",
+            "AdjustK"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-thermal-conductivity",
+          "label": "单变量·导热系数",
+          "nodeCount": 12,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Env",
+            "Challenge",
+            "Fire",
+            "Observe",
+            "RetryLow",
+            "RetryOverheat",
+            "Route_main_s_thermal_conductiv",
+            "Adjust",
+            "AdjustK"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "main_s-temperature-diff",
+          "label": "单变量·温差",
+          "nodeCount": 12,
+          "edgeCount": 12,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "StrategySelect",
+            "Win",
+            "Env",
+            "Challenge",
+            "Fire",
+            "Observe",
+            "RetryLow",
+            "RetryOverheat",
+            "Route_main_s_temperature_diff",
+            "Adjust",
+            "AdjustK"
+          ],
+          "kind": "single"
+        },
+        {
+          "id": "trap",
+          "label": "多参盲调",
+          "nodeCount": 10,
+          "edgeCount": 10,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "Start",
+            "Env",
+            "Challenge",
+            "StrategySelect",
+            "Fire",
+            "Observe",
+            "RetryLow",
+            "RetryOverheat",
+            "Trap",
+            "AdjustK"
+          ],
+          "kind": "other"
+        },
+        {
+          "id": "confound_CV1",
+          "label": "试探混淆·无关控件",
+          "nodeCount": 7,
+          "edgeCount": 7,
+          "ok": true,
+          "legacyNoSpine": false,
+          "sample": [
+            "StrategySelect",
+            "ProbeCV",
+            "ObserveCV",
+            "BackFromCV",
+            "Start",
+            "Env",
+            "Challenge"
+          ],
+          "kind": "confound"
+        }
+      ],
+      "cv": {
+        "hasCv": true,
+        "mermaidHasCv": true,
+        "routeCv": true
+      },
+      "export": {
+        "ok": true,
+        "bytes": 159177,
+        "outs": [
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\data\\runtime\\packages\\heat-conduction\\图谱.html",
+          "C:\\Users\\20844\\Desktop\\myweb-re\\agent\\样本html\\热传导\\图谱.html"
         ]
       }
     }

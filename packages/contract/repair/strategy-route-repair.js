@@ -179,7 +179,7 @@ function repairIrrelevantAvMapsTo(chapter) {
   if (!irr.length) return chapter;
 
   const routes = strat.routes.map(route => {
-    if (route.kind === 'confoundProbe' || /试探混淆/.test(route.label || '')) return route;
+    if (route.kind === 'confoundProbe' || /试探(?:混淆)?[·•.]/.test(route.label || '')) return route;
     if (!/单变量·/.test(route.label || '')) return route;
     const labelTail = String(route.label || '').replace(/^.*单变量·/, '').replace(/\s+/g, '');
     if (!labelTail) return route;
@@ -245,7 +245,7 @@ function repairStrategyRouteHighlights(chapter) {
   const routes = strat.routes.map(route => {
     if (routeIsTrueMisconceptionRoute(route, mermaidBody)) return route;
 
-    const isConfound = route.kind === 'confoundProbe' || /试探混淆/.test(route.label || '');
+    const isConfound = route.kind === 'confoundProbe' || /试探(?:混淆)?[·•.]/.test(route.label || '');
     // Still repair sparse confound loops; skip only when already complete
     if (isConfound && !routeNeedsSpineSeed(route)) return route;
 

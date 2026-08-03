@@ -390,13 +390,14 @@
             "id": "StrategySelect",
             "label": "选择调参策略?",
             "ins": [
+              "BackFromCV",
               "ChallengeMode",
               "ExploreMode"
             ],
             "outs": [
-              "单变量·极板间距→SingleD",
               "单变量·场强→SingleE",
               "单变量·电荷量→SingleQ",
+              "试探混淆·极板间距→ProbeCV",
               "多参盲调→Trap"
             ]
           }
@@ -410,13 +411,14 @@
             "id": "StrategySelect",
             "label": "选择调参策略?",
             "ins": [
+              "BackFromCV",
               "ChallengeMode",
               "ExploreMode"
             ],
             "outs": [
-              "单变量·极板间距→SingleD",
               "单变量·场强→SingleE",
               "单变量·电荷量→SingleQ",
+              "试探混淆·极板间距→ProbeCV",
               "多参盲调→Trap"
             ]
           }
@@ -644,10 +646,9 @@
               "ExploreMode"
             ],
             "outs": [
-              "试探混淆·无关控件→ProbeCV",
+              "试探混淆·导线温度→ProbeCV",
               "单变量·电流→Route_main",
               "单变量·磁场→Route_main_s_magnetic",
-              "单变量·导线温度→Route_main_s_wire_temp",
               "多参盲调→Trap"
             ]
           }
@@ -666,10 +667,9 @@
               "ExploreMode"
             ],
             "outs": [
-              "试探混淆·无关控件→ProbeCV",
+              "试探混淆·导线温度→ProbeCV",
               "单变量·电流→Route_main",
               "单变量·磁场→Route_main_s_magnetic",
-              "单变量·导线温度→Route_main_s_wire_temp",
               "多参盲调→Trap"
             ]
           }

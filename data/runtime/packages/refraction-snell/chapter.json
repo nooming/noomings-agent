@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 入射角在范围? | C2 | constraint | 0°–89° |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C3 | constraint | 折射率在范围? 1.0–2.5 |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C4 | constraint | 光路有效? (非全反射) |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C5 | constraint | 命中靶? |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | R1 | result | 过关 |\n| 飞出边界? | C6 | constraint | 独立失败判定 |\n| 否→继续 | step | step | 继续 |\n| 是→重试 | skip retry | skip retry | skip retry |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式调参 |\n| 否(探究) | O1 | operation | 探究模式调参 |\n| 入射角在范围? | C2 | constraint | 0°–89° |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C3 | constraint | 折射率在范围? 1.0–2.5 |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C4 | constraint | 光路有效? (非全反射) |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | C5 | constraint | 命中靶? |\n| 否→重试 | skip retry | skip retry | skip retry |\n| 是 | R1 | result | 过关 |\n| 飞出边界? | C6 | constraint | 独立失败判定 |\n| 否→继续 | step | step | 继续 |\n| 是→重试 | skip retry | skip retry | skip retry |\n| 水槽水深 | I1 | irrelevant | 只改填充观感，不改变折射角 |",
   "kg": {
     "title": "折射 · 探究",
     "sub": "光学台 · 水槽折射",
@@ -30,7 +30,7 @@
         "layer": "play",
         "level": 2,
         "r": 22,
-        "desc": "调节入射角、折射率、波长滑条，点击发射光线按钮"
+        "desc": "调节入射角、折射率滑条，点击发射光线按钮"
       },
       {
         "id": "C2",
@@ -111,12 +111,12 @@
       },
       {
         "id": "I1",
-        "label": "无关控件",
+        "label": "水槽水深",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "隐藏的无关输入控件，不影响过关"
+        "desc": "水槽水深滑条：只改填充观感，不改变折射角与命中判定"
       }
     ],
     "links": [
@@ -282,7 +282,7 @@
         {
           "n": "调节参数并发射光线",
           "t": "step",
-          "d": "调节入射角、折射率、波长滑条，点击发射光线按钮",
+          "d": "调节入射角、折射率，点击发射光线按钮",
           "children": []
         },
         {
@@ -321,9 +321,9 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-wavelength": {
-        "kgId": "O1",
-        "role": "operation"
+      "s-water-depth": {
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -348,11 +348,11 @@
   "strategy": {
     "title": "折射 · 探究",
     "sub": "光学台 · 水槽折射",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nAdjustWave --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| AdjustWave\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·波长| Route_main\nStrategySelect -->|单变量·入射角| Route_main_s_incident_angle\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改波长]\nRoute_main_s_incident_angle[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nAdjustWave[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_incident_angle --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[发射光线]\nAdjustIndex --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nEnv -->|竞赛模式| Challenge[竞赛挑战]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nObserve -->|偏左| AdjustAngle\nObserve -->|偏右| AdjustIndex\nObserve -->|未命中| Retry\nObserve -->|全反射| Retry[重试]:::stratRetry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·水槽水深| ProbeCV\nStrategySelect -->|单变量·入射角| Route_main\nStrategySelect -->|单变量·折射率| Route_main_s_refractive_index\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nEnv -->|探究模式| Explore[自由探究]:::stratCore\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改入射角]\nRoute_main_s_refractive_index[控制变量：只改折射率]\nAdjustAngle[按观察单变量微调]\nAdjustIndex[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_refractive_index --> Adjust\nTrap -->|低效| Retry\nProbeCV[试探·水槽水深]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
-        "label": "单变量·波长",
+        "label": "单变量·入射角",
         "mapsTo": [
           "P1",
           "O1",
@@ -376,8 +376,7 @@
           "Route_main",
           "Adjust",
           "AdjustAngle",
-          "AdjustIndex",
-          "AdjustWave"
+          "AdjustIndex"
         ],
         "highlightEdges": [
           [
@@ -430,22 +429,14 @@
           ],
           [
             "Observe",
-            "AdjustWave"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
-            "Observe",
             "Retry"
           ]
         ],
         "highlightFailureBranches": true
       },
       {
-        "id": "main_s-incident-angle",
-        "label": "单变量·入射角",
+        "id": "main_s-refractive-index",
+        "label": "单变量·折射率",
         "mapsTo": [
           "P1",
           "O1",
@@ -466,104 +457,10 @@
           "Fire",
           "Observe",
           "Retry",
-          "Route_main_s_incident_angle",
-          "Adjust",
-          "AdjustAngle",
-          "AdjustIndex",
-          "AdjustWave"
-        ],
-        "highlightEdges": [
-          [
-            "Start",
-            "Env"
-          ],
-          [
-            "Env",
-            "Challenge"
-          ],
-          [
-            "Challenge",
-            "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "Route_main_s_incident_angle"
-          ],
-          [
-            "Route_main_s_incident_angle",
-            "Adjust"
-          ],
-          [
-            "Adjust",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustAngle"
-          ],
-          [
-            "AdjustAngle",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustIndex"
-          ],
-          [
-            "AdjustIndex",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustWave"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ]
-        ],
-        "highlightFailureBranches": true
-      },
-      {
-        "id": "main_s-refractive-index",
-        "label": "单变量·折射率",
-        "mapsTo": [
-          "P1",
-          "O1",
-          "C1",
-          "C2",
-          "R1"
-        ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.7,
-        "weight": 0.7,
-        "priorityRank": 3,
-        "highlightNodes": [
-          "Start",
-          "StrategySelect",
-          "Win",
-          "Env",
-          "Challenge",
-          "Fire",
-          "Observe",
-          "Retry",
           "Route_main_s_refractive_index",
           "Adjust",
           "AdjustAngle",
-          "AdjustIndex",
-          "AdjustWave"
+          "AdjustIndex"
         ],
         "highlightEdges": [
           [
@@ -616,14 +513,6 @@
           ],
           [
             "Observe",
-            "AdjustWave"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
-            "Observe",
             "Retry"
           ]
         ],
@@ -648,7 +537,6 @@
           "Retry",
           "AdjustAngle",
           "AdjustIndex",
-          "AdjustWave",
           "Trap"
         ],
         "highlightEdges": [
@@ -697,14 +585,6 @@
             "Fire"
           ],
           [
-            "Observe",
-            "AdjustWave"
-          ],
-          [
-            "AdjustWave",
-            "Fire"
-          ],
-          [
             "Trap",
             "Retry"
           ]
@@ -715,10 +595,10 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_CV1",
-        "label": "试探混淆·无关控件",
+        "id": "confound_s_water_depth",
+        "label": "试探·水槽水深",
         "mapsTo": [],
-        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "highlightNodes": [
@@ -785,54 +665,47 @@
     "adjustmentVariables": [
       {
         "id": "AV1",
-        "controlId": "s-wavelength",
-        "label": "波长",
+        "controlId": "s-incident-angle",
+        "label": "入射角",
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "",
+        "monotonicity": "non-monotone",
+        "affects": [
+          "theta2",
+          "hit"
+        ],
+        "notes": "θ₁ 经斯涅尔定律决定 θ₂",
         "priorityRank": 1
       },
       {
         "id": "AV2",
-        "controlId": "s-incident-angle",
-        "label": "入射角",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "non-monotone",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 2
-      },
-      {
-        "id": "AV3",
         "controlId": "s-refractive-index",
         "label": "折射率",
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "monotonicity": "monotone",
+        "affects": [
+          "theta2",
+          "hit"
+        ],
+        "notes": "n₂ 与 θ₁ 共同决定折射角",
+        "priorityRank": 2
       }
     ],
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项"
+        "controlId": "s-water-depth",
+        "label": "水槽水深",
+        "reason": "只改变水槽填充观感；不进入折射角与命中判定（本关 n₂ 已给定）"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
       "AV2",
-      "AV3",
       "CV1"
     ],
     "narrative": {
@@ -850,9 +723,8 @@
         {
           "order": 2,
           "title": "识别调节变量",
-          "body": "可调节：调节参数并发射光线、调节参数并发射光线、调节参数并发射光线、模式选择；建议控制变量法，每次只改一项。",
+          "body": "可调节：入射角 θ₁、折射率 n₂；建议控制变量法，每次只改一项。",
           "mapsToKg": [
-            "O1",
             "O1",
             "O1",
             "C1"
@@ -861,7 +733,7 @@
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "混淆项：无关控件（隐藏的无关输入控件，不影响过关）",
+          "body": "可观察水槽水深变化；是否影响折射需自行测量对比。",
           "mapsToKg": [
             "I1"
           ]
@@ -895,8 +767,7 @@
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
     "confoundingVariables": [
       "CV1"
@@ -922,47 +793,32 @@
     "knowledgeSummary": "折射 · 探究",
     "controls": [
       {
-        "id": "s-wavelength",
-        "type": "range",
-        "label": "波长",
-        "symbol": "波长",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
         "id": "s-incident-angle",
         "type": "range",
         "label": "入射角",
-        "symbol": "入射角",
-        "unit": null,
+        "symbol": "θ₁",
+        "unit": "°",
         "mapsToKg": "O1",
         "role": "adjustment",
         "suggestedRange": {
           "min": 0,
-          "max": 100,
+          "max": 89,
           "step": 1,
-          "unit": ""
+          "unit": "°"
         }
       },
       {
         "id": "s-refractive-index",
         "type": "range",
         "label": "折射率",
-        "symbol": "折射率",
+        "symbol": "n₂",
         "unit": null,
         "mapsToKg": "O1",
         "role": "adjustment",
         "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
+          "min": 1,
+          "max": 2.5,
+          "step": 0.1,
           "unit": ""
         }
       },
@@ -976,13 +832,13 @@
     ],
     "confoundingUi": [
       {
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项",
-        "uiStrategy": "narrative_only"
+        "controlId": "s-water-depth",
+        "label": "水槽水深",
+        "reason": "只改变水槽填充观感；不进入折射角与命中判定",
+        "uiStrategy": "teach_only"
       }
     ],
-    "confoundingMustNotBePrimarySlider": false,
+    "confoundingMustNotBePrimarySlider": true,
     "constraints": [
       {
         "kgId": "C1",
@@ -1025,9 +881,9 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-wavelength": {
-        "kgId": "O1",
-        "role": "operation"
+      "s-water-depth": {
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -1055,22 +911,22 @@
     },
     "dataReadouts": [
       {
-        "label": "波长",
-        "symbol": "波长",
-        "unit": "",
-        "source": "state.s-wavelength"
-      },
-      {
         "label": "入射角",
-        "symbol": "入射角",
-        "unit": "",
+        "symbol": "θ₁",
+        "unit": "°",
         "source": "state.s-incident-angle"
       },
       {
         "label": "折射率",
-        "symbol": "折射率",
+        "symbol": "n₂",
         "unit": "",
         "source": "state.s-refractive-index"
+      },
+      {
+        "label": "水槽水深",
+        "symbol": "h",
+        "unit": "cm",
+        "source": "state.s-water-depth"
       },
       {
         "label": "过关结果",
@@ -1117,17 +973,17 @@
       },
       {
         "type": "tuning",
-        "controlId": "s-wavelength",
-        "kgId": "O1",
-        "required": true,
-        "description": "学生调节 s-wavelength → KG O1"
-      },
-      {
-        "type": "tuning",
         "controlId": "modeSelect",
         "kgId": "C1",
         "required": true,
         "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-water-depth",
+        "kgId": "I1",
+        "required": false,
+        "description": "混淆/无关控件触碰 s-water-depth"
       },
       {
         "type": "irrelevant_touch",
@@ -1145,7 +1001,7 @@
       {
         "type": "irrelevant_touch",
         "canonical": "irrelevant_touch",
-        "control": "I1",
+        "control": "s-water-depth",
         "required": false
       }
     ],

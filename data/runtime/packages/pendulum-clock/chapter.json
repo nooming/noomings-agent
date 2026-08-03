@@ -504,7 +504,7 @@
   "strategy": {
     "title": "钟表铺·校时",
     "sub": "钟表铺 · 校时",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAdjust[单变量微调]\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nCheckAngle -->|是| Win[过关]:::stratResult\nProbeCV[试探混淆·质量]\nAngleRoute[单变量·摆角]\nLenRoute[单变量·摆长]\nTrapRoute[多参盲调]\nTrapRoute --> Fire\n",
+    "mermaid": "graph TD\nAdjustAngle --> Fire\nAdjustLen --> Fire[启动计时]\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustLen\nObserve -->|偏快| AdjustLen\nObserve -->|达标| CheckAngle{摆幅≥15°?}:::stratCond\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·摆角| AngleRoute\nStrategySelect -->|单变量·摆长| LenRoute\nStrategySelect -.->|试探·质量| ProbeCV\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带±0.005s]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整摆角]\nCheckAngle -->|否| AdjustAngle\nLenRoute --> AdjustLen[调整摆长]\nCheckAngle -->|是| Win[过关]:::stratResult\nProbeCV[试探·质量]\nAngleRoute[单变量·摆角]\nLenRoute[单变量·摆长]\nTrapRoute[多参盲调]\nTrapRoute --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -738,9 +738,9 @@
       },
       {
         "id": "confound_s_mass",
-        "label": "试探混淆·质量",
+        "label": "试探·质量",
         "mapsTo": [],
-        "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "highlightNodes": [

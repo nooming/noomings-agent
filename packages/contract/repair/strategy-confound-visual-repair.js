@@ -1,15 +1,15 @@
 /**
  * Ensure confounding variables appear on the strategy Mermaid as a low-score
- * side branch (试探混淆), plus a confoundProbe route. Never assigns priorityRank
+ * side branch (试探·{CV}), plus a confoundProbe route. Never assigns priorityRank
  * that competes with AV 单变量 paths.
  *
  * Also collapses redundant ModeOff / 条件下误操作 misconception islands when a
- * structured 试探混淆·{CV} bypass already teaches the same “拧无关量” idea.
+ * structured 试探·{CV} bypass already teaches the same “拧无关量” idea.
  */
 const { parseStrategyMermaidEdges } = require('../../shared/strategy-mermaid-parse.js');
 
 const CONFOUND_PROBE_SCORE = 0.15;
-const CONFOUND_LABEL_RE = /试探混淆/;
+const CONFOUND_LABEL_RE = /试探(?:混淆)?[·•.]/;
 const MISCONCEPTION_NODE_RE = /CheckMisconception|InvalidMisconception/;
 const MISCONCEPTION_LINE_RE = /CheckMisconception|InvalidMisconception|条件下误操作|是否误调无效参数|关态误调无效参数/;
 
@@ -19,12 +19,12 @@ function listConfoundingVariables(chapter) {
 }
 
 function shortCvLabel(cv) {
-  const raw = String(cv.label || cv.controlId || '混淆量').trim();
-  return raw.replace(/极板/g, '').slice(0, 12) || '混淆量';
+  const raw = String(cv.label || cv.controlId || '试探量').trim();
+  return raw.replace(/（示意.*）|\(示意.*\)/g, '').slice(0, 12) || '试探量';
 }
 
 function confoundRouteLabel(cv) {
-  return `试探混淆·${shortCvLabel(cv)}`;
+  return `试探·${shortCvLabel(cv)}`;
 }
 
 function primaryStrategySelectId(mermaid) {
@@ -50,7 +50,7 @@ function primaryStrategySelectId(mermaid) {
 }
 
 function hasConfoundSelectEdge(mermaid) {
-  return /(?:StrategySelect|ModeSelect|Env)[^\n]*-(?:\.->|->)\s*\|[^|]*试探混淆/i.test(String(mermaid || ''));
+  return /(?:StrategySelect|ModeSelect|Env)[^\n]*-(?:\.->|->)\s*\|[^|]*试探(?:混淆)?[·•.]/i.test(String(mermaid || ''));
 }
 
 function nodeIdExists(mermaid, id) {
@@ -113,7 +113,7 @@ function stripRedundantMisconceptionLoop(mermaid) {
 }
 
 /**
- * Inject StrategySelect -.->|试探混淆·L| ProbeCV → ObserveCV → back to select.
+ * Inject StrategySelect -.->|试探·L| ProbeCV → ObserveCV → back to select.
  */
 function injectConfoundMermaidBranch(mermaid, cv) {
   let mm = String(mermaid || '').replace(/\r\n/g, '\n').trim();
@@ -125,7 +125,7 @@ function injectConfoundMermaidBranch(mermaid, cv) {
   const observeId = pickUniqueId(mm, 'ObserveCV');
   const backId = pickUniqueId(mm, 'BackFromCV');
   const label = confoundRouteLabel(cv);
-  const probeLabel = `拧混淆·${shortCvLabel(cv)}`;
+  const probeLabel = `试探·${shortCvLabel(cv)}`;
 
   const block = [
     `${selectId} -.->|${label}| ${probeId}[${probeLabel}]:::stratInvalid`,
@@ -166,7 +166,7 @@ function buildConfoundProbeRoute(cv, selectId, mermaid) {
     tier: 'suboptimal',
     kind: 'confoundProbe',
     mapsTo: [],
-    warn: '拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略',
+    warn: '试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略',
     score: CONFOUND_PROBE_SCORE,
     weight: CONFOUND_PROBE_SCORE,
     // Explicitly no priorityRank — must not compete with AV 单变量
@@ -246,7 +246,7 @@ function removeOrphanConfoundBranch(mermaid) {
     if (nonCv.length === 0 && cvOuts.length > 0) {
       // Drop orphan StrategySelect-only confound lines so we can rehang on ModeSelect
       mm = mm.split('\n').filter(line => {
-        if (/试探混淆|ProbeCV|ObserveCV|BackFromCV/i.test(line)) return false;
+        if (/试探(?:混淆)?[·•.]|ProbeCV|ObserveCV|BackFromCV/i.test(line)) return false;
         return true;
       }).join('\n');
       return mm;

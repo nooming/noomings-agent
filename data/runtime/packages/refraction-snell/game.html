@@ -615,8 +615,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <input type="range" id="s-refractive-index" min="1.0" max="2.5" step="0.1" value="1.3">
         </div>
         <div class="slider-group">
-            <label for="s-wavelength">入射光波长 λ <span id="waveValue" class="value">550 nm</span></label>
-            <input type="range" id="s-wavelength" min="400" max="700" step="10" value="550">
+            <label for="s-water-depth">水槽水深 <span id="depthValue" class="value">16 cm</span></label>
+            <input type="range" id="s-water-depth" min="8" max="30" step="1" value="16">
         </div>
     </div>
 
@@ -698,16 +698,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   const ctx = canvas.getContext('2d');
   const angleSlider = document.getElementById('s-incident-angle');
   const indexSlider = document.getElementById('s-refractive-index');
-  const waveSlider = document.getElementById('s-wavelength');
+  const depthSlider = document.getElementById('s-water-depth');
   const angleValueSpan = document.getElementById('angleValue');
   const indexValueSpan = document.getElementById('indexValue');
-  const waveValueSpan = document.getElementById('waveValue');
+  const depthValueSpan = document.getElementById('depthValue');
   const refractionDisplay = document.getElementById('refractionAngleDisplay');
   const feedback = document.getElementById('feedbackMsg');
   const winMessageDiv = document.getElementById('winMessage');
   const fireBtn = document.getElementById('btn-fire');
 
   const n1 = 1.0;
+  const FIXED_LAM_NM = 550; // 固定光束色，不进入折射角计算
   let W = 700, H = 400;
   let layout = { groundY: 240, launchX: 100, launchY: 70, target: { x: 520, y: 310, radius: 18 } };
   let playMode = 'explore';
@@ -720,6 +721,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   let lastFrameTs = 0;
   let lastFireHit = null;
   let lastFireMissSide = null;
+  let depthTouchedSinceFire = false;
+  let lastFireAvKey = null; // θ1|n2 快照，用于「只拧水深」复盘提示
   const MODE_GOALS = {
     explore: {
       hud: '试照：观察折射光随 θ₁、n₂ 变化',
@@ -748,6 +751,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     challengeWon = false;
     angleSlider.value = '45';
     indexSlider.value = '1.3';
+    depthTouchedSinceFire = false;
+    lastFireAvKey = '45|1.3';
     refreshRefractGoals();
     updateExperiment(false);
     feedback.textContent = '急单已锁定 · 水下靶位本局固定';
@@ -756,6 +761,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function applyExploreTarget() {
     lockedTargetFrac = null;
     challengeWon = false;
+    depthTouchedSinceFire = false;
+    lastFireAvKey = parseFloat(angleSlider.value).toFixed(0) + '|' + parseFloat(indexSlider.value).toFixed(1);
     refreshRefractGoals();
     updateExperiment(false);
     feedback.textContent = '调入射角与折射率，看光路';
@@ -805,12 +812,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
 
   function wavelengthToRgb(nm) {
-    // 粗略可见光谱映射，仅改光束色相，不改折射角
+    // 固定色相用；λ 不进入折射角计算
     var t = Math.max(0, Math.min(1, (nm - 400) / 300));
     var r = Math.round(255 * Math.min(1, Math.max(0, t < 0.25 ? (0.25 - t) * 4 : t > 0.55 ? (t - 0.55) / 0.45 : 0)));
     var g = Math.round(255 * Math.min(1, Math.max(0, t < 0.5 ? t * 2 : (1 - t) * 2)));
     var b = Math.round(255 * Math.min(1, Math.max(0, t < 0.45 ? 1 : (0.7 - t) / 0.25)));
     return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function readWaterDepthCm() {
+    if (!depthSlider) return 16;
+    var v = parseFloat(depthSlider.value);
+    return isNaN(v) ? 16 : Math.max(8, Math.min(30, v));
   }
 
   function mapAngleToDur(theta1) {
@@ -872,16 +885,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.restore();
   }
 
-  function drawScene(theta1Deg, n2, lamNm) {
+  function drawScene(theta1Deg, n2, depthCm) {
     const drv = eventAnim ? eventAnim.drivers : null;
-    if (drv) { theta1Deg = drv.theta1; n2 = drv.n2; lamNm = drv.lam; }
-    var beamColor = wavelengthToRgb(lamNm != null ? lamNm : 550);
+    if (drv) { theta1Deg = drv.theta1; n2 = drv.n2; depthCm = drv.depthCm; }
+    var beamColor = wavelengthToRgb(FIXED_LAM_NM);
     const L = syncCanvasSize();
     const groundY = L.groundY, launchX = L.launchX, launchY = L.launchY, target = L.target;
     ctx.clearRect(0, 0, W, H);
 
     var SC = { accent:'#3a9e9a', bg:'#0a1414', hi:'#8ad4c8', glow:'#f0d060', metal:'#6a7880', mid:'#1e3430' };
     var tankL = 18, tankR = W - 18, tankBot = H - 14, benchTh = 16;
+    // 水深只改界面以下的填充观感；不改 groundY / 发射几何 / 靶位
+    var depthVal = depthCm != null && !isNaN(depthCm) ? depthCm : 16;
+    var depthT = Math.max(0, Math.min(1, (depthVal - 8) / 22));
+    var tankH = Math.max(40, tankBot - groundY);
+    var fillH = 26 + depthT * (tankH - 34);
+    var waterSurfaceY = tankBot - fillH;
+    if (waterSurfaceY < groundY + 4) waterSurfaceY = groundY + 4;
+    var waterAlpha = 0.38 + depthT * 0.42;
+    var bubbleN = 4 + Math.round(depthT * 10);
 
     // 空气层
     const air = ctx.createLinearGradient(0, 0, 0, groundY);
@@ -950,25 +972,37 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.fillStyle = SC.metal;
     ctx.fillRect(0, benchY + benchTh - 2, W, 2);
 
-    // 水体
-    const water = ctx.createLinearGradient(0, groundY, 0, H);
-    water.addColorStop(0, 'rgba(58,158,154,0.32)');
-    water.addColorStop(0.45, 'rgba(30,52,48,0.62)');
-    water.addColorStop(1, 'rgba(10,20,20,0.88)');
-    ctx.fillStyle = water;
+    // 界面以下淡介质底色（折射界面固定在 groundY；水深不抬界面）
+    ctx.fillStyle = 'rgba(30,52,48,0.22)';
     ctx.fillRect(tankL, groundY, tankR - tankL, tankBot - groundY);
 
-    // 水底焦散 shimmer
+    // 水体填充：自槽底向上，高度/不透明度随水深变化
+    const water = ctx.createLinearGradient(0, waterSurfaceY, 0, tankBot);
+    water.addColorStop(0, 'rgba(58,158,154,' + (0.28 + depthT * 0.2).toFixed(2) + ')');
+    water.addColorStop(0.45, 'rgba(30,52,48,' + waterAlpha.toFixed(2) + ')');
+    water.addColorStop(1, 'rgba(10,20,20,' + Math.min(0.92, 0.7 + depthT * 0.22).toFixed(2) + ')');
+    ctx.fillStyle = water;
+    ctx.fillRect(tankL, waterSurfaceY, tankR - tankL, tankBot - waterSurfaceY);
+
+    // 可变液面线（在折射界面之下）
+    ctx.beginPath();
+    ctx.moveTo(tankL + 2, waterSurfaceY);
+    ctx.lineTo(tankR - 2, waterSurfaceY);
+    ctx.strokeStyle = 'rgba(138,212,200,' + (0.35 + depthT * 0.35).toFixed(2) + ')';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // 水底焦散 shimmer（仅填充区内）
     ctx.save();
     ctx.beginPath();
-    ctx.rect(tankL + 2, groundY + 4, tankR - tankL - 4, tankBot - groundY - 6);
+    ctx.rect(tankL + 2, waterSurfaceY + 2, tankR - tankL - 4, Math.max(4, tankBot - waterSurfaceY - 6));
     ctx.clip();
-    ctx.globalAlpha = causticAlpha;
+    ctx.globalAlpha = causticAlpha * (0.55 + depthT * 0.45);
     ctx.strokeStyle = SC.hi;
     ctx.lineWidth = 1.1;
-    for (var ci = 0; ci < 14; ci++) {
+    for (var ci = 0; ci < 10 + Math.round(depthT * 6); ci++) {
       var cx0 = tankL + 12 + (ci * 37) % (tankR - tankL - 24);
-      var cy0 = groundY + 18 + (ci * 23) % (tankBot - groundY - 30);
+      var cy0 = waterSurfaceY + 10 + (ci * 23) % Math.max(12, tankBot - waterSurfaceY - 24);
       ctx.beginPath();
       ctx.moveTo(cx0, cy0);
       ctx.bezierCurveTo(cx0 + 14, cy0 - 6, cx0 + 28, cy0 + 10, cx0 + 42, cy0 + 2);
@@ -976,12 +1010,26 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     ctx.globalAlpha = causticAlpha * 0.55;
     ctx.fillStyle = SC.glow;
-    for (var si = 0; si < 9; si++) {
+    for (var si = 0; si < 6 + Math.round(depthT * 5); si++) {
       var sx = tankL + 20 + (si * 53) % (tankR - tankL - 40);
-      var sy = groundY + 30 + (si * 41) % (tankBot - groundY - 50);
+      var sy = waterSurfaceY + 16 + (si * 41) % Math.max(10, tankBot - waterSurfaceY - 40);
       ctx.beginPath();
       ctx.ellipse(sx, sy, 10 + (si % 3) * 4, 5 + (si % 2) * 3, si * 0.4, 0, Math.PI * 2);
       ctx.fill();
+    }
+    // 气泡：数量随水深增加
+    ctx.globalAlpha = 0.35 + depthT * 0.35;
+    ctx.strokeStyle = 'rgba(200,240,235,0.75)';
+    ctx.fillStyle = 'rgba(180,230,220,0.18)';
+    ctx.lineWidth = 1;
+    for (var bi = 0; bi < bubbleN; bi++) {
+      var bx = tankL + 16 + ((bi * 47 + Math.floor(ambientT * 18)) % Math.max(20, tankR - tankL - 32));
+      var by = waterSurfaceY + 12 + ((bi * 31 + Math.floor(ambientT * 12)) % Math.max(10, tankBot - waterSurfaceY - 28));
+      var br = 2 + (bi % 4) * 0.7 + depthT * 1.2;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
     ctx.restore();
 
@@ -1003,11 +1051,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     drawGlassWall(0, tankL, true);
     drawGlassWall(tankR, W - tankR, false);
-    // 水面涟漪
-    ctx.strokeStyle = 'rgba(138,212,200,0.35)';
+    // 填充区内涟漪（界面 groundY 本身不动）
+    ctx.strokeStyle = 'rgba(138,212,200,' + (0.22 + depthT * 0.25).toFixed(2) + ')';
     ctx.lineWidth = 1.2;
-    for (var rip = 0; rip < 5; rip++) {
-      var ry = groundY + 8 + rip * 10;
+    var ripMax = 2 + Math.round(depthT * 3);
+    for (var rip = 0; rip < ripMax; rip++) {
+      var ry = waterSurfaceY + 6 + rip * 9;
+      if (ry >= tankBot - 18) break;
       ctx.beginPath();
       ctx.moveTo(tankL + 8, ry);
       for (var rx = tankL + 8; rx < tankR - 8; rx += 24) {
@@ -1044,6 +1094,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.fillText('空气', 18, groundY - 10);
     ctx.fillStyle = 'rgba(138,212,200,0.85)';
     ctx.fillText('水槽介质 n₂=' + n2.toFixed(1), 18, groundY + 22);
+    // 槽壁水深刻度（中性标注，不剧透）
+    ctx.fillStyle = 'rgba(200,220,215,0.7)';
+    ctx.font = '11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
+    ctx.fillText('水深 ' + depthVal.toFixed(0) + ' cm', tankR - 86, Math.min(tankBot - 22, waterSurfaceY + 16));
 
     // 探照灯 — 加大灯座 + 黄铜灯室
     ctx.fillStyle = SC.metal;
@@ -1142,59 +1196,49 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     ctx.fillStyle = '#fdba74';
     ctx.fillText('θ₁=' + theta1Deg.toFixed(0) + '°', ix + 18, groundY - 26);
 
-    const theta2Deg = drv ? drv.theta2 : calcRefractionAngle(theta1Deg, n2);
-    let valid = drv ? drv.valid : !(isNaN(theta2Deg) || theta2Deg < 0 || theta2Deg > 89);
+    // 测前不预计算/绘制正确 θ₂ 路径（避免剧透）；hit 判定仅在发射后使用
+    const theta2Deg = pathRevealedEarly
+      ? (drv ? drv.theta2 : calcRefractionAngle(theta1Deg, n2))
+      : NaN;
+    let valid = pathRevealedEarly
+      ? (drv ? drv.valid : !(isNaN(theta2Deg) || theta2Deg < 0 || theta2Deg > 89))
+      : false;
     let refrEndX = ix, refrEndY = groundY;
     const pathRevealed = measuredTheta2 != null || animActive;
-    if (valid) {
+    if (pathRevealed && valid) {
       const theta2Rad = theta2Deg * Math.PI / 180;
       const len = Math.min(H - groundY - 20, W * 0.35);
       refrEndX = ix + len * Math.sin(theta2Rad);
       refrEndY = groundY + len * Math.cos(theta2Rad);
-      if (pathRevealed) {
-        if (animActive) {
-          const incDone = eventAnim.phase !== 'windup';
-          if (incDone) {
-            drawBeamSegment(ix, groundY, refrEndX, refrEndY,
-              eventAnim.phase === 'peak' ? peakT : (eventAnim.phase === 'settle' ? settleT : 0),
-              beamColor, 2.5 + alignQual * 1.5, 6 + alignQual * 14);
-          }
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(ix, groundY);
-          ctx.lineTo(refrEndX, refrEndY);
-          ctx.strokeStyle = beamColor;
-          ctx.lineWidth = 2 + alignQual * 1.5;
-          ctx.globalAlpha = beamAlpha;
-          ctx.shadowColor = beamColor;
-          ctx.shadowBlur = 4 + alignQual * 12;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-          ctx.globalAlpha = 1;
-        }
-        ctx.beginPath();
-        ctx.arc(ix, groundY, 26, Math.PI/2, Math.PI/2 + theta2Rad, false);
-        ctx.strokeStyle = '#7dd3fc';
-        ctx.stroke();
-        ctx.fillStyle = '#7dd3fc';
-        if (!isNaN(measuredTheta2) && measuredTheta2 != null) {
-          ctx.fillText('θ₂=' + measuredTheta2.toFixed(1) + '°', ix + 18, groundY + 44);
+      if (animActive) {
+        const incDone = eventAnim.phase !== 'windup';
+        if (incDone) {
+          drawBeamSegment(ix, groundY, refrEndX, refrEndY,
+            eventAnim.phase === 'peak' ? peakT : (eventAnim.phase === 'settle' ? settleT : 0),
+            beamColor, 2.5 + alignQual * 1.5, 6 + alignQual * 14);
         }
       } else {
-        ctx.save();
-        ctx.setLineDash([7, 5]);
-        ctx.globalAlpha = 0.42;
         ctx.beginPath();
         ctx.moveTo(ix, groundY);
         ctx.lineTo(refrEndX, refrEndY);
         ctx.strokeStyle = beamColor;
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = 2 + alignQual * 1.5;
+        ctx.globalAlpha = beamAlpha;
+        ctx.shadowColor = beamColor;
+        ctx.shadowBlur = 4 + alignQual * 12;
         ctx.stroke();
-        ctx.restore();
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText('预测折射 · θ₂ 待测', ix + 16, groundY + 36);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
       }
-    } else if (pathRevealed) {
+      ctx.beginPath();
+      ctx.arc(ix, groundY, 26, Math.PI/2, Math.PI/2 + theta2Rad, false);
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.stroke();
+      ctx.fillStyle = '#7dd3fc';
+      if (!isNaN(measuredTheta2) && measuredTheta2 != null) {
+        ctx.fillText('θ₂=' + measuredTheta2.toFixed(1) + '°', ix + 18, groundY + 44);
+      }
+    } else if (pathRevealed && !valid) {
       // TIR：沿界面滑动光带
       const slideLen = Math.min(W * 0.22, 120);
       const slideT = animActive
@@ -1228,8 +1272,22 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       ctx.fillStyle = '#fda4af';
       ctx.fillText('全反射 / 无效', ix + 16, groundY + 36);
     } else {
+      // 发射前：界面下不确定雾扇（不编码正确 θ₂），中性提示
+      ctx.save();
+      const fogLen = Math.min(H - groundY - 28, 70);
+      const fog = ctx.createRadialGradient(ix, groundY, 4, ix, groundY + fogLen * 0.45, fogLen);
+      fog.addColorStop(0, 'rgba(148,163,184,0.16)');
+      fog.addColorStop(0.55, 'rgba(100,120,130,0.08)');
+      fog.addColorStop(1, 'rgba(100,120,130,0)');
+      ctx.fillStyle = fog;
+      ctx.beginPath();
+      ctx.moveTo(ix, groundY);
+      ctx.arc(ix, groundY, fogLen, Math.PI * 0.15, Math.PI - Math.PI * 0.15, false);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
       ctx.fillStyle = '#94a3b8';
-      ctx.fillText('全反射风险 · 点发射确认', ix + 16, groundY + 36);
+      ctx.fillText('点发射后观察水下光路', ix + 16, groundY + 36);
     }
 
     // 水下靶 — 信标盘 + 十字准星（竞赛命中/未中视觉区分）
@@ -1349,10 +1407,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function updateExperiment(fireAction = false) {
     const theta1 = parseFloat(angleSlider.value);
     const n2 = parseFloat(indexSlider.value);
-    const lam = waveSlider ? parseFloat(waveSlider.value) : 550;
+    const depthCm = readWaterDepthCm();
+    const avKey = theta1.toFixed(0) + '|' + n2.toFixed(1);
     angleValueSpan.textContent = theta1 + '°';
     indexValueSpan.textContent = n2.toFixed(1);
-    if (waveValueSpan) waveValueSpan.textContent = lam.toFixed(0) + ' nm';
+    if (depthValueSpan) depthValueSpan.textContent = depthCm.toFixed(0) + ' cm';
 
     // 发射时先揭示，再绘制，使出射光路与读数同帧出现
     if (fireAction) {
@@ -1361,7 +1420,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       measuredTheta2 = validPre ? t2pre : NaN; // NaN = 已测但无效/全反射
     }
 
-    const result = drawScene(theta1, n2, lam);
+    const result = drawScene(theta1, n2, depthCm);
     const theta2 = result.theta2Deg;
     const valid = result.valid;
 
@@ -1390,18 +1449,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // 如果点击发射 或 自动检测 (fireAction)
     if (fireAction) {
+      const onlyDepthProbe = depthTouchedSinceFire && lastFireAvKey != null && lastFireAvKey === avKey;
       if (!valid || isNaN(theta2)) {
-        feedback.textContent = '光路无效 · 可能全反射';
+        feedback.textContent = onlyDepthProbe
+          ? '光路仍无效 · 水深不改变折射角；本关 n₂ 已给定'
+          : '光路无效 · 可能全反射';
         winMessageDiv.innerHTML = '';
+        depthTouchedSinceFire = false;
+        lastFireAvKey = avKey;
         return { winOk: false, hintKey: 'C3', hit: false, missSide: null, valid: false, theta2: NaN };
       }
       const hit = result.hit;
       const missSide = result.missSide;
       if (playMode === 'explore') {
-        feedback.textContent = hit
-          ? '光路已出 · 对照入射角与折射率再瞄'
-          : (missSide === 'left' ? '光路偏左未中靶 · 继续对比' : (missSide === 'right' ? '光路偏右未中靶 · 继续对比' : '未命中对照靶 · 继续对比光路'));
+        if (onlyDepthProbe && !hit) {
+          feedback.textContent = '水深不改变折射角 · 本关 n₂ 已给定，请调 θ₁ 或 n₂';
+        } else {
+          feedback.textContent = hit
+            ? '光路已出 · 对照入射角与折射率再瞄'
+            : (missSide === 'left' ? '光路偏左未中靶 · 继续对比' : (missSide === 'right' ? '光路偏右未中靶 · 继续对比' : '未命中对照靶 · 继续对比光路'));
+        }
         winMessageDiv.innerHTML = '';
+        depthTouchedSinceFire = false;
+        lastFireAvKey = avKey;
         return { winOk: false, hintKey: 'explore_observe', hit: hit, missSide: missSide, valid: valid, theta2: theta2 };
       }
       if (hit) {
@@ -1409,14 +1479,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         winMessageDiv.innerHTML = '<span class="win-badge">🎉 过关！命中锁定靶</span>';
         if (!challengeWon && typeof window.__craftShowWin === 'function') {
           challengeWon = true;
-          window.__craftShowWin('急单靶位本局锁定。入射角与折射率共同决定折射角，从而决定能否命中。');
+          window.__craftShowWin('急单靶位本局锁定。折射角由 θ₁ 与 n₂ 决定；水深不改变折射角，本关 n₂ 已给定。');
         }
+        depthTouchedSinceFire = false;
+        lastFireAvKey = avKey;
         return { winOk: true, hintKey: null, hit: hit, missSide: missSide, valid: valid, theta2: theta2 };
       } else {
         // FixedChallenge：失败不换靶
         const sideTxt = missSide === 'left' ? '光路偏左' : (missSide === 'right' ? '光路偏右' : '未命中');
-        feedback.textContent = sideTxt + ' · 靶位仍锁定，对照光路再调参后发射';
+        feedback.textContent = onlyDepthProbe
+          ? '水深不改变折射角 · 本关 n₂ 已给定，请改 θ₁ 或 n₂ 后发射'
+          : (sideTxt + ' · 靶位仍锁定，对照光路再调参后发射');
         winMessageDiv.innerHTML = '';
+        depthTouchedSinceFire = false;
+        lastFireAvKey = avKey;
         return { winOk: false, hintKey: missSide === 'left' ? 'miss_left' : (missSide === 'right' ? 'miss_right' : 'C3'), hit: hit, missSide: missSide, valid: valid, theta2: theta2 };
       }
     } else {
@@ -1440,7 +1516,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       lastFireMissSide = status.missSide || null;
       const theta1 = parseFloat(angleSlider.value);
       const n2 = parseFloat(indexSlider.value);
-      const lam = waveSlider ? parseFloat(waveSlider.value) : 550;
+      const depthCm = readWaterDepthCm();
       const valid = status.valid != null ? status.valid : !isNaN(measuredTheta2);
       const totalDur = Math.max(0.4, Math.min(1.5, mapAngleToDur(theta1)));
       eventAnim = {
@@ -1448,7 +1524,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         drivers: {
           theta1: theta1, n1: n1, n2: n2, theta2: measuredTheta2,
           isTIR: !valid, valid: valid, hit: !!status.hit, missSide: status.missSide || null,
-          lam: lam, totalDur: totalDur
+          depthCm: depthCm, lam: FIXED_LAM_NM, totalDur: totalDur
         }
       };
     }
@@ -1456,7 +1532,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     // 构造 controls 快照
     const controls = {
       's-incident-angle': angleSlider.value,
-      's-refractive-index': indexSlider.value
+      's-refractive-index': indexSlider.value,
+      's-water-depth': depthSlider ? depthSlider.value : String(readWaterDepthCm())
     };
 
     // snapshot 事件
@@ -1497,8 +1574,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     lastFireMissSide = null;
     updateExperiment(false);
   });
-  if (waveSlider) waveSlider.addEventListener('input', function() {
+  if (depthSlider) depthSlider.addEventListener('input', function() {
     if (eventAnim) return;
+    depthTouchedSinceFire = true;
     updateExperiment(false);
   });
   fireBtn.addEventListener('click', function() {
@@ -1506,6 +1584,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   });
 
   // 初始化 UI 读数（canvas 由 loop 驱动）
+  lastFireAvKey = parseFloat(angleSlider.value).toFixed(0) + '|' + parseFloat(indexSlider.value).toFixed(1);
   updateExperiment(false);
 
   // 连续渲染：空闲环境光 + 事件 FSM
@@ -1516,8 +1595,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     stepEventAnim(dt);
     const theta1 = eventAnim ? eventAnim.drivers.theta1 : parseFloat(angleSlider.value);
     const n2 = eventAnim ? eventAnim.drivers.n2 : parseFloat(indexSlider.value);
-    const lam = eventAnim ? eventAnim.drivers.lam : (waveSlider ? parseFloat(waveSlider.value) : 550);
-    drawScene(theta1, n2, lam);
+    const depthCm = eventAnim ? eventAnim.drivers.depthCm : readWaterDepthCm();
+    drawScene(theta1, n2, depthCm);
     requestAnimationFrame(loop);
   })(performance.now());
 })();

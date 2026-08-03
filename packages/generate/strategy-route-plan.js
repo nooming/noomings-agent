@@ -46,19 +46,19 @@ const ROUTE_SCORE_BY_RANK = { 1: 1.0, 2: 0.85, 3: 0.7, 4: 0.55 };
 const ROUTE_TRAP_SCORE = 0.2;
 /** Confound probe side-branch — below trap; never gets priorityRank. */
 const ROUTE_CONFOUND_PROBE_SCORE = 0.15;
-const CONFOUND_PROBE_WARN = '拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略';
+const CONFOUND_PROBE_WARN = '试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略';
 
 function buildConfoundProbePlanRoutes(chapter) {
   const cvs = chapter?.inquiryScript?.confoundingVariables || [];
   const primary = cvs.find(c => c && (c.label || c.controlId));
   if (!primary) return [];
-  const short = String(primary.label || primary.controlId || '混淆量')
-    .replace(/极板/g, '')
-    .slice(0, 12) || '混淆量';
+  const short = String(primary.label || primary.controlId || '试探量')
+    .replace(/（示意.*）|\(示意.*\)/g, '')
+    .slice(0, 12) || '试探量';
   const id = `confound_${primary.controlId || primary.id || 'cv1'}`.replace(/[^A-Za-z0-9_]/g, '_');
   return [{
     id,
-    label: `试探混淆·${short}`,
+    label: `试探·${short}`,
     tier: 'suboptimal',
     kind: 'confoundProbe',
     mapsTo: [],
@@ -319,8 +319,8 @@ function buildStrategySelectPromptSection(gameHints, analyzeParse = null) {
   return [
     '## Strategy 控制变量优途径（多滑条硬约束）',
     '- 须有 StrategySelect{选择调参策略?}:::stratCond',
-    `- |途径| 边须覆盖：${labels}（控制变量 + 多参盲调${plan.mermaidHints?.confoundProbeLabels?.length ? ' + 试探混淆旁路' : ''}）${perAvHint}`,
-    '- 若有 confoundingVariables：须加 StrategySelect -.->|试探混淆·{label}| ProbeCV:::stratInvalid → 观察无增益 → 回到 StrategySelect；routes 增加 kind=confoundProbe 低分（≤0.15），禁止 priorityRank',
+    `- |途径| 边须覆盖：${labels}（控制变量 + 多参盲调${plan.mermaidHints?.confoundProbeLabels?.length ? ' + 试探旁路' : ''}）${perAvHint}`,
+    '- 若有 confoundingVariables：须加 StrategySelect -.->|试探·{label}| ProbeCV:::stratInvalid → 观察无增益 → 回到 StrategySelect；routes 增加 kind=confoundProbe 低分（≤0.15），禁止 priorityRank',
     '- 每条途径独立 Adjust↔Fire↔Observe 子链，禁止多途径共用 Fire/Observe hub',
     '- 多参盲调扇出须为单节点：StrategySelect -->|多参盲调| Trap[多参盲调] --> Fire（或 Observe 环入口）；禁止 Trap→TrapStrat→AdjustBoth / Trap→AdjustMulti 近义多跳',
     '- 单变量入口统一用 Route_main / Route_main_s_*（或 HeightStrat 等 *Strat）；禁止再画一套 Route1→Adjust1…RouteN 平行残桩',

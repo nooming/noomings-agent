@@ -138,7 +138,7 @@ function buildStrategyPromptHints(hints) {
 
   lines.push('- 禁止把 strategy 写成唯一线性滑条链；模式分叉后用 StrategySelect{…}:::stratCond 或等价决策，以 |途径| 边引出宏策略，禁止分水岭节点三叉直连多个策略方框');
   lines.push('- 每条宏策略须独立子链（StrategySelect |途径| 进入该策略入口→Adjust↔Fire↔Observe 环）；禁止同一 Fire/Observe 节点同时连向多条 |途径| 分支（避免宽扇出布局）');
-  lines.push('- 若 inquiryScript.confoundingVariables 非空：StrategySelect 须有虚线旁路 |试探混淆·{label}| → :::stratInvalid 拧混淆 → 观察无增益 → 回到主策略；routes 增加 kind=confoundProbe（score≤0.15，无 priorityRank），禁止把 CV 写成「单变量·」高优主路径');
+  lines.push('- 若 inquiryScript.confoundingVariables 非空：StrategySelect 须有虚线旁路 |试探·{label}| → :::stratInvalid → 观察无增益 → 回到主策略；routes 增加 kind=confoundProbe（score≤0.15，无 priorityRank），禁止把 CV 写成「单变量·」高优主路径；学生可见标签勿写「混淆」');
 
   if (hints.hasConditionalParamProfile) {
     lines.push('- 禁止套用与源码无关的固定调参链；关态分支的 DT desc 须注明条件无效参数「仅 UI 范围/不影响过关判定」');

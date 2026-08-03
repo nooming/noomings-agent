@@ -31,7 +31,7 @@ function auditRoute(route, mermaid) {
   const hasEntry = nodes.some(id => /Route|Strat|Dist|Mat|Area|Trap|Path|Tune|Single|Adjust/i.test(id)
     && !/StrategySelect/i.test(id));
   const single = /单变量·/.test(route.label || '');
-  const confound = route.kind === 'confoundProbe' || /试探混淆/.test(route.label || '');
+  const confound = route.kind === 'confoundProbe' || /试探(?:混淆)?[·•.]/.test(route.label || '');
   const hasProbe = nodes.some(id => /ProbeCV|ObserveCV|BackFromCV/i.test(id));
   const selectHit = /StrategySelect|ModeSelect/i.test(String(route.highlightNodes || []))
     && (route.highlightEdges || []).some(p => Array.isArray(p) && /Select/i.test(p[0]));
@@ -71,9 +71,9 @@ function repairOne(entry) {
     auditRoute(r, chapter.strategy.mermaid));
 
   const hasCv = (chapter.inquiryScript?.confoundingVariables || []).some(c => c?.label || c?.controlId);
-  const mermaidHasCv = /试探混淆/.test(chapter.strategy?.mermaid || '');
+  const mermaidHasCv = /试探(?:混淆)?[·•.]/.test(chapter.strategy?.mermaid || '');
   const routeCv = (chapter.strategy?.routes || []).some(r =>
-    r.kind === 'confoundProbe' || /试探混淆/.test(r.label || ''));
+    r.kind === 'confoundProbe' || /试探(?:混淆)?[·•.]/.test(r.label || ''));
 
   let exportResult = { ok: false };
   try {

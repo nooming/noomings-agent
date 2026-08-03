@@ -797,10 +797,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <input type="range" id="in-mass" min="0.1" max="5.0" step="0.1" value="1.0">
         </div>
 
-        <!-- 无关混淆变量 -->
         <div class="input-group" id="group-material">
-            <div class="label-row"><span>弹药材质</span> <span class="val-display" id="val-material">铁质</span></div>
-            <input type="range" id="in-material" min="1" max="5" step="1" value="3">
+            <div class="label-row"><span>弹种</span> <span class="val-display" id="val-material">钢</span></div>
+            <input type="range" id="in-material" min="1" max="3" step="1" value="2">
         </div>
         </div>
         <div class="ctrl-ft">
@@ -875,9 +874,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     <p>质量越大，惯性越强。重物受风力和阻力减速的影响较小。</p>
                 </div>
                 <div class="guide-section" style="border: none;">
-                    <h3>7. 弹药材质 (玄学参数)</h3>
-                    <p>改变炮弹表面的物理材料构造。</p>
-                    <p class="highlight">专家提示：不同的材质能带来微妙的发射手感与气动玄学变化，请自行体会。</p>
+                    <h3>7. 弹种</h3>
+                    <p>可选铅、钢、铁等弹种外观。</p>
                 </div>
             </div>
             <div class="btn-group">
@@ -899,7 +897,7 @@ class PixelGame {
                 drag: document.getElementById('in-drag'),
                 wind: document.getElementById('in-wind'),
                 mass: document.getElementById('in-mass'),
-                material: document.getElementById('in-material') // 新增材质混淆滑块
+                material: document.getElementById('in-material') // 弹种外观（不进轨迹）
             },
             groups: {
                 angle: document.getElementById('group-angle'),
@@ -1099,9 +1097,8 @@ class PixelGame {
         this.dom.displays.wind.innerText = getVal('wind') + ' m/s';
         this.dom.displays.mass.innerText = getVal('mass') + ' kg';
 
-        // 材质混淆UI逻辑
-        const materials = ["木质", "石质", "铁质", "钢质", "钛金"];
-        const matIndex = parseInt(getVal('material')) - 1;
+        const materials = ["铅", "钢", "铁"];
+        const matIndex = Math.max(0, Math.min(2, parseInt(getVal('material'), 10) - 1));
         this.dom.displays.material.innerText = materials[matIndex];
 
         const windSpeed = parseFloat(getVal('wind'));
@@ -1214,9 +1211,9 @@ class PixelGame {
         const wind = parseFloat(this.dom.inputs.wind.value);
         const m = parseFloat(this.dom.inputs.mass.value);
 
-        // 提取混淆材质值，并赋予不同的外观颜色
-        const matIndex = parseInt(this.dom.inputs.material.value) - 1;
-        const matColors = ['#d35400', '#7f8c8d', '#bdc3c7', '#2c3e50', '#9b59b6'];
+        // 弹种仅改外观颜色，不进入轨迹积分
+        const matIndex = Math.max(0, Math.min(2, parseInt(this.dom.inputs.material.value, 10) - 1));
+        const matColors = ['#6b7280', '#94a3b8', '#475569'];
 
         this.proj = {
             x: 60, y: this.groundY - 25,
@@ -1754,7 +1751,7 @@ class PixelGame {
     drawProj() {
         if(this.proj) {
             const p = this.proj;
-            // 使用混淆材质带来的颜色变化
+            // 使用弹种外观颜色
             this.ctx.fillStyle = p.color || '#ffaf40';
             this.ctx.fillRect(Math.floor(p.x - p.size/2), Math.floor(p.y - p.size/2), p.size, p.size);
             

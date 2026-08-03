@@ -83,6 +83,53 @@ function run() {
   assert(!mainExp.highlightNodes.includes('FrictionRoute'), 'main drops FrictionRoute bleed');
   assert(!mainExp.highlightNodes.includes('AdjustFriction'), 'main drops AdjustFriction bleed');
 
+  // Post-merge dual mode: both Explore + Challenge stay lit (not only one side)
+  const DUAL_MODE_MERMAID = [
+    'graph TD',
+    'Start --> ModeSelect{选择模式?}',
+    'ModeSelect -->|探究| ExploreMode[探究模式：自由调参]',
+    'ModeSelect -->|竞赛| ChallengeMode[竞赛模式：限次]',
+    'ExploreMode --> StrategySelect{选择?}',
+    'ChallengeMode --> StrategySelect',
+    'StrategySelect -->|单变量·电流| Route_main',
+    'StrategySelect -->|多参盲调| Trap',
+    'Route_main --> Adjust --> Fire --> Observe',
+    'Trap --> Fire',
+    'Observe -->|达标| Win',
+  ].join('\n');
+  const singleVar = {
+    id: 'main',
+    label: '单变量·电流',
+    highlightNodes: ['Start', 'ModeSelect', 'ExploreMode', 'StrategySelect', 'Route_main', 'Adjust', 'Fire', 'Observe', 'Win'],
+    highlightEdges: [
+      ['Start', 'ModeSelect'],
+      ['ModeSelect', 'ExploreMode'],
+      ['ExploreMode', 'StrategySelect'],
+      ['StrategySelect', 'Route_main'],
+      ['Route_main', 'Adjust'],
+      ['Adjust', 'Fire'],
+      ['Fire', 'Observe'],
+      ['Observe', 'Win'],
+    ],
+  };
+  const dualExp = expandRouteHighlight(singleVar, DUAL_MODE_MERMAID, {});
+  assert(dualExp.highlightNodes.includes('ExploreMode'), 'dual keeps ExploreMode');
+  assert(dualExp.highlightNodes.includes('ChallengeMode'), 'dual keeps ChallengeMode sibling');
+  assert(dualExp.edgeKeys.has('ModeSelect->ExploreMode'), 'dual ModeSelect→ExploreMode');
+  assert(dualExp.edgeKeys.has('ModeSelect->ChallengeMode'), 'dual ModeSelect→ChallengeMode');
+  assert(!dualExp.highlightNodes.includes('Trap'), 'dual does not light Trap sibling');
+
+  const envOnly = {
+    id: 'env_explore',
+    label: '探究模式',
+    kind: 'env',
+    highlightNodes: ['Start', 'ModeSelect', 'ExploreMode'],
+    highlightEdges: [['Start', 'ModeSelect'], ['ModeSelect', 'ExploreMode']],
+  };
+  const envExp = expandRouteHighlight(envOnly, DUAL_MODE_MERMAID, {});
+  assert(envExp.highlightNodes.includes('ExploreMode'), 'env-only keeps ExploreMode');
+  assert(!envExp.highlightNodes.includes('ChallengeMode'), 'env-only does not force ChallengeMode');
+
   console.log('strategy-sparse-highlight-seed-check: ok');
 }
 

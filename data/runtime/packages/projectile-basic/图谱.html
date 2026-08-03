@@ -456,12 +456,12 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   function routeLooksLikeTrapFanout(route) {
     return /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`)
-      && !/试探混淆|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
+      && !/试探(?:混淆)?[·•.]|迷思|Invalid|Misconception/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
 
   function routeLooksLikeConfoundProbe(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   /** Trap / invalid / off-mode routes must not highlight stratResult success exits. */
@@ -478,7 +478,7 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
-  /** True misconception / off-mode — not intentional 多参盲调 or 试探混淆 fan-outs. */
+  /** True misconception / off-mode — not intentional 多参盲调 or 试探· / 试探混淆 fan-outs. */
   function routeIsTrueMisconceptionRoute(route, mermaidBody) {
     if (routeLooksLikeTrapFanout(route) || routeLooksLikeConfoundProbe(route)) return false;
     return routeIsMisconceptionRoute(route, mermaidBody);
@@ -598,9 +598,78 @@ function isSuccessBranchEdge(edge, resultIds) {
     return false;
   }
 
+  function isModeChoiceHub(id) {
+    return /ModeSelect|^Env$/i.test(String(id || ''));
+  }
+
+  /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
+  function isModeEntryNodeId(id, label) {
+    const s = String(id || '');
+    const lab = String(label || '');
+    if (/Explore|Challenge/i.test(s)) return true;
+    if (/探究|竞赛/.test(lab)) return true;
+    return false;
+  }
+
+  /**
+   * Env-only routes that intentionally light one mode (探究模式 vs 竞赛模式 alone).
+   * Post-merge strategy routes (单变量 / 盲调 / 试探) are never exclusive.
+   */
+  function routeIsExclusiveModeEnvRoute(route) {
+    if (!route) return false;
+    if (String(route.kind || '').toLowerCase() === 'env') return true;
+    const id = String(route.id || '');
+    const label = String(route.label || '').trim();
+    const text = `${id} ${label}`;
+    if (/单变量|盲调|多参|试探|Probe|Trap|confound|^main\b/i.test(text)) return false;
+    if (/^(探究模式|竞赛模式|自由探究|竞赛挑战|ExploreMode|ChallengeMode|Explore|Challenge)$/i.test(label)) {
+      return true;
+    }
+    const mentionsExplore = /探究模式|自由探究|ExploreMode|\bExplore\b/i.test(text);
+    const mentionsChallenge = /竞赛模式|竞赛挑战|ChallengeMode|\bChallenge\b/i.test(text);
+    if ((mentionsExplore !== mentionsChallenge) && /模式|Mode|Env/i.test(text)) return true;
+    return false;
+  }
+
+  /**
+   * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
+   * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   */
+  function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
+    if (routeIsExclusiveModeEnvRoute(route)) return;
+    const hasStrategySelect = [...nodeSet].some(id => /StrategySelect/i.test(id));
+    if (!hasStrategySelect) return;
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const byFrom = new Map();
+    edges.forEach(e => {
+      if (!byFrom.has(e.from)) byFrom.set(e.from, []);
+      if (!byFrom.get(e.from).some(x => x.to === e.to)) byFrom.get(e.from).push(e);
+    });
+    byFrom.forEach((outs, from) => {
+      if (!isModeChoiceHub(from)) return;
+      const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
+      if (modeOuts.length < 2) return;
+      const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
+      if (!anyModeLit && !nodeSet.has(from)) return;
+      if (!anyModeLit) return;
+      nodeSet.add(from);
+      modeOuts.forEach(e => {
+        nodeSet.add(e.to);
+        keySet.add(e.key);
+        edges.forEach(e2 => {
+          if (e2.from === e.to && /StrategySelect/i.test(e2.to) && nodeSet.has(e2.to)) {
+            keySet.add(e2.key);
+          }
+        });
+      });
+    });
+  }
+
   /** At macro forks, forbid paths through sibling branches not on this route. */
-  function forkSiblingExclusions(edges, hlSet) {
+  function forkSiblingExclusions(edges, hlSet, mermaidBody, route) {
     const forbidden = new Set();
+    const labels = extractStrategyNodeLabels(mermaidBody || '');
+    const exclusiveEnv = routeIsExclusiveModeEnvRoute(route);
     const byFrom = new Map();
     edges.forEach(e => {
       if (!byFrom.has(e.from)) byFrom.set(e.from, []);
@@ -609,11 +678,16 @@ function isSuccessBranchEdge(edge, resultIds) {
     byFrom.forEach((children, from) => {
       if (children.length < 2) return;
       const active = children.filter(child => branchReachableHighlight(child, hlSet, edges));
-      if (active.length === 1) {
-        children.forEach(c => {
-          if (c !== active[0]) forbidden.add(c);
-        });
-      }
+      if (active.length !== 1) return;
+      const modeKids = children.filter(c => isModeEntryNodeId(c, labels.get(c) || ''));
+      const dualModeHub = isModeChoiceHub(from) && modeKids.length >= 2 && !exclusiveEnv;
+      const modeActive = dualModeHub && modeKids.some(m => m === active[0] || hlSet.has(m));
+      children.forEach(c => {
+        if (c === active[0]) return;
+        // Shared post-merge: do not grey out the other explore/challenge entry.
+        if (modeActive && modeKids.includes(c)) return;
+        forbidden.add(c);
+      });
     });
     return forbidden;
   }
@@ -670,8 +744,8 @@ function isSuccessBranchEdge(edge, resultIds) {
     return forbidden;
   }
 
-  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig) {
-    const forbidden = forkSiblingExclusions(edges, hlSet);
+  function collectPathForbidden(edges, hlSet, mermaidBody, hlOrig, route) {
+    const forbidden = forkSiblingExclusions(edges, hlSet, mermaidBody, route);
     directStrategyBranchExclusions(edges, hlOrig || hlSet).forEach(id => forbidden.add(id));
     if (detectMacroRouteFanOut(mermaidBody)) {
       numberedRouteSiblingExclusions(hlSet, mermaidBody).forEach(id => forbidden.add(id));
@@ -1016,7 +1090,7 @@ function isSuccessBranchEdge(edge, resultIds) {
   
   function isConfoundProbeRouteLike(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isConfoundVisualNodeId(id) {
@@ -1034,7 +1108,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       const a = k.slice(0, i);
       const b = k.slice(i + 2);
       if (isConfoundVisualNodeId(a) || isConfoundVisualNodeId(b)) keySet.delete(k);
-      if (/试探混淆/.test(a) || /试探混淆/.test(b)) keySet.delete(k);
+      if (/试探(?:混淆)?[·•.]/.test(a) || /试探(?:混淆)?[·•.]/.test(b)) keySet.delete(k);
     }
   }
 
@@ -1358,7 +1432,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       }
     }
     const hasExplicitSpine = Array.isArray(syntheticRoute.highlightEdges) && syntheticRoute.highlightEdges.length > 0;
-    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig);
+    const forbidden = collectPathForbidden(edges, nodeSet, mermaidBody, hlOrig, syntheticRoute);
     const pathFn = (from, to) =>
       (forbidden.size
         ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1410,6 +1484,8 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         if (!nodeSet.has(a) || !nodeSet.has(b)) keySet.delete(k);
       }
     }
+    // Shared post-merge: both explore + challenge mode entries stay lit
+    ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, syntheticRoute);
     return { highlightNodes: [...nodeSet], edgeKeys: keySet };
   }
 
@@ -1426,13 +1502,13 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
     if (!hasExplicitSpine) {
       edges.forEach(e => {
-        if (!isConfoundProbeRouteLike(route) && (/试探混淆/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
+        if (!isConfoundProbeRouteLike(route) && (/试探(?:混淆)?[·•.]/.test(e.label || '') || isConfoundVisualNodeId(e.to))) {
           return;
         }
         if (nodes.has(e.from) && nodes.has(e.to)) keys.add(e.key);
         else if (e.dotted && nodes.has(e.from)) keys.add(e.key);
       });
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1440,7 +1516,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       const hl = route.highlightNodes || [];
       addRestrictedPairwiseKeys(keys, hl, hlOrig, pathFn, mermaidBody, false);
     } else {
-      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig);
+      const forbidden = collectPathForbidden(edges, nodes, mermaidBody, hlOrig, route);
       const pathFn = (from, to) =>
         (forbidden.size
           ? shortestPathEdgeKeysAvoiding(from, to, edges, forbidden)
@@ -1726,6 +1802,10 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     normalizeRouteLabelKey,
     routeNeedsSpineSeed,
     isBranchEntryNodeId,
+    isModeChoiceHub,
+    isModeEntryNodeId,
+    routeIsExclusiveModeEnvRoute,
+    ensureSharedModeDualEntry,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -1743,7 +1823,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 (function (root) {
   function isConfoundProbeRoute(route) {
     return route?.kind === 'confoundProbe'
-      || /试探混淆/.test(String(route?.label || ''));
+      || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
@@ -2106,7 +2186,7 @@ const GraphViewer = (function () {
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
-    { cls: 'confound', label: '试探混淆 · 虚线旁路' },
+    { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
 
 function cssVar(name) {
@@ -2390,7 +2470,7 @@ function resolveRouteVarContext(route) {
   const label = String(route?.label || '');
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
-    .replace(/^试探混淆[·•.]/, '')
+    .replace(/^试探(?:混淆)?[·•.]/, '')
     .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
     .trim();
 
@@ -2434,7 +2514,7 @@ function buildRouteTeachingHtml(route) {
   if (meta?.confound) {
     badge = student
       ? '<span class="i-badge" style="background:#64748b">旁路试探</span>'
-      : '<span class="i-badge route-badge-cv">试探混淆 · 旁路</span>';
+      : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
   } else if (meta && meta.rank <= 20) {
@@ -3209,7 +3289,7 @@ function updateLegend() {
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
           .replace(/·\s*优先\d+/g, '')
-          .replace(/试探混淆/g, '旁路试探')
+          .replace(/试探混淆/g, '试探')
         : label;
       const hiddenCls = i >= DEFAULT_VISIBLE ? ' route-btn-extra hidden' : '';
       return `<button type="button" class="route-btn ${prioCls}${meta?.trap || meta?.confound ? ' warn' : ''}${hiddenCls}" data-route-id="${r.id}">${studentSafeLabel}${!isStudentAudience() && scoreTxt && !prioApi?.formatPriorityEdgeLabel ? `<span class="route-score">${scoreTxt}</span>` : ''}</button>`;
@@ -3693,7 +3773,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究/挑战 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是(挑战) | C2 | constraint | 挑战模式 |\n| 否(探究) | C3 | constraint | 探究模式 |\n| 调参发射 | O1 | operation | 调节角度/速度/高度/质量并发射 |\n| 落地? | C4 | constraint | 小球落地检测 |\n| 命中靶心? | C5 | constraint | 挑战模式命中判定 |\n| 过关 | R1 | result | 命中靶心 |\n| 偏近/偏远 | C6 | constraint | 未命中提示 |\n| 机会用尽 | C7 | constraint | 挑战失败 |\n| 探究时间到 | C8 | constraint | 探究超时 |\n| 斜抛运动公式 | S1 | core | 教学知识 |\n| 控制变量法 | S2 | method | 教学知识 |\n| 重试 | - | - | skip retry |","kg":{"title":"斜抛运动探究与挑战","sub":"野战炮兵 · 斜抛试射","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始斜抛运动探究与挑战"},{"id":"C1","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或靶心挑战模式","constraintKind":"physics"},{"id":"C2","label":"挑战模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"靶心挑战模式，限次命中固定靶距","constraintKind":"physics"},{"id":"C3","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由探究模式，无靶心，可自由试射","constraintKind":"physics"},{"id":"O1","label":"调参发射","group":"operation","layer":"play","level":3,"r":22,"desc":"调节发射角度、初速度、发射高度、小球质量并点击发射"},{"id":"C4","label":"落地检测","group":"constraint","layer":"play","level":4,"r":22,"desc":"小球落地后触发判定","constraintKind":"physics"},{"id":"C5","label":"命中靶心","group":"constraint","layer":"play","level":5,"r":22,"desc":"挑战模式下落点与靶心距离小于允许误差","constraintKind":"physics"},{"id":"C6","label":"偏近/偏远","group":"constraint","layer":"play","level":5,"r":22,"desc":"未命中时提示偏近或偏远及偏差距离","constraintKind":"physics"},{"id":"C7","label":"机会用尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"挑战模式下6次机会用完仍未命中","constraintKind":"physics"},{"id":"C8","label":"探究时间到","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"挑战模式下命中靶心，完成本局挑战"},{"id":"S1","label":"斜抛运动公式","group":"core","layer":"teach","level":0,"r":22,"desc":"x = v₀cosθ·t；y = v₀sinθ·t − ½gt²"},{"id":"S2","label":"控制变量法","group":"method","layer":"teach","level":0,"r":22,"desc":"每次只改变一个参数，观察对落点的影响"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"R1","tp":"core"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"O1","tp":"premise"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C4","t":"C8","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"斜抛运动探究与挑战","sub":"野战炮兵 · 斜抛试射","tree":{"n":"进入关卡","t":"root","d":"开始探究或挑战","children":[{"n":"选择模式?","t":"decision","d":"环境/模式判定","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由探究，无靶心","children":[{"n":"调参发射","t":"step","d":"调节参数并发射","children":[{"n":"落地?","t":"decision","d":"小球落地检测","children":[{"_e":"否","n":"继续飞行","t":"junction","d":"等待落地"},{"_e":"是","n":"探究时间到?","t":"decision","d":"探究模式10分钟倒计时","children":[{"_e":"否","n":"继续探究","t":"step","d":"可继续发射"},{"_e":"是","n":"超时重试","t":"retry","d":"探究时间到，进入挑战模式"}]}]}]}]},{"_e":"是","n":"挑战模式","t":"step","d":"靶心挑战，限次命中","children":[{"n":"调参发射","t":"step","d":"调节参数并发射","children":[{"n":"落地?","t":"decision","d":"小球落地检测","children":[{"_e":"否","n":"继续飞行","t":"junction","d":"等待落地"},{"_e":"是","n":"命中靶心?","t":"decision","d":"挑战模式命中判定","children":[{"_e":"是","n":"过关","t":"result","d":"命中靶心，挑战完成"},{"n":"未达标重试","t":"retry","d":"剩余机会判定","_e":"否","children":[]}]}]}]}]}]}]}},"winSync":{"title":"命中靶心！","sub":"完美击中靶心，本局挑战完成"},"strategy":{"title":"斜抛运动探究与挑战","sub":"野战炮兵 · 斜抛试射","mermaid":"graph TD\nAdjust --> Fire\nAdjust1 --> Fire[发射]\nAdjust2 --> Fire\nAdjust3 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察落点?}:::stratCond\nMode -->|挑战| Challenge[靶心挑战]\nMode -->|探究| Explore[自由探究]\nObserve -->|偏近| Adjust1\nObserve -->|偏远| Adjust1\nObserve -->|机会用尽| Retry[重试]:::stratRetry\nObserve -->|超时| Retry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·发射角度| AngleStrat\nStrategySelect -->|单变量·发射高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nStart([开始]):::stratStart\nAdjust[单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleStrat --> Adjust3[调整发射角度]\nHeightStrat --> Adjust2[调整发射高度]\nSpeedStrat --> Adjust1[调整初速度]\nAngleStrat[单变量·发射角度]\nHeightStrat[单变量·发射高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·初速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust1","Fire","Observe","Win","Retry","SpeedStrat"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","SpeedStrat"],["SpeedStrat","Adjust1"],["Adjust1","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-height","label":"单变量·发射高度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust2","Fire","Observe","Win","Retry","HeightStrat","Adjust1"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","HeightStrat"],["HeightStrat","Adjust2"],["Adjust2","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-angle","label":"单变量·发射角度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust3","Fire","Observe","Win","Retry","AngleStrat","Adjust1"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","AngleStrat"],["AngleStrat","Adjust3"],["Adjust3","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","tier":"suboptimal","warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Mode","Challenge","StrategySelect","Trap","Fire","Observe","Adjust1","Retry"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"],["Trap","Fire"]],"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Mode","Challenge"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-angle":{"kgId":"O1","role":"operation"},"s-speed":{"kgId":"O1","role":"operation"},"s-height":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"斜抛运动探究与挑战","knowledgePoints":[{"id":"KP1","label":"斜抛运动探究与挑战","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-speed","label":"初速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["R","H"],"notes":"v0 优先单变量：单调抬高射程","priorityRank":1},{"id":"AV2","controlId":"s-height","label":"发射高度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":["R","H"],"notes":"发射高度单调影响落点，弱于 v0","priorityRank":2},{"id":"AV3","controlId":"s-angle","label":"发射角度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2","AV3"],"narrative":{"intro":"本关探究：斜抛运动公式、控制变量法","steps":[{"order":1,"title":"明确知识点","body":"回顾：斜抛运动公式；控制变量法","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调参发射、调参发射、调参发射、调参发射、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","O1","C1"]},{"order":3,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | 开始探究/挑战 |\n| 选择模式? | C1 | constraint | 环境/模式判定 |\n| 是(挑战) | C2 | constraint | 挑战模式 |\n| 否(探究) | C3 | constraint | 探究模式 |\n| 调参发射 | O1 | operation | 调节角度/速度/高度/质量并发射 |\n| 落地? | C4 | constraint | 小球落地检测 |\n| 命中靶心? | C5 | constraint | 挑战模式命中判定 |\n| 过关 | R1 | result | 命中靶心 |\n| 偏近/偏远 | C6 | constraint | 未命中提示 |\n| 机会用尽 | C7 | constraint | 挑战失败 |\n| 探究时间到 | C8 | constraint | 探究超时 |\n| 斜抛运动公式 | S1 | core | 教学知识 |\n| 控制变量法 | S2 | method | 教学知识 |\n| 重试 | - | - | skip retry |","kg":{"title":"斜抛运动探究与挑战","sub":"靶场 · 斜抛","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始斜抛运动探究与挑战"},{"id":"C1","label":"选择模式","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择自由探究或靶心挑战模式","constraintKind":"physics"},{"id":"C2","label":"挑战模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"靶心挑战模式，限次命中固定靶距","constraintKind":"physics"},{"id":"C3","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"自由探究模式，无靶心，可自由试射","constraintKind":"physics"},{"id":"O1","label":"调参发射","group":"operation","layer":"play","level":3,"r":22,"desc":"调节发射角度、初速度、发射高度、小球质量并点击发射"},{"id":"C4","label":"落地检测","group":"constraint","layer":"play","level":4,"r":22,"desc":"小球落地后触发判定","constraintKind":"physics"},{"id":"C5","label":"命中靶心","group":"constraint","layer":"play","level":5,"r":22,"desc":"挑战模式下落点与靶心距离小于允许误差","constraintKind":"physics"},{"id":"C6","label":"偏近/偏远","group":"constraint","layer":"play","level":5,"r":22,"desc":"未命中时提示偏近或偏远及偏差距离","constraintKind":"physics"},{"id":"C7","label":"机会用尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"挑战模式下6次机会用完仍未命中","constraintKind":"physics"},{"id":"C8","label":"探究时间到","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"挑战模式下命中靶心，完成本局挑战"},{"id":"S1","label":"斜抛运动公式","group":"core","layer":"teach","level":0,"r":22,"desc":"x = v₀cosθ·t；y = v₀sinθ·t − ½gt²"},{"id":"S2","label":"控制变量法","group":"method","layer":"teach","level":0,"r":22,"desc":"每次只改变一个参数，观察对落点的影响"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"混淆或装饰控件，不进入主探究归因"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"R1","tp":"core"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"O1","tp":"premise"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C4","t":"C8","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"斜抛运动探究与挑战","sub":"靶场 · 斜抛","tree":{"n":"进入关卡","t":"root","d":"开始探究或挑战","children":[{"n":"选择模式?","t":"decision","d":"环境/模式判定","children":[{"_e":"否","n":"探究模式","t":"step","d":"自由探究，无靶心","children":[{"n":"调参发射","t":"step","d":"调节参数并发射","children":[{"n":"落地?","t":"decision","d":"小球落地检测","children":[{"_e":"否","n":"继续飞行","t":"junction","d":"等待落地"},{"_e":"是","n":"探究时间到?","t":"decision","d":"探究模式10分钟倒计时","children":[{"_e":"否","n":"继续探究","t":"step","d":"可继续发射"},{"_e":"是","n":"超时重试","t":"retry","d":"探究时间到，进入挑战模式"}]}]}]}]},{"_e":"是","n":"挑战模式","t":"step","d":"靶心挑战，限次命中","children":[{"n":"调参发射","t":"step","d":"调节参数并发射","children":[{"n":"落地?","t":"decision","d":"小球落地检测","children":[{"_e":"否","n":"继续飞行","t":"junction","d":"等待落地"},{"_e":"是","n":"命中靶心?","t":"decision","d":"挑战模式命中判定","children":[{"_e":"是","n":"过关","t":"result","d":"命中靶心，挑战完成"},{"n":"未达标重试","t":"retry","d":"剩余机会判定","_e":"否","children":[]}]}]}]}]}]}]}},"winSync":{"title":"命中靶心！","sub":"完美击中靶心，本局挑战完成"},"strategy":{"title":"斜抛运动探究与挑战","sub":"靶场 · 斜抛","mermaid":"graph TD\nAdjust1 --> Fire[发射]\nAdjust2 --> Fire\nAdjust3 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察落点?}:::stratCond\nMode -->|挑战| Challenge[靶心挑战]\nMode -->|探究| Explore[自由探究]\nObserve -->|偏近| Adjust1\nObserve -->|偏远| Adjust1\nObserve -->|机会用尽| Retry[重试]:::stratRetry\nObserve -->|超时| Retry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·发射角度| AngleStrat\nStrategySelect -->|单变量·发射高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleStrat --> Adjust3[调整发射角度]\nHeightStrat --> Adjust2[调整发射高度]\nSpeedStrat --> Adjust1[调整初速度]\nAngleStrat[单变量·发射角度]\nHeightStrat[单变量·发射高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·初速度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust1","Fire","Observe","Win","Retry","SpeedStrat"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","SpeedStrat"],["SpeedStrat","Adjust1"],["Adjust1","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-height","label":"单变量·发射高度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust2","Fire","Observe","Win","Retry","HeightStrat","Adjust1"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","HeightStrat"],["HeightStrat","Adjust2"],["Adjust2","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-angle","label":"单变量·发射角度","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Mode","Challenge","Adjust3","Fire","Observe","Win","Retry","AngleStrat","Adjust1"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","AngleStrat"],["AngleStrat","Adjust3"],["Adjust3","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","tier":"suboptimal","warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","Mode","Challenge","StrategySelect","Trap","Fire","Observe","Adjust1","Retry"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","Trap"],["Fire","Observe"],["Observe","Adjust1"],["Adjust1","Fire"],["Observe","Retry"],["Trap","Fire"]],"highlightFailureBranches":true},{"id":"confound_s_mass","label":"试探混淆·质量","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Mode","Challenge"],"highlightEdges":[["Start","Mode"],["Mode","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-angle":{"kgId":"O1","role":"operation"},"s-speed":{"kgId":"O1","role":"operation"},"s-height":{"kgId":"O1","role":"operation"},"s-mass":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"}},"legacyTypes":{}},"inquiryScript":{"summary":"斜抛运动探究与挑战","knowledgePoints":[{"id":"KP1","label":"斜抛运动探究与挑战","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-speed","label":"初速度","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["R","H"],"notes":"v0 优先单变量：单调抬高射程","priorityRank":1},{"id":"AV2","controlId":"s-height","label":"发射高度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":["R","H"],"notes":"发射高度单调影响落点，弱于 v0","priorityRank":2},{"id":"AV3","controlId":"s-angle","label":"发射角度","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"non-monotone","affects":["R","H"],"notes":"θ 对射程非单调，与 v0/h 不等价","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":"s-mass","label":"质量","reason":"混淆/装饰控件：不参与核心过关归因"}],"inquiryFlow":["KP1","AV1","AV2","AV3"],"narrative":{"intro":"本关探究：斜抛运动公式、控制变量法","steps":[{"order":1,"title":"明确知识点","body":"回顾：斜抛运动公式；控制变量法","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调参发射、调参发射、调参发射、调参发射、选择模式；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1","O1","C1"]},{"order":3,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"射程","symbol":"R","unit":"m","role":"primary","source":"formula"},{"id":"OV2","label":"最大高度","symbol":"H","unit":"m","role":"secondary","source":"formula"}],"domain":"projectile"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

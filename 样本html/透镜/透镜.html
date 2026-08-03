@@ -874,23 +874,35 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       };
     }
 
-    function getRayWaypoints(ri, L, objX, f, onScreen) {
+    // 三条主光线：交于真实像尖（ideal thin lens），不瞄光屏假 Y
+    function getRayWaypoints(ri, L, objX, f, u, v) {
       const fPx = f * L.pxPerCm;
       const tipY = L.axisY - 60;
-      const y0 = tipY + ri * 4;
-      const pts = [{ x: objX, y: y0 }];
+      const imageX = L.lensX + v * L.pxPerCm;
+      const imageTipY = L.axisY + (-v / u) * (tipY - L.axisY);
       if (ri === 0) {
-        pts.push({ x: L.lensX, y: y0 });
-        pts.push({ x: L.screenX, y: L.axisY + (y0 - L.axisY) * (onScreen ? -0.35 : 0.2) });
-      } else if (ri === 1) {
-        pts.push({ x: L.lensX, y: L.axisY + (y0 - L.axisY) * 0.15 });
-        pts.push({ x: L.screenX, y: L.axisY + (y0 - L.axisY) * 0.55 });
-      } else {
-        pts.push({ x: L.lensX - fPx, y: L.axisY });
-        pts.push({ x: L.lensX, y: L.axisY + (y0 - L.axisY) * 0.4 });
-        pts.push({ x: L.screenX, y: L.axisY + 8 });
+        // 平行主轴 → 过像方焦点 F' → 像尖
+        return [
+          { x: objX, y: tipY },
+          { x: L.lensX, y: tipY },
+          { x: imageX, y: imageTipY }
+        ];
       }
-      return pts;
+      if (ri === 1) {
+        // 过光心，不偏折
+        return [
+          { x: objX, y: tipY },
+          { x: L.lensX, y: L.axisY },
+          { x: imageX, y: imageTipY }
+        ];
+      }
+      // 过物方焦点 F → 透镜后平行主轴（高度 = 像尖 y）
+      return [
+        { x: objX, y: tipY },
+        { x: L.lensX - fPx, y: L.axisY },
+        { x: L.lensX, y: imageTipY },
+        { x: imageX, y: imageTipY }
+      ];
     }
 
     function polylineLength(pts) {
@@ -1197,7 +1209,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           ctx.globalAlpha = 1;
         }
         for (let ri = 0; ri < 3; ri++) {
-          const pts = getRayWaypoints(ri, L, objX, f, onScreen);
+          const pts = getRayWaypoints(ri, L, objX, f, u, v);
           const isAnim = !!eventAnim;
           const rayDone = !isAnim || sweepT >= 1;
           const rayT = isAnim ? sweepT : 1;
@@ -1225,11 +1237,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             drawRayPath(pts, 1, rayStyle);
           }
           if (measured && rayDone) {
+            const tip = pts[pts.length - 1];
             ctx.fillStyle = 'rgba(240,208,128,0.06)';
             ctx.beginPath();
             ctx.moveTo(pts[0].x, pts[0].y - 3);
             ctx.lineTo(pts[1].x, pts[1].y - 6 + ri * 2);
-            if (pts.length > 2) ctx.lineTo(pts[2].x, pts[2].y + 6 - ri * 2);
+            ctx.lineTo(tip.x, tip.y + 6 - ri * 2);
             ctx.lineTo(pts[0].x, pts[0].y + 3);
             ctx.closePath();
             ctx.fill();

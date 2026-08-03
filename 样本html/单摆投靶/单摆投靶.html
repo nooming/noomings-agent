@@ -598,7 +598,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>过关 · 你学到了什么</h2>
     <div class="formula" id="craftWinFormula">周期与摆长相关；落点由释放角决定</div>
-    <p id="craftWinText">对照命中与未中，你摸清了摆长与释放角如何影响落点。</p>
+    <p id="craftWinText">对照命中与未中，你摸清了摆长与释放角如何影响落点；质量 m 不改变落点。</p>
     <button type="button" id="craftWinBtn">再玩一次</button>
   </div>
 </div>
@@ -637,9 +637,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     <input type="range" id="s-angle" min="-80" max="80" value="-45" step="1">
                 </div>
                 <div class="slider-item">
-                    <div class="row"><label>质量 m（混淆）</label><span class="slider-value" id="massValue">3.0</span></div>
+                    <div class="row"><label>质量 m</label><span class="slider-value" id="massValue">3.0</span></div>
                     <input type="range" id="s-mass" min="1" max="5" value="3" step="0.5">
-                    <div class="confound-note" style="margin-top:6px">质量 <span>不改变</span> 落点（单摆周期/脱钩速度与 m 无关）；请调摆长与释放角。</div>
                 </div>
             </div>
             <div class="mode-group" style="display:none" aria-hidden="true">
@@ -714,6 +713,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let confuseOn = false;
     let confuseScale = 0;
     let L = 150, theta = -45 * Math.PI / 180, omega = 0, theta0 = -45 * Math.PI / 180, mass = 3.0;
+    let lastShotParams = null;
     let elasticDelta = 0, shakeAccel = 0;
     const STATE_READY = 'ready', STATE_SWING = 'swing', STATE_FLYING = 'flying';
     let state = STATE_READY;
@@ -1036,7 +1036,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
               window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_rush' });
               window.__emit('win', { winOk: true });
               if (typeof window.__craftShowWin === 'function') {
-                window.__craftShowWin('急单矿车工况本局锁定，你用摆长与释放角把矿石摆进了指定接矿车。');
+                window.__craftShowWin('急单矿车工况本局锁定：落点由摆长与释放角决定，与质量 m 无关。');
               }
             }
           } else {
@@ -1046,12 +1046,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         } else if (!hit && window.__emit) {
           const missSide = x < left ? 'miss_short' : 'miss_long';
           const missTxt = x < left ? '落点偏近（车前）' : '落点偏远（车后）';
-          if (statusMsg) statusMsg.textContent = missTxt + ' · 对照落点再调释放角';
+          let missHint = missTxt + ' · 对照落点再调释放角';
+          if (lastShotParams
+              && Math.abs(mass - lastShotParams.mass) > 0.05
+              && Math.abs(L - lastShotParams.L) < 0.5
+              && Math.abs(theta0 - lastShotParams.theta0) < 1e-3) {
+            missHint = missTxt + ' · 只改质量时落点几乎不变，试试摆长或释放角';
+          }
+          if (statusMsg) statusMsg.textContent = missHint;
           window.__emit('snapshot', {
             controls: { 's-length': L, 's-angle': theta0 * 180 / Math.PI, 's-mass': mass },
             winOk: false, hintKey: playMode === 'challenge' ? missSide : 'pendulum_miss'
           });
         }
+        lastShotParams = { L: L, theta0: theta0, mass: mass };
     }
 
     function drawScene() {
