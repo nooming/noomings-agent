@@ -427,7 +427,7 @@
   "strategy": {
     "title": "磁场 · 安培力探究",
     "sub": "电磁吊运 · 磁轨货厢",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustI --> Fire[点击测试]\nAdjustT --> Fire\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect2{选择调参策略?}:::stratCond\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[多参盲调]\nAdjustB[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustT[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustB --> Fire\nAdjustI --> Fire[点击测试]\nAdjustT --> Fire\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察托力?}:::stratCond\nModeSelect -->|竞赛挑战| ChallengeMode[竞赛模式：限次挑战]:::stratCore\nModeSelect -->|自由探究| ExploreMode[探究模式：自由调参观察]:::stratCore\nObserve -->|偏小| AdjustI\nObserve -->|偏大| AdjustI\nObserve -->|未达标| AdjustI\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·电流| Route_main\nStrategySelect -->|单变量·磁场| Route_main_s_magnetic\nStrategySelect -->|单变量·导线温度| Route_main_s_wire_temp\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改电流]\nRoute_main_s_magnetic[控制变量：只改磁场]\nRoute_main_s_wire_temp[控制变量：只改导线温度]\nTrap[多参盲调]\nAdjustB[按观察单变量微调]\nAdjustI[按观察单变量微调]\nAdjustT[按观察单变量微调]\nRoute_main --> Adjust\nRoute_main_s_magnetic --> Adjust\nRoute_main_s_wire_temp --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -452,7 +452,6 @@
           "Observe",
           "Win",
           "ChallengeMode",
-          "StrategySelect2",
           "Route_main",
           "Adjust",
           "AdjustI"
@@ -496,7 +495,7 @@
           ],
           [
             "ChallengeMode",
-            "StrategySelect2"
+            "StrategySelect"
           ],
           [
             "Observe",

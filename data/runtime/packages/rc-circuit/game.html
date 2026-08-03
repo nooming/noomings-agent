@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RC电路 · 探究</title>
+    <title>暗房 · 闪光同步</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -158,7 +158,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#38bdf8;--craft-bg:#061018;--craft-panel:#0e2433;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#e8a06a;--craft-bg:#0a0806;--craft-panel:#1a1410;--craft-text:#f0e6d8;--craft-muted:#a89880;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -255,13 +255,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (rc-circuit) === */
+:root{
+  --craft-accent:#e8a06a;--craft-bg:#0a0806;--craft-panel:#1a1410;
+  --craft-text:#f0e6d8;--craft-muted:#a89880;
+  --scene-ink:#0a0806;--scene-mid:#2a1e16;--scene-hi:#f5c48a;
+  --scene-glow:#ff6a28;--scene-metal:#8a96a4;--scene-ok:#7dba8c;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>相机闪光同步</h2>
+    <h2>暗房 · 闪光同步</h2>
     <p>闪光灯充电偏慢，抓拍对不齐。试着弄清电阻与电容如何改变充电快慢；再接限次急单——目标 τ 本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标时间常数本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -496,92 +583,158 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function drawChargeCurve(tau_ms) {
         ctx.clearRect(0, 0, W, H);
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#071018');
-        bg.addColorStop(1, '#0b1c2c');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(0, H - 64, W, 64);
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(0, H - 64, W, 10);
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(24, H - 150, 110, 78);
-        ctx.strokeStyle = '#38bdf8';
-        ctx.strokeRect(24, H - 150, 110, 78);
-        ctx.fillStyle = '#e0f2fe';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('闪光模块', 40, H - 120);
-        ctx.fillStyle = '#7dd3fc';
-        ctx.font = '11px sans-serif';
         const rc = computeTau();
-        ctx.fillText('R ' + rc.R + 'kΩ', 40, H - 98);
-        ctx.fillText('C ' + rc.C + 'μF', 40, H - 82);
-        const ox = W * 0.22, oy = 36, ow = W * 0.72, oh = H - 120;
-        ctx.fillStyle = '#020617';
-        ctx.fillRect(ox, oy, ow, oh);
-        ctx.strokeStyle = '#22d3ee';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(ox, oy, ow, oh);
-        ctx.fillStyle = '#67e8f9';
-        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-        ctx.fillText('示波器 · 闪光充电', ox + 12, oy + 22);
-        ctx.strokeStyle = 'rgba(34,211,238,0.15)';
-        ctx.lineWidth = 1;
+        const charge = tau_ms > 0 ? (1 - Math.exp(-((animT * 0.35) % 1) * 5)) : 0;
+        // 暗房墙面 + 红安灯
+        const wall = ctx.createLinearGradient(0, 0, 0, H);
+        wall.addColorStop(0, '#1a120e'); wall.addColorStop(0.55, '#100c0a'); wall.addColorStop(1, '#0a0806');
+        ctx.fillStyle = wall; ctx.fillRect(0, 0, W, H);
+        for (let x = 0; x < W; x += 48) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.72); ctx.stroke();
+        }
+        const safe = ctx.createRadialGradient(W - 48, 36, 4, W - 48, 36, 160);
+        safe.addColorStop(0, 'rgba(255,90,40,0.22)'); safe.addColorStop(1, 'rgba(255,90,40,0)');
+        ctx.fillStyle = safe; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#3a2018'; ctx.fillRect(W - 58, 0, 6, 28);
+        ctx.beginPath();
+        const flick = 0.85 + 0.15 * Math.sin(animT * 2.1);
+        ctx.fillStyle = 'rgba(255,106,40,' + (0.75 * flick) + ')';
+        ctx.arc(W - 55, 36, 8, 0, Math.PI * 2); ctx.fill();
+
+        // 木工作台
+        const deskY = H * 0.72;
+        const desk = ctx.createLinearGradient(0, deskY, 0, H);
+        desk.addColorStop(0, '#3a2a1c'); desk.addColorStop(1, '#1a120c');
+        ctx.fillStyle = desk; ctx.fillRect(0, deskY, W, H - deskY);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, deskY, W, 8);
+        ctx.strokeStyle = 'rgba(232,160,106,0.12)';
+        for (let i = 1; i < 5; i++) {
+          const y = deskY + 10 + i * 12;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        // ── 英雄道具：闪光电容单元（左侧主装置）──
+        const fx = 28, fy = H * 0.28, fw = Math.min(210, W * 0.32), fh = H * 0.38;
+        const body = ctx.createLinearGradient(fx, fy, fx + fw, fy + fh);
+        body.addColorStop(0, '#4a5560'); body.addColorStop(0.45, '#2a323a'); body.addColorStop(1, '#1a2026');
+        ctx.fillStyle = body;
+        roundSoft(fx, fy, fw, fh, 10); ctx.fill();
+        ctx.strokeStyle = 'rgba(232,160,106,0.45)'; ctx.lineWidth = 2;
+        roundSoft(fx, fy, fw, fh, 10); ctx.stroke();
+        // 顶盖散热栅
+        ctx.fillStyle = '#151a1e';
+        ctx.fillRect(fx + 12, fy + 12, fw - 24, 18);
+        for (let i = 0; i < 7; i++) {
+          ctx.fillStyle = '#5a6570';
+          ctx.fillRect(fx + 18 + i * ((fw - 40) / 7), fy + 15, 4, 12);
+        }
+        // 电容罐
+        const canX = fx + fw * 0.22, canY = fy + 48, canR = 22;
+        const canG = ctx.createRadialGradient(canX - 6, canY - 6, 2, canX, canY, canR);
+        canG.addColorStop(0, '#c8d0d8'); canG.addColorStop(0.6, '#6a7888'); canG.addColorStop(1, '#2a323c');
+        ctx.fillStyle = canG; ctx.beginPath(); ctx.arc(canX, canY, canR, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8a7060'; ctx.fillRect(canX - 10, canY - canR - 6, 20, 8);
+        // 充电指示环
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255,106,40,' + (0.35 + charge * 0.55) + ')';
+        ctx.lineWidth = 3; ctx.arc(canX, canY, canR + 6, -Math.PI / 2, -Math.PI / 2 + charge * Math.PI * 2);
+        ctx.stroke();
+        // 闪光灯头
+        const hx = fx + fw * 0.68, hy = fy + 52;
+        ctx.fillStyle = '#1a1e22';
+        ctx.beginPath(); ctx.moveTo(hx - 28, hy - 8); ctx.lineTo(hx + 34, hy - 18); ctx.lineTo(hx + 34, hy + 18); ctx.lineTo(hx - 28, hy + 8); ctx.closePath(); ctx.fill();
+        const flashPulse = 0.15 + charge * 0.7 + 0.1 * Math.sin(animT * 6);
+        const beam = ctx.createRadialGradient(hx + 20, hy, 2, hx + 20, hy, 50);
+        beam.addColorStop(0, 'rgba(255,220,160,' + (0.55 * flashPulse) + ')');
+        beam.addColorStop(1, 'rgba(255,106,40,0)');
+        ctx.fillStyle = beam; ctx.beginPath(); ctx.arc(hx + 20, hy, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f5c48a';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('闪光电容单元', fx + 14, fy + fh - 36);
+        ctx.fillStyle = '#a89880';
+        ctx.font = '11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('R ' + rc.R + ' kΩ  ·  C ' + rc.C + ' μF', fx + 14, fy + fh - 16);
+
+        // ── 次要：示波器（右侧）──
+        const ox = fx + fw + 24, oy = H * 0.16, ow = W - ox - 20, oh = H * 0.48;
+        ctx.fillStyle = '#12161a';
+        roundSoft(ox, oy, ow, oh, 8); ctx.fill();
+        ctx.strokeStyle = 'rgba(138,150,164,0.55)'; ctx.lineWidth = 2;
+        roundSoft(ox, oy, ow, oh, 8); ctx.stroke();
+        // 铍铜旋钮
+        for (let i = 0; i < 3; i++) {
+          const kx = ox + ow - 28, ky = oy + 28 + i * 28;
+          const kg = ctx.createRadialGradient(kx - 2, ky - 2, 1, kx, ky, 8);
+          kg.addColorStop(0, '#f5c48a'); kg.addColorStop(1, '#8a5a28');
+          ctx.fillStyle = kg; ctx.beginPath(); ctx.arc(kx, ky, 8, 0, Math.PI * 2); ctx.fill();
+        }
+        const plotL = ox + 16, plotR = ox + ow - 40, plotT = oy + 36, plotB = oy + oh - 18;
+        ctx.fillStyle = '#060a0c';
+        ctx.fillRect(plotL - 4, plotT - 8, plotR - plotL + 8, plotB - plotT + 16);
+        ctx.fillStyle = '#c8b090';
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.fillText('示波 · 充电曲线', plotL, oy + 22);
+        ctx.strokeStyle = 'rgba(125,186,140,0.12)'; ctx.lineWidth = 1;
         for (let i = 1; i < 6; i++) {
-            const x = ox + (i / 6) * ow;
-            ctx.beginPath(); ctx.moveTo(x, oy + 30); ctx.lineTo(x, oy + oh - 16); ctx.stroke();
+          const x = plotL + (i / 6) * (plotR - plotL);
+          ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB); ctx.stroke();
         }
         for (let i = 1; i < 4; i++) {
-            const y = oy + 30 + (i / 4) * (oh - 46);
-            ctx.beginPath(); ctx.moveTo(ox + 10, y); ctx.lineTo(ox + ow - 10, y); ctx.stroke();
+          const y = plotT + (i / 4) * (plotB - plotT);
+          ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
         }
-        if (tau_ms <= 0) return;
-        const maxT = 5 * tau_ms;
-        const plotL = ox + 16, plotR = ox + ow - 16, plotT = oy + 34, plotB = oy + oh - 20;
-        const scaleX = (plotR - plotL) / maxT;
-        const scaleY = (plotB - plotT);
-        ctx.beginPath();
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = '#22d3ee';
-        ctx.shadowBlur = 8;
-        for (let t = 0; t <= maxT; t += Math.max(0.5, maxT / 200)) {
+        if (tau_ms > 0) {
+          const maxT = 5 * tau_ms;
+          const scaleX = (plotR - plotL) / maxT;
+          const scaleY = (plotB - plotT);
+          ctx.beginPath();
+          ctx.strokeStyle = '#7dba8c';
+          ctx.lineWidth = 2.4;
+          ctx.shadowColor = 'rgba(125,186,140,0.55)';
+          ctx.shadowBlur = 6;
+          for (let t = 0; t <= maxT; t += Math.max(0.5, maxT / 200)) {
             const v = 1 - Math.exp(-t / tau_ms);
             const x = plotL + t * scaleX;
             const y = plotB - v * scaleY;
             if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+          const tScan = ((animT * 0.4) % 1) * maxT;
+          const vScan = 1 - Math.exp(-tScan / tau_ms);
+          ctx.beginPath();
+          ctx.arc(plotL + tScan * scaleX, plotB - vScan * scaleY, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#ff6a28';
+          ctx.fill();
         }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        const tScan = ((animT * 0.4) % 1) * maxT;
-        const vScan = 1 - Math.exp(-tScan / tau_ms);
-        ctx.beginPath();
-        ctx.arc(plotL + tScan * scaleX, plotB - vScan * scaleY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#fde047';
-        ctx.fill();
         const tau_s = tau_ms / 1000;
         const tauTol = playMode === 'challenge' ? 0.03 : 0.08;
         const on = playMode === 'challenge' && Math.abs(tau_s - TARGET_TAU_SEC) < tauTol;
-        // 读数徽章：右下，避开顶栏双模式条与左侧闪光模块
-        const badgeX = W - 216, badgeY = H - 100;
-        ctx.fillStyle = 'rgba(15,23,42,0.85)';
-        ctx.fillRect(badgeX, badgeY, 200, 44);
-        ctx.strokeStyle = on ? 'rgba(74,222,128,0.55)' : 'rgba(56,189,248,0.4)';
-        ctx.strokeRect(badgeX, badgeY, 200, 44);
-        ctx.fillStyle = '#e0f2fe';
+        const badgeX = W - 216, badgeY = H - 52;
+        ctx.fillStyle = 'rgba(20,14,10,0.88)';
+        roundSoft(badgeX, badgeY, 200, 40, 6); ctx.fill();
+        ctx.strokeStyle = on ? 'rgba(125,186,140,0.65)' : 'rgba(232,160,106,0.4)';
+        roundSoft(badgeX, badgeY, 200, 40, 6); ctx.stroke();
+        ctx.fillStyle = '#f0e6d8';
         ctx.font = '12px "Microsoft YaHei",sans-serif';
         if (playMode === 'challenge') {
-          ctx.fillText('急单 τ ≈ ' + TARGET_TAU_SEC.toFixed(1) + ' s', badgeX + 10, badgeY + 18);
+          ctx.fillText('急单 τ ≈ ' + TARGET_TAU_SEC.toFixed(1) + ' s', badgeX + 10, badgeY + 16);
         } else {
-          ctx.fillText('探究观察快慢', badgeX + 10, badgeY + 18);
+          ctx.fillText('探究观察快慢', badgeX + 10, badgeY + 16);
         }
-        ctx.fillStyle = on && measuredTau != null ? '#86efac' : '#7dd3fc';
+        ctx.fillStyle = on && measuredTau != null ? '#7dba8c' : '#e8a06a';
         if (measuredTau != null) {
-          ctx.fillText('当前 ' + measuredTau.toFixed(3) + ' s', badgeX + 10, badgeY + 34);
+          ctx.fillText('当前 ' + measuredTau.toFixed(3) + ' s', badgeX + 10, badgeY + 32);
         } else {
-          ctx.fillText('当前 τ 待测 · 点测试后显示', badgeX + 10, badgeY + 34);
+          ctx.fillText('当前 τ 待测 · 点测试后显示', badgeX + 10, badgeY + 32);
         }
+    }
+    function roundSoft(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
     }
 
     // 过关判定 (基于τ)

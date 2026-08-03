@@ -50,7 +50,7 @@ function buildStandaloneExportHtml({ chapter, title, viewerJs, graphCss, escapeH
   // AGENT A · 探究策略图（优先级可视）
   const tHeaderTag = 'AGENT A \u00b7 \u63a2\u7a76\u7b56\u7565\u56fe\uff08\u4f18\u5148\u7ea7\u53ef\u89c6\uff09';
 
-  // Offline strategy render: relative vendor/ (D3 + Mermaid + MathJax). MathJax async/fail-soft.
+  // Strategy-first cold start: sync Mermaid only. D3 / MathJax lazy via viewer (__*_SRC__).
   const base = (vendorBase == null || vendorBase === '')
     ? '../vendor'
     : String(vendorBase).replace(/\/$/, '');
@@ -67,12 +67,12 @@ function buildStandaloneExportHtml({ chapter, title, viewerJs, graphCss, escapeH
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${safeTitle} \u00b7 Agent A ${tPreview}</title>
-<script src="${d3Src}"><\/script>
 <script src="${mermaidSrc}"><\/script>
 <script>
-  window.MathJax = { tex:{inlineMath:[['$','$'],['\\\\(','\\\\)']]}, svg:{fontCache:'global'} };
+  window.__D3_SRC__ = ${JSON.stringify(d3Src)};
+  window.__MERMAID_SRC__ = ${JSON.stringify(mermaidSrc)};
+  window.__MATHJAX_SRC__ = ${JSON.stringify(mathjaxSrc)};
 <\/script>
-<script async src="${mathjaxSrc}"><\/script>
 <style>
 :root{--font-ui:${fontStack};--font-formula:${serifStack};}
 ${graphCss}

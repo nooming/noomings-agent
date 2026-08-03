@@ -35,7 +35,12 @@ function run() {
   assert(html.includes('id="btn-struct-toggle"'), 'struct data fold');
   assert(html.includes('mermaid.min.js'), 'mermaid script');
   assert(html.includes('../vendor/mermaid.min.js') || /vendor\/mermaid\.min\.js/.test(html), 'mermaid local vendor');
-  assert(html.includes('../vendor/d3.v7.min.js') || /vendor\/d3\.v7\.min\.js/.test(html), 'd3 local vendor');
+  assert(html.includes('../vendor/d3.v7.min.js') || /vendor\/d3\.v7\.min\.js/.test(html), 'd3 local vendor ref');
+  assert(/src=["'][^"']*vendor\/mermaid\.min\.js["']/.test(html), 'mermaid sync in head');
+  assert(!/<script[^>]+src=["'][^"']*d3\.v7\.min\.js["']/i.test(html), 'no sync d3 in head');
+  assert(!/<script[^>]+src=["'][^"']*tex-mml-svg\.js["']/i.test(html), 'no early mathjax script tag');
+  assert(html.includes('__D3_SRC__'), 'lazy d3 src hook');
+  assert(html.includes('__MATHJAX_SRC__'), 'lazy mathjax src hook');
   assert(!/https:\/\/d3js\.org\//.test(html), 'no d3 CDN');
   assert(!/cdn\.jsdelivr\.net\/npm\/mermaid/.test(html), 'no mermaid CDN');
   assert(html.includes('strategy-mermaid-parse') || html.includes('parseStrategyMermaid'), 'parse bundled');
@@ -56,8 +61,10 @@ function run() {
   assert(!html.includes('需联网加载 CDN'), 'no CDN banner text');
   assert(!html.includes('gen-banner'), 'no gen-banner UI');
   assert(!html.includes('单文件预览'), 'no export subtitle banner');
-  assert(html.includes('d3.v7.min.js'), 'd3 vendor script kept');
-  assert(html.includes('tex-mml-svg.js'), 'mathjax local vendor script (optional formulas)');
+  assert(html.includes('d3.v7.min.js'), 'd3 vendor path kept for lazy load');
+  assert(html.includes('tex-mml-svg.js'), 'mathjax local vendor path (lazy formulas)');
+  assert(html.includes('loadD3Lib') || html.includes('__D3_SRC__'), 'd3 lazy loader wired');
+  assert(html.includes('loadMathJaxLib') || html.includes('typesetInfoPanel'), 'mathjax lazy loader wired');
   assert(!/cdn\.jsdelivr\.net\/npm\/mathjax/.test(html), 'no mathjax CDN');
   assert(!/\?\?\/(?:div|h2|button)>/.test(html), 'no corrupted closers like ??/div>');
   assert(!/CDN\?D3/.test(html), 'no CDN?D3 mojibake');

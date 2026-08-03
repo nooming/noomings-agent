@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>机械能 · 过山车环路</title>
+    <title>环轨台 · 机械能</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
@@ -157,7 +157,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#3b82f6;--craft-bg:#0b1220;--craft-panel:#152238;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#5088c8;--craft-bg:#0c1218;--craft-panel:#162028;--craft-text:#e4ecf4;--craft-muted:#8898a8;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -282,13 +282,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (multi-kp) === */
+:root{
+  --craft-accent:#5088c8;--craft-bg:#0c1218;--craft-panel:#162028;
+  --craft-text:#e4ecf4;--craft-muted:#8898a8;
+  --scene-ink:#0c1218;--scene-mid:#243040;--scene-hi:#90b8e8;
+  --scene-glow:#4080d0;--scene-metal:#6a7888;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>夜场乐园 · 过山车试车</h2>
+    <h2>环轨台 · 机械能</h2>
     <p>首班试车卡在出发台——试着弄清怎样才能翻过环顶。过环后看小车停在减速带哪里：能量不够会掉落，过大则冲出带外；对照停靠远近再调参。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；顶部与侧栏会写明当前任务。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -312,7 +399,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">夜场乐园 · 过山车</div>
+      <div class="essence-title">过山车环轨台</div>
       <div class="essence-sub" id="goalMission">目标：自由试车，对照减速带停靠位置，同时见过「过环停稳」与失败（掉落或冲出）；竞赛停稳区另有布置</div>
     </div>
   </div>
@@ -645,24 +732,42 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     function drawCar(x, y) {
         var m = massSlider ? parseFloat(massSlider.value) : 1.5;
         var s = 0.75 + Math.min(1.4, Math.max(0.5, m)) * 0.18;
+        var SC = { ink: '#0c1218', mid: '#243040', hi: '#90b8e8', glow: '#4080d0', metal: '#6a7888', accent: '#5088c8' };
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(s, s);
-        // 车厢体（尺度随质量，过环判据用比能，与 m 无关）
-        ctx.fillStyle = '#f59e0b';
-        roundRect(-14, -10, 28, 16, 4);
+        // 环轨小车：钢制底架 + 冷色座舱
+        var chassis = ctx.createLinearGradient(-16, 4, 16, 12);
+        chassis.addColorStop(0, '#4a5564');
+        chassis.addColorStop(0.5, SC.metal);
+        chassis.addColorStop(1, '#3a4450');
+        roundRect(-16, 2, 32, 10, 3);
+        ctx.fillStyle = chassis;
         ctx.fill();
-        ctx.strokeStyle = '#fde68a';
+        ctx.strokeStyle = SC.accent;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.fillStyle = SC.accent;
+        roundRect(-14, -12, 28, 16, 4);
+        ctx.fill();
+        ctx.strokeStyle = SC.hi;
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#1e293b';
-        ctx.fillRect(-8, -7, 7, 6);
-        ctx.fillRect(1, -7, 7, 6);
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = SC.ink;
+        ctx.fillRect(-9, -9, 8, 6);
+        ctx.fillRect(1, -9, 8, 6);
+        ctx.fillStyle = SC.glow;
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(-12, -11, 24, 3);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#3a4450';
         ctx.beginPath();
-        ctx.arc(-8, 7, 3.5, 0, Math.PI * 2);
-        ctx.arc(8, 7, 3.5, 0, Math.PI * 2);
+        ctx.arc(-9, 8, 3.5, 0, Math.PI * 2);
+        ctx.arc(9, 8, 3.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = SC.hi;
+        ctx.lineWidth = 1;
+        ctx.stroke();
         ctx.restore();
     }
 
@@ -683,113 +788,87 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         var h = parseFloat(heightSlider.value);
         var sy = startYForH(h);
 
-        // —— 乐园黄昏天空 ——
-        const sky = ctx.createLinearGradient(0, 0, 0, H);
-        sky.addColorStop(0, '#0f172a');
-        sky.addColorStop(0.28, '#1e3a5f');
-        sky.addColorStop(0.55, '#7c2d12');
-        sky.addColorStop(0.78, '#334155');
-        sky.addColorStop(1, '#475569');
-        ctx.fillStyle = sky;
+        var SC = { ink: '#0c1218', mid: '#243040', hi: '#90b8e8', glow: '#4080d0', metal: '#6a7888', accent: '#5088c8', ok: '#6fae8f' };
+
+        // —— 环轨台：冷色钢架实验间 ——
+        var bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#101820');
+        bg.addColorStop(0.3, SC.ink);
+        bg.addColorStop(0.65, '#0a1018');
+        bg.addColorStop(1, '#080c12');
+        ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
 
-        // 落日光晕
-        var sunX = W * 0.78, sunY = groundY - 70;
-        var sunG = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 90);
-        sunG.addColorStop(0, 'rgba(254,215,170,0.75)');
-        sunG.addColorStop(0.35, 'rgba(251,146,60,0.28)');
-        sunG.addColorStop(1, 'rgba(251,146,60,0)');
-        ctx.fillStyle = sunG;
-        ctx.beginPath();
-        ctx.arc(sunX, sunY, 90, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 远山剪影
-        ctx.fillStyle = 'rgba(15,23,42,0.45)';
-        ctx.beginPath();
-        ctx.moveTo(0, groundY - 40);
-        ctx.quadraticCurveTo(W * 0.2, groundY - 90, W * 0.38, groundY - 50);
-        ctx.quadraticCurveTo(W * 0.55, groundY - 110, W * 0.72, groundY - 55);
-        ctx.quadraticCurveTo(W * 0.88, groundY - 85, W, groundY - 48);
-        ctx.lineTo(W, groundY);
-        ctx.lineTo(0, groundY);
-        ctx.fill();
-
-        // 灯串 / 彩旗（灯珠闪烁）
         var tNow = performance.now();
-        for (var i = 0; i < 7; i++) {
-            var fx = W * 0.12 + i * (W * 0.11);
-            ctx.strokeStyle = 'rgba(251,191,36,0.35)';
-            ctx.lineWidth = 1;
+        var coolPulse = 0.9 + 0.1 * Math.sin(tNow * 0.0015);
+        var spot = ctx.createRadialGradient(W * 0.55, H * 0.05, 6, W * 0.5, groundY * 0.45, Math.max(W, H) * 0.7);
+        spot.addColorStop(0, `rgba(64,128,208,${0.18 * coolPulse})`);
+        spot.addColorStop(0.35, `rgba(80,136,200,${0.08 * coolPulse})`);
+        spot.addColorStop(1, 'rgba(12,18,24,0)');
+        ctx.fillStyle = spot;
+        ctx.fillRect(0, 0, W, H);
+        var spot2 = ctx.createRadialGradient(W * 0.15, H * 0.08, 4, W * 0.2, H * 0.35, W * 0.3);
+        spot2.addColorStop(0, 'rgba(144,184,232,0.06)');
+        spot2.addColorStop(1, 'rgba(12,18,24,0)');
+        ctx.fillStyle = spot2;
+        ctx.fillRect(0, 0, W, H);
+
+        // 钢架桁条
+        ctx.strokeStyle = 'rgba(106,120,136,0.35)';
+        ctx.lineWidth = 2;
+        for (var tr = 0; tr < 5; tr++) {
+            var tx = 30 + tr * (W / 5.5);
             ctx.beginPath();
-            ctx.moveTo(fx, 28);
-            ctx.lineTo(fx + 36, 48);
+            ctx.moveTo(tx, 20);
+            ctx.lineTo(tx + 8, groundY - 30);
             ctx.stroke();
-            var flap = Math.sin(tNow * 0.004 + i) * 3;
-            ctx.fillStyle = i % 2 ? '#f472b6' : '#38bdf8';
-            ctx.beginPath();
-            ctx.moveTo(fx + 10, 34);
-            ctx.lineTo(fx + 22, 34 + flap * 0.2);
-            ctx.lineTo(fx + 16, 46 + flap);
-            ctx.fill();
-            // 串灯
-            var twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tNow * 0.008 + i * 1.7));
-            ctx.fillStyle = `rgba(254,243,199,${twinkle})`;
-            ctx.beginPath();
-            ctx.arc(fx + 8, 32, 2.2, 0, Math.PI * 2);
-            ctx.arc(fx + 24, 40, 2.2, 0, Math.PI * 2);
-            ctx.fill();
         }
 
-        // 售票亭（叙事锚点）
-        var boothX = Math.max(16, startX - 110);
-        ctx.fillStyle = '#7c2d12';
-        ctx.fillRect(boothX, groundY - 58, 52, 58);
-        ctx.fillStyle = '#ea580c';
-        ctx.beginPath();
-        ctx.moveTo(boothX - 6, groundY - 58);
-        ctx.lineTo(boothX + 26, groundY - 78);
-        ctx.lineTo(boothX + 58, groundY - 58);
-        ctx.closePath();
+        // 环轨台控制台
+        var boothX = Math.max(16, startX - 100);
+        ctx.fillStyle = SC.mid;
+        roundRect(boothX, groundY - 62, 56, 58, 4);
         ctx.fill();
-        ctx.fillStyle = '#fef3c7';
-        ctx.fillRect(boothX + 12, groundY - 44, 28, 18);
-        ctx.fillStyle = '#fde68a';
+        ctx.strokeStyle = SC.accent;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('售票处', boothX + 6, groundY - 82);
+        ctx.fillText('环轨台', boothX + 10, groundY - 72);
+        ctx.fillStyle = 'rgba(144,184,232,0.25)';
+        ctx.fillRect(boothX + 10, groundY - 48, 36, 14);
 
-        // 围栏
-        ctx.strokeStyle = '#94a3b8';
+        // 工业围栏
+        ctx.strokeStyle = SC.metal;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(8, groundY - 18);
-        ctx.lineTo(W - 8, groundY - 18);
+        ctx.moveTo(8, groundY - 16);
+        ctx.lineTo(W - 8, groundY - 16);
         ctx.stroke();
         for (var p = 8; p < W; p += 28) {
             ctx.beginPath();
-            ctx.moveTo(p, groundY - 18);
+            ctx.moveTo(p, groundY - 16);
             ctx.lineTo(p, groundY);
             ctx.stroke();
         }
 
-        // 地坪
-        const floor = ctx.createLinearGradient(0, groundY, 0, H);
-        floor.addColorStop(0, '#64748b');
-        floor.addColorStop(1, '#334155');
+        // 钢质地坪
+        var floor = ctx.createLinearGradient(0, groundY, 0, H);
+        floor.addColorStop(0, '#3a4450');
+        floor.addColorStop(0.5, SC.mid);
+        floor.addColorStop(1, SC.ink);
         ctx.fillStyle = floor;
         ctx.fillRect(0, groundY, W, H - groundY);
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(0, groundY, W, 5);
-        ctx.fillStyle = '#22c55e';
-        ctx.globalAlpha = 0.35;
-        ctx.fillRect(0, groundY + 5, W, 10);
-        ctx.globalAlpha = 1;
+        ctx.fillStyle = SC.metal;
+        ctx.fillRect(0, groundY, W, 4);
+        ctx.fillStyle = 'rgba(80,136,200,0.12)';
+        for (var g = 0; g < 12; g++) ctx.fillRect(12 + g * 62, groundY + 10, 24, 2);
 
         // 出发平台高度随 h 绑定
         var deckW = 64, deckH = 12;
         var deckY = sy;
         // 钢架立柱
-        ctx.strokeStyle = '#94a3b8';
+        ctx.strokeStyle = SC.metal;
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(startX - 18, groundY);
@@ -797,7 +876,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.moveTo(startX + 28, groundY);
         ctx.lineTo(startX + 28, deckY);
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+        ctx.strokeStyle = 'rgba(106,120,136,0.55)';
         ctx.lineWidth = 2;
         for (var k = 0; k < 4; k++) {
             var yy = deckY + (groundY - deckY) * (k / 4);
@@ -806,32 +885,32 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.lineTo(startX + 28, yy + 10);
             ctx.stroke();
         }
-        ctx.fillStyle = '#b45309';
+        ctx.fillStyle = SC.mid;
         roundRect(startX - 26, deckY - 2, deckW, deckH, 3);
         ctx.fill();
-        ctx.strokeStyle = '#fde68a';
+        ctx.strokeStyle = SC.hi;
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#fef3c7';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
         ctx.fillText('出发台', startX - 18, deckY - 10);
 
         // 高度标尺（与滑条 h 视觉绑定）
         var rulerX = startX - 42;
-        ctx.strokeStyle = '#93c5fd';
+        ctx.strokeStyle = SC.glow;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(rulerX, groundY);
         ctx.lineTo(rulerX, deckY);
         ctx.stroke();
         ctx.font = '11px ui-monospace,Consolas,sans-serif';
-        ctx.fillStyle = 'rgba(15,23,42,0.78)';
+        ctx.fillStyle = 'rgba(12,18,24,0.82)';
         ctx.fillRect(rulerX - 10, Math.max(40, deckY - 30), 56, 18);
-        ctx.fillStyle = '#ffe0c2';
+        ctx.fillStyle = SC.hi;
         ctx.fillText('h=' + h.toFixed(1) + 'm', rulerX - 8, Math.max(56, deckY - 16));
 
         // 环路支架
-        ctx.strokeStyle = '#64748b';
+        ctx.strokeStyle = SC.metal;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(loopCenterX - loopRadius - 6, groundY);
@@ -843,7 +922,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.stroke();
 
         // 轨道：出发台 → 环底入环 → 竖直全环（过顶）→ 环底出环落地
-        ctx.strokeStyle = '#60a5fa';
+        ctx.strokeStyle = SC.accent;
         ctx.lineWidth = 5;
         ctx.lineJoin = 'round';
         ctx.beginPath();
@@ -856,7 +935,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineTo(brake.x1 + 8, groundY - 4);
         ctx.stroke();
         // 轨枕高光
-        ctx.strokeStyle = '#93c5fd';
+        ctx.strokeStyle = SC.hi;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(startX, sy - 3);
@@ -865,9 +944,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
         // 减速带：出环后右侧地面（斑马纹理 + 停稳区刻度）
         var bz0 = brake.x0, bz1 = brake.x1, bzTop = groundY - 5, bzH = 12;
-        ctx.fillStyle = '#f59e0b';
+        ctx.fillStyle = SC.glow;
         ctx.fillRect(bz0, bzTop, bz1 - bz0, bzH);
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = SC.ink;
         for (var zx = bz0; zx < bz1; zx += 12) {
             ctx.beginPath();
             ctx.moveTo(zx, bzTop);
@@ -887,15 +966,15 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.lineTo(tx, bzTop + bzH + 3);
             ctx.stroke();
         }
-        ctx.strokeStyle = '#fde68a';
+        ctx.strokeStyle = SC.hi;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(bz0, bzTop, bz1 - bz0, bzH);
         // 成功/失败短暂光效（不改判据）
         if (winGlow > 0) {
-            ctx.strokeStyle = `rgba(74,222,128,${0.9 * Math.min(1, winGlow)})`;
+            ctx.strokeStyle = `rgba(111,174,143,${0.9 * Math.min(1, winGlow)})`;
             ctx.lineWidth = 3;
             ctx.strokeRect(bz0 - 3, bzTop - 4, bz1 - bz0 + 6, bzH + 8);
-            ctx.fillStyle = `rgba(74,222,128,${0.15 * Math.min(1, winGlow)})`;
+            ctx.fillStyle = `rgba(111,174,143,${0.15 * Math.min(1, winGlow)})`;
             ctx.fillRect(bz0 - 3, bzTop - 4, bz1 - bz0 + 6, bzH + 8);
         } else if (failGlow > 0) {
             ctx.strokeStyle = `rgba(248,113,113,${0.8 * Math.min(1, failGlow)})`;
@@ -905,40 +984,40 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.setLineDash([]);
         }
         // 末端竖标：冲出时对照「差多少」
-        ctx.fillStyle = '#ef4444';
+        ctx.fillStyle = '#e06060';
         ctx.fillRect(bz1 - 2, bzTop - 10, 3, bzH + 14);
-        ctx.fillStyle = 'rgba(15,23,42,0.78)';
+        ctx.fillStyle = 'rgba(12,18,24,0.82)';
         ctx.fillRect((bz0 + bz1) / 2 - 30, bzTop - 20, 60, 14);
-        ctx.fillStyle = '#fef3c7';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
         ctx.fillText('停稳区', (bz0 + bz1) / 2 - 18, bzTop - 8);
-        ctx.fillStyle = 'rgba(15,23,42,0.7)';
+        ctx.fillStyle = 'rgba(12,18,24,0.75)';
         ctx.fillRect(bz1 - 22, bzTop - 34, 40, 12);
-        ctx.fillStyle = '#fecaca';
+        ctx.fillStyle = '#e8a0a0';
         ctx.font = '10px "Microsoft YaHei",sans-serif';
         ctx.fillText('末端', bz1 - 12, bzTop - 24);
 
         // 最高点标记
-        ctx.fillStyle = '#fca5a5';
+        ctx.fillStyle = '#e08080';
         ctx.beginPath();
         ctx.arc(loopCenterX, loopTopY, 6, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.fillStyle = 'rgba(15,23,42,0.72)';
+        ctx.fillStyle = 'rgba(12,18,24,0.82)';
         ctx.fillRect(loopCenterX - 18, loopTopY - 26, 36, 16);
-        ctx.fillStyle = '#ffe0c2';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
         ctx.fillText('环顶', loopCenterX - 14, loopTopY - 12);
 
-        // 读数徽章：减速带上方偏右，避开环路与左上双模式条
+        // 读数徽章
         var badgeX = Math.min(W - 140, Math.max(brake.x0, brake.x1 - 110));
         var badgeY = groundY - 72;
         roundRect(badgeX, badgeY, 118, 36, 8);
-        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        ctx.fillStyle = 'rgba(12,18,24,0.88)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(96,165,250,0.55)';
+        ctx.strokeStyle = 'rgba(80,136,200,0.55)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#f8fafc';
+        ctx.fillStyle = SC.hi;
         ctx.font = '12px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
         ctx.fillText('v₀ = ' + parseFloat(speedSlider.value).toFixed(1) + ' m/s', badgeX + 12, badgeY + 22);
 
@@ -955,7 +1034,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             sp.life -= 0.04;
             if (sp.life <= 0) { carSparks.splice(si, 1); continue; }
             ctx.globalAlpha = Math.max(0, sp.life);
-            ctx.fillStyle = sp.hot ? '#fde68a' : '#fb923c';
+            ctx.fillStyle = sp.hot ? SC.hi : SC.glow;
             ctx.beginPath();
             ctx.arc(sp.x, sp.y, sp.r, 0, Math.PI * 2);
             ctx.fill();

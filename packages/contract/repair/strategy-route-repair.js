@@ -21,6 +21,10 @@ const {
   collapseOrphanStrategyStubs,
   collapseOrphanStubsInChapter,
 } = require('../../shared/collapse-orphan-strategy-stubs.js');
+const {
+  collapseDuplicateStrategySelect,
+  collapseDuplicateSelectInChapter,
+} = require('../../shared/collapse-duplicate-strategy-select.js');
 
 function edgePairKey(a, b) {
   return `${a}->${b}`;
@@ -75,6 +79,11 @@ function inferFeedbackPairs(route, mermaidBody, expanded) {
 function repairStrategySelectTopology(mermaidBody) {
   let mm = String(mermaidBody || '').replace(/\r\n/g, '\n');
   if (!mm.trim()) return mm;
+
+  // Collapse Challenge/Explore parallel StrategySelect2/C/Challenge diamonds
+  const deduped = collapseDuplicateStrategySelect(mm);
+  mm = deduped.mermaid;
+
   let edges = parseStrategyMermaidEdges(mm);
   const hasSelect = edges.some(e => /StrategySelect/i.test(e.from) || /StrategySelect/i.test(e.to))
     || /\bStrategySelect\b/.test(mm);
@@ -209,6 +218,10 @@ function repairIrrelevantAvMapsTo(chapter) {
 }
 
 function repairStrategyRouteHighlights(chapter) {
+  // Merge duplicate StrategySelect* 「选择调参策略?」 hubs before expand/seed
+  const deduped = collapseDuplicateSelectInChapter(chapter);
+  if (deduped.changed) chapter = deduped.chapter;
+
   // Drop orphan RouteN stubs + stale highlight refs before expand/seed
   const orphaned = collapseOrphanStubsInChapter(chapter);
   if (orphaned.changed) chapter = orphaned.chapter;
@@ -347,4 +360,5 @@ module.exports = {
   repairStrategyRouteHighlights,
   repairStrategySelectTopology,
   repairIrrelevantAvMapsTo,
+  collapseDuplicateSelectInChapter,
 };

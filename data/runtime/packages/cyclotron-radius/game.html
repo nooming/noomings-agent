@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>回旋加速器 · 探究轨道半径</title>
+    <title>加速舱 · 回旋半径</title>
     <style>
         * {
             box-sizing: border-box;
@@ -347,7 +347,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#22d3ee;--craft-bg:#061018;--craft-panel:#0d2230;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#40b8c8;--craft-bg:#0a1216;--craft-panel:#142228;--craft-text:#e0eef0;--craft-muted:#7898a0;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -445,13 +445,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (cyclotron-radius) === */
+:root{
+  --craft-accent:#40b8c8;--craft-bg:#0a1216;--craft-panel:#142228;
+  --craft-text:#e0eef0;--craft-muted:#7898a0;
+  --scene-ink:#0a1216;--scene-mid:#1e343c;--scene-hi:#80d8e0;
+  --scene-glow:#30c8d8;--scene-metal:#6a7880;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>回旋加速器 · 束流提取</h2>
+    <h2>加速舱 · 回旋半径</h2>
     <p>提取口对不准。试着调 B 与入射速度，看轨道半径怎么变；竞赛时提取环本局锁定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛环带进入后固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -591,6 +678,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     let challengeWon = false;
     /** 仅发射后揭示轨道半径 r */
     let measuredR = null;
+    /** 轨道尾迹（纯视觉） */
+    let orbitTrail = [];
+    let trailTick = 0;
 
     // 是否已经过关 (防止重复触发)
     let hasWon = false;
@@ -721,6 +811,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         if (simRunning) stopSim();
         measuredR = null;
         angle = 0;
+        orbitTrail = [];
+        trailTick = 0;
         syncUI();
         recalcPhysics();
         emit('tuning', { controlId: controlId, value: value, timestamp: Date.now() });
@@ -741,131 +833,231 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     // ---------- 绘制 (静态/动态) ----------
     function drawChamber(w, h) {
-        // 医用同位素加速器舱：深蓝机房 + 地板灯带
-        const bg = ctx.createLinearGradient(0, 0, 0, h);
-        bg.addColorStop(0, '#071525');
-        bg.addColorStop(0.7, '#0b1a2f');
-        bg.addColorStop(1, '#0a1628');
+        var SC = { ink:'#0a1216', mid:'#1e343c', hi:'#80d8e0', glow:'#30c8d8', metal:'#6a7880', accent:'#40b8c8', ok:'#6fae8f' };
+        const R = Math.min(w, h) * 0.42;
+
+        // 舱室纵深背景
+        const bg = ctx.createRadialGradient(centerX, centerY, R * 0.2, centerX, centerY, Math.max(w, h) * 0.72);
+        bg.addColorStop(0, '#142830');
+        bg.addColorStop(0.45, SC.ink);
+        bg.addColorStop(1, '#060a0c');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = '#0f172a';
+        var sideGlow = ctx.createLinearGradient(0, 0, w, 0);
+        sideGlow.addColorStop(0, 'rgba(48,200,216,0.06)');
+        sideGlow.addColorStop(0.5, 'rgba(10,18,22,0)');
+        sideGlow.addColorStop(1, 'rgba(48,200,216,0.06)');
+        ctx.fillStyle = sideGlow;
+        ctx.fillRect(0, 0, w, h);
+
+        // 金属底板 + 格栅
+        ctx.fillStyle = '#121a1e';
+        ctx.fillRect(0, h - 52, w, 52);
+        const floorG = ctx.createLinearGradient(0, h - 52, 0, h);
+        floorG.addColorStop(0, SC.mid);
+        floorG.addColorStop(1, SC.ink);
+        ctx.fillStyle = floorG;
         ctx.fillRect(0, h - 48, w, 48);
-        ctx.strokeStyle = 'rgba(56,189,248,0.25)';
+        ctx.strokeStyle = 'rgba(106,120,128,0.35)';
+        ctx.lineWidth = 1;
+        for (var gi = 0; gi < 14; gi++) {
+            ctx.beginPath();
+            ctx.moveTo(gi * (w / 13), h - 48);
+            ctx.lineTo(gi * (w / 13) - 18, h);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = SC.metal;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(0, h - 48);
         ctx.lineTo(w, h - 48);
         ctx.stroke();
-        for (let i = 0; i < 8; i++) {
-          ctx.fillStyle = i % 2 ? 'rgba(56,189,248,0.08)' : 'rgba(148,163,184,0.06)';
-          ctx.fillRect(20 + i * (w / 8), h - 36, 18, 8);
+
+        // 上下磁极（铜包钢，圆柱截面）
+        function drawPole(cy, label) {
+            var poleW = R * 1.55, poleH = 28;
+            var pg = ctx.createLinearGradient(centerX - poleW / 2, cy, centerX + poleW / 2, cy);
+            pg.addColorStop(0, '#4a4038');
+            pg.addColorStop(0.25, '#a08058');
+            pg.addColorStop(0.5, '#c8a878');
+            pg.addColorStop(0.75, '#806848');
+            pg.addColorStop(1, '#3a3028');
+            ctx.fillStyle = pg;
+            ctx.beginPath();
+            ctx.ellipse(centerX, cy, poleW / 2, poleH / 2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(128,216,224,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = SC.hi;
+            ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, centerX, cy + 4);
+            ctx.textAlign = 'left';
         }
-        // 真空室外壳
-        const R = Math.min(w, h) * 0.42;
-        ctx.fillStyle = '#1e293b';
+        drawPole(centerY - R - 22, 'N 极');
+        drawPole(centerY + R + 22, 'S 极 · B⊗');
+
+        // 圆柱真空室外壳（双层玻璃感）
+        ctx.fillStyle = 'rgba(30,52,60,0.55)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R + 22, 0, Math.PI * 2);
+        ctx.fill();
+        var shellG = ctx.createRadialGradient(centerX - R * 0.3, centerY - R * 0.3, R * 0.1, centerX, centerY, R + 20);
+        shellG.addColorStop(0, 'rgba(128,216,224,0.08)');
+        shellG.addColorStop(0.6, 'rgba(30,52,60,0.35)');
+        shellG.addColorStop(1, 'rgba(64,184,200,0.18)');
+        ctx.fillStyle = shellG;
         ctx.beginPath();
         ctx.arc(centerX, centerY, R + 18, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 10;
+        ctx.strokeStyle = SC.metal;
+        ctx.lineWidth = 8;
         ctx.stroke();
-        // D 形电极
-        ctx.fillStyle = 'rgba(56,189,248,0.12)';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R, -Math.PI / 2, Math.PI / 2, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R, Math.PI / 2, -Math.PI / 2, false);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(251,191,36,0.1)';
-        ctx.fill();
-        ctx.strokeStyle = '#38bdf8';
+        ctx.strokeStyle = 'rgba(128,216,224,0.25)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY - R);
-        ctx.lineTo(centerX, centerY + R);
+        ctx.arc(centerX, centerY, R + 10, 0, Math.PI * 2);
         ctx.stroke();
+
+        // 舱内真空暗区
+        ctx.fillStyle = 'rgba(6,12,16,0.72)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R - 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // D 形电极（半圆dee）
+        ctx.fillStyle = 'rgba(64,184,200,0.14)';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R - 8, -Math.PI / 2, Math.PI / 2, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R - 8, Math.PI / 2, -Math.PI / 2, false);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(48,200,216,0.10)';
+        ctx.fill();
+        ctx.strokeStyle = SC.accent;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - R + 8);
+        ctx.lineTo(centerX, centerY + R - 8);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(128,216,224,0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, R - 8, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 弱磁场线（⊗ 符号阵列）
+        ctx.fillStyle = 'rgba(128,216,224,0.22)';
+        ctx.font = '10px ui-monospace,monospace';
+        for (var bi = -2; bi <= 2; bi++) {
+            for (var bj = -2; bj <= 2; bj++) {
+                if (bi * bi + bj * bj > 5) continue;
+                ctx.fillText('⊗', centerX + bi * 38 - 4, centerY + bj * 34 + 4);
+            }
+        }
+
         // 提取环带（竞赛锁定 / 探究参考）
         if (playMode === 'challenge' || lockedBand) {
           const rLo = TARGET_R_MIN * scale;
           const rHi = TARGET_R_MAX * scale;
           ctx.beginPath();
           ctx.arc(centerX, centerY, (rLo + rHi) / 2, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(74,222,128,0.55)';
+          ctx.strokeStyle = 'rgba(111,174,143,0.55)';
           ctx.lineWidth = Math.max(8, rHi - rLo);
           ctx.stroke();
-          // 提取口缺口示意
-          ctx.strokeStyle = '#86efac';
+          ctx.strokeStyle = SC.ok;
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(centerX, centerY, rHi + 6, -0.35, 0.35);
           ctx.stroke();
-          // 环带说明：舞台底部，避开顶栏双模式条
-          ctx.fillStyle = 'rgba(15,23,42,0.82)';
+          ctx.fillStyle = 'rgba(10,18,22,0.82)';
           ctx.fillRect(12, h - 52, 220, 18);
-          ctx.fillStyle = '#86efac';
+          ctx.fillStyle = SC.ok;
           ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
           ctx.fillText('急单环 ' + TARGET_R_MIN.toFixed(1) + '–' + TARGET_R_MAX.toFixed(1) + ' m', 16, h - 39);
         } else {
-          ctx.strokeStyle = 'rgba(148,163,184,0.25)';
+          ctx.strokeStyle = 'rgba(106,120,128,0.35)';
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 6]);
           ctx.beginPath();
           ctx.arc(centerX, centerY, 2.75 * scale, 0, Math.PI * 2);
           ctx.stroke();
           ctx.setLineDash([]);
-          ctx.fillStyle = 'rgba(15,23,42,0.82)';
+          ctx.fillStyle = 'rgba(10,18,22,0.82)';
           ctx.fillRect(12, h - 52, 168, 18);
-          ctx.fillStyle = '#ffe0c2';
+          ctx.fillStyle = SC.hi;
           ctx.font = '12px "Microsoft YaHei",sans-serif';
           ctx.fillText('参考环（探究不必命中）', 16, h - 39);
         }
-        // 场景标题：底部第二行，避开顶栏/侧栏叠层
-        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        // 场景标题
+        ctx.fillStyle = 'rgba(10,18,22,0.82)';
         ctx.fillRect(12, h - 32, 168, 18);
-        ctx.fillStyle = '#f8fafc';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('同位素束流舱 · 真空室', 16, h - 19);
-        // 控制台小灯：右下，避开顶栏右侧「剩余机会」
-        ctx.fillStyle = '#22c55e';
+        ctx.fillText('回旋轨道舱 · 真空室', 16, h - 19);
+        // 控制台指示灯
+        ctx.fillStyle = SC.ok;
         ctx.beginPath(); ctx.arc(w - 36, h - 22, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fbbf24';
+        ctx.fillStyle = SC.glow;
         ctx.beginPath(); ctx.arc(w - 20, h - 22, 5, 0, Math.PI * 2); ctx.fill();
-        // 磁极标注
-        ctx.fillStyle = '#fde68a';
-        ctx.font = '12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('B ⊗', centerX - 12, centerY + R + 36);
+    }
+
+    function drawOrbitTrail() {
+        if (orbitTrail.length < 2) return;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(orbitTrail[0].x, orbitTrail[0].y);
+        for (var ti = 1; ti < orbitTrail.length; ti++) {
+            ctx.lineTo(orbitTrail[ti].x, orbitTrail[ti].y);
+        }
+        ctx.strokeStyle = 'rgba(48,200,216,0.18)';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(128,216,224,0.55)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.restore();
     }
 
     function drawOrbitLabels() {
-        const hudSafeTop = 56; // 双模式条下方
-        // 仅发射后揭示：当前参数对应的半径虚线与读数（调参时不剧透）
+        const hudSafeTop = 56;
+        var SC = { hi:'#80d8e0', glow:'#30c8d8', accent:'#40b8c8', ok:'#6fae8f' };
         if (measuredR != null && measuredR > 0 && measuredR < 100) {
             const rPx = measuredR * scale;
             ctx.beginPath();
             ctx.arc(centerX, centerY, rPx, 0, 2 * Math.PI);
-            ctx.strokeStyle = '#7dd3fc';
+            ctx.strokeStyle = SC.hi;
             ctx.lineWidth = 2;
             ctx.setLineDash([6, 6]);
             ctx.stroke();
             ctx.setLineDash([]);
-            ctx.fillStyle = '#e0f2fe';
+            ctx.fillStyle = SC.hi;
             ctx.font = '13px sans-serif';
             const labelY = Math.max(hudSafeTop + 14, centerY - rPx - 8);
             ctx.fillText('r = ' + measuredR.toFixed(2) + ' m', centerX + 8, labelY);
         } else {
-            ctx.fillStyle = 'rgba(15,23,42,0.75)';
+            ctx.fillStyle = 'rgba(10,18,22,0.75)';
             ctx.fillRect(centerX - 72, hudSafeTop + 4, 144, 18);
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = 'rgba(128,216,224,0.65)';
             ctx.font = '12px "Microsoft YaHei",sans-serif';
             ctx.fillText('轨道半径待测 · 点发射', centerX - 64, hudSafeTop + 17);
         }
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = '#f0c060';
+        ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = SC.glow;
+        ctx.shadowColor = SC.glow;
+        ctx.shadowBlur = 10;
         ctx.fill();
-        ctx.fillStyle = '#fef3c7';
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = SC.accent;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = SC.hi;
         ctx.font = '12px "Microsoft YaHei",sans-serif';
         ctx.fillText('粒子源', centerX + 10, centerY - 6);
     }
@@ -883,6 +1075,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const h = canvas.height / (window.devicePixelRatio || 1);
         ctx.clearRect(0, 0, w, h);
         drawChamber(w, h);
+        drawOrbitTrail();
         drawOrbitLabels();
 
         // 粒子仅在已测半径后沿该轨道运动（发射后过程可见）
@@ -890,13 +1083,23 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             const rPx = measuredR * scale;
             const px = centerX + rPx * Math.cos(angle);
             const py = centerY + rPx * Math.sin(angle);
+            if (simRunning) {
+                trailTick++;
+                if (trailTick % 2 === 0) {
+                    orbitTrail.push({ x: px, y: py });
+                    if (orbitTrail.length > 140) orbitTrail.shift();
+                }
+            }
             ctx.beginPath();
             ctx.arc(px, py, 7, 0, 2 * Math.PI);
             ctx.fillStyle = '#ffb347';
-            ctx.shadowColor = '#ffb347';
-            ctx.shadowBlur = 14;
+            ctx.shadowColor = '#30c8d8';
+            ctx.shadowBlur = 16;
             ctx.fill();
             ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(128,216,224,0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
         }
     }
 
@@ -959,6 +1162,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         stopSim();
         // 重置角度
         angle = 0;
+        orbitTrail = [];
+        trailTick = 0;
         recalcPhysics();
         syncUI();
         const r = radius;
@@ -1011,6 +1216,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         stopSim();
         angle = 0;
         measuredR = null;
+        orbitTrail = [];
+        trailTick = 0;
         recalcPhysics();
         syncUI();
         drawStatic();

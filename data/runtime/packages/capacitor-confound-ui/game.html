@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>电容 · 平行板探究</title>
+  <title>装配台 · 平行板电容</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -168,7 +168,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#f59e0b;--craft-bg:#1a1408;--craft-panel:#2a2010;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;--craft-text:#f0e8d4;--craft-muted:#a09070;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -249,13 +249,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (capacitor-confound-ui) === */
+:root{
+  --craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;
+  --craft-text:#f0e8d4;--craft-muted:#a09070;
+  --scene-ink:#141008;--scene-mid:#2e2414;--scene-hi:#f0c878;
+  --scene-glow:#e09030;--scene-metal:#7a8490;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>收音机电容标定</h2>
+    <h2>装配台 · 平行板电容</h2>
     <p>老式收音机调谐电容读数飘了。试着弄清面积与间距如何改变读数；再接限次急单——打偏换新目标。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛打偏换新目标。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -279,7 +366,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">收音机调谐台</div>
+      <div class="essence-title">电容装配台</div>
       <div class="essence-sub" id="goalMission">探究：自由调 A、d，观察电容读数变化</div>
     </div>
   </div>
@@ -431,12 +518,35 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
 
+    /** 离散滑条网格上是否存在 (A,d) 使 C∈[lo,hi] */
+    function bandHasDiscreteSolution(lo, hi) {
+      for (let A = 0.01; A <= 0.10001; A += 0.01) {
+        for (let d = 0.001; d <= 0.01001; d += 0.001) {
+          const C = pF(computeCapacitance(A, d));
+          if (C >= lo && C <= hi) return true;
+        }
+      }
+      return false;
+    }
     function rollChallengeBand() {
-      const mid = 90 + Math.random() * 140; // 90–230
-      // 带宽 ~16–28，明显窄于探究 40，同参未必两边同结论
-      const half = 8 + Math.random() * 6;
-      TARGET_LO = Math.round(mid - half);
-      TARGET_HI = Math.round(mid + half);
+      for (let attempt = 0; attempt < 64; attempt++) {
+        const mid = 90 + Math.random() * 140; // 90–230
+        // 带宽 ~16–28，明显窄于探究 40，同参未必两边同结论
+        const half = 8 + Math.random() * 6;
+        const lo = Math.round(mid - half);
+        const hi = Math.round(mid + half);
+        if (bandHasDiscreteSolution(lo, hi)) {
+          TARGET_LO = lo;
+          TARGET_HI = hi;
+          lockedBand = { lo: TARGET_LO, hi: TARGET_HI };
+          return;
+        }
+      }
+      // 保底：绕已知可达离散 C 建带，避免无解急单烧掉次数
+      const A = 0.05, d = 0.004;
+      const C0 = Math.round(pF(computeCapacitance(A, d)));
+      TARGET_LO = C0 - 10;
+      TARGET_HI = C0 + 10;
       lockedBand = { lo: TARGET_LO, hi: TARGET_HI };
     }
     /** RerollChallenge：进入竞赛抽一次；失败再换目标 C */
@@ -592,83 +702,64 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function drawScene(A, d, tone, C_pF) {
       ctx.clearRect(0, 0, W, H);
-      // 实验室墙与地面
+      const INK = '#141008', MID = '#2e2414', HI = '#f0c878', GLOW = '#e09030';
+      const METAL = '#7a8490', PANEL = '#241c10', ACCENT = '#d4a050', OK = '#6fae8f';
+
       const wall = ctx.createLinearGradient(0, 0, 0, H);
-      wall.addColorStop(0, '#1c140c');
-      wall.addColorStop(0.55, '#24180f');
-      wall.addColorStop(1, '#120e0a');
+      wall.addColorStop(0, '#1a140c');
+      wall.addColorStop(0.45, MID);
+      wall.addColorStop(1, INK);
       ctx.fillStyle = wall;
       ctx.fillRect(0, 0, W, H);
-      // 墙面瓷砖线
-      ctx.strokeStyle = 'rgba(245,158,11,0.06)';
+      const lamp = ctx.createRadialGradient(W * 0.35, H * 0.06, 8, W * 0.35, H * 0.06, W * 0.55);
+      lamp.addColorStop(0, 'rgba(224,144,48,0.18)');
+      lamp.addColorStop(1, 'rgba(224,144,48,0)');
+      ctx.fillStyle = lamp;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = 'rgba(212,160,80,0.06)';
       ctx.lineWidth = 1;
       for (let y = 40; y < H - 90; y += 36) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
-      // 后墙货架与吊灯
-      ctx.fillStyle = '#2a2018';
-      ctx.fillRect(W * 0.05, 48, W * 0.22, 110);
-      ctx.strokeStyle = '#78350f';
-      ctx.strokeRect(W * 0.05, 48, W * 0.22, 110);
+
+      ctx.fillStyle = PANEL;
+      ctx.fillRect(W * 0.04, 52, W * 0.20, 100);
+      ctx.strokeStyle = 'rgba(212,160,80,0.35)';
+      ctx.strokeRect(W * 0.04, 52, W * 0.20, 100);
       for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = i % 2 ? '#854d0e' : '#a16207';
-        ctx.fillRect(W * 0.07 + i * 42, 70, 28, 70);
+        ctx.fillStyle = i % 2 ? '#6a5030' : '#8a6838';
+        ctx.fillRect(W * 0.06 + i * 38, 72, 24, 68);
       }
-      ctx.fillStyle = '#fde68a';
-      ctx.beginPath();
-      ctx.arc(W * 0.5, 28, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = 'rgba(253,230,138,0.12)';
-      ctx.beginPath();
-      ctx.moveTo(W * 0.5 - 80, 120);
-      ctx.lineTo(W * 0.5, 28);
-      ctx.lineTo(W * 0.5 + 80, 120);
-      ctx.fill();
+      ctx.fillStyle = HI;
+      ctx.font = '11px "Microsoft YaHei",sans-serif';
+      ctx.fillText('介质料架', W * 0.06, 64);
 
-      // 窗户
-      const wx = W * 0.78, wy = 42, ww = Math.min(150, W * 0.18), wh = 100;
-      const sky = ctx.createLinearGradient(wx, wy, wx, wy + wh);
-      sky.addColorStop(0, '#38bdf8');
-      sky.addColorStop(1, '#0c4a6e');
-      ctx.fillStyle = sky;
-      ctx.fillRect(wx, wy, ww, wh);
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(wx, wy, ww, wh);
-      ctx.beginPath();
-      ctx.moveTo(wx + ww / 2, wy); ctx.lineTo(wx + ww / 2, wy + wh);
-      ctx.moveTo(wx, wy + wh / 2); ctx.lineTo(wx + ww, wy + wh / 2);
-      ctx.stroke();
-      ctx.fillStyle = '#e2e8f0';
-      ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('收音机修理铺', wx - 4, wy - 10);
+      const benchY = H - 68;
+      ctx.fillStyle = '#1a1208';
+      ctx.fillRect(0, benchY + 4, W, 68);
+      ctx.fillStyle = '#2e2014';
+      ctx.fillRect(0, benchY, W, 68);
+      ctx.fillStyle = '#4a3524';
+      ctx.fillRect(0, benchY, W, 12);
+      for (let i = 0; i < 5; i++) ctx.fillRect(30 + i * (W / 5), benchY + 18, 12, 44);
 
-      // 实验台满幅
-      const benchY = H - 70;
-      ctx.fillStyle = '#3f2a1a';
-      ctx.fillRect(0, benchY, W, 70);
-      ctx.fillStyle = '#6b4423';
-      ctx.fillRect(0, benchY, W, 14);
-      ctx.fillStyle = 'rgba(251,191,36,0.08)';
-      ctx.fillRect(0, benchY, W, 14);
-      ctx.fillStyle = '#2a1c12';
-      for (let i = 0; i < 5; i++) ctx.fillRect(30 + i * (W / 5), benchY + 20, 12, 44);
-
-      // 电容计主机（右侧，更大）
       const meterW = Math.min(168, W * 0.22);
       const meterH = Math.min(200, H * 0.42);
       const meterX = W - meterW - 28;
       const meterY = benchY - meterH - 8;
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(meterX - 6, meterY - 6, meterW + 12, meterH + 12);
-      ctx.fillStyle = '#1e293b';
+      ctx.fillStyle = '#8a6830';
+      ctx.fillRect(meterX - 4, meterY - 4, meterW + 8, meterH + 8);
+      ctx.fillStyle = '#c9a040';
+      ctx.fillRect(meterX - 2, meterY - 2, meterW + 4, meterH + 4);
+      ctx.fillStyle = PANEL;
       ctx.fillRect(meterX, meterY, meterW, meterH);
-      ctx.strokeStyle = '#f59e0b';
+      ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 2.5;
       ctx.strokeRect(meterX, meterY, meterW, meterH);
-      ctx.fillStyle = '#020617';
+      ctx.fillStyle = 'rgba(20,16,8,0.85)';
       ctx.fillRect(meterX + 14, meterY + 18, meterW - 28, 64);
-      ctx.fillStyle = '#fbbf24';
+      ctx.fillStyle = HI;
       ctx.font = 'bold 26px ui-monospace,monospace';
       if (measuredC != null) {
         ctx.fillText(measuredC.toFixed(1), meterX + 22, meterY + 56);
@@ -677,28 +768,27 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.fillText('—', meterX + 36, meterY + 56);
       }
       ctx.font = '13px "Microsoft YaHei",sans-serif';
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = '#a09070';
       ctx.fillText('pF', meterX + meterW - 42, meterY + 56);
-      ctx.fillStyle = measuredC != null ? (winOkColor(measuredC) ? '#4ade80' : '#f87171') : '#94a3b8';
+      ctx.fillStyle = measuredC != null ? (winOkColor(measuredC) ? OK : '#e07060') : '#a09070';
       ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
       ctx.fillText(measuredC != null ? (winOkColor(measuredC) ? '区间内' : '偏离目标') : '待测', meterX + 22, meterY + 74);
-      ctx.strokeStyle = '#334155';
+      ctx.strokeStyle = METAL;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(meterX + meterW / 2, meterY + meterH - 48, 42, Math.PI, 0);
       ctx.stroke();
       const ang = Math.PI + Math.min(1, Math.max(0, meterNeedle / 300)) * Math.PI;
-      ctx.strokeStyle = '#f59e0b';
+      ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(meterX + meterW / 2, meterY + meterH - 48);
       ctx.lineTo(meterX + meterW / 2 + Math.cos(ang) * 36, meterY + meterH - 48 + Math.sin(ang) * 36);
       ctx.stroke();
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = '#f0e8d4';
       ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-      ctx.fillText('精密电容计', meterX + 28, meterY + meterH - 12);
+      ctx.fillText('装配电容计', meterX + 28, meterY + meterH - 12);
 
-      // 平行板夹具（视觉中心，满幅）
       const plateW = Math.min(W * 0.48, 120 + (A - 0.01) / 0.09 * W * 0.32);
       const gap = Math.min(H * 0.34, 36 + (d - 0.001) / 0.009 * H * 0.26);
       const cx = W * 0.40;
@@ -707,19 +797,22 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       const colors = TONE_COLORS[tone] || TONE_COLORS[0];
       const plateT = Math.max(14, Math.min(22, H * 0.03));
 
-      // 底座与立柱
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(leftX - 36, midY - gap / 2 - 56, plateW + 72, 14);
-      ctx.fillRect(leftX - 36, midY + gap / 2 + 42, plateW + 72, 14);
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(leftX - 26, midY - gap / 2 - 56, 16, gap + 112);
-      ctx.fillRect(leftX + plateW + 10, midY - gap / 2 - 56, 16, gap + 112);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(leftX - 48, benchY - 18, plateW + 96, 18);
+      ctx.fillStyle = METAL;
+      ctx.fillRect(leftX - 40, midY - gap / 2 - 58, plateW + 80, 12);
+      ctx.fillRect(leftX - 40, midY + gap / 2 + 46, plateW + 80, 12);
+      ctx.fillStyle = '#5a6068';
+      ctx.fillRect(leftX - 28, midY - gap / 2 - 58, 14, gap + 116);
+      ctx.fillRect(leftX + plateW + 14, midY - gap / 2 - 58, 14, gap + 116);
+      ctx.fillStyle = PANEL;
+      ctx.fillRect(leftX - 52, benchY - 18, plateW + 104, 18);
+      ctx.fillStyle = 'rgba(212,160,80,0.12)';
+      ctx.fillRect(leftX - 48, benchY - 16, plateW + 96, 6);
+      ctx.fillStyle = HI;
+      ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.fillText('平行板压装夹具', leftX - 4, midY - gap / 2 - 68);
 
-      // 电场线
       glowPulse = (glowPulse + 0.02) % 1;
-      ctx.strokeStyle = 'rgba(251,191,36,' + (0.22 + 0.14 * Math.sin(glowPulse * Math.PI * 2)) + ')';
+      ctx.strokeStyle = 'rgba(224,144,48,' + (0.22 + 0.14 * Math.sin(glowPulse * Math.PI * 2)) + ')';
       ctx.lineWidth = 2;
       for (let i = 0; i < 9; i++) {
         const x = leftX + 20 + i * (plateW - 40) / 8;
@@ -729,18 +822,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.stroke();
       }
 
-      // 上/下极板
       ctx.fillStyle = colors.top;
       ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT);
       ctx.fillStyle = colors.topHi;
       ctx.fillRect(leftX, midY - gap / 2 - plateT, plateW, plateT * 0.4);
+      if (tone > 0) {
+        ctx.fillStyle = 'rgba(212,160,80,0.18)';
+        ctx.fillRect(leftX + 8, midY - gap / 2 + 4, plateW - 16, gap - 8);
+      }
       ctx.fillStyle = colors.bot;
       ctx.fillRect(leftX, midY + gap / 2, plateW, plateT);
       ctx.fillStyle = colors.botHi;
       ctx.fillRect(leftX, midY + gap / 2, plateW, plateT * 0.4);
 
-      // 引线
-      ctx.strokeStyle = '#fbbf24';
+      ctx.strokeStyle = ACCENT;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(leftX + plateW + 26, midY - gap / 2 - plateT / 2);
@@ -749,35 +844,33 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.bezierCurveTo(leftX + plateW + 80, midY + gap / 2 + 40, meterX - 20, meterY + 70, meterX, meterY + 70);
       ctx.stroke();
 
-      // 间距标注
-      ctx.strokeStyle = '#f8fafc';
+      ctx.strokeStyle = '#f0e8d4';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(leftX + plateW + 40, midY - gap / 2);
       ctx.lineTo(leftX + plateW + 40, midY + gap / 2);
       ctx.stroke();
-      ctx.fillStyle = '#fde68a';
+      ctx.fillStyle = HI;
       ctx.font = 'bold 16px "Microsoft YaHei",sans-serif';
       ctx.fillText('d', leftX + plateW + 48, midY + 6);
 
-      // 底部读数条（避开 dual-mode HUD）
-      ctx.fillStyle = 'rgba(15,23,42,0.82)';
-      ctx.fillRect(18, benchY - 46, 240, 36);
-      ctx.strokeStyle = 'rgba(245,158,11,0.4)';
-      ctx.strokeRect(18, benchY - 46, 240, 36);
-      ctx.fillStyle = '#fbbf24';
+      ctx.fillStyle = 'rgba(36,28,16,0.88)';
+      ctx.fillRect(18, benchY - 46, 250, 36);
+      ctx.strokeStyle = 'rgba(212,160,80,0.4)';
+      ctx.strokeRect(18, benchY - 46, 250, 36);
+      ctx.fillStyle = ACCENT;
       ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
       if (playMode === 'challenge') {
         ctx.fillText('急单(可换) ' + TARGET_LO + '–' + TARGET_HI + ' pF', 28, benchY - 24);
       } else {
         ctx.fillText('探究观察读数', 28, benchY - 24);
       }
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = '#f0e8d4';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
       if (measuredC != null) {
-        ctx.fillText('当前 ' + measuredC.toFixed(1) + ' · A=' + A.toFixed(2), 150, benchY - 24);
+        ctx.fillText('当前 ' + measuredC.toFixed(1) + ' · A=' + A.toFixed(2), 160, benchY - 24);
       } else {
-        ctx.fillText('当前 待测 · A=' + A.toFixed(2), 150, benchY - 24);
+        ctx.fillText('当前 待测 · A=' + A.toFixed(2), 160, benchY - 24);
       }
     }
 

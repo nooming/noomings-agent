@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>磁场 · 安培力探究</title>
+  <title>磁轨 · 安培力台</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
@@ -162,7 +162,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#4ade80;--craft-bg:#06140c;--craft-panel:#102418;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#4aaa78;--craft-bg:#0a1410;--craft-panel:#14241c;--craft-text:#e4f0e8;--craft-muted:#7a9a88;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -259,13 +259,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (magnetic-force) === */
+:root{
+  --craft-accent:#4aaa78;--craft-bg:#0a1410;--craft-panel:#14241c;
+  --craft-text:#e4f0e8;--craft-muted:#7a9a88;
+  --scene-ink:#0a1410;--scene-mid:#1e3428;--scene-hi:#80d0a0;
+  --scene-glow:#40c878;--scene-metal:#6a7870;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>电磁吊运 · 磁轨货厢</h2>
+    <h2>磁轨 · 安培力台</h2>
     <p>夜班仓库磁轨吊运偏了。试着弄清电流与磁场如何改变导线托力；再接限次急单——目标托力本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标力本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -289,7 +376,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">电磁吊运 · 磁轨货厢</div>
+      <div class="essence-title">磁轨测力台</div>
       <div class="essence-sub" id="goalMission">探究：自由调 I、B，观察托力变化</div>
     </div>
   </div>
@@ -536,24 +623,78 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   function drawCanvas(I, B, F) {
     ctx.clearRect(0, 0, W, H);
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#0b1220');
-    bg.addColorStop(1, '#111827');
+    var INK = '#0a1410', MID = '#1e3428', ACCENT = '#4aaa78';
+    var GLOW = '#40c878', METAL = '#6a7870', HI = '#80d0a0', OK = '#6fae8f';
+
+    function rr(x, y, w, h, r) {
+      r = Math.min(r, w * 0.5, h * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // 测力台背景
+    var bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#101c16');
+    bg.addColorStop(0.55, INK);
+    bg.addColorStop(1, '#060c08');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    // 实验室墙与磁铁架
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(0, H - 70, W, 70);
-    ctx.fillStyle = '#374151';
-    ctx.fillRect(0, H - 70, W, 10);
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fillRect(W * 0.12, 48, W * 0.76, H * 0.55);
-    ctx.strokeStyle = '#fca5a5';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(W * 0.12, 48, W * 0.76, H * 0.55);
-    ctx.fillStyle = '#fecaca';
+    var ambGlow = ctx.createRadialGradient(W * 0.5, H * 0.45, 30, W * 0.5, H * 0.45, W * 0.6);
+    ambGlow.addColorStop(0, 'rgba(64,200,120,0.06)');
+    ambGlow.addColorStop(1, 'rgba(64,200,120,0)');
+    ctx.fillStyle = ambGlow;
+    ctx.fillRect(0, 0, W, H);
+
+    // 实验台地面
+    var floorY = H - 70;
+    var floorG = ctx.createLinearGradient(0, floorY, 0, H);
+    floorG.addColorStop(0, MID);
+    floorG.addColorStop(1, INK);
+    ctx.fillStyle = floorG;
+    ctx.fillRect(0, floorY, W, H - floorY);
+    ctx.fillStyle = METAL;
+    ctx.fillRect(0, floorY, W, 10);
+    ctx.strokeStyle = 'rgba(64,200,120,0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, floorY);
+    ctx.lineTo(W, floorY);
+    ctx.stroke();
+
+    // 磁轭框架（HERO）
+    var yokeX = W * 0.12, yokeY = 48, yokeW = W * 0.76, yokeH = H * 0.55;
+    var yokeG = ctx.createLinearGradient(yokeX, yokeY, yokeX + yokeW, yokeY + yokeH);
+    yokeG.addColorStop(0, '#2a4034');
+    yokeG.addColorStop(0.45, MID);
+    yokeG.addColorStop(1, '#142018');
+    ctx.fillStyle = yokeG;
+    rr(yokeX, yokeY, yokeW, yokeH, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(74,170,120,0.38)';
+    ctx.lineWidth = 2.5;
+    rr(yokeX, yokeY, yokeW, yokeH, 6);
+    ctx.stroke();
+    var poleH = yokeH * 0.18;
+    var poleG = ctx.createLinearGradient(yokeX, yokeY + 8, yokeX, yokeY + 8 + poleH);
+    poleG.addColorStop(0, '#889890');
+    poleG.addColorStop(0.5, METAL);
+    poleG.addColorStop(1, '#4a5850');
+    ctx.fillStyle = poleG;
+    rr(yokeX + 12, yokeY + 8, yokeW - 24, poleH, 3);
+    ctx.fill();
+    var botPoleY = yokeY + yokeH - poleH - 8;
+    ctx.fillStyle = poleG;
+    rr(yokeX + 12, botPoleY, yokeW - 24, poleH, 3);
+    ctx.fill();
+    ctx.fillStyle = HI;
     ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-    ctx.fillText('磁轨吊运区', W * 0.14, 70);
+    ctx.textAlign = 'left';
+    ctx.fillText('磁轨测力台', W * 0.14, 70);
 
     // B × 标记
     const dens = Math.max(3, Math.round(B * 6));
@@ -561,58 +702,121 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       for (let j = 0; j < 4; j++) {
         const x = W * 0.18 + i * (W * 0.64) / dens;
         const y = 100 + j * (H * 0.1);
-        ctx.strokeStyle = 'rgba(96,165,250,0.55)';
+        ctx.strokeStyle = 'rgba(64,200,120,' + (0.35 + B * 0.15) + ')';
         ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#93c5fd';
+        ctx.fillStyle = ACCENT;
         ctx.font = '12px sans-serif';
-        ctx.fillText('×', x - 4, y + 4);
+        ctx.textAlign = 'center';
+        ctx.fillText('×', x, y + 4);
       }
     }
 
-    // 载流导线 + 轨道
+    // 磁轨 + 载流导线
     const yWire = H * 0.42;
     const lift = Math.min(50, F * 12);
-    ctx.fillStyle = '#64748b';
+    var railG = ctx.createLinearGradient(0, yWire + 28, 0, yWire + 36);
+    railG.addColorStop(0, '#889890');
+    railG.addColorStop(0.5, METAL);
+    railG.addColorStop(1, '#4a5850');
+    ctx.fillStyle = railG;
     ctx.fillRect(W * 0.1, yWire + 28, W * 0.8, 8);
-    ctx.strokeStyle = '#f59e0b';
+    ctx.strokeStyle = 'rgba(128,208,160,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.1, yWire + 28);
+    ctx.lineTo(W * 0.9, yWire + 28);
+    ctx.stroke();
+    for (var ri = 0; ri < 5; ri++) {
+      var rx = W * 0.12 + ri * (W * 0.76 / 4);
+      ctx.fillStyle = '#4a5850';
+      ctx.fillRect(rx - 4, yWire + 36, 8, 14);
+    }
+    var wireY = yWire - lift;
+    var wireG = ctx.createLinearGradient(0, wireY - 4, 0, wireY + 4);
+    wireG.addColorStop(0, '#c89050');
+    wireG.addColorStop(0.45, '#e8b060');
+    wireG.addColorStop(1, '#a87030');
+    ctx.strokeStyle = wireG;
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
+    ctx.shadowColor = 'rgba(232,176,96,0.4)';
+    ctx.shadowBlur = 6;
     ctx.beginPath();
-    ctx.moveTo(W * 0.16, yWire - lift);
-    ctx.lineTo(W * 0.84, yWire - lift);
+    ctx.moveTo(W * 0.16, wireY);
+    ctx.lineTo(W * 0.84, wireY);
     ctx.stroke();
-    ctx.fillStyle = '#fde68a';
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = HI;
     ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
-    ctx.fillText('I →', W * 0.78, yWire - lift - 14);
-    // 力箭头
+    ctx.textAlign = 'left';
+    ctx.fillText('I →', W * 0.78, wireY - 14);
+
+    // 测力计（HERO）
+    var scaleX = W * 0.88, scaleY = yWire - 20;
+    var scaleG = ctx.createLinearGradient(scaleX - 20, scaleY, scaleX + 20, scaleY);
+    scaleG.addColorStop(0, '#3a4840');
+    scaleG.addColorStop(0.5, METAL);
+    scaleG.addColorStop(1, '#5a6860');
+    ctx.fillStyle = scaleG;
+    rr(scaleX - 18, scaleY - 30, 36, 60, 4);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(74,170,120,0.35)';
+    ctx.lineWidth = 1.5;
+    rr(scaleX - 18, scaleY - 30, 36, 60, 4);
+    ctx.stroke();
+    ctx.strokeStyle = METAL;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(scaleX, scaleY - 30);
+    ctx.lineTo(W * 0.84, wireY);
+    ctx.stroke();
+    var tickH = Math.min(40, F * 10);
+    ctx.fillStyle = F > 0.05 ? GLOW : 'rgba(106,120,112,0.4)';
+    ctx.fillRect(scaleX - 6, scaleY + 20 - tickH, 12, tickH);
+    ctx.fillStyle = HI;
+    ctx.font = '10px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('测力', scaleX, scaleY + 38);
+
+    // 安培力箭头
     if (F > 0.05) {
       const ax = W * 0.5;
-      ctx.strokeStyle = '#f87171';
+      ctx.strokeStyle = GLOW;
       ctx.lineWidth = 3;
+      ctx.shadowColor = GLOW;
+      ctx.shadowBlur = 8;
       ctx.beginPath();
-      ctx.moveTo(ax, yWire - lift + 10);
-      ctx.lineTo(ax, yWire - lift + 10 + 36 + pulse * 4);
+      ctx.moveTo(ax, wireY + 10);
+      ctx.lineTo(ax, wireY + 10 + 36 + pulse * 4);
       ctx.stroke();
-      ctx.fillStyle = '#f87171';
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = GLOW;
       ctx.beginPath();
-      ctx.moveTo(ax, yWire - lift + 52 + pulse * 4);
-      ctx.lineTo(ax - 8, yWire - lift + 40 + pulse * 4);
-      ctx.lineTo(ax + 8, yWire - lift + 40 + pulse * 4);
+      ctx.moveTo(ax, wireY + 52 + pulse * 4);
+      ctx.lineTo(ax - 8, wireY + 40 + pulse * 4);
+      ctx.lineTo(ax + 8, wireY + 40 + pulse * 4);
       ctx.fill();
-      ctx.fillText('F', ax + 12, yWire - lift + 40);
+      ctx.fillStyle = HI;
+      ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('F', ax + 12, wireY + 40);
     }
 
-    // 目标力指示牌
+    // 目标力读数牌
     const onBand = Math.abs(F - F_TARGET) <= forceTol();
-    ctx.fillStyle = 'rgba(15,23,42,0.85)';
-    ctx.fillRect(16, H - 58, 260, 40);
-    ctx.strokeStyle = onBand ? 'rgba(74,222,128,0.6)' : 'rgba(248,113,113,0.45)';
-    ctx.strokeRect(16, H - 58, 260, 40);
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = 'rgba(10,20,16,0.85)';
+    rr(16, H - 58, 260, 40, 4);
+    ctx.fill();
+    ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.6)' : 'rgba(248,113,113,0.45)';
+    ctx.lineWidth = 1.5;
+    rr(16, H - 58, 260, 40, 4);
+    ctx.stroke();
+    ctx.fillStyle = HI;
     ctx.font = '12px "Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left';
     ctx.fillText((playMode==='challenge'?'急单':'参考') + ' F ≈ ' + F_TARGET.toFixed(1) + ' N (±' + forceTol() + ')', 26, H - 42);
-    ctx.fillStyle = measuredF != null ? (Math.abs(measuredF - F_TARGET) <= forceTol() ? '#86efac' : '#fca5a5') : '#94a3b8';
+    ctx.fillStyle = measuredF != null ? (Math.abs(measuredF - F_TARGET) <= forceTol() ? OK : '#fca5a5') : '#7a9a88';
     if (measuredF != null) {
       ctx.fillText('当前 ' + measuredF.toFixed(2) + ' N · I=' + I.toFixed(1) + 'A B=' + B.toFixed(1) + 'T', 26, H - 26);
     } else {

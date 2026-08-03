@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>动量守恒 · 碰撞实验</title>
+    <title>气垫导轨 · 碰撞</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -158,7 +158,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#f472b6;--craft-bg:#1a0a14;--craft-panel:#2a1524;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#c878a0;--craft-bg:#120c12;--craft-panel:#221820;--craft-text:#f0e4ec;--craft-muted:#a08898;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -289,13 +289,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (momentum-collision) === */
+:root{
+  --craft-accent:#c878a0;--craft-bg:#120c12;--craft-panel:#221820;
+  --craft-text:#f0e4ec;--craft-muted:#a08898;
+  --scene-ink:#120c12;--scene-mid:#2e2430;--scene-hi:#e8a8c8;
+  --scene-glow:#e060a0;--scene-metal:#7a8490;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>夜班分拣 · 对撞投递</h2>
+    <h2>气垫导轨 · 碰撞</h2>
     <p>货运滑轨上，试着让包件1撞上包件2，把它推进右侧接货口。先自由对撞，看看末速怎么变；再接急单——接货口本局锁定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛口位进入后固定，未投进只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -319,7 +406,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">夜班分拣 · 对撞投递</div>
+      <div class="essence-title">气垫导轨台</div>
       <div class="essence-sub" id="goalMission">目标：自由对撞，看末速与是否进区</div>
     </div>
   </div>
@@ -589,85 +676,133 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         var TARGET_LEFT = L.TARGET_LEFT, TARGET_RIGHT = L.TARGET_RIGHT;
         var TARGET_Y_TOP = L.TARGET_Y_TOP, TARGET_Y_BOT = L.TARGET_Y_BOT;
 
-        // 夜班分拣仓
+        var SC = { ink:'#120c12', mid:'#2e2430', hi:'#e8a8c8', glow:'#e060a0', metal:'#7a8490', accent:'#c878a0', ok:'#6fae8f' };
+
+        // 冷色实验台背景 + 纵深
         const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#0c1222');
-        bg.addColorStop(0.5, '#1e293b');
-        bg.addColorStop(1, '#0f172a');
+        bg.addColorStop(0, '#1a1420');
+        bg.addColorStop(0.35, SC.ink);
+        bg.addColorStop(0.72, '#181018');
+        bg.addColorStop(1, '#0e080e');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
+        var flood = ctx.createRadialGradient(W * 0.28, H * 0.06, 6, W * 0.42, H * 0.5, Math.max(W, H) * 0.75);
+        flood.addColorStop(0, 'rgba(232,168,200,0.18)');
+        flood.addColorStop(0.4, 'rgba(200,120,160,0.08)');
+        flood.addColorStop(1, 'rgba(18,12,18,0)');
+        ctx.fillStyle = flood;
+        ctx.fillRect(0, 0, W, H);
 
-        // 高位货架
-        for (var rack = 0; rack < 3; rack++) {
-            var rx = 40 + rack * Math.max(120, W / 4.5);
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(rx, 40, 70, GROUND_Y - 70);
-            ctx.strokeStyle = '#64748b';
-            ctx.strokeRect(rx, 40, 70, GROUND_Y - 70);
-            for (var sh = 0; sh < 4; sh++) {
-                ctx.fillStyle = '#475569';
-                ctx.fillRect(rx + 6, 55 + sh * 42, 58, 8);
-                ctx.fillStyle = rack % 2 ? '#f59e0b' : '#38bdf8';
-                ctx.fillRect(rx + 12, 66 + sh * 42, 22, 18);
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillRect(rx + 38, 66 + sh * 42, 18, 18);
-            }
-        }
-        ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('货架区', 48, 32);
-
-        // 左侧气泵柜
-        ctx.fillStyle = '#1e3a5f';
-        ctx.fillRect(12, GROUND_Y - 90, 70, 90);
-        ctx.fillStyle = '#7dd3fc';
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('气泵', 30, GROUND_Y - 98);
-        ctx.fillStyle = '#64748b';
-        ctx.fillRect(24, GROUND_Y - 70, 46, 18);
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(30, GROUND_Y - 48, 34, 28);
-
-        // 地坪
-        const floor = ctx.createLinearGradient(0, GROUND_Y + 10, 0, H);
-        floor.addColorStop(0, '#334155');
-        floor.addColorStop(1, '#0f172a');
-        ctx.fillStyle = floor;
-        ctx.fillRect(0, GROUND_Y + 10, W, H - GROUND_Y - 10);
-
-        // 分拣滑轨
-        ctx.fillStyle = '#475569';
-        ctx.fillRect(40, GROUND_Y - 14, W - 80, 18);
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(40, GROUND_Y - 6, W - 80, 5);
-        ctx.fillStyle = 'rgba(226,232,240,0.35)';
-        for (var p = 50; p < W - 50; p += 18) {
+        // 顶灯带（冷实验室照明）
+        for (var li = 0; li < 5; li++) {
+            var lx = 60 + li * (W / 5.5);
+            ctx.strokeStyle = 'rgba(122,132,144,0.5)';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.arc(p, GROUND_Y - 3, 1.5, 0, Math.PI * 2);
+            ctx.moveTo(lx, 6);
+            ctx.lineTo(lx, 28);
+            ctx.stroke();
+            ctx.fillStyle = SC.hi;
+            roundRect(lx - 12, 28, 24, 10, 3);
+            ctx.fill();
+            var lg = ctx.createRadialGradient(lx, 42, 2, lx, 55, 28);
+            lg.addColorStop(0, 'rgba(232,168,200,0.22)');
+            lg.addColorStop(1, 'rgba(232,168,200,0)');
+            ctx.fillStyle = lg;
+            ctx.beginPath();
+            ctx.arc(lx, 55, 28, 0, Math.PI * 2);
             ctx.fill();
         }
-        ctx.fillStyle = '#334155';
-        ctx.fillRect(32, GROUND_Y + 4, 18, 32);
-        ctx.fillRect(W - 50, GROUND_Y + 4, 18, 32);
-        ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('夜班分拣滑轨', 150, 56);
 
-        // 接货口（与终点几何对齐）
-        ctx.fillStyle = 'rgba(74, 222, 128, 0.18)';
+        // 后墙板（层次）
+        ctx.fillStyle = 'rgba(46,36,48,0.55)';
+        ctx.fillRect(0, 32, W, GROUND_Y - 80);
+        ctx.strokeStyle = 'rgba(122,132,144,0.15)';
+        ctx.lineWidth = 1;
+        for (var pv = 0; pv < 5; pv++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 50 + pv * 42);
+            ctx.lineTo(W, 50 + pv * 42);
+            ctx.stroke();
+        }
+
+        // 左侧气泵柜（金属质感）
+        var pumpGrad = ctx.createLinearGradient(8, GROUND_Y - 100, 88, GROUND_Y);
+        pumpGrad.addColorStop(0, '#3a4048');
+        pumpGrad.addColorStop(0.5, SC.metal);
+        pumpGrad.addColorStop(1, '#4a5058');
+        ctx.fillStyle = pumpGrad;
+        roundRect(10, GROUND_Y - 96, 76, 92, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(200,120,160,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = SC.ink;
+        ctx.fillRect(22, GROUND_Y - 78, 52, 22);
+        ctx.fillStyle = SC.accent;
+        ctx.fillRect(28, GROUND_Y - 72, 18, 10);
+        ctx.fillStyle = SC.hi;
+        ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
+        ctx.fillText('气泵', 38, GROUND_Y - 102);
+        ctx.strokeStyle = 'rgba(122,132,144,0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(86, GROUND_Y - 40);
+        ctx.quadraticCurveTo(110, GROUND_Y - 50, 130, GROUND_Y - 18);
+        ctx.stroke();
+
+        // 实验台地坪
+        const floor = ctx.createLinearGradient(0, GROUND_Y + 8, 0, H);
+        floor.addColorStop(0, '#3a3840');
+        floor.addColorStop(0.4, SC.mid);
+        floor.addColorStop(1, SC.ink);
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, GROUND_Y + 8, W, H - GROUND_Y - 8);
+        ctx.fillStyle = SC.metal;
+        ctx.fillRect(0, GROUND_Y + 8, W, 3);
+
+        // 气垫导轨（铝轨 + 喷气孔）
+        var trackL = 36, trackR = W - 36, trackTop = GROUND_Y - 16, trackH = 20;
+        var railGrad = ctx.createLinearGradient(0, trackTop, 0, trackTop + trackH);
+        railGrad.addColorStop(0, '#9aa4ae');
+        railGrad.addColorStop(0.35, '#c8d0d8');
+        railGrad.addColorStop(0.55, SC.metal);
+        railGrad.addColorStop(1, '#5a626a');
+        ctx.fillStyle = railGrad;
+        roundRect(trackL, trackTop, trackR - trackL, trackH, 3);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(232,168,200,0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(232,168,200,0.45)';
+        for (var p = trackL + 14; p < trackR - 10; p += 16) {
+            ctx.beginPath();
+            ctx.arc(p, GROUND_Y - 6, 1.4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(232,168,200,0.06)';
+        ctx.fillRect(trackL + 4, trackTop - 8, trackR - trackL - 8, 6);
+        ctx.fillStyle = '#5a6268';
+        ctx.fillRect(trackL - 6, GROUND_Y + 2, 14, 28);
+        ctx.fillRect(trackR - 8, GROUND_Y + 2, 14, 28);
+        ctx.fillStyle = SC.hi;
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText('气垫导轨台', trackL + 8, trackTop - 10);
+
+        // 光电门区（与终点几何对齐）
+        ctx.fillStyle = 'rgba(111,174,143,0.12)';
         ctx.fillRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
-        ctx.strokeStyle = '#86efac';
+        ctx.strokeStyle = 'rgba(111,174,143,0.55)';
         ctx.lineWidth = 2;
         ctx.strokeRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
-        ctx.fillStyle = '#b45309';
-        roundRect(TARGET_LEFT + 8, GROUND_Y - 8, TARGET_RIGHT - TARGET_LEFT - 16, 12, 2);
-        ctx.fill();
-        // 扫码灯
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(TARGET_LEFT + 4, TARGET_Y_TOP + 4, TARGET_RIGHT - TARGET_LEFT - 8, 4);
-        ctx.fillStyle = '#bbf7d0';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText(playMode === 'challenge' ? '急单接货口' : '接货口', TARGET_LEFT + 10, TARGET_Y_TOP - 8);
+        ctx.fillStyle = SC.metal;
+        ctx.fillRect(TARGET_LEFT + 2, TARGET_Y_TOP + 6, 5, TARGET_Y_BOT - TARGET_Y_TOP - 12);
+        ctx.fillRect(TARGET_RIGHT - 7, TARGET_Y_TOP + 6, 5, TARGET_Y_BOT - TARGET_Y_TOP - 12);
+        ctx.fillStyle = SC.ok;
+        ctx.fillRect(TARGET_LEFT + 4, TARGET_Y_TOP + 4, TARGET_RIGHT - TARGET_LEFT - 8, 3);
+        ctx.fillStyle = SC.hi;
+        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+        ctx.fillText(playMode === 'challenge' ? '竞赛光电门' : '光电门', TARGET_LEFT + 10, TARGET_Y_TOP - 6);
 
         var r1 = ballRadius(m1), r2 = ballRadius(m2);
         if (!animating && !hasFired) {
@@ -690,13 +825,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.fillText(label, x, y + 4);
             ctx.textAlign = 'left';
         }
-        drawBlock(ball1X, ball1Y, r1, '#60a5fa', '#93c5fd', '1');
-        drawBlock(ball2X, ball2Y, r2, '#f472b6', '#f9a8d4', '2');
+        drawBlock(ball1X, ball1Y, r1, '#5a7898', SC.hi, '1');
+        drawBlock(ball2X, ball2Y, r2, SC.accent, '#f0b0c8', '2');
 
-        // 初速箭头（初始张力）
+        // 初速箭头
         if (!hasFired) {
-            ctx.strokeStyle = '#93c5fd';
-            ctx.fillStyle = '#93c5fd';
+            ctx.strokeStyle = SC.hi;
+            ctx.fillStyle = SC.hi;
             ctx.lineWidth = 2;
             var ax = ball1X + r1 + 6;
             var ay = ball1Y - r1 - 10;
@@ -709,18 +844,18 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.lineTo(ax + 20 + v1 * 4, ay - 5);
             ctx.lineTo(ax + 20 + v1 * 4, ay + 5);
             ctx.fill();
-            ctx.fillStyle = '#fce7f3';
+            ctx.fillStyle = SC.hi;
             ctx.font = '11px sans-serif';
             ctx.fillText('v₁', ax + 8, ay - 8);
         }
 
         if (hasFired && !animating && v1f !== null) {
             roundRect(16, H - 72, 148, 48, 10);
-            ctx.fillStyle = 'rgba(26,16,32,0.88)';
+            ctx.fillStyle = 'rgba(18,12,18,0.88)';
             ctx.fill();
-            ctx.strokeStyle = 'rgba(244,114,182,0.45)';
+            ctx.strokeStyle = 'rgba(200,120,160,0.45)';
             ctx.stroke();
-            ctx.fillStyle = '#fce7f3';
+            ctx.fillStyle = SC.hi;
             ctx.font = '12px ui-monospace,Consolas,sans-serif';
             ctx.textAlign = 'left';
             ctx.fillText(`v₁' = ${v1f.toFixed(2)} m/s`, 28, H - 52);

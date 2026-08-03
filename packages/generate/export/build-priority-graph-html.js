@@ -2,7 +2,7 @@
  * Build Strategy-first standalone 图谱.html with priority mermaid annotate bundled.
  * Does not mutate chapter.json mermaid on disk.
  *
- * Offline: D3 + Mermaid + MathJax loaded from relative ../vendor/ (copied beside packages / 样本html).
+ * Offline: sync Mermaid from ../vendor/; D3 + MathJax lazy via viewer (__*_SRC__).
  */
 const fs = require('fs');
 const path = require('path');
@@ -103,9 +103,19 @@ function assertGraphHtmlSane(graphHtml) {
   if (!graphHtml.includes('tex-mml-svg.js')) {
     throw new Error('missing local mathjax vendor script ref');
   }
-  if (!/src="[^"]*vendor\/d3\.v7\.min\.js"/.test(graphHtml)
-    && !/src='[^']*vendor\/d3\.v7\.min\.js'/.test(graphHtml)) {
-    throw new Error('d3 vendor path not relative vendor/');
+  // Strategy-first: Mermaid sync in head; D3 / MathJax must not block first paint.
+  if (!/src="[^"]*vendor\/mermaid\.min\.js"/.test(graphHtml)
+    && !/src='[^']*vendor\/mermaid\.min\.js'/.test(graphHtml)) {
+    throw new Error('mermaid vendor path not relative vendor/');
+  }
+  if (/<script[^>]+src=["'][^"']*d3\.v7\.min\.js["']/i.test(graphHtml)) {
+    throw new Error('d3 must not be sync-loaded in head');
+  }
+  if (/<script[^>]+src=["'][^"']*tex-mml-svg\.js["']/i.test(graphHtml)) {
+    throw new Error('mathjax must not be early-loaded via script tag');
+  }
+  if (!graphHtml.includes('__D3_SRC__') || !graphHtml.includes('__MATHJAX_SRC__')) {
+    throw new Error('missing lazy vendor src hooks (__D3_SRC__ / __MATHJAX_SRC__)');
   }
 }
 

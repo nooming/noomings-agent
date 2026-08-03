@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>斜抛运动探究与挑战</title>
+    <title>靶场 · 斜抛</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background-color: #f3f4f6; font-family:"PingFang SC","Microsoft YaHei",sans-serif; }
@@ -27,7 +27,7 @@
         }
     
 /* === craft-gold-shell === */
-:root{--craft-accent:#3b82f6;--craft-bg:#0f172a;--craft-panel:#1e293b;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#6aaa78;--craft-bg:#0e1410;--craft-panel:#1a241c;--craft-text:#e4eee6;--craft-muted:#889a88;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -135,13 +135,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (projectile-basic) === */
+:root{
+  --craft-accent:#6aaa78;--craft-bg:#0e1410;--craft-panel:#1a241c;
+  --craft-text:#e4eee6;--craft-muted:#889a88;
+  --scene-ink:#0e1410;--scene-mid:#243028;--scene-hi:#90c8a0;
+  --scene-glow:#50b868;--scene-metal:#6a7868;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row min-h-0">
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>野战炮兵 · 斜抛试射</h2>
+    <h2>靶场 · 斜抛</h2>
     <p>郊外靶场上，试着调炮口参数打几发，弄清落点怎么变；再接靶心挑战——限次打中本局锁定距离的靶。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；侧栏与顶部会写明当前要做什么。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -402,12 +489,18 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         initBirds();
 
         function spawnTarget() {
-            // FixedChallenge：仅在进入竞赛时调用一次；靶距在 15m～场地上限内随机，此后本局固定
-            const minMeters = 15;
-            const maxMeters = (state.viewW - state.cannonBaseX) / state.PPM - 2;
-            const span = Math.max(minMeters + 1, Math.max(minMeters, maxMeters));
-            const distMeters = minMeters + Math.random() * (span - minMeters);
-            state.targetX = state.cannonBaseX + distMeters * state.PPM;
+            // FixedChallenge：仅在进入竞赛时调用一次；靶距钳制在可视场地内，避免窄屏靶画到画布外
+            const marginPx = Math.max(state.targetWidth || 40, 24) + 8;
+            const maxMetersRaw = (state.viewW - state.cannonBaseX - marginPx) / state.PPM;
+            const maxMeters = Math.max(5, maxMetersRaw);
+            const minMeters = Math.min(15, Math.max(5, maxMeters * 0.45));
+            const lo = Math.min(minMeters, maxMeters);
+            const hi = Math.max(minMeters, maxMeters);
+            const distMeters = lo + Math.random() * Math.max(0.01, hi - lo);
+            let targetX = state.cannonBaseX + distMeters * state.PPM;
+            const maxX = state.viewW - marginPx;
+            const minX = state.cannonBaseX + 5 * state.PPM;
+            state.targetX = Math.min(Math.max(targetX, minX), Math.max(minX, maxX));
             refreshModeGoals();
         }
 

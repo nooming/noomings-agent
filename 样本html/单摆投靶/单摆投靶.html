@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>单摆投靶 · 探究游戏</title>
+    <title>投靶台 · 单摆</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         html, body {
@@ -171,7 +171,7 @@ body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#5fa3c9;--craft-bg:#0c1520;--craft-panel:#152434;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#c9973f;--craft-bg:#1a1410;--craft-panel:#2a2118;--craft-text:#f0e8d8;--craft-muted:#a09070;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -252,13 +252,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (pendulum-target) === */
+:root{
+  --craft-accent:#c9973f;--craft-bg:#1a1410;--craft-panel:#2a2118;
+  --craft-text:#f0e8d8;--craft-muted:#a09070;
+  --scene-ink:#1a1410;--scene-mid:#3a2c1c;--scene-hi:#f0cf8a;
+  --scene-glow:#ff9d45;--scene-metal:#c9973f;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>矿井 · 单摆投递</h2>
+    <h2>投靶台 · 单摆</h2>
     <p>矿车沿铁轨往返。试着摆几次，弄清落点与释放角的关系；再接急单——矿车工况本局锁定，打偏不换车。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛工况进入后固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -306,8 +393,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                     <input type="range" id="s-angle" min="-80" max="80" value="-45" step="1">
                 </div>
                 <div class="slider-item">
-                    <div class="row"><label>质量 m</label><span class="slider-value" id="massValue">3.0</span></div>
+                    <div class="row"><label>质量 m（混淆）</label><span class="slider-value" id="massValue">3.0</span></div>
                     <input type="range" id="s-mass" min="1" max="5" value="3" step="0.5">
+                    <div class="confound-note" style="margin-top:6px">质量 <span>不改变</span> 落点（单摆周期/脱钩速度与 m 无关）；请调摆长与释放角。</div>
                 </div>
             </div>
             <div class="mode-group" style="display:none" aria-hidden="true">
@@ -378,7 +466,9 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     let health = 5;
     let maxHealth = 5;
     let currentLevel = 1;
-    let confuseOn = true;
+    /** 探究默认关闭噪声；竞赛仅保留很弱扰动，避免不公平不可达 */
+    let confuseOn = false;
+    let confuseScale = 0;
     let L = 150, theta = -45 * Math.PI / 180, omega = 0, theta0 = -45 * Math.PI / 180, mass = 3.0;
     let elasticDelta = 0, shakeAccel = 0;
     const STATE_READY = 'ready', STATE_SWING = 'swing', STATE_FLYING = 'flying';
@@ -426,13 +516,64 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
 
+    /** 理想能量近似下的落点包络（与 detachBob 同号：自左侧释放向右飞） */
+    function landingEnvelope() {
+      let minX = Infinity, maxX = -Infinity;
+      for (let len = 60; len <= 220; len += 4) {
+        for (let deg = 12; deg <= 80; deg += 4) {
+          const th = deg * Math.PI / 180;
+          const fall = GROUND_Y - 6 - PIVOT_Y - len;
+          if (fall < 18) continue;
+          const v = Math.sqrt(2 * G * len * (1 - Math.cos(th)));
+          const t = Math.sqrt(2 * fall / G);
+          const land = PIVOT_X + v * t;
+          minX = Math.min(minX, PIVOT_X + 20);
+          maxX = Math.max(maxX, land);
+        }
+      }
+      if (!isFinite(minX) || !isFinite(maxX)) return { minX: 220, maxX: 430 };
+      // 留一点边距，避免矿车贴极限落点
+      return {
+        minX: Math.max(180, Math.floor(minX)),
+        maxX: Math.min(460, Math.ceil(maxX - 8))
+      };
+    }
+    function clampCartRange(minX, maxX, width) {
+      const env = landingEnvelope();
+      let lo = Math.max(minX, env.minX);
+      let hi = Math.min(maxX, env.maxX);
+      if (hi - lo < width + 30) {
+        lo = env.minX;
+        hi = Math.max(env.minX + width + 40, env.maxX);
+      }
+      if (hi <= lo) { lo = env.minX; hi = env.maxX; }
+      return { minX: lo, maxX: hi };
+    }
+    function syncConfuseForMode() {
+      if (playMode === 'challenge') {
+        confuseOn = true;
+        confuseScale = 0.18; // 竞赛极弱扰动
+      } else {
+        confuseOn = false;
+        confuseScale = 0;
+      }
+      if (confuseToggle) confuseToggle.checked = confuseOn;
+    }
+
     /** FixedChallenge：仅进入竞赛时锁定一次矿车工况（车更窄更快，目视可辨） */
     function lockChallengeCart() {
+      syncConfuseForMode();
+      const env = landingEnvelope();
+      const w = 34 + Math.random() * 14; // 明显窄于探究关卡 50–90
+      const span = Math.max(70, env.maxX - env.minX - w);
+      const minX = env.minX + Math.random() * Math.max(8, span * 0.25);
+      const maxX = Math.min(env.maxX, minX + 80 + Math.random() * 90);
+      const clamped = clampCartRange(minX, maxX, w);
       lockedCartSpec = {
-        w: 34 + Math.random() * 14, // 明显窄于探究关卡 50–90
-        spd: 110 + Math.random() * 55,
-        minX: 220 + Math.random() * 40,
-        maxX: 740 - Math.random() * 40
+        w: w,
+        spd: 90 + Math.random() * 40,
+        minX: clamped.minX,
+        maxX: clamped.maxX
       };
       cartWidth = lockedCartSpec.w;
       cartSpeed = lockedCartSpec.spd;
@@ -456,6 +597,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     function applyExploreCart() {
       lockedCartSpec = null;
       challengeWon = false;
+      syncConfuseForMode();
       loadLevel(currentLevel || 1);
       refreshGoalUI();
     }
@@ -534,22 +676,25 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             case 1:
                 cartWidth = 90;
                 cartSpeed = 50;
-                cartMinX = 300;   // 原来480，向左扩180
+                cartMinX = 300;
                 cartMaxX = 720;
                 break;
             case 2:
                 cartWidth = 70;
                 cartSpeed = 80;
-                cartMinX = 250;   // 原来460
+                cartMinX = 250;
                 cartMaxX = 750;
                 break;
             case 3:
                 cartWidth = 50;
                 cartSpeed = 120;
-                cartMinX = 200;   // 原来440
+                cartMinX = 200;
                 cartMaxX = 780;
                 break;
         }
+        var clamped = clampCartRange(cartMinX, cartMaxX, cartWidth);
+        cartMinX = clamped.minX;
+        cartMaxX = clamped.maxX;
         cartX = cartMinX + (cartMaxX - cartMinX) / 2; // 初始居中
         cartDir = 1;
         resetGame();
@@ -560,10 +705,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function physicsStep(dt) {
         if (state === STATE_SWING) {
-            if (confuseOn) {
-                elasticDelta += (Math.random() - 0.5) * 4 * dt * 20;
-                elasticDelta = clamp(elasticDelta, -12, 12);
-                shakeAccel = (Math.random() - 0.5) * 150;
+            if (confuseOn && confuseScale > 0) {
+                elasticDelta += (Math.random() - 0.5) * 4 * dt * 20 * confuseScale;
+                elasticDelta = clamp(elasticDelta, -12 * confuseScale, 12 * confuseScale);
+                shakeAccel = (Math.random() - 0.5) * 150 * confuseScale;
             } else {
                 elasticDelta = 0;
                 shakeAccel = 0;
@@ -940,9 +1085,8 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         drawScene();
     });
 
-    // 弹性/晃动作为隐蔽扰动保留，不向学生剧透「混淆」
-    confuseOn = true;
-    if (confuseToggle) confuseToggle.checked = true;
+    // 探究默认关闭随机扰动；竞赛弱扰动在 syncConfuseForMode 中开启
+    syncConfuseForMode();
 
     function init() {
         loadLevel(1);

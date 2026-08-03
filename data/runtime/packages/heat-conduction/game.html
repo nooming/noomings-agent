@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>热传导 · 探究</title>
+    <title>热工台 · 导热棒</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -162,7 +162,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#fb7185;--craft-bg:#1a0a10;--craft-panel:#2a1520;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#e07060;--craft-bg:#140c0c;--craft-panel:#241616;--craft-text:#f0e4e0;--craft-muted:#a88880;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -264,13 +264,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (heat-conduction) === */
+:root{
+  --craft-accent:#e07060;--craft-bg:#140c0c;--craft-panel:#241616;
+  --craft-text:#f0e4e0;--craft-muted:#a88880;
+  --scene-ink:#140c0c;--scene-mid:#342020;--scene-hi:#f0a090;
+  --scene-glow:#ff6040;--scene-metal:#8a7870;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>极地科考站 · 保温墙</h2>
+    <h2>热工台 · 导热棒</h2>
     <p>暴风雪夜里，炉膛侧偏热、值班舱偏凉。试着弄清导热与温差如何改变穿墙热流；再接限次急单——安全带本局固定，不足或过热都不合格。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后热流安全带本局固定，未达标只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -294,7 +381,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">极地科考站 · 保温墙</div>
+      <div class="essence-title">导热棒实验台</div>
       <div class="essence-sub" id="goalMission">探究：自由调导热与温差，观察穿墙热流</div>
     </div>
   </div>
@@ -524,113 +611,136 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         function drawCanvas(k, dt, Qlive, aUi, Qshown) {
             syncCanvasSize();
             ctx.clearRect(0, 0, W, H);
+            const INK = '#140c0c', MID = '#342020', HI = '#f0a090', GLOW = '#ff6040';
+            const METAL = '#8a7870', PANEL = '#241616', ACCENT = '#e07060', OK = '#6fae8f';
             const intensity = Math.min(Qlive / 5000, 1);
-            const g = ctx.createLinearGradient(0, 0, 0, H);
-            g.addColorStop(0, '#1a0a12');
-            g.addColorStop(1, '#0f172a');
-            ctx.fillStyle = g;
+
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#1a1010');
+            bg.addColorStop(0.45, MID);
+            bg.addColorStop(1, INK);
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+            const lamp = ctx.createRadialGradient(W * 0.5, H * 0.05, 8, W * 0.5, H * 0.05, W * 0.6);
+            lamp.addColorStop(0, 'rgba(255,96,64,0.14)');
+            lamp.addColorStop(1, 'rgba(255,96,64,0)');
+            ctx.fillStyle = lamp;
             ctx.fillRect(0, 0, W, H);
 
-            // 地面与墙
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(0, H * 0.78, W, H * 0.22);
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(0, H * 0.78, W, 8);
+            const benchY = H - 56;
+            ctx.fillStyle = '#1a1008';
+            ctx.fillRect(0, benchY + 4, W, 56);
+            ctx.fillStyle = '#2e2014';
+            ctx.fillRect(0, benchY, W, 56);
+            ctx.fillStyle = '#4a3524';
+            ctx.fillRect(0, benchY, W, 10);
 
-            const wallX = W * 0.46, wallW = Math.max(36, W * 0.08 + (aUi - 0.05) * 120);
-            const wallTop = H * 0.18, wallH = H * 0.6;
+            const rodY = H * 0.44, rodH = Math.max(14, H * 0.06);
+            const rodX0 = W * 0.18, rodX1 = W * 0.78, rodLen = rodX1 - rodX0;
 
-            // 炉膛侧
-            const hot = ctx.createLinearGradient(0, 0, wallX, 0);
-            hot.addColorStop(0, 'rgba(251,113,133,0.55)');
-            hot.addColorStop(1, 'rgba(251,113,133,0.12)');
-            ctx.fillStyle = hot;
-            ctx.fillRect(0, wallTop, wallX, wallH);
-            ctx.fillStyle = '#fb7185';
-            ctx.fillRect(W * 0.08, H * 0.55, W * 0.16, H * 0.23);
-            ctx.fillStyle = '#fda4af';
-            ctx.fillRect(W * 0.11, H * 0.48, W * 0.1, H * 0.07);
-            ctx.fillStyle = '#fecdd3';
-            ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-            ctx.fillText('炉膛', W * 0.12, H * 0.45);
-
-            // 值班室侧
-            const cold = ctx.createLinearGradient(wallX + wallW, 0, W, 0);
-            cold.addColorStop(0, 'rgba(56,189,248,0.08)');
-            cold.addColorStop(1, 'rgba(56,189,248,0.28)');
-            ctx.fillStyle = cold;
-            ctx.fillRect(wallX + wallW, wallTop, W - wallX - wallW, wallH);
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(W * 0.72, H * 0.52, W * 0.18, H * 0.26);
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(W * 0.76, H * 0.58, W * 0.1, H * 0.08);
-            ctx.fillStyle = '#bae6fd';
-            ctx.fillText('值班室', W * 0.74, H * 0.48);
-
-            // 保温墙
-            ctx.fillStyle = '#78716c';
-            ctx.fillRect(wallX, wallTop, wallW, wallH);
-            ctx.strokeStyle = '#a8a29e';
+            const srcW = W * 0.12, srcH = H * 0.22;
+            const srcX = W * 0.06, srcY = rodY - srcH * 0.35;
+            const srcG = ctx.createLinearGradient(srcX, srcY, srcX + srcW, srcY + srcH);
+            srcG.addColorStop(0, `rgba(255,96,64,${0.55 + intensity * 0.35})`);
+            srcG.addColorStop(1, `rgba(180,40,20,${0.35 + intensity * 0.25})`);
+            ctx.fillStyle = srcG;
+            ctx.fillRect(srcX, srcY, srcW, srcH);
+            ctx.strokeStyle = ACCENT;
             ctx.lineWidth = 2;
-            ctx.strokeRect(wallX, wallTop, wallW, wallH);
-            for (let i = 1; i < 4; i++) {
-                const y = wallTop + (i / 4) * wallH;
-                ctx.beginPath(); ctx.moveTo(wallX, y); ctx.lineTo(wallX + wallW, y); ctx.stroke();
+            ctx.strokeRect(srcX, srcY, srcW, srcH);
+            for (let c = 0; c < 4; c++) {
+                ctx.strokeStyle = `rgba(255,160,120,${0.25 + intensity * 0.35})`;
+                ctx.beginPath();
+                ctx.arc(srcX + srcW * 0.5, srcY + srcH * 0.55, 8 + c * 5 + Math.sin(animT * 3 + c) * 2, 0, Math.PI * 2);
+                ctx.stroke();
             }
-            ctx.fillStyle = 'rgba(15,23,42,0.75)';
-            ctx.fillRect(wallX + 2, wallTop - 22, 48, 16);
-            ctx.fillStyle = '#ffe0c2';
+            ctx.fillStyle = HI;
             ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('保温墙', wallX + 6, wallTop - 10);
-            ctx.fillStyle = 'rgba(226,232,240,0.75)';
-            ctx.font = '10px "Microsoft YaHei",sans-serif';
-            ctx.fillText('热流粒子·示意（快慢随热流变）', wallX - 36, wallTop + wallH + 16);
+            ctx.fillText('热源', srcX + 8, srcY - 8);
 
-            // 热流粒子（速度随 intensity，非守恒动力学）
+            const sinkW = W * 0.10, sinkH = H * 0.20;
+            const sinkX = W * 0.82, sinkY = rodY - sinkH * 0.32;
+            const sinkG = ctx.createLinearGradient(sinkX, sinkY, sinkX + sinkW, sinkY + sinkH);
+            sinkG.addColorStop(0, '#6a7870');
+            sinkG.addColorStop(1, '#4a5458');
+            ctx.fillStyle = sinkG;
+            ctx.fillRect(sinkX, sinkY, sinkW, sinkH);
+            ctx.strokeStyle = METAL;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sinkX, sinkY, sinkW, sinkH);
+            ctx.fillStyle = '#a09078';
+            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+            ctx.fillText('冷端', sinkX + 6, sinkY - 8);
+
+            const irG = ctx.createLinearGradient(rodX0, 0, rodX1, 0);
+            irG.addColorStop(0, `rgba(255,96,64,${0.75 + intensity * 0.2})`);
+            irG.addColorStop(0.35, `rgba(240,160,120,${0.45 + intensity * 0.35})`);
+            irG.addColorStop(0.65, `rgba(180,120,100,${0.25 + intensity * 0.2})`);
+            irG.addColorStop(1, `rgba(120,100,96,${0.15 + intensity * 0.08})`);
+            ctx.fillStyle = irG;
+            ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
+            const rodMetal = ctx.createLinearGradient(0, rodY - rodH / 2, 0, rodY + rodH / 2);
+            rodMetal.addColorStop(0, '#a89890');
+            rodMetal.addColorStop(0.5, METAL);
+            rodMetal.addColorStop(1, '#6a6058');
+            ctx.fillStyle = rodMetal;
+            ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
+            ctx.globalAlpha = 0.55 + intensity * 0.35;
+            ctx.fillStyle = irG;
+            ctx.fillRect(rodX0, rodY - rodH / 2, rodLen, rodH);
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = 'rgba(240,160,144,0.45)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(rodX0, rodY - rodH / 2, rodLen, rodH);
+            ctx.fillStyle = HI;
+            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.fillText('导热棒 · IR 示意', rodX0, rodY - rodH / 2 - 10);
+
             const n = 6 + Math.floor(intensity * 10);
             for (let i = 0; i < n; i++) {
                 const t = (animT * (0.35 + intensity * 0.6) + i / n) % 1;
-                const x = wallX - 40 + t * (wallW + 80);
-                const y = wallTop + 24 + (i % 5) * (wallH / 6) + Math.sin(animT * 2 + i) * 4;
+                const x = rodX0 + t * rodLen;
+                const y = rodY + Math.sin(animT * 2 + i) * (rodH * 0.6);
                 const alpha = 0.25 + intensity * 0.65;
                 ctx.beginPath();
-                ctx.fillStyle = 'rgba(251,146,60,' + alpha + ')';
-                ctx.arc(x, y, 3 + intensity * 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255,96,64,' + alpha + ')';
+                ctx.shadowColor = GLOW;
+                ctx.shadowBlur = 4 + intensity * 6;
+                ctx.arc(x, y, 2.5 + intensity * 2, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.shadowBlur = 0;
             }
 
-            // 读数右下，避开顶栏 HUD
-            const boxW = 230, boxH = 52, boxX = W - boxW - 16, boxY = H - boxH - 28;
-            ctx.fillStyle = 'rgba(15,23,42,0.82)';
+            const boxW = 240, boxH = 52, boxX = W - boxW - 16, boxY = H - boxH - 28;
+            ctx.fillStyle = 'rgba(36,22,22,0.88)';
             ctx.fillRect(boxX, boxY, boxW, boxH);
-            ctx.strokeStyle = intensity >= 0.4 ? 'rgba(251,113,133,0.55)' : 'rgba(148,163,184,0.4)';
+            ctx.strokeStyle = intensity >= 0.4 ? 'rgba(255,96,64,0.55)' : 'rgba(224,112,96,0.4)';
             ctx.strokeRect(boxX, boxY, boxW, boxH);
-            ctx.fillStyle = '#fecdd3';
+            ctx.fillStyle = HI;
             ctx.font = '12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('暴风雪夜 · ΔT ' + dt + ' K', boxX + 10, boxY + 22);
+            ctx.fillText('热工台 · ΔT ' + dt + ' K', boxX + 10, boxY + 22);
             if (Qshown == null) {
-              ctx.fillStyle = '#f8fafc';
+              ctx.fillStyle = '#f0e4e0';
               if (playMode === 'challenge') {
                 ctx.fillText('穿墙热流 待测 · 急单 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W', boxX + 10, boxY + 42);
               } else {
                 ctx.fillText('穿墙热流 待测 · 点测试后显示', boxX + 10, boxY + 42);
               }
             } else if (playMode === 'challenge') {
-              ctx.fillStyle = (Qshown >= TARGET_Q && Qshown <= TARGET_Q_HI) ? '#86efac' : (Qshown > TARGET_Q_HI ? '#fb7185' : '#fda4af');
+              ctx.fillStyle = (Qshown >= TARGET_Q && Qshown <= TARGET_Q_HI) ? OK : (Qshown > TARGET_Q_HI ? GLOW : ACCENT);
               ctx.fillText('穿墙热流 ' + Qshown.toFixed(0) + ' W / 急单 ' + TARGET_Q + '–' + TARGET_Q_HI, boxX + 10, boxY + 42);
             } else {
-              ctx.fillStyle = '#7dd3fc';
+              ctx.fillStyle = HI;
               ctx.fillText('穿墙热流 ' + Qshown.toFixed(0) + ' W · 本次测量', boxX + 10, boxY + 42);
             }
 
-            // 脉冲提示
             if (flowPulse > 0) {
                 ctx.globalAlpha = Math.min(1, flowPulse);
-                ctx.strokeStyle = '#fb7185';
+                ctx.strokeStyle = GLOW;
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(wallX - 20, H * 0.5);
-                ctx.lineTo(wallX + wallW + 20, H * 0.5);
+                ctx.moveTo(rodX0 - 10, rodY);
+                ctx.lineTo(rodX1 + 10, rodY);
                 ctx.stroke();
                 ctx.globalAlpha = 1;
             }

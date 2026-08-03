@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>光电效应 · 探究</title>
+  <title>暗箱 · 光电门禁</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -164,7 +164,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#facc15;--craft-bg:#141208;--craft-panel:#242010;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#d4a84b;--craft-bg:#0c0a12;--craft-panel:#1a1624;--craft-text:#efe8d8;--craft-muted:#9a8e78;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -270,13 +270,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (photoelectric) === */
+:root{
+  --craft-accent:#d4a84b;--craft-bg:#0c0a12;--craft-panel:#1a1624;
+  --craft-text:#efe8d8;--craft-muted:#9a8e78;
+  --scene-ink:#0c0a12;--scene-mid:#2a2438;--scene-hi:#f0d090;
+  --scene-glow:#6eb8e8;--scene-metal:#7a8494;--scene-ok:#7dba8c;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>夜班光电管 · 换材料急单</h2>
+    <h2>暗箱 · 光电门禁</h2>
     <p>光电管阴极材料换了一批。试着弄清频率与逸出功如何决定光电流；再接限次急单——打偏换新目标。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛打偏换新目标。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -300,7 +387,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">夜班光电管 · 换材料急单</div>
+      <div class="essence-title">光电暗箱工作台</div>
       <div class="essence-sub" id="goalMission">探究：自由调 f、W，观察光电流阈值</div>
     </div>
   </div>
@@ -424,6 +511,14 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       { name: '铜', W: 4.5 },
       { name: '银', W: 4.3 }
     ];
+    /** f_max=10e14 → E_max≈4.14 eV；竞赛材料必须 W < E_max - ε 才可出光电流 */
+    const F_MAX_UNITS = 10; // ×1e14 Hz
+    const PHOTO_E_MAX = h * F_MAX_UNITS * 1e14;
+    const PHOTO_W_EPS = 0.08;
+    function challengeMaterialPool() {
+      const pool = MATERIALS.filter(function(m) { return m.W < PHOTO_E_MAX - PHOTO_W_EPS; });
+      return pool.length ? pool : MATERIALS.filter(function(m) { return m.W <= 3.3; });
+    }
     const MODE_GOALS = {
       explore: {
         hud: '探究：自由试光，观察何时出现光电流',
@@ -453,10 +548,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       }
     }
     function rollChallengeMaterial() {
-      lockedMat = MATERIALS[Math.floor(Math.random() * MATERIALS.length)];
+      const pool = challengeMaterialPool();
+      lockedMat = pool[Math.floor(Math.random() * pool.length)];
       workSlider.value = String(lockedMat.W);
-      // 打乱频率，避免贴旧解
-      freqSlider.value = String((2 + Math.random() * 4).toFixed(1));
+      // 打乱频率，避免贴旧解（仍保证存在 f 使 hf>W）
+      const fMinWin = Math.min(F_MAX_UNITS - 0.2, (lockedMat.W / (h * 1e14)) + 0.3);
+      let fRoll = 2 + Math.random() * 4;
+      if (fRoll * 1e14 * h <= lockedMat.W) {
+        fRoll = Math.min(F_MAX_UNITS, Math.max(fMinWin, 6));
+      }
+      freqSlider.value = String(fRoll.toFixed(1));
     }
     /** RerollChallenge：进入抽材料；失败再换材料/W */
     function lockChallengeMaterial() {
@@ -616,81 +717,258 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     function drawCanvas(fVal, wVal, I) {
       syncCanvasSize();
       ctx.clearRect(0, 0, W, H);
-      const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#1a1608');
-      bg.addColorStop(1, '#0f172a');
+
+      var INK = '#0c0a12', MID = '#2a2438', ACCENT = '#d4a84b';
+      var GLOW = '#6eb8e8', METAL = '#7a8494', HI = '#f0d090';
+
+      function rr(x, y, w, h, r) {
+        r = Math.min(r, w * 0.5, h * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      // 暗箱腔室背景
+      var bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#14101c');
+      bg.addColorStop(0.55, INK);
+      bg.addColorStop(1, '#06050a');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(0, H * 0.82, W, H * 0.18);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(0, H * 0.82, W, 6);
 
-      // 真空管外壳
-      const tubeX = W * 0.18, tubeY = H * 0.22, tubeW = W * 0.64, tubeH = H * 0.48;
-      ctx.strokeStyle = 'rgba(250,204,21,0.45)';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(tubeX, tubeY, tubeW, tubeH);
-      ctx.fillStyle = 'rgba(250,204,21,0.05)';
-      ctx.fillRect(tubeX, tubeY, tubeW, tubeH);
-      ctx.fillStyle = '#fde68a';
+      // 汞灯冷光（左侧）
+      var lampX = W * 0.11, lampY = H * 0.42;
+      var lampFlick = 0.90 + 0.10 * Math.sin(animT * 5.1) * Math.sin(animT * 3.3 + 1.2);
+      var lampRad = ctx.createRadialGradient(lampX, lampY, 6, lampX, lampY, W * 0.52);
+      lampRad.addColorStop(0, 'rgba(110,184,232,' + (0.42 * lampFlick) + ')');
+      lampRad.addColorStop(0.28, 'rgba(110,184,232,' + (0.16 * lampFlick) + ')');
+      lampRad.addColorStop(0.62, 'rgba(110,184,232,0.04)');
+      lampRad.addColorStop(1, 'rgba(110,184,232,0)');
+      ctx.fillStyle = lampRad;
+      ctx.fillRect(0, 0, W, H);
+
+      // 腔室地面
+      var floorY = H * 0.84;
+      var floorG = ctx.createLinearGradient(0, floorY, 0, H);
+      floorG.addColorStop(0, '#1a1624');
+      floorG.addColorStop(1, '#080610');
+      ctx.fillStyle = floorG;
+      ctx.fillRect(0, floorY, W, H - floorY);
+      ctx.strokeStyle = 'rgba(212,168,75,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, floorY);
+      ctx.lineTo(W, floorY);
+      ctx.stroke();
+
+      // 密封暗箱外壳（HERO）
+      var chX = W * 0.06, chY = H * 0.10, chW = W * 0.88, chH = H * 0.70;
+      var shellG = ctx.createLinearGradient(chX, chY, chX + chW, chY + chH);
+      shellG.addColorStop(0, '#1e1a28');
+      shellG.addColorStop(0.45, MID);
+      shellG.addColorStop(1, '#14101c');
+      ctx.fillStyle = shellG;
+      rr(chX, chY, chW, chH, 10);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(212,168,75,0.38)';
+      ctx.lineWidth = 2;
+      rr(chX, chY, chW, chH, 10);
+      ctx.stroke();
+      // 内腔阴影
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      rr(chX + 8, chY + 8, chW - 16, chH - 16, 7);
+      ctx.fill();
+      // 顶沿高光
+      var topSheen = ctx.createLinearGradient(chX, chY, chX, chY + 28);
+      topSheen.addColorStop(0, 'rgba(240,208,144,0.10)');
+      topSheen.addColorStop(1, 'rgba(240,208,144,0)');
+      ctx.fillStyle = topSheen;
+      rr(chX + 2, chY + 2, chW - 4, 26, 8);
+      ctx.fill();
+
+      // 标题铭牌
+      ctx.fillStyle = HI;
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText(playMode === 'challenge' && lockedMat ? ('门禁光电管 · ' + lockedMat.name) : '门禁光电管', tubeX + 12, tubeY - 8);
+      ctx.textAlign = 'left';
+      ctx.fillText(
+        playMode === 'challenge' && lockedMat ? ('暗箱光电管 · ' + lockedMat.name) : '暗箱光电管',
+        chX + 16, chY - 6
+      );
 
-      // 阴极 / 阳极
-      const cy = tubeY + tubeH * 0.2, ch = tubeH * 0.6;
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(tubeX + 28, cy, 34, ch);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(tubeX + tubeW - 62, cy, 34, ch);
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillText('阴极', tubeX + 28, cy + ch + 18);
-      ctx.fillText('阳极', tubeX + tubeW - 58, cy + ch + 18);
+      // 汞/UV 灯罩（左侧）
+      var housX = chX + 18, housY = chY + chH * 0.22, housW = W * 0.13, housH = chH * 0.56;
+      var housG = ctx.createLinearGradient(housX, housY, housX + housW, housY);
+      housG.addColorStop(0, '#3a3448');
+      housG.addColorStop(0.5, METAL);
+      housG.addColorStop(1, '#4a5060');
+      ctx.fillStyle = housG;
+      rr(housX, housY, housW, housH, 5);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(212,168,75,0.28)';
+      ctx.lineWidth = 1.5;
+      rr(housX, housY, housW, housH, 5);
+      ctx.stroke();
+      // 石英窗
+      var winX = housX + housW * 0.18, winY = housY + housH * 0.28;
+      var winW = housW * 0.64, winH = housH * 0.44;
+      var winG = ctx.createLinearGradient(winX, winY, winX + winW, winY + winH);
+      winG.addColorStop(0, 'rgba(110,184,232,0.55)');
+      winG.addColorStop(0.5, 'rgba(180,220,240,0.35)');
+      winG.addColorStop(1, 'rgba(80,140,180,0.25)');
+      ctx.fillStyle = winG;
+      rr(winX, winY, winW, winH, 3);
+      ctx.fill();
+      var bulbCore = ctx.createRadialGradient(winX + winW * 0.5, winY + winH * 0.5, 1, winX + winW * 0.5, winY + winH * 0.5, winW * 0.55);
+      bulbCore.addColorStop(0, 'rgba(220,240,255,' + (0.95 * lampFlick) + ')');
+      bulbCore.addColorStop(0.45, 'rgba(110,184,232,' + (0.75 * lampFlick) + ')');
+      bulbCore.addColorStop(1, 'rgba(110,184,232,0)');
+      ctx.fillStyle = bulbCore;
+      ctx.beginPath();
+      ctx.arc(winX + winW * 0.5, winY + winH * 0.5, winW * 0.42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(110,184,232,0.85)';
+      ctx.font = '9px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Hg UV', winX + winW * 0.5, housY + housH + 14);
 
-      // 入射光子
-      for (let i = 0; i < 5; i++) {
-        const x = tubeX - 10 + ((animT * 40 + i * 28) % (tubeW * 0.35));
-        const y = tubeY + 18 + i * 10;
+      // 真空光电管（玻璃 + 电极）
+      var tubeX = chX + W * 0.22, tubeY = chY + chH * 0.18;
+      var tubeW = chW * 0.62, tubeH = chH * 0.58;
+      // 玻璃管体
+      var glassG = ctx.createLinearGradient(tubeX, tubeY, tubeX + tubeW, tubeY);
+      glassG.addColorStop(0, 'rgba(110,184,232,0.06)');
+      glassG.addColorStop(0.18, 'rgba(180,210,230,0.14)');
+      glassG.addColorStop(0.50, 'rgba(120,150,180,0.08)');
+      glassG.addColorStop(0.82, 'rgba(180,210,230,0.12)');
+      glassG.addColorStop(1, 'rgba(110,184,232,0.05)');
+      ctx.fillStyle = glassG;
+      rr(tubeX, tubeY, tubeW, tubeH, 8);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(110,184,232,0.42)';
+      ctx.lineWidth = 2;
+      rr(tubeX, tubeY, tubeW, tubeH, 8);
+      ctx.stroke();
+      // 玻璃高光
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(tubeX + 14, tubeY + 10);
+      ctx.lineTo(tubeX + 14, tubeY + tubeH - 16);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      ctx.beginPath();
+      ctx.arc(tubeX + tubeW * 0.72, tubeY + tubeH * 0.22, tubeH * 0.12, -0.6, 0.9);
+      ctx.stroke();
+
+      // 阴极 / 阳极金属板
+      var cy = tubeY + tubeH * 0.18, ch = tubeH * 0.64, plateW = Math.max(22, tubeW * 0.055);
+      var cathG = ctx.createLinearGradient(tubeX + 24, cy, tubeX + 24 + plateW, cy);
+      cathG.addColorStop(0, '#4a5060');
+      cathG.addColorStop(0.45, METAL);
+      cathG.addColorStop(1, '#5a6474');
+      ctx.fillStyle = cathG;
+      rr(tubeX + 24, cy, plateW, ch, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(240,208,144,0.25)';
+      ctx.lineWidth = 1;
+      rr(tubeX + 24, cy, plateW, ch, 2);
+      ctx.stroke();
+      var anG = ctx.createLinearGradient(tubeX + tubeW - 24 - plateW, cy, tubeX + tubeW - 24, cy);
+      anG.addColorStop(0, '#5a6474');
+      anG.addColorStop(0.55, '#9aa4b4');
+      anG.addColorStop(1, '#6a7484');
+      ctx.fillStyle = anG;
+      rr(tubeX + tubeW - 24 - plateW, cy, plateW, ch, 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(240,208,144,0.30)';
+      rr(tubeX + tubeW - 24 - plateW, cy, plateW, ch, 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(154,142,120,0.9)';
+      ctx.font = '10px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('阴极', tubeX + 24, cy + ch + 16);
+      ctx.fillText('阳极', tubeX + tubeW - 24 - plateW, cy + ch + 16);
+
+      // 入射光子（汞灯 → 阴极）
+      var photonStart = winX + winW;
+      var photonEnd = tubeX + 24 + plateW;
+      for (var pi = 0; pi < 5; pi++) {
+        var pt = ((animT * 0.55 + pi / 5) % 1);
+        var px = photonStart + pt * (photonEnd - photonStart);
+        var py = tubeY + tubeH * 0.22 + pi * (tubeH * 0.11) + Math.sin(animT * 4 + pi) * 3;
+        var pRad = ctx.createRadialGradient(px, py, 0, px, py, I > 0 ? 6 : 4);
+        pRad.addColorStop(0, I > 0 ? '#f0d090' : '#a87826');
+        pRad.addColorStop(0.5, I > 0 ? '#d4a84b' : '#7a5a20');
+        pRad.addColorStop(1, 'rgba(212,168,75,0)');
+        ctx.fillStyle = pRad;
         ctx.beginPath();
-        ctx.fillStyle = I > 0 ? '#facc15' : '#a16207';
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.arc(px, py, I > 0 ? 5 : 3.5, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = '#fde68a';
-      ctx.fillText('入射光 f=' + fVal.toFixed(1) + '×10¹⁴ Hz', tubeX + tubeW * 0.28, tubeY + 22);
+      ctx.fillStyle = ACCENT;
+      ctx.font = '11px "Microsoft YaHei",sans-serif';
+      ctx.fillText('入射光 f=' + fVal.toFixed(1) + '×10¹⁴ Hz', tubeX + tubeW * 0.22, tubeY + 16);
 
-      // 电子流
+      // 电子流（阴极 → 阳极）
+      var eStart = tubeX + 24 + plateW + 6;
+      var eEnd = tubeX + tubeW - 24 - plateW - 6;
       if (I > 0) {
-        for (let i = 0; i < 6; i++) {
-          const t = (animT * 0.8 + i / 6) % 1;
-          const x = tubeX + 70 + t * (tubeW - 140);
-          const y = tubeY + tubeH * 0.45 + Math.sin(animT * 3 + i) * 6;
+        for (var ei = 0; ei < 6; ei++) {
+          var et = (animT * 0.8 + ei / 6) % 1;
+          var ex = eStart + et * (eEnd - eStart);
+          var ey = tubeY + tubeH * 0.48 + Math.sin(animT * 3 + ei) * 6;
+          var eRad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 5);
+          eRad.addColorStop(0, '#ffb4b4');
+          eRad.addColorStop(0.6, '#e06060');
+          eRad.addColorStop(1, 'rgba(224,96,96,0)');
+          ctx.fillStyle = eRad;
           ctx.beginPath();
-          ctx.fillStyle = '#f87171';
-          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.arc(ex, ey, 3.5, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.fillStyle = '#fda4af';
         ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
         if (measuredI != null) {
-          ctx.fillText('e⁻  ·  I=' + measuredI.toFixed(1) + ' μA', tubeX + tubeW * 0.35, tubeY + tubeH * 0.32);
+          ctx.fillText('e⁻  ·  I=' + measuredI.toFixed(1) + ' μA', tubeX + tubeW * 0.30, tubeY + tubeH * 0.38);
         } else {
-          ctx.fillText('e⁻ 逸出中 · I 待测', tubeX + tubeW * 0.35, tubeY + tubeH * 0.32);
+          ctx.fillText('e⁻ 逸出中 · I 待测', tubeX + tubeW * 0.30, tubeY + tubeH * 0.38);
         }
       } else {
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillText(measuredI != null ? '尚无光电子逸出' : '待发射检测', tubeX + tubeW * 0.34, tubeY + tubeH * 0.5);
+        ctx.fillStyle = 'rgba(154,142,120,0.85)';
+        ctx.font = '12px "Microsoft YaHei",sans-serif';
+        ctx.fillText(measuredI != null ? '尚无光电子逸出' : '待发射检测', tubeX + tubeW * 0.28, tubeY + tubeH * 0.52);
       }
 
-      const boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
-      ctx.fillStyle = 'rgba(15,23,42,0.85)';
-      ctx.fillRect(boxX, boxY, boxW, boxH);
-      ctx.strokeStyle = I > 0 ? 'rgba(250,204,21,0.65)' : 'rgba(148,163,184,0.35)';
-      ctx.strokeRect(boxX, boxY, boxW, boxH);
-      ctx.fillStyle = '#fef3c7';
+      // 接线柱（琥珀点缀）
+      ctx.fillStyle = ACCENT;
+      for (var wi = 0; wi < 2; wi++) {
+        var wx = chX + chW - 28 - wi * 22, wy = chY + chH - 18;
+        ctx.beginPath();
+        ctx.arc(wx, wy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 状态铭牌（右下，逻辑不变）
+      var boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
+      var badgeG = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+      badgeG.addColorStop(0, 'rgba(26,22,36,0.92)');
+      badgeG.addColorStop(1, 'rgba(12,10,18,0.95)');
+      ctx.fillStyle = badgeG;
+      rr(boxX, boxY, boxW, boxH, 4);
+      ctx.fill();
+      ctx.strokeStyle = I > 0 ? 'rgba(212,168,75,0.65)' : 'rgba(122,132,148,0.35)';
+      ctx.lineWidth = 1.5;
+      rr(boxX, boxY, boxW, boxH, 4);
+      ctx.stroke();
+      ctx.fillStyle = '#f0e8d0';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'left';
       ctx.fillText('逸出功 W = ' + wVal.toFixed(1) + ' eV', boxX + 10, boxY + 20);
-      ctx.fillStyle = measuredI != null ? (measuredI > 0 ? '#fde047' : '#fda4af') : '#f8fafc';
+      ctx.fillStyle = measuredI != null ? (measuredI > 0 ? '#f0d090' : '#fda4af') : 'rgba(154,142,120,0.95)';
       if (measuredI == null) {
         ctx.fillText('电流待测 · 点发射后显示', boxX + 10, boxY + 38);
       } else if (playMode === 'challenge') {

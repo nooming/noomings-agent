@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>串联与并联电路 · 调节电阻使电流达标</title>
+    <title>配电间 · 接线板</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -167,7 +167,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#34d399;--craft-bg:#07140f;--craft-panel:#10241c;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#d08040;--craft-bg:#12100c;--craft-panel:#221a12;--craft-text:#f0e8d8;--craft-muted:#a09078;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -259,13 +259,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (series-parallel) === */
+:root{
+  --craft-accent:#d08040;--craft-bg:#12100c;--craft-panel:#221a12;
+  --craft-text:#f0e8d8;--craft-muted:#a09078;
+  --scene-ink:#12100c;--scene-mid:#2e2418;--scene-hi:#e8b070;
+  --scene-glow:#e88830;--scene-metal:#6a7068;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>舞台灯电源板</h2>
+    <h2>配电间 · 接线板</h2>
     <p>后台电源板要给灯带配流。试着弄清串并联如何改变总电流；再接限次急单——目标电流本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标电流本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -289,7 +376,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">舞台灯电源板</div>
+      <div class="essence-title">串并联接线板</div>
       <div class="essence-sub" id="goalMission">探究：切换串/并联，观察电流如何变</div>
     </div>
   </div>
@@ -542,19 +629,38 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
 
         function drawResistorBody(x, y, w, h, label, ohms) {
-            ctx.fillStyle = '#78350f';
+            const bodyG = ctx.createLinearGradient(x, y, x, y + h);
+            bodyG.addColorStop(0, '#c8a878');
+            bodyG.addColorStop(0.5, '#a08058');
+            bodyG.addColorStop(1, '#806848');
+            ctx.fillStyle = bodyG;
             ctx.fillRect(x, y, w, h);
-            const bands = ['#ef4444', '#fbbf24', '#22c55e', '#f8fafc'];
+            const bands = ['#8b4513', '#1a1a1a', '#c04020', '#d4a050', '#6a7068'];
             for (let i = 0; i < 4; i++) {
                 ctx.fillStyle = bands[i];
                 ctx.fillRect(x + 10 + i * (w - 28) / 4, y + 4, 7, h - 8);
             }
-            ctx.strokeStyle = '#fde68a';
+            ctx.strokeStyle = '#e8b070';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(x, y, w, h);
-            ctx.fillStyle = '#ecfdf5';
+            ctx.fillStyle = '#f0e8d8';
             ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
             ctx.fillText(label + ' ' + ohms + 'Ω', x, y - 8);
+        }
+
+        function drawPatchCord(x1, y1, x2, y2, color, width) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width || 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(x1, y1, (width || 4) * 0.55, 0, Math.PI * 2);
+            ctx.arc(x2, y2, (width || 4) * 0.55, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         function drawFlowDots(points, speed) {
@@ -577,10 +683,10 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                         const x = points[i].x + (points[i + 1].x - points[i].x) * t;
                         const y = points[i].y + (points[i + 1].y - points[i].y) * t;
                         ctx.beginPath();
-                        ctx.arc(x, y, 3.2, 0, Math.PI * 2);
-                        ctx.fillStyle = '#67e8f9';
-                        ctx.shadowColor = '#22d3ee';
-                        ctx.shadowBlur = 8;
+                        ctx.arc(x, y, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = '#e88830';
+                        ctx.shadowColor = '#e8b070';
+                        ctx.shadowBlur = 6;
                         ctx.fill();
                         ctx.shadowBlur = 0;
                         break;
@@ -592,120 +698,139 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
         function drawWorkbench(r1, r2, mode, Rtotal, I) {
             ctx.clearRect(0, 0, W, H);
-            // 车间墙面
+            const INK = '#12100c', MID = '#2e2418', HI = '#e8b070', GLOW = '#e88830';
+            const METAL = '#6a7068', PANEL = '#221a12', ACCENT = '#d08040', OK = '#6fae8f';
+
             const bg = ctx.createLinearGradient(0, 0, 0, H);
-            bg.addColorStop(0, '#0a1a14');
-            bg.addColorStop(0.55, '#0f241c');
-            bg.addColorStop(1, '#07140f');
+            bg.addColorStop(0, '#1a1510');
+            bg.addColorStop(0.45, MID);
+            bg.addColorStop(1, INK);
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, W, H);
-            // 工具挂板
-            ctx.fillStyle = '#14532d';
-            ctx.fillRect(16, 40, 70, 120);
-            ctx.fillStyle = '#86efac';
-            ctx.font = '11px "Microsoft YaHei",sans-serif';
-            ctx.fillText('工具板', 28, 58);
-            for (let i = 0; i < 3; i++) {
-                ctx.fillStyle = '#64748b';
-                ctx.fillRect(30, 70 + i * 28, 40, 6);
+            const lamp = ctx.createRadialGradient(W * 0.2, H * 0.06, 8, W * 0.2, H * 0.06, W * 0.55);
+            lamp.addColorStop(0, 'rgba(232,136,48,0.20)');
+            lamp.addColorStop(1, 'rgba(232,136,48,0)');
+            ctx.fillStyle = lamp;
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.fillStyle = PANEL;
+            ctx.fillRect(14, 48, 62, 92);
+            ctx.strokeStyle = 'rgba(208,128,64,0.35)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(14, 48, 62, 92);
+            ctx.fillStyle = METAL;
+            for (let i = 0; i < 3; i++) ctx.fillRect(24, 64 + i * 24, 42, 5);
+            ctx.fillStyle = 'rgba(160,144,120,0.55)';
+            ctx.font = '10px "Microsoft YaHei",sans-serif';
+            ctx.fillText('配电挂板', 20, 60);
+
+            const benchY = H - 58;
+            ctx.fillStyle = '#1a1208';
+            ctx.fillRect(0, benchY + 6, W, 58);
+            ctx.fillStyle = '#2e2014';
+            ctx.fillRect(0, benchY, W, 58);
+            ctx.fillStyle = '#4a3524';
+            ctx.fillRect(0, benchY, W, 10);
+            for (let gx = 0; gx < W; gx += 28) {
+                ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                ctx.beginPath();
+                ctx.moveTo(gx, benchY + 10);
+                ctx.lineTo(gx + 14, H);
+                ctx.stroke();
             }
-            // 窗户
-            ctx.fillStyle = '#0ea5e9';
-            ctx.globalAlpha = 0.25;
-            ctx.fillRect(W - 150, 36, 110, 80);
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(W - 150, 36, 110, 80);
 
-            // 木工位台面
-            const benchY = H - 64;
-            ctx.fillStyle = '#3f2a1a';
-            ctx.fillRect(0, benchY, W, 64);
-            ctx.fillStyle = '#5b3d24';
-            ctx.fillRect(0, benchY, W, 12);
-
-            // 面包板
-            const bx = W * 0.12, by = H * 0.28, bw = W * 0.52, bh = H * 0.38;
-            ctx.fillStyle = '#fff7ed';
+            const bx = W * 0.10, by = H * 0.26, bw = W * 0.54, bh = H * 0.40;
+            const bakG = ctx.createLinearGradient(bx, by, bx, by + bh);
+            bakG.addColorStop(0, '#3a3028');
+            bakG.addColorStop(0.5, '#2a2218');
+            bakG.addColorStop(1, '#1e1810');
+            ctx.fillStyle = bakG;
             ctx.fillRect(bx, by, bw, bh);
-            ctx.strokeStyle = '#fdba74';
+            ctx.strokeStyle = 'rgba(208,128,64,0.45)';
             ctx.lineWidth = 2;
             ctx.strokeRect(bx, by, bw, bh);
-            ctx.fillStyle = '#fed7aa';
-            for (let row = 0; row < 8; row++) {
-                for (let col = 0; col < 18; col++) {
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < 16; col++) {
+                    const tx = bx + 16 + col * (bw - 32) / 15;
+                    const ty = by + 16 + row * (bh - 32) / 5;
+                    ctx.fillStyle = '#c8b898';
                     ctx.beginPath();
-                    ctx.arc(bx + 18 + col * (bw - 36) / 17, by + 18 + row * (bh - 36) / 7, 2.2, 0, Math.PI * 2);
+                    ctx.arc(tx, ty, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#1a1410';
+                    ctx.beginPath();
+                    ctx.arc(tx, ty, 1.4, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
-            ctx.fillStyle = '#9a3412';
+            ctx.fillStyle = HI;
             ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-            ctx.fillText('舞台电源板 · ' + (mode === 'series' ? '串联' : '并联'), bx + 12, by - 10);
+            ctx.fillText('胶木接线板 · ' + (mode === 'series' ? '串联' : '并联'), bx + 12, by - 10);
 
-            // 电源模块
-            const px = 24, py = benchY - 120;
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(px, py, 90, 100);
-            ctx.strokeStyle = '#34d399';
-            ctx.strokeRect(px, py, 90, 100);
-            ctx.fillStyle = '#6ee7b7';
-            ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
-            ctx.fillText('12V', px + 28, py + 36);
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '11px "Microsoft YaHei",sans-serif';
-            ctx.fillText('直流电源', px + 18, py + 58);
-            ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(px + 28, py + 78, 6, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#000';
-            ctx.beginPath(); ctx.arc(px + 62, py + 78, 6, 0, Math.PI * 2); ctx.fill();
-
-            // 电流表
-            const mx = W - 150, my = benchY - 140;
-            ctx.fillStyle = '#111827';
-            ctx.fillRect(mx, my, 120, 120);
-            ctx.strokeStyle = '#34d399';
+            const px = 22, py = benchY - 118;
+            ctx.fillStyle = PANEL;
+            ctx.fillRect(px, py, 94, 102);
+            ctx.strokeStyle = ACCENT;
             ctx.lineWidth = 2;
-            ctx.strokeRect(mx, my, 120, 120);
-            ctx.fillStyle = '#022c22';
-            ctx.fillRect(mx + 12, my + 16, 96, 44);
+            ctx.strokeRect(px, py, 94, 102);
+            ctx.fillStyle = 'rgba(232,136,48,0.10)';
+            ctx.fillRect(px + 4, py + 4, 86, 18);
+            ctx.fillStyle = HI;
+            ctx.font = 'bold 14px "Microsoft YaHei",sans-serif';
+            ctx.fillText('12V', px + 30, py + 36);
+            ctx.fillStyle = '#a09078';
+            ctx.font = '11px "Microsoft YaHei",sans-serif';
+            ctx.fillText('直流电源', px + 20, py + 58);
+            ctx.fillStyle = '#c04030';
+            ctx.beginPath(); ctx.arc(px + 28, py + 80, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1a1208';
+            ctx.beginPath(); ctx.arc(px + 64, py + 80, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#806040';
+            ctx.fillRect(px + 22, py + 88, 50, 8);
+
+            const mx = W - 158, my = benchY - 138, mw = 128, mh = 118;
+            ctx.fillStyle = '#8a6830';
+            ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8);
+            ctx.fillStyle = '#c9a040';
+            ctx.fillRect(mx - 2, my - 2, mw + 4, mh + 4);
+            ctx.fillStyle = PANEL;
+            ctx.fillRect(mx, my, mw, mh);
             const showI = measuredI != null ? measuredI : null;
             const onTarget = showI != null && Math.abs(showI - targetCurrent) < 0.001;
-            ctx.fillStyle = showI != null ? (onTarget ? '#4ade80' : '#fbbf24') : '#94a3b8';
+            ctx.strokeStyle = showI != null ? (onTarget ? OK : GLOW) : 'rgba(208,128,64,0.45)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(mx, my, mw, mh);
+            ctx.fillStyle = 'rgba(18,16,12,0.85)';
+            ctx.fillRect(mx + 10, my + 14, mw - 20, 42);
+            ctx.fillStyle = showI != null ? (onTarget ? OK : HI) : '#a09078';
             ctx.font = 'bold 20px ui-monospace,monospace';
-            ctx.fillText(showI != null ? showI.toFixed(3) : '—', mx + 18, my + 45);
-            ctx.fillStyle = '#a7f3d0';
+            ctx.fillText(showI != null ? showI.toFixed(3) : '—', mx + 16, my + 44);
+            ctx.fillStyle = '#a09078';
             ctx.font = '12px "Microsoft YaHei",sans-serif';
-            ctx.fillText(playMode === 'challenge' ? ('A  目标 ' + targetCurrent.toFixed(2)) : 'A  待测', mx + 16, my + 72);
-            ctx.fillStyle = showI != null ? (onTarget ? '#86efac' : '#fca5a5') : '#94a3b8';
-            ctx.fillText(showI != null ? (onTarget ? '已对准' : '未对准') : '待测', mx + 16, my + 96);
+            ctx.fillText(playMode === 'challenge' ? ('A  目标 ' + targetCurrent.toFixed(2)) : 'A  待测', mx + 14, my + 72);
+            ctx.fillStyle = showI != null ? (onTarget ? '#a8d4b0' : '#e8b090') : '#a09078';
+            ctx.fillText(showI != null ? (onTarget ? '已对准' : '未对准') : '待测', mx + 14, my + 96);
+            ctx.strokeStyle = ACCENT;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(mx + mw / 2, my + mh - 28, 28, Math.PI, 0);
+            ctx.stroke();
 
-            // 电阻与连线
             const r1x = bx + bw * 0.18, r2x = bx + bw * 0.58;
             const ry = by + bh * 0.42;
             const rw = Math.min(70, bw * 0.18), rh = 28;
+            const wireHot = '#c04030', wireRet = '#1a1208', wireBus = '#806040';
             if (mode === 'series') {
                 drawResistorBody(r1x, ry, rw, rh, 'R₁', r1);
                 drawResistorBody(r2x, ry, rw, rh, 'R₂', r2);
-                ctx.strokeStyle = '#0f766e';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(px + 90, py + 50);
-                ctx.lineTo(r1x, ry + rh / 2);
-                ctx.lineTo(r1x + rw, ry + rh / 2);
-                ctx.lineTo(r2x, ry + rh / 2);
-                ctx.lineTo(r2x + rw, ry + rh / 2);
-                ctx.lineTo(mx, my + 40);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(mx + 60, my + 120);
-                ctx.lineTo(mx + 60, benchY - 8);
-                ctx.lineTo(px + 45, benchY - 8);
-                ctx.lineTo(px + 45, py + 100);
-                ctx.stroke();
+                drawPatchCord(px + 94, py + 50, r1x, ry + rh / 2, wireHot);
+                drawPatchCord(r1x + rw, ry + rh / 2, r2x, ry + rh / 2, wireBus);
+                drawPatchCord(r2x + rw, ry + rh / 2, mx, my + 40, wireHot);
+                drawPatchCord(mx + 64, my + mh, mx + 64, benchY - 8, wireRet);
+                drawPatchCord(mx + 64, benchY - 8, px + 45, benchY - 8, wireRet);
+                drawPatchCord(px + 45, benchY - 8, px + 45, py + 102, wireRet);
                 drawFlowDots([
-                    { x: px + 90, y: py + 50 },
+                    { x: px + 94, y: py + 50 },
                     { x: r1x, y: ry + rh / 2 },
                     { x: r2x + rw, y: ry + rh / 2 },
                     { x: mx, y: my + 40 }
@@ -714,45 +839,30 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
                 const y1 = ry - 36, y2 = ry + 36;
                 drawResistorBody(r1x + 40, y1, rw, rh, 'R₁', r1);
                 drawResistorBody(r1x + 40, y2, rw, rh, 'R₂', r2);
-                ctx.strokeStyle = '#0f766e';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(px + 90, py + 50);
-                ctx.lineTo(r1x, ry + rh / 2);
-                ctx.moveTo(r1x, y1 + rh / 2);
-                ctx.lineTo(r1x, y2 + rh / 2);
-                ctx.moveTo(r1x, y1 + rh / 2);
-                ctx.lineTo(r1x + 40, y1 + rh / 2);
-                ctx.lineTo(r1x + 40 + rw, y1 + rh / 2);
-                ctx.lineTo(r2x + rw, y1 + rh / 2);
-                ctx.moveTo(r1x, y2 + rh / 2);
-                ctx.lineTo(r1x + 40, y2 + rh / 2);
-                ctx.lineTo(r1x + 40 + rw, y2 + rh / 2);
-                ctx.lineTo(r2x + rw, y2 + rh / 2);
-                ctx.moveTo(r2x + rw, y1 + rh / 2);
-                ctx.lineTo(r2x + rw, y2 + rh / 2);
-                ctx.lineTo(mx, my + 40);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(mx + 60, my + 120);
-                ctx.lineTo(mx + 60, benchY - 8);
-                ctx.lineTo(px + 45, benchY - 8);
-                ctx.lineTo(px + 45, py + 100);
-                ctx.stroke();
+                drawPatchCord(px + 94, py + 50, r1x, ry + rh / 2, wireHot);
+                drawPatchCord(r1x, y1 + rh / 2, r1x, y2 + rh / 2, wireBus);
+                drawPatchCord(r1x, y1 + rh / 2, r1x + 40, y1 + rh / 2, wireHot);
+                drawPatchCord(r1x + 40 + rw, y1 + rh / 2, r2x + rw, y1 + rh / 2, wireBus);
+                drawPatchCord(r1x, y2 + rh / 2, r1x + 40, y2 + rh / 2, wireHot);
+                drawPatchCord(r1x + 40 + rw, y2 + rh / 2, r2x + rw, y2 + rh / 2, wireBus);
+                drawPatchCord(r2x + rw, y1 + rh / 2, r2x + rw, y2 + rh / 2, wireBus);
+                drawPatchCord(r2x + rw, y1 + rh / 2, mx, my + 40, wireHot);
+                drawPatchCord(mx + 64, my + mh, mx + 64, benchY - 8, wireRet);
+                drawPatchCord(mx + 64, benchY - 8, px + 45, benchY - 8, wireRet);
+                drawPatchCord(px + 45, benchY - 8, px + 45, py + 102, wireRet);
                 drawFlowDots([
-                    { x: px + 90, y: py + 50 },
+                    { x: px + 94, y: py + 50 },
                     { x: r1x, y: ry + rh / 2 },
                     { x: r2x + rw, y: ry + rh / 2 },
                     { x: mx, y: my + 40 }
                 ], 0.45 + Math.min(1, I));
             }
 
-            // 底部状态条
-            ctx.fillStyle = 'rgba(6, 78, 59, 0.85)';
-            ctx.fillRect(16, benchY - 40, 280, 32);
-            ctx.strokeStyle = 'rgba(52,211,153,0.45)';
-            ctx.strokeRect(16, benchY - 40, 280, 32);
-            ctx.fillStyle = '#ecfdf5';
+            ctx.fillStyle = 'rgba(34,26,18,0.88)';
+            ctx.fillRect(16, benchY - 40, 290, 32);
+            ctx.strokeStyle = 'rgba(208,128,64,0.45)';
+            ctx.strokeRect(16, benchY - 40, 290, 32);
+            ctx.fillStyle = '#f0e8d8';
             ctx.font = '12px "Microsoft YaHei",sans-serif';
             const tgtLabel = playMode === 'challenge'
               ? ('急单 ' + targetCurrent.toFixed(2) + 'A')

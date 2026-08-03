@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>变压器 · 探究</title>
+  <title>工地 · 变压器台架</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
@@ -162,7 +162,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#94a3b8;--craft-bg:#0f141a;--craft-panel:#1a2430;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#c4783a;--craft-bg:#14110e;--craft-panel:#241c16;--craft-text:#efe6d8;--craft-muted:#9a8a78;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -259,13 +259,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (transformer-turns) === */
+:root{
+  --craft-accent:#c4783a;--craft-bg:#14110e;--craft-panel:#241c16;
+  --craft-text:#efe6d8;--craft-muted:#9a8a78;
+  --scene-ink:#14110e;--scene-mid:#3a2e22;--scene-hi:#e8b070;
+  --scene-glow:#e09040;--scene-metal:#6a7068;--scene-ok:#7dba8c;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>营地供电 · 变压器柜</h2>
+    <h2>工地 · 变压器台架</h2>
     <p>露营营地副边电压飘了。试着弄清匝数与输入如何改变副边电压；再接限次急单——目标电压带本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标电压带本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -289,7 +376,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">营地供电 · 变压器柜</div>
+      <div class="essence-title">变压器台架</div>
       <div class="essence-sub" id="goalMission">探究：自由调匝比与 U₁，观察 U₂</div>
     </div>
   </div>
@@ -513,101 +600,188 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   }
   function drawTransformer(n1, n2, U1, U2) {
     ctx.clearRect(0, 0, W, H);
+    const INK = '#14110e', MID = '#3a2e22', HI = '#e8b070', GLOW = '#e09040';
+    const METAL = '#6a7068', PANEL = '#241c16', ACCENT = '#c4783a', OK = '#7dba8c';
+
+    // 车间墙面 + 顶光
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#111827');
-    bg.addColorStop(1, '#0f172a');
+    bg.addColorStop(0, '#1a1510');
+    bg.addColorStop(0.45, MID);
+    bg.addColorStop(1, INK);
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(0, H - 70, W, 70);
-    ctx.fillStyle = '#374151';
-    ctx.fillRect(0, H - 70, W, 12);
-    // 墙面配电柜（满幅）
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(W * 0.04, 28, W * 0.92, H * 0.72);
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(W * 0.06, 48, W * 0.88, H * 0.66);
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(W * 0.06, 48, W * 0.88, H * 0.66);
-    // 柜门把手与铭牌
-    ctx.fillStyle = '#64748b';
-    ctx.fillRect(W * 0.9, H * 0.35, 10, 56);
-    // 铭牌下移，避开顶栏双模式条
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(W * 0.08, 72, 160, 36);
-    ctx.strokeStyle = '#38bdf8';
-    ctx.strokeRect(W * 0.08, 72, 160, 36);
-    ctx.fillStyle = '#e2e8f0';
-    ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-    ctx.fillText('配电柜 · 变压器室', W * 0.1, 94);
-    // 警示条
-    for (let i = 0; i < 8; i++) {
-      ctx.fillStyle = i % 2 ? '#f59e0b' : '#111827';
-      ctx.fillRect(W * 0.06 + i * (W * 0.88 / 8), 48 + H * 0.66 - 10, W * 0.88 / 8, 10);
-    }
+    const lamp = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.22, H * 0.08, W * 0.55);
+    lamp.addColorStop(0, 'rgba(224,144,64,0.22)');
+    lamp.addColorStop(1, 'rgba(224,144,64,0)');
+    ctx.fillStyle = lamp;
+    ctx.fillRect(0, 0, W, H);
+    // 挂板与工具剪影
+    ctx.fillStyle = '#2a2218';
+    ctx.fillRect(14, 52, 58, 88);
+    ctx.strokeStyle = 'rgba(196,120,58,0.35)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(14, 52, 58, 88);
+    ctx.fillStyle = METAL;
+    for (let i = 0; i < 3; i++) ctx.fillRect(24, 68 + i * 22, 38, 5);
+    ctx.fillStyle = 'rgba(154,138,120,0.55)';
+    ctx.font = '10px "Microsoft YaHei",sans-serif';
+    ctx.fillText('台架工位', 20, 64);
 
-    const cx = W * 0.48, cy = H * 0.42;
-    // 铁芯
-    ctx.fillStyle = '#4b5563';
-    ctx.fillRect(cx - 70, cy - 55, 140, 110);
-    ctx.fillStyle = '#6b7280';
-    ctx.fillRect(cx - 55, cy - 40, 40, 80);
-    ctx.fillRect(cx + 15, cy - 40, 40, 80);
-    // 线圈
+    // 木台架（纵深）
+    const benchY = H - 58;
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(0, benchY + 6, W, 58);
+    ctx.fillStyle = '#2e2014';
+    ctx.fillRect(0, benchY, W, 58);
+    ctx.fillStyle = '#4a3524';
+    ctx.fillRect(0, benchY, W, 10);
+    for (let gx = 0; gx < W; gx += 28) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+      ctx.beginPath();
+      ctx.moveTo(gx, benchY + 10);
+      ctx.lineTo(gx + 14, H);
+      ctx.stroke();
+    }
+    // 台架腿
+    ctx.fillStyle = '#3a2a1c';
+    ctx.fillRect(W * 0.08, benchY + 10, 10, H - benchY - 10);
+    ctx.fillRect(W * 0.88, benchY + 10, 10, H - benchY - 10);
+
+    const cx = W * 0.46, cy = benchY - H * 0.22;
+    const coreW = Math.min(150, W * 0.28), coreH = Math.min(108, H * 0.34);
+    const legW = coreW * 0.28, barH = coreH * 0.18;
+
+    // 叠片铁芯 E/I 形
+    function drawLaminations(x, y, w, h) {
+      const n = Math.max(6, Math.floor(h / 4));
+      for (let i = 0; i < n; i++) {
+        ctx.strokeStyle = i % 2 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.18)';
+        ctx.beginPath();
+        ctx.moveTo(x, y + (i + 0.5) * (h / n));
+        ctx.lineTo(x + w, y + (i + 0.5) * (h / n));
+        ctx.stroke();
+      }
+    }
+    function fillCoreBlock(x, y, w, h) {
+      const g = ctx.createLinearGradient(x, y, x + w, y + h);
+      g.addColorStop(0, '#7a8078');
+      g.addColorStop(0.5, METAL);
+      g.addColorStop(1, '#4a5048');
+      ctx.fillStyle = g;
+      ctx.fillRect(x, y, w, h);
+      drawLaminations(x, y, w, h);
+      ctx.strokeStyle = '#3a4038';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+    }
+    const cLeft = cx - coreW / 2, cTop = cy - coreH / 2;
+    fillCoreBlock(cLeft, cTop, coreW, barH);
+    fillCoreBlock(cLeft, cy + coreH / 2 - barH, coreW, barH);
+    fillCoreBlock(cx - legW / 2, cTop + barH, legW, coreH - barH * 2);
+    ctx.fillStyle = 'rgba(224,144,64,0.08)';
+    ctx.fillRect(cLeft + 2, cTop + 2, coreW - 4, barH - 3);
+
+    // 铭牌（台架标识，避开 HUD）
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(W * 0.06, 78, 148, 32);
+    ctx.strokeStyle = ACCENT;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(W * 0.06, 78, 148, 32);
+    ctx.fillStyle = HI;
+    ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+    ctx.fillText('变压器台架 · 叠片铁芯', W * 0.08, 98);
+
+    // 铜绕组
     const turns1 = Math.max(3, Math.round(n1 / 200));
     const turns2 = Math.max(3, Math.round(n2 / 200));
+    const coilRx = Math.min(24, coreW * 0.16), coilRy = 7;
+    const coilSpan = coreH - barH * 2 - 8;
     for (let i = 0; i < turns1; i++) {
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3;
+      const t = turns1 > 1 ? i / (turns1 - 1) : 0.5;
+      const yy = cTop + barH + 4 + t * coilSpan;
+      const g = ctx.createLinearGradient(cx - legW - coilRx, yy, cx - legW + coilRx, yy);
+      g.addColorStop(0, '#8b5a2b');
+      g.addColorStop(0.45, ACCENT);
+      g.addColorStop(1, '#6a4020');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 3.2;
       ctx.beginPath();
-      ctx.ellipse(cx - 35, cy - 28 + i * (56 / turns1), 22, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx - legW * 0.85, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
     for (let i = 0; i < turns2; i++) {
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 3;
+      const t = turns2 > 1 ? i / (turns2 - 1) : 0.5;
+      const yy = cTop + barH + 4 + t * coilSpan;
+      const g = ctx.createLinearGradient(cx + legW - coilRx, yy, cx + legW + coilRx, yy);
+      g.addColorStop(0, '#a06830');
+      g.addColorStop(0.45, HI);
+      g.addColorStop(1, '#7a5028');
+      ctx.strokeStyle = g;
+      ctx.lineWidth = 3.2;
       ctx.beginPath();
-      ctx.ellipse(cx + 35, cy - 28 + i * (56 / turns2), 22, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + legW * 0.85, yy, coilRx, coilRy, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
-    ctx.fillStyle = '#7dd3fc';
+    ctx.fillStyle = ACCENT;
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillText('原边 n₁=' + n1, cx - 110, cy + 70);
-    ctx.fillStyle = '#fde68a';
-    ctx.fillText('副边 n₂=' + n2, cx + 30, cy + 70);
+    ctx.fillText('原边 n₁=' + n1, cx - coreW * 0.75, cy + coreH * 0.55);
+    ctx.fillStyle = HI;
+    ctx.fillText('副边 n₂=' + n2, cx + coreW * 0.12, cy + coreH * 0.55);
 
-    // 电压表
+    // 黄铜搪瓷电压表铭牌
     const on = isFinite(U2) && U2 >= U2_LO && U2 <= U2_HI;
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(W - 160, H - 150, 130, 70);
-    ctx.strokeStyle = on ? '#4ade80' : '#f59e0b';
-    ctx.strokeRect(W - 160, H - 150, 130, 70);
-    ctx.fillStyle = '#f8fafc';
+    const mx = W - 168, my = benchY - 132, mw = 136, mh = 78;
+    ctx.fillStyle = '#8a6830';
+    ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8);
+    ctx.fillStyle = '#c9a040';
+    ctx.fillRect(mx - 2, my - 2, mw + 4, mh + 4);
+    ctx.fillStyle = PANEL;
+    ctx.fillRect(mx, my, mw, mh);
+    ctx.strokeStyle = on ? OK : GLOW;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(mx, my, mw, mh);
+    ctx.fillStyle = 'rgba(224,144,64,0.12)';
+    ctx.fillRect(mx + 6, my + 6, mw - 12, 22);
+    ctx.fillStyle = HI;
+    ctx.font = '10px "Microsoft YaHei",sans-serif';
+    ctx.fillText('副边电压表', mx + 10, my + 20);
+    ctx.fillStyle = isFinite(U2) ? (on ? OK : '#e8a060') : '#9a8a78';
     ctx.font = 'bold 18px ui-monospace,monospace';
     if (isFinite(U2)) {
-      ctx.fillText(U2.toFixed(2) + ' V', W - 148, H - 118);
-      ctx.fillStyle = on ? '#86efac' : '#fca5a5';
+      ctx.fillText(U2.toFixed(2) + ' V', mx + 10, my + 48);
+      ctx.fillStyle = on ? '#a8d4b0' : '#e8b090';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText(playMode === 'challenge' ? (on ? '急单区间内' : '偏离急单') : (on ? '参考带内' : '参考带外'), W - 148, H - 96);
+      ctx.fillText(playMode === 'challenge' ? (on ? '急单区间内' : '偏离急单') : (on ? '参考带内' : '参考带外'), mx + 10, my + 66);
     } else {
-      ctx.fillText('— V', W - 148, H - 118);
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('— V', mx + 10, my + 48);
+      ctx.fillStyle = '#9a8a78';
       ctx.font = '12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('U₂ 待测', W - 148, H - 96);
+      ctx.fillText('U₂ 待测', mx + 10, my + 66);
     }
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillText('U₁ ' + U1.toFixed(1) + ' V', 24, H - 28);
+
+    // 输入端子牌
+    ctx.fillStyle = 'rgba(36,28,22,0.88)';
+    ctx.fillRect(18, benchY - 36, 118, 28);
+    ctx.strokeStyle = 'rgba(196,120,58,0.45)';
+    ctx.strokeRect(18, benchY - 36, 118, 28);
+    ctx.fillStyle = '#efe6d8';
+    ctx.font = '12px "Microsoft YaHei",sans-serif';
+    ctx.fillText('U₁ ' + U1.toFixed(1) + ' V', 28, benchY - 18);
+
     // 能量流光点
     spark = (spark + 0.02) % 1;
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = GLOW;
+    ctx.shadowColor = GLOW;
+    ctx.shadowBlur = 6;
     ctx.beginPath();
-    ctx.arc(cx - 90 + spark * 60, cy, 3, 0, Math.PI * 2);
+    ctx.arc(cx - legW * 1.6 + spark * (legW * 1.2), cy, 3.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = HI;
+    ctx.shadowColor = HI;
     ctx.beginPath();
-    ctx.arc(cx + 40 + spark * 50, cy, 3, 0, Math.PI * 2);
+    ctx.arc(cx + legW * 0.5 + spark * (legW * 1.1), cy, 3.2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 
   /** 仅测试后揭示 U₂ */

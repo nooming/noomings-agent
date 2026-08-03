@@ -208,6 +208,24 @@ function isPathAllowed(file) {
   });
 }
 
+/** Long-cache immutable vendor JS: /static/.../vendor/*.js and packages/vendor. */
+function isVendorStaticJs(url, file) {
+  if (!/\.js$/i.test(file || '')) return false;
+  const u = String(url || '').split('?')[0];
+  if (/^\/static\/(?:.+\/)?vendor\/[^/]+\.js$/i.test(u)) return true;
+  const norm = String(file || '').replace(/\\/g, '/');
+  return /\/(?:packages\/)?vendor\/[^/]+\.js$/i.test(norm)
+    || /\/viewer\/vendor\/[^/]+\.js$/i.test(norm);
+}
+
+function contentHeaders(url, file) {
+  const headers = { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' };
+  if (isVendorStaticJs(url, file)) {
+    headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+  }
+  return headers;
+}
+
 function serveAsset(req, res) {
   const url = decodeUrlPath(req.url);
   const file = resolveAssetFile(url);
@@ -223,7 +241,7 @@ function serveAsset(req, res) {
       res.end('Not found');
       return;
     }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    res.writeHead(200, contentHeaders(url, file));
     res.end(data);
   });
   return true;

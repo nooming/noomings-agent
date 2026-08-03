@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>透镜 · Agent A 预览</title>
-<script src="../vendor/d3.v7.min.js"></script>
 <script src="../vendor/mermaid.min.js"></script>
 <script>
-  window.MathJax = { tex:{inlineMath:[['$','$'],['\\(','\\)']]}, svg:{fontCache:'global'} };
+  window.__D3_SRC__ = "../vendor/d3.v7.min.js";
+  window.__MERMAID_SRC__ = "../vendor/mermaid.min.js";
+  window.__MATHJAX_SRC__ = "../vendor/tex-mml-svg.js";
 </script>
-<script async src="../vendor/tex-mml-svg.js"></script>
 <style>
 :root{--font-ui:'Segoe UI','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;--font-formula:'Noto Serif SC','Songti SC','SimSun',serif;}
 :root {
@@ -1148,7 +1148,8 @@ function isSuccessBranchEdge(edge, resultIds) {
    * Seed spine from StrategySelect -->|label| entry so expand can light Adjust/Fire/Observe.
    */
   /**
-   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists, walk from alias.
+   * When StrategySelect→Trap has no outs but TrapStrat→Adjust* exists (legacy data),
+   * walk from alias. New repair must not create TrapStrat — prefer Trap→Fire.
    */
   function resolveSpineWalkEntry(entry, edges, forbidden) {
     const directOuts = edges.filter(e => e.from === entry && !forbidden.has(e.to));
@@ -2045,6 +2046,7 @@ const GraphViewer = (function () {
   let currentCh = 0, currentView = 'strategy', kgFilter = 'all';
   let simulation, nodeG, linkG, zoomBeh, gRoot, svgEl, d3svg;
   let mermaidReady = false, mermaidLoadPromise = null, strategyRenderId = 0, activeStrategyRouteId = null;
+  let d3LoadPromise = null, mathjaxLoadPromise = null, graphRenderId = 0;
   let strategyZoomBeh = null, strategyResizeTimer = null;
   let lastKgNodes = null, lastKgLinks = null, pendingRouteId = null;
   let lastStrategyDisplayMermaid = '';
@@ -2279,12 +2281,11 @@ function getStrategySvgBBox() {
 }
 
 function fitStrategyToPanel() {
-  if (typeof d3 === 'undefined') return;
-  bindStrategyZoom();
+  ensureStrategyViewport();
   const panel = document.getElementById('strategy-panel');
-  const viewport = d3.select('#strategy-viewport');
+  const mount = document.getElementById('strategy-mermaid');
   const bbox = getStrategySvgBBox();
-  if (!panel || !bbox || !strategyZoomBeh || !viewport.node()) return;
+  if (!panel || !bbox || !mount) return;
 
   const padX = 24;
   const padY = 24;
@@ -2295,6 +2296,13 @@ function fitStrategyToPanel() {
   const k = Math.min(1, pw / bbox.width, ph / bbox.height);
   const tx = padX + (pw - bbox.width * k) / 2 - bbox.x * k;
   const ty = padY + (ph - bbox.height * k) / 2 - bbox.y * k;
+  // CSS fit works without d3 (strategy-first cold start); d3.zoom sync when available.
+  mount.style.transform = `translate(${tx}px, ${ty}px) scale(${k})`;
+  mount.style.transformOrigin = '0 0';
+  if (typeof d3 === 'undefined') return;
+  bindStrategyZoom();
+  const viewport = d3.select('#strategy-viewport');
+  if (!strategyZoomBeh || !viewport.node()) return;
   viewport.call(strategyZoomBeh.transform, d3.zoomIdentity.translate(tx, ty).scale(k));
 }
 
@@ -2876,14 +2884,65 @@ function loadChapter(idx) {
   syncGraphHash();
 }
 
+function ensureD3Svg() {
+  if (!svgEl) svgEl = document.getElementById('svg');
+  if (typeof d3 !== 'undefined' && svgEl && !d3svg) d3svg = d3.select(svgEl);
+  return d3svg;
+}
+
+function clearGraphSvg() {
+  if (typeof d3 !== 'undefined' && d3svg) d3svg.selectAll('*').remove();
+  else if (svgEl) svgEl.innerHTML = '';
+}
+
+/** Lazy-load D3 for DT/KG (and interactive strategy zoom when present). */
+function loadD3Lib() {
+  if (typeof d3 !== 'undefined') return Promise.resolve();
+  if (d3LoadPromise) return d3LoadPromise;
+  const src = (typeof window !== 'undefined' && window.__D3_SRC__)
+    || '/static/viewer/vendor/d3.v7.min.js';
+  d3LoadPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-d3-loader]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('D3 加载失败')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.dataset.d3Loader = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('D3 加载失败'));
+    document.head.appendChild(s);
+  });
+  return d3LoadPromise;
+}
+
 function render() {
   if (simulation) { simulation.stop(); simulation = null; }
-  d3svg.selectAll('*').remove();
+  clearGraphSvg();
   document.getElementById('p-title').textContent = panelTitleForView(currentCh);
   document.getElementById('p-sub').textContent = panelSubForView(currentCh);
-  if (currentView === 'kg') renderKG(KG_CHAPTERS[currentCh]);
-  else if (currentView === 'strategy') renderStrategy();
-  else renderDT(DT_CHAPTERS[currentCh]);
+  if (currentView === 'strategy') {
+    renderStrategy();
+    return;
+  }
+  const rid = ++graphRenderId;
+  const view = currentView;
+  const ch = currentCh;
+  loadD3Lib().then(() => {
+    if (rid !== graphRenderId || currentView !== view || currentCh !== ch) return;
+    ensureD3Svg();
+    clearGraphSvg();
+    if (currentView === 'kg') renderKG(KG_CHAPTERS[currentCh]);
+    else renderDT(DT_CHAPTERS[currentCh]);
+  }).catch(err => {
+    if (rid !== graphRenderId) return;
+    const mount = document.getElementById('info');
+    if (mount) {
+      mount.innerHTML = `<div class="i-desc" style="text-align:center;margin-top:20px">${err.message || err}</div>`;
+    }
+  });
 }
 
 function getStrategyClassDefs() {
@@ -2954,6 +3013,72 @@ function loadMermaidLib() {
   return mermaidLoadPromise;
 }
 
+/** Inject MathJax on first side-panel typeset need (fail-soft). */
+function loadMathJaxLib() {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+    return Promise.resolve(window.MathJax);
+  }
+  if (mathjaxLoadPromise) return mathjaxLoadPromise;
+  if (!window.MathJax || !window.MathJax.tex) {
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' },
+    };
+  }
+  const src = window.__MATHJAX_SRC__ || '/static/viewer/vendor/tex-mml-svg.js';
+  mathjaxLoadPromise = new Promise((resolve, reject) => {
+    const finish = () => {
+      const mj = window.MathJax;
+      if (mj && typeof mj.typesetPromise === 'function') {
+        resolve(mj);
+        return;
+      }
+      if (mj?.startup?.promise) {
+        mj.startup.promise.then(() => resolve(window.MathJax)).catch(reject);
+        return;
+      }
+      let tries = 0;
+      const poll = () => {
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+          resolve(window.MathJax);
+          return;
+        }
+        if (++tries > 40) {
+          reject(new Error('MathJax 初始化超时'));
+          return;
+        }
+        setTimeout(poll, 50);
+      };
+      poll();
+    };
+    const existing = document.querySelector('script[data-mathjax-loader]');
+    if (existing) {
+      existing.addEventListener('load', finish);
+      existing.addEventListener('error', () => reject(new Error('MathJax 加载失败')));
+      if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') finish();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.dataset.mathjaxLoader = '1';
+    s.onload = finish;
+    s.onerror = () => reject(new Error('MathJax 加载失败'));
+    document.head.appendChild(s);
+  }).catch(() => null);
+  return mathjaxLoadPromise;
+}
+
+function typesetInfoPanel(el) {
+  if (!el) return;
+  loadMathJaxLib().then((mj) => {
+    if (mj && typeof mj.typesetPromise === 'function') {
+      return mj.typesetPromise([el]).catch(() => {});
+    }
+  }).catch(() => {});
+}
+
 function renderStrategy() {
   ensureStrategyViewport();
   const mount = document.getElementById('strategy-mermaid');
@@ -3001,7 +3126,7 @@ function showRouteInfo(route) {
   if (!infoEl || !route) return;
   infoEl.innerHTML = buildRouteTeachingHtml(route);
   document.getElementById('btn-route-kg')?.addEventListener('click', () => showRouteInKg(route));
-  if (window.MathJax) MathJax.typesetPromise([infoEl]).catch(() => {});
+  typesetInfoPanel(infoEl);
   applyStrategyRouteHighlight(route);
 }
 
@@ -3316,7 +3441,7 @@ function showKGInfo(d,links,nodes){
   if(ups.length) h+=`<div class="i-rel-lbl">↑ 逻辑依赖</div><div class="i-rel-list">${ups.join(' · ')}</div>`;
   if(dns.length) h+=`<div class="i-rel-lbl" style="margin-top:10px">↓ 逻辑导出</div><div class="i-rel-list">${dns.join(' · ')}</div>`;
   document.getElementById('info').innerHTML = h;
-  if(window.MathJax) MathJax.typesetPromise([document.getElementById('info')]).catch(()=>{});
+  typesetInfoPanel(document.getElementById('info'));
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -3465,7 +3590,7 @@ function showDTInfo(data) {
   h += `<span class="i-badge" style="background:${col}">${DT_NAMES[data.type]||data.type}</span>`;
   if(data.desc) h += `<div class="i-desc">${data.desc}</div>`;
   document.getElementById('info').innerHTML = h;
-  if(window.MathJax) MathJax.typesetPromise([document.getElementById('info')]).catch(()=>{});
+  typesetInfoPanel(document.getElementById('info'));
 }
 
 function kgResetLayout() {
@@ -3524,7 +3649,8 @@ function clearInfoPanel() {
     DT_CHAPTERS = opts.dtChapters || [];
     metaChapters = opts.metaChapters || [];
     svgEl = document.getElementById('svg');
-    d3svg = d3.select(svgEl);
+    // d3 may be absent on strategy-first cold start; bind when loadD3Lib resolves.
+    if (typeof d3 !== 'undefined') d3svg = d3.select(svgEl);
     // Only explicit defaultView:'strategy' (standalone 图谱.html) opens strategy-first.
     // graph.html / preview-shell omit defaultView → start on dt (or kg) to avoid mermaid.render on first paint.
     if (opts.defaultView === 'strategy' && chapterHasStrategy(0)) currentView = 'strategy';
@@ -3567,7 +3693,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(探究) | C1 | constraint | 探究模式 |\n| 否(竞赛) | C2 | constraint | 竞赛模式 |\n| 调节物距/焦距 | O1 | operation | 调节物距 u 和焦距 f |\n| 测试成像 | J1 | junction | 触发观察 |\n| 像在光屏上? | C3 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否 | C4 | constraint | 提示重试 |\n| 重试 | skip retry | skip retry | 回到调参 |\n| 竞赛机会耗尽? | C5 | constraint | 独立失败判定 |\n| 是 | skip retry | skip retry | 竞赛失败重试 |\n| 否 | skip retry | skip retry | 继续 |\n| 透镜成像公式 | S1 | core | 教学节点 |\n| 像距与物距关系 | S2 | core | 教学节点 |","kg":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始凸透镜成像实验"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，竞赛模式限次且光屏距固定","constraintKind":"gameLimit"},{"id":"O1","label":"调节物距与焦距","group":"operation","layer":"play","level":2,"r":22,"desc":"通过滑条调节物距 u 和焦距 f，观察成像变化"},{"id":"J1","label":"测试成像","group":"junction","layer":"play","level":3,"r":22,"desc":"点击测试按钮触发成像判定与观察结果更新"},{"id":"C3","label":"像在光屏上?","group":"constraint","layer":"play","level":4,"r":22,"desc":"判定实像是否落在光屏上（探究容差2cm，竞赛容差0.85cm）","constraintKind":"physics"},{"id":"C4","label":"提示重试","group":"constraint","layer":"play","level":5,"r":22,"desc":"像未对准，提示偏近或偏远，需重新调节","constraintKind":"physics"},{"id":"C5","label":"竞赛机会耗尽?","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为零，无法继续测试","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"实验完成，像成在光屏上，显示胜利消息"},{"id":"S1","label":"透镜成像公式","group":"core","layer":"teach","level":0,"r":22,"desc":"1/f = 1/u + 1/v，物距、像距与焦距满足透镜成像公式"},{"id":"S2","label":"像距与物距关系","group":"core","layer":"teach","level":0,"r":22,"desc":"物距改变时像距随之变化，物距越大像距越小"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏的无关输入控件，不影响实验"},{"id":"C_HIT","label":"命中目标区?","group":"constraint","layer":"play","level":2,"r":22,"desc":"结果是否落入目标/锁定带"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"J1","tp":"premise"},{"s":"J1","t":"C3","tp":"premise"},{"s":"C3","t":"R1","tp":"core"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"O1","tp":"premise"},{"s":"C1","t":"C5","tp":"premise"},{"s":"C5","t":"O1","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","tree":{"n":"进入关卡","t":"root","d":"开始凸透镜成像实验","children":[{"n":"调节物距与焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f，观察成像变化","children":[]},{"n":"模式选择?","t":"decision","d":"选择探究模式或竞赛模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究，不限制次数","children":[{"n":"调节物距/焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f","children":[{"n":"测试成像","t":"step","d":"点击测试按钮观察成像结果","children":[{"n":"像在光屏上?","t":"decision","d":"判定实像是否落在光屏上（容差2cm）","children":[{"_e":"否","n":"提示重试","t":"retry","d":"像未对准，提示偏近或偏远","children":[]},{"_e":"是","n":"过关","t":"result","d":"实验完成，像成在光屏上"}]}]}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"限次挑战，光屏距固定","children":[{"n":"调节物距/焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f","children":[{"n":"测试成像","t":"step","d":"点击测试按钮观察成像结果","children":[{"n":"像在光屏上?","t":"decision","d":"判定实像是否落在光屏上（容差0.85cm）","children":[{"_e":"否","n":"提示重试","t":"retry","d":"像未对准，提示偏近或偏远","children":[]},{"_e":"是","n":"过关","t":"result","d":"实验完成，像成在光屏上"}]}]}]},{"n":"竞赛机会耗尽?","t":"decision","d":"独立失败判定：剩余机会为零","children":[{"_e":"否","n":"继续","t":"step","d":"仍有剩余机会"},{"_e":"是","n":"竞赛失败重试","t":"retry","d":"机会耗尽，重置竞赛"}]}]}]}]}},"winSync":{"title":"实验完成 · 像成在光屏上","sub":"过关"},"strategy":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","mermaid":"graph TD\nAdjust --> Fire\nAdjustBothC --> FireC\nAdjustF --> Fire\nAdjustFC --> FireC\nAdjustU --> Fire[测试成像]\nAdjustUC --> FireC[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelectC{选择调参策略?}:::stratCond\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveC -->|偏远| AdjustFC\nObserveC -->|偏近| AdjustUC\nObserveC -->|机会耗尽| Fail[竞赛失败]:::stratRetry\nObserveC -->|未对准| RetryC[重试]:::stratRetry\nObserveC -->|达标| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[多参盲调]\nAdjustBothC[同时调多个参数]\nAdjustF[按观察单变量微调]\nAdjustFC[按观察单变量微调]\nAdjustU[按观察单变量微调]\nAdjustUC[按观察单变量微调]\nRetry --> AdjustU\nRetryC --> AdjustUC\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·物距","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Mode","Explore","Fire","Observe","Win","Retry","WinC","Route_main","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main"],["Route_main","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-focal-length","label":"单变量·焦距","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","WinC","Mode","Explore","Fire","Observe","Retry","Route_main_s_focal_length","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main_s_focal_length"],["Route_main_s_focal_length","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-aperture","label":"单变量·光圈","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","WinC","Mode","Explore","Fire","Observe","Retry","Route_main_s_aperture","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main_s_aperture"],["Route_main_s_aperture","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C3"],"highlightNodes":["Start","Mode","Explore","StrategySelect","Fire","Observe","Retry","Trap","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"priorityRank":3,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Mode","Explore"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-object-distance":{"kgId":"O1","role":"operation"},"s-focal-length":{"kgId":"O1","role":"operation"},"s-aperture":{"kgId":"O1","role":"operation"},"observeResult":{"kgId":"I1","role":"irrelevant"},"winMessage":{"kgId":"I1","role":"irrelevant"},"I1":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-object-distance"},"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"透镜 · 凸透镜成像实验","knowledgePoints":[{"id":"KP1","label":"透镜 · 凸透镜成像实验","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-object-distance","label":"物距","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-focal-length","label":"焦距","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-aperture","label":"光圈","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：透镜成像公式、像距与物距关系","steps":[{"order":1,"title":"明确知识点","body":"回顾：透镜成像公式；像距与物距关系","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节物距与焦距、调节物距与焦距、调节物距与焦距；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（隐藏的无关输入控件，不影响实验）；无关控件（隐藏的无关输入控件，不影响实验）；无关控件（隐藏的无关输入控件，不影响实验）","mapsToKg":["I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"optics"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | 开始探究 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(探究) | C1 | constraint | 探究模式 |\n| 否(竞赛) | C2 | constraint | 竞赛模式 |\n| 调节物距/焦距 | O1 | operation | 调节物距 u 和焦距 f |\n| 测试成像 | J1 | junction | 触发观察 |\n| 像在光屏上? | C3 | constraint | 结果判定 |\n| 是 | R1 | result | 过关 |\n| 否 | C4 | constraint | 提示重试 |\n| 重试 | skip retry | skip retry | 回到调参 |\n| 竞赛机会耗尽? | C5 | constraint | 独立失败判定 |\n| 是 | skip retry | skip retry | 竞赛失败重试 |\n| 否 | skip retry | skip retry | 继续 |\n| 透镜成像公式 | S1 | core | 教学节点 |\n| 像距与物距关系 | S2 | core | 教学节点 |","kg":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"开始凸透镜成像实验"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"选择探究模式或竞赛模式，竞赛模式限次且光屏距固定","constraintKind":"gameLimit"},{"id":"O1","label":"调节物距与焦距","group":"operation","layer":"play","level":2,"r":22,"desc":"通过滑条调节物距 u 和焦距 f，观察成像变化"},{"id":"J1","label":"测试成像","group":"junction","layer":"play","level":3,"r":22,"desc":"点击测试按钮触发成像判定与观察结果更新"},{"id":"C3","label":"像在光屏上?","group":"constraint","layer":"play","level":4,"r":22,"desc":"判定实像是否落在光屏上（探究容差2cm，竞赛容差0.85cm）","constraintKind":"physics"},{"id":"C4","label":"提示重试","group":"constraint","layer":"play","level":5,"r":22,"desc":"像未对准，提示偏近或偏远，需重新调节","constraintKind":"physics"},{"id":"C5","label":"竞赛机会耗尽?","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为零，无法继续测试","constraintKind":"gameLimit"},{"id":"R1","label":"过关","group":"result","layer":"play","level":6,"r":22,"desc":"实验完成，像成在光屏上，显示胜利消息"},{"id":"S1","label":"透镜成像公式","group":"core","layer":"teach","level":0,"r":22,"desc":"1/f = 1/u + 1/v，物距、像距与焦距满足透镜成像公式"},{"id":"S2","label":"像距与物距关系","group":"core","layer":"teach","level":0,"r":22,"desc":"物距改变时像距随之变化，物距越大像距越小"},{"id":"I1","label":"无关控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"隐藏的无关输入控件，不影响实验"},{"id":"C_HIT","label":"命中目标区?","group":"constraint","layer":"play","level":2,"r":22,"desc":"结果是否落入目标/锁定带"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"O1","tp":"premise"},{"s":"O1","t":"J1","tp":"premise"},{"s":"J1","t":"C3","tp":"premise"},{"s":"C3","t":"R1","tp":"core"},{"s":"C3","t":"C4","tp":"premise"},{"s":"C4","t":"O1","tp":"premise"},{"s":"C1","t":"C5","tp":"premise"},{"s":"C5","t":"O1","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","tree":{"n":"进入关卡","t":"root","d":"开始凸透镜成像实验","children":[{"n":"调节物距与焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f，观察成像变化","children":[]},{"n":"模式选择?","t":"decision","d":"选择探究模式或竞赛模式","children":[{"_e":"是","n":"探究模式","t":"step","d":"自由探究，不限制次数","children":[{"n":"调节物距/焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f","children":[{"n":"测试成像","t":"step","d":"点击测试按钮观察成像结果","children":[{"n":"像在光屏上?","t":"decision","d":"判定实像是否落在光屏上（容差2cm）","children":[{"_e":"否","n":"提示重试","t":"retry","d":"像未对准，提示偏近或偏远","children":[]},{"_e":"是","n":"过关","t":"result","d":"实验完成，像成在光屏上"}]}]}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"限次挑战，光屏距固定","children":[{"n":"调节物距/焦距","t":"step","d":"通过滑条调节物距 u 和焦距 f","children":[{"n":"测试成像","t":"step","d":"点击测试按钮观察成像结果","children":[{"n":"像在光屏上?","t":"decision","d":"判定实像是否落在光屏上（容差0.85cm）","children":[{"_e":"否","n":"提示重试","t":"retry","d":"像未对准，提示偏近或偏远","children":[]},{"_e":"是","n":"过关","t":"result","d":"实验完成，像成在光屏上"}]}]}]},{"n":"竞赛机会耗尽?","t":"decision","d":"独立失败判定：剩余机会为零","children":[{"_e":"否","n":"继续","t":"step","d":"仍有剩余机会"},{"_e":"是","n":"竞赛失败重试","t":"retry","d":"机会耗尽，重置竞赛"}]}]}]}]}},"winSync":{"title":"实验完成 · 像成在光屏上","sub":"过关"},"strategy":{"title":"透镜 · 凸透镜成像实验","sub":"探究物距与焦距对成像位置的影响","mermaid":"graph TD\nAdjust --> Fire\nAdjustBothC --> FireC\nAdjustF --> Fire\nAdjustFC --> FireC\nAdjustU --> Fire[测试成像]\nAdjustUC --> FireC[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveC -->|偏远| AdjustFC\nObserveC -->|偏近| AdjustUC\nObserveC -->|机会耗尽| Fail[竞赛失败]:::stratRetry\nObserveC -->|未对准| RetryC[重试]:::stratRetry\nObserveC -->|达标| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[多参盲调]\nAdjustBothC[同时调多个参数]\nAdjustF[按观察单变量微调]\nAdjustFC[按观察单变量微调]\nAdjustU[按观察单变量微调]\nAdjustUC[按观察单变量微调]\nRetry --> AdjustU\nRetryC --> AdjustUC\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n","routes":[{"id":"main","label":"单变量·物距","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","StrategySelect","Mode","Explore","Fire","Observe","Win","Retry","WinC","Route_main","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main"],["Route_main","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-focal-length","label":"单变量·焦距","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","StrategySelect","Win","WinC","Mode","Explore","Fire","Observe","Retry","Route_main_s_focal_length","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main_s_focal_length"],["Route_main_s_focal_length","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"main_s-aperture","label":"单变量·光圈","mapsTo":["P1","O1","C1","C3","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.7,"weight":0.7,"priorityRank":3,"highlightNodes":["Start","StrategySelect","Win","WinC","Mode","Explore","Fire","Observe","Retry","Route_main_s_aperture","Adjust","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Route_main_s_aperture"],["Route_main_s_aperture","Adjust"],["Adjust","Fire"],["Fire","Observe"],["Observe","Win"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C3"],"highlightNodes":["Start","Mode","Explore","StrategySelect","Fire","Observe","Retry","Trap","AdjustF","AdjustU"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","Trap"],["Adjust","Fire"],["Fire","Observe"],["Observe","AdjustF"],["AdjustF","Fire"],["Observe","AdjustU"],["AdjustU","Fire"],["Observe","Retry"],["Trap","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"priorityRank":3,"highlightFailureBranches":true},{"id":"confound_CV1","label":"试探混淆·无关控件","mapsTo":[],"warn":"拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略","score":0.15,"weight":0.15,"highlightNodes":["StrategySelect","ProbeCV","ObserveCV","BackFromCV","Start","Mode","Explore"],"highlightEdges":[["Start","Mode"],["Mode","Explore"],["Explore","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-object-distance":{"kgId":"O1","role":"operation"},"s-focal-length":{"kgId":"O1","role":"operation"},"s-aperture":{"kgId":"O1","role":"operation"},"observeResult":{"kgId":"I1","role":"irrelevant"},"winMessage":{"kgId":"I1","role":"irrelevant"},"I1":{"kgId":"I1","role":"irrelevant"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-object-distance"},"irrelevant_touch":{"canonical":"irrelevant_touch","control":"I1"}}},"inquiryScript":{"summary":"透镜 · 凸透镜成像实验","knowledgePoints":[{"id":"KP1","label":"透镜 · 凸透镜成像实验","formulas":["C = ε₀εᵣA / d","E = V/d（击穿：E > Ebd）"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV1","controlId":"s-object-distance","label":"物距","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":1},{"id":"AV2","controlId":"s-focal-length","label":"焦距","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"monotone","affects":[],"notes":"","priorityRank":2},{"id":"AV3","controlId":"s-aperture","label":"光圈","type":"range","role":"secondary","mapsToKg":"O1","monotonicity":"unknown","affects":[],"notes":"","priorityRank":3}],"confoundingVariables":[{"id":"CV1","controlId":null,"label":"无关控件","reason":"与过关判定无关的装饰或误导项"}],"inquiryFlow":["KP1","AV1","AV2","AV3","CV1"],"narrative":{"intro":"本关探究：透镜成像公式、像距与物距关系","steps":[{"order":1,"title":"明确知识点","body":"回顾：透镜成像公式；像距与物距关系","mapsToKg":["S1","S2"]},{"order":2,"title":"识别调节变量","body":"可调节：调节物距与焦距、调节物距与焦距、调节物距与焦距；建议控制变量法，每次只改一项。","mapsToKg":["O1","O1","O1"]},{"order":3,"title":"识别混淆变量","body":"混淆项：无关控件（隐藏的无关输入控件，不影响实验）；无关控件（隐藏的无关输入控件，不影响实验）；无关控件（隐藏的无关输入控件，不影响实验）","mapsToKg":["I1","I1","I1"]},{"order":4,"title":"观察—调整—再测","body":"操作后观察结果，未达标则微调调节变量并重复，直至满足约束过关。","mapsToKg":["O1"]}]},"outputVariables":[{"id":"OV1","label":"过关结果","symbol":"","unit":"","role":"primary","source":"observe"}],"domain":"optics"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

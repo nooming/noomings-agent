@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>仓库卸货滑道 · 摩擦探究</title>
+  <title>斜面台 · 摩擦探究</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -159,7 +159,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#e8a06a;--craft-bg:#1a1410;--craft-panel:#2a2118;--craft-text:#f3f0ea;--craft-muted:#d4c4b0;}
+:root{--craft-accent:#d08850;--craft-bg:#14100c;--craft-panel:#241c14;--craft-text:#f0e6d8;--craft-muted:#a09078;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -330,13 +330,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (friction-incline) === */
+:root{
+  --craft-accent:#d08850;--craft-bg:#14100c;--craft-panel:#241c14;
+  --craft-text:#f0e6d8;--craft-muted:#a09078;
+  --scene-ink:#14100c;--scene-mid:#2e2418;--scene-hi:#e8b888;
+  --scene-glow:#e07830;--scene-metal:#7a7060;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>仓库卸货滑道</h2>
+    <h2>斜面台 · 摩擦探究</h2>
     <p>夜班仓库等着出货。试着调 μ 与倾角，对比「卡住 / 卸到接货区 / 冲过接货区」；再接急单——μ 锁定，限次只靠调坡度把货箱停在接货区。</p>
     <p style="font-size:13px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛锁定 μ 后本局不变，卡住或冲过都只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -360,7 +447,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">仓库 · 卸货滑道</div>
+      <div class="essence-title">斜面摩擦台</div>
       <div class="essence-sub" id="goalMission">目标：对比卡住与卸下，摸清临界</div>
     </div>
   </div>
@@ -638,121 +725,114 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const topX = BASE_X + dx;
         const topY = BASE_Y - dy;
 
-        // —— 仓库内景：提高墙/地/道具色差 ——
+        const SC = { ink: '#14100c', mid: '#2e2418', hi: '#e8b888', glow: '#e07830', metal: '#7a7060', accent: '#d08850', ok: '#6fae8f' };
+        ctx.clearRect(0, 0, W, H);
+
+        // —— 斜面摩擦台：暖色木工坊 ——
         const wall = ctx.createLinearGradient(0, 0, 0, H);
-        wall.addColorStop(0, '#4a5568');
-        wall.addColorStop(0.4, '#334155');
-        wall.addColorStop(1, '#1e293b');
+        wall.addColorStop(0, '#1e1810');
+        wall.addColorStop(0.35, SC.ink);
+        wall.addColorStop(0.72, '#181410');
+        wall.addColorStop(1, '#100c08');
         ctx.fillStyle = wall;
         ctx.fillRect(0, 0, W, H);
 
-        // 顶部高窗（更亮、更清晰）+ 光束呼吸
         const tNow = performance.now();
-        const winPulse = 0.9 + 0.1 * Math.sin(tNow * 0.002);
-        const winCount = Math.max(3, Math.floor(W / 160));
-        for (let i = 0; i < winCount; i++) {
-          const wx = 40 + i * (W / winCount);
-          const ww = Math.min(70, W / winCount - 24);
-          ctx.fillStyle = `rgba(186,230,253,${0.38 * winPulse})`;
-          ctx.fillRect(wx + 4, 12, ww, 36);
-          ctx.strokeStyle = 'rgba(254,243,199,0.7)';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(wx + 4, 12, ww, 36);
-          ctx.beginPath();
-          ctx.moveTo(wx + 4 + ww / 2, 12);
-          ctx.lineTo(wx + 4 + ww / 2, 48);
-          ctx.moveTo(wx + 4, 30);
-          ctx.lineTo(wx + 4 + ww, 30);
-          ctx.stroke();
-          const beam = ctx.createLinearGradient(wx + ww / 2, 48, wx + ww / 2, groundY);
-          beam.addColorStop(0, `rgba(255,240,200,${0.14 * winPulse})`);
-          beam.addColorStop(1, 'rgba(255,240,200,0)');
-          ctx.fillStyle = beam;
-          ctx.fillRect(wx, 48, ww + 8, groundY - 48);
-        }
+        const lampPulse = 0.92 + 0.08 * Math.sin(tNow * 0.002);
+        const flood = ctx.createRadialGradient(W * 0.42, H * 0.06, 8, W * 0.48, groundY * 0.55, Math.max(W, H) * 0.65);
+        flood.addColorStop(0, `rgba(224,120,48,${0.20 * lampPulse})`);
+        flood.addColorStop(0.4, `rgba(208,136,80,${0.08 * lampPulse})`);
+        flood.addColorStop(1, 'rgba(20,16,12,0)');
+        ctx.fillStyle = flood;
+        ctx.fillRect(0, 0, W, H);
 
-        // 悬挂工作灯（微摆）
-        const lampX = Math.min(W - 80, topX + 40);
-        const lampSwing = Math.sin(tNow * 0.0018) * 6;
-        ctx.strokeStyle = 'rgba(148,163,184,0.7)';
+        // 悬挂工作灯（微摆 + 琥珀光晕）
+        const lampX = Math.min(W - 90, topX + 50);
+        const lampSwing = Math.sin(tNow * 0.0018) * 5;
+        ctx.strokeStyle = SC.metal;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(lampX, 8);
-        ctx.lineTo(lampX + lampSwing, 58);
+        ctx.moveTo(lampX, 6);
+        ctx.lineTo(lampX + lampSwing, 52);
         ctx.stroke();
-        ctx.fillStyle = '#fbbf24';
-        ctx.beginPath();
-        ctx.moveTo(lampX + lampSwing - 10, 58);
-        ctx.lineTo(lampX + lampSwing + 10, 58);
-        ctx.lineTo(lampX + lampSwing, 72);
-        ctx.closePath();
+        ctx.fillStyle = SC.accent;
+        roundRect(lampX + lampSwing - 11, 52, 22, 14, 4);
         ctx.fill();
-        const lampGlow = ctx.createRadialGradient(lampX + lampSwing, 78, 2, lampX + lampSwing, 90, 40);
-        lampGlow.addColorStop(0, 'rgba(251,191,36,0.28)');
-        lampGlow.addColorStop(1, 'rgba(251,191,36,0)');
+        ctx.strokeStyle = 'rgba(224,120,48,0.45)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        const lampGlow = ctx.createRadialGradient(lampX + lampSwing, 72, 2, lampX + lampSwing, 85, 48);
+        lampGlow.addColorStop(0, `rgba(224,120,48,${0.32 * lampPulse})`);
+        lampGlow.addColorStop(1, 'rgba(224,120,48,0)');
         ctx.fillStyle = lampGlow;
         ctx.beginPath();
-        ctx.arc(lampX + lampSwing, 90, 40, 0, Math.PI * 2);
+        ctx.arc(lampX + lampSwing, 85, 48, 0, Math.PI * 2);
         ctx.fill();
 
-        // 远处货架（低干扰，靠右）
-        for (let i = 0; i < 4; i++) {
-          const sx = W - 40 - (4 - i) * 48;
-          if (sx < topX + 40) continue;
-          ctx.fillStyle = 'rgba(15,23,42,0.35)';
-          ctx.fillRect(sx, 90, 32, groundY - 90);
-          ctx.fillStyle = 'rgba(71,85,105,0.4)';
-          for (let r = 0; r < 3; r++) {
-            ctx.fillRect(sx + 4, 105 + r * 36, 24, 8);
+        // 工具挂板（右后方低干扰）
+        const pegX = W - 88;
+        if (pegX > topX + 40) {
+          ctx.fillStyle = SC.mid;
+          roundRect(pegX, 72, 56, groundY - 88, 3);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(122,112,96,0.55)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          for (let pi = 0; pi < 4; pi++) {
+            ctx.fillStyle = pi % 2 ? SC.metal : SC.accent;
+            ctx.fillRect(pegX + 10, 90 + pi * 32, 18, 4);
+            ctx.fillStyle = 'rgba(232,184,136,0.35)';
+            ctx.beginPath();
+            ctx.arc(pegX + 38, 98 + pi * 32, 5, 0, Math.PI * 2);
+            ctx.fill();
           }
-          // 货箱剪影
-          ctx.fillStyle = 'rgba(180,83,9,0.35)';
-          ctx.fillRect(sx + 6, groundY - 28, 20, 18);
+          ctx.fillStyle = SC.hi;
+          ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
+          ctx.fillText('工具板', pegX + 8, 68);
         }
 
-        // 悬浮尘埃（氛围，低噪声）
-        for (let i = 0; i < 10; i++) {
-          const dx = (i * 97 + tNow * 0.02) % W;
-          const dy = 40 + (i * 37) % Math.max(40, groundY - 60) + Math.sin(tNow * 0.001 + i) * 6;
-          ctx.fillStyle = `rgba(254,243,199,${0.12 + (i % 3) * 0.05})`;
+        // 木屑微尘
+        for (let i = 0; i < 14; i++) {
+          const px = (i * 83 + tNow * 0.015) % W;
+          const py = 36 + (i * 41) % Math.max(40, groundY - 80) + Math.sin(tNow * 0.0012 + i) * 4;
+          ctx.fillStyle = `rgba(232,184,136,${0.10 + (i % 3) * 0.04})`;
           ctx.beginPath();
-          ctx.arc(dx, dy, 1.2 + (i % 2) * 0.6, 0, Math.PI * 2);
+          ctx.arc(px, py, 1 + (i % 2) * 0.5, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        // 水泥地面：偏亮冷灰，与木滑道拉开对比
+        // 木工地坪
         const floor = ctx.createLinearGradient(0, groundY, 0, H);
-        floor.addColorStop(0, '#94a3b8');
-        floor.addColorStop(1, '#64748b');
+        floor.addColorStop(0, '#3a3228');
+        floor.addColorStop(0.5, SC.mid);
+        floor.addColorStop(1, SC.ink);
         ctx.fillStyle = floor;
         ctx.fillRect(0, groundY, W, H - groundY);
-        ctx.strokeStyle = 'rgba(15,23,42,0.2)';
+        ctx.fillStyle = SC.metal;
+        ctx.fillRect(0, groundY, W, 3);
+        ctx.strokeStyle = 'rgba(122,112,96,0.25)';
         ctx.lineWidth = 1;
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 8; i++) {
           ctx.beginPath();
-          ctx.moveTo(20 + i * 110, groundY + 4);
-          ctx.lineTo(20 + i * 110, H - 4);
+          ctx.moveTo(24 + i * 95, groundY + 6);
+          ctx.lineTo(24 + i * 95, H - 6);
           ctx.stroke();
         }
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, groundY);
-        ctx.lineTo(W, groundY);
-        ctx.stroke();
+        ctx.fillStyle = 'rgba(208,136,80,0.15)';
+        for (let g = 0; g < 9; g++) ctx.fillRect(20 + g * 78, groundY + 14, 32, 2);
 
         // 接货托盘：长度随模式 landLimit，目视可辨探究宽区 vs 竞赛短区
         const zc = zoneCfg();
         const palletW = Math.min(BASE_X - 16, Math.max(40, Math.abs(zc.landLimit) * LENGTH * 0.95));
         const palletX = Math.max(8, BASE_X - palletW - 8);
         const palletY = groundY - 6;
-        ctx.fillStyle = playMode === 'challenge' ? '#c2410c' : '#b45309';
+        ctx.fillStyle = playMode === 'challenge' ? '#a06030' : SC.accent;
         roundRect(palletX, palletY, palletW, 12, 2);
         ctx.fill();
-        ctx.strokeStyle = playMode === 'challenge' ? '#9a3412' : '#78350f';
+        ctx.strokeStyle = playMode === 'challenge' ? '#7a5028' : '#6a4020';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#d97706';
+        ctx.fillStyle = SC.hi;
         const slatN = Math.max(2, Math.floor(palletW / 24));
         for (let i = 0; i < slatN; i++) {
           ctx.fillRect(palletX + 6 + i * (palletW / slatN), palletY - 5, Math.max(10, palletW / slatN - 8), 6);
@@ -776,11 +856,11 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
             ctx.setLineDash([]);
           }
         }
-        ctx.fillStyle = '#fef3c7';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
         ctx.fillText(zc.label, palletX + Math.max(4, palletW / 2 - 22), palletY + 28);
 
-        // —— 木质滑道楔体（饱和木色） ——
+        // —— 木质滑道楔体 ——
         ctx.beginPath();
         ctx.moveTo(BASE_X, BASE_Y);
         ctx.lineTo(topX, topY);
@@ -788,12 +868,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineTo(topX + 20, BASE_Y);
         ctx.closePath();
         const rampFill = ctx.createLinearGradient(BASE_X, topY, topX, BASE_Y);
-        rampFill.addColorStop(0, '#d4a574');
-        rampFill.addColorStop(0.5, '#b45309');
-        rampFill.addColorStop(1, '#78350f');
+        rampFill.addColorStop(0, SC.hi);
+        rampFill.addColorStop(0.5, SC.accent);
+        rampFill.addColorStop(1, '#6a4020');
         ctx.fillStyle = rampFill;
         ctx.fill();
-        ctx.strokeStyle = '#451a03';
+        ctx.strokeStyle = '#3a2818';
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -806,7 +886,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.lineTo(topX + 20, BASE_Y);
         ctx.closePath();
         ctx.clip();
-        ctx.strokeStyle = 'rgba(69,26,3,0.45)';
+        ctx.strokeStyle = 'rgba(58,40,24,0.45)';
         ctx.lineWidth = 1.2;
         for (let i = 0; i < 10; i++) {
           const u = i / 9;
@@ -823,53 +903,68 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.beginPath();
         ctx.moveTo(BASE_X, BASE_Y);
         ctx.lineTo(topX, topY);
-        ctx.strokeStyle = '#fde68a';
+        ctx.strokeStyle = SC.hi;
         ctx.lineWidth = 3.5;
         ctx.stroke();
 
         // 坡顶装车台
         const deckW = 56, deckH = 12;
-        ctx.fillStyle = '#92400e';
+        ctx.fillStyle = '#7a5028';
         roundRect(topX - 6, topY - deckH - 2, deckW, deckH, 2);
         ctx.fill();
-        ctx.strokeStyle = '#451a03';
+        ctx.strokeStyle = '#3a2818';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#78350f';
+        ctx.fillStyle = '#5a3820';
         ctx.fillRect(topX + deckW - 16, topY - deckH - 16, 6, 16);
-        ctx.fillStyle = '#fef3c7';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
         ctx.fillText('装车台', topX, topY - deckH - 20);
 
-        // 角度弧（不抢戏）
-        const arcR = 32;
+        // 量角器弧 + 刻度
+        const arcR = 36;
         ctx.beginPath();
         ctx.arc(BASE_X, BASE_Y, arcR, -thetaRad, 0);
-        ctx.strokeStyle = 'rgba(232,160,106,0.85)';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgba(208,136,80,0.75)`;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
         ctx.beginPath();
+        ctx.arc(BASE_X, BASE_Y, arcR - 6, -thetaRad, 0);
+        ctx.strokeStyle = 'rgba(232,184,136,0.35)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        for (let tick = 0; tick <= 6; tick++) {
+          const ta = -thetaRad * (tick / 6);
+          const r0 = arcR - 2, r1 = arcR + (tick % 3 === 0 ? 5 : 3);
+          ctx.beginPath();
+          ctx.moveTo(BASE_X + Math.cos(ta) * r0, BASE_Y + Math.sin(ta) * r0);
+          ctx.lineTo(BASE_X + Math.cos(ta) * r1, BASE_Y + Math.sin(ta) * r1);
+          ctx.strokeStyle = tick % 3 === 0 ? SC.hi : 'rgba(122,112,96,0.6)';
+          ctx.lineWidth = tick % 3 === 0 ? 1.5 : 1;
+          ctx.stroke();
+        }
+        ctx.beginPath();
         ctx.moveTo(BASE_X, BASE_Y);
-        ctx.lineTo(BASE_X + arcR + 6, BASE_Y);
-        ctx.strokeStyle = 'rgba(255,224,194,0.5)';
+        ctx.lineTo(BASE_X + arcR + 8, BASE_Y);
+        ctx.strokeStyle = 'rgba(232,184,136,0.5)';
         ctx.lineWidth = 1.2;
         ctx.stroke();
         const midA = -thetaRad / 2;
-        ctx.fillStyle = '#ffe0c2';
+        ctx.fillStyle = SC.hi;
         ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-        ctx.fillText('θ', BASE_X + Math.cos(midA) * (arcR + 12), BASE_Y + Math.sin(midA) * (arcR + 12) + 4);
+        ctx.fillText('θ', BASE_X + Math.cos(midA) * (arcR + 14), BASE_Y + Math.sin(midA) * (arcR + 14) + 4);
 
-        // 读数贴坡脚（避开左上双模式条与右上 essence-hud）
+        // 读数贴坡脚
         const badgeW = 118, badgeH = 48;
         const badgeX = BASE_X + 44;
         const badgeY = Math.max(56, BASE_Y - 78);
         roundRect(badgeX, badgeY, badgeW, badgeH, 10);
-        ctx.fillStyle = 'rgba(15,23,42,0.82)';
+        ctx.fillStyle = 'rgba(20,16,12,0.88)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(232,160,106,0.55)';
+        ctx.strokeStyle = 'rgba(208,136,80,0.55)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#ffe0c2';
+        ctx.fillStyle = SC.hi;
         ctx.font = '13px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
         ctx.fillText('μ = ' + parseFloat(frictionSlider.value).toFixed(2), badgeX + 12, badgeY + 20);
         ctx.fillText('θ = ' + (thetaRad * 180 / Math.PI).toFixed(0) + '°', badgeX + 12, badgeY + 38);
@@ -893,20 +988,20 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.shadowOffsetY = 2;
         const crate = ctx.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
         if (sliding) {
-          crate.addColorStop(0, '#fdba74');
-          crate.addColorStop(1, '#ea580c');
+          crate.addColorStop(0, SC.glow);
+          crate.addColorStop(1, SC.accent);
         } else {
-          crate.addColorStop(0, '#f0c987');
-          crate.addColorStop(1, '#b45309');
+          crate.addColorStop(0, SC.hi);
+          crate.addColorStop(1, '#8a5830');
         }
         roundRect(-size / 2, -size / 2, size, size, 3);
         ctx.fillStyle = crate;
         ctx.fill();
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#451a03';
+        ctx.strokeStyle = '#3a2818';
         ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.strokeStyle = 'rgba(69,26,3,0.55)';
+        ctx.strokeStyle = 'rgba(58,40,24,0.55)';
         ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(-size / 2 + 4, -size / 6);
@@ -914,7 +1009,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         ctx.moveTo(-size / 2 + 4, size / 6);
         ctx.lineTo(size / 2 - 4, size / 6);
         ctx.stroke();
-        ctx.strokeStyle = sliding ? '#9f1239' : '#78350f';
+        ctx.strokeStyle = sliding ? '#c04030' : '#6a4020';
         ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.moveTo(0, -size / 2 + 2);
@@ -926,7 +1021,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
         // 下滑微尘：落在运动轨迹后方（坡顶一侧，相对向下滑动）
         if (sliding && onRamp && t < 0.75) {
-          ctx.fillStyle = 'rgba(254,243,199,0.55)';
+          ctx.fillStyle = 'rgba(232,184,136,0.55)';
           for (let i = 0; i < 5; i++) {
             const along = 10 + i * 6;
             const px = objX + Math.cos(thetaRad) * along + (i % 2) * 2;
@@ -938,7 +1033,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         }
         // 冲过接货区时的地面扬尘
         if (sliding && !onRamp) {
-          ctx.fillStyle = 'rgba(254,243,199,0.4)';
+          ctx.fillStyle = 'rgba(232,184,136,0.4)';
           for (let i = 0; i < 4; i++) {
             ctx.beginPath();
             ctx.arc(objX + 8 + i * 5, groundY - 2, 1.2 + (i % 2) * 0.4, 0, Math.PI * 2);

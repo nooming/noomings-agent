@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>透镜 · 凸透镜成像实验</title>
+  <title>光具座 · 薄透镜</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -161,7 +161,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#60a5fa;--craft-bg:#0a1220;--craft-panel:#152238;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#6a9ad0;--craft-bg:#0c1218;--craft-panel:#162028;--craft-text:#e4ecf4;--craft-muted:#8898a8;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -259,13 +259,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (thin-lens-implicit) === */
+:root{
+  --craft-accent:#6a9ad0;--craft-bg:#0c1218;--craft-panel:#162028;
+  --craft-text:#e4ecf4;--craft-muted:#8898a8;
+  --scene-ink:#0c1218;--scene-mid:#243038;--scene-hi:#a0c0e8;
+  --scene-glow:#f0d080;--scene-metal:#6a7888;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>广场夜映 · 放映机</h2>
+    <h2>光具座 · 薄透镜</h2>
     <p>露天电影幕布要重标定。试着弄清物距与焦距如何改变像落点；再接限次急单——幕距本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后幕距本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -289,7 +376,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
   
     <div id="essence-hud">
-      <div class="essence-title">广场夜映 · 放映机</div>
+      <div class="essence-title">透镜光具座</div>
       <div class="essence-sub" id="goalMission">探究：自由调 u、f，观察成像位置</div>
     </div>
   </div>
@@ -514,92 +601,149 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     function drawScene(u, f) {
       const L = syncCanvasSize();
       ctx.clearRect(0, 0, W, H);
+      var SC = { ink:'#0c1218', mid:'#243038', hi:'#a0c0e8', glow:'#f0d080', metal:'#6a7888', accent:'#6a9ad0', ok:'#6fae8f' };
+
+      // 暗室背景 + 柔光
       const bg = ctx.createLinearGradient(0, 0, 0, H);
-      bg.addColorStop(0, '#0b1526');
-      bg.addColorStop(1, '#111827');
+      bg.addColorStop(0, '#101820');
+      bg.addColorStop(0.4, SC.ink);
+      bg.addColorStop(1, '#080c10');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
+      var lamp = ctx.createRadialGradient(W * 0.18, H * 0.12, 4, W * 0.32, H * 0.45, Math.max(W, H) * 0.55);
+      lamp.addColorStop(0, 'rgba(240,208,128,0.22)');
+      lamp.addColorStop(0.35, 'rgba(106,154,208,0.08)');
+      lamp.addColorStop(1, 'rgba(12,18,24,0)');
+      ctx.fillStyle = lamp;
+      ctx.fillRect(0, 0, W, H);
 
-      // 实验室墙与导轨台
-      ctx.fillStyle = '#1e293b';
+      // 顶灯（柔光台灯）
+      var lampX = W * 0.16, lampY = 36;
+      ctx.strokeStyle = 'rgba(106,120,136,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lampX, 8);
+      ctx.lineTo(lampX, lampY);
+      ctx.stroke();
+      var shadeG = ctx.createLinearGradient(lampX - 22, lampY, lampX + 22, lampY + 18);
+      shadeG.addColorStop(0, '#8a7344');
+      shadeG.addColorStop(0.5, SC.glow);
+      shadeG.addColorStop(1, SC.metal);
+      ctx.fillStyle = shadeG;
+      ctx.beginPath();
+      ctx.moveTo(lampX - 24, lampY);
+      ctx.lineTo(lampX + 24, lampY);
+      ctx.lineTo(lampX + 14, lampY + 20);
+      ctx.lineTo(lampX - 14, lampY + 20);
+      ctx.closePath();
+      ctx.fill();
+      var lampGlow = ctx.createRadialGradient(lampX, lampY + 28, 2, lampX, L.axisY, 80);
+      lampGlow.addColorStop(0, 'rgba(240,208,128,0.18)');
+      lampGlow.addColorStop(1, 'rgba(240,208,128,0)');
+      ctx.fillStyle = lampGlow;
+      ctx.fillRect(0, lampY, W * 0.55, L.axisY - lampY + 20);
+
+      // 实验台台面
+      ctx.fillStyle = SC.mid;
       ctx.fillRect(0, H * 0.78, W, H * 0.22);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(W * 0.06, L.axisY + 36, W * 0.88, 14);
-      ctx.fillStyle = '#475569';
-      for (let i = 0; i < 12; i++) {
-        const x = W * 0.08 + i * (W * 0.07);
-        ctx.fillRect(x, L.axisY + 36, 2, 14);
+      const benchG = ctx.createLinearGradient(0, L.axisY + 30, 0, L.axisY + 50);
+      benchG.addColorStop(0, '#3a4858');
+      benchG.addColorStop(0.5, SC.metal);
+      benchG.addColorStop(1, '#4a5868');
+      ctx.fillStyle = benchG;
+      ctx.fillRect(W * 0.04, L.axisY + 32, W * 0.92, 16);
+      // 光具座导轨刻度
+      ctx.fillStyle = 'rgba(160,192,232,0.35)';
+      for (let i = 0; i < 16; i++) {
+        const x = W * 0.06 + i * (W * 0.055);
+        ctx.fillRect(x, L.axisY + 32, 1, i % 5 === 0 ? 16 : 10);
       }
-      ctx.fillStyle = 'rgba(15,23,42,0.75)';
-      ctx.fillRect(W * 0.08 - 4, H * 0.9 - 14, 96, 18);
-      ctx.fillStyle = '#ffe0c2';
+      ctx.fillStyle = 'rgba(12,18,24,0.75)';
+      ctx.fillRect(W * 0.06, H * 0.9 - 14, 96, 18);
+      ctx.fillStyle = SC.hi;
       ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-      ctx.fillText('广场放映导轨', W * 0.08, H * 0.9);
+      ctx.fillText('透镜光具座', W * 0.06, H * 0.9);
 
       // 主光轴
       ctx.beginPath();
       ctx.moveTo(W * 0.06, L.axisY);
       ctx.lineTo(W * 0.94, L.axisY);
-      ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+      ctx.strokeStyle = 'rgba(160,192,232,0.45)';
       ctx.setLineDash([5, 5]);
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 物
+      // 物（光具座滑块 + 物高箭头）
       const objX = L.lensX - u * L.pxPerCm;
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(objX - 10, L.axisY + 8, 20, 28);
-      ctx.strokeStyle = '#f87171';
+      var mountG = ctx.createLinearGradient(objX - 14, L.axisY + 8, objX + 14, L.axisY + 36);
+      mountG.addColorStop(0, '#3a4858');
+      mountG.addColorStop(0.5, SC.metal);
+      mountG.addColorStop(1, '#4a5868');
+      ctx.fillStyle = mountG;
+      ctx.fillRect(objX - 12, L.axisY + 8, 24, 30);
+      ctx.strokeStyle = SC.accent;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(objX, L.axisY);
       ctx.lineTo(objX, L.axisY - 48);
       ctx.stroke();
-      ctx.fillStyle = '#f87171';
+      ctx.fillStyle = SC.accent;
       ctx.beginPath();
       ctx.moveTo(objX - 7, L.axisY - 38);
       ctx.lineTo(objX, L.axisY - 52);
       ctx.lineTo(objX + 7, L.axisY - 38);
       ctx.fill();
-      ctx.fillStyle = '#fecaca';
+      ctx.fillStyle = SC.hi;
       ctx.font = '12px "Microsoft YaHei",sans-serif';
       ctx.fillText('物', objX - 8, L.axisY - 58);
 
-      // 透镜支架（口径 D 只改示意高度，成像公式仍只依赖 u、f）
+      // 透镜支架（黄铜座 + 玻璃透镜）
       var Dcm = sliderD ? parseFloat(sliderD.value) : 6;
       var lensHalf = 36 + Dcm * 3.5;
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(L.lensX - 6, L.axisY - lensHalf - 12, 12, lensHalf * 2 + 24);
-      ctx.strokeStyle = '#60a5fa';
+      var standG = ctx.createLinearGradient(L.lensX - 8, L.axisY - lensHalf - 14, L.lensX + 8, L.axisY + lensHalf + 14);
+      standG.addColorStop(0, '#5a5040');
+      standG.addColorStop(0.45, '#a08858');
+      standG.addColorStop(1, '#5a5040');
+      ctx.fillStyle = standG;
+      ctx.fillRect(L.lensX - 7, L.axisY - lensHalf - 14, 14, lensHalf * 2 + 28);
+      ctx.fillStyle = 'rgba(106,154,208,0.12)';
+      ctx.beginPath();
+      ctx.ellipse(L.lensX, L.axisY, 11, lensHalf, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = SC.hi;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.ellipse(L.lensX, L.axisY, 10, lensHalf, 0, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.strokeStyle = 'rgba(160,192,232,0.35)';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(L.lensX - 8, L.axisY - lensHalf * 0.85);
       ctx.lineTo(L.lensX + 8, L.axisY + lensHalf * 0.85);
       ctx.moveTo(L.lensX + 8, L.axisY - lensHalf * 0.85);
       ctx.lineTo(L.lensX - 8, L.axisY + lensHalf * 0.85);
       ctx.stroke();
-      ctx.fillStyle = '#bfdbfe';
-      ctx.fillText('透镜', L.lensX - 14, L.axisY + lensHalf + 20);
+      ctx.fillStyle = SC.hi;
+      ctx.fillText('透镜', L.lensX - 14, L.axisY + lensHalf + 22);
 
       // 焦点标记
       const fPx = f * L.pxPerCm;
-      ctx.fillStyle = '#93c5fd';
+      ctx.fillStyle = SC.glow;
       ctx.beginPath(); ctx.arc(L.lensX - fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(L.lensX + fPx, L.axisY, 3, 0, Math.PI * 2); ctx.fill();
 
-      // 光屏
+      // 光屏（磨砂屏 + 金属框）
       const screenW = 18, screenH = 90;
-      ctx.fillStyle = '#166534';
+      ctx.fillStyle = '#2a3848';
+      ctx.fillRect(L.screenX - screenW/2 - 3, L.axisY - screenH/2 - 6, screenW + 6, screenH + 12);
+      ctx.fillStyle = '#e8eef4';
       ctx.fillRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
-      ctx.strokeStyle = '#4ade80';
+      ctx.strokeStyle = SC.accent;
       ctx.lineWidth = 2;
       ctx.strokeRect(L.screenX - screenW/2, L.axisY - screenH/2, screenW, screenH);
-      ctx.fillStyle = '#86efac';
-      ctx.fillText('幕布', L.screenX - 12, L.axisY + screenH/2 + 18);
+      ctx.fillStyle = SC.hi;
+      ctx.fillText('光屏', L.screenX - 12, L.axisY + screenH/2 + 18);
 
       const v = computeImageDistance(u, f);
       const onScreen = isImageOnScreen(u, f);
@@ -608,13 +752,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         const imageX = L.lensX + v * L.pxPerCm;
         if (imageX > L.lensX && imageX < W * 0.95) {
           ctx.globalAlpha = onScreen ? 0.9 : 0.35;
-          ctx.strokeStyle = '#f472b6';
+          ctx.strokeStyle = SC.accent;
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.moveTo(imageX, L.axisY);
           ctx.lineTo(imageX, L.axisY + (onScreen ? 40 : 28));
           ctx.stroke();
-          ctx.fillStyle = '#f9a8d4';
+          ctx.fillStyle = SC.hi;
           ctx.font = '12px "Microsoft YaHei",sans-serif';
           ctx.fillText('像', imageX - 6, L.axisY - 10);
           ctx.globalAlpha = 1;
@@ -623,16 +767,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
       // 读数放右下，避开顶栏 dual-mode / essence-hud
       const boxW = 220, boxH = 48, boxX = W - boxW - 16, boxY = H - boxH - 28;
-      ctx.fillStyle = 'rgba(15,23,42,0.85)';
+      ctx.fillStyle = 'rgba(12,18,24,0.85)';
       ctx.fillRect(boxX, boxY, boxW, boxH);
       ctx.strokeStyle = measured
-        ? (onScreen ? 'rgba(74,222,128,0.55)' : 'rgba(251,113,133,0.45)')
-        : 'rgba(96,165,250,0.4)';
+        ? (onScreen ? 'rgba(111,174,143,0.55)' : 'rgba(200,120,160,0.45)')
+        : 'rgba(106,154,208,0.4)';
       ctx.strokeRect(boxX, boxY, boxW, boxH);
-      ctx.fillStyle = '#dbeafe';
+      ctx.fillStyle = SC.hi;
       ctx.font = '12px "Microsoft YaHei",sans-serif';
       ctx.fillText('物距 ' + u + ' cm · 焦距 ' + f + ' cm', boxX + 10, boxY + 20);
-      ctx.fillStyle = measured ? (onScreen ? '#86efac' : '#fda4af') : '#94a3b8';
+      ctx.fillStyle = measured ? (onScreen ? SC.ok : '#fda4af') : 'rgba(160,192,232,0.65)';
       if (measured) {
         ctx.fillText((playMode==='challenge'?'急单屏 ':'对照屏 ') + SCREEN_DIST_CM + 'cm · ' + (onScreen ? '已对准' : '未对准'), boxX + 10, boxY + 38);
       } else {

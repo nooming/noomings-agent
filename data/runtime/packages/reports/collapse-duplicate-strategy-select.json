@@ -1,0 +1,1471 @@
+{
+  "dry": true,
+  "packageCount": 23,
+  "touched": [],
+  "aliasByPkg": {},
+  "residualDuplicates": [],
+  "verifyFails": [],
+  "rows": [
+    {
+      "id": "capacitor-confound-ui",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·外观色调→ProbeCV",
+              "单变量·极板间距→Route_main",
+              "单变量·极板面积→Route_main_s_area",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·外观色调→ProbeCV",
+              "单变量·极板间距→Route_main",
+              "单变量·极板面积→Route_main_s_area",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·极板面积→Route_main_s_area",
+              "单变量·极板间距→Route_main_s_dist",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·极板面积→Route_main_s_area",
+              "单变量·极板间距→Route_main_s_dist",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeOff",
+              "ModeOn"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·电容C1→Route_main",
+              "单变量·电容C2→Route_main_s_c2",
+              "单变量·电容C3→Route_main_s_c3",
+              "单变量·馈线长度→Route_main_s_cable",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeOff",
+              "ModeOn"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·电容C1→Route_main",
+              "单变量·电容C2→Route_main_s_c2",
+              "单变量·电容C3→Route_main_s_c3",
+              "单变量·馈线长度→Route_main_s_cable",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ModeOff",
+          "ModeOn"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeCha",
+              "ModeExp"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·馈线长度→Route_main",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeCha",
+              "ModeExp"
+            ],
+            "outs": [
+              "试探混淆·音量→ProbeCV",
+              "单变量·馈线长度→Route_main",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ModeCha",
+          "ModeExp"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "circular-motion",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeCore",
+              "ExploreCore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·角速度→Route_main",
+              "单变量·倾角→Route_main_s_base_tilt",
+              "单变量·半径→Route_main_s_radius",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeCore",
+              "ExploreCore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·角速度→Route_main",
+              "单变量·倾角→Route_main_s_base_tilt",
+              "单变量·半径→Route_main_s_radius",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ChallengeCore",
+          "ExploreCore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "cyclotron-radius",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "ExploreCore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·腔室气压→Route_main_s_chamber_p",
+              "多参盲调→Trap",
+              "单变量·速度→Tune1",
+              "单变量·磁场→Tune2"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "ExploreCore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·腔室气压→Route_main_s_chamber_p",
+              "多参盲调→Trap",
+              "单变量·速度→Tune1",
+              "单变量·磁场→Tune2"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ExploreCore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "efield-charge",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "单变量·极板间距→SingleD",
+              "单变量·场强→SingleE",
+              "单变量·电荷量→SingleQ",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "单变量·极板间距→SingleD",
+              "单变量·场强→SingleE",
+              "单变量·电荷量→SingleQ",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ChallengeMode",
+          "ExploreMode"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "friction-incline",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeChallenge",
+              "ModeExplore"
+            ],
+            "outs": [
+              "单变量·斜面倾角→AngleRoute",
+              "单变量·摩擦系数→FrictionRoute",
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeChallenge",
+              "ModeExplore"
+            ],
+            "outs": [
+              "单变量·斜面倾角→AngleRoute",
+              "单变量·摩擦系数→FrictionRoute",
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ModeChallenge",
+          "ModeExplore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "gas-ideal",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "多参盲调→Trap",
+              "单变量·压强→Tune",
+              "单变量·体积→Tune1a",
+              "单变量·温度→Tune2"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "多参盲调→Trap",
+              "单变量·压强→Tune",
+              "单变量·体积→Tune1a",
+              "单变量·温度→Tune2"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "heat-conduction",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·截面积→Route_main",
+              "单变量·温差→Route_main_s_temperature_diff",
+              "单变量·导热系数→Route_main_s_thermal_conductiv",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·截面积→Route_main",
+              "单变量·温差→Route_main_s_temperature_diff",
+              "单变量·导热系数→Route_main_s_thermal_conductiv",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "magnetic-force",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·电流→Route_main",
+              "单变量·磁场→Route_main_s_magnetic",
+              "单变量·导线温度→Route_main_s_wire_temp",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·电流→Route_main",
+              "单变量·磁场→Route_main_s_magnetic",
+              "单变量·导线温度→Route_main_s_wire_temp",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ChallengeMode",
+          "ExploreMode"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "momentum-collision",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·导轨温度→SingleMass",
+              "单变量·质量→SingleMassC",
+              "单变量·速度1→SingleVel1C",
+              "单变量·速度2→SingleVel2C",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ChallengeMode",
+              "ExploreMode"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·导轨温度→SingleMass",
+              "单变量·质量→SingleMassC",
+              "单变量·速度1→SingleVel1C",
+              "单变量·速度2→SingleVel2C",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ChallengeMode",
+          "ExploreMode"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "multi-kp",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·起始高度→HeightStrat",
+              "试探混淆·质量→ProbeCV",
+              "单变量·初速度→SpeedStrat",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·起始高度→HeightStrat",
+              "试探混淆·质量→ProbeCV",
+              "单变量·初速度→SpeedStrat",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "pendulum-clock",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "AutoChallenge",
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·摆角→AngleRoute",
+              "单变量·摆长→LenRoute",
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→TrapRoute"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "AutoChallenge",
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·摆角→AngleRoute",
+              "单变量·摆长→LenRoute",
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→TrapRoute"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "AutoChallenge",
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "pendulum-target",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·摆长→Len",
+              "试探混淆·质量→ProbeCV",
+              "单变量·摆角→Route_main_s_angle",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·摆长→Len",
+              "试探混淆·质量→ProbeCV",
+              "单变量·摆角→Route_main_s_angle",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "photoelectric",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeChallenge",
+              "ModeExplore"
+            ],
+            "outs": [
+              "单变量·频率→PathFreq",
+              "单变量·光强→PathIntensity",
+              "单变量·逸出功→PathWork",
+              "试探混淆·无关控件→ProbeCV",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "ModeChallenge",
+              "ModeExplore"
+            ],
+            "outs": [
+              "单变量·频率→PathFreq",
+              "单变量·光强→PathIntensity",
+              "单变量·逸出功→PathWork",
+              "试探混淆·无关控件→ProbeCV",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "ModeChallenge",
+          "ModeExplore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "projectile-basic",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·发射角度→AngleStrat",
+              "单变量·发射高度→HeightStrat",
+              "试探混淆·质量→ProbeCV",
+              "单变量·初速度→SpeedStrat",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·发射角度→AngleStrat",
+              "单变量·发射高度→HeightStrat",
+              "试探混淆·质量→ProbeCV",
+              "单变量·初速度→SpeedStrat",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "projectile-cannon",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→Trap",
+              "单变量·初速度→Tune1",
+              "单变量·重力加速度→Tune2",
+              "单变量·风速→Tune3",
+              "单变量·发射角度→Tune4",
+              "单变量·空气阻力→Tune5"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Start"
+            ],
+            "outs": [
+              "试探混淆·质量→ProbeCV",
+              "多参盲调→Trap",
+              "单变量·初速度→Tune1",
+              "单变量·重力加速度→Tune2",
+              "单变量·风速→Tune3",
+              "单变量·发射角度→Tune4",
+              "单变量·空气阻力→Tune5"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "rc-circuit",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·电源电压→Route_main",
+              "单变量·电容→Route_main_s_capacitance",
+              "单变量·电阻→Route_main_s_resistance",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "单变量·电源电压→Route_main",
+              "单变量·电容→Route_main_s_capacitance",
+              "单变量·电阻→Route_main_s_resistance",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "refraction-snell",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·波长→Route_main",
+              "单变量·入射角→Route_main_s_incident_angle",
+              "单变量·折射率→Route_main_s_refractive_index",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·波长→Route_main",
+              "单变量·入射角→Route_main_s_incident_angle",
+              "单变量·折射率→Route_main_s_refractive_index",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "series-parallel",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·电阻R1→Route_main",
+              "单变量·电表内阻→Route_main_s_meter_r",
+              "单变量·电阻R2→Route_main_s_r2",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·电阻R1→Route_main",
+              "单变量·电表内阻→Route_main_s_meter_r",
+              "单变量·电阻R2→Route_main_s_r2",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "thin-lens-implicit",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·物距→Route_main",
+              "单变量·光圈→Route_main_s_aperture",
+              "单变量·焦距→Route_main_s_focal_length",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·物距→Route_main",
+              "单变量·光圈→Route_main_s_aperture",
+              "单变量·焦距→Route_main_s_focal_length",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    },
+    {
+      "id": "transformer-turns",
+      "changed": false,
+      "aliases": [],
+      "before": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·原边匝数→Route_main",
+              "单变量·副边匝数→Route_main_s_n2",
+              "单变量·原边电压→Route_main_s_U1",
+              "单变量·绕组温度→Route_main_s_winding_temp",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "after": {
+        "hubs": [
+          {
+            "id": "StrategySelect",
+            "label": "选择调参策略?",
+            "ins": [
+              "BackFromCV",
+              "Challenge",
+              "Explore"
+            ],
+            "outs": [
+              "试探混淆·无关控件→ProbeCV",
+              "单变量·原边匝数→Route_main",
+              "单变量·副边匝数→Route_main_s_n2",
+              "单变量·原边电压→Route_main_s_U1",
+              "单变量·绕组温度→Route_main_s_winding_temp",
+              "多参盲调→Trap"
+            ]
+          }
+        ],
+        "aliases": [],
+        "duplicate": false
+      },
+      "verify": {
+        "selectIds": [
+          "StrategySelect"
+        ],
+        "aliasesLeft": [],
+        "fanOutFrom": [
+          "StrategySelect"
+        ],
+        "modeIns": [
+          "Challenge",
+          "Explore"
+        ],
+        "ok": true
+      },
+      "hlRewrites": [],
+      "exported": null
+    }
+  ]
+}

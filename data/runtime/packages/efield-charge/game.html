@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title>电场 · 带电粒子偏转</title>
+    <title>偏转舱 · 电场实验</title>
     <style>
         * {
             box-sizing: border-box;
@@ -358,7 +358,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#a78bfa;--craft-bg:#12081c;--craft-panel:#1e1230;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#8a9ee0;--craft-bg:#0c1018;--craft-panel:#161e2c;--craft-text:#e4eaf4;--craft-muted:#8898b0;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -468,13 +468,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (efield-charge) === */
+:root{
+  --craft-accent:#8a9ee0;--craft-bg:#0c1018;--craft-panel:#161e2c;
+  --craft-text:#e4eaf4;--craft-muted:#8898b0;
+  --scene-ink:#0c1018;--scene-mid:#243044;--scene-hi:#b0c0f0;
+  --scene-glow:#6090e8;--scene-metal:#6a7888;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>霓虹工坊 · 电子「写字」</h2>
+    <h2>偏转舱 · 电场实验</h2>
     <p>招牌管里的光点偏了。试着调场强与电荷量，看偏转怎么变；再接急单——靶区本局锁定，打偏不换靶。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛靶区进入后固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -543,12 +630,12 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
             <div class="ctrl-group">
                 <div class="ctrl-label">
-                    <span>极板间距 <span class="symbol">d</span></span>
+                    <span>极板间距 <span class="symbol">d</span>（示意）</span>
                     <span class="value" id="gapValDisplay">4.0 cm</span>
                 </div>
-                <input type="range" id="s-plate-gap" min="2" max="8" step="0.1" value="4.0">
+                <input type="range" id="s-plate-gap" min="2" max="8" step="0.1" value="4.0" title="仅改变极板示意间距，不改变偏转（E 独立设定）">
                 <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--craft-muted); padding:0 4px;">
-                    <span>2 cm</span><span>8 cm</span>
+                    <span>2 cm</span><span>仅示意 · 不影响偏转</span><span>8 cm</span>
                 </div>
             </div>
 
@@ -654,12 +741,34 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         if (hint) hint.textContent = g.hint;
       }
     }
-    /** FixedChallenge：仅进入竞赛时锁定一次靶区高度；靶区明显更小 */
+    /** FixedChallenge：仅进入竞赛时锁定一次靶区高度；靶区在发射线下方可达带内 */
     function lockChallengeTarget() {
-      state.lockedTargetYFrac = 0.18 + Math.random() * 0.45;
-      state.targetZone.y = H * state.lockedTargetYFrac;
-      state.targetZone.h = Math.max(36, H * 0.07);
-      state.targetZone.w = Math.max(40, W * 0.065);
+      const zoneH = Math.max(36, H * 0.07);
+      const zoneW = Math.max(40, W * 0.065);
+      const yMin = predictScreenY(1, 80, W, H);
+      const yMax = Math.min(
+        H * 0.92,
+        predictScreenY(10, 1000, W, H) - zoneH * 0.35
+      );
+      const lo = Math.max(H * (LAUNCH_Y_FRAC + 0.04), yMin);
+      const hi = Math.max(lo + zoneH, yMax);
+      let picked = null;
+      for (let attempt = 0; attempt < 48; attempt++) {
+        const y = lo + Math.random() * Math.max(4, hi - lo);
+        if (someEqHitsZone(y, zoneH, W, H)) {
+          picked = y;
+          break;
+        }
+      }
+      if (picked == null) {
+        // 保底：取中等偏转落点居中的可达靶
+        const midY = predictScreenY(6, 600, W, H);
+        picked = Math.max(lo, midY - zoneH * 0.45);
+      }
+      state.lockedTargetYFrac = picked / H;
+      state.targetZone.y = picked;
+      state.targetZone.h = zoneH;
+      state.targetZone.w = zoneW;
       // 开局张力：默认参数往往打不进
       fieldSlider.value = '200';
       chargeSlider.value = '2';
@@ -667,21 +776,28 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       challengeWon = false;
       resetParticle();
       refreshEfieldGoals();
-      observeMsg.innerHTML = '急单已锁定靶区（本局不变）';
+      observeMsg.innerHTML = '急单已锁定靶区（本局不变）· 正电荷向下偏转入靶';
       draw();
     }
     function applyExploreTarget() {
       state.lockedTargetYFrac = null;
       challengeWon = false;
-      state.targetZone.y = H * 0.25;
-      state.targetZone.h = Math.max(64, H * 0.14);
-      state.targetZone.w = Math.max(70, W * 0.12);
+      placeExploreTargetZone();
       fieldSlider.value = '500';
       chargeSlider.value = '5';
+      // 宽画布飞行时间更长：若默认参落点不在靶内，抬到舒适可达参
+      {
+        const y0 = predictScreenY(5, 500, W, H);
+        const inZone = y0 >= state.targetZone.y && y0 <= state.targetZone.y + state.targetZone.h;
+        if (!inZone) {
+          fieldSlider.value = '650';
+          chargeSlider.value = '7';
+        }
+      }
       updateFromSliders();
       resetParticle();
       refreshEfieldGoals();
-      observeMsg.innerHTML = '自由试写：调节后发射，观察偏转。';
+      observeMsg.innerHTML = '自由试写：调节后发射，观察向下偏转（间距 d 仅示意）。';
       draw();
     }
     window.__efieldApplyMode = function(mode) {
@@ -693,10 +809,54 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     // 物理常量 (相对值)
     const PIXEL_SCALE = 1.2;  // 每单位场强加速度系数
     const BASE_ACCEL = 0.8;   // 基础加速度因子
+    /** 发射高度（canvas y 向下增大）；ay≥0 只向下偏，靶区须在发射线下方 */
+    const LAUNCH_Y_FRAC = 0.38;
+    /** 探究靶默认落在中高偏转带；具体 y 由 placeExploreTargetZone 按画布自适应 */
+    const EXPLORE_TARGET_Y_FRAC = 0.58;
 
     // DPR 及尺寸
     let dpr = 1;
     let W = 0, H = 0;
+
+    function accelFor(q, E) {
+      return (q * E) * BASE_ACCEL * 0.012;
+    }
+    /** 荧光屏落点 y（无边界裁剪）；正电荷 ay≥0 → 落点 ≥ 发射高度 */
+    function predictScreenY(q, E, canvasW, canvasH) {
+      const x0 = 70;
+      const y0 = canvasH * LAUNCH_Y_FRAC;
+      const vx = 200;
+      const tx = canvasW * 0.78;
+      const t = Math.max(0.05, (tx - x0) / vx);
+      const ay = accelFor(q, E);
+      return y0 + 0.5 * ay * t * t;
+    }
+    function someEqHitsZone(zoneY, zoneH, canvasW, canvasH) {
+      for (let E = 0; E <= 1000; E += 50) {
+        for (let q = 1; q <= 10; q += 1) {
+          const y = predictScreenY(q, E, canvasW, canvasH);
+          if (y >= zoneY && y <= zoneY + zoneH) return true;
+        }
+      }
+      return false;
+    }
+    /** 探究靶：以中高 (q,E) 落点为中心，钳制在发射线下方可达带 */
+    function placeExploreTargetZone() {
+      const zoneH = Math.max(64, H * 0.14);
+      const zoneW = Math.max(70, W * 0.12);
+      const yComfort = predictScreenY(7, 650, W, H);
+      let y = yComfort - zoneH * 0.45;
+      const yMin = H * (LAUNCH_Y_FRAC + 0.04);
+      const yMax = Math.min(H * 0.88 - zoneH, predictScreenY(10, 1000, W, H) - zoneH * 0.25);
+      y = Math.max(yMin, Math.min(y, Math.max(yMin, yMax)));
+      if (!someEqHitsZone(y, zoneH, W, H)) {
+        y = Math.max(yMin, predictScreenY(8, 800, W, H) - zoneH * 0.5);
+      }
+      state.targetZone.y = y;
+      state.targetZone.h = zoneH;
+      state.targetZone.w = zoneW;
+      return y;
+    }
 
     function resizeCanvas() {
         const rect = area.getBoundingClientRect();
@@ -718,9 +878,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
           state.targetZone.h = Math.max(36, H * 0.07);
           state.targetZone.w = Math.max(40, W * 0.065);
         } else {
-          state.targetZone.y = H * 0.25;
-          state.targetZone.h = Math.max(64, H * 0.14);
-          state.targetZone.w = Math.max(70, W * 0.12);
+          placeExploreTargetZone();
         }
         state.fieldRect.x = 50;
         state.fieldRect.y = 30;
@@ -732,7 +890,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function resetParticle() {
         state.x = 70;
-        state.y = H * 0.7;
+        state.y = H * LAUNCH_Y_FRAC;
         state.vx = 200;
         state.vy = 0;
         state.ax = 0;
@@ -767,18 +925,17 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         // 重置轨迹
         state.trail = [];
         state.x = 70;
-        state.y = H * 0.7;
+        state.y = H * LAUNCH_Y_FRAC;
         state.vx = 200;
         state.vy = 0;
         state.time = 0;
         state.launched = true;
         state.finished = false;
         winOverlay.classList.remove('show');
-        // 计算加速度 (相对值)  ay = (q*E)/m  符号: 正电荷向下偏转 (y增加)
+        // 计算加速度 (相对值)  ay = (q*E)/m  符号: 正电荷向下偏转 (y增加)；靶区在发射线下方
         const q = state.charge;
         const E = state.fieldStrength;
-        const m = 1.0; // 固定质量
-        const accel = (q * E) * BASE_ACCEL * 0.012; // 调参使偏转可见
+        const accel = accelFor(q, E); // 调参使偏转可见
         state.ay = accel;
         state.ax = 0;
         observeMsg.innerHTML = '⏳ 粒子飞行中…';
@@ -870,141 +1027,260 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     function draw() {
         ctx.clearRect(0, 0, W, H);
-        // 霓虹工坊夜街
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#0a0614');
-        bg.addColorStop(0.55, '#1a0b2e');
-        bg.addColorStop(1, '#2d1b4e');
+        var INK = '#0c1018', MID = '#243044', ACCENT = '#8a9ee0';
+        var GLOW = '#6090e8', METAL = '#6a7888', HI = '#b0c0f0', OK = '#6fae8f';
+
+        function rr(x, y, w, h, r) {
+            r = Math.min(r, w * 0.5, h * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
+
+        // 真空偏转舱背景
+        var bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, '#121828');
+        bg.addColorStop(0.55, INK);
+        bg.addColorStop(1, '#060810');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
-        // 窗外霓虹点缀
-        for (let i = 0; i < 18; i++) {
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(244,114,182,0.35)' : (i % 3 === 1 ? 'rgba(56,189,248,0.3)' : 'rgba(250,204,21,0.25)');
-          ctx.beginPath();
-          ctx.arc(30 + (i * 47) % Math.max(80, W - 40), 20 + (i * 37) % Math.max(40, H * 0.35), 2 + (i % 3), 0, Math.PI * 2);
-          ctx.fill();
-        }
-        // 工作台
-        ctx.fillStyle = '#1f1630';
-        ctx.fillRect(0, H - 44, W, 44);
-        ctx.fillStyle = '#4c1d95';
-        ctx.fillRect(0, H - 44, W, 3);
-        // 电子枪 / 写字管枪头
-        ctx.fillStyle = '#6d28d9';
-        ctx.fillRect(18, H * 0.55, 48, H * 0.22);
-        ctx.fillStyle = '#c4b5fd';
-        ctx.fillRect(52, H * 0.62, 30, 10);
-        ctx.fillStyle = 'rgba(15,23,42,0.72)';
-        ctx.fillRect(16, H * 0.54 - 16, 52, 20);
-        ctx.fillStyle = '#ffe0c2';
+        var chamberGlow = ctx.createRadialGradient(W * 0.45, H * 0.5, 20, W * 0.45, H * 0.5, W * 0.55);
+        chamberGlow.addColorStop(0, 'rgba(96,144,232,0.08)');
+        chamberGlow.addColorStop(1, 'rgba(96,144,232,0)');
+        ctx.fillStyle = chamberGlow;
+        ctx.fillRect(0, 0, W, H);
+
+        // 舱底基座
+        var floorY = H - 44;
+        var floorG = ctx.createLinearGradient(0, floorY, 0, H);
+        floorG.addColorStop(0, MID);
+        floorG.addColorStop(1, INK);
+        ctx.fillStyle = floorG;
+        ctx.fillRect(0, floorY, W, H - floorY);
+        ctx.strokeStyle = 'rgba(96,144,232,0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, floorY);
+        ctx.lineTo(W, floorY);
+        ctx.stroke();
+
+        // 真空室外壳（HERO 框架）
+        var chX = 12, chY = 28, chW = W - 24, chH = H - 72;
+        var shellG = ctx.createLinearGradient(chX, chY, chX + chW, chY + chH);
+        shellG.addColorStop(0, '#1a2438');
+        shellG.addColorStop(0.45, MID);
+        shellG.addColorStop(1, '#101828');
+        ctx.fillStyle = shellG;
+        rr(chX, chY, chW, chH, 8);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(138,158,224,0.35)';
+        ctx.lineWidth = 2;
+        rr(chX, chY, chW, chH, 8);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
+        rr(chX + 6, chY + 6, chW - 12, chH - 12, 6);
+        ctx.fill();
+        var topSheen = ctx.createLinearGradient(chX, chY, chX, chY + 24);
+        topSheen.addColorStop(0, 'rgba(176,192,240,0.12)');
+        topSheen.addColorStop(1, 'rgba(176,192,240,0)');
+        ctx.fillStyle = topSheen;
+        rr(chX + 2, chY + 2, chW - 4, 22, 6);
+        ctx.fill();
+        ctx.fillStyle = HI;
+        ctx.font = '12px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('静电偏转舱 · 真空室', chX + 14, chY - 8);
+
+        // 电子枪
+        var gunX = 18, gunY = H * 0.55, gunW = 48, gunH = H * 0.22;
+        var gunG = ctx.createLinearGradient(gunX, gunY, gunX + gunW, gunY);
+        gunG.addColorStop(0, '#3a4458');
+        gunG.addColorStop(0.5, METAL);
+        gunG.addColorStop(1, '#4a5568');
+        ctx.fillStyle = gunG;
+        rr(gunX, gunY, gunW, gunH, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(138,158,224,0.28)';
+        ctx.lineWidth = 1.5;
+        rr(gunX, gunY, gunW, gunH, 4);
+        ctx.stroke();
+        ctx.fillStyle = ACCENT;
+        rr(gunX + gunW - 4, gunY + gunH * 0.32, 34, 10, 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(12,16,24,0.78)';
+        rr(16, H * 0.54 - 16, 52, 20, 3);
+        ctx.fill();
+        ctx.fillStyle = HI;
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
         ctx.fillText('电子枪', 20, H * 0.54);
 
-        // 偏转板电场区
-        ctx.fillStyle = 'rgba(124, 58, 237, 0.16)';
-        ctx.strokeStyle = '#c084fc';
+        // 平行板偏转区（HERO）
+        var fr = state.fieldRect;
+        var plateW = fr.w * 0.55;
+        var fieldX = fr.x, fieldY = fr.y, fieldH = fr.h;
+        var fieldGlow = ctx.createLinearGradient(fieldX, fieldY, fieldX + plateW, fieldY);
+        fieldGlow.addColorStop(0, 'rgba(96,144,232,0.04)');
+        fieldGlow.addColorStop(0.5, 'rgba(96,144,232,0.14)');
+        fieldGlow.addColorStop(1, 'rgba(96,144,232,0.04)');
+        ctx.fillStyle = fieldGlow;
+        ctx.fillRect(fieldX, fieldY, plateW, fieldH);
+        ctx.strokeStyle = 'rgba(138,158,224,0.45)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 8]);
-        ctx.strokeRect(state.fieldRect.x, state.fieldRect.y, state.fieldRect.w * 0.55, state.fieldRect.h);
+        ctx.strokeRect(fieldX, fieldY, plateW, fieldH);
         ctx.setLineDash([]);
-        ctx.fillRect(state.fieldRect.x, state.fieldRect.y, state.fieldRect.w * 0.55, state.fieldRect.h);
-        // 上下极板（间距 d 只改示意厚度/留白，偏转仍由独立设定的 E 决定）
-        ctx.fillStyle = '#e9d5ff';
         var gapCm = state.plateGap != null ? state.plateGap : 4;
         var plateInset = 4 + (gapCm - 2) * 1.2;
-        ctx.fillRect(state.fieldRect.x + 8, state.fieldRect.y + plateInset, state.fieldRect.w * 0.5, 8);
-        ctx.fillRect(state.fieldRect.x + 8, state.fieldRect.y + state.fieldRect.h - plateInset - 8, state.fieldRect.w * 0.5, 8);
-        // 标注下移避开 dual-mode 条，并加底板提高对比
-        const plateLabelY = Math.max(72, state.fieldRect.y + 48);
-        ctx.fillStyle = 'rgba(15,23,42,0.78)';
-        ctx.fillRect(state.fieldRect.x + 10, plateLabelY - 14, 52, 18);
-        ctx.fillStyle = '#ffe0c2';
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('偏转板', state.fieldRect.x + 16, plateLabelY);
-        // 电场线示意
-        ctx.strokeStyle = 'rgba(232,121,249,0.35)';
+        var plateThick = 8;
+        var plateLen = fr.w * 0.5;
+        var topPlateG = ctx.createLinearGradient(fieldX, fieldY + plateInset, fieldX, fieldY + plateInset + plateThick);
+        topPlateG.addColorStop(0, '#8898b0');
+        topPlateG.addColorStop(0.4, METAL);
+        topPlateG.addColorStop(1, '#4a5868');
+        ctx.fillStyle = topPlateG;
+        rr(fieldX + 8, fieldY + plateInset, plateLen, plateThick, 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(176,192,240,0.35)';
         ctx.lineWidth = 1;
-        const plateW = state.fieldRect.w * 0.55;
+        rr(fieldX + 8, fieldY + plateInset, plateLen, plateThick, 2);
+        ctx.stroke();
+        var botY = fieldY + fieldH - plateInset - plateThick;
+        var botPlateG = ctx.createLinearGradient(fieldX, botY, fieldX, botY + plateThick);
+        botPlateG.addColorStop(0, '#8898b0');
+        botPlateG.addColorStop(0.4, METAL);
+        botPlateG.addColorStop(1, '#4a5868');
+        ctx.fillStyle = botPlateG;
+        rr(fieldX + 8, botY, plateLen, plateThick, 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(176,192,240,0.35)';
+        rr(fieldX + 8, botY, plateLen, plateThick, 2);
+        ctx.stroke();
+        ctx.fillStyle = GLOW;
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('+', fieldX + 18, fieldY + plateInset + 6);
+        ctx.fillText('−', fieldX + 18, botY + 6);
+        ctx.strokeStyle = 'rgba(96,144,232,0.35)';
+        ctx.lineWidth = 1;
         for (let i = 0; i < 6; i++) {
-            const xPos = state.fieldRect.x + 24 + i * (plateW / 7);
+            const xPos = fieldX + 24 + i * (plateW / 7);
             ctx.beginPath();
-            ctx.moveTo(xPos, state.fieldRect.y + 18);
-            ctx.lineTo(xPos, state.fieldRect.y + state.fieldRect.h - 18);
+            ctx.moveTo(xPos, fieldY + plateInset + plateThick + 4);
+            ctx.lineTo(xPos, botY - 4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(xPos - 3, botY - 8);
+            ctx.lineTo(xPos, botY - 4);
+            ctx.lineTo(xPos + 3, botY - 8);
             ctx.stroke();
         }
+        const plateLabelY = Math.max(72, fieldY + 48);
+        ctx.fillStyle = 'rgba(12,16,24,0.78)';
+        rr(fieldX + 10, plateLabelY - 14, 52, 18, 3);
+        ctx.fill();
+        ctx.fillStyle = HI;
+        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('偏转板', fieldX + 16, plateLabelY);
 
-        // 招牌荧光屏 + 靶区
+        // 荧光屏 + 靶区
         const tz = state.targetZone;
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(tz.x - 14, 36, tz.w + 48, H - 90);
-        ctx.strokeStyle = '#f472b6';
+        var scrX = tz.x - 14, scrY = 36, scrW = tz.w + 48, scrH = H - 90;
+        var scrG = ctx.createLinearGradient(scrX, scrY, scrX + scrW, scrY);
+        scrG.addColorStop(0, '#141c28');
+        scrG.addColorStop(0.5, '#0e1620');
+        scrG.addColorStop(1, '#141c28');
+        ctx.fillStyle = scrG;
+        rr(scrX, scrY, scrW, scrH, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(138,158,224,0.45)';
         ctx.lineWidth = 2;
-        ctx.shadowColor = '#f472b6';
-        ctx.shadowBlur = 12;
-        ctx.strokeRect(tz.x - 14, 36, tz.w + 48, H - 90);
+        ctx.shadowColor = GLOW;
+        ctx.shadowBlur = 10;
+        rr(scrX, scrY, scrW, scrH, 4);
+        ctx.stroke();
         ctx.shadowBlur = 0;
-        ctx.fillStyle = 'rgba(74, 222, 128, 0.28)';
-        ctx.strokeStyle = '#4ade80';
+        var phosG = ctx.createLinearGradient(scrX + 4, scrY + 4, scrX + 4, scrY + scrH - 4);
+        phosG.addColorStop(0, 'rgba(96,144,232,0.06)');
+        phosG.addColorStop(0.5, 'rgba(96,144,232,0.12)');
+        phosG.addColorStop(1, 'rgba(96,144,232,0.06)');
+        ctx.fillStyle = phosG;
+        ctx.fillRect(scrX + 4, scrY + 4, scrW - 8, scrH - 8);
+        ctx.fillStyle = 'rgba(111,174,143,0.28)';
+        ctx.strokeStyle = OK;
         ctx.lineWidth = 2.5;
         ctx.fillRect(tz.x, tz.y, tz.w, tz.h);
         ctx.strokeRect(tz.x, tz.y, tz.w, tz.h);
-        ctx.fillStyle = '#bbf7d0';
+        ctx.fillStyle = '#a8d4b8';
         ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
         ctx.fillText(playMode === 'challenge' ? '急单靶' : '试写区', tz.x + 6, tz.y - 8);
-        ctx.fillStyle = 'rgba(15,23,42,0.78)';
-        ctx.fillRect(tz.x - 10, 58, 78, 18);
-        ctx.fillStyle = '#f8fafc';
-        ctx.fillText('霓虹招牌屏', tz.x - 6, Math.max(tz.y - 28, 58)); // 避开顶栏双模式条
+        ctx.fillStyle = 'rgba(12,16,24,0.78)';
+        rr(tz.x - 10, 58, 78, 18, 3);
+        ctx.fill();
+        ctx.fillStyle = HI;
+        ctx.fillText('荧光屏', tz.x - 6, Math.max(tz.y - 28, 58));
 
-        // 轨迹
+        // 粒子束轨迹
         if (state.trail.length > 1) {
             ctx.beginPath();
-            ctx.strokeStyle = '#facc15';
+            var trailG = ctx.createLinearGradient(state.trail[0].x, state.trail[0].y, state.trail[state.trail.length - 1].x, state.trail[state.trail.length - 1].y);
+            trailG.addColorStop(0, 'rgba(96,144,232,0.5)');
+            trailG.addColorStop(1, ACCENT);
+            ctx.strokeStyle = trailG;
             ctx.lineWidth = 2.5;
-            ctx.shadowColor = '#facc15';
+            ctx.shadowColor = GLOW;
             ctx.shadowBlur = 8;
             for (let i = 1; i < state.trail.length; i++) {
-                ctx.moveTo(state.trail[i-1].x, state.trail[i-1].y);
+                ctx.moveTo(state.trail[i - 1].x, state.trail[i - 1].y);
                 ctx.lineTo(state.trail[i].x, state.trail[i].y);
             }
             ctx.stroke();
             ctx.shadowBlur = 0;
         }
 
-        // 粒子 (圆)
+        // 粒子光点
         if (!state.finished || state.trail.length > 0) {
             ctx.beginPath();
-            ctx.arc(state.x, state.y, 8, 0, Math.PI*2);
-            ctx.fillStyle = '#f97316';
-            ctx.shadowColor = '#f97316';
+            ctx.arc(state.x, state.y, 8, 0, Math.PI * 2);
+            var partRad = ctx.createRadialGradient(state.x - 2, state.y - 2, 1, state.x, state.y, 8);
+            partRad.addColorStop(0, HI);
+            partRad.addColorStop(0.5, GLOW);
+            partRad.addColorStop(1, ACCENT);
+            ctx.fillStyle = partRad;
+            ctx.shadowColor = GLOW;
             ctx.shadowBlur = 18;
             ctx.fill();
             ctx.shadowBlur = 0;
-            // 电荷标识
             ctx.fillStyle = 'white';
             ctx.font = 'bold 12px sans-serif';
-            ctx.fillText('+', state.x-5, state.y+4);
+            ctx.textAlign = 'left';
+            ctx.fillText('+', state.x - 5, state.y + 4);
         }
 
         // 初速度箭头
         if (!state.launched && !state.finished) {
             ctx.beginPath();
-            ctx.strokeStyle = '#f8fafc';
+            ctx.strokeStyle = HI;
             ctx.lineWidth = 2;
             ctx.moveTo(state.x, state.y);
             ctx.lineTo(state.x + 40, state.y);
             ctx.stroke();
-            ctx.fillStyle = '#f8fafc';
+            ctx.fillStyle = HI;
             ctx.beginPath();
-            ctx.moveTo(state.x+44, state.y);
-            ctx.lineTo(state.x+36, state.y-5);
-            ctx.lineTo(state.x+36, state.y+5);
+            ctx.moveTo(state.x + 44, state.y);
+            ctx.lineTo(state.x + 36, state.y - 5);
+            ctx.lineTo(state.x + 36, state.y + 5);
             ctx.fill();
-            ctx.fillStyle = 'rgba(15,23,42,0.78)';
-            ctx.fillRect(state.x + 12, state.y - 24, 28, 16);
-            ctx.fillStyle = '#ffe0c2';
+            ctx.fillStyle = 'rgba(12,16,24,0.78)';
+            rr(state.x + 12, state.y - 24, 28, 16, 3);
+            ctx.fill();
+            ctx.fillStyle = ACCENT;
             ctx.font = 'bold 12px sans-serif';
-            ctx.fillText('v₀', state.x+20, state.y-10);
+            ctx.fillText('v₀', state.x + 20, state.y - 10);
         }
     }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>电容实验三：储能与充电</title>
+<title>储能台 · 充放电</title>
 <style>
 /* ===== css/base.css ===== */
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -642,7 +642,7 @@ body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#00c8ff;--craft-bg:#040410;--craft-panel:#081220;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;--craft-text:#f0e8d4;--craft-muted:#a09070;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -723,13 +723,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (capacitor-era-ch4) === */
+:root{
+  --craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;
+  --craft-text:#f0e8d4;--craft-muted:#a09070;
+  --scene-ink:#141008;--scene-mid:#2e2414;--scene-hi:#f0c878;
+  --scene-glow:#e09030;--scene-metal:#7a8490;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body class="cap-dark">
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>能量之门 · 储能校准</h2>
+    <h2>储能台 · 充放电</h2>
     <p>城门封印要精确储能。试着弄清电容与电压如何改变储能；再接限次急单——目标储能带本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标储能带本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -3830,18 +3917,18 @@ function drawCh4CapDevice(x, y, w, h) {
   const midX  = gapX + gapW2 * 0.5;
   if (g > 0.02) {
     const gg = ctx.createRadialGradient(midX, colY + colH * 0.5, 0, midX, colY + colH * 0.5, gapW2 * 1.4 + colW * 0.6);
-    gg.addColorStop(0,   `rgba(80,185,255,${g * (0.80 + pp2 * 0.18)})`);
-    gg.addColorStop(0.35,`rgba(35,115,220,${g * 0.48})`);
-    gg.addColorStop(1,    'rgba(0,30,90,0)');
+    gg.addColorStop(0,   `rgba(240,200,120,${g * (0.80 + pp2 * 0.18)})`);
+    gg.addColorStop(0.35,`rgba(212,160,80,${g * 0.48})`);
+    gg.addColorStop(1,    'rgba(60,40,10,0)');
     ctx.fillStyle = gg;
     ctx.fillRect(gapX, colY + 3, gapW2, colH - 6);
 
     // Intermittent spark arcs between plates
     if (g > 0.45 && Math.random() < 0.22 * g) {
       ctx.save();
-      ctx.strokeStyle = `rgba(160,225,255,${g * 0.75})`;
+      ctx.strokeStyle = `rgba(240,200,120,${g * 0.75})`;
       ctx.lineWidth = 1;
-      ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(100,200,255,0.8)';
+      ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(224,160,80,0.8)';
       ctx.beginPath();
       let sx = col1X + colW, sy = colY + colH * (0.25 + Math.random() * 0.50);
       ctx.moveTo(sx, sy);
@@ -3865,8 +3952,8 @@ function drawCh4CapDevice(x, y, w, h) {
   if (g > 0.01) {
     const fh = indH * g;
     const ig = ctx.createLinearGradient(0, indY + indH - fh, 0, indY + indH);
-    ig.addColorStop(0, `rgba(55,155,255,${g * 0.80})`);
-    ig.addColorStop(1, `rgba(120,215,255,${g * 0.95})`);
+    ig.addColorStop(0, `rgba(212,160,80,${g * 0.80})`);
+    ig.addColorStop(1, `rgba(240,200,120,${g * 0.95})`);
     ctx.fillStyle = ig;
     ctx.fillRect(indX + 1, indY + indH - fh + 1, 5, fh - 1);
   }

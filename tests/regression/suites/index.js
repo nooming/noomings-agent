@@ -26,6 +26,7 @@ const SUITES = {
     { name: 'platform-phase-teammate', module: './parts/platform-phase-teammate' },
     { name: 'teammate-coverage', module: './parts/teammate-coverage' },
     { name: 'capacitor-slim-visual', module: './parts/capacitor-slim-visual' },
+    { name: 'unpassable-levels-audit', module: './parts/unpassable-levels-audit' },
     { name: 'graph-preview-url', module: './parts/graph-preview-url' },
     { name: 'graph-preview-api-smoke', module: './parts/graph-preview-api-smoke' },
     { name: 'manual-backups', module: './parts/manual-backups' },

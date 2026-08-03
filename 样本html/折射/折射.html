@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>折射 · 探究</title>
+    <title>光学台 · 水槽折射</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; padding: 20px; }
@@ -158,7 +158,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#2dd4bf;--craft-bg:#061816;--craft-panel:#0f2a28;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#3a9e9a;--craft-bg:#0a1414;--craft-panel:#142422;--craft-text:#e4f0ee;--craft-muted:#7a9a96;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -257,13 +257,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (refraction-snell) === */
+:root{
+  --craft-accent:#3a9e9a;--craft-bg:#0a1414;--craft-panel:#142422;
+  --craft-text:#e4f0ee;--craft-muted:#7a9a96;
+  --scene-ink:#0a1414;--scene-mid:#1e3430;--scene-hi:#8ad4c8;
+  --scene-glow:#f0d060;--scene-metal:#6a7880;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>夜潜探照 · 水下打靶</h2>
+    <h2>光学台 · 水槽折射</h2>
     <p>码头夜潜要照亮水下浮标。试着弄清入射角与折射率如何改变折射光路；再接限次急单——靶位本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后靶位本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -287,7 +374,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">夜潜探照 · 水下打靶</div>
+      <div class="essence-title">光学水槽台</div>
       <div class="essence-sub" id="goalMission">探究：自由调 θ₁、n₂，观察折射光路</div>
     </div>
   </div>
@@ -503,48 +590,161 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
     const groundY = L.groundY, launchX = L.launchX, launchY = L.launchY, target = L.target;
     ctx.clearRect(0, 0, W, H);
 
-    // 空气 / 水槽
+    var SC = { accent:'#3a9e9a', bg:'#0a1414', hi:'#8ad4c8', glow:'#f0d060', metal:'#6a7880', mid:'#1e3430' };
+    var tankL = 10, tankR = W - 10, tankBot = H - 16, benchTh = 12;
+
+    // 空气层
     const air = ctx.createLinearGradient(0, 0, 0, groundY);
-    air.addColorStop(0, '#0b1c1a');
-    air.addColorStop(1, '#12302c');
+    air.addColorStop(0, SC.bg);
+    air.addColorStop(0.55, SC.mid);
+    air.addColorStop(1, '#163532');
     ctx.fillStyle = air;
     ctx.fillRect(0, 0, W, groundY);
+    ctx.fillStyle = 'rgba(138,212,200,0.04)';
+    ctx.fillRect(0, 0, W, Math.round(groundY * 0.45));
+
+    // 光学木台（承托水槽）
+    var benchY = groundY - 1;
+    const woodG = ctx.createLinearGradient(0, benchY, 0, benchY + benchTh);
+    woodG.addColorStop(0, '#6b4a32');
+    woodG.addColorStop(0.35, '#8f6238');
+    woodG.addColorStop(0.7, '#5c3f28');
+    woodG.addColorStop(1, '#4a3220');
+    ctx.fillStyle = woodG;
+    ctx.fillRect(0, benchY, W, benchTh);
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = 1;
+    for (var wg = 0; wg < Math.ceil(W / 28); wg++) {
+      var gx = wg * 28 + (wg % 3) * 4;
+      ctx.beginPath();
+      ctx.moveTo(gx, benchY + 2);
+      ctx.bezierCurveTo(gx + 8, benchY + benchTh * 0.4, gx + 18, benchY + benchTh * 0.75, gx + 26, benchY + benchTh - 1);
+      ctx.stroke();
+    }
+    ctx.fillStyle = SC.metal;
+    ctx.fillRect(0, benchY + benchTh - 2, W, 2);
+
+    // 水体
     const water = ctx.createLinearGradient(0, groundY, 0, H);
-    water.addColorStop(0, 'rgba(45,212,191,0.28)');
-    water.addColorStop(1, 'rgba(14,116,144,0.55)');
+    water.addColorStop(0, 'rgba(58,158,154,0.32)');
+    water.addColorStop(0.45, 'rgba(30,52,48,0.62)');
+    water.addColorStop(1, 'rgba(10,20,20,0.88)');
     ctx.fillStyle = water;
-    ctx.fillRect(0, groundY, W, H - groundY);
+    ctx.fillRect(tankL, groundY, tankR - tankL, tankBot - groundY);
 
-    // 水槽壁
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(0, groundY, 10, H - groundY);
-    ctx.fillRect(W - 10, groundY, 10, H - groundY);
-    ctx.fillRect(0, H - 16, W, 16);
-
+    // 水底焦散 shimmer
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(0, groundY);
-    ctx.lineTo(W, groundY);
-    ctx.strokeStyle = '#5eead4';
-    ctx.lineWidth = 2;
+    ctx.rect(tankL + 2, groundY + 4, tankR - tankL - 4, tankBot - groundY - 6);
+    ctx.clip();
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = SC.hi;
+    ctx.lineWidth = 1.1;
+    for (var ci = 0; ci < 14; ci++) {
+      var cx0 = tankL + 12 + (ci * 37) % (tankR - tankL - 24);
+      var cy0 = groundY + 18 + (ci * 23) % (tankBot - groundY - 30);
+      ctx.beginPath();
+      ctx.moveTo(cx0, cy0);
+      ctx.bezierCurveTo(cx0 + 14, cy0 - 6, cx0 + 28, cy0 + 10, cx0 + 42, cy0 + 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = SC.glow;
+    for (var si = 0; si < 9; si++) {
+      var sx = tankL + 20 + (si * 53) % (tankR - tankL - 40);
+      var sy = groundY + 30 + (si * 41) % (tankBot - groundY - 50);
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 10 + (si % 3) * 4, 5 + (si % 2) * 3, si * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 玻璃槽壁 + 金属底框
+    function drawGlassWall(x, w, inner) {
+      var g = ctx.createLinearGradient(x, groundY, inner ? x + w : x - w, groundY);
+      g.addColorStop(0, 'rgba(106,120,128,0.72)');
+      g.addColorStop(0.35, 'rgba(138,212,200,0.18)');
+      g.addColorStop(0.65, 'rgba(58,158,154,0.28)');
+      g.addColorStop(1, 'rgba(30,52,48,0.55)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x, groundY, w, tankBot - groundY);
+      ctx.strokeStyle = inner ? 'rgba(138,212,200,0.55)' : 'rgba(106,120,128,0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(inner ? x + w - 1 : x + 1, groundY);
+      ctx.lineTo(inner ? x + w - 1 : x + 1, tankBot);
+      ctx.stroke();
+    }
+    drawGlassWall(0, tankL, true);
+    drawGlassWall(tankR, tankL, false);
+    const floorG = ctx.createLinearGradient(0, tankBot - 16, 0, tankBot);
+    floorG.addColorStop(0, 'rgba(58,158,154,0.35)');
+    floorG.addColorStop(0.5, 'rgba(106,120,128,0.5)');
+    floorG.addColorStop(1, '#4a3220');
+    ctx.fillStyle = floorG;
+    ctx.fillRect(0, tankBot - 16, W, 16);
+    ctx.strokeStyle = SC.metal;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, tankBot - 16.5, W - 1, 15);
+
+    // 水面高光与液面
+    ctx.beginPath();
+    ctx.moveTo(tankL, groundY);
+    ctx.lineTo(tankR, groundY);
+    ctx.strokeStyle = SC.hi;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(240,208,96,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tankL + 4, groundY - 1);
+    ctx.lineTo(tankR - 4, groundY - 1);
     ctx.stroke();
 
     ctx.font = '12px "Microsoft YaHei",sans-serif';
-    ctx.fillStyle = '#99f6e4';
+    ctx.fillStyle = SC.hi;
     ctx.fillText('空气', 18, groundY - 10);
+    ctx.fillStyle = 'rgba(138,212,200,0.85)';
     ctx.fillText('水槽介质 n₂=' + n2.toFixed(1), 18, groundY + 22);
 
-    // 探照灯
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(launchX - 18, launchY - 10, 28, 20);
+    // 探照灯 — 黄铜灯室 + 暖光
+    ctx.save();
+    ctx.shadowColor = SC.glow;
+    ctx.shadowBlur = 22;
+    ctx.beginPath();
+    ctx.arc(launchX, launchY, 9, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(240,208,96,0.35)';
+    ctx.fill();
+    ctx.restore();
+    const brass = ctx.createLinearGradient(launchX - 20, launchY - 12, launchX + 12, launchY + 12);
+    brass.addColorStop(0, '#8a7344');
+    brass.addColorStop(0.45, SC.glow);
+    brass.addColorStop(0.75, SC.metal);
+    brass.addColorStop(1, '#4a4030');
+    ctx.fillStyle = brass;
+    ctx.fillRect(launchX - 20, launchY - 11, 32, 22);
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#3a3530';
+    ctx.fillRect(launchX - 6, launchY - 14, 12, 5);
+    const lensG = ctx.createRadialGradient(launchX - 2, launchY - 1, 1, launchX, launchY, 8);
+    lensG.addColorStop(0, '#fff8dc');
+    lensG.addColorStop(0.5, SC.glow);
+    lensG.addColorStop(1, 'rgba(240,160,40,0.85)');
     ctx.beginPath();
     ctx.arc(launchX, launchY, 7, 0, 2 * Math.PI);
-    ctx.fillStyle = '#fde047';
-    ctx.shadowColor = '#facc15';
-    ctx.shadowBlur = 12;
+    ctx.fillStyle = lensG;
+    ctx.shadowColor = SC.glow;
+    ctx.shadowBlur = 14;
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#fef9c3';
-    ctx.fillText('探照灯', launchX - 18, launchY - 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = SC.glow;
+    ctx.font = '12px "Microsoft YaHei",sans-serif';
+    ctx.fillText('探照灯', launchX - 18, launchY - 18);
 
     const theta1Rad = theta1Deg * Math.PI / 180;
     let ix = launchX + (groundY - launchY) * Math.tan(theta1Rad);
@@ -608,17 +808,62 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
       ctx.fillText('折射光路待测 · 点发射', ix + 16, groundY + 36);
     }
 
-    // 水下靶
+    // 水下靶 — 信标盘 + 十字准星
+    var tr = target.radius;
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(target.x, target.y, target.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(248,113,113,0.28)';
+    ctx.arc(target.x, target.y, tr + 10, 0, Math.PI * 2);
+    var haloG = ctx.createRadialGradient(target.x, target.y, tr * 0.3, target.x, target.y, tr + 10);
+    haloG.addColorStop(0, 'rgba(240,208,96,0.28)');
+    haloG.addColorStop(0.6, 'rgba(240,120,80,0.12)');
+    haloG.addColorStop(1, 'rgba(240,80,60,0)');
+    ctx.fillStyle = haloG;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(target.x, target.y + tr + 14);
+    ctx.lineTo(target.x, tankBot - 4);
+    ctx.strokeStyle = 'rgba(106,120,128,0.55)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = SC.metal;
+    ctx.fillRect(target.x - 4, tankBot - 6, 8, 6);
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, tr + 4, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(240,208,96,0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, tr, 0, Math.PI * 2);
+    var discG = ctx.createRadialGradient(target.x - tr * 0.25, target.y - tr * 0.25, 1, target.x, target.y, tr);
+    discG.addColorStop(0, 'rgba(255,200,180,0.55)');
+    discG.addColorStop(0.5, 'rgba(240,100,90,0.38)');
+    discG.addColorStop(1, 'rgba(180,50,50,0.45)');
+    ctx.fillStyle = discG;
+    ctx.fill();
     ctx.strokeStyle = '#f87171';
     ctx.lineWidth = 2.5;
-    ctx.fill();
     ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, tr * 0.55, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,220,200,0.7)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(target.x - tr * 0.65, target.y);
+    ctx.lineTo(target.x + tr * 0.65, target.y);
+    ctx.moveTo(target.x, target.y - tr * 0.65);
+    ctx.lineTo(target.x, target.y + tr * 0.65);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = SC.glow;
+    ctx.fill();
+    ctx.restore();
     ctx.fillStyle = '#fecaca';
     ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-    ctx.fillText(playMode==='challenge'?'急单靶':'对照靶', target.x - 22, target.y - target.radius - 8);
+    ctx.fillText(playMode==='challenge'?'急单靶':'对照靶', target.x - 22, target.y - tr - 8);
 
     let hit = false;
     let missSide = null; // 'left' | 'right' | null

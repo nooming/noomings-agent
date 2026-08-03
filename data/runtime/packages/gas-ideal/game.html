@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>气体 · 玻意耳定律</title>
+    <title>气室 · 活塞实验桌</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
@@ -160,7 +160,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#c084fc;--craft-bg:#120818;--craft-panel:#22142e;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#6a9ab8;--craft-bg:#101418;--craft-panel:#1a2228;--craft-text:#e8eef2;--craft-muted:#8a9aa8;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -260,13 +260,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (gas-ideal) === */
+:root{
+  --craft-accent:#6a9ab8;--craft-bg:#101418;--craft-panel:#1a2228;
+  --craft-text:#e8eef2;--craft-muted:#8a9aa8;
+  --scene-ink:#101418;--scene-mid:#2a343c;--scene-hi:#b8d0e0;
+  --scene-glow:#5a9ec8;--scene-metal:#8a969e;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body>
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>深潜器 · 压舱气室</h2>
+    <h2>气室 · 活塞实验桌</h2>
     <p>下潜前压舱气室读数飘了。试着弄清压强与体积如何关联；再接限次急单——标定带本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后标定带本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -290,7 +377,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
     
     <div id="essence-hud">
-      <div class="essence-title">深潜器 · 压舱气室</div>
+      <div class="essence-title">气缸活塞桌</div>
       <div class="essence-sub" id="goalMission">探究：自由调 p、V，观察乘积变化</div>
     </div>
   </div>
@@ -494,95 +581,267 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
         function drawScene(p, V, pv) {
             syncCanvasSize();
             ctx.clearRect(0, 0, W, H);
+
+            const C = {
+                bg: '#101418', mid: '#2a343c', hi: '#b8d0e0', metal: '#8a969e',
+                accent: '#6a9ab8', glow: '#5a9ec8', ok: '#6fae8f', panel: '#1a2228',
+                brass: '#c9973f', brassHi: '#e8c878', brassDark: '#6a4a18'
+            };
+
+            function rr(x, y, w, h, r) {
+                r = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            }
+
+            function brassDial(cx, cy, r) {
+                const bz = ctx.createRadialGradient(cx - r * 0.28, cy - r * 0.32, r * 0.15, cx, cy, r);
+                bz.addColorStop(0, C.brassHi);
+                bz.addColorStop(0.55, C.brass);
+                bz.addColorStop(1, C.brassDark);
+                ctx.fillStyle = bz;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.fill();
+                const fg = ctx.createRadialGradient(cx, cy, 1, cx, cy, r * 0.78);
+                fg.addColorStop(0, '#ece4d0');
+                fg.addColorStop(1, '#c4b8a0');
+                ctx.fillStyle = fg;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * 0.78, -Math.PI * 0.72, Math.PI * 0.08);
+                ctx.stroke();
+                for (let t = 0; t <= 10; t++) {
+                    const a = -Math.PI * 0.75 + (t / 10) * Math.PI * 1.5;
+                    const inner = r * (t % 5 === 0 ? 0.52 : 0.6);
+                    ctx.strokeStyle = t % 5 === 0 ? 'rgba(42,52,60,0.85)' : 'rgba(42,52,60,0.45)';
+                    ctx.lineWidth = t % 5 === 0 ? 1.4 : 0.8;
+                    ctx.beginPath();
+                    ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+                    ctx.lineTo(cx + Math.cos(a) * r * 0.72, cy + Math.sin(a) * r * 0.72);
+                    ctx.stroke();
+                }
+            }
+
+            // 背景与顶光
             const bg = ctx.createLinearGradient(0, 0, 0, H);
-            bg.addColorStop(0, '#1a1024');
-            bg.addColorStop(1, '#0f172a');
+            bg.addColorStop(0, '#182028');
+            bg.addColorStop(0.55, C.bg);
+            bg.addColorStop(1, '#0a0c10');
             ctx.fillStyle = bg;
             ctx.fillRect(0, 0, W, H);
-            ctx.fillStyle = '#1e293b';
-            ctx.fillRect(0, H * 0.82, W, H * 0.18);
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(0, H * 0.82, W, 6);
+            const topGlow = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.22, H * 0.08, W * 0.55);
+            topGlow.addColorStop(0, 'rgba(90,158,200,0.16)');
+            topGlow.addColorStop(1, 'rgba(90,158,200,0)');
+            ctx.fillStyle = topGlow;
+            ctx.fillRect(0, 0, W, H);
 
-            // 实验台
-            const cylX = W * 0.18, cylY = H * 0.22, cylW = W * 0.58, cylH = H * 0.48;
-            ctx.fillStyle = '#334155';
-            ctx.fillRect(cylX - 18, cylY + cylH, cylW + 36, 18);
-            ctx.strokeStyle = '#a78bfa';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(cylX, cylY, cylW, cylH);
-            ctx.fillStyle = 'rgba(192,132,252,0.08)';
-            ctx.fillRect(cylX, cylY, cylW, cylH);
+            const deskY = H * 0.78;
+            const deskGrad = ctx.createLinearGradient(0, deskY - 20, 0, H);
+            deskGrad.addColorStop(0, '#3a444c');
+            deskGrad.addColorStop(0.12, C.mid);
+            deskGrad.addColorStop(1, '#141a20');
+            ctx.fillStyle = deskGrad;
+            ctx.fillRect(0, deskY, W, H - deskY);
+            ctx.fillStyle = 'rgba(184,208,224,0.12)';
+            ctx.fillRect(0, deskY, W, 3);
+            ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 7; i++) {
+                ctx.beginPath();
+                ctx.moveTo(24 + i * (W / 6.5), deskY + 8);
+                ctx.lineTo(24 + i * (W / 6.5), H - 6);
+                ctx.stroke();
+            }
 
-            const gasW = Math.max(40, (V / 10) * (cylW - 28));
-            const gasGrad = ctx.createLinearGradient(cylX, 0, cylX + gasW, 0);
-            gasGrad.addColorStop(0, 'rgba(167,139,250,0.55)');
-            gasGrad.addColorStop(1, 'rgba(56,189,248,0.35)');
+            // 气缸布局（水平玻璃管 + 钢架）
+            const mountW = W * 0.68, mountH = H * 0.34;
+            const mountX = W * 0.08, mountY = H * 0.24;
+            const tubeX = mountX + mountW * 0.06;
+            const tubeY = mountY + mountH * 0.38;
+            const tubeW = mountW * 0.72;
+            const tubeH = Math.max(36, mountH * 0.28);
+            const wall = 10;
+            const innerX = tubeX + wall;
+            const innerY = tubeY + wall * 0.55;
+            const innerW = tubeW - wall * 2;
+            const innerH = tubeH - wall;
+
+            // 钢架底座
+            ctx.fillStyle = 'rgba(0,0,0,0.28)';
+            rr(mountX + 6, deskY - 4, mountW, 12, 4);
+            ctx.fill();
+            const frameGrad = ctx.createLinearGradient(mountX, mountY, mountX, mountY + mountH);
+            frameGrad.addColorStop(0, '#4a545c');
+            frameGrad.addColorStop(0.45, C.metal);
+            frameGrad.addColorStop(1, '#3a4248');
+            ctx.fillStyle = frameGrad;
+            rr(mountX, mountY + mountH * 0.72, mountW, mountH * 0.14, 5);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(184,208,224,0.18)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#525c64';
+            rr(mountX + mountW * 0.04, mountY + mountH * 0.18, mountW * 0.07, mountH * 0.58, 3);
+            ctx.fill();
+            rr(mountX + mountW * 0.88, mountY + mountH * 0.18, mountW * 0.07, mountH * 0.58, 3);
+            ctx.fill();
+
+            // 玻璃/金属气缸外壁
+            const shellGrad = ctx.createLinearGradient(tubeX, tubeY, tubeX, tubeY + tubeH);
+            shellGrad.addColorStop(0, 'rgba(184,208,224,0.55)');
+            shellGrad.addColorStop(0.35, 'rgba(106,154,184,0.22)');
+            shellGrad.addColorStop(0.65, 'rgba(42,52,60,0.35)');
+            shellGrad.addColorStop(1, 'rgba(138,150,158,0.45)');
+            ctx.fillStyle = shellGrad;
+            rr(tubeX, tubeY, tubeW, tubeH, tubeH / 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(184,208,224,0.35)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(tubeX + tubeH * 0.35, tubeY + 4);
+            ctx.lineTo(tubeX + tubeW - tubeH * 0.35, tubeY + 4);
+            ctx.stroke();
+
+            // 左端盖（钢）
+            const capGrad = ctx.createLinearGradient(tubeX - 14, tubeY, tubeX + 6, tubeY + tubeH);
+            capGrad.addColorStop(0, '#6a747c');
+            capGrad.addColorStop(1, '#3a4248');
+            ctx.fillStyle = capGrad;
+            rr(tubeX - 12, tubeY + 2, 14, tubeH - 4, 4);
+            ctx.fill();
+
+            // 气体体积（随 V）
+            const gasW = Math.max(28, (V / 10) * innerW);
+            const gasGrad = ctx.createLinearGradient(innerX, innerY, innerX + gasW, innerY);
+            gasGrad.addColorStop(0, 'rgba(90,158,200,0.42)');
+            gasGrad.addColorStop(0.6, 'rgba(106,154,184,0.32)');
+            gasGrad.addColorStop(1, 'rgba(184,208,224,0.18)');
             ctx.fillStyle = gasGrad;
-            ctx.fillRect(cylX + 8, cylY + 10, gasW, cylH - 20);
+            rr(innerX, innerY, gasW, innerH, innerH / 2);
+            ctx.fill();
+            const gasGlow = ctx.createRadialGradient(innerX + gasW * 0.35, innerY + innerH * 0.5, 4, innerX + gasW * 0.35, innerY + innerH * 0.5, gasW * 0.55);
+            gasGlow.addColorStop(0, 'rgba(90,158,200,0.22)');
+            gasGlow.addColorStop(1, 'rgba(90,158,200,0)');
+            ctx.fillStyle = gasGlow;
+            rr(innerX, innerY, gasW, innerH, innerH / 2);
+            ctx.fill();
 
             // 分子
             const n = 8 + Math.floor(p);
+            const gasInnerW = Math.max(16, gasW - 20);
             for (let i = 0; i < n; i++) {
-                const x = cylX + 20 + ((i * 47 + animT * (20 + p * 8)) % Math.max(20, gasW - 24));
-                const y = cylY + 24 + (i * 37 % Math.max(20, cylH - 48));
+                const mx = innerX + 12 + ((i * 47 + animT * (18 + p * 7)) % Math.max(12, gasInnerW));
+                const my = innerY + 10 + (i * 37 % Math.max(12, innerH - 20));
                 ctx.beginPath();
-                ctx.fillStyle = 'rgba(250,204,21,0.85)';
-                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(184,208,224,' + (0.55 + (i % 3) * 0.12) + ')';
+                ctx.arc(mx, my, 2.2 + (i % 2) * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(106,154,184,0.35)';
+                ctx.beginPath();
+                ctx.arc(mx - 0.8, my - 0.8, 0.9, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // 活塞
-            const pistonX = cylX + 8 + gasW;
-            ctx.fillStyle = '#c4b5fd';
-            ctx.fillRect(pistonX, cylY + 4, 14, cylH - 8);
-            ctx.fillStyle = '#ddd6fe';
-            ctx.fillRect(pistonX + 14, cylY + cylH * 0.35, Math.min(80, W - pistonX - 40), 16);
-            ctx.fillStyle = '#e9d5ff';
-            ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('压舱活塞', pistonX + 18, cylY + cylH * 0.35 - 6);
-
-            // 压力表
-            ctx.beginPath();
-            ctx.fillStyle = '#111827';
-            ctx.arc(W * 0.86, H * 0.32, 34, 0, Math.PI * 2);
+            // 黄铜活塞
+            const pistonX = innerX + gasW;
+            const pistonW = 16;
+            const brassGrad = ctx.createLinearGradient(pistonX, innerY, pistonX + pistonW, innerY + innerH);
+            brassGrad.addColorStop(0, C.brassHi);
+            brassGrad.addColorStop(0.45, C.brass);
+            brassGrad.addColorStop(1, C.brassDark);
+            ctx.fillStyle = brassGrad;
+            rr(pistonX - 1, innerY - 2, pistonW, innerH + 4, 3);
             ctx.fill();
-            ctx.strokeStyle = '#c084fc';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            const ang = -Math.PI * 0.75 + (p / 10) * Math.PI * 1.5;
+            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(W * 0.86, H * 0.32);
-            ctx.lineTo(W * 0.86 + Math.cos(ang) * 22, H * 0.32 + Math.sin(ang) * 22);
-            ctx.strokeStyle = '#fde68a';
+            ctx.moveTo(pistonX + 3, innerY + 2);
+            ctx.lineTo(pistonX + 3, innerY + innerH - 2);
+            ctx.stroke();
+            const rodLen = Math.min(72, W - pistonX - pistonW - 48);
+            const rodGrad = ctx.createLinearGradient(pistonX + pistonW, innerY + innerH * 0.42, pistonX + pistonW + rodLen, innerY + innerH * 0.58);
+            rodGrad.addColorStop(0, '#a8b0b8');
+            rodGrad.addColorStop(1, '#5a626a');
+            ctx.fillStyle = rodGrad;
+            rr(pistonX + pistonW, innerY + innerH * 0.38, rodLen, innerH * 0.24, 2);
+            ctx.fill();
+            ctx.fillStyle = C.hi;
+            ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('活塞', pistonX + pistonW + 6, innerY - 8);
+
+            // 压力表 + 连接管
+            const gaugeX = Math.min(W * 0.84, tubeX + tubeW + 36);
+            const gaugeY = mountY + mountH * 0.32;
+            const gaugeR = Math.min(38, H * 0.11);
+            ctx.strokeStyle = '#7a5520';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(tubeX + tubeW * 0.82, tubeY + tubeH * 0.35);
+            ctx.lineTo(gaugeX - gaugeR * 0.5, gaugeY);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(201,151,63,0.55)';
             ctx.lineWidth = 2;
             ctx.stroke();
-            ctx.fillStyle = '#e9d5ff';
+            brassDial(gaugeX, gaugeY, gaugeR);
+            const ang = -Math.PI * 0.75 + (p / 10) * Math.PI * 1.5;
+            ctx.strokeStyle = '#2a343c';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(gaugeX, gaugeY);
+            ctx.lineTo(gaugeX + Math.cos(ang) * gaugeR * 0.58, gaugeY + Math.sin(ang) * gaugeR * 0.58);
+            ctx.stroke();
+            ctx.fillStyle = C.brassDark;
+            ctx.beginPath();
+            ctx.arc(gaugeX, gaugeY, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = C.hi;
             ctx.font = '11px "Microsoft YaHei",sans-serif';
-            ctx.fillText('压强表', W * 0.86 - 18, H * 0.32 + 48);
+            ctx.textAlign = 'center';
+            ctx.fillText('压强表', gaugeX, gaugeY + gaugeR + 16);
+            ctx.fillStyle = C.accent;
+            ctx.font = '10px ui-monospace,monospace';
+            ctx.fillText(p.toFixed(1) + ' atm', gaugeX, gaugeY + gaugeR + 30);
 
             const onBand = pv >= BAND_LO && pv <= BAND_HI;
             const boxW = 230, boxH = 50, boxX = W - boxW - 16, boxY = H - boxH - 28;
-            ctx.fillStyle = 'rgba(15,23,42,0.85)';
-            ctx.fillRect(boxX, boxY, boxW, boxH);
-            ctx.strokeStyle = onBand ? 'rgba(167,139,250,0.7)' : 'rgba(148,163,184,0.35)';
-            ctx.strokeRect(boxX, boxY, boxW, boxH);
-            ctx.fillStyle = '#e9d5ff';
+            ctx.fillStyle = 'rgba(16,20,24,0.88)';
+            rr(boxX, boxY, boxW, boxH, 6);
+            ctx.fill();
+            ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.75)' : 'rgba(138,150,158,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = C.hi;
             ctx.font = '12px "Microsoft YaHei",sans-serif';
-            ctx.fillText((playMode==='challenge'?'急单':'对照') + ' ' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + ' atm·L', boxX + 10, boxY + 20);
+            ctx.textAlign = 'left';
+            ctx.fillText((playMode === 'challenge' ? '急单' : '对照') + ' ' + BAND_LO.toFixed(1) + '–' + BAND_HI.toFixed(1) + ' atm·L', boxX + 10, boxY + 20);
             if (measuredPV == null) {
-                ctx.fillStyle = '#f8fafc';
+                ctx.fillStyle = '#e8eef2';
                 ctx.fillText('当前乘积 待测 · 点测试后显示', boxX + 10, boxY + 38);
             } else {
-                ctx.fillStyle = onBand ? '#c4b5fd' : '#fda4af';
+                ctx.fillStyle = onBand ? C.ok : '#d4847a';
                 ctx.fillText('当前乘积 ' + measuredPV.toFixed(2), boxX + 10, boxY + 38);
             }
 
             if (pulse > 0) {
                 ctx.globalAlpha = pulse;
-                ctx.strokeStyle = '#c084fc';
+                ctx.strokeStyle = C.glow;
                 ctx.lineWidth = 3;
-                ctx.strokeRect(cylX - 4, cylY - 4, cylW + 8, cylH + 8);
+                rr(tubeX - 6, tubeY - 6, tubeW + 12, tubeH + 12, tubeH / 2 + 4);
+                ctx.stroke();
                 ctx.globalAlpha = 1;
             }
         }

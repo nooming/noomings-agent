@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>电容实验一：介质与击穿</title>
+<title>介质台 · 击穿探究</title>
 <style>
 /* ===== css/base.css ===== */
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -637,7 +637,7 @@ body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
 /* === craft-gold-shell === */
-:root{--craft-accent:#00c8ff;--craft-bg:#040410;--craft-panel:#081220;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;--craft-text:#f0e8d4;--craft-muted:#a09070;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -718,13 +718,100 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-muted)!important;
 }
 
+
+/* === craft-scene-tokens (capacitor-era-ch1) === */
+:root{
+  --craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;
+  --craft-text:#f0e8d4;--craft-muted:#a09070;
+  --scene-ink:#141008;--scene-mid:#2e2414;--scene-hi:#f0c878;
+  --scene-glow:#e09030;--scene-metal:#7a8490;--scene-ok:#6fae8f;
+}
+#essence-app,#app{background:var(--scene-ink)!important;}
+#essence-stage,#stage{
+  background:
+    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
+    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
+    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+}
+#essence-bench,.control-panel,#controls-area,#bench{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
+  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
+  color:var(--craft-text)!important;
+}
+#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
+  background:rgba(0,0,0,.28)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+}
+#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-hud .essence-title{
+  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--scene-hi)!important;letter-spacing:2px;
+}
+#essence-hud .essence-sub{
+  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
+  color:var(--craft-muted)!important;
+}
+#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
+#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
+#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
+  accent-color:var(--craft-accent);
+}
+#essence-bench input[type=range]::-webkit-slider-runnable-track,
+.slider-group input[type=range]::-webkit-slider-runnable-track{
+  height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+}
+#essence-bench input[type=range]::-webkit-slider-thumb,
+.slider-group input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
+  box-shadow:0 2px 5px rgba(0,0,0,.55);
+}
+#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
+  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
+}
+.craft-card{
+  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
+  border-radius:8px!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
+}
+.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
+.craft-card .formula{border-left-color:var(--craft-accent)!important;}
+.craft-card button{
+  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
+  color:#1a1208!important;border-radius:6px!important;
+}
+#essence-bench .observe-box,.observe-box{
+  background:rgba(0,0,0,.38)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  border-left:3px solid var(--craft-accent)!important;
+  border-radius:6px!important;
+}
+#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
+#dual-mode-hud .dual-chip,#challengeStats{
+  background:rgba(0,0,0,.55)!important;
+  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
+  color:var(--craft-text)!important;border-radius:8px!important;
+}
+#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
+#modeSelect{
+  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
+  color:var(--scene-hi)!important;border-radius:6px!important;
+}
 </style>
 </head>
 <body class="cap-dark">
 
 <div id="craft-intro">
   <div class="craft-card">
-    <h2>信号塔夜修 · 介质与击穿</h2>
+    <h2>介质台 · 击穿探究</h2>
     <p>雷暴夜里信号塔电容组又飘了。试着弄清介质与极板参数如何影响读数与击穿边界；再接限次急单——目标电容本局固定。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标电容本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
@@ -2275,7 +2362,7 @@ function drawCapacitor() {
   // 2. Electric field overlay (non-breakdown state)
   if(!bd&&I>0.02){
     const gg=ctx.createLinearGradient(0,g.gy,0,g.gy+g.gh);
-    gg.addColorStop(0,`rgba(0,150,255,${I*.28})`); gg.addColorStop(.5,`rgba(0,70,195,${I*.42})`); gg.addColorStop(1,`rgba(0,150,255,${I*.28})`);
+    gg.addColorStop(0,`rgba(224,144,48,${I*.28})`); gg.addColorStop(.5,`rgba(212,160,80,${I*.42})`); gg.addColorStop(1,`rgba(224,144,48,${I*.28})`);
     ctx.fillStyle=gg; ctx.fillRect(g.gx,g.gy,g.gw,g.gh);
   }
 
@@ -2283,19 +2370,19 @@ function drawCapacitor() {
   if(bd) drawBreakdownArc(g);
 
   // 4. Plates
-  const sc1=bd?`rgba(255,90,50,${.3+I*.3})`:`rgba(255,75,75,${.18+I*.32})`;
-  const sc2=bd?`rgba(255,90,50,${.3+I*.3})`:`rgba(75,75,255,${.18+I*.32})`;
-  const tp=ctx.createLinearGradient(0,g.topY,0,g.topY+g.ph); tp.addColorStop(0,'#9eafc0'); tp.addColorStop(1,'#687888');
+  const sc1=bd?`rgba(255,90,50,${.3+I*.3})`:`rgba(240,200,120,${.18+I*.32})`;
+  const sc2=bd?`rgba(255,90,50,${.3+I*.3})`:`rgba(212,160,80,${.18+I*.32})`;
+  const tp=ctx.createLinearGradient(0,g.topY,0,g.topY+g.ph); tp.addColorStop(0,'#c8b898'); tp.addColorStop(1,'#8a8070');
   ctx.shadowColor=sc1; ctx.shadowBlur=14; ctx.fillStyle=tp; ctx.fillRect(g.gx,g.topY,g.pw,g.ph);
-  const bp=ctx.createLinearGradient(0,g.botY,0,g.botY+g.ph); bp.addColorStop(0,'#687888'); bp.addColorStop(1,'#9eafc0');
+  const bp=ctx.createLinearGradient(0,g.botY,0,g.botY+g.ph); bp.addColorStop(0,'#8a8070'); bp.addColorStop(1,'#c8b898');
   ctx.shadowColor=sc2; ctx.fillStyle=bp; ctx.fillRect(g.gx,g.botY,g.pw,g.ph); ctx.shadowBlur=0;
 
   // 5. Charge symbols on plate edges
   const ns=Math.max(2,Math.floor(g.pw/28)); ctx.textAlign='center'; ctx.font='10px monospace';
   for(let i=0;i<ns;i++){
     const sx=g.gx+(i+.5)*(g.pw/ns);
-    ctx.fillStyle=`rgba(255,100,100,${.35+I*.55})`; ctx.fillText('+',sx,g.topY+g.ph-2);
-    ctx.fillStyle=`rgba(100,100,255,${.35+I*.55})`; ctx.fillText('−',sx,g.botY+g.ph-2);
+    ctx.fillStyle=`rgba(240,200,120,${.35+I*.55})`; ctx.fillText('+',sx,g.topY+g.ph-2);
+    ctx.fillStyle=`rgba(180,140,80,${.35+I*.55})`; ctx.fillText('−',sx,g.botY+g.ph-2);
   }
   ctx.textAlign='left';
 
@@ -2307,13 +2394,13 @@ function drawCapacitor() {
   if (ch===0) drawCh0HoloFront(g, I);
 
   // 7. Dimension labels (left side)
-  ctx.fillStyle='rgba(0,200,255,0.40)'; ctx.font='11px Courier New'; ctx.textAlign='right';
+  ctx.fillStyle='rgba(240,200,120,0.40)'; ctx.font='11px Courier New'; ctx.textAlign='right';
   ctx.fillText(`A = ${areaCm2} cm²`,g.gx-10,g.topY+g.ph-1);
   ctx.fillText(`d = ${distMm.toFixed(1)} mm`,g.gx-10,g.botY+1);
   if(ch===1){
-    ctx.fillStyle='rgba(0,200,255,0.34)';
+    ctx.fillStyle='rgba(240,200,120,0.34)';
     ctx.fillText(`εᵣ = ${m.er}`,g.gx-10,g.topY+g.ph+13);
-    ctx.fillStyle=bd?'rgba(255,120,80,0.6)':'rgba(0,200,255,0.30)';
+    ctx.fillStyle=bd?'rgba(255,120,80,0.6)':'rgba(224,144,48,0.30)';
     if (measuredCap == null) ctx.fillText('E 待测',g.gx-10,g.botY+14);
     else ctx.fillText(`E = ${measuredCap.E.toFixed(1)} MV/m`,g.gx-10,g.botY+14);
   }
@@ -2331,8 +2418,8 @@ function drawCapacitor() {
 
   // 9. C / breakdown readout below capacitor
   ctx.textAlign='center'; ctx.font='bold 14px Courier New';
-  ctx.fillStyle=bd?'rgba(255,110,70,0.90)':`rgba(0,${Math.floor(200+I*29)},255,0.88)`;
-  ctx.shadowColor=bd?'rgba(255,60,10,0.55)':'rgba(0,200,255,0.55)'; ctx.shadowBlur=10;
+  ctx.fillStyle=bd?'rgba(255,110,70,0.90)':`rgba(240,${Math.floor(200+I*29)},120,0.88)`;
+  ctx.shadowColor=bd?'rgba(255,60,10,0.55)':'rgba(224,144,48,0.55)'; ctx.shadowBlur=10;
   if (measuredCap == null) ctx.fillText('C 待测',g.cx,g.botY+g.ph+28);
   else ctx.fillText(measuredCap.bd?'击穿！':`C = ${measuredCap.C.toFixed(1)} pF`,g.cx,g.botY+g.ph+28);
   ctx.shadowBlur=0; ctx.textAlign='left';
@@ -2340,8 +2427,8 @@ function drawCapacitor() {
 function drawField(g,I) {
   if(I<0.02) return;
   const n=Math.floor(2+I*13); ctx.save();
-  ctx.strokeStyle=`rgba(0,188,255,${.13+I*.52})`; ctx.lineWidth=.8+I*.5;
-  ctx.shadowColor='rgba(0,200,255,0.22)'; ctx.shadowBlur=5;
+  ctx.strokeStyle=`rgba(224,160,80,${.13+I*.52})`; ctx.lineWidth=.8+I*.5;
+  ctx.shadowColor='rgba(224,144,48,0.22)'; ctx.shadowBlur=5;
   for(let i=0;i<n;i++){
     const fx=g.gx+(i+.5)*(g.gw/n);
     ctx.beginPath(); ctx.moveTo(fx,g.gy); ctx.lineTo(fx,g.gy+g.gh); ctx.stroke();
@@ -2350,7 +2437,7 @@ function drawField(g,I) {
   }
   if(I>0.38){
     const fa=(I-.38)/.62, my=g.gy+g.gh*.5;
-    ctx.strokeStyle=`rgba(0,148,255,${fa*.20})`; ctx.lineWidth=.7; ctx.shadowBlur=0;
+    ctx.strokeStyle=`rgba(224,144,48,${fa*.20})`; ctx.lineWidth=.7; ctx.shadowBlur=0;
     for(let k=1;k<=2;k++){
       const off=22*k;
       ctx.beginPath(); ctx.moveTo(g.gx,g.gy+g.gh*.22*k); ctx.quadraticCurveTo(g.gx-off,my,g.gx-off,g.gy+g.gh*(.78+.04*k)); ctx.stroke();
@@ -2390,13 +2477,13 @@ function drawCh0HoloBase(g, I) {
   // Emitter platform glow beneath the device
   const padY = g.botY + g.ph + 16;
   const pad = ctx.createRadialGradient(g.cx, padY, 4, g.cx, padY, g.pw * 0.7);
-  pad.addColorStop(0, `rgba(0,200,255,${0.10 + I * 0.22})`);
+  pad.addColorStop(0, `rgba(224,144,48,${0.10 + I * 0.22})`);
   pad.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = pad;
   ctx.beginPath(); ctx.ellipse(g.cx, padY, g.pw * 0.6, 9 + I * 8, 0, 0, Math.PI * 2); ctx.fill();
   // Soft backglow halo behind the plates
   const halo = ctx.createRadialGradient(g.cx, g.cy, 8, g.cx, g.cy, g.pw * 0.78);
-  halo.addColorStop(0, `rgba(20,120,210,${0.06 + I * 0.16})`);
+  halo.addColorStop(0, `rgba(180,120,40,${0.06 + I * 0.16})`);
   halo.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = halo;
   ctx.fillRect(g.gx - 45, g.topY - 34, g.pw + 90, (g.botY + g.ph) - g.topY + 68);
@@ -2410,15 +2497,15 @@ function drawCh0HoloFront(g, I) {
     const sy = g.gy + ((t * 0.9) % g.gh);
     const sg = ctx.createLinearGradient(0, sy - 6, 0, sy + 6);
     sg.addColorStop(0, 'rgba(0,220,255,0)');
-    sg.addColorStop(0.5, `rgba(140,238,255,${0.22 + I * 0.42})`);
+    sg.addColorStop(0.5, `rgba(240,200,120,${0.22 + I * 0.42})`);
     sg.addColorStop(1, 'rgba(0,220,255,0)');
     ctx.fillStyle = sg; ctx.fillRect(g.gx, sy - 6, g.gw, 12);
   }
   // HUD corner brackets framing the device
   const pad = 18, L = 16;
   const x0 = g.gx - pad, y0 = g.topY - pad, x1 = g.gx + g.pw + pad, y1 = g.botY + g.ph + pad;
-  ctx.strokeStyle = `rgba(0,200,255,${0.28 + I * 0.26})`; ctx.lineWidth = 1.4;
-  ctx.shadowColor = 'rgba(0,200,255,0.4)'; ctx.shadowBlur = 5;
+  ctx.strokeStyle = `rgba(224,144,48,${0.28 + I * 0.26})`; ctx.lineWidth = 1.4;
+  ctx.shadowColor = 'rgba(224,144,48,0.4)'; ctx.shadowBlur = 5;
   for (const [x, y, sx, sy] of [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]]) {
     ctx.beginPath(); ctx.moveTo(x + sx * L, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy * L); ctx.stroke();
   }
