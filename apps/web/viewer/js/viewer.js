@@ -257,7 +257,16 @@ function fitStrategyToPanel() {
   // CSS fit works without d3 (strategy-first cold start); d3.zoom sync when available.
   mount.style.transform = `translate(${tx}px, ${ty}px) scale(${k})`;
   mount.style.transformOrigin = '0 0';
-  if (typeof d3 === 'undefined') return;
+  if (typeof d3 === 'undefined') {
+    // Do not block Mermaid first paint; enable pan/zoom once D3 arrives.
+    loadD3Lib()
+      .then(() => {
+        if (currentView !== 'strategy') return;
+        fitStrategyToPanel();
+      })
+      .catch(() => { /* keep CSS fit */ });
+    return;
+  }
   bindStrategyZoom();
   const viewport = d3.select('#strategy-viewport');
   if (!strategyZoomBeh || !viewport.node()) return;
