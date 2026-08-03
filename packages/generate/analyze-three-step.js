@@ -8,6 +8,11 @@ const {
   isLikelyConfoundingControl,
   inferLabelFromControlId,
 } = require('./control-label');
+const {
+  inferResponseShape,
+  inquiryPriorityScore,
+  syncMonotonicityWithShape,
+} = require('./av-response-shape');
 
 const FORMULA_RE = /C\s*=\s*[^;\n<]{3,80}|E\s*=\s*[^;\n<]{3,60}|R\s*=\s*[^;\n<]+|v0[^;\n<]{0,60}|sin\s*\(\s*2\s*[θθ]|[α-ωΑ-Ω][^;\n<]{0,30}=[^;\n<]+/gi;
 const RAF_RE = /requestAnimationFrame|setInterval\s*\(\s*(?:function|\(\)|[\w.]+\s*=>)/i;
@@ -181,63 +186,105 @@ function extractVariablesFromSource(sources, gameHints, physicsCore) {
   };
 }
 
-function inferMonotonicity(av) {
-  const blob = `${av.controlId || ''} ${av.label || ''}`.toLowerCase();
-  if (/mat|介质|材料|κ/.test(blob) || av.type === 'discrete') return 'discrete';
-  if (/angle|角度|θ|theta/.test(blob)) return 'non-monotone';
-  if (/height|高度|h\b/.test(blob)) return 'monotone';
-  if (/speed|velocity|速度|v0|v\b/.test(blob)) return 'monotone';
-  if (/area|面积|dist|间距|a\b|d\b/.test(blob)) return 'monotone';
-  return 'unknown';
+function inferMonotonicity(av, domain) {
+  const shape = inferResponseShape(av, domain || 'generic');
+  return syncMonotonicityWithShape({ ...av, responseShape: shape }).monotonicity;
 }
 
 function inferAffectsNotes(av, domain) {
   const blob = `${av.controlId || ''} ${av.label || ''}`.toLowerCase();
+  const shape = inferResponseShape(av, domain);
   if (domain === 'capacitor') {
     if (/mat|介质|材料/.test(blob)) {
-      return { affects: ['C', 'Ebd'], notes: '离散介质：εᵣ 与击穿极限同时变，与 A/d 连续滑条不等价' };
+      return {
+        affects: ['C', 'Ebd'],
+        notes: '离散介质优先：εᵣ 与击穿极限同时变，与 A/d 连续滑条不等价',
+        responseShape: 'discrete',
+      };
     }
     if (/dist|间距/.test(blob)) {
-      return { affects: ['C', 'E'], notes: 'd 双作用：抬高 C（∝1/d）同时改 E=V/d 击穿风险' };
+      return {
+        affects: ['C', 'E'],
+        notes: 'rank 高因探究清晰：C∝1/d 非线性单调，同时改击穿风险 E=V/d',
+        responseShape: 'nonlinear-monotone',
+      };
     }
     if (/area|面积/.test(blob)) {
-      return { affects: ['C'], notes: 'A 单调改 C，不直接改击穿场强' };
+      return {
+        affects: ['C'],
+        notes: 'A 近似线性抬高 C；优先级通常低于介质/间距',
+        responseShape: 'linear-approx',
+      };
     }
   }
   if (domain === 'projectile') {
     if (/angle|角度/.test(blob)) {
-      return { affects: ['R', 'H'], notes: 'θ 对射程非单调，与 v0/h 不等价' };
+      return {
+        affects: ['R', 'H'],
+        notes: 'θ 对射程非单调（约 45° 有极值），宜在 v0/h 之后再单变量试',
+        responseShape: 'non-monotone',
+      };
     }
     if (/speed|速度/.test(blob)) {
-      return { affects: ['R', 'H'], notes: 'v0 优先单变量：单调抬高射程' };
+      return {
+        affects: ['R', 'H'],
+        notes: 'v0 优先：单调抬高射程，响应清晰最好归因',
+        responseShape: 'linear-approx',
+      };
     }
     if (/height|高度/.test(blob)) {
-      return { affects: ['R', 'H'], notes: '发射高度单调影响落点，弱于 v0' };
+      return {
+        affects: ['R', 'H'],
+        notes: '发射高度单调影响落点，作用弱于 v0、强于非单调角',
+        responseShape: 'linear-approx',
+      };
     }
   }
-  return { affects: [], notes: '' };
+  if (domain === 'pendulum') {
+    if (/len|摆长|length/.test(blob)) {
+      return {
+        affects: ['T'],
+        notes: '摆长优先：T∝√L 非线性单调，是校时主控',
+        responseShape: 'nonlinear-monotone',
+      };
+    }
+    if (/angle|角度|摆角/.test(blob)) {
+      return {
+        affects: ['T'],
+        notes: '摆角对周期仅有弱 θ² 修正，且需满足最小摆幅；次于摆长',
+        responseShape: 'nonlinear-monotone',
+      };
+    }
+  }
+  return { affects: [], notes: '', responseShape: shape };
 }
 
 function inferAdjustmentPriority(inquiryPartial, gameHints) {
   const avs = inquiryPartial?.adjustmentVariables || [];
-  const domain = inquiryPartial?.domain || 'generic';
+  const domain = inquiryPartial?.domain
+    || (typeof gameHints === 'object' && gameHints?.domain)
+    || 'generic';
   if (!avs.length) return { adjustmentVariables: [], notes: '无调节变量' };
 
   const scored = avs.map(av => {
-    const monotonicity = inferMonotonicity(av);
-    const { affects, notes } = inferAffectsNotes(av, domain);
-    const blob = `${av.controlId || ''} ${av.label || ''}`.toLowerCase();
-    let score = 0;
-    if (monotonicity === 'monotone') score += 10;
-    if (monotonicity === 'discrete') score += 12; // 介质优先于连续滑条（电容样本）
-    if (/speed|velocity|速度|v0|mat|介质|材料/.test(blob)) score += 5;
-    if (/dist|间距/.test(blob)) score += 4;
-    if (/height|高度/.test(blob)) score += 3;
-    if (/area|面积/.test(blob)) score += 2;
-    if (/angle|角度|θ|theta/.test(blob)) score += 2;
-    if (monotonicity === 'non-monotone') score += 1;
-    if (/mass|质量|thickness|厚度|audio|volume|音量/.test(blob)) score -= 20;
-    return { ...av, monotonicity, affects, notes, _score: score };
+    const { shape, score } = inquiryPriorityScore(av, domain);
+    const { affects, notes: domainNotes, responseShape: noteShape } = inferAffectsNotes(av, domain);
+    const responseShape = noteShape || shape;
+    const synced = syncMonotonicityWithShape({ ...av, responseShape });
+    const notes = domainNotes
+      || (responseShape === 'non-monotone'
+        ? '响应有极值/变号，不宜作为首选单变量，除非教学主线要求'
+        : responseShape === 'nonlinear-monotone'
+          ? '非线性但单调：仍可作为主探究路径，不因非线性降级'
+          : responseShape === 'linear-approx'
+            ? '近似线性、归因清晰，适合优先单变量'
+            : '');
+    return {
+      ...synced,
+      affects: affects.length ? affects : (av.affects || []),
+      notes: notes || av.notes || '',
+      _score: score,
+    };
   });
   scored.sort((a, b) => b._score - a._score || String(a.id).localeCompare(b.id));
 
@@ -254,7 +301,7 @@ function inferAdjustmentPriority(inquiryPartial, gameHints) {
     adjustmentVariables: ranked,
     notes: ranked.map(a => {
       const why = a.notes ? `；${a.notes}` : '';
-      return `${a.label}(rank=${a.priorityRank}, ${a.monotonicity}${why})`;
+      return `${a.label}(rank=${a.priorityRank}, ${a.responseShape}/${a.monotonicity}${why})`;
     }).join(' ｜ '),
   };
 }
@@ -273,15 +320,17 @@ function formatAnalyzeParseForPrompt(analyzeParse) {
       knowledgePoints: analyzeParse.inquiryScript?.knowledgePoints,
     }, null, 2),
     '### Step3 priorityRank + 不等价说明 + strategy',
-    '每个 adjustmentVariable 须有 priorityRank、monotonicity（monotone|non-monotone|discrete|unknown）、affects[]、notes（为何与其它 AV 不等价）。',
-    '多 AV 时 strategy.routes 须含「单变量·{label}」每 AV 一路 + trap；各 route 按 priorityRank 赋不同 score/weight（高优更高，trap 最低）。',
+    '每个 adjustmentVariable 须有 priorityRank、responseShape（linear-approx|nonlinear-monotone|non-monotone|discrete|unknown）、monotonicity（与 shape 一致：monotone|non-monotone|discrete|unknown）、affects[]、notes（中文简述为何该 rank + 响应形态；勿剧透「混淆」）。',
+    'priorityRank 表达推荐探究路径，不是单纯 |∂y/∂x|；非线性但单调（如 1/u+1/v=1/f、I∝1/R）不得因此降级。',
+    '应降级/标注：非单调（有极值/变号）通常非 rank1；近无效控件保持最低或移出 AV；窄敏感区难归因者 notes 警示并可低于更清晰的单调 AV。',
+    '多 AV 时 strategy.routes 须含「单变量·{label}」每 AV 一路 + trap；score/weight：rank1→1.0, 2→0.85, 3→0.7, 4→0.55；trap→0.2；confoundProbe→0.15 且无 priorityRank。',
     '禁止套用其它样本模板：outputVariables/formulas/叙事不得出现与本关无关的「射程/最大高度」或 HTML 碎片。',
     'inquiryScript.narrative 用现象语言（读数高低、是否击穿、落点偏近/偏远）；完整公式只写在 teach S* / KP.formulas。',
     'O1.label 须写真实控件名（如「调节介质/间距/面积」），禁止空洞「调参操作」。',
     '',
     '【标签硬约束】AV/CV label 必须用本关物理量中文名，禁止把电容用语（极板/介质）套到非电容关，禁止把斜抛用语（发射角度/发射高度）套到摩擦/单摆/光学等关；禁止直接写控件 DOM id。',
-    '【斜抛 few-shot——仅当本关为斜抛/抛体时套用】AV：初速度(rank1) > 发射高度(rank2) > 发射角度(rank3)；质量为 CV 不得进 AV；routes 按 AV 拆单变量 + 多参盲调。',
-    '【电容 few-shot——仅当本关为电容时套用】AV：介质材料 ≥ 极板间距 > 极板面积；厚度/音量为 CV 不得进 AV。',
+    '【斜抛 few-shot——仅当本关为斜抛/抛体时套用】AV：初速度(rank1, linear-approx) > 发射高度(rank2, linear-approx) > 发射角度(rank3, non-monotone)；质量为 CV 不得进 AV；routes 按 AV 拆单变量 + 多参盲调。',
+    '【电容 few-shot——仅当本关为电容时套用】AV：介质材料(discrete) ≥ 极板间距(nonlinear-monotone) > 极板面积(linear-approx)；厚度/音量为 CV 不得进 AV。',
     analyzeParse.priorityNotes || '',
   ];
   return lines.join('\n');
@@ -405,6 +454,7 @@ module.exports = {
   mergeAnalyzeParseIntoChapter,
   inferLabelFromControlId,
   inferMonotonicity,
+  inferResponseShape,
   detectSourceDomain,
   buildOutputVariablesForDomain,
 };

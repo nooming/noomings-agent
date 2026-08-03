@@ -12,7 +12,7 @@ function buildStrategyPromptHints(hints) {
     if ((hints.sliderControlIds || []).length >= 2) {
       lines.push(
         '- 单变量优策略：若仅调一个滑条即可达标，该途径为主推；同时调两个及以上滑条为次优/误区（routes.warn）',
-        '- 变量不等价：各 AV 须写 monotonicity 与 notes/affects；strategy 按「单变量·{label}」拆分支，routes.score 按 priorityRank 分档（禁止全相同）',
+        '- 变量不等价：各 AV 须写 responseShape（linear-approx|nonlinear-monotone|non-monotone|discrete|unknown）、monotonicity（与 shape 一致）与 notes/affects；priority 是探究路径而非 |∂y/∂x|，非线性单调不得降级；strategy 按「单变量·{label}」拆分支，routes.score 按 priorityRank 分档（rank1→1.0… trap→0.2；禁止全相同）',
       );
     }
   }

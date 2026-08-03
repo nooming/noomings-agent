@@ -374,7 +374,7 @@
   "strategy": {
     "title": "斜抛运动探究与挑战",
     "sub": "靶场 · 斜抛",
-    "mermaid": "graph TD\nAdjust1 --> Fire[发射]\nAdjust2 --> Fire\nAdjust3 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察落点?}:::stratCond\nMode -->|挑战| Challenge[靶心挑战]\nMode -->|探究| Explore[自由探究]\nObserve -->|偏近| Adjust1\nObserve -->|偏远| Adjust1\nObserve -->|机会用尽| Retry[重试]:::stratRetry\nObserve -->|超时| Retry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·发射角度| AngleStrat\nStrategySelect -->|单变量·发射高度| HeightStrat\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleStrat --> Adjust3[调整发射角度]\nHeightStrat --> Adjust2[调整发射高度]\nSpeedStrat --> Adjust1[调整初速度]\nAngleStrat[单变量·发射角度]\nHeightStrat[单变量·发射高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust1 --> Fire[发射]\nAdjust2 --> Fire\nAdjust3 --> Fire\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察落点?}:::stratCond\nMode -->|挑战| Challenge[靶心挑战]\nMode -->|探究| Explore[自由探究]\nObserve -->|偏近| Adjust1\nObserve -->|偏远| Adjust1\nObserve -->|机会用尽| Retry[重试]:::stratRetry\nObserve -->|超时| Retry\nObserve -->|命中| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·发射角度| AngleStrat\nStrategySelect -->|单变量·发射高度| HeightStrat\nStrategySelect -.->|试探·质量| ProbeCV\nStrategySelect -->|单变量·初速度| SpeedStrat\nStrategySelect -->|多参盲调| Trap\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleStrat --> Adjust3[调整发射角度]\nHeightStrat --> Adjust2[调整发射高度]\nSpeedStrat --> Adjust1[调整初速度]\nAngleStrat[单变量·发射角度]\nHeightStrat[单变量·发射高度]\nSpeedStrat[单变量·初速度]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -662,7 +662,7 @@
       },
       {
         "id": "confound_s_mass",
-        "label": "试探混淆·质量",
+        "label": "试探·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -741,8 +741,9 @@
           "R",
           "H"
         ],
-        "notes": "v0 优先单变量：单调抬高射程",
-        "priorityRank": 1
+        "notes": "rank1：v0 单调抬高射程，归因最清晰",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV2",
@@ -756,8 +757,9 @@
           "R",
           "H"
         ],
-        "notes": "发射高度单调影响落点，弱于 v0",
-        "priorityRank": 2
+        "notes": "rank2：发射高度单调影响落点，弱于 v0",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV3",
@@ -771,8 +773,9 @@
           "R",
           "H"
         ],
-        "notes": "θ 对射程非单调，与 v0/h 不等价",
-        "priorityRank": 3
+        "notes": "rank3：θ 对射程非单调（约 45° 极值），不宜首选",
+        "priorityRank": 3,
+        "responseShape": "non-monotone"
       }
     ],
     "confoundingVariables": [

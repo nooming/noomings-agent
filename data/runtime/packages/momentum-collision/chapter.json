@@ -349,7 +349,7 @@
   "strategy": {
     "title": "动量守恒 · 碰撞实验",
     "sub": "气垫导轨 · 碰撞",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustC --> FireC\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nModeSelect -->|竞赛| ChallengeMode[竞赛模式]:::stratCore\nModeSelect -->|探究| ExploreMode[探究模式]:::stratCore\nObserve -->|碰撞但未进区| Adjust[调整参数]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|未碰撞| RetryCollide[未碰撞重试]:::stratRetry\nObserve -->|进区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveC -->|碰撞但未进区| AdjustC[调整参数]\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|未碰撞| RetryCollideC[未碰撞重试]:::stratRetry\nObserveC -->|进区| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetryCollide --> Fire\nRetryCollideC --> FireC\nSingleMass --> Fire\nSingleMassC --> FireC\nSingleVel1C --> FireC[发射]\nSingleVel2C --> FireC\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·导轨温度| SingleMass\nStrategySelect -->|单变量·质量| SingleMassC\nStrategySelect -->|单变量·速度1| SingleVel1C\nStrategySelect -->|单变量·速度2| SingleVel2C\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nProbeCV[拧混淆控件]:::stratInvalid\nSingleMass[单变量·导轨温度]\nSingleMassC[单变量·质量]\nSingleVel1C[单变量·速度1]\nSingleVel2C[单变量·速度2]\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustC --> FireC\nBackFromCV --> StrategySelect\nChallengeMode --> StrategySelect\nExploreMode --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nFireC --> ObserveC{观察结果?}:::stratCond\nModeSelect -->|竞赛| ChallengeMode[竞赛模式]:::stratCore\nModeSelect -->|探究| ExploreMode[探究模式]:::stratCore\nObserve -->|碰撞但未进区| Adjust[调整参数]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|未碰撞| RetryCollide[未碰撞重试]:::stratRetry\nObserve -->|进区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveC -->|碰撞但未进区| AdjustC[调整参数]\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|未碰撞| RetryCollideC[未碰撞重试]:::stratRetry\nObserveC -->|进区| WinC[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetryCollide --> Fire\nRetryCollideC --> FireC\nSingleMass --> Fire\nSingleMassC --> FireC\nSingleVel1C --> FireC[发射]\nSingleVel2C --> FireC\nStart --> ModeSelect{模式选择?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|单变量·导轨温度| SingleMass\nStrategySelect -->|单变量·质量1| SingleMassC\nStrategySelect -->|单变量·速度1| SingleVel1C\nStrategySelect -->|单变量·速度2| SingleVel2C\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nProbeCV[拧混淆控件]:::stratInvalid\nSingleMass[单变量·导轨温度]\nSingleMassC[单变量·质量2]\nSingleVel1C[单变量·速度1]\nSingleVel2C[单变量·速度2]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -568,9 +568,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.7,
-        "weight": 0.7,
-        "priorityRank": 3,
+        "score": 0.47000000000000003,
+        "weight": 0.47000000000000003,
+        "priorityRank": 5,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -634,7 +634,7 @@
       },
       {
         "id": "main_s-mass1",
-        "label": "单变量·质量",
+        "label": "单变量·质量1",
         "mapsTo": [
           "P1",
           "O1",
@@ -643,9 +643,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.55,
-        "weight": 0.55,
-        "priorityRank": 4,
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -737,7 +737,7 @@
       },
       {
         "id": "main_s-mass2",
-        "label": "单变量·质量",
+        "label": "单变量·质量2",
         "mapsTo": [
           "P1",
           "O1",
@@ -907,7 +907,7 @@
       },
       {
         "id": "confound_CV1",
-        "label": "试探混淆·无关控件",
+        "label": "试探·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -983,8 +983,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：入射速度1直接改动量与落点",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV2",
@@ -995,44 +996,48 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：速度2（靶/第二球）次优先",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV3",
+        "controlId": "s-mass1",
+        "label": "质量1",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank3：质量1进动量交换，有效 AV",
+        "priorityRank": 3,
+        "responseShape": "linear-approx"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-mass2",
+        "label": "质量2",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank4：质量2对称通道",
+        "priorityRank": 4,
+        "responseShape": "linear-approx"
+      },
+      {
+        "id": "AV5",
         "controlId": "s-rail-temp",
         "label": "导轨温度",
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
-      },
-      {
-        "id": "AV4",
-        "controlId": "s-mass1",
-        "label": "质量",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 4
-      },
-      {
-        "id": "AV5",
-        "controlId": "s-mass2",
-        "label": "质量",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 5
+        "notes": "rank5：导轨温度不进碰撞公式，近无效最低",
+        "priorityRank": 5,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

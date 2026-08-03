@@ -1,0 +1,1182 @@
+{
+  "generatedAt": "2026-08-03T09:21:46.373Z",
+  "packages": [
+    {
+      "id": "capacitor-confound-ui",
+      "avs": [
+        {
+          "controlId": "s-distance",
+          "label": "极板间距",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：d 使 C∝1/d 非线性单调，并改击穿风险"
+        },
+        {
+          "controlId": "s-area",
+          "label": "极板面积",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：A 近似线性改 C，次优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·极板间距",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·极板面积",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "avs": [
+        {
+          "controlId": "s-dist",
+          "label": "极板间距",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：间距非线性单调改 C 与击穿风险（介质为离散操作，见策略图）"
+        },
+        {
+          "controlId": "s-area",
+          "label": "极板面积",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：面积近似线性改 C"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·极板间距",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·极板面积",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "avs": [
+        {
+          "controlId": "s-c1",
+          "label": "电容C1",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：串并联等效电容主参，优先单变量 C1"
+        },
+        {
+          "controlId": "s-c2",
+          "label": "电容C2",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：并联支路电容，与 C1 对称"
+        },
+        {
+          "controlId": "s-c3",
+          "label": "电容C3",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank3：串联支路电容，继续单变量"
+        },
+        {
+          "controlId": "s-cable",
+          "label": "馈线长度",
+          "priorityRank": 4,
+          "role": "secondary",
+          "responseShape": "unknown",
+          "monotonicity": "unknown",
+          "notes": "rank4：馈线长度多为外观/次级，对等效 C 贡献弱，最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·电容C1",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·电容C2",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·电容C3",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·馈线长度",
+          "priorityRank": 4,
+          "score": 0.55,
+          "weight": 0.55
+        }
+      ],
+      "residuals": [
+        "s-cable"
+      ]
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "avs": [
+        {
+          "controlId": "s-cable",
+          "label": "馈线长度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "unknown",
+          "monotonicity": "unknown",
+          "notes": "本关仅馈线长度可调；响应形态依赖关卡脚本，标 unknown"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·馈线长度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        }
+      ],
+      "residuals": [
+        "s-cable"
+      ]
+    },
+    {
+      "id": "circular-motion",
+      "avs": [
+        {
+          "controlId": "s-omega",
+          "label": "角速度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：向心力∝ω²，角速度优先"
+        },
+        {
+          "controlId": "s-radius",
+          "label": "半径",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：F∝r 近似线性，次优先"
+        },
+        {
+          "controlId": "s-base-tilt",
+          "label": "倾角",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：底座倾角不进 F 计算，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·角速度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·半径",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·倾角",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "cyclotron-radius",
+      "avs": [
+        {
+          "controlId": "s-velocity",
+          "label": "速度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：r=mv/qB，速度线性抬半径"
+        },
+        {
+          "controlId": "s-magnetic",
+          "label": "磁场",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：B 使 r∝1/B 非线性单调，主方程对偶量"
+        },
+        {
+          "controlId": "s-chamber-p",
+          "label": "腔室气压",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：腔室气压不进 r 公式，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·速度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·磁场",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·腔室气压",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "efield-charge",
+      "avs": [
+        {
+          "controlId": "s-fieldStrength",
+          "label": "场强",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：场强直接改偏转，线性主控"
+        },
+        {
+          "controlId": "s-charge",
+          "label": "电荷量",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：电荷量改受力，线性次控"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·场强",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·电荷量",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "friction-incline",
+      "avs": [
+        {
+          "controlId": "s-angle",
+          "label": "斜面倾角",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：倾角经 tanθ 与 μ 比较，下滑倾向非线性单调（非抛体极值角）"
+        },
+        {
+          "controlId": "s-friction",
+          "label": "摩擦系数",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：μ 单调改临界条件；竞赛常锁定，探究次优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·斜面倾角",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·摩擦系数",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "gas-ideal",
+      "avs": [
+        {
+          "controlId": "s-pressure",
+          "label": "压强",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：过关看 p·V，压强线性主控"
+        },
+        {
+          "controlId": "s-volume",
+          "label": "体积",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：体积与压强对偶进 pV"
+        },
+        {
+          "controlId": "s-temp",
+          "label": "温度",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "unknown",
+          "monotonicity": "unknown",
+          "notes": "rank3：标称温度滑条未进 pV 判据，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·压强",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·温度",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·体积",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": [
+        "s-temp"
+      ]
+    },
+    {
+      "id": "heat-conduction",
+      "avs": [
+        {
+          "controlId": "s-thermal-conductivity",
+          "label": "导热系数",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：导热系数 k 线性进热流，材料主控"
+        },
+        {
+          "controlId": "s-area",
+          "label": "截面积",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：截面积 A 线性进热流"
+        },
+        {
+          "controlId": "s-temperature-diff",
+          "label": "温差",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：温差 ΔT 线性进热流，与 k/A 等价通道靠后"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·截面积",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·导热系数",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·温差",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "magnetic-force",
+      "avs": [
+        {
+          "controlId": "s-current",
+          "label": "电流",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：F∝I 近似线性，电流优先单变量"
+        },
+        {
+          "controlId": "s-magnetic",
+          "label": "磁场",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：F∝B 同样线性，与 I 对称次优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·电流",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·磁场",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "momentum-collision",
+      "avs": [
+        {
+          "controlId": "s-vel1",
+          "label": "速度1",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：入射速度1直接改动量与落点"
+        },
+        {
+          "controlId": "s-vel2",
+          "label": "速度2",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：速度2（靶/第二球）次优先"
+        },
+        {
+          "controlId": "s-mass1",
+          "label": "质量",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：质量1进动量交换，有效 AV"
+        },
+        {
+          "controlId": "s-mass2",
+          "label": "质量",
+          "priorityRank": 4,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank4：质量2对称通道"
+        },
+        {
+          "controlId": "s-rail-temp",
+          "label": "导轨温度",
+          "priorityRank": 5,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank5：导轨温度不进碰撞公式，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·速度1",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·速度2",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·导轨温度",
+          "priorityRank": 5,
+          "score": 0.47000000000000003,
+          "weight": 0.47000000000000003
+        },
+        {
+          "label": "单变量·质量",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·质量",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "multi-kp",
+      "avs": [
+        {
+          "controlId": "s-speed",
+          "label": "初速度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：初速度改动能，过环/制动主控"
+        },
+        {
+          "controlId": "s-height",
+          "label": "起始高度",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：起始高度改势能，单调次优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·初速度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·起始高度",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "pendulum-clock",
+      "avs": [
+        {
+          "controlId": "s-len",
+          "label": "摆长",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：摆长主控，T∝√L 非线性单调，校时首选"
+        },
+        {
+          "controlId": "s-angle",
+          "label": "摆角",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：摆角仅弱 θ² 修正周期，并需满足最小摆幅"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·摆角",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·摆长",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "pendulum-target",
+      "avs": [
+        {
+          "controlId": "s-length",
+          "label": "摆长",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：摆长改周期与出手时机，非线性单调主控"
+        },
+        {
+          "controlId": "s-angle",
+          "label": "摆角",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：摆角改振幅与落点包络，次优先（非抛体式非单调）"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·摆长",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·摆角",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "photoelectric",
+      "avs": [
+        {
+          "controlId": "s-frequency",
+          "label": "频率",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：频率相对阈值决定能否逸出，过关主控"
+        },
+        {
+          "controlId": "s-workfunction",
+          "label": "逸出功",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：逸出功改阈值，与频率对偶"
+        },
+        {
+          "controlId": "s-intensity",
+          "label": "光强",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：光强只缩放光电流幅值，不改阈值条件，最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·频率",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·逸出功",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·光强",
+          "score": 0.2,
+          "weight": 0.2
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "projectile-basic",
+      "avs": [
+        {
+          "controlId": "s-speed",
+          "label": "初速度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：v0 单调抬高射程，归因最清晰"
+        },
+        {
+          "controlId": "s-height",
+          "label": "发射高度",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：发射高度单调影响落点，弱于 v0"
+        },
+        {
+          "controlId": "s-angle",
+          "label": "发射角度",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "non-monotone",
+          "monotonicity": "non-monotone",
+          "notes": "rank3：θ 对射程非单调（约 45° 极值），不宜首选"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·初速度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·发射高度",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·发射角度",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "projectile-cannon",
+      "avs": [
+        {
+          "controlId": "in-power",
+          "label": "初速度",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：初速度单调主导射程，首选单变量"
+        },
+        {
+          "controlId": "in-grav",
+          "label": "重力加速度",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：g 单调改落点/飞行时间，环境主参"
+        },
+        {
+          "controlId": "in-wind",
+          "label": "风速",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：风速近似线性扰动水平位移"
+        },
+        {
+          "controlId": "in-angle",
+          "label": "发射角度",
+          "priorityRank": 4,
+          "role": "secondary",
+          "responseShape": "non-monotone",
+          "monotonicity": "non-monotone",
+          "notes": "rank4：发射角对射程非单调，靠后探究"
+        },
+        {
+          "controlId": "in-drag",
+          "label": "空气阻力",
+          "priorityRank": 5,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank5：阻力非线性压射程，归因较绕，最低有效 AV"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·初速度",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·重力加速度",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·风速",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·发射角度",
+          "priorityRank": 4,
+          "score": 0.55,
+          "weight": 0.55
+        },
+        {
+          "label": "单变量·空气阻力",
+          "priorityRank": 5,
+          "score": 0.47000000000000003,
+          "weight": 0.47000000000000003
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "rc-circuit",
+      "avs": [
+        {
+          "controlId": "s-resistance",
+          "label": "电阻",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：τ=RC，R 线性进时间常数，过关主控"
+        },
+        {
+          "controlId": "s-capacitance",
+          "label": "电容",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank2：C 同样线性进 τ，与 R 对称次优先"
+        },
+        {
+          "controlId": "s-supply-v",
+          "label": "电源电压",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：电源电压不进 τ 判据，近无效，最低优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·电源电压",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·电阻",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·电容",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "refraction-snell",
+      "avs": [
+        {
+          "controlId": "s-incident-angle",
+          "label": "入射角",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：θ₁ 经斯涅尔定律单调决定 θ₂（未全反射前），探究最直观"
+        },
+        {
+          "controlId": "s-refractive-index",
+          "label": "折射率",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：n₂ 非线性单调改折射角；与 θ₁ 联立，次优先单变量"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·入射角",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·折射率",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "series-parallel",
+      "avs": [
+        {
+          "controlId": "s-r1",
+          "label": "电阻R1",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：I∝1/R 非线性单调，串联/并联下改 R1 归因清晰"
+        },
+        {
+          "controlId": "s-r2",
+          "label": "电阻R2",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：与 R1 对称的非线性单调通道，次优先单变量"
+        },
+        {
+          "controlId": "s-meter-r",
+          "label": "电表内阻",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：仪表内阻几乎不进过关电流公式，近无效，最低优先"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·电阻R1",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·电阻R2",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·电表内阻",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "thin-lens-implicit",
+      "avs": [
+        {
+          "controlId": "s-object-distance",
+          "label": "物距",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank1：物距经 1/u+1/v=1/f 强非线性单调定像距，主探究量（近焦区敏感但不得因此降级）"
+        },
+        {
+          "controlId": "s-focal-length",
+          "label": "焦距",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：焦距同样是成像主方程自变量，非线性单调"
+        },
+        {
+          "controlId": "s-aperture",
+          "label": "光圈",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：口径多影响光束观感，不过关判据，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·物距",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·焦距",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·光圈",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        }
+      ],
+      "residuals": []
+    },
+    {
+      "id": "transformer-turns",
+      "avs": [
+        {
+          "controlId": "s-n2",
+          "label": "副边匝数",
+          "priorityRank": 1,
+          "role": "primary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank1：副边匝数线性改 U2（U2=U1·n2/n1），变压比最直观"
+        },
+        {
+          "controlId": "s-n1",
+          "label": "原边匝数",
+          "priorityRank": 2,
+          "role": "secondary",
+          "responseShape": "nonlinear-monotone",
+          "monotonicity": "monotone",
+          "notes": "rank2：原边匝数使 U2∝1/n1，非线性单调"
+        },
+        {
+          "controlId": "s-U1",
+          "label": "原边电压",
+          "priorityRank": 3,
+          "role": "secondary",
+          "responseShape": "linear-approx",
+          "monotonicity": "monotone",
+          "notes": "rank3：原边电压线性缩放 U2"
+        },
+        {
+          "controlId": "s-winding-temp",
+          "label": "绕组温度",
+          "priorityRank": 4,
+          "role": "secondary",
+          "responseShape": "unknown",
+          "monotonicity": "unknown",
+          "notes": "rank4：绕组温度不进 U2 公式，近无效最低"
+        }
+      ],
+      "routes": [
+        {
+          "label": "单变量·原边匝数",
+          "priorityRank": 2,
+          "score": 0.85,
+          "weight": 0.85
+        },
+        {
+          "label": "单变量·副边匝数",
+          "priorityRank": 1,
+          "score": 1,
+          "weight": 1
+        },
+        {
+          "label": "单变量·原边电压",
+          "priorityRank": 3,
+          "score": 0.7,
+          "weight": 0.7
+        },
+        {
+          "label": "单变量·绕组温度",
+          "priorityRank": 4,
+          "score": 0.55,
+          "weight": 0.55
+        }
+      ],
+      "residuals": [
+        "s-winding-temp"
+      ]
+    }
+  ],
+  "residuals": [
+    {
+      "id": "capacitor-era-ch2",
+      "items": [
+        "s-cable"
+      ]
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "items": [
+        "s-cable"
+      ]
+    },
+    {
+      "id": "gas-ideal",
+      "items": [
+        "s-temp"
+      ]
+    },
+    {
+      "id": "transformer-turns",
+      "items": [
+        "s-winding-temp"
+      ]
+    }
+  ]
+}

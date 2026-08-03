@@ -607,8 +607,9 @@
         "affects": [
           "deflection"
         ],
-        "notes": "有效主控：改 E 直接改偏转",
-        "priorityRank": 1
+        "notes": "rank1：场强直接改偏转，线性主控",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV2",
@@ -621,8 +622,9 @@
         "affects": [
           "deflection"
         ],
-        "notes": "有效次控：改 q 改偏转",
-        "priorityRank": 2
+        "notes": "rank2：电荷量改受力，线性次控",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

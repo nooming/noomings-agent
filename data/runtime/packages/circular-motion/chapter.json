@@ -366,7 +366,7 @@
   "strategy": {
     "title": "夜市飞椅 · 圆周运动",
     "sub": "夜市 · 转盘工位",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustDown --> Fire\nAdjustUp --> Fire\nBackFromCV --> StrategySelect\nChallengeCore --> StrategySelect\nExploreCore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛模式：限次巡检]:::stratCore\nModeSelect -->|探究模式| ExploreCore[探究模式：自由调参观察]:::stratCore\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|v/F 偏大| AdjustDown[按观察结果单变量微调]\nObserve -->|v/F 偏小| AdjustUp[按观察结果单变量微调]\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·角速度| Route_main\nStrategySelect -->|单变量·倾角| Route_main_s_base_tilt\nStrategySelect -->|单变量·半径| Route_main_s_radius\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改角速度]\nRoute_main_s_radius[控制变量：只改半径]\nRoute_main_s_base_tilt[控制变量：只改倾角]\nRoute_main --> AdjustDown\nRoute_main_s_base_tilt --> AdjustDown\nRoute_main_s_radius --> AdjustDown\nProbeCV[试探混淆·无关控件]\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustDown --> Fire\nAdjustUp --> Fire\nBackFromCV --> StrategySelect\nChallengeCore --> StrategySelect\nExploreCore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察读数?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛模式：限次巡检]:::stratCore\nModeSelect -->|探究模式| ExploreCore[探究模式：自由调参观察]:::stratCore\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|v/F 偏大| AdjustDown[按观察结果单变量微调]\nObserve -->|v/F 偏小| AdjustUp[按观察结果单变量微调]\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|单变量·角速度| Route_main\nStrategySelect -->|单变量·倾角| Route_main_s_base_tilt\nStrategySelect -->|单变量·半径| Route_main_s_radius\nStrategySelect -->|多参盲调| Trap\nTrap --> Fire\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改角速度]\nRoute_main_s_radius[控制变量：只改半径]\nRoute_main_s_base_tilt[控制变量：只改倾角]\nRoute_main --> AdjustDown\nRoute_main_s_base_tilt --> AdjustDown\nRoute_main_s_radius --> AdjustDown\nProbeCV[试探·无关控件]\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -700,12 +700,11 @@
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
         "score": 0.2,
         "weight": 0.2,
-        "priorityRank": 0,
         "highlightFailureBranches": true
       },
       {
         "id": "confound_CV1",
-        "label": "试探混淆·无关控件",
+        "label": "试探·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -780,8 +779,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：向心力∝ω²，角速度优先",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -790,10 +790,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：F∝r 近似线性，次优先",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV3",
@@ -802,10 +803,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "notes": "rank3：底座倾角不进 F 计算，近无效最低",
+        "priorityRank": 3,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

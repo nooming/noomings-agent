@@ -786,8 +786,9 @@
           "R",
           "H"
         ],
-        "notes": "v0 优先单变量：单调抬高射程",
-        "priorityRank": 1
+        "notes": "rank1：初速度单调主导射程，首选单变量",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV2",
@@ -801,8 +802,9 @@
           "R",
           "H"
         ],
-        "notes": "v0 优先单变量：单调抬高射程",
-        "priorityRank": 2
+        "notes": "rank2：g 单调改落点/飞行时间，环境主参",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV3",
@@ -813,8 +815,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "notes": "rank3：风速近似线性扰动水平位移",
+        "priorityRank": 3,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV4",
@@ -828,8 +831,9 @@
           "R",
           "H"
         ],
-        "notes": "θ 对射程非单调，与 v0/h 不等价",
-        "priorityRank": 4
+        "notes": "rank4：发射角对射程非单调，靠后探究",
+        "priorityRank": 4,
+        "responseShape": "non-monotone"
       },
       {
         "id": "AV5",
@@ -838,10 +842,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 5
+        "notes": "rank5：阻力非线性压射程，归因较绕，最低有效 AV",
+        "priorityRank": 5,
+        "responseShape": "nonlinear-monotone"
       }
     ],
     "confoundingVariables": [

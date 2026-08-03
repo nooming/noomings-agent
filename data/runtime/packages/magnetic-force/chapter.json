@@ -717,10 +717,11 @@
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：F∝I 近似线性，电流优先单变量",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV2",
@@ -729,10 +730,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：F∝B 同样线性，与 I 对称次优先",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

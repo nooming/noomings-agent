@@ -321,7 +321,7 @@
   "strategy": {
     "title": "电容实验三：储能与充电",
     "sub": "储能台 · 充放电",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探混淆·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n",
     "routes": [
       {
         "id": "main",
@@ -495,7 +495,7 @@
       },
       {
         "id": "confound_audio_volume",
-        "label": "试探混淆·音量",
+        "label": "试探·音量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -573,8 +573,9 @@
         "mapsToKg": "O1",
         "monotonicity": "unknown",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "本关仅馈线长度可调；响应形态依赖关卡脚本，标 unknown",
+        "priorityRank": 1,
+        "responseShape": "unknown"
       }
     ],
     "confoundingVariables": [

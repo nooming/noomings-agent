@@ -295,7 +295,7 @@
   "strategy": {
     "title": "电容实验二：串并联配置",
     "sub": "串并联 · 电容台",
-    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveFB -->|达标| Win[过关]:::stratResult\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探混淆·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探混淆·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
+    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveFB -->|达标| Win[过关]:::stratResult\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
     "routes": [
       {
         "id": "main",
@@ -630,7 +630,7 @@
       },
       {
         "id": "confound_audio_volume",
-        "label": "试探混淆·音量",
+        "label": "试探·音量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -706,10 +706,11 @@
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：串并联等效电容主参，优先单变量 C1",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -718,10 +719,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：并联支路电容，与 C1 对称",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV3",
@@ -730,10 +732,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "notes": "rank3：串联支路电容，继续单变量",
+        "priorityRank": 3,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV4",
@@ -744,8 +747,9 @@
         "mapsToKg": "O1",
         "monotonicity": "unknown",
         "affects": [],
-        "notes": "",
-        "priorityRank": 4
+        "notes": "rank4：馈线长度多为外观/次级，对等效 C 贡献弱，最低",
+        "priorityRank": 4,
+        "responseShape": "unknown"
       }
     ],
     "confoundingVariables": [

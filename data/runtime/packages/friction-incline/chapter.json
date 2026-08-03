@@ -406,7 +406,7 @@
   "strategy": {
     "title": "仓库卸货滑道 · 摩擦探究",
     "sub": "斜面台 · 摩擦探究",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustFriction --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探混淆·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nAngleRoute[单变量·斜面倾角]\nFrictionRoute[单变量·摩擦系数]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire[测试卸货]\nAdjustFriction --> Fire\nBackFromCV --> StrategySelect\nFire --> Observe{观察结果}:::stratCond\nFire --> Observe\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|卡住| AdjustAngle\nObserve -->|冲过| AdjustAngle\nObserve -->|卡住| Retry[重试]:::stratRetry\nObserve -->|冲过| Retry\nObserve -->|停在接货区| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·斜面倾角| AngleRoute\nStrategySelect -->|单变量·摩擦系数| FrictionRoute\nStrategySelect -.->|试探·质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nProbeCV[拧混淆控件]:::stratInvalid\nAngleRoute --> AdjustAngle[调整角度]\nFrictionRoute --> AdjustFriction[调整摩擦]\nRetry --> AdjustAngle\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：μ锁定，限次调θ]:::stratResult\nAngleRoute[单变量·斜面倾角]\nFrictionRoute[单变量·摩擦系数]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -651,7 +651,7 @@
       },
       {
         "id": "confound_s_mass",
-        "label": "试探混淆·质量",
+        "label": "试探·质量",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -724,13 +724,14 @@
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "non-monotone",
+        "monotonicity": "monotone",
         "affects": [
           "R",
           "H"
         ],
-        "notes": "θ 对射程非单调，与 v0/h 不等价",
-        "priorityRank": 1
+        "notes": "rank1：倾角经 tanθ 与 μ 比较，下滑倾向非线性单调（非抛体极值角）",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -739,10 +740,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：μ 单调改临界条件；竞赛常锁定，探究次优先",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

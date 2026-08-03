@@ -517,9 +517,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 1,
-        "weight": 1,
-        "priorityRank": 1,
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -605,9 +605,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.85,
-        "weight": 0.85,
-        "priorityRank": 2,
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -805,30 +805,32 @@
     "adjustmentVariables": [
       {
         "id": "AV1",
-        "controlId": "s-angle",
-        "label": "摆角",
+        "controlId": "s-len",
+        "label": "摆长",
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "non-monotone",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank1：摆长主控，T∝√L 非线性单调，校时首选",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-angle",
+        "label": "摆角",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
         "affects": [
           "R",
           "H"
         ],
-        "notes": "θ 对射程非单调，与 v0/h 不等价",
-        "priorityRank": 1
-      },
-      {
-        "id": "AV2",
-        "controlId": "s-len",
-        "label": "摆长",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：摆角仅弱 θ² 修正周期，并需满足最小摆幅",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       }
     ],
     "confoundingVariables": [

@@ -362,7 +362,7 @@
   "strategy": {
     "title": "透镜 · 凸透镜成像实验",
     "sub": "光具座 · 薄透镜",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustF --> Fire\nAdjustU --> Fire[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探混淆·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[多参盲调]\nAdjustF[按观察单变量微调]\nAdjustU[按观察单变量微调]\nRetry --> AdjustU\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nProbeCV[试探混淆·无关控件]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustF --> Fire\nAdjustU --> Fire[测试成像]\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察结果?}:::stratCond\nMode -->|竞赛| Challenge[竞赛模式：限次急单]:::stratCore\nMode -->|探究| Explore[探究模式：自由试像]:::stratCore\nObserve -->|偏远| AdjustF\nObserve -->|偏近| AdjustU\nObserve -->|未对准| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|单变量·物距| Route_main\nStrategySelect -->|单变量·光圈| Route_main_s_aperture\nStrategySelect -->|单变量·焦距| Route_main_s_focal_length\nStrategySelect -->|多参盲调| Trap\nStart([开始探究]):::stratStart\nAdjust[单变量微调]\nRoute_main[控制变量：只改物距]\nRoute_main_s_focal_length[控制变量：只改焦距]\nRoute_main_s_aperture[控制变量：只改光圈]\nTrap[多参盲调]\nAdjustF[按观察单变量微调]\nAdjustU[按观察单变量微调]\nRetry --> AdjustU\nRoute_main --> Adjust\nRoute_main_s_aperture --> Adjust\nRoute_main_s_focal_length --> Adjust\nProbeCV[试探·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -690,12 +690,11 @@
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
         "score": 0.2,
         "weight": 0.2,
-        "priorityRank": 3,
         "highlightFailureBranches": true
       },
       {
         "id": "confound_CV1",
-        "label": "试探混淆·无关控件",
+        "label": "试探·无关控件",
         "mapsTo": [],
         "warn": "拧混淆量通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
@@ -771,8 +770,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：物距经 1/u+1/v=1/f 强非线性单调定像距，主探究量（近焦区敏感但不得因此降级）",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -783,8 +783,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：焦距同样是成像主方程自变量，非线性单调",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV3",
@@ -793,10 +794,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "notes": "rank3：口径多影响光束观感，不过关判据，近无效最低",
+        "priorityRank": 3,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

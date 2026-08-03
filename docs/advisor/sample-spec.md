@@ -76,7 +76,21 @@ Agent B 默认 **仅统计 challenge 段** 的 tuning/action 用于控制变量�
 - [ ] （精品）对照 [sample-craft-rubric.md](sample-craft-rubric.md) 必达全勾
 - [ ] 游戏内探究/竞赛：`#modeSelect` + HUD + `__platformTraceSetPhase`；竞赛限次（如剩余机会）
 
-## 7. 验收流程
+## 7. 调节优先级与响应形态（chapter 侧）
+
+Agent A 写入 `inquiryScript.adjustmentVariables[]` 时：
+
+| 字段 | 约定 |
+|------|------|
+| `priorityRank` | 推荐探究路径顺序（1 最好归因），不是单纯灵敏度 \|∂y/∂x\| |
+| `responseShape` | `linear-approx` \| `nonlinear-monotone` \| `non-monotone` \| `discrete` \| `unknown` |
+| `monotonicity` | 与 shape 一致：`monotone` / `non-monotone` / `discrete` / `unknown` |
+| `notes` | 中文简述为何该 rank + 形态；学生可见文案勿写「混淆」 |
+
+- **不要**因非线性（如透镜公式、I∝1/R）把主物理量降级
+- **要**把非单调（有极值）、近无效/装饰滑条放到更后或标低；`strategy.routes` 的 score：rank1→1.0，2→0.85，3→0.7，4→0.55，trap→0.2，confoundProbe→0.15（无 priorityRank）
+
+## 8. 验收流程
 
 1. 同学 PR / 提交 zip
 2. 负责人在学生端试玩：切换探索/竞赛，确认轨迹含 `phase_change`，过关后教师端见 win + 参数次数

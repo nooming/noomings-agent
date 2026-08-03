@@ -179,9 +179,10 @@ function enrichAdjustmentVariableSemantics(avs, chapter, gameHints) {
       label,
       priorityRank: av.priorityRank != null ? av.priorityRank : i + 1,
       monotonicity: inferred.monotonicity,
+      responseShape: av.responseShape || undefined,
       affects: (av.affects && av.affects.length) ? av.affects : inferred.affects,
       notes: av.notes || inferred.notes,
-      role: av.role || (i === 0 ? 'primary' : 'secondary'),
+      role: av.role || ((av.priorityRank === 1 || i === 0) ? 'primary' : 'secondary'),
     };
   });
 }

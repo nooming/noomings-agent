@@ -594,8 +594,9 @@
           "C",
           "E"
         ],
-        "notes": "d 双作用：抬高 C（∝1/d）同时改 E=V/d 击穿风险",
-        "priorityRank": 1
+        "notes": "rank1：d 使 C∝1/d 非线性单调，并改击穿风险",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -608,8 +609,9 @@
         "affects": [
           "C"
         ],
-        "notes": "A 单调改 C，不直接改击穿场强",
-        "priorityRank": 2
+        "notes": "rank2：A 近似线性改 C，次优先",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [

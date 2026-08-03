@@ -18,7 +18,9 @@ const DEFAULT_PREFERRED = 0.75;
 function scoreForPriorityRank(rank) {
   const r = Number(rank);
   if (Number.isFinite(r) && SCORE_BY_RANK[r] != null) return SCORE_BY_RANK[r];
-  if (Number.isFinite(r) && r > 4) return Math.max(0.35, 0.55 - (r - 4) * 0.08);
+  if (Number.isFinite(r) && r > 4) {
+    return Math.round(Math.max(0.35, 0.55 - (r - 4) * 0.08) * 100) / 100;
+  }
   return DEFAULT_PREFERRED;
 }
 
@@ -67,14 +69,17 @@ function repairStrategyRouteScores(chapter, gameHints) {
     const idx = isTrapRoute(r) ? -1 : preferredIdx++;
     const fields = computeRouteScoreFields(r, rankedAvs, Math.max(0, idx));
     // Always overwrite identical/missing scores for consistency
-    return {
+    const next = {
       ...r,
       score: fields.score,
       weight: fields.weight,
-      ...(fields.priorityRank != null && fields.priorityRank < 99
-        ? { priorityRank: fields.priorityRank }
-        : {}),
     };
+    if (fields.priorityRank != null && fields.priorityRank < 99) {
+      next.priorityRank = fields.priorityRank;
+    } else {
+      delete next.priorityRank;
+    }
+    return next;
   });
 
   const preferredScores = nextRoutes

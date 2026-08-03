@@ -670,13 +670,14 @@
         "type": "range",
         "role": "primary",
         "mapsToKg": "O1",
-        "monotonicity": "non-monotone",
+        "monotonicity": "monotone",
         "affects": [
           "theta2",
           "hit"
         ],
-        "notes": "θ₁ 经斯涅尔定律决定 θ₂",
-        "priorityRank": 1
+        "notes": "rank1：θ₁ 经斯涅尔定律单调决定 θ₂（未全反射前），探究最直观",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -690,8 +691,9 @@
           "theta2",
           "hit"
         ],
-        "notes": "n₂ 与 θ₁ 共同决定折射角",
-        "priorityRank": 2
+        "notes": "rank2：n₂ 非线性单调改折射角；与 θ₁ 联立，次优先单变量",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       }
     ],
     "confoundingVariables": [

@@ -304,9 +304,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 1,
-        "weight": 1,
-        "priorityRank": 1,
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -397,9 +397,9 @@
           "R1"
         ],
         "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.85,
-        "weight": 0.85,
-        "priorityRank": 2,
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
         "highlightNodes": [
           "Start",
           "StrategySelect",
@@ -788,27 +788,29 @@
     "adjustmentVariables": [
       {
         "id": "AV1",
-        "controlId": "s-n1",
-        "label": "原边匝数",
-        "type": "range",
-        "role": "primary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "",
-        "priorityRank": 1
-      },
-      {
-        "id": "AV2",
         "controlId": "s-n2",
         "label": "副边匝数",
         "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank1：副边匝数线性改 U2（U2=U1·n2/n1），变压比最直观",
+        "priorityRank": 1,
+        "responseShape": "linear-approx"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-n1",
+        "label": "原边匝数",
+        "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：原边匝数使 U2∝1/n1，非线性单调",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV3",
@@ -817,10 +819,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "unknown",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 3
+        "notes": "rank3：原边电压线性缩放 U2",
+        "priorityRank": 3,
+        "responseShape": "linear-approx"
       },
       {
         "id": "AV4",
@@ -831,8 +834,9 @@
         "mapsToKg": "O1",
         "monotonicity": "unknown",
         "affects": [],
-        "notes": "",
-        "priorityRank": 4
+        "notes": "rank4：绕组温度不进 U2 公式，近无效最低",
+        "priorityRank": 4,
+        "responseShape": "unknown"
       }
     ],
     "confoundingVariables": [

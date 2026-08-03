@@ -634,8 +634,9 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 1
+        "notes": "rank1：摆长改周期与出手时机，非线性单调主控",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
       },
       {
         "id": "AV2",
@@ -644,10 +645,11 @@
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
-        "monotonicity": "non-monotone",
+        "monotonicity": "monotone",
         "affects": [],
-        "notes": "",
-        "priorityRank": 2
+        "notes": "rank2：摆角改振幅与落点包络，次优先（非抛体式非单调）",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
       }
     ],
     "confoundingVariables": [
