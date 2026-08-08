@@ -1,0 +1,1247 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 探究/竞赛 |\n| 调节参数 | O1 | operation | AV 滑条/形状 |\n| 发射 | O2 | operation | 发射按钮 |\n| 碰撞后爬升? | C2 | constraint | 高度结果 |\n| 冲出斜坡? | C3 | constraint | 动能过大 |\n| 命中目标高度? | C4 | constraint | 竞赛达标 |\n| 竞赛次数耗尽 | C5 | constraint | 失败 |\n| 过关 | R1 | result | win |\n| 轨温控件 | I1 | irrelevant | CV |",
+  "kg": {
+    "title": "工坊斜轨 · 碰撞与纯滚动",
+    "sub": "斜坡滚球 · 高度探究",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始斜坡滚球碰撞与纯滚动探究"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择自由探究或定高挑战，决定目标高度与限次",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "O1",
+        "label": "调节滑条参数",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节质量、初速、倾角与靶球形状"
+      },
+      {
+        "id": "O2",
+        "label": "发射",
+        "group": "operation",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "发射入射球，观察碰撞与爬升"
+      },
+      {
+        "id": "C2",
+        "label": "爬升高度判定",
+        "group": "constraint",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "靶球沿斜轨纯滚动后达到的最大垂直高度",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "是否冲出斜坡",
+        "group": "constraint",
+        "layer": "play",
+        "level": 5,
+        "r": 22,
+        "desc": "动能过大导致冲过斜坡顶端坠落",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C4",
+        "label": "是否命中目标高度",
+        "group": "constraint",
+        "layer": "play",
+        "level": 6,
+        "r": 22,
+        "desc": "竞赛模式下高度是否落入目标窗口",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C5",
+        "label": "竞赛次数耗尽",
+        "group": "constraint",
+        "layer": "play",
+        "level": 7,
+        "r": 22,
+        "desc": "竞赛剩余机会为 0",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 8,
+        "r": 22,
+        "desc": "靶球停在目标高度附近，触发 win"
+      },
+      {
+        "id": "S1",
+        "label": "一维弹性碰撞分配速度",
+        "group": "core",
+        "layer": "teach",
+        "level": 9,
+        "r": 22,
+        "desc": "碰撞后靶球速度由质量比与入射初速决定"
+      },
+      {
+        "id": "S2",
+        "label": "纯滚动爬升含平动与转动",
+        "group": "core",
+        "layer": "teach",
+        "level": 10,
+        "r": 22,
+        "desc": "沿斜轨上坡时动能同时含平动与转动，形状改变转动惯量因子"
+      },
+      {
+        "id": "I1",
+        "label": "轨温",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 11,
+        "r": 18,
+        "desc": "轨温控件（试探项）；高度判定见竞赛目标与发射结果"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "O2",
+        "tp": "premise"
+      },
+      {
+        "s": "O2",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "premise"
+      },
+      {
+        "s": "C3",
+        "t": "C4",
+        "tp": "premise"
+      },
+      {
+        "s": "C4",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C5",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "工坊斜轨 · 碰撞与纯滚动",
+    "sub": "斜坡滚球 · 高度探究",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "—",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "选择自由探究或定高挑战",
+          "children": [
+            {
+              "_e": "探究",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由调参观察高度",
+              "children": [
+                {
+                  "n": "调节滑条参数",
+                  "t": "step",
+                  "d": "调节滑条与形状",
+                  "children": [
+                    {
+                      "n": "发射",
+                      "t": "step",
+                      "d": "观察碰撞与爬升",
+                      "children": [
+                        {
+                          "n": "冲出斜坡?",
+                          "t": "decision",
+                          "d": "动能是否过大",
+                          "children": [
+                            {
+                              "_e": "是",
+                              "n": "记录高度",
+                              "t": "step",
+                              "d": "对照读数继续调参"
+                            },
+                            {
+                              "_e": "否",
+                              "n": "提示重试",
+                              "t": "retry",
+                              "d": "减小初速或改质量比",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_e": "竞赛",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次命中目标高度",
+              "children": [
+                {
+                  "n": "调参并发射",
+                  "t": "step",
+                  "d": "对准目标高度（含调节滑条参数）",
+                  "children": [
+                    {
+                      "n": "命中目标高度?",
+                      "t": "decision",
+                      "d": "是否落入 ±0.2 m 窗口",
+                      "children": [
+                        {
+                          "_e": "是",
+                          "n": "过关",
+                          "t": "result",
+                          "d": "触发 win"
+                        },
+                        {
+                          "_e": "否",
+                          "n": "未达标重试",
+                          "t": "retry",
+                          "d": "是否还有机会",
+                          "children": [
+                            {
+                              "_e": "是",
+                              "n": "提示重试",
+                              "t": "retry",
+                              "d": "继续微调"
+                            },
+                            {
+                              "_e": "否",
+                              "n": "挑战结束",
+                              "t": "retry",
+                              "d": "回到探究"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关",
+    "sub": "靶球停在目标高度附近"
+  },
+  "traceMap": {
+    "controls": {
+      "s-speed": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-shape": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-rail-temp": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "btnLaunch": {
+        "kgId": "O2",
+        "role": "operation"
+      },
+      "btnReset": {
+        "kgId": "O1",
+        "role": "operation",
+        "note": "重置场景：不计入主探究路径"
+      }
+    },
+    "legacyTypes": {}
+  },
+  "strategy": {
+    "title": "工坊斜轨 · 碰撞与纯滚动",
+    "sub": "斜坡滚球 · 高度探究",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustC[竞赛微调] --> FireC\nAdjustMass1 --> Fire\nAdjustMass2 --> Fire\nAdjustShape --> Fire\nAdjustSpeed --> Fire[发射]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：限次定高]:::stratResult\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nFireC[竞赛发射] --> ObserveC{竞赛观察?}:::stratCond\nModeChallenge --> FireC\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏高/冲出| Adjust[按观察单变量微调]\nObserve -->|偏低/不足| Adjust\nObserve -->|冲出| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|命中目标高度| Win\nObserveC -->|未命中| AdjustC\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|命中| WinC[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·初速度| AngleRoute[单变量·倾角]\nStrategySelect -->|单变量·入射质量| Mass1Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·靶球质量| Mass2Route[控制变量：每次只改一项]\nStrategySelect -.->|单变量·斜坡倾角| ProbeCV[试探·轨温]:::stratInvalid\nStrategySelect -->|单变量·靶球形状| ShapeRoute[离散·形状]\nStrategySelect -->|多参盲调| SpeedRoute[控制变量：每次只改一项]\nStrategySelect -->|多参盲调| Trap[多参盲调]\nTrap --> Fire\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整倾角]\nMass1Route --> AdjustMass1[调整入射质量]\nMass2Route --> AdjustMass2[调整靶球质量]\nRetry --> Adjust\nShapeRoute --> AdjustShape[切换形状]\nSpeedRoute --> AdjustSpeed[调整初速度]\n",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·初速度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeExplore",
+          "AdjustSpeed",
+          "Fire",
+          "Observe",
+          "Retry",
+          "Adjust",
+          "AdjustMass1",
+          "AdjustMass2",
+          "AngleRoute",
+          "AdjustAngle",
+          "AdjustShape",
+          "Mass1Route",
+          "Mass2Route",
+          "ProbeCV"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "AdjustSpeed",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Retry",
+            "Adjust"
+          ],
+          [
+            "AdjustMass1",
+            "Fire"
+          ],
+          [
+            "AdjustMass2",
+            "Fire"
+          ],
+          [
+            "StrategySelect",
+            "AngleRoute"
+          ],
+          [
+            "AngleRoute",
+            "AdjustAngle"
+          ],
+          [
+            "AdjustAngle",
+            "Fire"
+          ],
+          [
+            "AdjustShape",
+            "Fire"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Mass1Route"
+          ],
+          [
+            "Mass1Route",
+            "AdjustMass1"
+          ],
+          [
+            "StrategySelect",
+            "Mass2Route"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ]
+        ]
+      },
+      {
+        "id": "main_s-mass1",
+        "label": "单变量·入射质量",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeChallenge",
+          "Mass1Route",
+          "AdjustMass1",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust",
+          "Retry",
+          "ModeExplore",
+          "WinC"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Mass1Route"
+          ],
+          [
+            "Mass1Route",
+            "AdjustMass1"
+          ],
+          [
+            "AdjustMass1",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-mass2",
+        "label": "单变量·靶球质量",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeChallenge",
+          "AdjustMass1",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust",
+          "Retry",
+          "ModeExplore",
+          "WinC",
+          "Mass2Route"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "AdjustMass1",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "Mass2Route"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-angle",
+        "label": "单变量·斜坡倾角",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.55,
+        "weight": 0.55,
+        "priorityRank": 4,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ModeChallenge",
+          "AdjustAngle",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust",
+          "Retry",
+          "ModeExplore",
+          "WinC"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "AdjustAngle",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-shape",
+        "label": "单变量·靶球形状",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.47,
+        "weight": 0.47,
+        "priorityRank": 5,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "Env",
+          "ProbeCV"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExplore",
+          "StrategySelect",
+          "Fire",
+          "Observe",
+          "Adjust",
+          "Retry",
+          "SpeedRoute"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SpeedRoute"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_s_rail_temp",
+        "label": "试探·轨温",
+        "kind": "confoundProbe",
+        "mapsTo": [],
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.39,
+        "weight": 0.39,
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExplore",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true,
+        "priorityRank": 6
+      }
+    ]
+  },
+  "inquiryProfile": "generic",
+  "inquiryScript": {
+    "summary": "碰撞后靶球纯滚动爬升高度探究",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "一维碰撞与纯滚动爬升",
+        "formulas": [
+          "v0 = 2*m1/(m1+m2)*u0（弹性碰撞·靶初静）",
+          "Ek = 1/2*m*v^2",
+          "Ep = m*g*h（纯滚动爬升）"
+        ],
+        "mapsToKg": [
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-speed",
+        "label": "初速度",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "H"
+        ],
+        "notes": "rank1：入射初速最直接改碰撞后动能与爬升高度",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-mass1",
+        "label": "入射质量",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "H"
+        ],
+        "notes": "rank2：质量比决定碰撞后靶球速度",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-mass2",
+        "label": "靶球质量",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "H"
+        ],
+        "notes": "rank3：靶球质量对称影响速度分配",
+        "priorityRank": 3,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-angle",
+        "label": "斜坡倾角",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "H"
+        ],
+        "notes": "rank4：倾角改减速与冲出几何，次优先",
+        "priorityRank": 4,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV5",
+        "controlId": "s-shape",
+        "label": "靶球形状",
+        "type": "discrete",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "discrete",
+        "affects": [
+          "H"
+        ],
+        "notes": "rank5：球/圆柱离散改变转动惯量因子，有效 AV 非 CV",
+        "priorityRank": 5,
+        "responseShape": "discrete"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-rail-temp",
+        "label": "轨温",
+        "reason": "教师注：轨色冷暖/emissive/雾色与灯光；高度判定不依赖该控件（学生侧后置揭示）"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "AV5",
+      "CV1"
+    ],
+    "narrative": {
+      "intro": "碰撞后靶球纯滚动爬升，探究影响高度的量。",
+      "steps": [
+        {
+          "order": 1,
+          "title": "明确知识点",
+          "body": "碰撞分配速度后，靶球沿斜轨纯滚动爬升；高度同时受平动与转动能量约束。",
+          "mapsToKg": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "识别调节变量",
+          "body": "可调节：初速度、两球质量、倾角与形状；建议控制变量法，每次只改一项。",
+          "mapsToKg": [
+            "O1"
+          ]
+        },
+        {
+          "order": 3,
+          "title": "观察—调整—再测",
+          "body": "发射后对照高度读数；竞赛时对准目标高度窗口，冲出或不足则微调。",
+          "mapsToKg": [
+            "O2",
+            "C2",
+            "C4"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "爬升高度",
+        "symbol": "H",
+        "unit": "m",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "mechanics-rolling"
+  },
+  "physicsModel": {
+    "formulas": [
+      "v0 = 2*m1/(m1+m2)*u0（弹性碰撞·靶初静）",
+      "Ek = 1/2*m*v^2",
+      "Ep = m*g*h（纯滚动爬升）"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "AV5"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "v0 = 2*m1/(m1+m2)*u0（弹性碰撞·靶初静）",
+        "Ek = 1/2*m*v^2",
+        "Ep = m*g*h（纯滚动爬升）"
+      ],
+      "constants": [
+        "g"
+      ],
+      "updateLoopSummary": "requestAnimationFrame：平直段滚动→弹性碰撞→斜轨纯滚动减速→高度/冲出判定",
+      "winConditionSummary": "竞赛模式 |H−H_target| ≤ 0.2 m 触发 win；轨温不参与",
+      "domain": "mechanics-rolling"
+    }
+  },
+  "gameSpec": {
+    "title": "工坊斜轨 · 碰撞与纯滚动",
+    "subtitle": "斜坡滚球",
+    "winCondition": "竞赛模式下靶球停在目标高度 ±0.2 m 内",
+    "knowledgeSummary": "碰撞速度分配 + 纯滚动爬升（平动与转动）",
+    "controls": [
+      {
+        "id": "s-speed",
+        "type": "range",
+        "label": "初速度",
+        "symbol": "v₀",
+        "unit": "m/s",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 2,
+          "max": 25,
+          "step": 0.1,
+          "unit": "m/s"
+        }
+      },
+      {
+        "id": "s-mass1",
+        "type": "range",
+        "label": "入射质量",
+        "symbol": "m₁",
+        "unit": "kg",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 15,
+          "step": 0.1,
+          "unit": "kg"
+        }
+      },
+      {
+        "id": "s-mass2",
+        "type": "range",
+        "label": "靶球质量",
+        "symbol": "m₂",
+        "unit": "kg",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 1,
+          "max": 15,
+          "step": 0.1,
+          "unit": "kg"
+        }
+      },
+      {
+        "id": "s-angle",
+        "type": "range",
+        "label": "斜坡倾角",
+        "symbol": "θ",
+        "unit": "°",
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 15,
+          "max": 60,
+          "step": 5,
+          "unit": "°"
+        }
+      },
+      {
+        "id": "s-shape",
+        "type": "discrete",
+        "label": "靶球形状",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-rail-temp",
+        "type": "range",
+        "label": "轨温",
+        "symbol": "T",
+        "unit": "°C",
+        "mapsToKg": "I1",
+        "role": "confounding",
+        "suggestedRange": {
+          "min": 5,
+          "max": 40,
+          "step": 1,
+          "unit": "°C"
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "s-rail-temp",
+        "label": "轨温",
+        "reason": "教师注：观感项；win 公式不含轨温（学生侧后置揭示）",
+        "uiStrategy": "neutral_slider"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-speed",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节初速度"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-mass1",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节入射质量"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-mass2",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节靶球质量"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-angle",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节倾角"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-shape",
+        "kgId": "O1",
+        "required": true,
+        "description": "切换形状（离散 AV）"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-rail-temp",
+        "kgId": "I1",
+        "required": false,
+        "description": "触碰轨温 CV"
+      },
+      {
+        "type": "action",
+        "controlId": "btnLaunch",
+        "kgId": "O2",
+        "required": true,
+        "description": "发射"
+      },
+      {
+        "type": "win",
+        "controlId": null,
+        "kgId": "R1",
+        "required": true,
+        "description": "竞赛命中目标高度"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "探究或竞赛"
+      },
+      {
+        "name": "冲出斜坡?",
+        "type": "decision",
+        "desc": "动能是否过大"
+      },
+      {
+        "name": "命中目标高度?",
+        "type": "decision",
+        "desc": "竞赛达标判定"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "win 事件"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：滑条/形状 change→tuning，按钮→action，过关→win。\nCV 轨温可记 irrelevant_touch，不计入主探究路径得分。\nAgent B 默认仅统计 challenge 段。"
+  },
+  "meta": {
+    "generationMode": "analyze",
+    "packageId": "ramp-rolling-collision",
+    "craft": "pilot"
+  }
+}

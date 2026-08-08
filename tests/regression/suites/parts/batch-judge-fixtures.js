@@ -8,15 +8,23 @@ const {
   synthTrapTrace,
   synthSingleVarMain,
 } = require('../../../../packages/generate/trace-synth');
+const {
+  getJudgeFixturesPath,
+  loadChapterForSample,
+} = require('../../../../packages/shared/data-paths');
 
-const ROOT = path.join(__dirname, '../../..');
-const FIXTURES = path.join(ROOT, 'data/datasets/html-samples/judge-fixtures.json');
+const FIXTURES = getJudgeFixturesPath();
 
 function resolveChapter(fx) {
   if (fx.chapter) return fx.chapter.chapter || fx.chapter;
   if (fx.chapterRef) {
-    const entry = loadChapter(fx.chapterRef.bundle, fx.chapterRef.key);
-    return entry.chapter || entry;
+    if (fx.chapterRef.packageId) {
+      return loadChapterForSample(fx.chapterRef.packageId);
+    }
+    if (fx.chapterRef.bundle && fx.chapterRef.key) {
+      const entry = loadChapter(fx.chapterRef.bundle, fx.chapterRef.key);
+      return entry.chapter || entry;
+    }
   }
   return null;
 }
@@ -29,6 +37,7 @@ function matchVerdict(actual, expected, traceKey) {
 }
 
 function run() {
+  assert(fs.existsSync(FIXTURES), `judge-fixtures missing: ${FIXTURES}`);
   const data = JSON.parse(fs.readFileSync(FIXTURES, 'utf8'));
   assert(data.fixtures?.length >= 3, 'judge-fixtures need >= 3 entries');
 

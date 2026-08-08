@@ -27,4 +27,5 @@ module.exports = [
   { id: 'thin-lens-implicit', dir: '透镜', game: '透镜.html', topic: '透镜' },
   { id: 'refraction-snell', dir: '折射', game: '折射.html', topic: '折射' },
   { id: 'photoelectric', dir: '光电效应', game: '光电效应.html', topic: '光电效应' },
+  { id: 'ramp-rolling-collision', dir: '斜坡滚球', game: 'game.html', topic: '碰撞与纯滚动' },
 ];

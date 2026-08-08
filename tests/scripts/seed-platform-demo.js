@@ -5,20 +5,21 @@ const fs = require('fs');
 const path = require('path');
 const { loadChapterForGraph } = require('../../packages/platform/catalog');
 const { getCatalogPath } = require('../../packages/platform/paths');
-const { getDatasetHtmlSamplesRoot } = require('../../packages/shared/data-paths');
+const { packagePlayUrl } = require('../../packages/shared/package-layout');
+const {
+  getPackageChapterPath,
+  getPackageGamePath,
+} = require('../../packages/shared/data-paths');
 
-const ROOT = path.resolve(__dirname, '../..');
 const CATALOG = getCatalogPath();
-const CHAPTER_ROOT = path.join(getDatasetHtmlSamplesRoot(), 'chapters');
-const HTML_ROOT = path.join(getDatasetHtmlSamplesRoot(), 'generated');
 
 const DEMO_ITEMS = [
   {
     id: 'demo-multi-kp',
     title: '【样本集】机械能双公式',
     description: 'multi-kp：mgh 与 ½mv² 多 KP + 混淆控件 I1',
-    graphId: 'html-samples-multi-kp',
-    playUrl: '/static/html-samples/generated/multi-kp.html',
+    graphId: 'multi-kp',
+    playUrl: packagePlayUrl('multi-kp'),
     published: true,
     featured: true,
   },
@@ -26,8 +27,8 @@ const DEMO_ITEMS = [
     id: 'demo-capacitor-confound-ui',
     title: '【样本集】电容与混淆 UI',
     description: 'capacitor-confound-ui：混淆变量与无关控件',
-    graphId: 'html-samples-capacitor-confound-ui',
-    playUrl: '/static/html-samples/generated/capacitor-confound-ui.html',
+    graphId: 'capacitor-confound-ui',
+    playUrl: packagePlayUrl('capacitor-confound-ui'),
     published: true,
     featured: false,
   },
@@ -35,16 +36,16 @@ const DEMO_ITEMS = [
     id: 'demo-projectile-basic',
     title: '【样本集】斜抛射程探究',
     description: '调节角度与初速度，探究平抛射程',
-    graphId: 'html-samples-projectile-basic',
-    playUrl: '/static/html-samples/generated/projectile-basic.html',
+    graphId: 'projectile-basic',
+    playUrl: packagePlayUrl('projectile-basic'),
     published: true,
     featured: false,
   },
 ];
 
 function chapterReady(sampleId) {
-  return fs.existsSync(path.join(CHAPTER_ROOT, sampleId, 'chapter.json'))
-    && fs.existsSync(path.join(HTML_ROOT, `${sampleId}.html`));
+  return fs.existsSync(getPackageChapterPath(sampleId))
+    && fs.existsSync(getPackageGamePath(sampleId));
 }
 
 function main() {
@@ -56,7 +57,7 @@ function main() {
   let added = 0;
   let updated = 0;
   for (const item of DEMO_ITEMS) {
-    const sampleId = item.graphId.replace(/^html-samples-/, '');
+    const sampleId = item.graphId;
     if (!chapterReady(sampleId)) {
       console.warn(`  skip ${item.id}: missing chapter/html for ${sampleId}`);
       continue;

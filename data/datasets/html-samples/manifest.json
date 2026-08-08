@@ -676,6 +676,45 @@
       },
       "demoCatalog": false,
       "htmlOrigin": "teammate"
+    },
+    {
+      "id": "ramp-rolling-collision",
+      "topic": "碰撞与纯滚动",
+      "knowledgeText": "工坊斜轨 · 弄清碰撞后靶球纯滚动爬升高度由哪些量决定",
+      "hint": "过关：竞赛模式命中目标高度窗口",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "button-action",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "m",
+          "v",
+          "h"
+        ],
+        "adjustmentLabelsContain": [
+          "质量",
+          "速度",
+          "倾角"
+        ],
+        "outputLabelsContain": [
+          "高度",
+          "H"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "demoCatalog": true,
+      "htmlOrigin": "ingest"
     }
   ]
 }

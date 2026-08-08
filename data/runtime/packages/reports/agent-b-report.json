@@ -1,29 +1,83 @@
 {
-  "generatedAt": "2026-07-30T09:37:26.363Z",
+  "generatedAt": "2026-08-08T06:28:29.358Z",
   "samples": 3,
-  "scored": 0,
-  "verdictMatchRate": 0,
+  "scored": 3,
+  "verdictMatchRate": 1,
   "rows": [
     {
       "id": "generic-dt",
-      "skipped": true,
-      "reason": "no chapter",
-      "matchRate": 0,
-      "cases": []
+      "skipped": false,
+      "matchRate": 1,
+      "cases": [
+        {
+          "key": "goodTrace",
+          "expected": "pass",
+          "actual": "pass",
+          "ok": true
+        },
+        {
+          "key": "trapTrace",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        },
+        {
+          "key": "singleVarMain",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        }
+      ]
     },
     {
       "id": "coupled-aligned",
-      "skipped": true,
-      "reason": "no chapter",
-      "matchRate": 0,
-      "cases": []
+      "skipped": false,
+      "matchRate": 1,
+      "cases": [
+        {
+          "key": "goodTrace",
+          "expected": "pass",
+          "actual": "pass",
+          "ok": true
+        },
+        {
+          "key": "trapTrace",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        },
+        {
+          "key": "singleVarMain",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        }
+      ]
     },
     {
       "id": "parallel-exit",
-      "skipped": true,
-      "reason": "no chapter",
-      "matchRate": 0,
-      "cases": []
+      "skipped": false,
+      "matchRate": 1,
+      "cases": [
+        {
+          "key": "goodTrace",
+          "expected": "pass",
+          "actual": "pass",
+          "ok": true
+        },
+        {
+          "key": "trapTrace",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        },
+        {
+          "key": "singleVarMain",
+          "expected": "in_progress",
+          "actual": "in_progress",
+          "ok": true
+        }
+      ]
     }
   ]
 }

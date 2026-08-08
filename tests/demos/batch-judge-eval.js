@@ -7,12 +7,15 @@ const {
   synthTrapTrace,
   synthSingleVarMain,
 } = require('../../packages/generate/trace-synth');
+const { loadChapter } = require('../lib/fixture-loader');
+const { loadAllSamples } = require('../lib/html-samples-manifest');
+const {
+  getPackagesRoot,
+  getJudgeFixturesPath,
+  loadChapterForSample,
+} = require('../../packages/shared/data-paths');
 
-const ROOT = path.resolve(__dirname, '../..');
-const MANIFEST = path.join(ROOT, 'data/datasets/html-samples/manifest.json');
-const FIXTURES = path.join(ROOT, 'data/datasets/html-samples/judge-fixtures.json');
-const CHAPTER_ROOT = path.join(ROOT, 'data/datasets/html-samples/chapters');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const FIXTURES = getJudgeFixturesPath();
 const REPORTS = path.join(getPackagesRoot(), 'reports');
 
 function argValue(flag) {
@@ -22,16 +25,22 @@ function argValue(flag) {
 }
 
 function loadManifestSamples() {
-  const data = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+  const data = loadAllSamples();
   const filterId = argValue('--id');
   let samples = data.samples || [];
   if (filterId) samples = samples.filter(s => s.id === filterId);
   return samples;
 }
 
-function loadChapterForSample(sample) {
-  const p = path.join(CHAPTER_ROOT, sample.id, 'chapter.json');
-  if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
+function resolveFixtureChapter(fx) {
+  if (fx.chapter) return fx.chapter.chapter || fx.chapter;
+  const ref = fx.chapterRef;
+  if (!ref) return null;
+  if (ref.packageId) return loadChapterForSample(ref.packageId);
+  if (ref.bundle && ref.key) {
+    const entry = loadChapter(ref.bundle, ref.key);
+    return entry.chapter || entry;
+  }
   return null;
 }
 
@@ -91,7 +100,7 @@ function evalFixtures() {
   const data = JSON.parse(fs.readFileSync(FIXTURES, 'utf8'));
   return (data.fixtures || []).map(fx => {
     const sample = { id: fx.id, judgeExpect: fx.judgeExpect };
-    return evalSample(sample, fx.chapter);
+    return evalSample(sample, resolveFixtureChapter(fx));
   });
 }
 
@@ -146,7 +155,7 @@ function main() {
     rows = evalFixtures();
   } else {
     const samples = loadManifestSamples();
-    rows = samples.map(s => evalSample(s, loadChapterForSample(s)));
+    rows = samples.map(s => evalSample(s, loadChapterForSample(s.id)));
     const fixtureRows = evalFixtures();
     rows = [...fixtureRows, ...rows.filter(r => !fixtureRows.some(f => f.id === r.id))];
   }

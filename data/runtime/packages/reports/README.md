@@ -6,12 +6,14 @@
 
 | 路径 | 职责 |
 | --- | --- |
-| `样本html/` | **编辑源**：23 份中文夹，仅游戏 HTML + `图谱.html` |
-| `data/runtime/packages/{id}/` | **运行时权威**：`game.html`、`chapter.json`、`meta.json`、图谱；平台与评测读这里 |
-| `data/datasets/html-samples/` | **批跑/SFT 兼容层**：manifest + 17 条遗留 chapters；**不是**现行 23 金标 |
+| `样本html/` | **编辑源**：中文夹，仅游戏 HTML + `图谱.html` |
+| `data/runtime/packages/{id}/` | **运行时权威 / chapter 真相源**：`game.html`、`chapter.json`、`meta.json`、图谱；平台、SFT、批跑读这里 |
+| `data/datasets/html-samples/` | **兼容残留**：deprecated manifest 镜像 + catalog-demo；**`chapters/` 已删** |
+| `tests/fixtures/judge-fixtures.json` | Agent B 离线评判 fixtures |
+| `data/datasets/training/v2-packages/` | 现行 SFT 导出（勿 silently 覆盖 `v1/`） |
 | `data/datasets/expert-graphs/` | 专家评测金标：手写 2 + curated 固化 |
 
-漂移警告：改 `样本html` 后需同步到 packages（现有 seed/organize 脚本）；勿只改 html-samples/chapters 以为已更新 yangben。
+漂移警告：改 `样本html` 后需同步到 packages（现有 seed/organize 脚本）。退役说明见 [`html-samples-retire.md`](./html-samples-retire.md)。
 
 Vendor：权威 `apps/web/viewer/vendor/` → 导出同步到 `data/runtime/packages/vendor/`（见该夹 README）。
 

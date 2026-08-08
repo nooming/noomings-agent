@@ -1,0 +1,730 @@
+{
+  "generatedAt": "2026-08-08T06:54:18.349Z",
+  "track": "design",
+  "summary": {
+    "total": 24,
+    "withMeta": 24,
+    "qualityOk": 24,
+    "qualityPassRate": 1,
+    "qualityScoreAvg": 98.25,
+    "qualityScoreMin": 96,
+    "qualityScoreMax": 100,
+    "failedRows": [],
+    "checklistFailsByLayer": {
+      "kg": 1,
+      "dt": 0,
+      "strategy": 19,
+      "traceMap": 0,
+      "inquiry": 1,
+      "other": 0
+    },
+    "topChecklistFails": [
+      {
+        "key": "strategy:strategyKgPathAligned",
+        "count": 18
+      },
+      {
+        "key": "kg:kgEnvBeforeOperation",
+        "count": 1
+      },
+      {
+        "key": "strategy:strategyRouteIsolation",
+        "count": 1
+      },
+      {
+        "key": "inquiry:inquiryAvSemantics",
+        "count": 1
+      }
+    ],
+    "topErrors": [],
+    "tagStats": {
+      "generate": {
+        "total": 18,
+        "qualityOk": 18
+      },
+      "multi-av": {
+        "total": 10,
+        "qualityOk": 10
+      },
+      "confounding": {
+        "total": 8,
+        "qualityOk": 8
+      },
+      "teammate": {
+        "total": 7,
+        "qualityOk": 7
+      },
+      "craft:gold": {
+        "total": 4,
+        "qualityOk": 4
+      },
+      "craft:draft": {
+        "total": 9,
+        "qualityOk": 9
+      },
+      "multi-kp": {
+        "total": 1,
+        "qualityOk": 1
+      },
+      "craft:pilot": {
+        "total": 11,
+        "qualityOk": 11
+      },
+      "has-confounding": {
+        "total": 1,
+        "qualityOk": 1
+      },
+      "new": {
+        "total": 3,
+        "qualityOk": 3
+      },
+      "implicit-formula": {
+        "total": 1,
+        "qualityOk": 1
+      },
+      "button-action": {
+        "total": 1,
+        "qualityOk": 1
+      }
+    }
+  },
+  "rows": [
+    {
+      "id": "projectile-basic",
+      "topic": "斜抛",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "teammate",
+        "craft:gold"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-height]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-angle]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "friction-incline",
+      "topic": "斜面摩擦",
+      "tags": [
+        "generate",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[3] (confound_s_mass): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-friction]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "efield-charge",
+      "topic": "电场",
+      "tags": [
+        "generate",
+        "multi-av",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 100,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [],
+      "failedChecklist": []
+    },
+    {
+      "id": "cyclotron-radius",
+      "topic": "回旋加速器",
+      "tags": [
+        "generate",
+        "multi-av",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[0] (main): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
+        "strategy.routes[1] (main_s-magnetic): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
+        "strategy.routes[2] (main_s-chamber-p): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
+        "quality: KG play chain must reach env constraint before operation from P1",
+        "inquiry: adjustmentVariable s-chamber-p not in traceMap as operation"
+      ],
+      "failedChecklist": [
+        {
+          "key": "kgEnvBeforeOperation",
+          "layer": "kg"
+        }
+      ]
+    },
+    {
+      "id": "multi-kp",
+      "topic": "机械能",
+      "tags": [
+        "generate",
+        "multi-kp",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-height]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "capacitor-confound-ui",
+      "topic": "电容",
+      "tags": [
+        "generate",
+        "has-confounding",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[0] (main): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（WinC）",
+        "strategy.routes[1] (main_s-area): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（WinC）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-area]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "series-parallel",
+      "topic": "电路",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[3] (trap): highlightEdges 从 ModeSelect->StrategySelect 经由 Explore；建议把 Explore 加入 highlightNodes 或改用 spine 路径",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-r2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-meter-r]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "heat-conduction",
+      "topic": "热传导",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[4] (confound_CV1): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-thermal-conductivity]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-temperature-diff]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "rc-circuit",
+      "topic": "RC电路",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-resistance]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-capacitance]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "thin-lens-implicit",
+      "topic": "透镜",
+      "tags": [
+        "generate",
+        "implicit-formula",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-focal-length]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-aperture]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "refraction-snell",
+      "topic": "折射",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[4] (confound_CV1): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-incident-angle]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-refractive-index]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "circular-motion",
+      "topic": "圆周运动",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-radius]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-base-tilt]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[explore_trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "momentum-collision",
+      "topic": "动量",
+      "tags": [
+        "generate",
+        "new",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-vel2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-rail-temp]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-mass1]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-mass2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "inquiry: adjustmentVariable s-rail-temp not in traceMap as operation",
+        "inquiry: adjustmentVariable s-mass1 not in traceMap as operation",
+        "inquiry: adjustmentVariable s-mass2 not in traceMap as operation"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "magnetic-force",
+      "topic": "安培力",
+      "tags": [
+        "generate",
+        "craft:draft"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-magnetic]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-wire-temp]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[explore_trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "transformer-turns",
+      "topic": "变压器",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 96,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "quality: macro routes should not share one Fire/Observe hub; use StrategySelect |途径| → per-route subgraph",
+        "strategy.routes[5] (confound_CV1): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-n2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-U1]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-winding-temp]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyRouteIsolation",
+          "layer": "strategy"
+        },
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "gas-ideal",
+      "topic": "理想气体",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-temp]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-volume]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "photoelectric",
+      "topic": "光电效应",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[2] (main_s-intensity): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（Win）",
+        "strategy.routes[4] (confound_CV1): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-workfunction]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-intensity]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "pendulum-clock",
+      "topic": "单摆秒摆",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 100,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [],
+      "failedChecklist": []
+    },
+    {
+      "id": "pendulum-target",
+      "topic": "单摆投靶",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[3] (confound_s_mass): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-angle]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "projectile-cannon",
+      "topic": "抛体大炮",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 100,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [],
+      "failedChecklist": []
+    },
+    {
+      "id": "capacitor-era-ch1",
+      "topic": "电容",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 100,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "quality: 失败类 decision「击穿判定」嵌套在「面积上限判定」的是-分支内，疑似并列退出错排为嵌套，建议改为同级 decision 序列"
+      ],
+      "failedChecklist": []
+    },
+    {
+      "id": "capacitor-era-ch2",
+      "topic": "电容",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[5] (confound_audio_volume): highlightNodes 应含 Start/Env（多关环境分叉时）",
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-c2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-c3]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-cable]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    },
+    {
+      "id": "capacitor-era-ch4",
+      "topic": "电容",
+      "tags": [
+        "teammate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "quality: Observe edge label should be observation-only (e.g. 偏近/偏远), not adjust instruction",
+        "inquiry: adjustmentVariable s-c not in traceMap as operation",
+        "inquiry: AV AV_C missing priorityRank/monotonicity (enrich should backfill)",
+        "inquiry: adjustmentVariable s-volt not in traceMap as operation",
+        "inquiry: AV AV_V missing priorityRank/monotonicity (enrich should backfill)",
+        "inquiry: adjustmentVariable s-time not in traceMap as operation",
+        "inquiry: AV AV_T missing priorityRank/monotonicity (enrich should backfill)"
+      ],
+      "failedChecklist": [
+        {
+          "key": "inquiryAvSemantics",
+          "layer": "inquiry"
+        }
+      ]
+    },
+    {
+      "id": "ramp-rolling-collision",
+      "topic": "碰撞与纯滚动",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "button-action",
+        "craft:pilot"
+      ],
+      "hasChapter": true,
+      "hasMeta": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "validationOk": true,
+      "errors": [],
+      "warnings": [
+        "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-mass1]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-mass2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-angle]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[main_s-shape]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+        "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+      ],
+      "failedChecklist": [
+        {
+          "key": "strategyKgPathAligned",
+          "layer": "strategy"
+        }
+      ]
+    }
+  ]
+}

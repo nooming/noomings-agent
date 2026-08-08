@@ -1,0 +1,150 @@
+{
+  "id": "ramp-rolling-collision",
+  "title": "斜坡滚球 · 碰撞与纯滚动",
+  "craft": "pilot",
+  "topic": "碰撞与纯滚动",
+  "knowledgeText": "工坊斜轨 · 弄清碰撞后靶球纯滚动爬升高度由哪些量决定",
+  "note": "场景三修后：竞赛目标可达带随机 + CV 后置揭示 + HUD 过程高度；图谱 quality 已过门；craft:pilot 未标 gold",
+  "avSummary": [
+    {
+      "controlId": "s-speed",
+      "label": "初速度",
+      "priorityRank": 1,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-mass1",
+      "label": "入射质量",
+      "priorityRank": 2,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-mass2",
+      "label": "靶球质量",
+      "priorityRank": 3,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-angle",
+      "label": "斜坡倾角",
+      "priorityRank": 4,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-shape",
+      "label": "靶球形状",
+      "priorityRank": 5,
+      "responseShape": "discrete"
+    }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-rail-temp",
+      "label": "轨温",
+      "effect": "轨色冷暖 / emissive / 雾色与灯光；不进 win"
+    }
+  ],
+  "analyzeSteps": [
+    {
+      "id": "physics_model",
+      "label": "剥离物理模型",
+      "status": "done",
+      "summary": "弹性碰撞 + 纯滚动爬升（平动与转动）"
+    },
+    {
+      "id": "variables",
+      "label": "确定变量",
+      "status": "done",
+      "summary": "AV×5（含离散形状）CV×1（轨温）OV×1（高度）"
+    },
+    {
+      "id": "priority",
+      "label": "单变量优先级",
+      "status": "done",
+      "summary": "s-speed(1)｜s-mass1(2)｜s-mass2(3)｜s-angle(4)｜s-shape(5)｜s-rail-temp(CV)"
+    },
+    {
+      "id": "graph",
+      "label": "生成事理图谱",
+      "status": "done",
+      "summary": "chapter.json + Strategy-first 图谱.html"
+    }
+  ],
+  "repairedAt": "2026-08-08T06:54:08.531Z",
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-mass1]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-mass2]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-angle]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-shape]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
+    ],
+    "checklist": {
+      "nodeCount": true,
+      "constraints": true,
+      "teachNodes": true,
+      "verifyLinks": true,
+      "playChain": true,
+      "strategyMermaid": true,
+      "strategyMermaidSyntax": true,
+      "strategyRoutes": true,
+      "strategyPerAvRoutes": true,
+      "strategyObserveAdjustCvar": true,
+      "strategyMacroPaths": true,
+      "strategyFeedbackLoop": true,
+      "strategyFeedbackDomainOnly": true,
+      "strategyRouteIsolation": true,
+      "strategyMentalBackbone": true,
+      "dtFeedbackToOperation": true,
+      "dtEnvAlignment": true,
+      "kgConditionalParamCoupling": true,
+      "kgMassEnvCoupling": true,
+      "dtConditionalParamBranch": true,
+      "strategyTeacherAlignment": true,
+      "coupledStratInvalid": true,
+      "strategyMisconceptionLoop": true,
+      "strategyMapsTo": true,
+      "strategyControlVarRoutes": true,
+      "strategySingleVarRoutes": true,
+      "kgEnvBeforeOperation": true,
+      "dtHasOperationStep": true,
+      "strategyKgPathAligned": false,
+      "optionalToggleNotConstraint": true,
+      "dtOutcomeOriented": true,
+      "chapterScope": true,
+      "routeFeedbackLoopHighlighted": true,
+      "inquiryKnowledgePoints": true,
+      "inquiryAdjustmentVars": true,
+      "inquiryFormulas": true,
+      "inquiryFormulasClean": true,
+      "inquiryOutputVars": true,
+      "inquiryNoCrossDomainOv": true,
+      "inquiryConfounding": true,
+      "inquiryFlow": true,
+      "inquiryFlowStartsKp": true,
+      "inquiryAvSemantics": true,
+      "inquiryAvLabels": true,
+      "inquiryO1Label": true,
+      "inquiryNarrativeNoHollow": true,
+      "inquiryConfoundingNotOperation": true,
+      "inquiryOutputNotOperation": true,
+      "physicsModel": true,
+      "gameSpec": true,
+      "telemetrySpec": true,
+      "inquiryRouteScores": true,
+      "inquiryScript": true,
+      "strategyRouteScores": true
+    },
+    "score": 98,
+    "total": 54,
+    "passed": 53
+  },
+  "repair": "quality-surgical-v1+manual-avcv"
+}

@@ -56,8 +56,9 @@ function getRuntimeOutputRoot() {
   return resolveWithFallback('data/runtime/output', 'data/output', 'output');
 }
 
+/** Canonical packages root. Do not fall back to html-samples (different layout). */
 function getPackagesRoot() {
-  return resolveWithFallback('data/runtime/packages', 'data/datasets/html-samples', 'data/html-samples');
+  return resolveWithFallback('data/runtime/packages');
 }
 
 function getRuntimePlatformRoot() {
@@ -76,15 +77,54 @@ function getPackageChapterPath(packageId) {
   return path.join(getPackageDir(packageId), 'chapter.json');
 }
 
+function getPackageMetaPath(packageId) {
+  return path.join(getPackageDir(packageId), 'meta.json');
+}
+
 function getPackageManifestPath() {
   return path.join(getPackagesRoot(), 'manifest.json');
 }
 
+/** Offline Agent B judge fixtures (moved from html-samples/). */
+function getJudgeFixturesPath() {
+  return path.join(getAgentDir(), 'tests/fixtures/judge-fixtures.json');
+}
+
+/**
+ * Load chapter.json for a package/sample id.
+ * @returns {object|null}
+ */
+function loadChapterForSample(sampleId) {
+  const id = String(sampleId || '').trim();
+  if (!id) return null;
+  const p = getPackageChapterPath(id);
+  if (!fs.existsSync(p)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Load meta.json for a package/sample id.
+ * @returns {object|null}
+ */
+function loadMetaForSample(sampleId) {
+  const id = String(sampleId || '').trim();
+  if (!id) return null;
+  const p = getPackageMetaPath(id);
+  if (!fs.existsSync(p)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(p, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 /** @deprecated use getPackageChapterPath */
 function getHtmlSampleChapterPath(sampleId) {
-  const pkgChapter = getPackageChapterPath(sampleId);
-  if (fs.existsSync(pkgChapter)) return pkgChapter;
-  return path.join(getDatasetHtmlSamplesRoot(), 'chapters', sampleId, 'chapter.json');
+  return getPackageChapterPath(sampleId);
 }
 
 function resolveRepoRelative(relPath) {
@@ -146,7 +186,11 @@ module.exports = {
   getPackageDir,
   getPackageGamePath,
   getPackageChapterPath,
+  getPackageMetaPath,
   getPackageManifestPath,
+  getJudgeFixturesPath,
+  loadChapterForSample,
+  loadMetaForSample,
   getRuntimePlatformRoot,
   getHtmlSampleChapterPath,
   resolveRepoRelative,

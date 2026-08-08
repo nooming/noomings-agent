@@ -9,9 +9,9 @@ const { extractGameHints } = require('../../packages/generate/hints');
 require('../../packages/shared/load-env').loadEnv();
 
 const ROOT = path.resolve(__dirname, '../..');
-const MANIFEST = path.join(ROOT, 'data/datasets/html-samples/manifest.json');
-const OUT_ROOT = path.join(ROOT, 'data/datasets/html-samples/analyze-track');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getPackageManifestPath, getDatasetHtmlSamplesRoot } = require('../../packages/shared/data-paths');
+const MANIFEST = getPackageManifestPath();
+const OUT_ROOT = path.join(getDatasetHtmlSamplesRoot(), 'analyze-track');
 const REPORTS = path.join(getPackagesRoot(), 'reports');
 const DESIGN_REPORT = path.join(REPORTS, 'graph-quality-report.json');
 

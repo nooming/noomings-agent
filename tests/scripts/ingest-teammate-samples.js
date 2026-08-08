@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { injectLegacyTrace, hasWinEmit } = require('../../packages/platform/legacy-trace-inject');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getDatasetHtmlSamplesRoot } = require('../../packages/shared/data-paths');
 const { packagePlayUrl } = require('../../packages/shared/package-layout');
 const { readCatalog, writeCatalog } = require('../../packages/platform/catalog');
 const { topicToMacroId } = require('../../packages/platform/category-macros');
@@ -12,7 +12,8 @@ const TEAM_MAP = require('../lib/teammate-sample-map');
 const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, '组员做的样本');
 const PKG = getPackagesRoot();
-const HS_MANIFEST = path.join(ROOT, 'data/datasets/html-samples/manifest.json');
+/** @deprecated mirror; packages/manifest.json is source of truth */
+const HS_MANIFEST = path.join(getDatasetHtmlSamplesRoot(), 'manifest.json');
 const ERA_CHAPTERS = path.join(PKG, 'capacitor-era', 'chapters.json');
 
 const PLATFORM_WIN_CLOCK = `

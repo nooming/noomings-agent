@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-07-30T10:44:41.099Z",
-  "total": 23,
-  "qualityPassed": 23,
-  "withGraph": 23,
+  "generatedAt": "2026-08-08T06:54:17.800Z",
+  "total": 24,
+  "qualityPassed": 24,
+  "withGraph": 24,
   "inquiryValidityDist": {
-    "强": 9,
-    "中": 14,
+    "强": 13,
+    "中": 11,
     "弱": 0
   },
   "narrativeDirtyCount": 0,
@@ -164,7 +164,7 @@
         "多条单变量支路",
         "含盲调对照"
       ],
-      "narrativeCleanScore": 1,
+      "narrativeCleanScore": 0.9,
       "narrativeDirty": false,
       "playUrl": "/static/packages/momentum-collision/game.html",
       "graphUrl": "/static/packages/momentum-collision/%E5%9B%BE%E8%B0%B1.html",
@@ -234,11 +234,12 @@
       "qualityOk": true,
       "qualityScore": 100,
       "qualityErrors": [],
-      "inquiryValidity": "中",
-      "inquiryValidityScore": 5.5,
+      "inquiryValidity": "强",
+      "inquiryValidityScore": 7.5,
       "inquiryValidityReasons": [
         "有调节变量",
         "多 AV 可对照",
+        "有真实 CV",
         "双模式",
         "可单变量收敛",
         "多条单变量支路",
@@ -365,11 +366,12 @@
       "qualityOk": true,
       "qualityScore": 98,
       "qualityErrors": [],
-      "inquiryValidity": "中",
-      "inquiryValidityScore": 5.5,
+      "inquiryValidity": "强",
+      "inquiryValidityScore": 7.5,
       "inquiryValidityReasons": [
         "有调节变量",
         "多 AV 可对照",
+        "有真实 CV",
         "双模式",
         "可单变量收敛",
         "多条单变量支路",
@@ -574,11 +576,12 @@
       "qualityOk": true,
       "qualityScore": 98,
       "qualityErrors": [],
-      "inquiryValidity": "中",
-      "inquiryValidityScore": 5.5,
+      "inquiryValidity": "强",
+      "inquiryValidityScore": 7.5,
       "inquiryValidityReasons": [
         "有调节变量",
         "多 AV 可对照",
+        "有真实 CV",
         "双模式",
         "可单变量收敛",
         "多条单变量支路",
@@ -615,6 +618,33 @@
       "playUrl": "/static/packages/photoelectric/game.html",
       "graphUrl": "/static/packages/photoelectric/%E5%9B%BE%E8%B0%B1.html",
       "sampleGraphPath": "样本html/光电效应/图谱.html"
+    },
+    {
+      "id": "ramp-rolling-collision",
+      "dir": "斜坡滚球",
+      "topic": "碰撞与纯滚动",
+      "title": "斜坡滚球 · 碰撞与纯滚动",
+      "hasGraph": true,
+      "hasGame": true,
+      "qualityOk": true,
+      "qualityScore": 98,
+      "qualityErrors": [],
+      "inquiryValidity": "强",
+      "inquiryValidityScore": 7.5,
+      "inquiryValidityReasons": [
+        "有调节变量",
+        "多 AV 可对照",
+        "有真实 CV",
+        "双模式",
+        "可单变量收敛",
+        "多条单变量支路",
+        "含盲调对照"
+      ],
+      "narrativeCleanScore": 1,
+      "narrativeDirty": false,
+      "playUrl": "/static/packages/ramp-rolling-collision/game.html",
+      "graphUrl": "/static/packages/ramp-rolling-collision/%E5%9B%BE%E8%B0%B1.html",
+      "sampleGraphPath": "样本html/斜坡滚球/图谱.html"
     }
   ]
 }

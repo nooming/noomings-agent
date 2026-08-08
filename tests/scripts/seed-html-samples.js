@@ -22,7 +22,6 @@ const LEGACY_MANIFEST = path.join(getDatasetHtmlSamplesRoot(), 'manifest.json');
 const MANIFEST = getPackageManifestPath();
 const CATALOG_DEMO = path.join(getDatasetHtmlSamplesRoot(), 'catalog-demo.json');
 const CATALOG = getCatalogPath();
-const OUT_CHAPTER_LEGACY = path.join(getDatasetHtmlSamplesRoot(), 'chapters');
 
 const KNOWN_CHAPTERS = {};
 

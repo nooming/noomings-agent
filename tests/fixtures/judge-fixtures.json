@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "description": "Agent B 离线评判金标准。chapterRef 支持：{ bundle, key }（tests/fixtures/*.bundle.json）或 { packageId }（data/runtime/packages/{id}/chapter.json）",
+  "fixtures": [
+    {
+      "id": "generic-dt",
+      "chapterRef": { "bundle": "judge", "key": "generic" },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "coupled-aligned",
+      "chapterRef": { "bundle": "judge", "key": "coupledAligned" },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    },
+    {
+      "id": "parallel-exit",
+      "chapterRef": { "bundle": "judge", "key": "parallelExit" },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      }
+    }
+  ]
+}

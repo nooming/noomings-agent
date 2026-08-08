@@ -4,14 +4,15 @@
 
 | 磁盘路径 | 内容 |
 |----------|------|
-| `data/runtime/packages/` | **探究包统一目录**（23 包：`game.html`、图谱、`chapter.json` 等） |
+| `data/runtime/packages/` | **探究包统一目录 / chapter 真相源**（`manifest.json` + `{id}/game.html`、`chapter.json`、`meta.json`、图谱等；含 `ramp-rolling-collision`） |
 | `样本html/` | **编辑源**（中文夹名；仅游戏 HTML + `图谱.html`）。改完须同步到 packages，勿只改此处却期望运行时自动更新 |
 | `data/games/legacy/` | 历史样本 HTML（design-samples 引用；HTTP `/static/legacy-samples/`） |
 | `data/games/manual-backups/` | 人工 HTML 原件归档（不挂载 HTTP） |
 | `data/games/generated/` | Agent A API 生成的 HTML（新探究包优先落 packages） |
-| `data/datasets/html-samples/` | 批跑/SFT 兼容层：`manifest*.json` + `chapters/`（17 条遗留章，见夹内 README）。**不是**现行 23 样本真相源 |
+| `data/datasets/html-samples/` | **批跑兼容残留**：`manifest*.json`、`catalog-demo.json`（镜像 / 演示子集）。**已删除** `chapters/`；训练与评判读 packages |
+| `tests/fixtures/judge-fixtures.json` | Agent B 离线评判 fixtures（`chapterRef`: bundle 或 `packageId`） |
 | `data/datasets/design-samples/` | 设计态 fixture |
-| `data/datasets/training/` | SFT JSONL 输出目录（`npm run export-training-jsonl`） |
+| `data/datasets/training/` | SFT JSONL 输出：`v1/`（历史）、`v2-packages/`（现行，`npm run export-training-jsonl`） |
 | `data/datasets/expert-graphs/` | 专家图谱数据集 |
 | `data/runtime/platform/` | 平台 catalog、adapters；`traces/` 本地运行数据（通常 gitignore） |
 
@@ -36,6 +37,13 @@
 - 新探究包：`{packageId}`（如 `projectile-basic`）
 - 兼容别名：`html-samples-{id}` 等 → 见 `packages/shared/package-layout.js`
 
-## 旧路径兼容
+## 路径 API
 
-若新目录不存在，自动回退：`data/html-samples`、`data/output`、`data/samples` 等。详见 `data-paths.js` 中 `resolveWithFallback`。
+业务脚本应通过 `packages/shared/data-paths.js`：
+
+- `getPackagesRoot` / `getPackageManifestPath`
+- `getPackageChapterPath` / `getPackageGamePath` / `getPackageMetaPath`
+- `loadChapterForSample` / `loadMetaForSample`
+- `getJudgeFixturesPath`
+
+`getPackagesRoot` **不再**回退到 `html-samples`（布局不同，易指错根）。其它旧目录若新路径不存在，仍见 `resolveWithFallback`。

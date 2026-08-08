@@ -4,8 +4,10 @@ const path = require('path');
 const { readCatalog, writeCatalog } = require('../../packages/platform/catalog');
 
 const ROOT = path.resolve(__dirname, '../..');
-const PKG_MANIFEST = path.join(ROOT, 'data/runtime/packages/manifest.json');
-const HS_MANIFEST = path.join(ROOT, 'data/datasets/html-samples/manifest.json');
+const { getPackageManifestPath, getDatasetHtmlSamplesRoot } = require('../../packages/shared/data-paths');
+const PKG_MANIFEST = getPackageManifestPath();
+/** @deprecated mirror under html-samples; packages manifest is source of truth */
+const HS_MANIFEST = path.join(getDatasetHtmlSamplesRoot(), 'manifest.json');
 
 const GOLD = new Set([
   'pendulum-clock',

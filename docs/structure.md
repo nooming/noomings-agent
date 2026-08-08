@@ -44,10 +44,10 @@ agent/
     datasets/
       design-samples/
       expert-graphs/
-      html-samples/        # 批跑兼容：manifest + chapters（17 遗留）
-      training/
+      html-samples/        # 批跑兼容残留：deprecated manifest 镜像（chapters 已删）
+      training/            # SFT：v1 历史 / v2-packages 现行
     runtime/
-      packages/            # 探究包 23 + vendor 副本 + reports
+      packages/            # 探究包真相源（manifest 23+）+ vendor + reports
       platform/
   docs/
     structure.md

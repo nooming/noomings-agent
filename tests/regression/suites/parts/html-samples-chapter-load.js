@@ -1,3 +1,4 @@
+/** Legacy name: multi-kp + html-samples-* alias smoke (full coverage → packages-chapter-load) */
 const fs = require('fs');
 const { loadChapterForGraph } = require('../../../../packages/platform/catalog');
 const { getPackageChapterPath } = require('../../../../packages/shared/data-paths');

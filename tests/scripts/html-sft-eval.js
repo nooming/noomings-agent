@@ -3,13 +3,18 @@ const fs = require('fs');
 const path = require('path');
 const { validateGeneratedHtml } = require('../../packages/generate/html-post-validate');
 const { loadAllSamples } = require('../lib/html-samples-manifest');
+const {
+  getPackageGamePath,
+  loadChapterForSample,
+  getDatasetTrainingRoot,
+  getPackagesRoot,
+} = require('../../packages/shared/data-paths');
 
 require('../../packages/shared/load-env').loadEnv();
 
 const ROOT = path.resolve(__dirname, '../..');
-const CHAPTER_ROOT = path.join(ROOT, 'data/datasets/html-samples/chapters');
-const HTML_ROOT = path.join(ROOT, 'data/datasets/html-samples/generated');
-const TRAINING_SUMMARY = path.join(ROOT, 'data/datasets/training/v1/summary.json');
+const TRAINING_V2 = path.join(getDatasetTrainingRoot(), 'v2-packages/summary.json');
+const TRAINING_V1 = path.join(getDatasetTrainingRoot(), 'v1/summary.json');
 
 const EVAL_IDS = ['multi-kp', 'series-parallel', 'heat-conduction', 'capacitor-confound-ui'];
 
@@ -18,12 +23,11 @@ function hasFlag(flag) {
 }
 
 function evalHtmlPass(id) {
-  const chapterPath = path.join(CHAPTER_ROOT, id, 'chapter.json');
-  const htmlPath = path.join(HTML_ROOT, `${id}.html`);
-  if (!fs.existsSync(chapterPath) || !fs.existsSync(htmlPath)) {
+  const chapter = loadChapterForSample(id);
+  const htmlPath = getPackageGamePath(id);
+  if (!chapter || !fs.existsSync(htmlPath)) {
     return { id, ok: false, reason: 'missing artifact' };
   }
-  const chapter = JSON.parse(fs.readFileSync(chapterPath, 'utf8'));
   const html = fs.readFileSync(htmlPath, 'utf8');
   const v = validateGeneratedHtml(html, chapter);
   const winOk = /winOk:\s*true/.test(html);
@@ -53,6 +57,7 @@ function main() {
   const finetuned = process.env.FINETUNED_MODEL_ID || process.env.HTMLGEN_MODEL;
 
   console.log('html-sft-eval: eval set (4 samples)');
+  console.log(`  packages: ${getPackagesRoot()}`);
   if (finetuned) console.log(`  model env: ${finetuned}`);
   console.log('');
 
@@ -63,9 +68,10 @@ function main() {
   console.log('');
   console.log(`manifest: ${manifest.samples.length} samples (${trainCount} train split)`);
 
-  if (fs.existsSync(TRAINING_SUMMARY)) {
-    const s = JSON.parse(fs.readFileSync(TRAINING_SUMMARY, 'utf8'));
-    console.log(`training: parse ${s.parse?.train}/${s.parse?.eval}, html ${s.html?.train}/${s.html?.eval} (reject ${s.html?.reject || 0})`);
+  const summaryPath = fs.existsSync(TRAINING_V2) ? TRAINING_V2 : TRAINING_V1;
+  if (fs.existsSync(summaryPath)) {
+    const s = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+    console.log(`training (${path.relative(ROOT, summaryPath)}): parse ${s.parse?.train}/${s.parse?.eval}, html ${s.html?.train}/${s.html?.eval} (reject ${s.html?.reject || 0})`);
   }
 
   if (compare) {
@@ -74,7 +80,7 @@ function main() {
     console.log('  1. Baseline: unset FINETUNED_MODEL_ID, batch eval ids with --force');
     console.log('  2. Fine-tuned: set FINETUNED_MODEL_ID, repeat batch on eval ids');
     console.log('  3. Re-run: npm run html-sft-eval');
-    const reportPath = path.join(ROOT, 'data/runtime/packages/reports/html-sft-compare.json');
+    const reportPath = path.join(getPackagesRoot(), 'reports/html-sft-compare.json');
     if (fs.existsSync(reportPath)) {
       const cmp = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
       console.log('');

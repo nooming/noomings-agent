@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斜坡滚球 · 碰撞与纯滚动</title>
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.js"></script>
+    <style>
+        :root {
+            --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", sans-serif;
+            --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+            --font-display: var(--font-sans);
+            --craft-accent: #b8956c;
+            --craft-bg: #161412;
+            --craft-panel: #252018;
+            --craft-text: #f2ebe0;
+            --craft-muted: #9a8f7e;
+            --scene-ink: #161412;
+            --scene-mid: #2a2620;
+            --scene-hi: #d4b896;
+            --scene-rail: #6a7368;
+            --scene-ok: #8a9a6e;
+            --danger: #c47a6a;
+            --line: color-mix(in srgb, var(--craft-accent) 28%, transparent);
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            background: var(--craft-bg);
+            color: var(--craft-text);
+            display: flex;
+            flex-direction: row;
+        }
+
+        #craft-intro, #craft-win {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(8px);
+        }
+        #craft-intro[hidden], #craft-win[hidden] { display: none !important; }
+        .craft-card {
+            width: min(440px, 92vw);
+            background: var(--craft-panel);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent);
+            border-radius: 18px;
+            padding: 22px 22px 18px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+        .craft-card h2 {
+            margin: 0 0 10px;
+            font-size: 1.25rem;
+            color: var(--craft-accent);
+            letter-spacing: 1px;
+            font-family: var(--font-display);
+        }
+        .craft-card p {
+            margin: 0 0 12px;
+            line-height: 1.65;
+            color: var(--craft-text);
+            font-size: 0.95rem;
+        }
+        .craft-card .formula {
+            font-size: 1.02rem;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.28);
+            border-left: 3px solid var(--craft-accent);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin: 10px 0 16px;
+            line-height: 1.55;
+        }
+        .craft-card button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(180deg, var(--scene-hi), var(--craft-accent) 60%, color-mix(in srgb, var(--craft-accent) 70%, #000));
+            color: #1a1208;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .craft-card button:hover { filter: brightness(1.06); }
+
+        #canvasContainer {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            background:
+                radial-gradient(ellipse at 18% 12%, color-mix(in srgb, var(--craft-accent) 12%, transparent), transparent 42%),
+                var(--craft-bg);
+            overflow: hidden;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .hud-bar {
+            position: absolute;
+            top: 16px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 24px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hud-chip {
+            pointer-events: auto;
+            padding: 10px 18px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+        #modeLabel {
+            font-weight: 700;
+            color: var(--craft-accent);
+            letter-spacing: 0.04em;
+        }
+        .hud-sep {
+            width: 1px;
+            height: 20px;
+            background: color-mix(in srgb, var(--craft-muted) 50%, transparent);
+        }
+        .hud-target { font-size: 0.9rem; font-weight: 500; color: var(--craft-text); }
+        #hudTargetH {
+            color: var(--scene-hi);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        .hud-climb {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--craft-muted);
+        }
+        #hudLiveH, #hudDelta {
+            color: var(--craft-text);
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+        #challengeStats {
+            display: none;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--craft-text);
+        }
+        #challengeStats.is-visible { display: flex; }
+        #attemptsDisplay {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .attempt-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3a342c;
+        }
+        .attempt-dot.on {
+            background: var(--scene-ok);
+            box-shadow: 0 0 4px color-mix(in srgb, var(--scene-ok) 50%, transparent);
+        }
+
+        #messageBox {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 28px 36px;
+            border-radius: 16px;
+            text-align: center;
+            z-index: 50;
+            pointer-events: auto;
+            width: 90%;
+            max-width: 28rem;
+            background: var(--craft-panel);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 40%, transparent);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+        }
+        #msgTitle {
+            font-size: 1.55rem;
+            font-weight: 800;
+            margin: 0 0 12px;
+            color: var(--craft-accent);
+        }
+        #msgDesc {
+            color: var(--craft-text);
+            margin: 0 0 24px;
+            line-height: 1.6;
+        }
+        #msgBtn {
+            padding: 12px 32px;
+            background: var(--craft-accent);
+            color: #1a1208;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        #msgBtn:hover { filter: brightness(1.08); }
+
+        .hint-bar {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: var(--craft-muted);
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 22%, transparent);
+        }
+
+        #sidePanel {
+            width: 400px;
+            max-width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+            border-left: 1px solid color-mix(in srgb, var(--craft-accent) 35%, transparent);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--scene-mid) 85%, #fff), var(--craft-panel) 45%, color-mix(in srgb, var(--scene-ink) 70%, var(--craft-panel)));
+            box-shadow: -8px 0 28px rgba(0, 0, 0, 0.35);
+            color: var(--craft-text);
+        }
+        .side-header {
+            padding: 20px 22px;
+            border-bottom: 1px solid color-mix(in srgb, var(--craft-accent) 30%, transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.28);
+        }
+        .side-header h1 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            color: var(--scene-hi);
+        }
+        #modeSelect {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent);
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-size: 0.875rem;
+            color: var(--craft-text);
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        #modeSelect:focus { border-color: var(--craft-accent); }
+        .side-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .side-body::-webkit-scrollbar { width: 6px; }
+        .side-body::-webkit-scrollbar-thumb {
+            background: color-mix(in srgb, var(--craft-muted) 40%, transparent);
+            border-radius: 3px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--craft-accent);
+            letter-spacing: 0.08em;
+            margin: 0 0 6px;
+        }
+        #sideGoal {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--craft-text);
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.28);
+            border-left: 3px solid var(--craft-accent);
+        }
+
+        .param-card {
+            background: rgba(0, 0, 0, 0.28);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 22%, transparent);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .param-card h3 {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--scene-hi);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.inc { background: #6a8ab0; }
+        .dot.tgt { background: var(--scene-ok); }
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #s-shape {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 35%, transparent);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            color: var(--craft-text);
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .slider-row .row-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .slider-row label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--craft-muted);
+        }
+        .slider-row label em {
+            font-family: Georgia, "Times New Roman", serif;
+            font-style: italic;
+            color: var(--craft-text);
+        }
+        .val-badge {
+            font-size: 0.875rem;
+            color: var(--scene-hi);
+            font-family: var(--font-mono);
+            background: rgba(0, 0, 0, 0.45);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--craft-accent);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .cv-card {
+            opacity: 0.85;
+            border-style: dashed;
+            border-color: color-mix(in srgb, var(--craft-accent) 35%, transparent);
+        }
+        .cv-card h3 { color: var(--craft-muted); font-size: 0.88rem; }
+
+        .side-footer {
+            padding: 18px 22px;
+            border-top: 1px solid color-mix(in srgb, var(--craft-accent) 28%, transparent);
+            background: rgba(0, 0, 0, 0.28);
+            display: grid;
+            gap: 10px;
+        }
+        #btnLaunch {
+            background: linear-gradient(180deg, var(--scene-hi), var(--craft-accent) 60%, color-mix(in srgb, var(--craft-accent) 70%, #000));
+            color: #1a1208;
+            font-weight: 800;
+            font-size: 1.05rem;
+            padding: 14px;
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 50%, #000);
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px color-mix(in srgb, var(--craft-accent) 30%, transparent);
+        }
+        #btnLaunch:hover { filter: brightness(1.06); }
+        #btnLaunch:active { transform: scale(0.98); }
+        #btnLaunch.is-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #btnReset {
+            background: rgba(0, 0, 0, 0.35);
+            color: var(--craft-text);
+            font-weight: 600;
+            padding: 10px;
+            border: 1px solid color-mix(in srgb, var(--craft-accent) 30%, transparent);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #btnReset:hover { background: rgba(0, 0, 0, 0.5); }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.35s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -46%) scale(0.97); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .vel-info {
+            margin-top: 12px;
+            display: inline-block;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            border: 1px solid var(--line);
+        }
+        .vel-info .v1 { color: #8ab0d4; font-weight: 700; margin-bottom: 4px; }
+        .vel-info .v2 { color: var(--scene-ok); font-weight: 700; }
+        .hl-em { color: var(--scene-hi); font-weight: 700; font-size: 1.1rem; }
+        .hl-danger { color: var(--danger); font-weight: 700; }
+        .hl-warn { color: var(--danger); }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            #canvasContainer { height: 55vh; width: 100%; }
+            #sidePanel { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--line); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>工坊斜轨 · 滚球碰撞</h2>
+    <p>入射球撞上静止的靶球后，靶球沿斜轨纯滚动爬升。调参观察：哪些量会改变它达到的高度？</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究模式可自由试；竞赛模式需把靶球停在目标高度附近（限次）。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+    <div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 你学到了什么</h2>
+    <div class="formula">爬升高度由碰撞后动能决定——靶球同时带着<strong>平动</strong>与<strong>转动</strong>能量上坡。</div>
+    <p id="craftWinText">对照各次发射的高度读数，你摸清了质量比、初速、倾角与形状怎样影响结果。轨温不改变爬升高度。</p>
+    <button type="button" id="craftWinBtn">再玩一次</button>
+  </div>
+</div>
+
+    <div id="canvasContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="hud-bar">
+            <div class="hud-chip">
+                <span id="modeLabel">探究模式</span>
+                <span class="hud-sep"></span>
+                <div class="hud-target">目标高度: <span id="hudTargetH">--</span> m</div>
+                <span class="hud-sep"></span>
+                <div class="hud-climb">当前 h: <span id="hudLiveH">--</span> m<span id="hudDeltaWrap" hidden> · Δ <span id="hudDelta">--</span> m</span></div>
+            </div>
+
+            <div id="challengeStats" class="hud-chip">
+                <span>剩余挑战次数:</span>
+                <div id="attemptsDisplay"></div>
+            </div>
+        </div>
+
+        <div id="messageBox" class="hidden fade-in">
+            <h2 id="msgTitle"></h2>
+            <p id="msgDesc"></p>
+            <button id="msgBtn" type="button">确定</button>
+        </div>
+
+        <div class="hint-bar">拖拽旋转视角 · 滚轮缩放 · 发射后观察靶球爬升高度</div>
+    </div>
+
+    <div id="sidePanel">
+        <div class="side-header">
+            <h1>斜轨工作台</h1>
+            <select id="modeSelect" aria-label="探究阶段">
+                <option value="explore">自由探究</option>
+                <option value="challenge">定高挑战</option>
+            </select>
+        </div>
+
+        <div class="side-body">
+            <div>
+                <div class="section-label">当前目标</div>
+                <p id="sideGoal">调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。</p>
+            </div>
+
+            <div class="param-card">
+                <h3><span class="dot inc"></span>入射球</h3>
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-mass1">质量 <em>m₁</em> (kg)</label>
+                        <span id="valMass1" class="val-badge">5.0</span>
+                    </div>
+                    <input type="range" id="s-mass1" min="1" max="15" value="5" step="0.1">
+                </div>
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-speed">初速度 <em>v₀</em> (m/s)</label>
+                        <span id="valSpeed" class="val-badge">10.0</span>
+                    </div>
+                    <input type="range" id="s-speed" min="2" max="25" value="10" step="0.1">
+                </div>
+            </div>
+
+            <div class="param-card">
+                <div class="card-head">
+                    <h3><span class="dot tgt"></span>靶球</h3>
+                    <select id="s-shape" aria-label="靶球形状">
+                        <option value="sphere">实心球</option>
+                        <option value="cylinder">实心圆柱</option>
+                    </select>
+                </div>
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-mass2">质量 <em>m₂</em> (kg)</label>
+                        <span id="valMass2" class="val-badge">5.0</span>
+                    </div>
+                    <input type="range" id="s-mass2" min="1" max="15" value="5" step="0.1">
+                </div>
+            </div>
+
+            <div class="param-card">
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-angle">斜坡倾角 <em>θ</em> (°)</label>
+                        <span id="valAngle" class="val-badge">30</span>
+                    </div>
+                    <input type="range" id="s-angle" min="15" max="60" value="30" step="5">
+                </div>
+            </div>
+
+            <div class="param-card cv-card">
+                <h3>轨温</h3>
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-rail-temp">轨温 <em>T</em> (°C)</label>
+                        <span id="valRailTemp" class="val-badge">22</span>
+                    </div>
+                    <input type="range" id="s-rail-temp" min="5" max="40" value="22" step="1">
+                </div>
+            </div>
+        </div>
+
+        <div class="side-footer">
+            <button id="btnLaunch" type="button">发射</button>
+            <button id="btnReset" type="button">重置场景</button>
+        </div>
+    </div>
+
+    <script>
+        let initAttempts = 0;
+        function checkDependencies() {
+            if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
+                initApp();
+            } else {
+                initAttempts++;
+                if (initAttempts > 50) {
+                    console.error('Three.js / OrbitControls 未加载（请确认 vendor/ 相对路径）');
+                    return;
+                }
+                setTimeout(checkDependencies, 100);
+            }
+        }
+
+        let scene, camera, renderer, controls;
+        let ball1, ball2, rampGroup;
+        let sphereGeo, cylinderGeo;
+        let particles = [];
+        let floorMesh = null;
+        let railMats = [];
+        let railLineMats = [];
+        let workshopLights = {};
+
+        const R = 1;
+        const g = 9.8;
+
+        const CRAFT = {
+            bg: 0x161412,
+            accent: 0xb8956c,
+            railCool: 0x5a6a72,
+            railWarm: 0x8a6a48,
+            railMid: 0x6a7368,
+            ok: 0x8a9a6e,
+            ball1: 0x6a8ab0,
+            ball2: 0x7a9a68
+        };
+
+        const state = {
+            mode: 'explore',
+            targetShape: 'sphere',
+            m1: 5.0, m2: 5.0, v0: 10.0, theta: 30 * Math.PI / 180,
+            railTemp: 22,
+            targetH: 0,
+            phase: 'idle',
+            u1: -20,
+            u2: -5,
+            v1: 0,
+            v2: 0,
+            v1_post: 0,
+            v2_post: 0,
+            s2: 0,
+            attempts: 3,
+            dt: 1/60,
+            fellOff: false,
+            fall_x: 0, fall_y: 0, fall_vx: 0, fall_vy: 0,
+            lastAchievedH: null,
+            peakClimbH: 0
+        };
+
+        /** AV 快照（不含轨温），用于「只拧轨温再发射」复盘 */
+        let lastFireAvKey = null;
+        let railTempTouchedSinceFire = false;
+
+        const TOLERANCE_H = 0.2;
+
+        const ui = {
+            modeSelect: document.getElementById('modeSelect'),
+            sMass1: document.getElementById('s-mass1'), valMass1: document.getElementById('valMass1'),
+            sMass2: document.getElementById('s-mass2'), valMass2: document.getElementById('valMass2'),
+            sSpeed: document.getElementById('s-speed'), valSpeed: document.getElementById('valSpeed'),
+            sAngle: document.getElementById('s-angle'), valAngle: document.getElementById('valAngle'),
+            sRailTemp: document.getElementById('s-rail-temp'), valRailTemp: document.getElementById('valRailTemp'),
+            btnLaunch: document.getElementById('btnLaunch'), btnReset: document.getElementById('btnReset'),
+            modeLabel: document.getElementById('modeLabel'), hudTargetH: document.getElementById('hudTargetH'),
+            hudLiveH: document.getElementById('hudLiveH'),
+            hudDelta: document.getElementById('hudDelta'),
+            hudDeltaWrap: document.getElementById('hudDeltaWrap'),
+            challengeStats: document.getElementById('challengeStats'), attemptsDisplay: document.getElementById('attemptsDisplay'),
+            msgBox: document.getElementById('messageBox'), msgTitle: document.getElementById('msgTitle'),
+            msgDesc: document.getElementById('msgDesc'), msgBtn: document.getElementById('msgBtn'),
+            container: document.getElementById('canvasContainer'),
+            sShape: document.getElementById('s-shape'),
+            sideGoal: document.getElementById('sideGoal'),
+            craftIntro: document.getElementById('craft-intro'),
+            craftIntroBtn: document.getElementById('craftIntroBtn'),
+            craftWin: document.getElementById('craft-win'),
+            craftWinText: document.getElementById('craftWinText'),
+            craftWinBtn: document.getElementById('craftWinBtn')
+        };
+
+        function initApp() {
+            initThreeJS();
+            bindEvents();
+            applyRailTempVisual(state.railTemp);
+            if (state.mode === 'challenge') {
+                generateChallenge();
+            } else {
+                state.targetH = 0;
+                ui.hudTargetH.textContent = '--';
+                updateRampGeometry();
+            }
+            resetScene();
+            try {
+                if (typeof window.__platformTraceSetPhase === 'function') {
+                    window.__platformTraceSetPhase(state.mode);
+                }
+            } catch (_) {}
+            animate();
+        }
+
+        function initThreeJS() {
+            const canvas = document.getElementById('gameCanvas');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(ui.container.clientWidth, ui.container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CRAFT.bg);
+            scene.fog = new THREE.Fog(CRAFT.bg, 40, 160);
+
+            camera = new THREE.PerspectiveCamera(45, ui.container.clientWidth / ui.container.clientHeight, 0.1, 1000);
+            camera.position.set(15, 12, 35);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 5, 0);
+
+            const ambientLight = new THREE.AmbientLight(0xc8b8a0, 0.45);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffe8c8, 0.75);
+            dirLight.position.set(18, 36, 16);
+            dirLight.castShadow = true;
+            dirLight.shadow.camera.top = 20;
+            dirLight.shadow.camera.bottom = -20;
+            dirLight.shadow.camera.left = -30;
+            dirLight.shadow.camera.right = 30;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.PointLight(0xb8956c, 0.35, 80);
+            fillLight.position.set(-12, 14, 10);
+            scene.add(fillLight);
+
+            const coolFill = new THREE.PointLight(0x6a7a88, 0.2, 60);
+            coolFill.position.set(8, 6, -12);
+            scene.add(coolFill);
+
+            workshopLights = { ambient: ambientLight, dir: dirLight, fill: fillLight, cool: coolFill };
+
+            createTrack();
+            createBalls();
+            createWorkshopEnvironment();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = ui.container.clientWidth / ui.container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(ui.container.clientWidth, ui.container.clientHeight);
+            });
+        }
+
+        function lerpColor(a, b, t) {
+            const ca = new THREE.Color(a);
+            const cb = new THREE.Color(b);
+            return ca.lerp(cb, t);
+        }
+
+        function applyRailTempVisual(tempC) {
+            const t = Math.max(0, Math.min(1, (tempC - 5) / 35));
+            const railCol = lerpColor(CRAFT.railCool, CRAFT.railWarm, t);
+            railMats.forEach(m => {
+                if (m.color) m.color.copy(railCol);
+                if (m.emissive) {
+                    m.emissive.copy(railCol);
+                    m.emissiveIntensity = 0.04 + t * 0.08;
+                }
+            });
+            const lineCol = lerpColor(0x7a8a92, 0xc4a06a, t);
+            railLineMats.forEach(m => {
+                if (m.color) m.color.copy(lineCol);
+            });
+            if (scene && scene.fog) {
+                const fogCol = lerpColor(0x12161a, 0x1a1410, t);
+                scene.fog.color.copy(fogCol);
+                scene.background.copy(fogCol);
+            }
+            if (workshopLights.fill) {
+                workshopLights.fill.intensity = 0.25 + t * 0.25;
+            }
+            if (workshopLights.cool) {
+                workshopLights.cool.intensity = 0.28 - t * 0.18;
+            }
+        }
+
+        function createTrack() {
+            railMats = [];
+            railLineMats = [];
+            const trackMat = new THREE.MeshStandardMaterial({
+                color: CRAFT.railMid, roughness: 0.55, metalness: 0.35,
+                emissive: CRAFT.railMid, emissiveIntensity: 0.05
+            });
+            railMats.push(trackMat);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xa09070 });
+            railLineMats.push(lineMat);
+
+            const flatGeo = new THREE.BoxGeometry(40, 0.5, 4);
+            const flatTrack = new THREE.Mesh(flatGeo, trackMat);
+            flatTrack.position.set(-20, -0.25, 0);
+            flatTrack.receiveShadow = true;
+            scene.add(flatTrack);
+
+            const flatLine = new THREE.Mesh(new THREE.PlaneGeometry(40, 0.1), lineMat);
+            flatLine.rotation.x = -Math.PI / 2;
+            flatLine.position.set(-20, 0.01, 0);
+            scene.add(flatLine);
+
+            rampGroup = new THREE.Group();
+            scene.add(rampGroup);
+            updateRampGeometry();
+        }
+
+        function updateRampGeometry() {
+            while (rampGroup.children.length > 0) {
+                const child = rampGroup.children[0];
+                rampGroup.remove(child);
+                child.traverse(o => {
+                    if (o.geometry) o.geometry.dispose();
+                });
+            }
+            // Keep flat-track mats (index 0); dispose ramp mats from prior rebuilds
+            while (railMats.length > 1) {
+                const m = railMats.pop();
+                if (m && m.dispose) m.dispose();
+            }
+            while (railLineMats.length > 1) {
+                const m = railLineMats.pop();
+                if (m && m.dispose) m.dispose();
+            }
+
+            const theta = state.theta;
+            const toleranceH = TOLERANCE_H;
+            let length = 10.0 / Math.sin(theta);
+
+            if (state.mode === 'challenge' && state.targetH > 0) {
+                length = (state.targetH + toleranceH) / Math.sin(theta);
+            }
+
+            const trackMat = new THREE.MeshStandardMaterial({
+                color: CRAFT.railMid, roughness: 0.55, metalness: 0.35,
+                emissive: CRAFT.railMid, emissiveIntensity: 0.05
+            });
+            railMats.push(trackMat);
+            const rampGeo = new THREE.BoxGeometry(length, 0.5, 4);
+            rampGeo.translate(length / 2, 0, 0);
+            const ramp = new THREE.Mesh(rampGeo, trackMat);
+            ramp.rotation.z = theta;
+            // Center-origin box: shift so top (local y=+0.25) lies on slope through origin
+            ramp.position.set(0.25 * Math.sin(theta), -0.25 * Math.cos(theta), 0);
+            ramp.receiveShadow = true;
+            rampGroup.add(ramp);
+
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xa09070 });
+            railLineMats.push(lineMat);
+            const rampLineGeo = new THREE.PlaneGeometry(length, 0.1);
+            rampLineGeo.translate(length / 2, 0, 0);
+            const rampLine = new THREE.Mesh(rampLineGeo, lineMat);
+            // Child of ramp: inherit θ; only flatten onto local +Y (avoid Euler lock)
+            rampLine.rotation.x = -Math.PI / 2;
+            rampLine.position.y = 0.26;
+            ramp.add(rampLine);
+
+            if (state.mode === 'challenge' && state.targetH > 0) {
+                const s_target = state.targetH / Math.sin(theta);
+                const platformX = s_target * Math.cos(theta);
+                const platformY = s_target * Math.sin(theta);
+                const ds = toleranceH / Math.sin(theta);
+                const platMat = new THREE.MeshStandardMaterial({
+                    color: CRAFT.accent,
+                    emissive: CRAFT.accent,
+                    emissiveIntensity: 0.22,
+                    metalness: 0.25,
+                    roughness: 0.45
+                });
+                const platGeo = new THREE.BoxGeometry(ds * 2, 0.22, 4.2);
+                const platform = new THREE.Mesh(platGeo, platMat);
+                platform.rotation.z = theta;
+                platform.position.set(platformX, platformY, 0);
+                rampGroup.add(platform);
+
+                // Soft height marker (readable, not neon)
+                const markerMat = new THREE.MeshBasicMaterial({
+                    color: CRAFT.accent, transparent: true, opacity: 0.18, side: THREE.DoubleSide
+                });
+                const marker = new THREE.Mesh(new THREE.PlaneGeometry(ds * 2.4, 3.2), markerMat);
+                marker.position.set(platformX, platformY + 1.6, 0);
+                rampGroup.add(marker);
+            }
+
+            applyRailTempVisual(state.railTemp);
+        }
+
+        function createBalls() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#d8c8b0'; ctx.fillRect(0, 0, 256, 256);
+            ctx.fillStyle = '#3a342c';
+            ctx.fillRect(0, 0, 128, 128); ctx.fillRect(128, 128, 128, 128);
+            const checkerTex = new THREE.CanvasTexture(canvas);
+            checkerTex.magFilter = THREE.NearestFilter;
+            checkerTex.wrapS = THREE.RepeatWrapping;
+            checkerTex.wrapT = THREE.RepeatWrapping;
+            checkerTex.repeat.set(4, 2);
+
+            sphereGeo = new THREE.SphereGeometry(R, 32, 32);
+            cylinderGeo = new THREE.CylinderGeometry(R, R, R * 2, 32);
+            cylinderGeo.rotateX(Math.PI / 2);
+
+            const mat1 = new THREE.MeshStandardMaterial({
+                color: CRAFT.ball1, map: checkerTex, roughness: 0.45, metalness: 0.15
+            });
+            ball1 = new THREE.Mesh(sphereGeo, mat1);
+            ball1.castShadow = true;
+            scene.add(ball1);
+
+            const mat2 = new THREE.MeshStandardMaterial({
+                color: CRAFT.ball2, map: checkerTex, roughness: 0.45, metalness: 0.15
+            });
+            ball2 = new THREE.Mesh(sphereGeo, mat2);
+            ball2.castShadow = true;
+            scene.add(ball2);
+        }
+
+        function createWorkshopEnvironment() {
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x2a241c, roughness: 0.92, metalness: 0.05
+            });
+            floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMat);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.position.y = -0.51;
+            floorMesh.receiveShadow = true;
+            scene.add(floorMesh);
+
+            // Wood plank strips
+            const plankMat = new THREE.MeshStandardMaterial({ color: 0x3a3024, roughness: 0.85, metalness: 0.02 });
+            for (let i = -6; i <= 6; i++) {
+                const plank = new THREE.Mesh(new THREE.BoxGeometry(80, 0.08, 1.1), plankMat);
+                plank.position.set(0, -0.48, i * 1.35);
+                plank.receiveShadow = true;
+                scene.add(plank);
+            }
+
+            // Workshop walls / benches (simple blocks)
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e1a16, roughness: 0.9 });
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(120, 40, 1), wallMat);
+            backWall.position.set(10, 18, -40);
+            scene.add(backWall);
+            const sideWall = new THREE.Mesh(new THREE.BoxGeometry(1, 40, 90), wallMat);
+            sideWall.position.set(-55, 18, -10);
+            scene.add(sideWall);
+
+            const benchMat = new THREE.MeshStandardMaterial({ color: 0x4a3c2c, roughness: 0.7 });
+            const bench = new THREE.Mesh(new THREE.BoxGeometry(18, 1.2, 4), benchMat);
+            bench.position.set(-28, 0.2, 10);
+            scene.add(bench);
+
+            const gridHelper = new THREE.GridHelper(120, 60, 0x3a3228, 0x2a241c);
+            gridHelper.position.y = -0.49;
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+        }
+
+        function bindEvents() {
+            const bindSlider = (slider, valEl, key, isAngle = false) => {
+                slider.addEventListener('input', e => {
+                    let val = parseFloat(e.target.value);
+                    valEl.textContent = val.toFixed(isAngle ? 0 : 1);
+                    if (isAngle) state[key] = val * Math.PI / 180;
+                    else state[key] = val;
+
+                    if (isAngle) {
+                        updateRampGeometry();
+                        if (state.mode === 'challenge') generateChallenge();
+                    }
+                    if (state.phase === 'idle') resetScene();
+                });
+            };
+
+            bindSlider(ui.sMass1, ui.valMass1, 'm1');
+            bindSlider(ui.sMass2, ui.valMass2, 'm2');
+            bindSlider(ui.sSpeed, ui.valSpeed, 'v0');
+            bindSlider(ui.sAngle, ui.valAngle, 'theta', true);
+
+            ui.sRailTemp.addEventListener('input', e => {
+                const val = parseFloat(e.target.value);
+                state.railTemp = val;
+                ui.valRailTemp.textContent = String(Math.round(val));
+                applyRailTempVisual(val);
+                railTempTouchedSinceFire = true;
+                // CV: visual only — does not reset physics / win geometry
+            });
+
+            ui.sShape.addEventListener('change', e => {
+                state.targetShape = e.target.value;
+                ball2.geometry = state.targetShape === 'cylinder' ? cylinderGeo : sphereGeo;
+                if (state.mode === 'challenge') generateChallenge();
+                if (state.phase === 'idle') resetScene();
+            });
+
+            ui.modeSelect.addEventListener('change', e => {
+                state.mode = e.target.value;
+                ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+                try {
+                    if (typeof window.__platformTraceSetPhase === 'function') {
+                        window.__platformTraceSetPhase(state.mode);
+                    } else if (window.PlatformTraceAdapter && window.PlatformTraceAdapter.setPhase) {
+                        window.PlatformTraceAdapter.setPhase(state.mode);
+                    }
+                } catch (_) {}
+
+                if (state.mode === 'challenge') {
+                    ui.challengeStats.classList.add('is-visible');
+                    ui.sideGoal.textContent = '竞赛：在限次内让靶球停在 HUD 目标高度附近（±0.2 m）。';
+                    state.attempts = 3;
+                    renderAttempts();
+                    generateChallenge();
+                } else {
+                    ui.challengeStats.classList.remove('is-visible');
+                    ui.sideGoal.textContent = '调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。';
+                    state.targetH = 0;
+                    ui.hudTargetH.textContent = '--';
+                    updateRampGeometry();
+                }
+                resetScene();
+            });
+
+            ui.btnLaunch.addEventListener('click', () => {
+                if (state.phase !== 'idle' || (state.mode === 'challenge' && state.attempts <= 0)) return;
+
+                state.v1 = state.v0;
+                state.v2 = 0;
+                state.peakClimbH = 0;
+                state.phase = 'rolling';
+                ui.btnLaunch.classList.add('is-disabled');
+                updateClimbHud(0);
+
+                if (state.mode === 'challenge') {
+                    state.attempts--;
+                    renderAttempts();
+                }
+            });
+
+            ui.btnReset.addEventListener('click', resetScene);
+
+            ui.craftIntroBtn.addEventListener('click', () => {
+                ui.craftIntro.hidden = true;
+            });
+            ui.craftWinBtn.addEventListener('click', () => {
+                ui.craftWin.hidden = true;
+                resetScene();
+                if (state.mode === 'challenge') generateChallenge();
+            });
+        }
+
+        function renderAttempts() {
+            ui.attemptsDisplay.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const d = document.createElement('div');
+                d.className = 'attempt-dot' + (i < state.attempts ? ' on' : '');
+                ui.attemptsDisplay.appendChild(d);
+            }
+        }
+
+        /** 与仿真一致：纯滚动上坡 h = β v₂'² / g；球 β=0.7，圆柱 β=0.75 */
+        function rollingHeightFactor(shape) {
+            return shape === 'cylinder' ? 0.75 : 0.7;
+        }
+
+        function predictCoastHeight(m1, m2, v0, shape) {
+            const den = m1 + m2;
+            if (!(den > 0) || !(v0 > 0)) return 0;
+            const v2 = (2 * m1 / den) * v0;
+            if (!(v2 > 0)) return 0;
+            return rollingHeightFactor(shape) * v2 * v2 / g;
+        }
+
+        function makeAvKey() {
+            const ang = (state.theta * 180 / Math.PI).toFixed(0);
+            return [
+                state.m1.toFixed(1),
+                state.m2.toFixed(1),
+                state.v0.toFixed(1),
+                ang,
+                state.targetShape
+            ].join('|');
+        }
+
+        function estimateReachableBand() {
+            const shape = state.targetShape;
+            const m1s = [1, 3, 5, 8, 12, 15];
+            const m2s = [1, 3, 5, 8, 12, 15];
+            const v0s = [2, 5, 8, 10, 15, 20, 25];
+            let hMin = Infinity;
+            let hMax = 0;
+            for (let i = 0; i < m1s.length; i++) {
+                for (let j = 0; j < m2s.length; j++) {
+                    for (let k = 0; k < v0s.length; k++) {
+                        const h = predictCoastHeight(m1s[i], m2s[j], v0s[k], shape);
+                        if (h < hMin) hMin = h;
+                        if (h > hMax) hMax = h;
+                    }
+                }
+            }
+            const hNow = predictCoastHeight(state.m1, state.m2, state.v0, shape);
+            if (!(hMin < Infinity)) hMin = 0.5;
+            hMin = Math.max(0.35, hMin);
+            hMax = Math.max(hMax, hNow, hMin + 1.5);
+            return { hMin: hMin, hMax: hMax, hNow: hNow };
+        }
+
+        function generateChallenge() {
+            const band = estimateReachableBand();
+            const hNow = band.hNow;
+            const tol = TOLERANCE_H;
+            // 偏好可读目标高度；极端高参时改抽「减参可达成」区，而非不可达超高目标
+            const softCap = 16;
+
+            let lo;
+            let hi;
+            if (hNow < 1.2) {
+                // 当前几乎爬不上去：目标取可达带中下段，加参有解
+                lo = Math.max(band.hMin + tol, 1.0);
+                hi = Math.min(band.hMax - tol, Math.max(lo + 2.5, 6.0));
+            } else if (hNow > softCap) {
+                // 当前过高：目标落在可读区且低于 hNow，减参有解
+                lo = Math.max(band.hMin + tol, 2.5);
+                hi = Math.min(hNow - tol - 0.05, softCap);
+                if (!(hi > lo + 0.5)) {
+                    lo = Math.max(band.hMin + tol, Math.min(hNow * 0.35, softCap - 3));
+                    hi = Math.max(lo + 1.5, Math.min(hNow - tol - 0.05, softCap));
+                }
+            } else {
+                // 常态：围绕当前预测高度，保证默认参量附近有解
+                lo = Math.max(band.hMin + tol, hNow * 0.5);
+                hi = Math.min(band.hMax - tol, Math.max(hNow * 1.45, hNow + 1.2), softCap + 2);
+                if (!(hi > lo + 0.5)) {
+                    lo = Math.max(band.hMin + tol, hNow - 2.5);
+                    hi = Math.min(band.hMax - tol, hNow + 2.5);
+                }
+            }
+            if (!(hi > lo)) {
+                lo = Math.max(0.8, Math.min(hNow > 0 ? hNow : 2, softCap) * 0.55);
+                hi = lo + 2.0;
+            }
+
+            let target = lo + Math.random() * (hi - lo);
+            target = Math.round(target * 10) / 10;
+
+            // 避免「零调节躺赢」：与当前预测高度相差过近则轻推
+            if (Math.abs(target - hNow) < tol + 0.05) {
+                const nudge = (hNow > softCap ? -1 : (Math.random() < 0.5 ? -1 : 1)) * (0.4 + Math.random() * 0.6);
+                target = Math.round((Math.min(hNow, softCap) + nudge) * 10) / 10;
+            }
+            target = Math.min(Math.max(target, Math.round(lo * 10) / 10), Math.round(hi * 10) / 10);
+            if (!(target > 0)) target = Math.round(Math.max(1, Math.min(hNow || 2, softCap)) * 10) / 10;
+
+            state.targetH = target;
+            ui.hudTargetH.textContent = state.targetH.toFixed(1);
+            updateRampGeometry();
+            updateClimbHud(null);
+        }
+
+        function liveClimbHeight() {
+            if (state.phase === 'idle') return null;
+            if (state.phase === 'falling') {
+                return Math.max(state.peakClimbH, Math.max(0, state.fall_y - R));
+            }
+            if (state.phase === 'post_collision' || state.phase === 'end' || state.phase === 'rolling') {
+                const h = Math.max(0, state.s2 * Math.sin(state.theta));
+                if (h > state.peakClimbH) state.peakClimbH = h;
+                return state.s2 > 0 || state.u2 > 0 ? h : state.peakClimbH;
+            }
+            return null;
+        }
+
+        function updateClimbHud(hOpt) {
+            const h = (hOpt != null && isFinite(hOpt)) ? hOpt : liveClimbHeight();
+            if (ui.hudLiveH) {
+                ui.hudLiveH.textContent = (h != null && isFinite(h)) ? h.toFixed(2) : '--';
+            }
+            const showDelta = state.mode === 'challenge' && state.targetH > 0 && h != null && isFinite(h);
+            if (ui.hudDeltaWrap) {
+                ui.hudDeltaWrap.hidden = !showDelta;
+            }
+            if (showDelta && ui.hudDelta) {
+                const d = h - state.targetH;
+                const sign = d > 0 ? '+' : '';
+                ui.hudDelta.textContent = sign + d.toFixed(2);
+            }
+        }
+
+        function resetScene() {
+            state.phase = 'idle';
+            state.u1 = -20;
+            state.u2 = -5;
+            state.s2 = 0;
+            state.v1 = 0;
+            state.v2 = 0;
+            state.v1_post = 0;
+            state.v2_post = 0;
+            state.fellOff = false;
+            state.fall_x = 0;
+            state.fall_y = 0;
+            state.fall_vx = 0;
+            state.fall_vy = 0;
+            state.peakClimbH = 0;
+
+            updateBallPos(ball1, state.u1);
+            updateBallPos(ball2, state.u2);
+            ball1.rotation.set(0, 0, 0);
+            ball2.rotation.set(0, 0, 0);
+            ui.btnLaunch.classList.remove('is-disabled');
+            updateClimbHud(null);
+
+            particles.forEach(p => scene.remove(p.mesh));
+            particles = [];
+        }
+
+        function updateBallPos(mesh, u) {
+            if (u <= 0) {
+                mesh.position.set(u, R, 0);
+            } else {
+                const theta = state.theta;
+                mesh.position.set(u * Math.cos(theta), R + u * Math.sin(theta), 0);
+            }
+        }
+
+        function createParticles(x, y, colorHex) {
+            const pMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.85 });
+            for (let i = 0; i < 12; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), pMat);
+                p.position.set(x, y, 0);
+                scene.add(p);
+                particles.push({
+                    mesh: p,
+                    vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, vz: 0,
+                    life: 0.8, isFirework: false
+                });
+            }
+        }
+
+        function spawnFireworks(x, y, z) {
+            // Subtle craft burst — few particles, accent palette, does not obscure HUD
+            const colors = [CRAFT.accent, CRAFT.ok, CRAFT.ball1, 0xd4b896];
+            for (let burst = 0; burst < 2; burst++) {
+                setTimeout(() => {
+                    if (state.phase === 'idle') return;
+                    const burstX = x + (Math.random() - 0.5) * 4;
+                    const burstY = y + 3 + Math.random() * 3;
+                    const burstZ = z + (Math.random() - 0.5) * 3;
+                    for (let i = 0; i < 18; i++) {
+                        const mat = new THREE.MeshBasicMaterial({
+                            color: colors[Math.floor(Math.random() * colors.length)],
+                            transparent: true,
+                            opacity: 0.9
+                        });
+                        const p = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), mat);
+                        p.position.set(burstX, burstY, burstZ);
+                        scene.add(p);
+                        const th = Math.random() * 2 * Math.PI;
+                        const phi = Math.acos(Math.random() * 2 - 1);
+                        const speed = 2 + Math.random() * 3;
+                        particles.push({
+                            mesh: p,
+                            vx: speed * Math.sin(phi) * Math.cos(th),
+                            vy: speed * Math.sin(phi) * Math.sin(th) + 1.5,
+                            vz: speed * Math.cos(phi),
+                            life: 1.1,
+                            decay: 0.9 + Math.random() * 0.5,
+                            isFirework: true
+                        });
+                    }
+                }, burst * 280);
+            }
+        }
+
+        let lastTime = 0;
+        function animate(timestamp = 0) {
+            requestAnimationFrame(animate);
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+            lastTime = timestamp;
+
+            if (state.phase === 'rolling' || state.phase === 'post_collision' || state.phase === 'falling') {
+                if (state.v1 !== 0 && state.u1 < 0) {
+                    state.u1 += state.v1 * dt;
+                    ball1.rotation.z -= (state.v1 * dt) / R;
+                }
+
+                if (state.phase === 'rolling' && state.u2 <= 0 && (state.u1 + 2 * R >= state.u2)) {
+                    const m1 = state.m1;
+                    const m2 = state.m2;
+                    const v1_before = state.v1;
+                    const v2_before = state.v2;
+                    state.v1 = ((m1 - m2) * v1_before + 2 * m2 * v2_before) / (m1 + m2);
+                    state.v2 = (2 * m1 * v1_before + (m2 - m1) * v2_before) / (m1 + m2);
+                    state.v1_post = state.v1;
+                    state.v2_post = state.v2;
+                    state.u1 = state.u2 - 2 * R - 0.01;
+                    createParticles(state.u2 - R, R, 0xe8d8c0);
+                    state.phase = 'post_collision';
+                }
+
+                if (state.phase === 'post_collision') {
+                    if (state.u2 < 0) {
+                        state.u2 += state.v2 * dt;
+                        ball2.rotation.z -= (state.v2 * dt) / R;
+                        if (state.u2 >= 0) state.s2 = state.u2;
+                    } else {
+                        let a_ramp = 0;
+                        if (state.targetShape === 'cylinder') {
+                            a_ramp = -(2 / 3) * g * Math.sin(state.theta);
+                        } else {
+                            a_ramp = -(5 / 7) * g * Math.sin(state.theta);
+                        }
+                        state.v2 += a_ramp * dt;
+                        state.s2 += state.v2 * dt;
+                        state.u2 = state.s2;
+                        ball2.rotation.z -= (state.v2 * dt) / R;
+
+                        let max_s = 10.0 / Math.sin(state.theta);
+                        if (state.mode === 'challenge' && state.targetH > 0) {
+                            max_s = (state.targetH + TOLERANCE_H) / Math.sin(state.theta);
+                        }
+
+                        if (state.s2 > max_s && state.v2 > 0) {
+                            state.peakClimbH = Math.max(state.peakClimbH, max_s * Math.sin(state.theta));
+                            state.phase = 'falling';
+                            state.fellOff = true;
+                            state.fall_vx = state.v2 * Math.cos(state.theta);
+                            state.fall_vy = state.v2 * Math.sin(state.theta);
+                            state.fall_x = max_s * Math.cos(state.theta);
+                            state.fall_y = R + max_s * Math.sin(state.theta);
+                        } else if (state.v2 <= 0) {
+                            state.v2 = 0;
+                            state.phase = 'end';
+                            checkResult();
+                        }
+                    }
+                } else if (state.phase === 'falling') {
+                    state.fall_x += state.fall_vx * dt;
+                    state.fall_vy -= g * dt;
+                    state.fall_y += state.fall_vy * dt;
+                    ball2.rotation.z -= (state.fall_vx * dt) / R;
+                    if (state.fall_y <= R) {
+                        state.fall_y = R;
+                        state.phase = 'end';
+                        createParticles(state.fall_x, R, 0xe8d8c0);
+                        checkResult();
+                    }
+                }
+                updateClimbHud();
+            }
+
+            updateBallPos(ball1, state.u1);
+            if (state.phase !== 'falling') {
+                updateBallPos(ball2, state.u2);
+            } else {
+                ball2.position.set(state.fall_x, state.fall_y, 0);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.mesh.position.x += p.vx * dt;
+                p.mesh.position.y += p.vy * dt;
+                if (p.vz !== undefined) p.mesh.position.z += p.vz * dt;
+                if (p.isFirework) {
+                    p.vy -= 9.8 * dt;
+                    p.life -= dt * p.decay;
+                } else {
+                    p.life -= dt * 1.5;
+                }
+                p.mesh.scale.setScalar(Math.max(p.life, 0.01));
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function emitWin(extra) {
+            if (!window.__emit) return;
+            var c = window.__snapControls ? window.__snapControls() : {
+                's-mass1': state.m1,
+                's-speed': state.v0,
+                's-mass2': state.m2,
+                's-angle': (state.theta * 180 / Math.PI),
+                's-shape': state.targetShape,
+                's-rail-temp': state.railTemp
+            };
+            window.__emit('snapshot', Object.assign({ controls: c, winOk: true }, extra || {}));
+            window.__emit('win', { winOk: true });
+        }
+
+        function emitHeightSnapshot(achievedHeight) {
+            if (!window.__emit) return;
+            var c = window.__snapControls ? window.__snapControls() : {};
+            window.__emit('snapshot', {
+                controls: c,
+                winOk: false,
+                achievedHeight: Number(achievedHeight.toFixed(3)),
+                targetH: state.targetH || null,
+                fellOff: !!state.fellOff,
+                shape: state.targetShape
+            });
+        }
+
+        function checkResult() {
+            const achievedHeight = state.fellOff
+                ? Math.max(state.peakClimbH, state.s2 * Math.sin(state.theta))
+                : state.s2 * Math.sin(state.theta);
+            state.lastAchievedH = achievedHeight;
+            updateClimbHud(achievedHeight);
+
+            const avKey = makeAvKey();
+            const onlyRailTempProbe = railTempTouchedSinceFire && lastFireAvKey != null && lastFireAvKey === avKey;
+            railTempTouchedSinceFire = false;
+            lastFireAvKey = avKey;
+
+            const railTip = onlyRailTempProbe
+                ? `<br><br><span style="color:var(--craft-muted);font-size:0.9rem">对比上次发射：仅轨温变化时爬升高度不变——轨温不改变爬升高度。</span>`
+                : '';
+            const velInfo = `<br><br><div class="vel-info"><div class="v1">入射球 v₁' = ${state.v1_post.toFixed(2)} m/s</div><div class="v2">靶 球 v₂' = ${state.v2_post.toFixed(2)} m/s</div></div>`;
+
+            if (state.mode === 'explore') {
+                emitHeightSnapshot(achievedHeight);
+                if (state.fellOff) {
+                    showMessage("探究结果", `靶球动能过大，冲出斜坡顶端坠落。<br>当前参数足以支撑更高爬升。${railTip}${velInfo}`, true, resetScene);
+                } else {
+                    showMessage("探究结果", `靶球到达的最大垂直高度为: <span class="hl-em">${achievedHeight.toFixed(2)} m</span>${railTip}${velInfo}`, true, resetScene);
+                }
+            } else {
+                if (state.fellOff) {
+                    emitHeightSnapshot(achievedHeight);
+                    let desc = `用力过猛，靶球冲过斜坡顶端坠落。${railTip}${velInfo}`;
+                    if (state.attempts > 0) {
+                        showMessage("挑战失败", desc, true, resetScene);
+                    } else {
+                        showMessage("挑战结束", desc + "<br><br><span class='hl-warn'>次数用尽！</span>", true, () => {
+                            ui.modeSelect.value = 'explore';
+                            ui.modeSelect.dispatchEvent(new Event('change'));
+                        });
+                    }
+                    return;
+                }
+
+                const diff = Math.abs(achievedHeight - state.targetH);
+                const tolerance = TOLERANCE_H;
+
+                if (diff <= tolerance) {
+                    spawnFireworks(ball2.position.x, ball2.position.y, 0);
+                    emitWin({
+                        hintKey: 'ramp_height_hit',
+                        achievedHeight: Number(achievedHeight.toFixed(3)),
+                        targetH: state.targetH
+                    });
+                    if (ui.craftWinText) {
+                        ui.craftWinText.textContent =
+                            '对照各次发射的高度读数，你摸清了质量比、初速、倾角与形状怎样影响结果。轨温不改变爬升高度。';
+                    }
+                    showMessage(
+                        "挑战成功！",
+                        `靶球停在目标高度附近。<br><span style="color:var(--craft-muted);font-size:0.9rem">爬升时动能同时包含平动与转动。轨温不改变爬升高度。</span>${railTip}${velInfo}`,
+                        true,
+                        () => {
+                            ui.msgBox.classList.add('hidden');
+                            ui.craftWin.hidden = false;
+                        }
+                    );
+                } else {
+                    emitHeightSnapshot(achievedHeight);
+                    let desc = `未达目标高度。<br>当前到达: ${achievedHeight.toFixed(2)}m，目标: ${state.targetH.toFixed(2)}m。误差: ${diff.toFixed(2)}m${railTip}${velInfo}`;
+                    if (state.attempts > 0) {
+                        showMessage("挑战失败", desc, true, resetScene);
+                    } else {
+                        showMessage("挑战结束", desc + "<br><br><span class='hl-warn'>次数用尽！</span>", true, () => {
+                            ui.modeSelect.value = 'explore';
+                            ui.modeSelect.dispatchEvent(new Event('change'));
+                        });
+                    }
+                }
+            }
+        }
+
+        function showMessage(title, desc, showBtn, callback) {
+            ui.msgTitle.innerHTML = title;
+            ui.msgDesc.innerHTML = desc;
+            ui.msgBox.classList.remove('hidden');
+            if (showBtn) {
+                ui.msgBtn.classList.remove('hidden');
+                ui.msgBtn.onclick = () => {
+                    ui.msgBox.classList.add('hidden');
+                    if (callback) callback();
+                };
+            }
+        }
+
+        window.addEventListener('load', checkDependencies);
+    </script>
+
+<!-- trace-adapter-hook -->
+<script>
+(function(){
+  function emit(type, payload) {
+    try {
+      if (window.PlatformTraceAdapter) {
+        window.PlatformTraceAdapter.record(type, payload || {});
+        return;
+      }
+    } catch (e) {}
+    try {
+      if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
+        window.parent.PlatformTraceAdapter.record(type, payload || {});
+      }
+    } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"], input[type="number"], select').forEach(function(el) {
+      var id = el.id || el.name;
+      if (id && id !== 'modeSelect') o[id] = el.value;
+    });
+    return o;
+  }
+  function bindTrace() {
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      el.addEventListener('change', function() {
+        if (window.__platformTraceControlsBound) return;
+        emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
+      });
+    });
+    // 形状为离散 AV（select），平台默认不绑 select → 自建 change 上报
+    var shape = document.getElementById('s-shape');
+    if (shape) {
+      shape.addEventListener('change', function() {
+        if (window.__platformTraceControlsBound) return;
+        emit('tuning', { control: 's-shape', value: shape.value });
+      });
+    }
+    document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (window.__platformTraceControlsBound) return;
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+    window.__emit = emit;
+    window.__snapControls = snapControls;
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindTrace);
+  } else {
+    bindTrace();
+  }
+})();
+</script>
+<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;try{if(window.__platformTraceSetPhase)window.__platformTraceSetPhase(s.value||'explore');}catch(e){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+</body>
+</html>

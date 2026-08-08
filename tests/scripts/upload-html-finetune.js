@@ -1,14 +1,27 @@
 /** CLI: node tests/scripts/upload-html-finetune.js [--dry-run] [--poll] [--suffix name]
- *  Upload data/datasets/training/v1/html/train.jsonl to DeepSeek fine-tune API.
+ *  Upload training html/train.jsonl (v2-packages 优先，回退 v1) to DeepSeek fine-tune API.
  */
 const fs = require('fs');
 const path = require('path');
 require('../../packages/shared/load-env').loadEnv();
+const { getDatasetTrainingRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
-const TRAIN_JSONL = path.join(ROOT, 'data/datasets/training/v1/html/train.jsonl');
+const TRAINING = getDatasetTrainingRoot();
+const TRAIN_V2 = path.join(TRAINING, 'v2-packages/html/train.jsonl');
+const TRAIN_V1 = path.join(TRAINING, 'v1/html/train.jsonl');
 const API_BASE = (process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions')
   .replace(/\/chat\/completions\/?$/, '');
+
+function resolveTrainJsonl() {
+  if (fs.existsSync(TRAIN_V2)) return TRAIN_V2;
+  if (fs.existsSync(TRAIN_V1)) return TRAIN_V1;
+  return TRAIN_V2;
+}
+
+function trainingHtmlDir() {
+  return path.dirname(resolveTrainJsonl());
+}
 
 function hasFlag(flag) {
   return process.argv.includes(flag);
@@ -21,10 +34,11 @@ function argValue(flag) {
 }
 
 function loadTrainRows() {
-  if (!fs.existsSync(TRAIN_JSONL)) {
-    throw new Error(`missing ${TRAIN_JSONL} — run npm run export-training-jsonl first`);
+  const trainJsonl = resolveTrainJsonl();
+  if (!fs.existsSync(trainJsonl)) {
+    throw new Error(`missing ${trainJsonl} — run npm run export-training-jsonl first`);
   }
-  const lines = fs.readFileSync(TRAIN_JSONL, 'utf8').trim().split('\n').filter(Boolean);
+  const lines = fs.readFileSync(trainJsonl, 'utf8').trim().split('\n').filter(Boolean);
   return lines.map((line, i) => {
     const row = JSON.parse(line);
     if (!row.messages?.length) throw new Error(`line ${i + 1}: missing messages`);
@@ -33,7 +47,7 @@ function loadTrainRows() {
 }
 
 function writeUploadJsonl(rows) {
-  const tmp = path.join(ROOT, 'data/datasets/training/v1/html/train.upload.jsonl');
+  const tmp = path.join(trainingHtmlDir(), 'train.upload.jsonl');
   fs.writeFileSync(tmp, rows.map(r => JSON.stringify(r)).join('\n') + '\n', 'utf8');
   return tmp;
 }
@@ -111,6 +125,7 @@ async function main() {
 
   const rows = loadTrainRows();
   console.log(`upload-html-finetune: ${rows.length} training rows`);
+  console.log(`  source: ${resolveTrainJsonl()}`);
   if (rows.length < 10) {
     console.warn('  warn: <10 rows — consider expanding batch-html-dataset first');
   }
@@ -149,8 +164,13 @@ async function main() {
     process.exit(1);
   }
 
-  const metaPath = path.join(ROOT, 'data/datasets/training/v1/finetune-job.json');
-  fs.writeFileSync(metaPath, JSON.stringify({ job, file: fileInfo, createdAt: new Date().toISOString() }, null, 2));
+  const metaPath = path.join(path.dirname(trainingHtmlDir()), 'finetune-job.json');
+  fs.writeFileSync(metaPath, JSON.stringify({
+    job,
+    file: fileInfo,
+    source: resolveTrainJsonl(),
+    createdAt: new Date().toISOString(),
+  }, null, 2));
   console.log(`  saved: ${metaPath}`);
 
   if (poll) {

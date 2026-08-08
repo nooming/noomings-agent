@@ -1,13 +1,15 @@
 /** CLI: node tests/scripts/batch-graph-quality-eval.js
- *  汇总 html-samples chapters 下各 meta.json 的事理图谱 quality 指标
+ *  汇总 packages/{id}/meta.json 的事理图谱 quality 指标
  */
 const fs = require('fs');
 const path = require('path');
 const { loadAllSamples } = require('../lib/html-samples-manifest');
+const {
+  getPackagesRoot,
+  getPackageChapterPath,
+  loadMetaForSample,
+} = require('../../packages/shared/data-paths');
 
-const ROOT = path.resolve(__dirname, '../..');
-const CHAPTER_ROOT = path.join(ROOT, 'data/datasets/html-samples/chapters');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
 const REPORTS = path.join(getPackagesRoot(), 'reports');
 
 const LAYER_RULES = [
@@ -39,16 +41,9 @@ function layerOfError(msg) {
   return 'other';
 }
 
-function loadMeta(sampleId) {
-  const metaPath = path.join(CHAPTER_ROOT, sampleId, 'meta.json');
-  if (!fs.existsSync(metaPath)) return null;
-  return JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-}
-
 function analyzeRow(sample) {
-  const meta = loadMeta(sample.id);
-  const chapterPath = path.join(CHAPTER_ROOT, sample.id, 'chapter.json');
-  const hasChapter = fs.existsSync(chapterPath);
+  const meta = loadMetaForSample(sample.id);
+  const hasChapter = fs.existsSync(getPackageChapterPath(sample.id));
   if (!meta?.quality && !hasChapter) {
     return {
       id: sample.id,

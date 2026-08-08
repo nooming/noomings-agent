@@ -1,14 +1,18 @@
-/** CLI: node tests/scripts/export-llm-training-jsonl.js [--out data/datasets/training/v1] */
+/** CLI: node tests/scripts/export-llm-training-jsonl.js [--out data/datasets/training/v2-packages] */
 const fs = require('fs');
 const path = require('path');
 const { buildLlmPromptBundle, HTMLGEN_SYSTEM } = require('../../packages/generate/export/llm-prompt-bundle');
 const { PARSE_SYSTEM } = require('../../packages/generate/design-pipeline');
 const { validateGeneratedHtml } = require('../../packages/generate/html-post-validate');
+const {
+  getPackageManifestPath,
+  getPackageGamePath,
+  loadChapterForSample,
+  getDatasetTrainingRoot,
+} = require('../../packages/shared/data-paths');
+const { loadAllSamples } = require('../lib/html-samples-manifest');
 
 const ROOT = path.resolve(__dirname, '../..');
-const MANIFEST = path.join(ROOT, 'data/datasets/html-samples/manifest.json');
-const CHAPTER_ROOT = path.join(ROOT, 'data/datasets/html-samples/chapters');
-const HTML_ROOT = path.join(ROOT, 'data/datasets/html-samples/generated');
 
 const DEFAULT_EVAL_IDS = new Set([
   'multi-kp',
@@ -24,12 +28,6 @@ function ensureDir(dir) {
 function writeJsonl(file, rows) {
   ensureDir(path.dirname(file));
   fs.writeFileSync(file, rows.map(r => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : ''), 'utf8');
-}
-
-function loadChapter(id) {
-  const p = path.join(CHAPTER_ROOT, id, 'chapter.json');
-  if (!fs.existsSync(p)) return null;
-  return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
 function splitOf(sample) {
@@ -94,9 +92,13 @@ function exportHtmlDpoReject(sample, chapter, html) {
 function main() {
   const outRoot = process.argv.includes('--out')
     ? path.resolve(process.argv[process.argv.indexOf('--out') + 1])
-    : path.join(ROOT, 'data/datasets/training/v1');
+    : path.join(getDatasetTrainingRoot(), 'v2-packages');
 
-  const manifest = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+  // Prefer packages manifest via loadAllSamples; path check keeps CLI honest.
+  if (!fs.existsSync(getPackageManifestPath())) {
+    throw new Error(`packages manifest missing: ${getPackageManifestPath()}`);
+  }
+  const manifest = loadAllSamples();
   const parseTrain = [];
   const parseEval = [];
   const htmlTrain = [];
@@ -105,15 +107,20 @@ function main() {
   const skipped = [];
 
   for (const sample of manifest.samples || []) {
-    const chapter = loadChapter(sample.id);
-    const htmlPath = path.join(HTML_ROOT, `${sample.id}.html`);
+    const chapter = loadChapterForSample(sample.id);
+    const htmlPath = getPackageGamePath(sample.id);
     const html = fs.existsSync(htmlPath) ? fs.readFileSync(htmlPath, 'utf8') : null;
     const split = splitOf(sample);
+
+    if (!chapter) {
+      skipped.push(`${sample.id}: no chapter`);
+      continue;
+    }
 
     const parseRow = exportParseRows(sample, chapter);
     if (parseRow) {
       (split === 'eval' ? parseEval : parseTrain).push(parseRow);
-    } else if (chapter) {
+    } else {
       skipped.push(`${sample.id}: parse (no inquiryScript)`);
     }
 
@@ -139,6 +146,8 @@ function main() {
 
   const summary = {
     exportedAt: new Date().toISOString(),
+    source: 'data/runtime/packages',
+    manifestPath: getPackageManifestPath(),
     parse: { train: parseTrain.length, eval: parseEval.length },
     html: { train: htmlTrain.length, eval: htmlEval.length, reject: htmlReject.length },
     skipped,
@@ -147,6 +156,7 @@ function main() {
 
   console.log('export-llm-training-jsonl: OK');
   console.log(`  out: ${outRoot}`);
+  console.log(`  samples: ${(manifest.samples || []).length}`);
   console.log(`  parse train/eval: ${parseTrain.length}/${parseEval.length}`);
   console.log(`  html  train/eval/reject: ${htmlTrain.length}/${htmlEval.length}/${htmlReject.length}`);
   if (skipped.length) console.log(`  skipped: ${skipped.length}`);
