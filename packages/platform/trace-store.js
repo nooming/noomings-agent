@@ -220,6 +220,9 @@ function readFilteredTraceRows({ graphId, catalogId } = {}) {
         judgeResult: row.judgeResult || null,
         variableAdjustCounts: row.variableAdjustCounts || null,
         strategyPathSummary: row.strategyPathSummary || null,
+        strategyPathSummaryExplore: row.strategyPathSummaryExplore || null,
+        strategyPathByPhase: row.strategyPathByPhase || null,
+        scoredPhase: row.strategyPathSummary?.scoredPhase || null,
         currentPhase: row.currentPhase || null,
       });
     } catch { /* skip corrupt */ }
@@ -316,6 +319,10 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 100 } = {}) 
     if (row.judged && verdict && (!g.latestVerdict || (row.updatedAt || '') >= (g.lastUpdatedAt || ''))) {
       g.latestVerdict = verdict;
     }
+    const jr = row.judgeResult || null;
+    const gaps = Array.isArray(jr?.teacherSummary?.gaps)
+      ? jr.teacherSummary.gaps
+      : (Array.isArray(jr?.gaps) ? jr.gaps : null);
     g.sessions.push({
       sessionId: row.sessionId,
       startedAt: row.startedAt,
@@ -323,7 +330,12 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 100 } = {}) 
       eventCount: row.eventCount,
       judged: row.judged,
       verdict,
+      gaps,
       ch: row.ch,
+      strategyPathSummary: row.strategyPathSummary || null,
+      strategyPathSummaryExplore: row.strategyPathSummaryExplore || null,
+      strategyPathByPhase: row.strategyPathByPhase || null,
+      scoredPhase: row.scoredPhase || row.strategyPathSummary?.scoredPhase || null,
     });
   }
 

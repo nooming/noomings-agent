@@ -187,15 +187,19 @@ function resolveStrategyPathScoreScope(events, opts = {}) {
     return { events: list, mode: preferMode, scoredPhase: 'full' };
   }
 
+  const hasPhaseChange = list.some(e => e.type === 'phase_change');
+
   if (phaseScope === 'explore') {
+    // 仅在真实存在 phase_change 且探究段有调参/发射时标 scoredPhase=explore；
+    // 无分段时回退 full，避免双标签误把全会话当成「探究段」。
     const explore = filterEventsByExplorePhase(list);
-    if (explore.some(isTuningOrFireEvent)) {
+    if (hasPhaseChange && explore.some(isTuningOrFireEvent)) {
       return { events: explore, mode: 'explore', scoredPhase: 'explore' };
     }
     return { events: list, mode: 'explore', scoredPhase: 'full' };
   }
 
-  const hasPhaseChange = list.some(e => e.type === 'phase_change');
+  // phaseScope 为空 / challenge / 其它：有竞赛操作则评竞赛段，否则全量回退
   if (hasPhaseChange) {
     const challenge = filterEventsByChallengePhase(list);
     if (challenge.some(isTuningOrFireEvent)) {

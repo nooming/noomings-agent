@@ -5,6 +5,7 @@ const SUITES = {
     { name: 'judge-cv-heavy', module: './parts/judge-cv-heavy' },
     { name: 'judge-single-variable', module: './parts/judge-single-variable' },
     { name: 'judge-win-detect', module: './parts/judge-win-detect' },
+    { name: 'judge-pass-weak-compare', module: './parts/judge-pass-weak-compare' },
     { name: 'batch-judge-fixtures', module: './parts/batch-judge-fixtures' },
     { name: 'chapter-enrich-quality', module: './parts/chapter-enrich-quality' },
     { name: 'draft-quality', module: './parts/draft-quality' },

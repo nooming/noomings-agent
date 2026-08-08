@@ -108,6 +108,16 @@ function run() {
   const fullScope = resolveStrategyPathScoreScope(noPhase, { mode: 'explore' });
   assert(fullScope.scoredPhase === 'full', 'no phase_change → full');
   assert(fullScope.events.length === noPhase.length, 'full keeps all events');
+  const exploreNoPhase = resolveStrategyPathScoreScope(noPhase, { phaseScope: 'explore' });
+  assert(exploreNoPhase.scoredPhase === 'full', 'phaseScope=explore without phase_change → full (not fake explore)');
+
+  // Dual scopes: explore thrash + challenge single-var
+  const exploreScope = resolveStrategyPathScoreScope(full, { phaseScope: 'explore' });
+  assert(exploreScope.scoredPhase === 'explore', 'phaseScope=explore with ops → explore');
+  assert(
+    exploreScope.events.filter(e => e.type === 'tuning').some(e => e.payload.control === 's-b'),
+    'explore scope keeps explore tunings',
+  );
 
   // phase_change but challenge empty of ops → full fallback
   const exploreWin = [

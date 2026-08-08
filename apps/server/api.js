@@ -960,8 +960,8 @@ async function handleSessionStrategyPathSummary(req, res) {
       degradeReason,
       scoredPhase,
     });
-    // Persist path summary on session for teacher view (always keep score)
-    session.strategyPathSummary = {
+    // Persist path summary：竞赛优先作 primary；探究段写入独立字段，避免并行请求互相覆盖
+    const pathPayload = {
       ...summary,
       primaryStrategy: scoreResult.primaryStrategy,
       score: scoreResult.score,
@@ -970,6 +970,28 @@ async function handleSessionStrategyPathSummary(req, res) {
       nearTies,
       scoredAt: new Date().toISOString(),
     };
+    session.strategyPathByPhase = session.strategyPathByPhase && typeof session.strategyPathByPhase === 'object'
+      ? session.strategyPathByPhase
+      : {};
+    if (scoredPhase === 'explore') {
+      session.strategyPathSummaryExplore = pathPayload;
+      session.strategyPathByPhase.explore = pathPayload;
+      const prevPhase = session.strategyPathSummary?.scoredPhase;
+      if (!session.strategyPathSummary || prevPhase === 'explore' || prevPhase === 'full') {
+        // 无竞赛 primary 时可用探究段占位；已有 challenge 则不覆盖
+        if (prevPhase !== 'challenge') session.strategyPathSummary = pathPayload;
+      }
+    } else if (scoredPhase === 'challenge') {
+      session.strategyPathByPhase.challenge = pathPayload;
+      session.strategyPathSummary = pathPayload;
+    } else {
+      session.strategyPathByPhase.full = pathPayload;
+      // primary 优先级：challenge > explore > full（避免并行默认 full 冲掉探究段）
+      const prev = session.strategyPathSummary?.scoredPhase;
+      if (prev !== 'challenge' && prev !== 'explore') {
+        session.strategyPathSummary = pathPayload;
+      }
+    }
     saveTraceSession(session);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
@@ -982,11 +1004,13 @@ async function handleSessionStrategyPathSummary(req, res) {
       score: scoreResult.score,
       summary,
       nearTies,
+      strategyPathSummaryExplore: session.strategyPathSummaryExplore || null,
+      strategyPathByPhase: session.strategyPathByPhase || null,
       variableAdjustCounts: session.variableAdjustCounts,
       source: 'session-events',
       contract: {
         student: 'summary.text + summary.advice（不剧透最优；默认无分数；竞赛过关按竞赛段评分）',
-        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段',
+        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段；explore/challenge 可分次请求',
       },
     }));
   } catch (e) {

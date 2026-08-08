@@ -122,18 +122,47 @@ async function boot() {
   const frame = document.getElementById('gameFrame');
   let currentPhase = 'explore';
   const pathChip = document.getElementById('pathTypeChip');
+  const adviceChip = document.getElementById('pathAdviceChip');
   const pathToggle = document.getElementById('pathTypeToggle');
   let showPathType = pathTypeEnabled;
+  let craftSettleOpen = false;
+  let pathChipWantVisible = false;
+  let adviceChipWantVisible = false;
+
+  function applyPathChipVisibility() {
+    if (pathChip) {
+      pathChip.hidden = craftSettleOpen || !showPathType || !pathChipWantVisible;
+    }
+    if (adviceChip) {
+      adviceChip.hidden = craftSettleOpen || !showPathType || !adviceChipWantVisible;
+    }
+  }
+
   if (pathToggle) {
     pathToggle.checked = showPathType;
     pathToggle.addEventListener('change', () => {
       showPathType = pathToggle.checked;
       localStorage.setItem('platform-show-path-type', showPathType ? '1' : '0');
-      if (!showPathType && pathChip) pathChip.hidden = true;
-      const adviceChip = document.getElementById('pathAdviceChip');
-      if (!showPathType && adviceChip) adviceChip.hidden = true;
+      if (!showPathType) {
+        pathChipWantVisible = false;
+        adviceChipWantVisible = false;
+      }
+      applyPathChipVisibility();
     });
   }
+
+  window.addEventListener('message', (ev) => {
+    const data = ev && ev.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'platform-navigate' && data.to === 'student-list') {
+      location.href = '/student.html';
+      return;
+    }
+    if (data.type === 'craft-settle') {
+      craftSettleOpen = !!data.open;
+      applyPathChipVisibility();
+    }
+  });
 
   function noteInteraction(type) {
     if (type === 'win' || type === 'action' || type === 'tuning' || type === 'snapshot') {
@@ -145,7 +174,6 @@ async function boot() {
         || item.graphId
         || null;
       const sid = PlatformTraceAdapter.getSessionId?.() || traceSessionId;
-      const adviceChip = document.getElementById('pathAdviceChip');
       // Prefer real session events; fall back to synthetic demo only if session score fails
       fetch('/api/platform/strategy-path-summary', {
         method: 'POST',
@@ -166,11 +194,14 @@ async function boot() {
           if (!showPathType || !pathChip) return;
           if (data.ok && data.summary?.text) {
             pathChip.textContent = data.summary.text;
-            pathChip.hidden = false;
+            pathChipWantVisible = true;
             if (adviceChip && data.summary.advice) {
               adviceChip.textContent = '建议：' + data.summary.advice;
-              adviceChip.hidden = false;
+              adviceChipWantVisible = true;
+            } else {
+              adviceChipWantVisible = false;
             }
+            applyPathChipVisibility();
             return;
           }
           return fetch('/api/demo/strategy-path-summary', {
@@ -185,11 +216,14 @@ async function boot() {
             if (!showPathType || !pathChip) return;
             if (demo.ok && demo.summary?.text) {
               pathChip.textContent = demo.summary.text + ' · 演示';
-              pathChip.hidden = false;
+              pathChipWantVisible = true;
               if (adviceChip && demo.summary.advice) {
                 adviceChip.textContent = '建议：' + demo.summary.advice;
-                adviceChip.hidden = false;
+                adviceChipWantVisible = true;
+              } else {
+                adviceChipWantVisible = false;
               }
+              applyPathChipVisibility();
             }
           });
         })

@@ -1345,8 +1345,19 @@ body.play-page {
   border-top: 1px solid var(--edu-border);
 }
 
+/* 姓名行与游玩会话更紧凑，避免标题与列表被大间距拉开 */
+.session-detail-head + .session-detail-play {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.session-detail-head .hint,
 .session-detail-summary .hint {
   margin: 4px 0;
+}
+
+.session-detail-head .student-agg-meta {
+  margin-bottom: 0;
 }
 
 .session-task-line {
@@ -1363,7 +1374,8 @@ body.play-page {
 }
 
 .session-path-type {
-  margin-bottom: 2px;
+  margin: 0 0 2px;
+  line-height: 1.45;
 }
 
 .session-path-meta {
@@ -1422,15 +1434,15 @@ td.empty-state,
 .sessions-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin: 16px 0 8px;
+  gap: 8px;
+  margin: 8px 0 4px;
 }
 
 .stat-card {
   background: var(--edu-bg);
   border: 1px solid var(--edu-border);
-  border-radius: 10px;
-  padding: 14px 16px;
+  border-radius: 8px;
+  padding: 8px 12px;
   text-align: center;
 }
 
@@ -1438,16 +1450,16 @@ td.empty-state,
 .stat-card.stat-judged { border-color: #86efac; background: #f0fdf4; }
 
 .judged-overview {
-  margin: 0 0 16px;
-  padding: 12px 14px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
   background: var(--edu-bg);
   border: 1px solid var(--edu-border);
   border-radius: 10px;
 }
 
 .classroom-board {
-  margin: 0 0 16px;
-  padding: 12px 14px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
 }
 .classroom-board-summary {
   width: 100%;
@@ -1564,10 +1576,25 @@ td.empty-state,
   background: rgba(100, 116, 139, 0.12);
   color: #475569;
   font-weight: 500;
-  max-width: 8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: none;
+  overflow: visible;
   white-space: nowrap;
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+.badge-path-explore {
+  background: rgba(14, 116, 144, 0.1);
+  color: #0e7490;
+}
+.badge-path-challenge {
+  background: rgba(180, 83, 9, 0.1);
+  color: #9a3412;
+}
+.badge-path-uneval {
+  background: rgba(100, 116, 139, 0.08);
+  color: #94a3b8;
+  font-weight: 500;
 }
 .session-path-error { color: #b45309; }
 .badge-verdict {
@@ -1584,23 +1611,23 @@ td.empty-state,
 
 .stat-value {
   display: block;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--edu-text);
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .stat-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--edu-muted);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .sessions-stats-sub {
   font-size: 0.78rem;
   color: var(--edu-muted);
-  margin: 0 0 16px;
+  margin: 0 0 8px;
 }
 
 .sessions-toolbar {
@@ -1608,7 +1635,25 @@ td.empty-state,
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+}
+
+.sessions-hide-playtest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--edu-text);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sessions-hide-playtest input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--edu-primary);
+  cursor: pointer;
 }
 
 .sessions-select,
@@ -1626,8 +1671,8 @@ td.empty-state,
   display: grid;
   grid-template-columns: minmax(200px, 260px) 1fr;
   gap: 16px;
-  height: min(480px, calc(100vh - 340px));
-  min-height: 320px;
+  height: min(560px, calc(100vh - 260px));
+  min-height: 360px;
   border: 1px solid var(--edu-border);
   border-radius: 10px;
   overflow: hidden;
@@ -1638,16 +1683,32 @@ td.empty-state,
   border-right: 1px solid var(--edu-border);
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .student-list-header {
-  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
   font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--edu-muted);
   border-bottom: 1px solid var(--edu-border);
+}
+
+.student-list-header-hint {
+  font-size: 0.68rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: var(--edu-muted);
+  opacity: 0.9;
 }
 
 .student-list {
@@ -1675,12 +1736,13 @@ td.empty-state,
 .student-list-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-height: 28px;
 }
 
 .student-list-name {
   flex: 1;
+  min-width: 0;
   font-weight: 600;
   font-size: 0.88rem;
   color: var(--edu-text);
@@ -1695,12 +1757,72 @@ td.empty-state,
   flex-shrink: 0;
 }
 
+.student-list-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.badge-band {
+  padding: 1px 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.badge-process.band-process-clear {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+}
+
+.badge-process.band-process-partial {
+  background: rgba(234, 179, 8, 0.16);
+  color: #a16207;
+}
+
+.badge-process.band-process-unclear {
+  background: rgba(100, 116, 139, 0.14);
+  color: #64748b;
+}
+
+.badge-process.band-process-uneval {
+  background: rgba(100, 116, 139, 0.08);
+  color: #94a3b8;
+}
+
+.badge-result.band-result-pass {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.badge-result.band-result-pending {
+  background: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}
+
+.badge-result.band-result-fail {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.student-agg-meta {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--edu-muted);
+}
+
 .student-list-meta {
   display: none;
 }
 
 .session-detail-panel {
   padding: 16px 20px;
+  min-height: 0;
+  height: 100%;
   overflow-y: auto;
   background: var(--edu-surface);
 }
@@ -1772,14 +1894,27 @@ td.empty-state,
 .session-timeline-body {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 8px 10px;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .session-timeline-meta {
   font-size: 0.78rem;
   color: var(--edu-muted);
+  flex-shrink: 0;
+}
+
+.session-row-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sessions-select-all {
@@ -1847,7 +1982,8 @@ td.empty-state,
 @media (max-width: 768px) {
   .sessions-stats { grid-template-columns: repeat(2, 1fr); }
   .sessions-split { grid-template-columns: 1fr; min-height: auto; }
-  .student-list-panel { max-height: 220px; }
+  .student-list-panel { max-height: 220px; height: auto; }
+  .session-detail-panel { height: auto; }
 }
 
 @media (max-width: 640px) {

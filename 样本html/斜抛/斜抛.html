@@ -68,21 +68,38 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 #craft-intro[hidden],#craft-win[hidden]{display:none!important;}
 .craft-card{
-  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
-  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+  width:min(520px,94vw);max-height:min(92vh,720px);overflow:auto;background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  border-radius:18px;padding:20px 20px 16px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
 .craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
-  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
+  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 12px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
+.craft-card button:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+.craft-evidence{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent);font-size:.88rem;line-height:1.55;color:var(--craft-text);}
+.craft-evidence strong{color:var(--craft-accent);font-weight:600;}
+.craft-attr{margin:0 0 12px;}
+.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted);}
+.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr;}}
+.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer;}
+.craft-attr input{margin-top:3px;accent-color:var(--craft-accent);}
+.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted);}
+.craft-attr-hint[hidden]{display:none!important;}
+.craft-reveal{margin-top:4px;}
+.craft-reveal[hidden]{display:none!important;}
+.craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
+.craft-actions{display:flex;gap:10px;margin-top:14px;}
+.craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
+.craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
+.craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
 #craft-gauge{
   margin-top:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.35);
   border:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent);font-size:12px;color:var(--craft-muted);
 }
 #craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
-#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
-  border-radius:10px;padding:8px 10px;margin:8px 0;}
 .app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
 .sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
 
@@ -467,10 +484,28 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </div>
 <div id="craft-win" hidden>
   <div class="craft-card">
-    <h2>过关 · 你学到了什么</h2>
-    <div class="formula" id="craftWinFormula">x = v₀cosθ · t；y = v₀sinθ · t − ½gt²</div>
-    <p id="craftWinText">对照落点标尺，你摸清了初速、角度与高度如何影响射程。</p>
-    <button type="button" id="craftWinBtn">再玩一次</button>
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几发的对照来看，射程/命中主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-speed"> 主要是初速度</label>
+        <label><input type="radio" name="craftAttr" value="s-angle"> 主要是发射角度</label>
+        <label><input type="radio" name="craftAttr" value="s-height"> 主要是发射高度</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">x = v₀cosθ · t；y = v₀sinθ · t − ½gt²</div>
+      <p id="craftWinText">对照落点标尺，你摸清了初速、角度与高度如何影响射程。</p>
+      <p id="craftCv" class="craft-cv">质量只改观感大小，不改落点（视觉旁路）。</p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
+    </div>
   </div>
 </div>
 
@@ -609,8 +644,135 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             targetWidth: 56, // 物理宽度(约3.7米)；竞赛略放宽仍需瞄准
             attempts: 6,
             timeLeft: 600, // 10分钟
-            timerInterval: null
+            timerInterval: null,
+            lastLandM: null
         };
+
+        /** 本局证据：仅统计主 AV（不含质量），供过关卡自动出示 */
+        const AV_LABELS = { 's-speed': '初速度', 's-angle': '发射角度', 's-height': '发射高度' };
+        const sessionEvidence = {
+            tuneCounts: { 's-speed': 0, 's-angle': 0, 's-height': 0 },
+            fireCount: 0,
+            lastLandM: null,
+            hit: false,
+            attribution: null,
+            evidenceSummary: ''
+        };
+
+        function noteAvTune(controlId) {
+            if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+            sessionEvidence.tuneCounts[controlId] += 1;
+        }
+
+        function dominantAv() {
+            let bestId = null;
+            let bestN = 0;
+            Object.keys(sessionEvidence.tuneCounts).forEach(function (id) {
+                const n = sessionEvidence.tuneCounts[id];
+                if (n > bestN) { bestN = n; bestId = id; }
+            });
+            return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+        }
+
+        function buildEvidenceSummary(landM, hit) {
+            const rangeTxt = (landM != null && Number.isFinite(Number(landM)))
+                ? (Number(landM).toFixed(1) + ' m')
+                : '--';
+            const dom = dominantAv();
+            const mainTxt = dom && dom.count > 0
+                ? (dom.label + '×' + dom.count)
+                : '未集中调节';
+            if (state.mode === 'challenge') {
+                return '竞赛证据：' + (hit ? '命中靶心' : '未命中')
+                    + ' · 射程约 ' + rangeTxt
+                    + ' · 主调 ' + mainTxt
+                    + ' · 发射 ' + sessionEvidence.fireCount + ' 次';
+            }
+            return '探究证据：射程约 ' + rangeTxt
+                + ' · 主调节 ' + mainTxt
+                + ' · 发射 ' + sessionEvidence.fireCount + ' 次';
+        }
+
+        function setCraftSettleOpen(open) {
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+                }
+            } catch (_) {}
+        }
+
+        function navigateToStudentList() {
+            try {
+                if (window.parent && window.parent !== window) {
+                    try {
+                        window.parent.postMessage({ type: 'platform-navigate', to: 'student-list' }, '*');
+                    } catch (_) {}
+                    try {
+                        window.parent.location.href = '/student.html';
+                        return;
+                    } catch (_) {}
+                    return;
+                }
+            } catch (_) {}
+            window.location.href = '../index.html';
+        }
+
+        function updateAttrHint(selected) {
+            var hintEl = document.getElementById('craftAttrHint');
+            if (!hintEl) return;
+            var dom = dominantAv();
+            if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+                hintEl.hidden = true;
+                hintEl.textContent = '';
+                return;
+            }
+            hintEl.hidden = false;
+            hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+        }
+
+        function setCraftRevealVisible(visible) {
+            var reveal = document.getElementById('craftReveal');
+            if (reveal) reveal.hidden = !visible;
+        }
+
+        function prepareCraftWin(landM, hit) {
+            sessionEvidence.lastLandM = landM;
+            sessionEvidence.hit = !!hit;
+            sessionEvidence.evidenceSummary = buildEvidenceSummary(landM, hit);
+            sessionEvidence.attribution = null;
+            var line = document.getElementById('craftEvidenceLine');
+            if (line) {
+                line.innerHTML = '<strong>本局证据</strong>　' + sessionEvidence.evidenceSummary;
+            }
+            document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+                el.checked = false;
+            });
+            var wbtn = document.getElementById('craftWinBtn');
+            if (wbtn) wbtn.disabled = true;
+            setCraftRevealVisible(false);
+            updateAttrHint(null);
+            var t = document.getElementById('craftWinText');
+            if (t) t.textContent = '对照落点标尺，你摸清了初速、角度与高度如何影响射程。';
+            window.__projSessionEvidence = sessionEvidence;
+        }
+
+        function emitAttributionSnapshot() {
+            if (!window.__emit || !sessionEvidence.attribution) return;
+            var c = window.__snapControls ? window.__snapControls() : {};
+            window.__emit('snapshot', {
+                controls: c,
+                winOk: true,
+                attribution: sessionEvidence.attribution,
+                evidenceSummary: sessionEvidence.evidenceSummary
+            });
+        }
+        window.__projPrepareCraftWin = prepareCraftWin;
+        window.__projEmitAttribution = emitAttributionSnapshot;
+        window.__projSessionEvidence = sessionEvidence;
+        window.__projSetCraftSettleOpen = setCraftSettleOpen;
+        window.__projNavigateToStudentList = navigateToStudentList;
+        window.__projUpdateAttrHint = updateAttrHint;
+        window.__projSetCraftRevealVisible = setCraftRevealVisible;
 
         // DOM 元素绑定
         const ui = {
@@ -794,17 +956,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
         function bindEvents() {
             // 滑块绑定
-            const bindSlider = (slider, valElement, stateKey, suffix = '') => {
+            const bindSlider = (slider, valElement, stateKey, suffix = '', avId = null) => {
                 slider.addEventListener('input', (e) => {
                     let val = parseFloat(e.target.value);
                     state[stateKey] = val;
                     valElement.textContent = val + suffix;
                 });
+                if (avId) {
+                    slider.addEventListener('change', () => noteAvTune(avId));
+                }
             };
-            bindSlider(ui.sliderAngle, ui.valAngle, 'angle', '°');
-            bindSlider(ui.sliderSpeed, ui.valSpeed, 'speed');
-            bindSlider(ui.sliderHeight, ui.valHeight, 'height');
-            bindSlider(ui.sliderMass, ui.valMass, 'mass');
+            bindSlider(ui.sliderAngle, ui.valAngle, 'angle', '°', 's-angle');
+            bindSlider(ui.sliderSpeed, ui.valSpeed, 'speed', '', 's-speed');
+            bindSlider(ui.sliderHeight, ui.valHeight, 'height', '', 's-height');
+            bindSlider(ui.sliderMass, ui.valMass, 'mass'); // 质量不进证据主调（本包旁路量）
 
             // 模式切换：同时刷新目标文案与判据（靶心仅竞赛出现）
             ui.modeSelect.addEventListener('change', (e) => {
@@ -868,6 +1033,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
                 ui.btnLaunch.disabled = true;
                 ui.btnLaunch.classList.add('opacity-50', 'cursor-not-allowed');
+                sessionEvidence.fireCount += 1;
 
                 if (state.mode === 'challenge') {
                     state.attempts--;
@@ -1354,20 +1520,27 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         function checkHit(landX) {
             const hitMargin = state.targetWidth; // 允许的误差范围
             const distance = Math.abs(landX - state.targetX);
+            const landM = (landX - state.cannonBaseX) / state.PPM;
+            state.lastLandM = landM;
             
             if (distance <= hitMargin) {
                 state.hitFlash = 1.0;
+                prepareCraftWin(landM, true);
                 if (window.__emit) {
                   var c = window.__snapControls ? window.__snapControls() : {
                     's-angle': state.angle, 's-speed': state.speed, 's-height': state.height, 's-mass': state.mass
                   };
-                  window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'hit_target' });
+                  window.__emit('snapshot', {
+                    controls: c,
+                    winOk: true,
+                    hintKey: 'hit_target',
+                    evidenceSummary: sessionEvidence.evidenceSummary
+                  });
                   window.__emit('win', { winOk: true });
                 }
-                const hitDist = ((state.targetX - state.cannonBaseX) / state.PPM).toFixed(1);
-                showMessage("命中靶心！", `完美击中约 ${hitDist} m 靶心！本局挑战完成。`, false, () => {
-                    state.projectiles = []; // 清空场地；靶距保持至切回探究再进竞赛
-                });
+                // 命中：不叠 messageBox；直接进 #craft-win（由 __emit('win') 打开）
+                hideMessage();
+                state.projectiles = []; // 清空场地；靶距保持至切回探究再进竞赛
             } else {
                 let diffMeters = (distance / state.PPM).toFixed(1);
                 let dir = landX > state.targetX ? "远了" : "近了";
@@ -1520,7 +1693,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   var win = document.getElementById('craft-win');
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
+  var bbtn = document.getElementById('craftBackBtn');
   if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function setSettle(open){
+    if (typeof window.__projSetCraftSettleOpen === 'function') window.__projSetCraftSettleOpen(open);
+  }
   function replayLevel(){
     if (typeof window.__craftReplay === 'function') {
       try { window.__craftReplay(); return; } catch (e) {}
@@ -1530,18 +1707,47 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (rbtn) { try { rbtn.click(); } catch (e) {} }
   }
   if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
     window.__craftWinDismissed = true;
     if (win) win.hidden = true;
+    setSettle(false);
     replayLevel();
+  });
+  if (bbtn) bbtn.addEventListener('click', function(){
+    if (typeof window.__projNavigateToStudentList === 'function') window.__projNavigateToStudentList();
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){
+    el.addEventListener('change', function(){
+      if (!el.checked) return;
+      var ev = window.__projSessionEvidence;
+      if (ev) ev.attribution = el.value;
+      if (typeof window.__projSetCraftRevealVisible === 'function') window.__projSetCraftRevealVisible(true);
+      if (typeof window.__projUpdateAttrHint === 'function') window.__projUpdateAttrHint(el.value);
+      if (typeof window.__projEmitAttribution === 'function') window.__projEmitAttribution();
+      wbtn.disabled = false;
+    });
   });
 
   // gauge: reserved for sidebar; TL dual stays mode|timer|stats only
 function showWin(extra){
     if (win) {
       window.__craftWinDismissed = false;
+      var ev = window.__projSessionEvidence;
+      if (ev && !ev.evidenceSummary && typeof window.__projPrepareCraftWin === 'function') {
+        window.__projPrepareCraftWin(ev.lastLandM, true);
+      }
+      try {
+        var msg = document.getElementById('messageBox');
+        if (msg) msg.classList.add('hidden');
+      } catch (e) {}
       win.hidden = false;
+      setSettle(true);
+      if (!(ev && ev.attribution)) {
+        if (typeof window.__projSetCraftRevealVisible === 'function') window.__projSetCraftRevealVisible(false);
+      }
       var t = document.getElementById('craftWinText');
-      if (t && extra) t.textContent = extra;
+      if (t && typeof extra === 'string' && extra) t.textContent = extra;
+      if (wbtn && !(ev && ev.attribution)) wbtn.disabled = true;
     }
   }
   window.__craftShowWin = showWin;

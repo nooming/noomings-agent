@@ -134,6 +134,57 @@ function applyCvHeavyPolicy(result, summary) {
   return out;
 }
 
+/**
+ * 已过关但竞赛段有效对照不足 → 补一条短 gap（不改 verdict，不碰 CV 重度逻辑）。
+ * 启发式（满足其一即可，见注释）：
+ *  1) 评分段 AV 调节次数过低：avTunings < 2（几乎没对照就 win）
+ *  2) 调了 ≥3 种 AV 且 singleVariableRate < 0.6（种类多、无一清晰占优）
+ */
+const PASS_WEAK_COMPARE_GAP = '过关偏少对照，建议同一变量多测几次再下结论';
+
+function isPassWithWeakComparison(summary) {
+  if (!isPassed(summary)) return false;
+  if (isCvHeavyInquiry(summary)) return false; // CV 旁路另有 gap，不抢这条
+  const m = summary?.inquiryPath?.metrics || {};
+  const avTunings = m.avTunings;
+  const tuned = Array.isArray(m.tunedControls) ? m.tunedControls : [];
+  const sv = m.singleVariableRate;
+  // (1) 主有效参几乎没拧就过关
+  if (typeof avTunings === 'number' && avTunings < 2) return true;
+  // (2) 多 AV 混调且单变量率偏低（阈值 0.6：典型三角交替约 0.56）
+  if (tuned.length >= 3 && typeof sv === 'number' && sv < 0.6) return true;
+  return false;
+}
+
+function applyPassWeakComparisonPolicy(result, summary) {
+  if (!isPassWithWeakComparison(summary)) return result;
+  if (result.verdict !== 'pass' && !isPassed(summary)) return result;
+
+  const out = {
+    ...result,
+    strengths: [...(result.strengths || [])],
+    gaps: [...(result.gaps || [])],
+    teacherSummary: result.teacherSummary ? { ...result.teacherSummary } : undefined,
+  };
+
+  if (!out.gaps.some(g => /偏少对照|少对照|多测几次/.test(g))) {
+    // 优先露出：插到最前，再截断到 2 条
+    out.gaps.unshift(PASS_WEAK_COMPARE_GAP);
+  }
+  out.gaps = out.gaps.slice(0, 2).map(s => truncateText(s, 30));
+
+  if (out.teacherSummary) {
+    out.teacherSummary.gaps = out.gaps;
+    if (!out.teacherSummary.suggestion || !/对照|多测/.test(out.teacherSummary.suggestion)) {
+      out.teacherSummary.suggestion = truncateText(PASS_WEAK_COMPARE_GAP, 40);
+    }
+  }
+  if (out.comment && !/偏少对照|少对照/.test(out.comment)) {
+    out.comment = `${out.comment}；待改进：${truncateText(PASS_WEAK_COMPARE_GAP, 30)}`;
+  }
+  return out;
+}
+
 function applySingleVariablePolicy(result, summary) {
   if (!isMainSingleVariableExploration(summary) || isPassed(summary)) {
     return result;
@@ -270,16 +321,19 @@ function ruleJudge(summary, chapter) {
     suggestion: truncateText(gaps[0] || gapFromHint('ok', chapter), 40),
   };
   const comment = `[规则模式] ${teacherSummary.summary}${gaps.length ? '；待改进：' + teacherSummary.gaps.join('；') : ''}`;
-  return applyCvHeavyPolicy(applySingleVariablePolicy({
-    mode: 'rule',
-    verdict,
-    strengths: teacherSummary.strengths,
-    gaps: teacherSummary.gaps,
-    dtAlignment: align.dtPath,
-    inquiryPath: inquiryPath || undefined,
-    teacherSummary,
-    comment,
-  }, summary), summary);
+  return applyPassWeakComparisonPolicy(
+    applyCvHeavyPolicy(applySingleVariablePolicy({
+      mode: 'rule',
+      verdict,
+      strengths: teacherSummary.strengths,
+      gaps: teacherSummary.gaps,
+      dtAlignment: align.dtPath,
+      inquiryPath: inquiryPath || undefined,
+      teacherSummary,
+      comment,
+    }, summary), summary),
+    summary,
+  );
 }
 
 function buildLlmJudgeResult(text, summary) {
@@ -327,7 +381,10 @@ function buildLlmJudgeResult(text, summary) {
       comment: truncateText(text, 200),
     };
   }
-  return applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary);
+  return applyPassWeakComparisonPolicy(
+    applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary),
+    summary,
+  );
 }
 
 async function judge(body, opts = {}) {
@@ -373,7 +430,10 @@ module.exports = {
   buildLlmJudgeResult,
   applySingleVariablePolicy,
   applyCvHeavyPolicy,
+  applyPassWeakComparisonPolicy,
+  isPassWithWeakComparison,
   isMainSingleVariableExploration,
   isCvHeavyInquiry,
   isPassed,
+  PASS_WEAK_COMPARE_GAP,
 };

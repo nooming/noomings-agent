@@ -16,6 +16,10 @@
 - `inquiryScript` + `physicsModel` + `gameSpec` + `telemetrySpec`：见 [探究脚本与论文对齐计划](../../.cursor/plans/探究脚本与论文对齐.plan.md)
 - 游戏 HTML 样本：`data/games/preset/`（电容纪元）、`data/games/legacy/`（历史样本）
 
+## 过程性评价（教师半页）
+
+- [过程性评价 · 教师半页说明](./process-assessment-teacher-note.md)：路径摘要 / 变量表 / strengths·gaps 怎么读；附录可选映射到观点·证据·论证（UI 不用 CER 品牌）。
+
 ## 演示反馈（2026）
 
 张睿老师在看过演示视频后表示：**现有功能方向认可**；优化重点是先 **确定公式、混淆变量、输出变量（物理因变量）**，**暂不考虑 UI 美观**。

@@ -78,11 +78,18 @@
           <option value="judged">全部已评判</option>
         </select>
         <input type="search" id="filterStudent" class="sessions-search" placeholder="搜索学生姓名/组号…">
+        <label class="sessions-hide-playtest" title="隐藏 playtest / full-eval / 全量试玩 等评测身份">
+          <input type="checkbox" id="hidePlaytest" checked>
+          隐藏试玩
+        </label>
       </div>
 
       <div class="sessions-split">
         <div class="student-list-panel">
-          <div class="student-list-header">学生</div>
+          <div class="student-list-header">
+            <span>学生</span>
+            <span class="student-list-header-hint" title="过程档取当前筛选下最近一局有路径摘要的会话（无则未评估）；结果档：任一达标→达标，否则有待评→待评，否则未达标">过程·最近有效局 · 结果·当前筛选</span>
+          </div>
           <ul class="student-list" id="studentList">
             <li class="empty-state" style="padding:24px">加载中…</li>
           </ul>
@@ -496,6 +503,83 @@ let playUrlIndexItems = [];
 let publishPairItems = [];
 let detailRequestSeq = 0;
 let judgingSessionId = null;
+let filterGraphInitialized = false;
+/** 上次成功渲染详情的学生；同学生切换会话时用于恢复 #sessionDetail 滚动位置 */
+let lastDetailRenderedStudentKey = null;
+
+const FILTER_GRAPH_KEY = 'teacher.sessions.filterGraph';
+const HIDE_PLAYTEST_KEY = 'teacher.sessions.hidePlaytest';
+
+function isPlaytestIdentity(studentKey, studentLabel) {
+  const key = String(studentKey || '');
+  const label = String(studentLabel || '');
+  const blob = `${key} ${label}`.toLowerCase();
+  if (blob.includes('playtest')) return true;
+  if (blob.includes('full-eval')) return true;
+  if (key.includes('全量试玩') || label.includes('全量试玩')) return true;
+  return false;
+}
+
+function hidePlaytestEnabled() {
+  const el = document.getElementById('hidePlaytest');
+  return el ? !!el.checked : true;
+}
+
+function filterOutPlaytestStudents(items) {
+  if (!hidePlaytestEnabled()) return items || [];
+  return (items || []).filter(s => !isPlaytestIdentity(s.studentKey, s.studentLabel));
+}
+
+function readStoredFilterGraph() {
+  try {
+    return localStorage.getItem(FILTER_GRAPH_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredFilterGraph(value) {
+  try {
+    localStorage.setItem(FILTER_GRAPH_KEY, value == null ? '' : String(value));
+  } catch { /* ignore */ }
+}
+
+async function pickRecentGraphWithData(optionValues) {
+  const allowed = new Set(optionValues || []);
+  if (!allowed.size) return '';
+  try {
+    const r = await fetch('/api/platform/traces');
+    const data = await r.json();
+    const items = data.items || [];
+    for (const item of items) {
+      if (item.graphId && allowed.has(item.graphId)) return item.graphId;
+    }
+  } catch { /* ignore */ }
+  return optionValues[0] || '';
+}
+
+async function fillFilterGraphOptions() {
+  const filter = document.getElementById('filterGraph');
+  if (!filter) return;
+  const prev = filter.value;
+  const wasInit = filterGraphInitialized;
+  const opts = catalogItems.map(i => `<option value="${esc(i.graphId)}">${esc(i.title)}</option>`).join('');
+  filter.innerHTML = '<option value="">全部探究任务</option>' + opts;
+  const validValues = new Set([...filter.options].map(o => o.value));
+  const nonEmpty = [...filter.options].map(o => o.value).filter(Boolean);
+
+  let next;
+  if (wasInit && validValues.has(prev)) {
+    next = prev;
+  } else {
+    const saved = readStoredFilterGraph();
+    if (saved != null && validValues.has(saved)) next = saved;
+    else if (nonEmpty.length) next = await pickRecentGraphWithData(nonEmpty);
+    else next = '';
+  }
+  filter.value = next;
+  filterGraphInitialized = true;
+}
 
 const JUDGE_LEVEL_LABELS = {
   1: '明显误区 L1',
@@ -1164,11 +1248,7 @@ async function loadCatalog() {
       });
     });
   }
-  const filter = document.getElementById('filterGraph');
-  if (filter) {
-    const opts = catalogItems.map(i => `<option value="${esc(i.graphId)}">${esc(i.title)}</option>`).join('');
-    filter.innerHTML = '<option value="">全部探究任务</option>' + opts;
-  }
+  await fillFilterGraphOptions();
   await loadPublishPairOptions();
   renderResourceLists();
   } catch (err) {
@@ -1340,6 +1420,15 @@ function renderJudgeResult(jr) {
 function syncSessionTimelineVerdict(sessionId, verdict) {
   document.querySelectorAll('.session-timeline-item').forEach(row => {
     if (row.dataset.sid !== sessionId) return;
+    const wrap = row.querySelector('.session-row-badges');
+    if (wrap) {
+      wrap.querySelectorAll('.badge-pending, .badge-verdict').forEach(el => el.remove());
+      const badge = document.createElement('span');
+      badge.className = `badge badge-verdict ${verdictClass(verdict)}`;
+      badge.textContent = verdictLabel(verdict);
+      wrap.appendChild(badge);
+      return;
+    }
     const body = row.querySelector('.session-timeline-body');
     if (!body) return;
     body.querySelectorAll('.badge-pending, .badge-verdict').forEach(el => el.remove());
@@ -1362,8 +1451,16 @@ function renderJudgedOverview(stats) {
   const panel = document.getElementById('judgedOverview');
   const pills = document.getElementById('verdictPills');
   const chips = document.getElementById('judgedStudentChips');
-  const judged = stats.judgedStudents || [];
-  const summary = stats.verdictSummary || {};
+  let judged = stats.judgedStudents || [];
+  if (hidePlaytestEnabled()) {
+    judged = judged.filter(j => !isPlaytestIdentity(j.studentKey, j.studentLabel));
+  }
+  const summary = { pass: 0, in_progress: 0, learning: 0, other: 0 };
+  for (const j of judged) {
+    const v = j.verdict || 'other';
+    if (summary[v] != null) summary[v] += 1;
+    else summary.other += 1;
+  }
   if (!judged.length) {
     panel.hidden = true;
     return;
@@ -1394,6 +1491,25 @@ function renderJudgedOverview(stats) {
   });
 }
 
+function applyStatsFromStudents(items, lastActivityAt) {
+  let pendingJudge = 0;
+  let judgedCount = 0;
+  let latest = lastActivityAt || null;
+  for (const item of items) {
+    pendingJudge += item.pendingCount || 0;
+    judgedCount += Math.max(0, (item.sessionCount || 0) - (item.pendingCount || 0));
+    if (item.lastUpdatedAt && (!latest || item.lastUpdatedAt > latest)) {
+      latest = item.lastUpdatedAt;
+    }
+  }
+  document.getElementById('statStudents').textContent = items.length;
+  document.getElementById('statJudged').textContent = judgedCount;
+  document.getElementById('statPending').textContent = pendingJudge;
+  const sub = [];
+  if (latest) sub.push(`最近活动 ${fmtTime(latest)}`);
+  document.getElementById('statsSub').textContent = sub.join('');
+}
+
 async function loadStats() {
   const params = filterParams();
   params.delete('status');
@@ -1401,12 +1517,19 @@ async function loadStats() {
   const r = await fetch('/api/platform/traces/stats?' + params.toString());
   const data = await r.json();
   const s = data.stats || {};
-  document.getElementById('statStudents').textContent = s.uniqueStudents ?? '—';
-  document.getElementById('statJudged').textContent = s.judgedCount ?? '—';
-  document.getElementById('statPending').textContent = s.pendingJudge ?? '—';
-  const sub = [];
-  if (s.lastActivityAt) sub.push(`最近活动 ${fmtTime(s.lastActivityAt)}`);
-  document.getElementById('statsSub').textContent = sub.join('');
+  if (hidePlaytestEnabled()) {
+    const sr = await fetch('/api/platform/traces/students?' + params.toString());
+    const sd = await sr.json();
+    const items = filterOutPlaytestStudents(sd.items || []);
+    applyStatsFromStudents(items, s.lastActivityAt);
+  } else {
+    document.getElementById('statStudents').textContent = s.uniqueStudents ?? '—';
+    document.getElementById('statJudged').textContent = s.judgedCount ?? '—';
+    document.getElementById('statPending').textContent = s.pendingJudge ?? '—';
+    const sub = [];
+    if (s.lastActivityAt) sub.push(`最近活动 ${fmtTime(s.lastActivityAt)}`);
+    document.getElementById('statsSub').textContent = sub.join('');
+  }
   renderJudgedOverview(s);
 }
 
@@ -1439,7 +1562,10 @@ async function loadClassroomBoard() {
       <span>均策略分 <strong>${s.meanPathScore ?? '—'}</strong></span>
       <div class="classroom-dist">路径类型：${dist}</div>`;
   }
-  const rows = board.sessions || [];
+  let rows = board.sessions || [];
+  if (hidePlaytestEnabled()) {
+    rows = rows.filter(row => !isPlaytestIdentity(row.studentId || row.studentLabel, row.studentLabel));
+  }
   if (!tbody) return;
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="9">暂无会话；学生游玩并上报后会出现在此</td></tr>';
@@ -1468,35 +1594,171 @@ function downloadBlob(filename, text, mime) {
   URL.revokeObjectURL(a.href);
 }
 
-async function loadStudents(options = {}) {
-  const r = await fetch('/api/platform/traces/students?' + filterParams().toString());
-  const data = await r.json();
-  studentItems = data.items || [];
+/** 严重过程 gaps：有则不宜标「清楚」。 */
+const SEVERE_PROCESS_GAP_RE = /多参|混调|盲调|混淆|无关|旁路|对照不足|偏少对照|少对照|缺少连续|散乱|空操作|观察偏少/;
+
+function sessionHasPathSummary(session) {
+  const { explore, challenge, full, primary } = resolvePathSummariesByPhase(session);
+  return !!(pathTypeFullText(explore) || pathTypeFullText(challenge)
+    || pathTypeFullText(full) || pathTypeFullText(primary));
+}
+
+/** 过程档取局：仅认有路径摘要的会话（无路径 → 未评估，不再用「已评无路径」凑档）。 */
+function pickLatestPathSession(sessions) {
+  const list = Array.isArray(sessions) ? sessions.slice() : [];
+  list.sort((a, b) => {
+    const ta = a.updatedAt || a.startedAt || '';
+    const tb = b.updatedAt || b.startedAt || '';
+    return String(tb).localeCompare(String(ta));
+  });
+  return list.find(sessionHasPathSummary) || null;
+}
+
+function pathEnumKind(enumShort) {
+  const t = String(enumShort || '').trim();
+  if (!t) return null;
+  if (t === '单变量' || /^单变量/.test(t)) return 'clear';
+  if (t === '多参混调' || t === '混淆触碰' || /多参|混淆|盲调/.test(t)) return 'muddy';
+  if (t === '观察偏少' || t === '尚不清晰' || /观察偏少|尚不清晰|空操作/.test(t)) return 'unclear';
+  return 'other';
+}
+
+function sessionPathEnumKinds(session) {
+  const { explore, challenge, full, primary } = resolvePathSummariesByPhase(session);
+  const kinds = [];
+  const ex = pathEnumKind(pathTypeEnumShort(pathTypeFullText(explore)));
+  const ch = pathEnumKind(pathTypeEnumShort(pathTypeFullText(challenge)));
+  if (ex) kinds.push(ex);
+  if (ch) kinds.push(ch);
+  if (!kinds.length) {
+    const one = pathEnumKind(pathTypeEnumShort(pathTypeFullText(full || primary)));
+    if (one) kinds.push(one);
+  }
+  return kinds;
+}
+
+function sessionGaps(session) {
+  if (Array.isArray(session?.gaps)) return session.gaps;
+  const jr = session?.judgeResult;
+  if (Array.isArray(jr?.teacherSummary?.gaps)) return jr.teacherSummary.gaps;
+  if (Array.isArray(jr?.gaps)) return jr.gaps;
+  return [];
+}
+
+/**
+ * 单局 → 过程四态（常驻）。边界：无清晰单变量证据时不标「清楚」。
+ * - 清楚：探究/竞赛至少一端单变量（或主路径单变量），且无严重 gaps；两端不一致则降为部分清楚
+ * - 部分清楚：有结构但有 gaps，或一端清一端浊，或仅「其它」结构
+ * - 尚不清晰：尚不清晰/观察偏少/多参混调为主
+ * - 未评估：无路径摘要可判（含已评但无路径）
+ */
+function mapSessionProcessBand(session) {
+  if (!session) return '未评估';
+  const kinds = sessionPathEnumKinds(session);
+  const gaps = sessionGaps(session);
+  const severeGaps = gaps.some(g => SEVERE_PROCESS_GAP_RE.test(String(g || '')));
+  const hasClear = kinds.includes('clear');
+  const hasMuddy = kinds.includes('muddy');
+  const hasUnclear = kinds.includes('unclear');
+  const hasOther = kinds.includes('other');
+
+  if (!kinds.length) return '未评估';
+
+  if (!hasClear && (hasMuddy || hasUnclear) && !hasOther) {
+    return '尚不清晰';
+  }
+  if (!hasClear && hasUnclear) return '尚不清晰';
+  if (!hasClear && hasMuddy) return '尚不清晰';
+
+  if (hasClear && (hasMuddy || hasUnclear)) return '部分清楚';
+  if (hasClear && severeGaps) return '部分清楚';
+  if (hasClear) return '清楚';
+
+  // 仅 other / other+muddy 等：有信号但不算清楚
+  if (hasMuddy || hasUnclear) return '尚不清晰';
+  if (hasOther) return severeGaps ? '尚不清晰' : '部分清楚';
+  return '未评估';
+}
+
+/** 结果三态：达标 > 待评 > 未达标；无会话 → null。 */
+function mapStudentResultBand(sessions) {
+  const list = Array.isArray(sessions) ? sessions : [];
+  if (!list.length) return null;
+  if (list.some(s => s.verdict === 'pass')) return '达标';
+  if (list.some(s => !s.judged)) return '待评';
+  return '未达标';
+}
+
+function aggregateStudentBands(student) {
+  const sessions = student?.sessions || [];
+  if (!sessions.length) {
+    return { processBand: '未评估', resultBand: null, effectiveSession: null };
+  }
+  const effective = pickLatestPathSession(sessions);
+  return {
+    processBand: effective ? mapSessionProcessBand(effective) : '未评估',
+    resultBand: mapStudentResultBand(sessions),
+    effectiveSession: effective,
+  };
+}
+
+function processBandClass(band) {
+  if (band === '清楚') return 'band-process-clear';
+  if (band === '部分清楚') return 'band-process-partial';
+  if (band === '尚不清晰') return 'band-process-unclear';
+  if (band === '未评估') return 'band-process-uneval';
+  return 'band-process-uneval';
+}
+
+function resultBandClass(band) {
+  if (band === '达标') return 'band-result-pass';
+  if (band === '待评') return 'band-result-pending';
+  if (band === '未达标') return 'band-result-fail';
+  return '';
+}
+
+function studentAggBadgesHtml(student) {
+  const sessions = student?.sessions || [];
+  if (!sessions.length) return '';
+  const { processBand, resultBand } = aggregateStudentBands(student);
+  const proc = processBand || '未评估';
+  const res = resultBand || '待评';
+  return [
+    `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档（最近有路径摘要的局；无则未评估）">${esc(proc)}</span>`,
+    `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="结果档（当前筛选）">${esc(res)}</span>`,
+  ].join('');
+}
+
+function studentAggMetaHtml(student) {
+  const sessions = student?.sessions || [];
+  if (!sessions.length) return '';
+  const { processBand, resultBand } = aggregateStudentBands(student);
+  const graphId = document.getElementById('filterGraph')?.value;
+  const scope = graphId ? '当前任务' : '当前筛选';
+  const proc = processBand || '未评估';
+  const res = resultBand || '待评';
+  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·最近有效局）：过程·${esc(proc)} · 结果·${esc(res)}</p>`;
+}
+
+function renderStudentList() {
   const list = document.getElementById('studentList');
+  if (!list) return;
   if (!studentItems.length) {
     list.innerHTML = '<li class="empty-state" style="padding:24px">暂无学情 — 请让学生从学生端进入游戏</li>';
-    selectedStudentKey = null;
-    selectedSessionId = null;
-    selectedSessionIds.clear();
-    document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
     return;
-  }
-  if (!selectedStudentKey || !studentItems.find(s => s.studentKey === selectedStudentKey)) {
-    selectedSessionIds.clear();
-    selectedStudentKey = studentItems[0].studentKey;
-    selectedSessionId = studentItems[0].sessions?.[0]?.sessionId || null;
   }
   list.innerHTML = studentItems.map(item => {
     const name = displayStudentName(item.studentKey, item.studentLabel);
-    const statusBadge = item.pendingCount
-      ? `<span class="badge badge-pending">待评</span>`
-      : `<span class="badge badge-verdict ${verdictClass(item.latestVerdict)}">${esc(verdictLabel(item.latestVerdict))}</span>`;
-    const multi = item.sessionCount > 1 ? `<span class="student-list-count">${item.sessionCount}次</span>` : '';
+    const multi = item.sessionCount
+      ? `<span class="student-list-count">${item.sessionCount}次</span>`
+      : '';
+    const badges = studentAggBadgesHtml(item);
     return `
     <li class="student-list-item${item.studentKey === selectedStudentKey ? ' is-active' : ''}" data-key="${esc(item.studentKey)}">
       <div class="student-list-row">
         <span class="student-list-name">${esc(name)}</span>
-        ${multi}${statusBadge}
+        ${multi}
+        <span class="student-list-badges">${badges}</span>
       </div>
     </li>`;
   }).join('');
@@ -1506,12 +1768,41 @@ async function loadStudents(options = {}) {
       selectedStudentKey = el.dataset.key;
       const student = studentItems.find(s => s.studentKey === selectedStudentKey);
       selectedSessionId = student?.sessions?.[0]?.sessionId || null;
-      loadStudents();
+      renderStudentList();
       if (selectedSessionId) loadSessionDetail(selectedSessionId);
-      else document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">该学生暂无会话</div>';
+      else {
+        lastDetailRenderedStudentKey = null;
+        document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">该学生暂无会话</div>';
+      }
       loadCrossGameSummary(student);
+      const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
+      for (const id of [...selectedSessionIds]) {
+        if (!studentSessionIds.has(id)) selectedSessionIds.delete(id);
+      }
+      updateSelectionUi();
     });
   });
+}
+
+async function loadStudents(options = {}) {
+  const r = await fetch('/api/platform/traces/students?' + filterParams().toString());
+  const data = await r.json();
+  studentItems = filterOutPlaytestStudents(data.items || []);
+  if (!studentItems.length) {
+    selectedStudentKey = null;
+    selectedSessionId = null;
+    selectedSessionIds.clear();
+    lastDetailRenderedStudentKey = null;
+    renderStudentList();
+    document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
+    return;
+  }
+  if (!selectedStudentKey || !studentItems.find(s => s.studentKey === selectedStudentKey)) {
+    selectedSessionIds.clear();
+    selectedStudentKey = studentItems[0].studentKey;
+    selectedSessionId = studentItems[0].sessions?.[0]?.sessionId || null;
+  }
+  renderStudentList();
   if (selectedSessionId && !options.skipDetail && !judgingSessionId) {
     loadSessionDetail(selectedSessionId);
   }
@@ -1556,6 +1847,253 @@ function scoredPhaseLabel(phase) {
   if (phase === 'explore') return '探究段';
   if (phase === 'full') return '全会话';
   return null;
+}
+
+function scoredPhaseShort(phase) {
+  if (phase === 'challenge') return '竞赛';
+  if (phase === 'explore') return '探究';
+  if (phase === 'full') return '全会话';
+  return null;
+}
+
+/** Normalize cached explore/challenge/full summaries from a session row. */
+function resolvePathSummariesByPhase(session) {
+  const by = session?.strategyPathByPhase && typeof session.strategyPathByPhase === 'object'
+    ? session.strategyPathByPhase
+    : {};
+  const primary = session?.strategyPathSummary || null;
+  const exploreCached = session?.strategyPathSummaryExplore || by.explore || null;
+  const challengeCached = by.challenge || (primary?.scoredPhase === 'challenge' ? primary : null);
+  const fullCached = by.full || (primary?.scoredPhase === 'full' ? primary : null);
+
+  const explore = exploreCached?.scoredPhase === 'explore' ? exploreCached : null;
+  const challenge = challengeCached?.scoredPhase === 'challenge' ? challengeCached : null;
+  let full = null;
+  if (!explore && !challenge) {
+    full = fullCached?.scoredPhase === 'full'
+      ? fullCached
+      : (primary && primary.scoredPhase !== 'explore' && primary.scoredPhase !== 'challenge' ? primary : fullCached);
+    if (!full && primary) full = primary;
+  }
+  return { explore, challenge, full, primary: challenge || explore || full || primary };
+}
+
+/** Full path-type text from summary.type (or text), keeping括号内变量名. */
+function pathTypeFullText(summary) {
+  if (!summary) return null;
+  let type = String(summary.type || '').trim();
+  if (!type && summary.text) {
+    let rest = String(summary.text).replace(/^你的探究路径类型：\s*/, '').trim();
+    rest = rest.replace(/（多条路径表现接近）/g, '').replace(/（本局策略吻合度[^）]*）/g, '').trim();
+    type = rest;
+  }
+  type = type.replace(/^探究路径：\s*/, '').trim();
+  return type || null;
+}
+
+/**
+ * 列表短型名（方案 A）：只显示枚举短名，括号变量名留给 title/详情。
+ * 多参混调 / 混淆触碰 / 观察偏少 / 尚不清晰 / 单变量；其它压到 ≤6 字。
+ */
+function pathTypeEnumShort(fullType) {
+  const t = String(fullType || '').trim();
+  if (!t) return null;
+  if (/多参混调|盲调|多参/.test(t)) return '多参混调';
+  if (/混淆触碰|混淆/.test(t)) return '混淆触碰';
+  if (/观察偏少|空操作/.test(t)) return '观察偏少';
+  if (/尚不清晰/.test(t)) return '尚不清晰';
+  if (/单变量/.test(t)) return '单变量';
+  const stripped = t.replace(/型$/u, '').replace(/[（(].*$/u, '').trim();
+  if (!stripped) return t.slice(0, 6);
+  return stripped.length <= 6 ? stripped : stripped.slice(0, 6);
+}
+
+function pathTypeShortLabel(summary, maxLen = 18) {
+  const full = pathTypeFullText(summary);
+  if (!full) return null;
+  // 详情用大 maxLen：保留全文；列表短徽章请用 pathTypeEnumShort
+  if (maxLen >= 40) {
+    const short = full.length > maxLen ? `${full.slice(0, maxLen)}…` : full;
+    return { short, full };
+  }
+  return { short: pathTypeEnumShort(full) || full, full };
+}
+
+function pathTypeBadgeHtml(summary, phaseKey) {
+  const full = pathTypeFullText(summary);
+  if (!full) return '';
+  const enumShort = pathTypeEnumShort(full);
+  if (!enumShort) return '';
+  const prefix = scoredPhaseShort(phaseKey);
+  const label = prefix ? `${prefix}·${enumShort}` : enumShort;
+  const title = prefix ? `${prefix}段：${full}` : full;
+  return `<span class="badge badge-path${phaseKey ? ` badge-path-${phaseKey}` : ''}" title="${esc(title)}">${esc(label)}</span>`;
+}
+
+/** List-row path badges: up to two short phase·type pills; none → 常驻「路径·未评估」。无阶段大徽章。 */
+function pathTypeBadgesHtml(session) {
+  const { explore, challenge, full } = resolvePathSummariesByPhase(session);
+  const parts = [];
+  if (explore) {
+    const html = pathTypeBadgeHtml(explore, 'explore');
+    if (html) parts.push(html);
+  }
+  if (challenge) {
+    const html = pathTypeBadgeHtml(challenge, 'challenge');
+    if (html) parts.push(html);
+  }
+  if (!parts.length && full) {
+    const html = pathTypeBadgeHtml(full, null);
+    if (html) parts.push(html);
+  }
+  if (!parts.length) {
+    return '<span class="badge badge-path badge-path-uneval" title="打开详情或刷新路径摘要后计算">路径·未评估</span>';
+  }
+  return parts.join('');
+}
+
+function sessionRowVerdictBadgeHtml(session) {
+  if (session?.judged) {
+    return `<span class="badge badge-verdict ${verdictClass(session.verdict)}">${esc(verdictLabel(session.verdict))}</span>`;
+  }
+  return '<span class="badge badge-pending">待评</span>';
+}
+
+/** 会话行常驻：路径区 + 评判区。 */
+function sessionRowBadgesHtml(session) {
+  return `<span class="session-row-badges">${pathTypeBadgesHtml(session)}${sessionRowVerdictBadgeHtml(session)}</span>`;
+}
+
+function syncSessionTimelineRowBadges(student) {
+  if (!student?.sessions?.length) return;
+  document.querySelectorAll('.session-timeline-item').forEach(row => {
+    const sid = row.dataset.sid;
+    const sess = student.sessions.find(s => s.sessionId === sid);
+    if (!sess) return;
+    const body = row.querySelector('.session-timeline-body');
+    if (!body) return;
+    let wrap = body.querySelector('.session-row-badges');
+    if (!wrap) {
+      wrap = document.createElement('span');
+      wrap.className = 'session-row-badges';
+      const meta = body.querySelector('.session-timeline-meta');
+      if (meta) meta.after(wrap);
+      else body.appendChild(wrap);
+    }
+    wrap.innerHTML = pathTypeBadgesHtml(sess) + sessionRowVerdictBadgeHtml(sess);
+  });
+}
+
+async function runPool(items, concurrency, worker) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) return;
+  const limit = Math.max(1, Math.min(concurrency || 1, list.length));
+  let cursor = 0;
+  async function runOne() {
+    while (cursor < list.length) {
+      const idx = cursor++;
+      await worker(list[idx], idx);
+    }
+  }
+  await Promise.all(Array.from({ length: limit }, () => runOne()));
+}
+
+const PATH_REFRESH_CONCURRENCY = 3;
+const PATH_REFRESH_RECENT_N = 8;
+
+function applyPathRefreshResultToListSession(sess, r) {
+  if (!sess || !r?.refreshed) return false;
+  sess.scoredPhase = r.scoredPhase || null;
+  sess.strategyPathSummary = r.pathByPhase?.primary || sess.strategyPathSummary || null;
+  sess.strategyPathSummaryExplore = r.pathByPhase?.explore || null;
+  sess.strategyPathByPhase = {
+    explore: r.pathByPhase?.explore || null,
+    challenge: r.pathByPhase?.challenge || null,
+    full: r.pathByPhase?.full || null,
+  };
+  return true;
+}
+
+/** 打开详情后：对当前学生缺路径摘要的近期会话限流补刷，并重绘行徽章。 */
+async function refreshMissingPathSummariesForStudent(student, {
+  excludeSessionId = null,
+  reqId = null,
+  concurrency = PATH_REFRESH_CONCURRENCY,
+  recentN = PATH_REFRESH_RECENT_N,
+} = {}) {
+  if (!student?.sessions?.length) return { ok: 0, fail: 0 };
+  const sorted = student.sessions.slice().sort((a, b) => {
+    const ta = a.updatedAt || a.startedAt || '';
+    const tb = b.updatedAt || b.startedAt || '';
+    return String(tb).localeCompare(String(ta));
+  });
+  const targets = sorted
+    .filter(s => s.sessionId !== excludeSessionId && !sessionHasPathSummary(s))
+    .slice(0, recentN);
+  if (!targets.length) return { ok: 0, fail: 0 };
+  let ok = 0;
+  let fail = 0;
+  await runPool(targets, concurrency, async (sess) => {
+    if (reqId != null && reqId !== detailRequestSeq) return;
+    const r = await refreshTeacherPathSummary(sess, reqId);
+    if (r?.aborted) return;
+    if (applyPathRefreshResultToListSession(sess, r)) ok += 1;
+    else fail += 1;
+  });
+  return { ok, fail };
+}
+
+function pathScopeMetaLabel(pathByPhase) {
+  const bits = [];
+  if (pathByPhase?.explore) bits.push('探究段');
+  if (pathByPhase?.challenge) bits.push('竞赛段');
+  if (!bits.length && pathByPhase?.full) bits.push('全会话');
+  if (!bits.length && pathByPhase?.primary) {
+    return scoredPhaseLabel(pathByPhase.primary.scoredPhase);
+  }
+  return bits.length ? bits.join(' + ') : null;
+}
+
+function buildSessionPathBlock(pathByPhase, pathFailHint) {
+  const { explore, challenge, full, primary, sawPhaseChange } = pathByPhase || {};
+  const advice = (challenge || primary || explore || full)?.advice || '';
+  const lines = [];
+  if (explore || challenge) {
+    // 有数据的段分行全文展示；缺段不堆空行，仅在 meta 里轻量注明
+    if (explore) {
+      const typeText = pathTypeFullText(explore) || '—';
+      const score = explore.score != null ? `（策略分 ${Number(explore.score).toFixed(2)}）` : '';
+      lines.push(`<p class="hint session-path-type">探究段：<strong>${esc(typeText)}</strong>${score}</p>`);
+    }
+    if (challenge) {
+      const typeText = pathTypeFullText(challenge) || '—';
+      const score = challenge.score != null ? `（策略分 ${Number(challenge.score).toFixed(2)}）` : '';
+      lines.push(`<p class="hint session-path-type">竞赛段：<strong>${esc(typeText)}</strong>${score}</p>`);
+    }
+  } else if (full || primary) {
+    const sum = full || primary;
+    const typeText = pathTypeFullText(sum);
+    if (typeText) {
+      lines.push(`<p class="hint session-path-type">路径类型：<strong>${esc(typeText)}</strong></p>`);
+    }
+  }
+  if (!lines.length && !pathFailHint) {
+    return '<p class="hint session-path-empty">暂无路径摘要（打开详情会按探究/竞赛段分别重算）</p>';
+  }
+  const meta = [];
+  const scopeLabel = pathScopeMetaLabel(pathByPhase);
+  if (scopeLabel) meta.push(`评分范围：${esc(scopeLabel)}`);
+  if (sawPhaseChange && explore && !challenge) meta.push('竞赛段无操作');
+  if (sawPhaseChange && challenge && !explore) meta.push('探究段无操作');
+  if (!(explore || challenge) && (full || primary)?.score != null) {
+    meta.push(`策略分：<strong>${Number((full || primary).score).toFixed(2)}</strong>`);
+  }
+  return `<div class="session-path-block">
+    ${lines.join('')}
+    ${meta.length ? `<p class="session-path-meta">${meta.join(' · ')}</p>` : ''}
+    ${advice ? `<p class="hint session-path-advice">建议：${esc(advice)}</p>` : ''}
+    ${pathFailHint || ''}
+  </div>`;
 }
 
 function renderTuningTableRows(rows, phaseLabel) {
@@ -1603,42 +2141,84 @@ function buildSessionTuningBlock(summary) {
   return `<div class="session-tuning-block"><h4 class="session-section-label">变量调节次数（全会话）</h4>${note}${tuningTableHtml(rows)}</div>`;
 }
 
+function normalizePathSummaryPayload(data) {
+  if (!data?.ok || !data.summary) return null;
+  return {
+    ...data.summary,
+    score: data.score != null ? data.score : data.summary.score,
+    scoredPhase: data.scoredPhase || data.summary.scoredPhase || null,
+    primaryStrategy: data.primaryStrategy || data.summary.primary || data.summary.type || null,
+  };
+}
+
+async function fetchTeacherPathSummaryOnce(session, phaseScope) {
+  const body = {
+    sessionId: session.sessionId,
+    graphId: session.graphId,
+    audience: 'teacher',
+  };
+  if (phaseScope) body.phaseScope = phaseScope;
+  const r = await fetch('/api/platform/strategy-path-summary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return r.json();
+}
+
+function applyPathSummariesToSession(session, exploreSum, primarySum) {
+  const explore = exploreSum?.scoredPhase === 'explore' ? exploreSum : null;
+  const challenge = primarySum?.scoredPhase === 'challenge' ? primarySum : null;
+  const full = (!explore && !challenge && primarySum)
+    ? primarySum
+    : (primarySum?.scoredPhase === 'full' && !challenge ? primarySum : null);
+  const primary = challenge || explore || full || primarySum || null;
+
+  session.strategyPathSummaryExplore = explore;
+  session.strategyPathByPhase = {
+    explore: explore || null,
+    challenge: challenge || null,
+    full: full || null,
+  };
+  session.strategyPathSummary = primary;
+  session.scoredPhase = primary?.scoredPhase || null;
+  return resolvePathSummariesByPhase(session);
+}
+
 async function refreshTeacherPathSummary(session, reqId) {
-  const cached = session.strategyPathSummary || null;
+  const cachedByPhase = resolvePathSummariesByPhase(session);
   try {
-    const r = await fetch('/api/platform/strategy-path-summary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: session.sessionId,
-        graphId: session.graphId,
-        audience: 'teacher',
-        // 不传 phaseScope:'full'，跟随服务端默认（有竞赛操作时评竞赛段）
-      }),
-    });
+    // 并行双 scope：探究段 + 竞赛段（无竞赛操作时服务端回退 full）
+    const [exploreData, challengeData] = await Promise.all([
+      fetchTeacherPathSummaryOnce(session, 'explore'),
+      fetchTeacherPathSummaryOnce(session, 'challenge'),
+    ]);
     if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
-    const data = await r.json();
-    if (data.ok && data.summary) {
-      const pathSummary = {
-        ...data.summary,
-        score: data.score != null ? data.score : data.summary.score,
-        scoredPhase: data.scoredPhase || data.summary.scoredPhase || null,
-        primaryStrategy: data.primaryStrategy || data.summary.primary || data.summary.type || null,
+
+    const exploreSum = normalizePathSummaryPayload(exploreData);
+    const challengeSum = normalizePathSummaryPayload(challengeData);
+    if (!exploreSum && !challengeSum) {
+      return {
+        pathSummary: cachedByPhase.primary,
+        pathByPhase: cachedByPhase,
+        scoredPhase: cachedByPhase.primary?.scoredPhase || null,
+        refreshed: false,
+        error: challengeData?.error || exploreData?.error || 'path_summary_failed',
       };
-      session.strategyPathSummary = pathSummary;
-      return { pathSummary, scoredPhase: pathSummary.scoredPhase, refreshed: true };
     }
+    const pathByPhase = applyPathSummariesToSession(session, exploreSum, challengeSum || exploreSum);
     return {
-      pathSummary: cached,
-      scoredPhase: cached?.scoredPhase || null,
-      refreshed: false,
-      error: data.error || 'path_summary_failed',
+      pathSummary: pathByPhase.primary,
+      pathByPhase,
+      scoredPhase: pathByPhase.primary?.scoredPhase || null,
+      refreshed: true,
     };
   } catch (err) {
     if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
     return {
-      pathSummary: cached,
-      scoredPhase: cached?.scoredPhase || null,
+      pathSummary: cachedByPhase.primary,
+      pathByPhase: cachedByPhase,
+      scoredPhase: cachedByPhase.primary?.scoredPhase || null,
       refreshed: false,
       error: err.message || 'path_summary_network_error',
     };
@@ -1646,15 +2226,21 @@ async function refreshTeacherPathSummary(session, reqId) {
 }
 
 async function loadSessionDetail(sessionId) {
+  const prevStudentKey = lastDetailRenderedStudentKey;
+  const panel = document.getElementById('sessionDetail');
+  const preserveScroll = !!(prevStudentKey && prevStudentKey === selectedStudentKey);
+  const savedScrollTop = preserveScroll ? panel.scrollTop : 0;
+
   selectedSessionId = sessionId;
   const reqId = ++detailRequestSeq;
   const student = studentItems.find(s => s.studentKey === selectedStudentKey);
-  const panel = document.getElementById('sessionDetail');
   if (!student) {
+    lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
     return;
   }
-  if (!judgingSessionId) {
+  // 同学生切换会话时保留旧 DOM，避免加载占位把列表顶出视口
+  if (!judgingSessionId && !preserveScroll) {
     panel.innerHTML = '<div class="session-detail-empty">加载会话详情…</div>';
   }
   const r = await fetch('/api/platform/traces/' + encodeURIComponent(sessionId));
@@ -1662,6 +2248,7 @@ async function loadSessionDetail(sessionId) {
   const data = await r.json();
   if (!data.ok) {
     if (reqId !== detailRequestSeq) return;
+    lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">会话不存在</div>';
     return;
   }
@@ -1669,29 +2256,37 @@ async function loadSessionDetail(sessionId) {
   const summary = data.summary || {};
   const pathRefresh = await refreshTeacherPathSummary(session, reqId);
   if (pathRefresh.aborted || reqId !== detailRequestSeq) return;
-  const pathSummary = pathRefresh.pathSummary;
-  const pathScopeLabel = scoredPhaseLabel(pathRefresh.scoredPhase);
+  const pathByPhase = pathRefresh.pathByPhase || resolvePathSummariesByPhase(session);
+  // 先回写列表缓存，再渲染会话行短标签
+  const listSess = student.sessions.find(s => s.sessionId === sessionId);
+  if (listSess) {
+    listSess.strategyPathSummary = session.strategyPathSummary || null;
+    listSess.strategyPathSummaryExplore = session.strategyPathSummaryExplore || null;
+    listSess.strategyPathByPhase = session.strategyPathByPhase || null;
+    listSess.scoredPhase = pathRefresh.scoredPhase || session.scoredPhase || null;
+    if (session.judgeResult) {
+      listSess.judged = true;
+      listSess.verdict = session.judgeResult.verdict || listSess.verdict || null;
+      listSess.gaps = Array.isArray(session.judgeResult.teacherSummary?.gaps)
+        ? session.judgeResult.teacherSummary.gaps
+        : (Array.isArray(session.judgeResult.gaps) ? session.judgeResult.gaps : listSess.gaps || null);
+    }
+    renderStudentList();
+  }
   const cat = catalogItems.find(c => c.id === session.catalogId);
   const taskTitle = cat?.title || session.catalogId || '—';
   const graphFilter = document.getElementById('filterGraph').value;
 
-  const sessionRows = student.sessions.map(s => {
-    const phaseShort = scoredPhaseLabel(s.strategyPathSummary?.scoredPhase || s.scoredPhase);
-    return `
+  const sessionRows = student.sessions.map(s => `
     <div class="session-timeline-item${s.sessionId === sessionId ? ' is-active' : ''}" data-sid="${esc(s.sessionId)}">
       <input type="checkbox" class="session-pick-cb" data-sid="${esc(s.sessionId)}"${selectedSessionIds.has(s.sessionId) ? ' checked' : ''} aria-label="选择会话">
       <span class="session-timeline-body">
         <span>${fmtTime(s.startedAt || s.updatedAt)}</span>
         <span class="session-timeline-meta">${s.eventCount || 0} 事件</span>
-        ${phaseShort ? `<span class="badge badge-phase">${esc(phaseShort)}</span>` : ''}
-        ${s.strategyPathSummary?.text ? `<span class="badge badge-path">${esc(String(s.strategyPathSummary.text).slice(0, 12))}</span>` : ''}
-        ${s.judged
-          ? `<span class="badge badge-verdict ${verdictClass(s.verdict)}">${esc(verdictLabel(s.verdict))}</span>`
-          : '<span class="badge badge-pending">待评</span>'}
+        ${sessionRowBadgesHtml(s)}
       </span>
       <button type="button" class="edu-btn edu-btn-outline edu-btn-sm session-row-delete" data-sid="${esc(s.sessionId)}">删除</button>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 
   const jr = session.judgeResult;
   const judgeBlock = jr ? buildJudgeBlock(jr) : '';
@@ -1699,39 +2294,29 @@ async function loadSessionDetail(sessionId) {
   const phaseLine = summary.currentPhase
     ? `<p class="hint session-phase-line">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
     : '';
-  const pathMetaParts = [];
-  if (pathScopeLabel) pathMetaParts.push(`评分范围：${esc(pathScopeLabel)}`);
-  if (pathSummary?.score != null) pathMetaParts.push(`策略分：<strong>${Number(pathSummary.score).toFixed(2)}</strong>`);
   const pathFailHint = (!pathRefresh.refreshed && pathRefresh.error)
     ? `<p class="hint session-path-error">路径摘要刷新失败：${esc(pathRefresh.error)}（已显示缓存或留空）</p>`
     : '';
-  const pathLine = pathSummary?.text
-    ? `<div class="session-path-block">
-         <p class="hint session-path-type">探究路径：<strong>${esc(pathSummary.text)}</strong></p>
-         ${pathMetaParts.length ? `<p class="session-path-meta">${pathMetaParts.join(' · ')}</p>` : ''}
-         ${pathSummary.advice ? `<p class="hint session-path-advice">建议：${esc(pathSummary.advice)}</p>` : ''}
-         ${pathFailHint}
-       </div>`
-    : (pathFailHint || '<p class="hint session-path-empty">暂无路径摘要（打开详情会按竞赛段重算）</p>');
+  // 无 phase_change 时不硬凑探究/竞赛双行；有分段时缺段在 meta 注明「无操作」
+  const detailPathByPhase = { ...pathByPhase, sawPhaseChange: !!summary.sawPhaseChange };
+  if (!summary.sawPhaseChange) {
+    detailPathByPhase.explore = null;
+    detailPathByPhase.challenge = null;
+    if (!detailPathByPhase.full) detailPathByPhase.full = pathByPhase.primary;
+  }
+  const pathLine = buildSessionPathBlock(detailPathByPhase, pathFailHint);
   const tuningBlock = buildSessionTuningBlock(summary);
   const modeBadge = jr?.mode === 'llm'
     ? '<span class="hint">上次：LLM</span>'
     : (jr ? '<span class="hint">上次：规则</span>' : '<span class="hint">默认规则评判（无需 API Key）</span>');
 
   if (reqId !== detailRequestSeq) return;
-  // 回写当前学生会话行的 path 缓存，便于列表短标签
-  const listSess = student.sessions.find(s => s.sessionId === sessionId);
-  if (listSess && pathSummary) {
-    listSess.strategyPathSummary = pathSummary;
-    listSess.scoredPhase = pathRefresh.scoredPhase || null;
-  }
   loadCrossGameSummary(student);
+  const aggMeta = studentAggMetaHtml(student);
   panel.innerHTML = `
-    <section class="session-detail-section session-detail-summary">
+    <section class="session-detail-section session-detail-head">
       <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel))}</h3>
-      ${taskLine}
-      ${phaseLine}
-      ${pathLine}
+      ${aggMeta}
     </section>
     <section class="session-detail-section session-detail-play">
       <div class="session-list-head">
@@ -1742,7 +2327,7 @@ async function loadSessionDetail(sessionId) {
             <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
             <span>全选</span>
           </label>
-          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshPathSummariesLocal" title="按竞赛段默认 scope 重算当前学生会话路径">刷新路径摘要</button>
+          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshPathSummariesLocal" title="按探究段 + 竞赛段分别重算当前学生会话路径">刷新路径摘要</button>
           <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
         </div>
       </div>
@@ -1754,10 +2339,28 @@ async function loadSessionDetail(sessionId) {
       </div>
       <div id="judgeResult">${judgeBlock}</div>
     </section>
+    <section class="session-detail-section session-detail-summary">
+      ${taskLine}
+      ${phaseLine}
+      ${pathLine}
+    </section>
     ${tuningBlock ? `<section class="session-detail-section session-detail-tuning">${tuningBlock}</section>` : ''}`;
 
   syncSessionCheckboxes();
   updateSelectionUi();
+  lastDetailRenderedStudentKey = selectedStudentKey;
+  panel.scrollTop = preserveScroll ? savedScrollTop : 0;
+
+  // 后台限流补刷同学生其它缺摘要会话，刷新后重绘行徽章（落盘由 API 完成）
+  refreshMissingPathSummariesForStudent(student, {
+    excludeSessionId: sessionId,
+    reqId,
+  }).then((stats) => {
+    if (reqId !== detailRequestSeq) return;
+    if (!stats?.ok) return;
+    renderStudentList();
+    syncSessionTimelineRowBadges(student);
+  }).catch(() => {});
 }
 
 async function loadSessionsData(options = {}) {
@@ -1802,6 +2405,9 @@ async function judgeSession(sessionId, mode = 'rules') {
       if (sess) {
         sess.judged = true;
         sess.verdict = data.verdict;
+        sess.gaps = Array.isArray(data.teacherSummary?.gaps)
+          ? data.teacherSummary.gaps
+          : (Array.isArray(data.gaps) ? data.gaps : null);
       }
     }
     syncSessionTimelineVerdict(sessionId, data.verdict);
@@ -1824,15 +2430,20 @@ async function refreshPathSummariesForStudent() {
   if (btn) { btn.disabled = true; btn.textContent = '刷新中…'; }
   let ok = 0;
   let fail = 0;
-  for (const sess of student.sessions) {
+  const sorted = student.sessions.slice().sort((a, b) => {
+    const ta = a.updatedAt || a.startedAt || '';
+    const tb = b.updatedAt || b.startedAt || '';
+    return String(tb).localeCompare(String(ta));
+  });
+  await runPool(sorted, PATH_REFRESH_CONCURRENCY, async (sess) => {
     const r = await refreshTeacherPathSummary(sess, null);
-    if (r.aborted) continue;
-    if (r.refreshed) {
-      ok += 1;
-      sess.scoredPhase = r.scoredPhase || null;
-    } else fail += 1;
-  }
+    if (r?.aborted) return;
+    if (applyPathRefreshResultToListSession(sess, r)) ok += 1;
+    else fail += 1;
+  });
   if (btn) { btn.disabled = false; btn.textContent = '刷新路径摘要'; }
+  renderStudentList();
+  syncSessionTimelineRowBadges(student);
   if (selectedSessionId) await loadSessionDetail(selectedSessionId);
   else {
     alert(`路径摘要：成功 ${ok}，失败 ${fail}`);
@@ -1914,6 +2525,7 @@ document.getElementById('btnClassroomExportCsv')?.addEventListener('click', asyn
 });
 bindSessionDetailDelegation();
 document.getElementById('filterGraph').addEventListener('change', () => {
+  writeStoredFilterGraph(document.getElementById('filterGraph').value);
   selectedStudentKey = null;
   selectedSessionId = null;
   selectedSessionIds.clear();
@@ -1934,6 +2546,25 @@ document.getElementById('filterStudent').addEventListener('input', () => {
     loadSessionsData();
   }, 300);
 });
+
+(function initHidePlaytestToggle() {
+  const el = document.getElementById('hidePlaytest');
+  if (!el) return;
+  try {
+    const raw = localStorage.getItem(HIDE_PLAYTEST_KEY);
+    if (raw === '0') el.checked = false;
+    else if (raw === '1') el.checked = true;
+  } catch { /* keep default checked */ }
+  el.addEventListener('change', () => {
+    try {
+      localStorage.setItem(HIDE_PLAYTEST_KEY, el.checked ? '1' : '0');
+    } catch { /* ignore */ }
+    selectedStudentKey = null;
+    selectedSessionId = null;
+    selectedSessionIds.clear();
+    loadSessionsData();
+  });
+})();
 
 document.getElementById('publishBtn').addEventListener('click', async () => {
   const title = document.getElementById('pubTitle').value.trim();

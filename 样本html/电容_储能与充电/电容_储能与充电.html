@@ -658,6 +658,27 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
 }
 #craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+
+.craft-card button:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+.craft-evidence{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent);font-size:.88rem;line-height:1.55;color:var(--craft-text);}
+.craft-evidence strong{color:var(--craft-accent);font-weight:600;}
+.craft-attr{margin:0 0 12px;}
+.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted);}
+.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr;}}
+.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer;}
+.craft-attr input{margin-top:3px;accent-color:var(--craft-accent);}
+.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted);}
+.craft-attr-hint[hidden]{display:none!important;}
+.craft-reveal{margin-top:4px;}
+.craft-reveal[hidden]{display:none!important;}
+.craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
+.craft-actions{display:flex;gap:10px;margin-top:14px;}
+.craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
+.craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
+.craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
+
 .craft-card{
   width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
@@ -1047,10 +1068,28 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </div>
 <div id="craft-win" hidden>
   <div class="craft-card">
-    <h2>过关 · 你学到了什么</h2>
-    <div class="formula" id="craftWinFormula">E = ½ C V²</div>
-    <p id="craftWinText">通过调参与观察，你验证了本实验的核心关系。</p>
-    <button type="button" id="craftWinBtn">再玩一次</button>
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几发的对照来看，储能主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="c4-c"> 主要是电容量 C</label>
+        <label><input type="radio" name="craftAttr" value="c4-v"> 主要是充电电压 V</label>
+        <label><input type="radio" name="craftAttr" value="s-cable"> 主要是馈线长度</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">E = ½ C V²</div>
+      <p id="craftWinText">通过调参与观察，你验证了本实验的核心关系。</p>
+      <p id="craftCv" class="craft-cv" hidden></p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
+    </div>
   </div>
 </div>
 
@@ -4401,7 +4440,7 @@ Game.register(4, { init: initCh4, frame: frameCh4, usesCanvas: true, showSummary
 const Telemetry = (function () {
   const qs = new URLSearchParams(location.search);
   const sid = qs.get('sid') || ('anon-' + Math.random().toString(36).slice(2, 8));
-  const endpoint = qs.get('ep') || (location.protocol === 'file:' ? '' : 'http://127.0.0.1:8000/api/events');
+  const endpoint = qs.get('ep') || 'http://127.0.0.1:8000/api/events';
   const session = {
     session_id: sid + '-' + Date.now().toString(36),
     student_id: sid,
@@ -5154,6 +5193,159 @@ window.startTransition = window.startTransition || function(){
 </script>
 
 <script>
+/* === ea-minset-helper (capacitor-era-ch4) === */
+(function(){
+  if (window.__eaMinset) return; window.__eaMinset = true;
+  var AV_LABELS = {"c4-c":"电容量 C","c4-v":"充电电压 V","s-cable":"馈线长度"};
+  var READING_SEL = "#c4-readout, #craftGaugeVal";
+  var READING_LABEL = "储能";
+  var ACTION_LABEL = "操作";
+  var EXTRA_TUNE_SEL = "#c4-c-grid button, #c4-c-grid .c4-choice, #c4-v-grid button, #c4-v-grid .c4-choice, #c4-c-grid [data-c], #c4-v-grid [data-v]";
+  var sessionEvidence = {
+    tuneCounts: {},
+    fireCount: 0,
+    lastReading: '',
+    attribution: null,
+    evidenceSummary: ''
+  };
+  Object.keys(AV_LABELS).forEach(function(id){ sessionEvidence.tuneCounts[id] = 0; });
+
+  function noteAvTune(controlId){
+    if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+    sessionEvidence.tuneCounts[controlId] += 1;
+  }
+  function noteFire(){ sessionEvidence.fireCount += 1; }
+  function dominantAv(){
+    var bestId = null, bestN = 0;
+    Object.keys(sessionEvidence.tuneCounts).forEach(function(id){
+      var n = sessionEvidence.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+  function readObservation(){
+    var nodes = document.querySelectorAll(READING_SEL);
+    for (var i = 0; i < nodes.length; i++){
+      var t = (nodes[i].textContent || '').replace(/\s+/g, ' ').trim();
+      if (t && t !== '待测' && t !== '--' && t !== '—.———' && t !== '观测中') return t;
+    }
+    return sessionEvidence.lastReading || '--';
+  }
+  function modeIsChallenge(){
+    var s = document.getElementById('modeSelect');
+    var v = s ? String(s.value || '') : '';
+    if (v === 'challenge') return true;
+    try {
+      if (typeof window.__platformTraceGetPhase === 'function') {
+        return String(window.__platformTraceGetPhase() || '') === 'challenge';
+      }
+    } catch (e) {}
+    return false;
+  }
+  function buildEvidenceSummary(reading){
+    var dom = dominantAv();
+    var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+    var r = reading || readObservation();
+    sessionEvidence.lastReading = r;
+    if (modeIsChallenge()) {
+      return '竞赛证据：' + READING_LABEL + ' ' + r + ' · 主调 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+    }
+    return '探究证据：' + READING_LABEL + ' ' + r + ' · 主调节 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+  }
+  function setCraftSettleOpen(open){
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (e) {}
+  }
+  function navigateToStudentList(){
+    try {
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({ type: 'platform-navigate', to: 'student-list' }, '*'); } catch (e1) {}
+        try { window.parent.location.href = '/student.html'; return; } catch (e2) {}
+        return;
+      }
+    } catch (e3) {}
+    window.location.href = '../index.html';
+  }
+  function updateAttrHint(selected){
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = dominantAv();
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true; hintEl.textContent = ''; return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+  function setCraftRevealVisible(visible){
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+  function prepareCraftWin(extraReading){
+    var reading = extraReading || readObservation();
+    sessionEvidence.evidenceSummary = buildEvidenceSummary(reading);
+    sessionEvidence.attribution = null;
+    var line = document.getElementById('craftEvidenceLine');
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + sessionEvidence.evidenceSummary;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){ el.checked = false; });
+    var wbtn = document.getElementById('craftWinBtn');
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+    window.__eaSessionEvidence = sessionEvidence;
+  }
+  function emitAttributionSnapshot(){
+    if (!window.__emit || !sessionEvidence.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c,
+      winOk: true,
+      attribution: sessionEvidence.attribution,
+      evidenceSummary: sessionEvidence.evidenceSummary
+    });
+  }
+
+  function bindTunes(){
+    Object.keys(AV_LABELS).forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      var handler = function(){ noteAvTune(id); };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    });
+    // capacitor ch4 choice grids
+    if (EXTRA_TUNE_SEL) {
+      document.addEventListener('click', function(ev){
+        var t = ev.target;
+        if (!t || !t.closest) return;
+        if (t.closest('#c4-c-grid')) noteAvTune('c4-c');
+        else if (t.closest('#c4-v-grid')) noteAvTune('c4-v');
+      }, true);
+    }
+    var fireSel = '#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
+    document.addEventListener('click', function(ev){
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      if (t.closest(fireSel)) noteFire();
+    }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindTunes);
+  else bindTunes();
+
+  window.__eaPrepareCraftWin = prepareCraftWin;
+  window.__eaEmitAttribution = emitAttributionSnapshot;
+  window.__eaSessionEvidence = sessionEvidence;
+  window.__eaSetCraftSettleOpen = setCraftSettleOpen;
+  window.__eaNavigateToStudentList = navigateToStudentList;
+  window.__eaUpdateAttrHint = updateAttrHint;
+  window.__eaSetCraftRevealVisible = setCraftRevealVisible;
+  window.__eaNoteAvTune = noteAvTune;
+  window.__eaNoteFire = noteFire;
+})();
+</script>
+<script>
 /* === craft-gold-runtime === */
 (function(){
   if (window.__craftGold) return; window.__craftGold = true;
@@ -5161,7 +5353,11 @@ window.startTransition = window.startTransition || function(){
   var win = document.getElementById('craft-win');
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
+  var bbtn = document.getElementById('craftBackBtn');
   if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function setSettle(open){
+    if (typeof window.__eaSetCraftSettleOpen === 'function') window.__eaSetCraftSettleOpen(open);
+  }
   function replayLevel(){
     if (typeof window.__craftReplay === 'function') {
       try { window.__craftReplay(); return; } catch (e) {}
@@ -5171,36 +5367,63 @@ window.startTransition = window.startTransition || function(){
     if (rbtn) { try { rbtn.click(); } catch (e) {} }
   }
   if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
     window.__craftWinDismissed = true;
     if (win) win.hidden = true;
+    setSettle(false);
     replayLevel();
   });
+  if (bbtn) bbtn.addEventListener('click', function(){
+    if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){
+    el.addEventListener('change', function(){
+      if (!el.checked) return;
+      var ev = window.__eaSessionEvidence;
+      if (ev) ev.attribution = el.value;
+      if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(true);
+      if (typeof window.__eaUpdateAttrHint === 'function') window.__eaUpdateAttrHint(el.value);
+      if (typeof window.__eaEmitAttribution === 'function') window.__eaEmitAttribution();
+      if (wbtn) wbtn.disabled = false;
+    });
+  });
 
-  // gauge into hud
-  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
-  if (hud && !document.getElementById('craft-gauge')) {
-    var g = document.createElement('div');
-    g.id = 'craft-gauge';
-    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
-    hud.appendChild(g);
-  }
-function showWin(extra){
+  function showWin(extra){
     if (win) {
       window.__craftWinDismissed = false;
+      if (typeof window.__eaPrepareCraftWin === 'function') {
+        var ev0 = window.__eaSessionEvidence;
+        if (!ev0 || !ev0.evidenceSummary) window.__eaPrepareCraftWin();
+      }
+      try {
+        var msg = document.getElementById('messageBox');
+        if (msg) msg.classList.add('hidden');
+      } catch (e) {}
+      // prefer craft-win over long chapter summaries when both exist
+      try {
+        ['summary4','summary1','summary2','summary3','victory'].forEach(function(id){
+          var el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+      } catch (e2) {}
       win.hidden = false;
+      setSettle(true);
+      var ev = window.__eaSessionEvidence;
+      if (!(ev && ev.attribution)) {
+        if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(false);
+        if (wbtn) wbtn.disabled = true;
+      }
       var t = document.getElementById('craftWinText');
-      if (t && extra) t.textContent = extra;
+      if (t && typeof extra === 'string' && extra) t.textContent = extra;
     }
   }
   window.__craftShowWin = showWin;
 
-  // Hook common win paths
   var _emit = window.__emit;
   window.__emit = function(type, payload){
     if (typeof _emit === 'function') _emit(type, payload);
     if (type === 'win') showWin();
   };
-  // Observe win banners
   var obs = new MutationObserver(function(){
     if (window.__craftWinDismissed) return;
     var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
@@ -5208,10 +5431,8 @@ function showWin(extra){
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
 
-  // Live gauge from first range readout if possible
   function tick(){
-    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
-    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal');
     var gval = document.getElementById('craftGaugeVal');
     if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
     requestAnimationFrame(tick);
