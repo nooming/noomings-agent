@@ -114,6 +114,8 @@ const SHARED_RUNTIME = (opts) => `
   }
   /* === attempts-exhausted-settle === */
   var __exhaustTimer=null, __exhaustBound=false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound=false;
   function __isChallengeWonNow(){
     if(window.__craftWinOpen||window.__challengeWon) return true;
     var win=$('craft-win');
@@ -163,10 +165,16 @@ const SHARED_RUNTIME = (opts) => `
         var __exPayload={attempts:0,mode:'challenge'};
         var __exSnap={winOk:false,attemptsExhausted:true,hintKey:'attempts_exhausted'};
         if(typeof window.__emit==='function'){ window.__emit('attempts_exhausted',__exPayload); window.__emit('snapshot',__exSnap); }
-        else if(window.PlatformTraceAdapter&&typeof window.PlatformTraceAdapter.record==='function'){
-          window.PlatformTraceAdapter.record('attempts_exhausted',__exPayload);
-          window.PlatformTraceAdapter.record('snapshot',__exSnap);
-        }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try{
+          if(window.PlatformTraceAdapter&&typeof window.PlatformTraceAdapter.record==='function'){
+            window.PlatformTraceAdapter.record('attempts_exhausted',__exPayload);
+            window.PlatformTraceAdapter.record('snapshot',__exSnap);
+          }else if(window.parent&&window.parent!==window&&window.parent.PlatformTraceAdapter&&typeof window.parent.PlatformTraceAdapter.record==='function'){
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted',__exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot',__exSnap);
+          }
+        }catch(__pta){}
       }catch(__exErr){}
     }
   }
@@ -455,7 +463,7 @@ function patchCapacitor(html) {
       `<script>/* dualModeCapGate */
 (function(){
   function bind(){
-    document.querySelectorAll('#controls button, #controls2 button, #controls4 button, .ctrl-panel button').forEach(function(b){
+    document.querySelectorAll('#controls button, #controls2 button, #controls4 button, .ctrl-panel button, #c4-discharge-btn, #btn-read-cap, #btn-read-ch2').forEach(function(b){
       if(b.__dualGate||/重置|复位|跳过|继续|下一/i.test(b.textContent||'')) return;
       b.__dualGate=true;
       b.addEventListener('click',function(e){

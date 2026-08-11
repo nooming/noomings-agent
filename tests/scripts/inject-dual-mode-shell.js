@@ -171,7 +171,12 @@ const DUAL_JS = `
 
   function applyMode(mode){
     hideAttemptsExhausted();
-    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var __nextMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (__nextMode === 'challenge' && __exhaustedNeedsNewRound) {
+      __exhaustedNeedsNewRound = false;
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+    }
+    state.mode = __nextMode;
     var label = $('modeLabel');
     var stats = $('challengeStats');
     var timerChip = $('dual-timer-chip');
@@ -195,6 +200,8 @@ const DUAL_JS = `
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -233,6 +240,7 @@ const DUAL_JS = `
       else applyMode('explore');
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       applyMode('challenge');
@@ -256,6 +264,7 @@ const DUAL_JS = `
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -264,10 +273,17 @@ const DUAL_JS = `
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
   }
@@ -291,9 +307,10 @@ const DUAL_JS = `
   window.__showAttemptsExhausted = showAttemptsExhausted;
   window.__hideAttemptsExhausted = hideAttemptsExhausted;
 
+  var FIRE_SEL = '#btnLaunch,#btn-test,#btn-test-ft,#btn-fire,#btnFire,#btnTest,#testBtn,#fireBtn,#launchBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
-    var t = e.target.closest('button');
+    var t = e.target && e.target.closest ? e.target.closest(FIRE_SEL) : null;
     if (!t) return;
     if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
     if (state.attempts <= 0) {
@@ -357,8 +374,9 @@ const DUAL_JS = `
     if (!ensureUi()) return;
     var sel = $('modeSelect');
     sel.addEventListener('change', function(){ applyMode(sel.value); });
-    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
-    ft.addEventListener('click', onPrimaryClick, true);
+    // Prefer whole bench so fire buttons outside .essence-ft still count
+    var root = $('essence-bench') || document;
+    root.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
     setTimeout(bindExhaustWinGuard, 0);
   }

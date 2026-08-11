@@ -1050,6 +1050,7 @@ class PixelGame {
         this.groundY = 0;
 
         this.init();
+        window.__cannonGame = this;
     }
 
     init() {
@@ -1264,6 +1265,72 @@ class PixelGame {
             this.updateUI();
         }
         this.refreshGoalUI();
+    }
+
+    /** 不扣次：积分轨迹，返回是否命中当前要塞 */
+    probeHit(angleDeg, power, dragOpt, windOpt) {
+        if (!this.target) return { hit: false, reason: 'no-target' };
+        const angle = angleDeg * Math.PI / 180;
+        const v0 = power;
+        const g = parseFloat(this.dom.inputs.grav.value);
+        const k = dragOpt != null ? dragOpt : parseFloat(this.dom.inputs.drag.value);
+        const wind = windOpt != null ? windOpt : parseFloat(this.dom.inputs.wind.value);
+        const m = parseFloat(this.dom.inputs.mass.value);
+        let x = 60, y = this.groundY - 25;
+        let vx = v0 * Math.cos(angle), vy = -v0 * Math.sin(angle);
+        const dt = this.timeScale;
+        const tw = this.target.w / 2 + 8, th = this.target.h / 2 + 8;
+        for (let i = 0; i < 20000; i++) {
+            const vrX = vx - wind, vrY = vy;
+            const vr = Math.sqrt(vrX * vrX + vrY * vrY) || 1e-9;
+            const FdMag = k * vr * vr;
+            const ax = (-FdMag * (vrX / vr)) / m;
+            const ay = (m * g + (-FdMag * (vrY / vr))) / m;
+            vx += ax * dt; vy += ay * dt;
+            x += vx * dt; y += vy * dt;
+            for (let oi = 0; oi < this.obstacles.length; oi++) {
+                const obs = this.obstacles[oi];
+                if (x > obs.x && x < obs.x + obs.w && y > obs.y && y < obs.y + obs.h) {
+                    return { hit: false, reason: 'obstacle', x, y };
+                }
+            }
+            if (Math.abs(x - this.target.x) < tw && Math.abs(y - this.target.y) < th) {
+                return { hit: true, x, y, angle: angleDeg, power: v0 };
+            }
+            if (y + 8 >= this.groundY) {
+                return { hit: false, reason: 'ground', x, y, dx: x - this.target.x };
+            }
+            if (x > this.width || x < 0) return { hit: false, reason: 'bound', x, y };
+        }
+        return { hit: false, reason: 'timeout', x, y };
+    }
+    findWin() {
+        const drag0 = parseFloat(this.dom.inputs.drag.value);
+        const wind0 = parseFloat(this.dom.inputs.wind.value);
+        const angles = [];
+        for (let a = 10; a <= 85; a += 1) angles.push(a);
+        const powers = [];
+        for (let p = 15; p <= 140; p += 1) powers.push(p);
+        const dragTries = [drag0, 0, 0.002, 0.005, 0.01];
+        const windTries = [wind0];
+        // 有强制风时也试邻近风速（滑条可拧）
+        for (let dw = -10; dw <= 10; dw += 5) windTries.push(wind0 + dw);
+        const seen = {};
+        for (let di = 0; di < dragTries.length; di++) {
+          for (let wi = 0; wi < windTries.length; wi++) {
+            const drag = dragTries[di], wind = windTries[wi];
+            const key = drag + '|' + wind;
+            if (seen[key]) continue;
+            seen[key] = 1;
+            for (let ai = 0; ai < angles.length; ai++) {
+              for (let pi = 0; pi < powers.length; pi++) {
+                const r = this.probeHit(angles[ai], powers[pi], drag, wind);
+                if (r.hit) return { angle: angles[ai], power: powers[pi], drag, wind, probe: r };
+              }
+            }
+          }
+        }
+        return null;
     }
 
     fire() {
@@ -1483,6 +1550,10 @@ class PixelGame {
               };
               window.__emit('snapshot', Object.assign({ controls: c, hintKey: 'cannon_fort_hit' }, winProg));
               window.__emit('win', winProg);
+              // 终关：emit 后仍弹 craft-win（与钟表/动量一致；避免 Adapter/包装吞掉结算层）
+              if (!interim && typeof window.__craftShowWin === 'function') {
+                window.__craftShowWin('要塞四关急单已攻破：落点由发射角与初速主导，弹种仅改外观。');
+              }
             }
             earnedScore = this.calculatePotentialScore();
             this.totalScore += earnedScore;
@@ -2080,7 +2151,12 @@ window.onload = () => {
   }
   function apply(mode){
     hideAttemptsExhausted();
-    state.mode=mode==='challenge'?'challenge':'explore';
+    var __nextMode=mode==='challenge'?'challenge':'explore';
+    if(__nextMode==='challenge'&&__exhaustedNeedsNewRound){
+      __exhaustedNeedsNewRound=false;
+      try{ if(typeof window.__platformTraceRequestNewRound==='function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); }catch(__nr){}
+    }
+    state.mode=__nextMode;
     if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
     else startTimer();
     render(); setPhase(state.mode);
@@ -2090,6 +2166,8 @@ window.onload = () => {
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -2132,6 +2210,7 @@ window.onload = () => {
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       state.attempts = MAX;
@@ -2163,6 +2242,7 @@ window.onload = () => {
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -2171,10 +2251,17 @@ window.onload = () => {
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 

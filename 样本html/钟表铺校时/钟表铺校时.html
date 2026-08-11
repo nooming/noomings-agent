@@ -1367,8 +1367,10 @@ function tryShowWin() {
     var c = window.__snapControls ? window.__snapControls() : {};
     window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_clock' });
     window.__emit('win', { winOk: true });
-  } else if (typeof window.__craftShowWin === 'function') {
-    try { window.__craftShowWin(); } catch (eCraft) {}
+  }
+  // Always surface craft-win overlay (emit alone may not open UI)
+  if (typeof window.__craftShowWin === 'function') {
+    try { window.__craftShowWin('对照光电计时，你摸清了摆长如何影响周期。'); } catch (eCraft) {}
   }
 }
 
@@ -1571,7 +1573,12 @@ syncUI();
   }
   function apply(mode){
     hideAttemptsExhausted();
-    state.mode=mode==='challenge'?'challenge':'explore';
+    var __nextMode=mode==='challenge'?'challenge':'explore';
+    if(__nextMode==='challenge'&&__exhaustedNeedsNewRound){
+      __exhaustedNeedsNewRound=false;
+      try{ if(typeof window.__platformTraceRequestNewRound==='function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); }catch(__nr){}
+    }
+    state.mode=__nextMode;
     if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
     else startTimer();
     render(); setPhase(state.mode);
@@ -1586,6 +1593,8 @@ syncUI();
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -1628,6 +1637,7 @@ syncUI();
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       state.attempts = MAX;
@@ -1659,6 +1669,7 @@ syncUI();
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -1667,10 +1678,17 @@ syncUI();
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 

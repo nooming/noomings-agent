@@ -670,6 +670,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             targetX: 0,
             targetWidth: 56, // 物理宽度(约3.7米)；竞赛略放宽仍需瞄准
             attempts: 6,
+            /* === exhausted-mode-reenter-new-round === */
+            __exhaustedNeedsNewRound: false,
             timeLeft: 600, // 10分钟
             timerInterval: null,
             lastLandM: null
@@ -1010,6 +1012,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 } catch (_) {}
                 
                 if (state.mode === 'challenge') {
+                    if (state.__exhaustedNeedsNewRound) {
+                      state.__exhaustedNeedsNewRound = false;
+                      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+                    }
                     ui.challengeStats.classList.remove('hidden');
                     ui.challengeStats.classList.add('flex');
                     state.attempts = 6;
@@ -1902,7 +1908,10 @@ function showWin(extra){
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
-      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      try {
+        state.__exhaustedNeedsNewRound = false;
+        if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry');
+      } catch (__nr) {}
       hideAttemptsExhausted();
       var sel = $('modeSelect');
       if (sel) {
@@ -1933,6 +1942,9 @@ function showWin(extra){
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) {
+      try { state.__exhaustedNeedsNewRound = true; } catch (__e) {}
+    }
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -1941,10 +1953,17 @@ function showWin(extra){
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 

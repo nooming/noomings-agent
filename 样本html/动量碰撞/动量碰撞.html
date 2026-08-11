@@ -856,6 +856,45 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     };
 
+    /** 不扣次：按当前锁定口位预测 0.65s 后包件2是否进区 */
+    window.__momHitProbe = function(m1p, m2p, v1p, v2p) {
+      syncCanvasSize();
+      const L = layoutMetrics();
+      const r1 = ballRadius(m1p), r2 = ballRadius(m2p);
+      const postTime = 0.65;
+      let collided = false, collisionTime = 0;
+      let vf = computeCollision(m1p, m2p, v1p, v2p);
+      if (v1p > v2p) {
+        const dx = (L.BALL2_INIT_X - L.BALL1_INIT_X - r1 - r2) / L.PX_PER_M;
+        const dv = v1p - v2p;
+        if (dv > 0 && dx > 0) { collisionTime = dx / dv; collided = true; }
+      }
+      let end2;
+      if (collided) {
+        const c2 = L.BALL2_INIT_X + v2p * collisionTime * L.PX_PER_M;
+        end2 = c2 + vf.v2f * postTime * L.PX_PER_M;
+      } else {
+        end2 = L.BALL2_INIT_X + v2p * 0.55 * L.PX_PER_M;
+      }
+      if (end2 > W - r2) end2 = W - r2;
+      if (end2 < r2) end2 = r2;
+      const win = end2 >= L.TARGET_LEFT && end2 <= L.TARGET_RIGHT;
+      return {
+        winOk: win, end2: +end2.toFixed(1), collided: collided,
+        TARGET_LEFT: L.TARGET_LEFT, TARGET_RIGHT: L.TARGET_RIGHT,
+        v2f: +vf.v2f.toFixed(3), frac: targetCenterFrac, widthFrac: targetWidthFrac
+      };
+    };
+    window.__momFindWin = function() {
+      for (let m1p = 0.5; m1p <= 10; m1p += 0.5)
+        for (let m2p = 0.5; m2p <= 10; m2p += 0.5)
+          for (let v1p = 1; v1p <= 10; v1p += 0.5) {
+            const p = window.__momHitProbe(m1p, m2p, v1p, 0);
+            if (p.winOk) return { m1: m1p, m2: m2p, v1: v1p, v2: 0, probe: p };
+          }
+      return null;
+    };
+
     function layoutMetrics() {
         const GROUND_Y = Math.round(H * 0.78);
         const BALL_R = Math.max(14, Math.min(20, Math.round(H * 0.045)));
@@ -1688,7 +1727,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
   function applyMode(mode){
     hideAttemptsExhausted();
-    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var __nextMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (__nextMode === 'challenge' && __exhaustedNeedsNewRound) {
+      __exhaustedNeedsNewRound = false;
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+    }
+    state.mode = __nextMode;
     var label = $('modeLabel');
     var stats = $('challengeStats');
     var timerChip = $('dual-timer-chip');
@@ -1716,6 +1760,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -1761,6 +1807,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       state.attempts = MAX_ATTEMPTS;
@@ -1793,6 +1840,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -1801,10 +1849,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 
@@ -1837,9 +1892,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   window.__showAttemptsExhausted = showAttemptsExhausted;
   window.__hideAttemptsExhausted = hideAttemptsExhausted;
 
+  var FIRE_SEL = '#btnLaunch,#btn-test,#btn-test-ft,#btn-fire,#btnFire,#btnTest,#testBtn,#fireBtn,#launchBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
-    var t = e.target.closest('button');
+    var t = e.target && e.target.closest ? e.target.closest(FIRE_SEL) : null;
     if (!t) return;
     if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
     if (state.attempts <= 0) {
@@ -1903,8 +1959,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!ensureUi()) return;
     var sel = $('modeSelect');
     sel.addEventListener('change', function(){ applyMode(sel.value); });
-    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
-    ft.addEventListener('click', onPrimaryClick, true);
+    // Prefer whole bench so fire buttons outside .essence-ft still count
+    var root = $('essence-bench') || document;
+    root.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
     setTimeout(bindExhaustWinGuard, 0);
   }

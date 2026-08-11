@@ -839,6 +839,31 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (playMode === 'challenge') lockChallengeTarget();
     else applyExploreTarget();
   };
+  /** Offline hit probe for challenge target (no attempt consume). */
+  window.__refractHitProbe = function(theta1Deg, n2) {
+    const L = syncCanvasSize();
+    const target = L.target;
+    const theta2 = calcRefractionAngle(theta1Deg, n2);
+    const valid = !(isNaN(theta2) || theta2 < 0 || theta2 > 89);
+    if (!valid) return { hit: false, missSide: null, valid: false, theta2: NaN, target: target, frac: lockedTargetFrac };
+    const groundY = L.groundY, launchX = L.launchX, launchY = L.launchY;
+    const theta2Rad = theta2 * Math.PI / 180;
+    const len = Math.min(H - groundY - 20, W * 0.35);
+    const ix = launchX + (groundY - launchY) * Math.tan(theta1Deg * Math.PI / 180);
+    const endX = ix + len * Math.sin(theta2Rad);
+    const endY = groundY + len * Math.cos(theta2Rad);
+    const dx = endX - ix, dy = endY - groundY;
+    const l2 = dx * dx + dy * dy;
+    let hit = false, missSide = null;
+    if (l2 > 0.0001) {
+      let t = ((target.x - ix) * dx + (target.y - groundY) * dy) / l2;
+      t = Math.max(0, Math.min(1, t));
+      const cx = ix + t * dx, cy = groundY + t * dy;
+      if ((cx - target.x) * (cx - target.x) + (cy - target.y) * (cy - target.y) <= target.radius * target.radius) hit = true;
+      else missSide = cx < target.x ? 'left' : 'right';
+    }
+    return { hit: hit, missSide: missSide, valid: true, theta2: theta2, target: target, frac: lockedTargetFrac };
+  };
   document.addEventListener('dual-mode-change', function(ev) {
     var m = ev && ev.detail && ev.detail.mode;
     if (typeof window.__refractApplyMode === 'function') window.__refractApplyMode(m);
@@ -1887,7 +1912,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
   function applyMode(mode){
     hideAttemptsExhausted();
-    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var __nextMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (__nextMode === 'challenge' && __exhaustedNeedsNewRound) {
+      __exhaustedNeedsNewRound = false;
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+    }
+    state.mode = __nextMode;
     var label = $('modeLabel');
     var stats = $('challengeStats');
     var timerChip = $('dual-timer-chip');
@@ -1919,6 +1949,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -1964,6 +1996,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       state.attempts = MAX_ATTEMPTS;
@@ -1996,6 +2029,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -2004,10 +2038,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 
@@ -2040,9 +2081,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   window.__showAttemptsExhausted = showAttemptsExhausted;
   window.__hideAttemptsExhausted = hideAttemptsExhausted;
 
+  var FIRE_SEL = '#btnLaunch,#btn-test,#btn-test-ft,#btn-fire,#btnFire,#btnTest,#testBtn,#fireBtn,#launchBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
-    var t = e.target.closest('button');
+    var t = e.target && e.target.closest ? e.target.closest(FIRE_SEL) : null;
     if (!t) return;
     if (/reset|清除|重置|再来/i.test(t.textContent || '') || /reset|clear/i.test(t.id || '')) return;
     if (state.attempts <= 0) {
@@ -2106,8 +2148,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!ensureUi()) return;
     var sel = $('modeSelect');
     sel.addEventListener('change', function(){ applyMode(sel.value); });
-    var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
-    ft.addEventListener('click', onPrimaryClick, true);
+    // Prefer whole bench so fire buttons outside .essence-ft still count
+    var root = $('essence-bench') || document;
+    root.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
     setTimeout(bindExhaustWinGuard, 0);
   }

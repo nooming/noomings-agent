@@ -1530,7 +1530,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
   function applyMode(mode){
     hideAttemptsExhausted();
-    state.mode = mode === 'challenge' ? 'challenge' : 'explore';
+    var __nextMode = mode === 'challenge' ? 'challenge' : 'explore';
+    if (__nextMode === 'challenge' && __exhaustedNeedsNewRound) {
+      __exhaustedNeedsNewRound = false;
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+    }
+    state.mode = __nextMode;
     var label = $('modeLabel');
     var stats = $('challengeStats');
     var timerChip = $('dual-timer-chip');
@@ -1558,6 +1563,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   /* === attempts-exhausted-settle === */
   var __exhaustTimer = null;
   var __exhaustBound = false;
+  /* === exhausted-mode-reenter-new-round === */
+  var __exhaustedNeedsNewRound = false;
   function __isChallengeWonNow(){
     if (window.__craftWinOpen) return true;
     if (window.__challengeWon) return true;
@@ -1603,6 +1610,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      __exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       state.attempts = MAX_ATTEMPTS;
@@ -1635,6 +1643,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) __exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -1643,10 +1652,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 

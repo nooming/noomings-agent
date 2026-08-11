@@ -765,6 +765,8 @@
             v2_post: 0,
             s2: 0,
             attempts: 3,
+            /* === exhausted-mode-reenter-new-round === */
+            __exhaustedNeedsNewRound: false,
             dt: 1/60,
             fellOff: false,
             fall_x: 0, fall_y: 0, fall_vx: 0, fall_vy: 0,
@@ -1292,6 +1294,11 @@
                 } catch (_) {}
 
                 if (state.mode === 'challenge') {
+                    if (state.__exhaustedNeedsNewRound || window.__exhaustedNeedsNewRound) {
+                      state.__exhaustedNeedsNewRound = false;
+                      window.__exhaustedNeedsNewRound = false;
+                      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_mode_reenter'); } catch (__nr) {}
+                    }
                     ui.challengeStats.classList.add('is-visible');
                     ui.sideGoal.textContent = '竞赛：在限次内让靶球停在 HUD 目标高度附近（±0.2 m）。';
                     state.attempts = 3;
@@ -1460,6 +1467,36 @@
             updateRampGeometry();
             updateClimbHud(null);
         }
+
+        /** 不扣次：按滚动高度公式扫参，找落入目标带 ±TOLERANCE_H 的解 */
+        window.__rampProbeH = function(m1, m2, v0, shape) {
+          return predictCoastHeight(m1, m2, v0, shape || state.targetShape);
+        };
+        window.__rampFindWin = function() {
+          const target = state.targetH;
+          const shape = state.targetShape;
+          const tol = TOLERANCE_H;
+          if (!(target > 0)) return null;
+          let best = null, bestDiff = Infinity;
+          const m1s = [1, 2, 3, 5, 8, 10, 12, 15];
+          const m2s = [1, 2, 3, 5, 8, 10, 12, 15];
+          const v0s = [2, 3, 5, 6, 8, 10, 12, 15, 18, 20, 22, 25];
+          for (let i = 0; i < m1s.length; i++)
+            for (let j = 0; j < m2s.length; j++)
+              for (let k = 0; k < v0s.length; k++) {
+                const h = predictCoastHeight(m1s[i], m2s[j], v0s[k], shape);
+                const d = Math.abs(h - target);
+                if (d < bestDiff) {
+                  bestDiff = d;
+                  best = { m1: m1s[i], m2: m2s[j], v0: v0s[k], h: +h.toFixed(3), target: target, ok: d <= tol };
+                }
+                if (d <= tol) return best;
+              }
+          return best;
+        };
+        window.__rampGetTarget = function() {
+          return { targetH: state.targetH, shape: state.targetShape, tol: TOLERANCE_H, mode: state.mode };
+        };
 
         function liveClimbHeight() {
             if (state.phase === 'idle') return null;
@@ -1889,6 +1926,7 @@
       }
     });
     if (bRetry) bRetry.addEventListener('click', function(){
+      window.__exhaustedNeedsNewRound = false;
       try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
       hideAttemptsExhausted();
       var sel = $('modeSelect');
@@ -1920,6 +1958,7 @@
     if (!el) return;
     var firstShow = !!el.hidden;
     el.hidden = false;
+    if (firstShow) window.__exhaustedNeedsNewRound = true;
     /* === attempts-exhausted-emit === */
     if (firstShow) {
       try {
@@ -1928,10 +1967,17 @@
         if (typeof window.__emit === 'function') {
           window.__emit('attempts_exhausted', __exPayload);
           window.__emit('snapshot', __exSnap);
-        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
-          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
-          window.PlatformTraceAdapter.record('snapshot', __exSnap);
         }
+        // Always mirror to PlatformTraceAdapter — __emit may be a stub/wrapper
+        try {
+          if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+            window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.PlatformTraceAdapter.record('snapshot', __exSnap);
+          } else if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter && typeof window.parent.PlatformTraceAdapter.record === 'function') {
+            window.parent.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+            window.parent.PlatformTraceAdapter.record('snapshot', __exSnap);
+          }
+        } catch (__pta) {}
       } catch (__exErr) {}
     }
 
