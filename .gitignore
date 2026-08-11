@@ -9,7 +9,8 @@ resources/_*.json
 data/runtime/output/**
 !data/runtime/output/.gitkeep
 # 迁服临时入库已结束，恢复忽略课堂轨迹
-data/runtime/platform/traces/
+data/runtime/platform/traces/*
+!data/runtime/platform/traces/.gitignore
 data/output/design-runs/
 data/platform/traces/
 _archive/
