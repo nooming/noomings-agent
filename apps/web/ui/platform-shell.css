@@ -1679,62 +1679,6 @@ td.empty-state,
   border-radius: var(--radius-md);
 }
 
-.classroom-board {
-  margin: 0 0 10px;
-  padding: 8px 12px;
-}
-.classroom-board-summary {
-  width: 100%;
-  justify-content: space-between !important;
-}
-.classroom-board-summary-hint {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--edu-muted);
-}
-.classroom-board:not([open]) {
-  padding-bottom: 10px;
-}
-.classroom-board-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin: 10px 0 6px;
-}
-.classroom-board-head h4 { margin: 0; font-size: var(--text-sm); }
-.classroom-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  font-size: 0.85rem;
-  margin-bottom: 10px;
-}
-.classroom-dist { width: 100%; color: var(--edu-text-muted, #64748b); font-size: 0.8rem; }
-.classroom-table-wrap { overflow-x: auto; max-height: 280px; overflow-y: auto; }
-.classroom-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
-}
-.classroom-table th, .classroom-table td {
-  border-bottom: 1px solid var(--edu-border, #e2e8f0);
-  padding: 6px 8px;
-  text-align: left;
-  white-space: nowrap;
-}
-.classroom-table th {
-  position: sticky;
-  top: 0;
-  background: var(--edu-surface);
-  font-family: var(--font-label);
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
 .judged-overview-head {
   display: flex;
   flex-wrap: wrap;

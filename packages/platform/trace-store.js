@@ -730,6 +730,139 @@ function exportClassroomCsv(board) {
   return lines.join('\n');
 }
 
+/** CRC-32 (ISO 3309 / ZIP) for store-method local headers. */
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) {
+    c ^= buf[i];
+    for (let k = 0; k < 8; k++) {
+      c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+    }
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function u16(n) {
+  const b = Buffer.alloc(2);
+  b.writeUInt16LE(n >>> 0, 0);
+  return b;
+}
+
+function u32(n) {
+  const b = Buffer.alloc(4);
+  b.writeUInt32LE(n >>> 0, 0);
+  return b;
+}
+
+/**
+ * Build an uncompressed (store) ZIP from in-memory files.
+ * @param {{ name: string, data: Buffer }[]} files
+ * @returns {Buffer}
+ */
+function buildStoreZip(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  for (const file of files) {
+    const nameBuf = Buffer.from(String(file.name), 'utf8');
+    const data = Buffer.isBuffer(file.data) ? file.data : Buffer.from(file.data || '');
+    const crc = crc32(data);
+    const size = data.length;
+    const localHeader = Buffer.concat([
+      u32(0x04034b50),
+      u16(20),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(size),
+      u32(size),
+      u16(nameBuf.length),
+      u16(0),
+      nameBuf,
+    ]);
+    const centralHeader = Buffer.concat([
+      u32(0x02014b50),
+      u16(20),
+      u16(20),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(size),
+      u32(size),
+      u16(nameBuf.length),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(0),
+      u32(offset),
+      nameBuf,
+    ]);
+    localParts.push(localHeader, data);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + data.length;
+  }
+  const central = Buffer.concat(centralParts);
+  const end = Buffer.concat([
+    u32(0x06054b50),
+    u16(0),
+    u16(0),
+    u16(files.length),
+    u16(files.length),
+    u32(central.length),
+    u32(offset),
+    u16(0),
+  ]);
+  return Buffer.concat([...localParts, central, end]);
+}
+
+function tracesExportZipFilename(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `traces-全部-${y}${m}${d}.zip`;
+}
+
+/**
+ * Pack all session JSON files under getTracesRoot() into a store ZIP.
+ * Unfiltered by task/status — full classroom dump for teachers.
+ * @returns {{ ok: true, buffer: Buffer, count: number, filename: string } | { ok: false, error: string, count: number }}
+ */
+function exportAllTracesZip() {
+  ensureTracesRoot();
+  const root = getTracesRoot();
+  const names = fs.readdirSync(root)
+    .filter(f => f.endsWith('.json') && !f.startsWith('.'))
+    .sort();
+  if (!names.length) {
+    return { ok: false, error: '暂无轨迹', count: 0 };
+  }
+  const files = [];
+  for (const name of names) {
+    const full = path.join(root, name);
+    try {
+      const st = fs.statSync(full);
+      if (!st.isFile()) continue;
+      files.push({ name, data: fs.readFileSync(full) });
+    } catch {
+      // skip unreadable
+    }
+  }
+  if (!files.length) {
+    return { ok: false, error: '暂无轨迹', count: 0 };
+  }
+  return {
+    ok: true,
+    buffer: buildStoreZip(files),
+    count: files.length,
+    filename: tracesExportZipFilename(),
+  };
+}
+
 module.exports = {
   ingestTrace,
   listTraces,
@@ -748,4 +881,6 @@ module.exports = {
   getStudentTraceSummary,
   getClassroomBoard,
   exportClassroomCsv,
+  exportAllTracesZip,
+  tracesExportZipFilename,
 };

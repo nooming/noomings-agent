@@ -32,33 +32,6 @@
       </div>
       <p class="sessions-stats-sub" id="statsSub"></p>
 
-      <details class="edu-panel classroom-board catalog-panel-details" id="classroomBoard">
-        <summary class="catalog-panel-summary classroom-board-summary">
-          <span>课堂探究一页看板</span>
-          <span class="classroom-board-summary-hint">默认折叠 · 需要时展开</span>
-        </summary>
-        <div class="classroom-board-head">
-          <div class="tool-link-row">
-            <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomRefresh">刷新看板</button>
-            <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnClassroomExportJson">导出 JSON</button>
-            <button type="button" class="edu-btn edu-btn-sm" id="btnClassroomExportCsv">导出 CSV</button>
-          </div>
-        </div>
-        <p class="hint">按当前筛选的探究任务汇总：变量调节次数、混淆试探倾向、路径类型分布与策略分。学号/任务码随 session 上报（studentId / taskCode）。</p>
-        <div class="classroom-summary" id="classroomSummary">加载中…</div>
-        <div class="classroom-table-wrap">
-          <table class="classroom-table" id="classroomTable">
-            <thead>
-              <tr>
-                <th>学号</th><th>姓名</th><th>任务码</th><th>游戏</th>
-                <th>AV调节</th><th>CV试探</th><th>路径类型</th><th>策略分</th><th>更新</th>
-              </tr>
-            </thead>
-            <tbody id="classroomTbody"><tr><td colspan="9" class="empty-state">暂无数据</td></tr></tbody>
-          </table>
-        </div>
-      </details>
-
       <div class="judged-overview" id="judgedOverview" hidden>
         <div class="judged-overview-head">
           <span class="judged-overview-title">已评判概览</span>
@@ -70,6 +43,7 @@
 
       <div class="tool-link-row sessions-toolbar">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshTraces">刷新</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnDownloadTracesZip" title="下载全部会话轨迹（不受当前筛选影响）">下载轨迹包</button>
         <select id="filterGraph" class="sessions-select">
           <option value="">全部探究任务</option>
         </select>
@@ -527,8 +501,6 @@ let lastJudgedOverviewStats = null;
 /** v2：旧键曾被自动锁到最近单任务；升键后首次回到「全部探究任务」 */
 const FILTER_GRAPH_KEY = 'teacher.sessions.filterGraph.v2';
 const HIDE_PLAYTEST_KEY = 'teacher.sessions.hidePlaytest';
-/** 课堂看板路径类型摘要 Top-N */
-const CLASSROOM_PATH_TYPE_TOP_N = 6;
 /** 与 API listTraceStudents 默认对齐；上限 300 */
 const STUDENTS_LIST_LIMIT = 200;
 /** 最近一次 students API 是否触达 limit（截断提示用，按过滤前条数） */
@@ -1691,79 +1663,46 @@ async function loadStats() {
   renderJudgedOverview(s);
 }
 
-let lastClassroomBoard = null;
-
-/** 路径类型摘要：按出现次数 Top-N，其余折叠为「其余 n 类」。 */
-function formatPathTypeDistTopN(dist, topN = CLASSROOM_PATH_TYPE_TOP_N) {
-  const entries = Object.entries(dist || {})
-    .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0]), 'zh'));
-  if (!entries.length) return '暂无路径类型';
-  const n = Math.max(1, Number(topN) || CLASSROOM_PATH_TYPE_TOP_N);
-  const top = entries.slice(0, n);
-  const rest = entries.slice(n);
-  const parts = top.map(([k, v]) => `${esc(k)} ${v}`);
-  if (rest.length) {
-    const restSessions = rest.reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
-    parts.push(`其余 ${rest.length} 类（${restSessions}）`);
+async function downloadAllTracesZip() {
+  const btn = document.getElementById('btnDownloadTracesZip');
+  if (btn) btn.disabled = true;
+  try {
+    const headers = {};
+    const token = sessionStorage.getItem('platform-teacher-token');
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api/platform/traces/export-zip', { headers, credentials: 'same-origin' });
+    const ct = (r.headers.get('Content-Type') || '').toLowerCase();
+    if (!r.ok || ct.includes('application/json')) {
+      let msg = '下载失败';
+      try {
+        const data = await r.json();
+        msg = data.error || msg;
+      } catch {
+        msg = r.status === 401 ? '需要教师登录' : `下载失败（HTTP ${r.status}）`;
+      }
+      alert(msg);
+      return;
+    }
+    const blob = await r.blob();
+    let filename = `traces-全部-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.zip`;
+    const cd = r.headers.get('Content-Disposition') || '';
+    const mStar = cd.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+    const m = cd.match(/filename\s*=\s*"?([^";]+)"?/i);
+    if (mStar) {
+      try { filename = decodeURIComponent(mStar[1].trim()); } catch { /* keep fallback */ }
+    } else if (m) {
+      filename = m[1].trim();
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    alert(err.message || '下载失败');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  return parts.join(' · ');
-}
-
-async function loadClassroomBoard() {
-  const params = new URLSearchParams();
-  const graphId = document.getElementById('filterGraph')?.value;
-  if (graphId) params.set('graphId', graphId);
-  const r = await fetch('/api/platform/traces/classroom?' + params.toString());
-  const board = await r.json();
-  lastClassroomBoard = board;
-  const sumEl = document.getElementById('classroomSummary');
-  const tbody = document.getElementById('classroomTbody');
-  if (!board?.ok) {
-    if (sumEl) sumEl.textContent = '看板加载失败';
-    return;
-  }
-  const s = board.summary || {};
-  const dist = formatPathTypeDistTopN(s.pathTypeDist, CLASSROOM_PATH_TYPE_TOP_N);
-  if (sumEl) {
-    sumEl.innerHTML = `
-      <span>会话 <strong>${s.sessionCount ?? 0}</strong></span>
-      <span>学生 <strong>${s.uniqueStudents ?? 0}</strong></span>
-      <span>混淆倾向会话 <strong>${s.cvProbeSessions ?? 0}</strong></span>
-      <span>均 AV 调节 <strong>${s.avgAvAdjusts ?? 0}</strong></span>
-      <span>均 CV 试探 <strong>${s.avgCvAdjusts ?? 0}</strong></span>
-      <span>均策略分 <strong>${s.meanPathScore ?? '—'}</strong></span>
-      <div class="classroom-dist">路径类型：${dist}</div>`;
-  }
-  let rows = board.sessions || [];
-  if (hidePlaytestEnabled()) {
-    rows = rows.filter(row => !isPlaytestIdentity(row.studentId || row.studentLabel, row.studentLabel));
-  }
-  if (!tbody) return;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="9">暂无会话；学生游玩并上报后会出现在此</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.slice(0, 80).map(row => `
-    <tr data-sid="${esc(row.sessionId)}">
-      <td>${esc(row.studentId || '—')}</td>
-      <td>${esc(row.studentLabel || '—')}</td>
-      <td>${esc(row.taskCode || '—')}</td>
-      <td>${esc(row.graphId || row.catalogId || '—')}</td>
-      <td>${row.avAdjustCount ?? 0}</td>
-      <td>${row.cvAdjustCount ?? 0}${row.cvTendency >= 0.35 ? ' ⚠' : ''}</td>
-      <td>${esc(row.pathType || '未评分')}${row.scoredPhase ? ` <span class="hint">(${esc(scoredPhaseLabel(row.scoredPhase) || row.scoredPhase)})</span>` : ''}</td>
-      <td>${row.pathScore != null ? Number(row.pathScore).toFixed(2) : '—'}</td>
-      <td>${esc(fmtTime(row.updatedAt))}</td>
-    </tr>`).join('');
-}
-
-function downloadBlob(filename, text, mime) {
-  const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
 }
 
 /** 严重过程 gaps：有则不宜标「清楚」。 */
@@ -3303,7 +3242,6 @@ async function loadSessionDetail(sessionId) {
 async function loadSessionsData(options = {}) {
   await loadStats();
   await loadStudents(options);
-  await loadClassroomBoard();
 }
 
 async function judgeSession(sessionId, mode = 'rules') {
@@ -3466,20 +3404,7 @@ function bindSessionDetailDelegation() {
 }
 
 document.getElementById('refreshTraces').addEventListener('click', loadSessionsData);
-document.getElementById('btnClassroomRefresh')?.addEventListener('click', loadClassroomBoard);
-document.getElementById('btnClassroomExportJson')?.addEventListener('click', () => {
-  const payload = lastClassroomBoard || { ok: false, note: 'empty' };
-  downloadBlob(`classroom-board-${Date.now()}.json`, JSON.stringify(payload, null, 2), 'application/json');
-});
-document.getElementById('btnClassroomExportCsv')?.addEventListener('click', async () => {
-  const params = new URLSearchParams();
-  const graphId = document.getElementById('filterGraph')?.value;
-  if (graphId) params.set('graphId', graphId);
-  params.set('format', 'csv');
-  const r = await fetch('/api/platform/traces/classroom?' + params.toString());
-  const text = await r.text();
-  downloadBlob(`classroom-board-${Date.now()}.csv`, text, 'text/csv;charset=utf-8');
-});
+document.getElementById('btnDownloadTracesZip')?.addEventListener('click', downloadAllTracesZip);
 bindSessionDetailDelegation();
 document.getElementById('filterGraph').addEventListener('change', () => {
   writeStoredFilterGraph(document.getElementById('filterGraph').value);

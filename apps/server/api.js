@@ -40,6 +40,7 @@ const {
   enrichRecordMetrics,
   getClassroomBoard,
   exportClassroomCsv,
+  exportAllTracesZip,
 } = require('../../packages/platform/trace-store');
 const { getPackageGamePath, getPackageChapterPath } = require('../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../packages/judge/strategy-segment-score');
@@ -867,6 +868,32 @@ async function handlePlatformTraceDelete(req, res) {
   }
 }
 
+/** Teacher-only: download all sess-*.json under traces root as a store ZIP (unfiltered). */
+function handlePlatformTracesExportZip(req, res) {
+  cors(res);
+  try {
+    const result = exportAllTracesZip();
+    if (!result.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: result.error || '暂无轨迹', count: result.count || 0 }));
+      return;
+    }
+    const filename = result.filename;
+    const asciiFallback = filename.replace(/[^\x20-\x7E]/g, '_');
+    const disposition = `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+    res.writeHead(200, {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': disposition,
+      'Content-Length': String(result.buffer.length),
+      'Cache-Control': 'no-store',
+    });
+    res.end(result.buffer);
+  } catch (e) {
+    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || 'export_failed' }));
+  }
+}
+
 function handlePlatformAdapter(req, res) {
   cors(res);
   const url = new URL(req.url, 'http://localhost');
@@ -1289,6 +1316,11 @@ async function routeApi(req, res) {
   }
   if (req.method === 'GET' && req.url.startsWith('/api/platform/traces')) {
     const tracesPath = new URL(req.url, 'http://localhost').pathname;
+    if (tracesPath === '/api/platform/traces/export-zip' || tracesPath === '/api/platform/traces/export-zip/') {
+      if (!requireTeacherAuth(req, res)) return true;
+      handlePlatformTracesExportZip(req, res);
+      return true;
+    }
     if (tracesPath === '/api/platform/traces/stats' || tracesPath.startsWith('/api/platform/traces/stats/')) {
       handlePlatformTraceStats(req, res);
       return true;
