@@ -29,6 +29,8 @@
 | GET | `/api/platform/traces/students` | 按学生聚合会话 |
 | GET | `/api/platform/traces/:sessionId` | 会话详情 |
 | POST | `/api/platform/traces/delete` | 批量删除学情会话（body: `{ sessionIds: [] }`） |
+| GET | `/api/platform/traces/export-zip` | 教师下载全部轨迹 ZIP（需鉴权） |
+| POST | `/api/platform/traces/import-zip` | 教师上传轨迹 ZIP / `sess-*.json`（需鉴权；同名覆盖） |
 | POST | `/api/platform/judge-session` | 学情一键 Agent B 评判 |
 
 ## 典型流程

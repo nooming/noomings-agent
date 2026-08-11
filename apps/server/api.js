@@ -41,6 +41,8 @@ const {
   getClassroomBoard,
   exportClassroomCsv,
   exportAllTracesZip,
+  importAllTracesZip,
+  importTraceSessionFiles,
 } = require('../../packages/platform/trace-store');
 const { getPackageGamePath, getPackageChapterPath } = require('../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../packages/judge/strategy-segment-score');
@@ -143,6 +145,91 @@ function readBody(req) {
     });
     req.on('error', reject);
   });
+}
+
+const IMPORT_ZIP_MAX_BYTES = 64 * 1024 * 1024;
+
+function readRawBody(req, limit = IMPORT_ZIP_MAX_BYTES) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', c => {
+      size += c.length;
+      if (size > limit) {
+        reject(new Error('body_too_large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+/** Minimal multipart file extractor (filename parts only). */
+function parseMultipartFiles(buffer, contentType) {
+  const m = String(contentType || '').match(/boundary=(?:"([^"]+)"|([^;\s]+))/i);
+  if (!m) throw new Error('multipart_boundary_missing');
+  const boundary = Buffer.from(`--${(m[1] || m[2]).trim()}`);
+  const files = [];
+  let start = buffer.indexOf(boundary);
+  while (start >= 0) {
+    let p = start + boundary.length;
+    if (buffer[p] === 0x2d && buffer[p + 1] === 0x2d) break;
+    if (buffer[p] === 0x0d && buffer[p + 1] === 0x0a) p += 2;
+    const next = buffer.indexOf(boundary, p);
+    if (next < 0) break;
+    let partEnd = next;
+    if (partEnd >= 2 && buffer[partEnd - 2] === 0x0d && buffer[partEnd - 1] === 0x0a) {
+      partEnd -= 2;
+    }
+    const part = buffer.slice(p, partEnd);
+    const headerEnd = part.indexOf('\r\n\r\n');
+    if (headerEnd >= 0) {
+      const headers = part.slice(0, headerEnd).toString('utf8');
+      const body = part.slice(headerEnd + 4);
+      const fileMatch = headers.match(/filename="([^"]*)"/i);
+      if (fileMatch && fileMatch[1]) {
+        const nameMatch = headers.match(/name="([^"]+)"/i);
+        files.push({
+          field: nameMatch ? nameMatch[1] : 'file',
+          filename: fileMatch[1],
+          data: body,
+        });
+      }
+    }
+    start = next;
+  }
+  return files;
+}
+
+function mergeImportResults(parts) {
+  let imported = 0;
+  let skipped = 0;
+  const errors = [];
+  let anyOk = false;
+  let lastFatal = null;
+  for (const r of parts) {
+    if (!r) continue;
+    if (r.ok) anyOk = true;
+    else lastFatal = r.error || (r.errors && r.errors[0]) || 'import_failed';
+    imported += Number(r.imported) || 0;
+    skipped += Number(r.skipped) || 0;
+    if (Array.isArray(r.errors)) errors.push(...r.errors);
+  }
+  if (!anyOk && lastFatal) {
+    return {
+      ok: false,
+      imported,
+      skipped,
+      error: typeof lastFatal === 'string' ? lastFatal : String(lastFatal),
+      errors: errors.length ? errors : [lastFatal],
+    };
+  }
+  const out = { ok: true, imported, skipped };
+  if (errors.length) out.errors = errors;
+  return out;
 }
 
 function resolveChParam(ch) {
@@ -894,6 +981,79 @@ function handlePlatformTracesExportZip(req, res) {
   }
 }
 
+/** Teacher-only: import sess-*.json from ZIP (or multipart loose JSON); overwrite same names. */
+async function handlePlatformTracesImportZip(req, res) {
+  cors(res);
+  try {
+    const ct = String(req.headers['content-type'] || '');
+    const ctLower = ct.toLowerCase();
+    const raw = await readRawBody(req);
+    let result;
+
+    if (ctLower.includes('multipart/form-data')) {
+      const parts = parseMultipartFiles(raw, ct);
+      if (!parts.length) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, imported: 0, skipped: 0, error: 'no_files' }));
+        return;
+      }
+      const partials = [];
+      const looseJson = [];
+      for (const part of parts) {
+        const name = String(part.filename || '');
+        const lower = name.toLowerCase();
+        if (lower.endsWith('.zip')) {
+          partials.push(importAllTracesZip(part.data));
+        } else if (lower.endsWith('.json')) {
+          looseJson.push({ name, data: part.data });
+        } else {
+          partials.push({ ok: true, imported: 0, skipped: 1 });
+        }
+      }
+      if (looseJson.length) partials.push(importTraceSessionFiles(looseJson));
+      result = mergeImportResults(partials);
+    } else if (ctLower.includes('application/json')) {
+      let body;
+      try {
+        body = JSON.parse(raw.toString('utf8') || '{}');
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, imported: 0, skipped: 0, error: 'invalid_json' }));
+        return;
+      }
+      if (body.zipBase64) {
+        result = importAllTracesZip(Buffer.from(String(body.zipBase64), 'base64'));
+      } else if (Array.isArray(body.files)) {
+        result = importTraceSessionFiles(
+          body.files.map(f => ({
+            name: f.name || f.filename,
+            data: Buffer.from(String(f.contentBase64 || f.dataBase64 || ''), 'base64'),
+          })),
+        );
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, imported: 0, skipped: 0, error: 'expected_zipBase64_or_files' }));
+        return;
+      }
+    } else {
+      result = importAllTracesZip(raw);
+    }
+
+    const status = result.ok ? 200 : 400;
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(result));
+  } catch (e) {
+    const status = e.message === 'body_too_large' ? 413 : 500;
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: false,
+      imported: 0,
+      skipped: 0,
+      error: e.message || 'import_failed',
+    }));
+  }
+}
+
 function handlePlatformAdapter(req, res) {
   cors(res);
   const url = new URL(req.url, 'http://localhost');
@@ -1313,6 +1473,14 @@ async function routeApi(req, res) {
     if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformTraceDelete(req, res);
     return true;
+  }
+  if (req.method === 'POST') {
+    const importPath = new URL(req.url, 'http://localhost').pathname;
+    if (importPath === '/api/platform/traces/import-zip' || importPath === '/api/platform/traces/import-zip/') {
+      if (!requireTeacherAuth(req, res)) return true;
+      await handlePlatformTracesImportZip(req, res);
+      return true;
+    }
   }
   if (req.method === 'GET' && req.url.startsWith('/api/platform/traces')) {
     const tracesPath = new URL(req.url, 'http://localhost').pathname;

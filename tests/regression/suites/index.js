@@ -55,6 +55,7 @@ const SUITES = {
   export: [
     { name: 'export-standalone-smoke', module: './parts/export-standalone-smoke' },
     { name: 'viewer-syntax', module: './parts/viewer-syntax' },
+    { name: 'traces-zip-import', module: './parts/traces-zip-import' },
   ],
 };
 

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const { getTracesRoot } = require('./paths');
 const {
   filterEventsByChallengePhase,
@@ -863,6 +864,163 @@ function exportAllTracesZip() {
   };
 }
 
+/** Basename must be sess-*.json (same id charset as deleteTraceSessions). */
+const SESS_TRACE_FILE_RE = /^sess-[a-zA-Z0-9-]+\.json$/;
+
+/**
+ * Accept only safe sess-*.json basenames; reject path traversal / nested paths.
+ * @param {string} rawName
+ * @returns {string|null}
+ */
+function safeSessTraceBasename(rawName) {
+  const normalized = String(rawName || '').replace(/\\/g, '/');
+  if (!normalized || normalized.includes('\0')) return null;
+  const parts = normalized.split('/').filter(p => p && p !== '.');
+  if (!parts.length || parts.some(p => p === '..')) return null;
+  const base = parts[parts.length - 1];
+  if (!SESS_TRACE_FILE_RE.test(base)) return null;
+  return base;
+}
+
+/**
+ * Parse a ZIP (store or deflate) via central directory; mirrors buildStoreZip format.
+ * @param {Buffer} buf
+ * @returns {{ name: string, data: Buffer }[]}
+ */
+function parseZipEntries(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 22) {
+    throw new Error('invalid_zip');
+  }
+  let eocd = -1;
+  const minEocd = Math.max(0, buf.length - (22 + 0xffff));
+  for (let i = buf.length - 22; i >= minEocd; i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error('invalid_zip');
+  const entryCount = buf.readUInt16LE(eocd + 10);
+  const centralOffset = buf.readUInt32LE(eocd + 16);
+  if (centralOffset + 46 > buf.length) throw new Error('invalid_zip');
+  const entries = [];
+  let pos = centralOffset;
+  for (let i = 0; i < entryCount; i++) {
+    if (pos + 46 > buf.length || buf.readUInt32LE(pos) !== 0x02014b50) {
+      throw new Error('invalid_zip_central');
+    }
+    const method = buf.readUInt16LE(pos + 10);
+    const compSize = buf.readUInt32LE(pos + 20);
+    const nameLen = buf.readUInt16LE(pos + 28);
+    const extraLen = buf.readUInt16LE(pos + 30);
+    const commentLen = buf.readUInt16LE(pos + 32);
+    const localOff = buf.readUInt32LE(pos + 42);
+    const nameStart = pos + 46;
+    const nameEnd = nameStart + nameLen;
+    if (nameEnd > buf.length) throw new Error('invalid_zip_central');
+    const name = buf.slice(nameStart, nameEnd).toString('utf8');
+    pos = nameEnd + extraLen + commentLen;
+
+    if (name.endsWith('/')) {
+      entries.push({ name, data: Buffer.alloc(0), directory: true });
+      continue;
+    }
+    if (localOff + 30 > buf.length || buf.readUInt32LE(localOff) !== 0x04034b50) {
+      throw new Error('invalid_zip_local');
+    }
+    const localNameLen = buf.readUInt16LE(localOff + 26);
+    const localExtraLen = buf.readUInt16LE(localOff + 28);
+    const dataStart = localOff + 30 + localNameLen + localExtraLen;
+    const dataEnd = dataStart + compSize;
+    if (dataEnd > buf.length) throw new Error('invalid_zip_local');
+    const compressed = buf.slice(dataStart, dataEnd);
+    let data;
+    if (method === 0) {
+      data = compressed;
+    } else if (method === 8) {
+      data = zlib.inflateRawSync(compressed);
+    } else {
+      throw new Error(`unsupported_zip_method_${method}`);
+    }
+    entries.push({ name, data });
+  }
+  return entries;
+}
+
+/**
+ * Write sess-*.json files into traces root (overwrite same names).
+ * @param {{ name: string, data: Buffer|string }[]} files
+ * @returns {{ ok: true, imported: number, skipped: number, errors?: { name: string, error: string }[] }}
+ */
+function importTraceSessionFiles(files) {
+  ensureTracesRoot();
+  const root = path.resolve(getTracesRoot());
+  let imported = 0;
+  let skipped = 0;
+  const errors = [];
+  for (const file of files || []) {
+    const safe = safeSessTraceBasename(file && file.name);
+    if (!safe) {
+      skipped += 1;
+      continue;
+    }
+    const dest = path.resolve(root, safe);
+    if (path.dirname(dest) !== root) {
+      errors.push({ name: String(file.name || ''), error: 'path_traversal' });
+      continue;
+    }
+    try {
+      const data = Buffer.isBuffer(file.data) ? file.data : Buffer.from(file.data || '');
+      JSON.parse(data.toString('utf8'));
+      fs.writeFileSync(dest, data);
+      imported += 1;
+    } catch (e) {
+      errors.push({ name: safe, error: e.message || 'write_failed' });
+    }
+  }
+  const out = { ok: true, imported, skipped };
+  if (errors.length) out.errors = errors;
+  return out;
+}
+
+/**
+ * Import sess-*.json entries from a ZIP into traces root (overwrite).
+ * Non-matching / unsafe paths are skipped; invalid ZIP → ok:false.
+ * @param {Buffer} zipBuffer
+ * @returns {{ ok: boolean, imported: number, skipped: number, errors?: any[], error?: string }}
+ */
+function importAllTracesZip(zipBuffer) {
+  let entries;
+  try {
+    entries = parseZipEntries(zipBuffer);
+  } catch (e) {
+    return {
+      ok: false,
+      imported: 0,
+      skipped: 0,
+      error: e.message || 'invalid_zip',
+      errors: [e.message || 'invalid_zip'],
+    };
+  }
+  const files = [];
+  let skipped = 0;
+  for (const entry of entries) {
+    if (entry.directory) {
+      skipped += 1;
+      continue;
+    }
+    const safe = safeSessTraceBasename(entry.name);
+    if (!safe) {
+      skipped += 1;
+      continue;
+    }
+    files.push({ name: safe, data: entry.data });
+  }
+  const result = importTraceSessionFiles(files);
+  result.skipped += skipped;
+  return result;
+}
+
 module.exports = {
   ingestTrace,
   listTraces,
@@ -883,4 +1041,8 @@ module.exports = {
   exportClassroomCsv,
   exportAllTracesZip,
   tracesExportZipFilename,
+  buildStoreZip,
+  importAllTracesZip,
+  importTraceSessionFiles,
+  safeSessTraceBasename,
 };

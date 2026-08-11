@@ -44,6 +44,8 @@
       <div class="tool-link-row sessions-toolbar">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshTraces">刷新</button>
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnDownloadTracesZip" title="下载全部会话轨迹（不受当前筛选影响）">下载轨迹包</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnUploadTracesZip" title="上传轨迹包 ZIP（或多选 sess-*.json；同名覆盖）">上传轨迹包</button>
+        <input type="file" id="inputUploadTracesZip" accept=".zip,.json,application/zip,application/json" multiple hidden>
         <select id="filterGraph" class="sessions-select">
           <option value="">全部探究任务</option>
         </select>
@@ -1700,6 +1702,48 @@ async function downloadAllTracesZip() {
     URL.revokeObjectURL(a.href);
   } catch (err) {
     alert(err.message || '下载失败');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function pickUploadTracesPackage() {
+  const input = document.getElementById('inputUploadTracesZip');
+  if (!input) return;
+  input.value = '';
+  input.click();
+}
+
+async function uploadTracesPackageFromFiles(fileList) {
+  const files = [...(fileList || [])];
+  if (!files.length) return;
+  const btn = document.getElementById('btnUploadTracesZip');
+  if (btn) btn.disabled = true;
+  try {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f, f.name);
+    const headers = {};
+    const token = sessionStorage.getItem('platform-teacher-token');
+    if (token) headers.Authorization = 'Bearer ' + token;
+    const r = await fetch('/api/platform/traces/import-zip', {
+      method: 'POST',
+      headers,
+      credentials: 'same-origin',
+      body: fd,
+    });
+    let data = {};
+    try { data = await r.json(); } catch { /* ignore */ }
+    if (!r.ok || !data.ok) {
+      const msg = data.error
+        || (r.status === 401 ? '需要教师登录' : `上传失败（HTTP ${r.status}）`);
+      alert(msg);
+      return;
+    }
+    const errN = Array.isArray(data.errors) ? data.errors.length : 0;
+    alert(`导入完成：成功 ${data.imported ?? 0}，跳过 ${data.skipped ?? 0}${errN ? `，错误 ${errN}` : ''}`);
+    await loadSessionsData();
+  } catch (err) {
+    alert(err.message || '上传失败');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3405,6 +3449,10 @@ function bindSessionDetailDelegation() {
 
 document.getElementById('refreshTraces').addEventListener('click', loadSessionsData);
 document.getElementById('btnDownloadTracesZip')?.addEventListener('click', downloadAllTracesZip);
+document.getElementById('btnUploadTracesZip')?.addEventListener('click', pickUploadTracesPackage);
+document.getElementById('inputUploadTracesZip')?.addEventListener('change', e => {
+  uploadTracesPackageFromFiles(e.target.files);
+});
 bindSessionDetailDelegation();
 document.getElementById('filterGraph').addEventListener('change', () => {
   writeStoredFilterGraph(document.getElementById('filterGraph').value);
