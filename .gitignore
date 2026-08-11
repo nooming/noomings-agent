@@ -1,4 +1,4 @@
-.env
+﻿.env
 node_modules/
 *.log
 resources/*cookies*.txt
@@ -8,8 +8,8 @@ resources/_*.html
 resources/_*.json
 data/runtime/output/**
 !data/runtime/output/.gitkeep
-data/runtime/platform/traces/
+# data/runtime/platform/traces/  # 临时允许课堂轨迹入库（迁服后应改回）
 data/output/design-runs/
-data/platform/traces/
+# data/platform/traces/  # 临时允许课堂轨迹入库（迁服后应改回）
 _archive/
 临时/
