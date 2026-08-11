@@ -1,0 +1,194 @@
+{
+  "sessionId": "sess-1786454437100-uu7elz3",
+  "catalogId": "demo-circular-motion",
+  "graphId": "circular-motion",
+  "studentLabel": "20260811",
+  "studentId": "20260811",
+  "taskCode": "demo-circular-motion",
+  "ch": 0,
+  "game": "demo-circular-motion",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T13:20:37.817Z",
+  "updatedAt": "2026-08-11T13:20:57.806Z",
+  "eventCount": 16,
+  "events": [
+    {
+      "ts": 1786454437368,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786454437369,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454439182,
+      "type": "tuning",
+      "payload": {
+        "control": "s-omega",
+        "value": "1.5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454443674,
+      "type": "tuning",
+      "payload": {
+        "control": "s-radius",
+        "value": "1.4"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454445317,
+      "type": "tuning",
+      "payload": {
+        "control": "s-radius",
+        "value": "1.5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454446107,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454446107,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-radius": 1.5,
+          "s-omega": 1.5
+        },
+        "winOk": false,
+        "hintKey": "both_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454449134,
+      "type": "tuning",
+      "payload": {
+        "control": "s-radius",
+        "value": "1.8"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454449987,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454449986,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-radius": 1.8,
+          "s-omega": 1.5
+        },
+        "winOk": false,
+        "hintKey": "both_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454452091,
+      "type": "tuning",
+      "payload": {
+        "control": "s-radius",
+        "value": "2"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454452895,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-radius": 2,
+          "s-omega": 1.5
+        },
+        "winOk": false,
+        "hintKey": "f_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454452895,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454455586,
+      "type": "tuning",
+      "payload": {
+        "control": "s-omega",
+        "value": "2"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454457354,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-radius": 2,
+          "s-omega": 2
+        },
+        "winOk": true,
+        "hintKey": "circ_challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786454457355,
+      "type": "win",
+      "payload": {
+        "winOk": true
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-omega": 2,
+    "s-radius": 4
+  },
+  "actionCounts": {
+    "btn-fire": 3
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-radius",
+      "label": "半径",
+      "role": "adjustment",
+      "priorityRank": 2,
+      "adjustCount": 4
+    },
+    {
+      "controlId": "s-omega",
+      "label": "角速度",
+      "role": "adjustment",
+      "priorityRank": 1,
+      "adjustCount": 2
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "pass"
+}

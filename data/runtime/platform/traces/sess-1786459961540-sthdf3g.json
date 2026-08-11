@@ -1,0 +1,649 @@
+{
+  "sessionId": "sess-1786459961540-sthdf3g",
+  "catalogId": "demo-pendulum-clock",
+  "graphId": "pendulum-clock",
+  "studentLabel": "22",
+  "studentId": "22",
+  "taskCode": "demo-pendulum-clock",
+  "ch": 0,
+  "game": "demo-pendulum-clock",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T14:52:42.156Z",
+  "updatedAt": "2026-08-11T14:55:43.988Z",
+  "eventCount": 23,
+  "events": [
+    {
+      "ts": 1786459961757,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786459961759,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786459962086,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786459968938,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786459968940,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786459998076,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "1.405"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460016109,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "1.14"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460022635,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "1.1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460033929,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "1.005"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460044854,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "18"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460052562,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "17"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460058520,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "15"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460065705,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "11"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460079118,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "16"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460081976,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.995"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460090120,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460113370,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.99"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460124183,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.94"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460136233,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.91"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460140482,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "modeSelect": "challenge",
+          "n-len": "0.910",
+          "s-len": "0.91",
+          "s-angle": "20",
+          "s-mass": "1.5"
+        },
+        "winOk": true,
+        "hintKey": "pendulum_clock"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460140483,
+      "type": "win",
+      "payload": {
+        "winOk": true
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460143586,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786460143584,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-len": 8,
+    "s-angle": 5
+  },
+  "actionCounts": {
+    "craftIntroBtn": 2,
+    "craftBackBtn": 2
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-len",
+      "label": "s-len",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 8
+    },
+    {
+      "controlId": "s-angle",
+      "label": "s-angle",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 5
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "pass",
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "pass",
+    "strengths": [
+      "符合控制变量途径，坚持单参调节。"
+    ],
+    "gaps": [],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 9,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "pendulum_clock"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 8,
+        "main_s-len": 5,
+        "trap": 1,
+        "confound_s_mass": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 1,
+        "breakdown": {
+          "base": 1,
+          "mainClarityBonus": 0.08,
+          "switchPenalty": 0,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 0,
+          "nBlockSwitch": 0,
+          "switchKind": "stable",
+          "strategySequence": [
+            {
+              "label": "单变量·摆长",
+              "count": 1,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 1,
+          "dominantLabel": "单变量·摆长",
+          "dominantShare": 1,
+          "cvTunings": 0,
+          "avTunings": 3,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "单变量·摆长": 1
+          },
+          "effectiveTrials": 1
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "单变量·摆长",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-len",
+                "value": "0.99",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-len",
+                "value": "0.94",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-len",
+                "value": "0.91",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 1,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "win",
+            "effective": false
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "单变量·摆长",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "switchKind": "stable",
+        "primaryStrategy": "单变量·摆长",
+        "lastSegmentLabel": "单变量·摆长"
+      },
+      "metrics": {
+        "singleVariableRate": 1,
+        "rationalCorrectionRate": null,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-len"
+        ],
+        "operationControlCount": 3,
+        "parameterCoverage": 0.33,
+        "parameterCoverageChallenge": 0.33,
+        "parameterCoverageSource": "union",
+        "strategyScore": 1,
+        "primaryStrategy": "单变量·摆长",
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "单变量·摆长",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 3,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "unknown"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 4,
+      "summary": "符合控制变量途径，坚持单参调节。",
+      "strengths": [
+        "符合控制变量途径，坚持单参调节。"
+      ],
+      "gaps": [],
+      "suggestion": "已接近或达到过关条件，可检查是否触发 win。"
+    },
+    "comment": "[规则模式] 符合控制变量途径，坚持单参调节。",
+    "judgedAt": "2026-08-11T14:55:44.028Z"
+  },
+  "judgedAt": "2026-08-11T14:55:44.029Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 75,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 100,
+        "contrib": 30,
+        "note": "过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": 0,
+        "primary": null,
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": 100,
+        "contrib": 25,
+        "strategyScore": 1,
+        "primary": "单变量·摆长",
+        "switchKind": "stable",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 100,
+        "contrib": 20,
+        "processGate": true,
+        "challengeTrials": 1,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": true,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "部分清楚",
+      "result": "达标"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-11T14:55:44.028Z"
+  },
+  "abilityScoreComputedAt": "2026-08-11T14:55:44.028Z",
+  "strategyPathByPhase": {
+    "explore": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 0,
+        "avTunings": 10,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·摆长",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·摆长",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-11T16:13:08.646Z"
+    },
+    "challenge": {
+      "text": "你的探究路径类型：单变量探究（摆长）（本局策略吻合度 1.00）",
+      "type": "单变量探究（摆长）",
+      "advice": "竞赛段里，有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": "单变量·摆长",
+      "score": 1,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "challenge",
+      "teacherDetail": {
+        "score": 1,
+        "primaryStrategy": "单变量·摆长",
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "单变量·摆长",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "cvTunings": 0,
+        "avTunings": 3,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 1,
+        "segmentCounts": {
+          "单变量·摆长": 1
+        },
+        "nearTies": [
+          {
+            "label": "单变量·摆长",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "challenge"
+      },
+      "primaryStrategy": "单变量·摆长",
+      "mode": "compete",
+      "nearTies": [
+        {
+          "label": "单变量·摆长",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-11T16:13:08.648Z"
+    }
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 0,
+      "avTunings": 10,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·摆长",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·摆长",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-11T16:13:08.646Z"
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：单变量探究（摆长）（本局策略吻合度 1.00）",
+    "type": "单变量探究（摆长）",
+    "advice": "竞赛段里，有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": "单变量·摆长",
+    "score": 1,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "challenge",
+    "teacherDetail": {
+      "score": 1,
+      "primaryStrategy": "单变量·摆长",
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [
+        {
+          "label": "单变量·摆长",
+          "count": 1,
+          "bypass": false
+        }
+      ],
+      "cvTunings": 0,
+      "avTunings": 3,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 1,
+      "segmentCounts": {
+        "单变量·摆长": 1
+      },
+      "nearTies": [
+        {
+          "label": "单变量·摆长",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "challenge"
+    },
+    "primaryStrategy": "单变量·摆长",
+    "mode": "compete",
+    "nearTies": [
+      {
+        "label": "单变量·摆长",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-11T16:13:08.648Z"
+  }
+}

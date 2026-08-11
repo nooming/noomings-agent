@@ -1,0 +1,883 @@
+{
+  "sessionId": "sess-1786455348474-nb1utxn",
+  "catalogId": "demo-friction-incline",
+  "graphId": "friction-incline",
+  "studentLabel": "20260811",
+  "studentId": "20260811",
+  "taskCode": "demo-friction-incline",
+  "ch": 0,
+  "game": "demo-friction-incline",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T13:35:49.163Z",
+  "updatedAt": "2026-08-11T13:37:44.717Z",
+  "eventCount": 55,
+  "events": [
+    {
+      "ts": 1786455348696,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786455348696,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455354287,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786455356599,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455356600,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455357304,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.7",
+          "s-angle": "30",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "rest"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455361570,
+      "type": "tuning",
+      "payload": {
+        "control": "s-friction",
+        "value": "0"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455362298,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455362298,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455363603,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0",
+          "s-angle": "30",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "overshoot"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455365841,
+      "type": "tuning",
+      "payload": {
+        "control": "s-friction",
+        "value": "0.23"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455366731,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455366731,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455368032,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.23",
+          "s-angle": "30",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455368032,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.23",
+          "s-angle": "30",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "overshoot"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455372971,
+      "type": "tuning",
+      "payload": {
+        "control": "s-friction",
+        "value": "0.5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455374020,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455374020,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455375126,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.5",
+          "s-angle": "30",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "slide"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455381053,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "47"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455381827,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455381827,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455383132,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.5",
+          "s-angle": "47",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "overshoot"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455386481,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "25"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455387526,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455387526,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455388228,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.5",
+          "s-angle": "25",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "rest"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455390980,
+      "type": "tuning",
+      "payload": {
+        "control": "s-friction",
+        "value": "0.24"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455391739,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455391739,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455392840,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.24",
+          "s-angle": "25",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "slide"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455396101,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455408406,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455408405,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455409107,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "19",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "rest"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455420022,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "53"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455426358,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "38"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455428618,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455428618,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455429920,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "38",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "overshoot"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455436026,
+      "type": "canvas_interact",
+      "payload": {
+        "x": 351,
+        "y": 958
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455440661,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "59"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455445507,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "12"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455449024,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "21"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455449817,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455449818,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455450519,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "21",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "rest"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455452341,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "31"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455453158,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455453157,
+      "type": "action",
+      "payload": {
+        "control": "btn-test",
+        "value": "test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455454261,
+      "type": "win",
+      "payload": {
+        "winOk": true
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455454261,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "31",
+          "s-mass": "1"
+        },
+        "winOk": false,
+        "hintKey": "slide"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455454261,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "31",
+          "s-mass": "1"
+        },
+        "winOk": true,
+        "hintKey": "rush_unload"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455461306,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-friction": "0.52",
+          "s-angle": "31",
+          "s-mass": "1"
+        },
+        "winOk": true,
+        "attribution": "s-angle",
+        "evidenceSummary": "竞赛证据：滑动读数 已卸到接货区 · 主调 倾角×201 · 操作 11 次"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455464248,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-friction": 4,
+    "s-angle": 8
+  },
+  "actionCounts": {
+    "btn-test": 22,
+    "craftBackBtn": 1
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-angle",
+      "label": "斜面倾角",
+      "role": "adjustment",
+      "priorityRank": 1,
+      "adjustCount": 8
+    },
+    {
+      "controlId": "s-friction",
+      "label": "摩擦系数",
+      "role": "adjustment",
+      "priorityRank": 2,
+      "adjustCount": 4
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "pass",
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "pass",
+    "strengths": [
+      "符合控制变量途径，坚持单参调节。"
+    ],
+    "gaps": [],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 25,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "rest",
+        "overshoot",
+        "slide",
+        "rush_unload"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 9,
+        "main_s-friction": 4,
+        "trap": 1,
+        "confound_s_mass": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 1,
+        "breakdown": {
+          "base": 1,
+          "mainClarityBonus": 0.08,
+          "switchPenalty": 0,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 0,
+          "nBlockSwitch": 0,
+          "switchKind": "stable",
+          "strategySequence": [
+            {
+              "label": "单变量·斜面倾角",
+              "count": 3,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 1,
+          "dominantLabel": "单变量·斜面倾角",
+          "dominantShare": 1,
+          "cvTunings": 0,
+          "avTunings": 6,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "单变量·斜面倾角": 3
+          },
+          "effectiveTrials": 3
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 1,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 2,
+            "label": "单变量·斜面倾角",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "53",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "38",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 3,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 4,
+            "label": "单变量·斜面倾角",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "59",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "12",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "21",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 5,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 6,
+            "label": "单变量·斜面倾角",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-angle",
+                "value": "31",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 7,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 8,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "win",
+            "effective": false
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "单变量·斜面倾角",
+            "count": 3,
+            "bypass": false
+          }
+        ],
+        "switchKind": "stable",
+        "primaryStrategy": "单变量·斜面倾角",
+        "lastSegmentLabel": "单变量·斜面倾角"
+      },
+      "metrics": {
+        "singleVariableRate": 1,
+        "rationalCorrectionRate": 0.25,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-angle"
+        ],
+        "operationControlCount": 3,
+        "parameterCoverage": 0.33,
+        "parameterCoverageChallenge": 0.33,
+        "parameterCoverageSource": "union",
+        "strategyScore": 1,
+        "primaryStrategy": "单变量·斜面倾角",
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "单变量·斜面倾角",
+            "count": 3,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 6,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "unknown"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 4,
+      "summary": "符合控制变量途径，坚持单参调节。",
+      "strengths": [
+        "符合控制变量途径，坚持单参调节。"
+      ],
+      "gaps": [],
+      "suggestion": "已接近或达到过关条件，可检查是否触发 win。"
+    },
+    "comment": "[规则模式] 符合控制变量途径，坚持单参调节。",
+    "judgedAt": "2026-08-11T13:37:44.745Z"
+  },
+  "judgedAt": "2026-08-11T13:37:44.746Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 100,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 100,
+        "contrib": 30,
+        "note": "过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": 94.5,
+        "contrib": 23.6,
+        "strategyScore": 0.945,
+        "primary": "单变量·摩擦系数",
+        "switchKind": "focused_redirect"
+      },
+      "challengeProcess": {
+        "raw": 100,
+        "contrib": 25,
+        "strategyScore": 1,
+        "primary": "单变量·斜面倾角",
+        "switchKind": "stable",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 85,
+        "contrib": 17,
+        "processGate": true,
+        "challengeTrials": 3,
+        "exploreTrials": 6,
+        "gateReasons": {
+          "gateScore": true,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 5,
+        "contrib": 5,
+        "attribution": "s-angle",
+        "aligned": true,
+        "note": "归因与主导 AV/证据一致 +5"
+      }
+    },
+    "bands": {
+      "process": "清楚",
+      "result": "达标"
+    },
+    "labelsShort": {
+      "pathExplore": "探究·单变量",
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-11T13:37:44.745Z"
+  },
+  "abilityScoreComputedAt": "2026-08-11T13:37:44.745Z"
+}

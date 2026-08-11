@@ -1,0 +1,463 @@
+{
+  "sessionId": "sess-1786455728379-eezdmd0",
+  "catalogId": "demo-capacitor-era-ch1",
+  "graphId": "capacitor-era-ch1",
+  "studentLabel": "20260811",
+  "studentId": "20260811",
+  "taskCode": "demo-capacitor-era-ch1",
+  "ch": 0,
+  "game": "demo-capacitor-era-ch1",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T13:42:09.063Z",
+  "updatedAt": "2026-08-11T13:42:30.494Z",
+  "eventCount": 22,
+  "events": [
+    {
+      "ts": 1786455728590,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786455728590,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455732565,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "4.71"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455733097,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455733098,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455735133,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "600"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455737427,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "223.3"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455738128,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455738128,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455742749,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "5.59"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455743327,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455743327,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455746006,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "4.23"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455746591,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455746591,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455748842,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "4.91"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455749362,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455749363,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455750016,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455750016,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455750016,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786455750016,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-dist": 4,
+    "s-area": 2
+  },
+  "actionCounts": {
+    "btn-read-cap": 10
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-dist",
+      "label": "极板间距",
+      "role": "adjustment",
+      "priorityRank": 1,
+      "adjustCount": 4
+    },
+    {
+      "controlId": "s-area",
+      "label": "极板面积",
+      "role": "adjustment",
+      "priorityRank": 2,
+      "adjustCount": 2
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "exhausted_fail",
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "in_progress",
+    "strengths": [],
+    "gaps": [
+      "请对照过关说明调整：信号塔重建完成"
+    ],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 21,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "attempts_exhausted"
+      ],
+      "strategyRouteGuess": "main_s-dist",
+      "routeScores": {
+        "main_s-dist": 4,
+        "main_s-area": 3,
+        "trap": 1,
+        "confound_audio_volume": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 0.2,
+        "breakdown": {
+          "base": 0.2,
+          "mainClarityBonus": 0,
+          "switchPenalty": 0,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 0,
+          "nBlockSwitch": 0,
+          "switchKind": "stable",
+          "strategySequence": [
+            {
+              "label": "多参盲调",
+              "count": 1,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 0,
+          "dominantLabel": null,
+          "dominantShare": 0,
+          "cvTunings": 0,
+          "avTunings": 6,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "多参盲调": 1
+          },
+          "effectiveTrials": 1
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "多参盲调",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-dist",
+                "value": "4.71",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-area",
+                "value": "600",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-area",
+                "value": "223.3",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-dist",
+                "value": "5.59",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-dist",
+                "value": "4.23",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-dist",
+                "value": "4.91",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "多参盲调",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "switchKind": "stable",
+        "primaryStrategy": "多参盲调",
+        "lastSegmentLabel": "多参盲调"
+      },
+      "metrics": {
+        "singleVariableRate": 1,
+        "rationalCorrectionRate": 0,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-dist",
+          "s-area"
+        ],
+        "operationControlCount": 4,
+        "parameterCoverage": 0.5,
+        "parameterCoverageChallenge": 0.5,
+        "parameterCoverageSource": "union",
+        "strategyScore": 0.2,
+        "primaryStrategy": "多参盲调",
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "多参盲调",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 6,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "attempts_exhausted"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 3,
+      "summary": "有基本操作记录",
+      "strengths": [],
+      "gaps": [
+        "请对照过关说明调整：信号塔重建完成"
+      ],
+      "suggestion": "请对照过关说明调整：信号塔重建完成"
+    },
+    "comment": "[规则模式] 有基本操作记录；待改进：请对照过关说明调整：信号塔重建完成",
+    "judgedAt": "2026-08-11T13:42:33.532Z"
+  },
+  "judgedAt": "2026-08-11T13:42:33.532Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 16,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 20,
+        "contrib": 6,
+        "note": "机会用尽未过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": null,
+        "primary": null,
+        "switchKind": null
+      },
+      "challengeProcess": {
+        "raw": 20,
+        "contrib": 5,
+        "strategyScore": 0.2,
+        "primary": "多参盲调",
+        "switchKind": "stable",
+        "cvOver": false,
+        "trap": true
+      },
+      "efficiency": {
+        "raw": 25,
+        "contrib": 5,
+        "processGate": false,
+        "challengeTrials": 1,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": false,
+          "cvOk": true,
+          "singleTrialTrap": true
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "尚不清晰",
+      "result": "未达标"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": "竞赛·混调"
+    },
+    "computedAt": "2026-08-11T13:42:33.532Z"
+  },
+  "abilityScoreComputedAt": "2026-08-11T13:42:33.532Z"
+}

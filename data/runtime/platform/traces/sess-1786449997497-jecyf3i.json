@@ -1,0 +1,773 @@
+{
+  "sessionId": "sess-1786449997497-jecyf3i",
+  "catalogId": "demo-momentum-collision",
+  "graphId": "momentum-collision",
+  "studentLabel": "李四",
+  "studentId": "20250101",
+  "taskCode": "demo-momentum-collision",
+  "ch": 0,
+  "game": "demo-momentum-collision",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T12:06:38.423Z",
+  "updatedAt": "2026-08-11T12:09:21.903Z",
+  "eventCount": 73,
+  "events": [
+    {
+      "ts": 1786449997797,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786449997795,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786449999111,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786449999111,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786449999111,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786450006845,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450006844,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450018968,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450018969,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450021041,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "1",
+          "s-mass2": "1",
+          "s-vel1": "2",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450025602,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "1",
+          "s-mass2": "1",
+          "s-vel1": "2",
+          "s-vel2": "0",
+          "s-rail-temp": "22"
+        },
+        "winOk": false,
+        "hintKey": "manual_reset"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450025602,
+      "type": "action",
+      "payload": {
+        "control": "btn-reset"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450025602,
+      "type": "action",
+      "payload": {
+        "control": "btn-reset"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450033826,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450035701,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450035702,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450037707,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "5",
+          "s-mass2": "1",
+          "s-vel1": "2",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450042215,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "10"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450044271,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450044270,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450046190,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "1",
+          "s-vel1": "2",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450049310,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel1",
+        "value": "10"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450050145,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450050145,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450051146,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "1",
+          "s-vel1": "10",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "miss_long"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450058454,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450059445,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450059445,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450060452,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "1",
+          "s-mass2": "1",
+          "s-vel1": "10",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450060452,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "1",
+          "s-mass2": "1",
+          "s-vel1": "10",
+          "s-vel2": "0"
+        },
+        "winOk": false,
+        "hintKey": "win"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450072323,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel2",
+        "value": "2"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450080262,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel1",
+        "value": "2"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450082036,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450082036,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450082591,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "1",
+          "s-mass2": "1",
+          "s-vel1": "2",
+          "s-vel2": "2"
+        },
+        "winOk": false,
+        "hintKey": "no_collide"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450092362,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel2",
+        "value": "1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450096781,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel1",
+        "value": "4"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450099986,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "3"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450100928,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450100928,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450102502,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "3",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450115066,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450115938,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450115937,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450117490,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "5",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450121715,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "6"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450122669,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450122669,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450124212,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "6",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450128766,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "7"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450129639,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450129639,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450131168,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "7",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450135057,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "8"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450135949,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450135948,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450137468,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "8",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450139258,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass1",
+        "value": "10"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450140298,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450140298,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450141795,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450147354,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass2",
+        "value": "0.5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450148267,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450148268,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450149768,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "0.5",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450151948,
+      "type": "tuning",
+      "payload": {
+        "control": "s-mass2",
+        "value": "0.1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450152677,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450152677,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450154185,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "0.1",
+          "s-vel1": "4",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "miss_short"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450159237,
+      "type": "tuning",
+      "payload": {
+        "control": "s-vel1",
+        "value": "5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450159986,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450159987,
+      "type": "action",
+      "payload": {
+        "control": "btn-fire"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786450161285,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-mass1": "10",
+          "s-mass2": "0.1",
+          "s-vel1": "5",
+          "s-vel2": "1"
+        },
+        "winOk": false,
+        "hintKey": "win"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-mass1": 9,
+    "s-vel1": 4,
+    "s-vel2": 2,
+    "s-mass2": 2
+  },
+  "actionCounts": {
+    "craftIntroBtn": 2,
+    "btn-fire": 30,
+    "btn-reset": 2
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-mass1",
+      "label": "s-mass1",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 9
+    },
+    {
+      "controlId": "s-vel1",
+      "label": "s-vel1",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 4
+    },
+    {
+      "controlId": "s-mass2",
+      "label": "s-mass2",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 2
+    },
+    {
+      "controlId": "s-vel2",
+      "label": "s-vel2",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 2
+    }
+  ],
+  "currentPhase": "explore",
+  "sawPhaseChange": true,
+  "terminalOutcome": "incomplete"
+}

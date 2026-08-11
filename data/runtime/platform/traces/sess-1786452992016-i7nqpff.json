@@ -1,0 +1,393 @@
+{
+  "sessionId": "sess-1786452992016-i7nqpff",
+  "catalogId": "demo-capacitor-era-ch1",
+  "graphId": "capacitor-era-ch1",
+  "studentLabel": "刘总",
+  "studentId": "23333",
+  "taskCode": "demo-capacitor-era-ch1",
+  "ch": 0,
+  "game": "demo-capacitor-era-ch1",
+  "traceVersion": 1,
+  "startedAt": "2026-08-11T12:56:32.620Z",
+  "updatedAt": "2026-08-11T12:57:47.607Z",
+  "eventCount": 14,
+  "events": [
+    {
+      "ts": 1786452992352,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786452992357,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786452995229,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786453009911,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453009913,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453020012,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thickness",
+        "value": "10"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453060091,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "4.54"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453061512,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "271.8"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453063945,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453063942,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453065925,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "7.99"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453066316,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453066313,
+      "type": "action",
+      "payload": {
+        "control": "btn-read-cap"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786453067307,
+      "type": "tuning",
+      "payload": {
+        "control": "s-dist",
+        "value": "5.05"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-thickness": 1,
+    "s-dist": 3,
+    "s-area": 1
+  },
+  "actionCounts": {
+    "craftIntroBtn": 2,
+    "btn-read-cap": 4
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-dist",
+      "label": "s-dist",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 3
+    },
+    {
+      "controlId": "s-area",
+      "label": "s-area",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    },
+    {
+      "controlId": "s-thickness",
+      "label": "s-thickness",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    }
+  ],
+  "currentPhase": "explore",
+  "sawPhaseChange": true,
+  "terminalOutcome": "incomplete",
+  "strategyPathByPhase": {
+    "explore": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.03）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0.025,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0.025,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 1,
+        "avTunings": 4,
+        "cvOver": false,
+        "cvProbe": true,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·极板间距",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-11T13:02:22.981Z"
+    },
+    "full": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.03）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0.025,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "full",
+      "teacherDetail": {
+        "score": 0.025,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 1,
+        "avTunings": 4,
+        "cvOver": false,
+        "cvProbe": true,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·极板间距",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "full"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-11T13:02:22.984Z"
+    }
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.03）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0.025,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0.025,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 1,
+      "avTunings": 4,
+      "cvOver": false,
+      "cvProbe": true,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·极板间距",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-11T13:02:22.981Z"
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.03）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0.025,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0.025,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 1,
+      "avTunings": 4,
+      "cvOver": false,
+      "cvProbe": true,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·极板间距",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-11T13:02:22.981Z"
+  },
+  "abilityScore": {
+    "version": 3,
+    "total": null,
+    "pending": true,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": null,
+        "contrib": 0,
+        "note": "未完成/进行中",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": 0.025,
+        "primary": null,
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": null,
+        "primary": null,
+        "switchKind": null,
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": null,
+        "contrib": 0,
+        "processGate": false,
+        "challengeTrials": 0,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": false,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "未评估",
+      "result": "未完成"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": null
+    },
+    "computedAt": "2026-08-11T13:00:11.373Z"
+  }
+}
