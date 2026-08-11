@@ -603,6 +603,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:.75rem!important;
   opacity:.75!important;
 }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
 </style>
 </head>
 <body>
@@ -760,6 +787,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let flyX = 0, flyY = 0, flyVx = 0, flyVy = 0, flyTime = 0;
     let cartX = 600, cartWidth = 80, cartSpeed = 80, cartDir = 1, cartMinX = 480, cartMaxX = 720;
     let hit = false, attemptUsed = false;
+    let prevTheta = theta;
     let lastTime = 0, animId = null;
     let challengeWon = false;
     let lockedCartSpec = null; // FixedChallenge：进竞赛锁定一次
@@ -927,6 +955,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     function resetPhysics() {
         theta = theta0;
         omega = 0;
+        prevTheta = theta;
         elasticDelta = 0;
         shakeAccel = 0;
         bobX = PIVOT_X + L * Math.sin(theta);
@@ -1004,9 +1033,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             if (theta < -Math.PI / 1.8) theta = -Math.PI / 1.8;
             bobX = PIVOT_X + effectiveL * Math.sin(theta);
             bobY = PIVOT_Y + effectiveL * Math.cos(theta);
-            if (Math.abs(theta) < 0.04 && Math.abs(omega) > 1.0 && !attemptUsed) {
+            // 能量感知脱钩：过底且角速度达理想峰值的一定比例（小角/长摆也能脱）
+            var crossedBottom = (prevTheta < 0 && theta >= 0) || (prevTheta > 0 && theta <= 0) || Math.abs(theta) < 0.04;
+            var omegaIdeal = Math.sqrt(Math.max(0, 2 * (G / Math.max(effectiveL, 1)) * (1 - Math.cos(theta0))));
+            var omegaMin = Math.max(0.15, 0.35 * omegaIdeal);
+            var dirOk = (theta0 <= 0 && omega > 0) || (theta0 > 0 && omega < 0);
+            if (crossedBottom && Math.abs(omega) > omegaMin && dirOk && !attemptUsed) {
                 detachBob();
             }
+            prevTheta = theta;
         } else if (state === STATE_FLYING) {
             flyX += flyVx * dt;
             flyY += flyVy * dt;
@@ -1042,6 +1077,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     }
                 }
                 attemptUsed = true;
+                // 落点标记保留；摆姿回到当前滑条意图角，避免画布 θ≈0 与 UI θ0 不同步
+                theta = theta0;
+                omega = 0;
+                elasticDelta = 0;
+                shakeAccel = 0;
+                bobX = PIVOT_X + L * Math.sin(theta);
+                bobY = PIVOT_Y + L * Math.cos(theta);
+                prevTheta = theta;
                 drawScene();
             }
         }
@@ -1078,8 +1121,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
               }
             }
           } else {
-            window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_target' });
-            window.__emit('win', { winOk: true });
+            // 探究命中：观察反馈 only，不 emit win / 不过关结算
+            if (statusMsg) statusMsg.textContent = '落点进入矿车区域 · 对照摆长与释放角再试';
+            window.__emit('snapshot', { controls: c, winOk: false, hintKey: 'explore_observe' });
           }
         } else if (!hit && window.__emit) {
           const missSide = x < left ? 'miss_short' : 'miss_long';
@@ -1283,10 +1327,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             ctx.fillText('💀 挑战失败', 400, 180);
         } else if (state === STATE_READY && hit && isFreeMode) {
             ctx.fillStyle = '#66ff66';
-            ctx.font = 'bold 30px sans-serif';
+            ctx.font = 'bold 28px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🎉 命中！过关！', 400, 180);
+            // 探究：避免「过关」文案触发 legacy WIN_TEXT / craft 结算
+            ctx.fillText('落点进入目标区域', 400, 180);
         }
     }
 
@@ -1372,8 +1417,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (playMode === 'challenge' ? challengeAttemptsLeft() <= 0 : (!isFreeMode && health === 0)) return;
         attemptUsed = false;
         hit = false;
-        theta0 = theta;
+        // 始终从滑条读释放角，勿用落地后残留的 theta≈0 覆盖 theta0
+        theta0 = degToRad(parseFloat(angleSlider.value));
+        theta = theta0;
         omega = 0;
+        prevTheta = theta;
         state = STATE_SWING;
         releaseBtn.disabled = true;
         statusMsg.textContent = '摆动中…';
@@ -1458,8 +1506,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     emit('win', { winOk: true });
   }
   var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  var __legacyWinScanTimer = null;
   function scanWinText() {
-    var text = document.body ? document.body.innerText : '';
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return false;
+    var nodes = document.querySelectorAll(
+      '.win-banner,#winBanner,[data-win="1"],.pass-badge,#winIndicator,.toast,.banner,.observe-item,[class*="win"]'
+    );
+    var text = '';
+    for (var n = 0; n < nodes.length; n++) {
+      text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
+      if (text.length > 8000) break;
+    }
+    if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {
         emitWin('text_' + i);
@@ -1468,10 +1526,43 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     return false;
   }
+  function scheduleScanWinText(muts) {
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return;
+    if (__legacyWinScanTimer) return;
+    __legacyWinScanTimer = setTimeout(function() {
+      __legacyWinScanTimer = null;
+      var suspect = !muts || !muts.length;
+      if (!suspect) {
+        for (var i = 0; i < muts.length && !suspect; i++) {
+          var m = muts[i];
+          if (m.type === 'characterData') {
+            var pt = m.target && m.target.parentElement;
+            var t = ((pt && (pt.innerText || pt.textContent)) || (m.target && m.target.data) || '').slice(0, 240);
+            if (/过关|命中|胜利|🏆|🎯/.test(t)) suspect = true;
+          } else if (m.addedNodes && m.addedNodes.length) {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              var node = m.addedNodes[j];
+              if (!node || (node.nodeType !== 1 && node.nodeType !== 3)) continue;
+              var tx = node.nodeType === 3
+                ? (node.data || '')
+                : ((node.innerText || node.textContent || '') + ' ' + (node.className || '') + ' ' + (node.id || ''));
+              if (/过关|命中|胜利|🏆|🎯|win-banner|win-badge|pass-badge|winBanner/.test(tx)) {
+                suspect = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (suspect) scanWinText();
+    }, 200);
+  }
   document.addEventListener('DOMContentLoaded', function() {
-    var obs = new MutationObserver(function() { scanWinText(); });
+    var obs = new MutationObserver(function(muts) { scheduleScanWinText(muts); });
     if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    setInterval(scanWinText, 800);
+    setInterval(function(){
+      if (!window.__legacyWinEmitted && !window.__craftWinOpen && !window.__craftWinDismissed) scanWinText();
+    }, 2000);
   });
 })();
 </script>
@@ -1514,16 +1605,139 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     },1000);
   }
   function apply(mode){
+    hideAttemptsExhausted();
     state.mode=mode==='challenge'?'challenge':'explore';
     if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
     else startTimer();
     render(); setPhase(state.mode);
     document.dispatchEvent(new CustomEvent('dual-mode-change',{detail:{mode:state.mode,attempts:state.attempts}}));
   }
+
+  /* === attempts-exhausted-settle === */
+  var __exhaustTimer = null;
+  var __exhaustBound = false;
+  function __isChallengeWonNow(){
+    if (window.__craftWinOpen) return true;
+    if (window.__challengeWon) return true;
+    var win = $('craft-win');
+    if (win && win.hidden === false) return true;
+    return false;
+  }
+  function hideAttemptsExhausted(){
+    if (__exhaustTimer) { clearTimeout(__exhaustTimer); __exhaustTimer = null; }
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureAttemptsExhaustedUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        apply('explore');
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      state.attempts = MAX;
+      render();
+      apply('challenge');
+      var sel = $('modeSelect');
+      if (sel) sel.value = 'challenge';
+    });
+    if (bList) {
+      if (typeof window.__eaNavigateToStudentList !== 'function' && !document.getElementById('craftBackBtn')) {
+        bList.hidden = true;
+      } else {
+        bList.addEventListener('click', function(){
+          hideAttemptsExhausted();
+          if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+          else {
+            var bb = document.getElementById('craftBackBtn');
+            if (bb) bb.click();
+          }
+        });
+      }
+    }
+  }
+  function showAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__isChallengeWonNow()) return;
+    ensureAttemptsExhaustedUi();
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  function scheduleAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__exhaustTimer) clearTimeout(__exhaustTimer);
+    __exhaustTimer = setTimeout(function(){
+      __exhaustTimer = null;
+      showAttemptsExhausted();
+    }, 650);
+  }
+  function bindExhaustWinGuard(){
+    if (__exhaustBound) return;
+    __exhaustBound = true;
+    var prev = window.__craftShowWin;
+    if (typeof prev === 'function') {
+      window.__craftShowWin = function(){
+        hideAttemptsExhausted();
+        return prev.apply(this, arguments);
+      };
+    }
+    try {
+      var obs = new MutationObserver(function(){
+        if (__isChallengeWonNow()) hideAttemptsExhausted();
+      });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    } catch (e) {}
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+
   function consume(){
     if(state.mode!=='challenge') return true;
     if(state.attempts<=0) return false;
     state.attempts--; render();
+    if(state.attempts<=0) scheduleAttemptsExhausted();
     return state.attempts>=0;
   }
   window.__dualModeConsumeAttempt=consume;
@@ -1533,6 +1747,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if(!sel) return;
     sel.addEventListener('change',function(){ apply(sel.value); });
     apply(sel.value||'explore');
+    setTimeout(bindExhaustWinGuard,0);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
   else boot();
@@ -1733,7 +1948,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
   if (wbtn) wbtn.addEventListener('click', function(){
     if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
+    window.__craftWinOpen = false;
     if (win) win.hidden = true;
     setSettle(false);
     replayLevel();
@@ -1754,7 +1971,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   });
 
   function showWin(extra){
+    if (window.__craftWinOpen) {
+      var t0 = document.getElementById('craftWinText');
+      if (t0 && typeof extra === 'string' && extra) t0.textContent = extra;
+      return;
+    }
     if (win) {
+      window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
       if (typeof window.__eaPrepareCraftWin === 'function') {
         var ev0 = window.__eaSessionEvidence;
@@ -1790,8 +2013,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (type === 'win') showWin();
   };
   var obs = new MutationObserver(function(){
-    if (window.__craftWinDismissed) return;
-    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (window.__craftWinDismissed || window.__craftWinOpen) return;
+    var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
     if (el && el.offsetParent !== null) showWin();
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
@@ -1806,5 +2029,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 })();
 </script>
 
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
+})();
+</script>
 </body>
 </html>

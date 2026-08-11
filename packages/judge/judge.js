@@ -254,7 +254,7 @@ function ruleJudge(summary, chapter) {
   const gaps = [];
   if (brokenCount > 0) strengths.push('轨迹中有失败或危险状态快照，属于合理试错。');
   if (align.dtPath.length >= 2) strengths.push(`操作过程已触及约束链：${align.dtPath.join(' → ')}。`);
-  if (!strengths.length) strengths.push('有基本操作与状态记录。');
+  // 无实质亮点时不塞默认 strengths；摘要仍有「有基本操作记录」兜底（教师端会再去重）
 
   const hk = align.hintKey || lastSnapshot?.hintKey;
   if (hk && hk !== 'ok' && hk !== 'unknown') gaps.push(gapFromHint(hk, chapter));

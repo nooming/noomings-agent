@@ -538,7 +538,34 @@
             #canvasContainer { height: 55vh; width: 100%; }
             #sidePanel { width: 100%; height: 45vh; border-left: none; border-top: 1px solid var(--line); }
         }
-    </style>
+    
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
+</style>
 </head>
 <body>
 
@@ -1222,10 +1249,8 @@
                     if (isAngle) state[key] = val * Math.PI / 180;
                     else state[key] = val;
 
-                    if (isAngle) {
-                        updateRampGeometry();
-                        if (state.mode === 'challenge') generateChallenge();
-                    }
+                    // 竞赛目标高度在进入 challenge 时锁定；拧参只改轨迹/可达性，不重抽目标
+                    if (isAngle) updateRampGeometry();
                     if (state.phase === 'idle') resetScene();
                 });
                 // 证据计数用 change（松手一次算一次），与 trace tuning 粒度接近
@@ -1252,7 +1277,6 @@
                 state.targetShape = e.target.value;
                 noteAvTune('s-shape');
                 ball2.geometry = state.targetShape === 'cylinder' ? cylinderGeo : sphereGeo;
-                if (state.mode === 'challenge') generateChallenge();
                 if (state.phase === 'idle') resetScene();
             });
 
@@ -1307,6 +1331,7 @@
             });
             ui.craftWinBtn.addEventListener('click', () => {
                 if (ui.craftWinBtn.disabled) return;
+                try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
                 closeCraftWin();
                 resetScene();
                 if (state.mode === 'challenge') generateChallenge();
@@ -1714,10 +1739,11 @@
                     if (state.attempts > 0) {
                         showMessage("挑战失败", desc, true, resetScene);
                     } else {
-                        showMessage("挑战结束", desc + "<br><br><span class='hl-warn'>次数用尽！</span>", true, () => {
-                            ui.modeSelect.value = 'explore';
-                            ui.modeSelect.dispatchEvent(new Event('change'));
-                        });
+                        try { ui.msgBox.classList.add('hidden'); } catch (e0) {}
+                        if (typeof window.__showAttemptsExhausted === 'function') {
+                          window.__showAttemptsExhausted('本局急单未完成：未在限次内到达目标高度带。目标高度仍按本局锁定；可返回探究或再开一局竞赛。');
+                        }
+                        resetScene();
                     }
                     return;
                 }
@@ -1741,10 +1767,11 @@
                     if (state.attempts > 0) {
                         showMessage("挑战失败", desc, true, resetScene);
                     } else {
-                        showMessage("挑战结束", desc + "<br><br><span class='hl-warn'>次数用尽！</span>", true, () => {
-                            ui.modeSelect.value = 'explore';
-                            ui.modeSelect.dispatchEvent(new Event('change'));
-                        });
+                        try { ui.msgBox.classList.add('hidden'); } catch (e0) {}
+                        if (typeof window.__showAttemptsExhausted === 'function') {
+                          window.__showAttemptsExhausted('本局急单未完成：未在限次内到达目标高度带。目标高度仍按本局锁定；可返回探究或再开一局竞赛。');
+                        }
+                        resetScene();
                     }
                 }
             }
@@ -1823,5 +1850,126 @@
 })();
 </script>
 <script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;try{if(window.__platformTraceSetPhase)window.__platformTraceSetPhase(s.value||'explore');}catch(e){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+
+<script>
+/* === attempts-exhausted-settle standalone === */
+(function(){
+  if (window.__attemptsExhaustedSettle) return;
+  window.__attemptsExhaustedSettle = true;
+  function $(id){ return document.getElementById(id); }
+  function hideAttemptsExhausted(){
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        if (sel.value !== 'challenge') {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    if (bList) {
+      bList.addEventListener('click', function(){
+        hideAttemptsExhausted();
+        if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+        else {
+          var bb = document.getElementById('craftBackBtn');
+          if (bb) bb.click();
+        }
+      });
+    }
+  }
+  function showAttemptsExhausted(desc){
+    ensureUi();
+    var p = $('attemptsExhaustedDesc');
+    if (p && typeof desc === 'string' && desc) p.textContent = desc;
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+  document.addEventListener('change', function(ev){
+    if (ev.target && ev.target.id === 'modeSelect') hideAttemptsExhausted();
+  }, true);
+})();
+</script>
+
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
+})();
+</script>
 </body>
 </html>

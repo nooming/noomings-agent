@@ -470,6 +470,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:.75rem!important;
   opacity:.75!important;
 }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row min-h-0">
@@ -574,18 +601,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">初速度 (m/s)</label>
-                    <span id="valSpeed" class="text-sm text-blue-600 font-mono">15</span>
+                    <span id="valSpeed" class="text-sm text-blue-600 font-mono"><input type="number" id="n-speed" min="5" max="35" step="0.1" value="15" aria-label="初速度数值" style="width:56px;background:transparent;border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 6px"></span>
                 </div>
-                <input type="range" id="s-speed" min="5" max="35" value="15" step="1" class="w-full">
+                <input type="range" id="s-speed" min="5" max="35" value="15" step="0.1" class="w-full">
             </div>
 
             <!-- 高度控制 -->
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">发射高度 (m)</label>
-                    <span id="valHeight" class="text-sm text-blue-600 font-mono">10</span>
+                    <span id="valHeight" class="text-sm text-blue-600 font-mono"><input type="number" id="n-height" min="0" max="30" step="0.1" value="10" aria-label="高度数值" style="width:56px;background:rgba(0,0,0,0);border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 6px"></span>
                 </div>
-                <input type="range" id="s-height" min="0" max="30" value="10" step="1" class="w-full">
+                <input type="range" id="s-height" min="0" max="30" value="10" step="0.1" class="w-full">
             </div>
 
             <!-- 质量控制（教学陷阱） -->
@@ -956,23 +983,53 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
         function bindEvents() {
             // 滑块绑定
-            const bindSlider = (slider, valElement, stateKey, suffix = '', avId = null) => {
+            const bindSlider = (slider, valElement, stateKey, suffix = '', avId = null, numId = null, decimals = null) => {
+                const syncVal = (val) => {
+                    const numEl = numId ? document.getElementById(numId) : (valElement && valElement.querySelector && valElement.querySelector('input[type="number"]'));
+                    if (numEl) {
+                        if (document.activeElement !== numEl) numEl.value = decimals != null ? (+val).toFixed(decimals) : String(val);
+                    } else if (valElement) {
+                        valElement.textContent = val + suffix;
+                    }
+                };
                 slider.addEventListener('input', (e) => {
                     let val = parseFloat(e.target.value);
                     state[stateKey] = val;
-                    valElement.textContent = val + suffix;
+                    syncVal(val);
                 });
                 if (avId) {
                     slider.addEventListener('change', () => noteAvTune(avId));
                 }
+                const numEl = numId ? document.getElementById(numId) : null;
+                if (numEl) {
+                    const apply = () => {
+                        let v = parseFloat(numEl.value);
+                        const min = +slider.min, max = +slider.max, step = +slider.step || 1;
+                        if (!isFinite(v)) v = +slider.value;
+                        v = Math.min(max, Math.max(min, v));
+                        if (step > 0) {
+                            const n = Math.round((v - min) / step);
+                            v = min + n * step;
+                            if (decimals != null) v = parseFloat(v.toFixed(decimals));
+                        }
+                        numEl.value = decimals != null ? v.toFixed(decimals) : String(v);
+                        slider.value = String(v);
+                        state[stateKey] = v;
+                        slider.dispatchEvent(new Event('input', { bubbles: true }));
+                        slider.dispatchEvent(new Event('change', { bubbles: true }));
+                    };
+                    numEl.addEventListener('change', apply);
+                    numEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); numEl.blur(); } });
+                }
             };
             bindSlider(ui.sliderAngle, ui.valAngle, 'angle', '°', 's-angle');
-            bindSlider(ui.sliderSpeed, ui.valSpeed, 'speed', '', 's-speed');
-            bindSlider(ui.sliderHeight, ui.valHeight, 'height', '', 's-height');
+            bindSlider(ui.sliderSpeed, ui.valSpeed, 'speed', '', 's-speed', 'n-speed', 1);
+            bindSlider(ui.sliderHeight, ui.valHeight, 'height', '', 's-height', 'n-height', 1);
             bindSlider(ui.sliderMass, ui.valMass, 'mass'); // 质量不进证据主调（本包旁路量）
 
             // 模式切换：同时刷新目标文案与判据（靶心仅竞赛出现）
             ui.modeSelect.addEventListener('change', (e) => {
+                if (typeof window.__hideAttemptsExhausted === 'function') window.__hideAttemptsExhausted();
                 state.mode = e.target.value;
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
                 refreshModeGoals();
@@ -1554,9 +1611,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                         () => { state.projectiles = []; }
                     );
                 } else {
-                    showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true, () => {
-                        state.projectiles = [];
-                    });
+                    state.projectiles = [];
+                    hideMessage();
+                    if (typeof window.__showAttemptsExhausted === 'function') {
+                        window.__showAttemptsExhausted('未能在限次内命中约 ' + lockDist + ' m 靶心。目标靶距仍按本局锁定；可返回探究继续试射，或再开一局竞赛。');
+                    } else {
+                        showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true, () => {
+                            state.projectiles = [];
+                        });
+                    }
                 }
             }
         }
@@ -1666,8 +1729,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     emit('win', { winOk: true });
   }
   var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  var __legacyWinScanTimer = null;
   function scanWinText() {
-    var text = document.body ? document.body.innerText : '';
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return false;
+    var nodes = document.querySelectorAll(
+      '.win-banner,#winBanner,[data-win="1"],.pass-badge,#winIndicator,.toast,.banner,.observe-item,[class*="win"]'
+    );
+    var text = '';
+    for (var n = 0; n < nodes.length; n++) {
+      text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
+      if (text.length > 8000) break;
+    }
+    if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {
         emitWin('text_' + i);
@@ -1676,10 +1749,43 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     return false;
   }
+  function scheduleScanWinText(muts) {
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return;
+    if (__legacyWinScanTimer) return;
+    __legacyWinScanTimer = setTimeout(function() {
+      __legacyWinScanTimer = null;
+      var suspect = !muts || !muts.length;
+      if (!suspect) {
+        for (var i = 0; i < muts.length && !suspect; i++) {
+          var m = muts[i];
+          if (m.type === 'characterData') {
+            var pt = m.target && m.target.parentElement;
+            var t = ((pt && (pt.innerText || pt.textContent)) || (m.target && m.target.data) || '').slice(0, 240);
+            if (/过关|命中|胜利|🏆|🎯/.test(t)) suspect = true;
+          } else if (m.addedNodes && m.addedNodes.length) {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              var node = m.addedNodes[j];
+              if (!node || (node.nodeType !== 1 && node.nodeType !== 3)) continue;
+              var tx = node.nodeType === 3
+                ? (node.data || '')
+                : ((node.innerText || node.textContent || '') + ' ' + (node.className || '') + ' ' + (node.id || ''));
+              if (/过关|命中|胜利|🏆|🎯|win-banner|win-badge|pass-badge|winBanner/.test(tx)) {
+                suspect = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (suspect) scanWinText();
+    }, 200);
+  }
   document.addEventListener('DOMContentLoaded', function() {
-    var obs = new MutationObserver(function() { scanWinText(); });
+    var obs = new MutationObserver(function(muts) { scheduleScanWinText(muts); });
     if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    setInterval(scanWinText, 800);
+    setInterval(function(){
+      if (!window.__legacyWinEmitted && !window.__craftWinOpen && !window.__craftWinDismissed) scanWinText();
+    }, 2000);
   });
 })();
 </script>
@@ -1708,7 +1814,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
   if (wbtn) wbtn.addEventListener('click', function(){
     if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
+    window.__craftWinOpen = false;
     if (win) win.hidden = true;
     setSettle(false);
     replayLevel();
@@ -1730,7 +1838,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
   // gauge: reserved for sidebar; TL dual stays mode|timer|stats only
 function showWin(extra){
+    if (window.__craftWinOpen) {
+      var t0 = document.getElementById('craftWinText');
+      if (t0 && typeof extra === 'string' && extra) t0.textContent = extra;
+      return;
+    }
     if (win) {
+      window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
       var ev = window.__projSessionEvidence;
       if (ev && !ev.evidenceSummary && typeof window.__projPrepareCraftWin === 'function') {
@@ -1760,8 +1874,8 @@ function showWin(extra){
   };
   // Observe win banners
   var obs = new MutationObserver(function(){
-    if (window.__craftWinDismissed) return;
-    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (window.__craftWinDismissed || window.__craftWinOpen) return;
+    var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
     if (el && el.offsetParent !== null) showWin();
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
@@ -1778,5 +1892,126 @@ function showWin(extra){
 })();
 </script>
 
+
+<script>
+/* === attempts-exhausted-settle standalone === */
+(function(){
+  if (window.__attemptsExhaustedSettle) return;
+  window.__attemptsExhaustedSettle = true;
+  function $(id){ return document.getElementById(id); }
+  function hideAttemptsExhausted(){
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        if (sel.value !== 'challenge') {
+          sel.value = 'challenge';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+    if (bList) {
+      bList.addEventListener('click', function(){
+        hideAttemptsExhausted();
+        if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+        else {
+          var bb = document.getElementById('craftBackBtn');
+          if (bb) bb.click();
+        }
+      });
+    }
+  }
+  function showAttemptsExhausted(desc){
+    ensureUi();
+    var p = $('attemptsExhaustedDesc');
+    if (p && typeof desc === 'string' && desc) p.textContent = desc;
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+  document.addEventListener('change', function(ev){
+    if (ev.target && ev.target.id === 'modeSelect') hideAttemptsExhausted();
+  }, true);
+})();
+</script>
+
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
+})();
+</script>
 </body>
 </html>

@@ -1,19 +1,26 @@
-/* 全平台设计令牌 — platform + Agent A/B 共用 */
+/* 全平台设计令牌 — lab blueprint / industrial label（教师端 + 学生端壳层） */
 
-:root {
-  /* 色彩 */
-  --edu-primary: #007baa;
-  --edu-primary-dark: #005f87;
-  --edu-accent: #fffa00;
+:root,
+.edu-shell {
+  /* 主色：冷静 cyan；黄仅作 CTA / 强调芯片 */
+  --edu-primary: #0c8aad;
+  --edu-primary-dark: #096f8c;
+  --edu-primary-soft: rgba(12, 138, 173, 0.10);
+  --edu-accent: #e6c200;
   --edu-accent-ink: #1a1a1a;
-  --edu-bg: #f4f7fb;
-  --edu-surface: #ffffff;
-  --edu-border: rgba(0, 90, 130, 0.12);
-  --edu-text: #1e293b;
-  --edu-muted: #64748b;
-  --edu-teacher: #007baa;
-  --edu-student: #0d9488;
-  --agent-accent: #fffa00;
+  --edu-bg: #eef1f4;
+  --edu-surface: #fbfcfd;
+  --edu-border: rgba(18, 36, 48, 0.14);
+  --edu-border-strong: rgba(18, 36, 48, 0.28);
+  --edu-text: #1a2330;
+  --edu-muted: #5c6b7a;
+  --edu-ink: #0e141b;
+  --edu-ink-soft: rgba(14, 20, 27, 0.06);
+  --edu-grid: rgba(12, 138, 173, 0.055);
+  --edu-grid-cross: rgba(12, 138, 173, 0.09);
+  --edu-teacher: #0c8aad;
+  --edu-student: #0b8a80;
+  --agent-accent: var(--edu-accent);
 
   /* 间距（8px 栅格） */
   --space-1: 4px;
@@ -23,31 +30,32 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  /* 圆角 / 阴影 */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --shadow-edu: 0 4px 24px rgba(0, 90, 130, 0.08);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 12px 32px rgba(0, 0, 0, 0.06);
+  /* 圆角：锐利工业感，允许小圆角 */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
 
-  /* 字体栈（统一平台壳 + craft；不引入外链 / 自托管 woff2） */
-  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
-  /* 标题与正文同栈；优先 PingFang / YaHei，避免另起一套 display 字库 */
-  --font-display: var(--font-sans);
-  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  /* 阴影极弱 — 用线框与标签建立层次 */
+  --shadow-edu: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+  --shadow-card: none;
+
+  /* 字体：课堂可读中文 + 工业标签用等宽 */
+  --font-sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-display: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-mono: "Cascadia Mono", "Sarasa Mono SC", "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --font-label: var(--font-mono);
   --font-formula: "Cambria Math", "Times New Roman", serif;
 
-  /* 字号阶梯（可选令牌；壳层现有 rem 规则未强制改绑） */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.25rem;    /* 20px */
-  --text-xl: 1.75rem;    /* 28px */
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
 
   /* Agent 页 legacy 别名 */
   --color-theme: var(--agent-accent);
   --color-theme-secondary: var(--edu-text);
-  --color-theme-deep: #d4c800;
-  --color-theme-hover: #ebe300;
+  --color-theme-deep: #c4a800;
+  --color-theme-hover: #d4b400;
   --color-theme-ink: var(--edu-accent-ink);
   --color-body: var(--edu-text);
   --color-muted: var(--edu-muted);

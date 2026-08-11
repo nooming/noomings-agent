@@ -26,7 +26,8 @@
         .observe-box strong { font-weight: 600; }
         .hint { font-size: 0.85rem; color: #2d3748; margin-top: 4px; }
         .confound-note { background: #f7fafc; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; color: #4a5568; border: 1px dashed #cbd5e0; margin: 8px 0 4px; }
-        .win-badge { background: #38a169; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
+        .pass-badge { background: #38a169; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
+        .pass-badge { background: #2f855a; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
         .fail-badge { background: #e53e3e; color: white; padding: 6px 16px; border-radius: 40px; display: inline-block; font-weight: 600; font-size: 0.9rem; margin-top: 6px; }
         .flex { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .mt-1 { margin-top: 6px; }
@@ -173,6 +174,27 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
 }
 #craft-intro[hidden],#craft-win[hidden]{display:none!important;}
+
+.craft-card button:disabled{opacity:.45;cursor:not-allowed;filter:none;}
+.craft-evidence{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent);font-size:.88rem;line-height:1.55;color:var(--craft-text);}
+.craft-evidence strong{color:var(--craft-accent);font-weight:600;}
+.craft-attr{margin:0 0 12px;}
+.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted);}
+.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
+@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr;}}
+.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer;}
+.craft-attr input{margin-top:3px;accent-color:var(--craft-accent);}
+.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted);}
+.craft-attr-hint[hidden]{display:none!important;}
+.craft-reveal{margin-top:4px;}
+.craft-reveal[hidden]{display:none!important;}
+.craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
+.craft-actions{display:flex;gap:10px;margin-top:14px;}
+.craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
+.craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
+.craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
+
 .craft-card{
   width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
@@ -592,6 +614,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:.75rem!important;
   opacity:.75!important;
 }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
 </style>
 </head>
 <body>
@@ -606,10 +655,27 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </div>
 <div id="craft-win" hidden>
   <div class="craft-card">
-    <h2>过关 · 你学到了什么</h2>
-    <div class="formula" id="craftWinFormula">½mv² + mgh = 常量（理想）</div>
-    <p id="craftWinText">对照掉落、停在减速带不同位置与冲出带外，你摸清了高度与初速既不能太小、也不能太大。</p>
-    <button type="button" id="craftWinBtn">再玩一次</button>
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几发的对照来看，过环并停减速带主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-height"> 主要是起始高度 h</label>
+        <label><input type="radio" name="craftAttr" value="s-speed"> 主要是释放速度 v</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">½mv² + mgh = 常量（理想）</div>
+      <p id="craftWinText">对照掉落、停在减速带不同位置与冲出带外，你摸清了高度与初速既不能太小、也不能太大。</p>
+      <p id="craftCv" class="craft-cv">小车质量只改观感大小，不改过环能量判据（旁路）。</p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
+    </div>
   </div>
 </div>
 
@@ -1300,7 +1366,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           challengeWon = true;
           winOk = true;
           hintKey = 'rush_loop';
-          winMessage.innerHTML = '<span class="win-badge">夜场试车成功</span>';
+          winMessage.innerHTML = '<span class="pass-badge">夜场试车成功</span>';
           if (emitFn) {
             emitFn('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: hintKey });
             emitFn('win', { winOk: true });
@@ -1318,15 +1384,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           return;
         }
         exploreWon = true;
-        winOk = true;
-        hintKey = 'critical_explored';
-        winMessage.innerHTML = '<span class="win-badge">探究完成</span>';
+        winOk = false;
+        hintKey = 'explore_observe';
+        winMessage.innerHTML = '<span style="color:#7dba8c;font-size:12px">已对照成功与失败 · 可切换竞赛接夜场试车</span>';
         if (emitFn) {
-          emitFn('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: hintKey });
-          emitFn('win', { winOk: true });
-        }
-        if (typeof window.__craftShowWin === 'function') {
-          window.__craftShowWin('你通过对照掉落、减速带内不同停靠位置与冲出带外，归纳出了合适的机械能区间。');
+          emitFn('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
         }
     }
 
@@ -1382,7 +1444,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             observeText.textContent = playMode === 'challenge'
               ? ('过山车翻过环顶，停在减速带' + stopDesc.where + '。夜场试车达标。')
               : ('过山车停在减速带' + stopDesc.where + '。可对照刻度微调，或再试掉落 / 冲出。');
-            winMessage.innerHTML = '<span class="win-badge">' + stopDesc.short + '</span>';
+            // 侧栏过关标用 pass-badge，避免 craft-gold MutationObserver 误匹配
+            winMessage.innerHTML = '<span class="pass-badge">' + stopDesc.short + '</span>';
             hintKey = 'pass';
         } else if (failKind === 'fly') {
             failGlow = 1.25;
@@ -1655,8 +1718,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     emit('win', { winOk: true });
   }
   var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  var __legacyWinScanTimer = null;
   function scanWinText() {
-    var text = document.body ? document.body.innerText : '';
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return false;
+    var nodes = document.querySelectorAll(
+      '.win-banner,#winBanner,[data-win="1"],.pass-badge,#winIndicator,.toast,.banner,.observe-item,[class*="win"]'
+    );
+    var text = '';
+    for (var n = 0; n < nodes.length; n++) {
+      text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
+      if (text.length > 8000) break;
+    }
+    if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {
         emitWin('text_' + i);
@@ -1665,10 +1738,43 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     return false;
   }
+  function scheduleScanWinText(muts) {
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return;
+    if (__legacyWinScanTimer) return;
+    __legacyWinScanTimer = setTimeout(function() {
+      __legacyWinScanTimer = null;
+      var suspect = !muts || !muts.length;
+      if (!suspect) {
+        for (var i = 0; i < muts.length && !suspect; i++) {
+          var m = muts[i];
+          if (m.type === 'characterData') {
+            var pt = m.target && m.target.parentElement;
+            var t = ((pt && (pt.innerText || pt.textContent)) || (m.target && m.target.data) || '').slice(0, 240);
+            if (/过关|命中|胜利|🏆|🎯/.test(t)) suspect = true;
+          } else if (m.addedNodes && m.addedNodes.length) {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              var node = m.addedNodes[j];
+              if (!node || (node.nodeType !== 1 && node.nodeType !== 3)) continue;
+              var tx = node.nodeType === 3
+                ? (node.data || '')
+                : ((node.innerText || node.textContent || '') + ' ' + (node.className || '') + ' ' + (node.id || ''));
+              if (/过关|命中|胜利|🏆|🎯|win-banner|win-badge|pass-badge|winBanner/.test(tx)) {
+                suspect = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (suspect) scanWinText();
+    }, 200);
+  }
   document.addEventListener('DOMContentLoaded', function() {
-    var obs = new MutationObserver(function() { scanWinText(); });
+    var obs = new MutationObserver(function(muts) { scheduleScanWinText(muts); });
     if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    setInterval(scanWinText, 800);
+    setInterval(function(){
+      if (!window.__legacyWinEmitted && !window.__craftWinOpen && !window.__craftWinDismissed) scanWinText();
+    }, 2000);
   });
 })();
 </script>
@@ -1777,6 +1883,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
 
   function applyMode(mode){
+    hideAttemptsExhausted();
     state.mode = mode === 'challenge' ? 'challenge' : 'explore';
     var label = $('modeLabel');
     var stats = $('challengeStats');
@@ -1801,6 +1908,131 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
   }
 
+
+  /* === attempts-exhausted-settle === */
+  var __exhaustTimer = null;
+  var __exhaustBound = false;
+  function __isChallengeWonNow(){
+    if (window.__craftWinOpen) return true;
+    if (window.__challengeWon) return true;
+    var win = $('craft-win');
+    if (win && !win.hidden && win.getAttribute('hidden') == null) {
+      try { if (win.offsetParent !== null || getComputedStyle(win).display !== 'none') return true; } catch (e) { return true; }
+    }
+    if (win && win.hidden === false) return true;
+    return false;
+  }
+  function hideAttemptsExhausted(){
+    if (__exhaustTimer) { clearTimeout(__exhaustTimer); __exhaustTimer = null; }
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureAttemptsExhaustedUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        applyMode('explore');
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+      gateActions();
+      applyMode('challenge');
+      var sel = $('modeSelect');
+      if (sel) sel.value = 'challenge';
+    });
+    if (bList) {
+      if (typeof window.__eaNavigateToStudentList !== 'function' && !document.getElementById('craftBackBtn')) {
+        bList.hidden = true;
+      } else {
+        bList.addEventListener('click', function(){
+          hideAttemptsExhausted();
+          if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+          else {
+            var bb = document.getElementById('craftBackBtn');
+            if (bb) bb.click();
+          }
+        });
+      }
+    }
+  }
+  function showAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__isChallengeWonNow()) return;
+    ensureAttemptsExhaustedUi();
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  function scheduleAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__exhaustTimer) clearTimeout(__exhaustTimer);
+    __exhaustTimer = setTimeout(function(){
+      __exhaustTimer = null;
+      showAttemptsExhausted();
+    }, 650);
+  }
+  function bindExhaustWinGuard(){
+    if (__exhaustBound) return;
+    __exhaustBound = true;
+    var prev = window.__craftShowWin;
+    if (typeof prev === 'function') {
+      window.__craftShowWin = function(){
+        hideAttemptsExhausted();
+        return prev.apply(this, arguments);
+      };
+    }
+    try {
+      var obs = new MutationObserver(function(){
+        if (__isChallengeWonNow()) hideAttemptsExhausted();
+      });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    } catch (e) {}
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
     var t = e.target.closest('button');
@@ -1814,6 +2046,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     state.attempts -= 1;
     renderAttempts();
     gateActions();
+    if (state.attempts <= 0) scheduleAttemptsExhausted();
   }
 
   function ensureUi(){
@@ -1869,6 +2102,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
     ft.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
+    setTimeout(bindExhaustWinGuard, 0);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
@@ -1878,6 +2112,159 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
 
 <script>
+/* === ea-minset-helper (multi-kp) === */
+(function(){
+  if (window.__eaMinset) return; window.__eaMinset = true;
+  var AV_LABELS = {"s-height":"起始高度","s-speed":"释放速度"};
+  var READING_SEL = "#observeText, #winMessage, #craftGaugeVal, .observe-box .state, .observe-value";
+  var READING_LABEL = "过环/停靠";
+  var ACTION_LABEL = "发射";
+  var EXTRA_TUNE_SEL = "";
+  var sessionEvidence = {
+    tuneCounts: {},
+    fireCount: 0,
+    lastReading: '',
+    attribution: null,
+    evidenceSummary: ''
+  };
+  Object.keys(AV_LABELS).forEach(function(id){ sessionEvidence.tuneCounts[id] = 0; });
+
+  function noteAvTune(controlId){
+    if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+    sessionEvidence.tuneCounts[controlId] += 1;
+  }
+  function noteFire(){ sessionEvidence.fireCount += 1; }
+  function dominantAv(){
+    var bestId = null, bestN = 0;
+    Object.keys(sessionEvidence.tuneCounts).forEach(function(id){
+      var n = sessionEvidence.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+  function readObservation(){
+    var nodes = document.querySelectorAll(READING_SEL);
+    for (var i = 0; i < nodes.length; i++){
+      var t = (nodes[i].textContent || '').replace(/\s+/g, ' ').trim();
+      if (t && t !== '待测' && t !== '--' && t !== '—.———' && t !== '观测中') return t;
+    }
+    return sessionEvidence.lastReading || '--';
+  }
+  function modeIsChallenge(){
+    var s = document.getElementById('modeSelect');
+    var v = s ? String(s.value || '') : '';
+    if (v === 'challenge') return true;
+    try {
+      if (typeof window.__platformTraceGetPhase === 'function') {
+        return String(window.__platformTraceGetPhase() || '') === 'challenge';
+      }
+    } catch (e) {}
+    return false;
+  }
+  function buildEvidenceSummary(reading){
+    var dom = dominantAv();
+    var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+    var r = reading || readObservation();
+    sessionEvidence.lastReading = r;
+    if (modeIsChallenge()) {
+      return '竞赛证据：' + READING_LABEL + ' ' + r + ' · 主调 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+    }
+    return '探究证据：' + READING_LABEL + ' ' + r + ' · 主调节 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+  }
+  function setCraftSettleOpen(open){
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (e) {}
+  }
+  function navigateToStudentList(){
+    try {
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({ type: 'platform-navigate', to: 'student-list' }, '*'); } catch (e1) {}
+        try { window.parent.location.href = '/student.html'; return; } catch (e2) {}
+        return;
+      }
+    } catch (e3) {}
+    window.location.href = '../index.html';
+  }
+  function updateAttrHint(selected){
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = dominantAv();
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true; hintEl.textContent = ''; return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+  function setCraftRevealVisible(visible){
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+  function prepareCraftWin(extraReading){
+    var reading = extraReading || readObservation();
+    sessionEvidence.evidenceSummary = buildEvidenceSummary(reading);
+    sessionEvidence.attribution = null;
+    var line = document.getElementById('craftEvidenceLine');
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + sessionEvidence.evidenceSummary;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){ el.checked = false; });
+    var wbtn = document.getElementById('craftWinBtn');
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+    window.__eaSessionEvidence = sessionEvidence;
+  }
+  function emitAttributionSnapshot(){
+    if (!window.__emit || !sessionEvidence.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c,
+      winOk: true,
+      attribution: sessionEvidence.attribution,
+      evidenceSummary: sessionEvidence.evidenceSummary
+    });
+  }
+
+  function bindTunes(){
+    Object.keys(AV_LABELS).forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      var handler = function(){ noteAvTune(id); };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+    });
+    // capacitor ch4 choice grids
+    if (EXTRA_TUNE_SEL) {
+      document.addEventListener('click', function(ev){
+        var t = ev.target;
+        if (!t || !t.closest) return;
+        if (t.closest('#c4-c-grid')) noteAvTune('c4-c');
+        else if (t.closest('#c4-v-grid')) noteAvTune('c4-v');
+      }, true);
+    }
+    var fireSel = '#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
+    document.addEventListener('click', function(ev){
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      if (t.closest(fireSel)) noteFire();
+    }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindTunes);
+  else bindTunes();
+
+  window.__eaPrepareCraftWin = prepareCraftWin;
+  window.__eaEmitAttribution = emitAttributionSnapshot;
+  window.__eaSessionEvidence = sessionEvidence;
+  window.__eaSetCraftSettleOpen = setCraftSettleOpen;
+  window.__eaNavigateToStudentList = navigateToStudentList;
+  window.__eaUpdateAttrHint = updateAttrHint;
+  window.__eaSetCraftRevealVisible = setCraftRevealVisible;
+  window.__eaNoteAvTune = noteAvTune;
+  window.__eaNoteFire = noteFire;
+})();
+</script>
+<script>
 /* === craft-gold-runtime === */
 (function(){
   if (window.__craftGold) return; window.__craftGold = true;
@@ -1885,7 +2272,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   var win = document.getElementById('craft-win');
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
+  var bbtn = document.getElementById('craftBackBtn');
   if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  function setSettle(open){
+    if (typeof window.__eaSetCraftSettleOpen === 'function') window.__eaSetCraftSettleOpen(open);
+  }
   function replayLevel(){
     if (typeof window.__craftReplay === 'function') {
       try { window.__craftReplay(); return; } catch (e) {}
@@ -1895,47 +2286,80 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (rbtn) { try { rbtn.click(); } catch (e) {} }
   }
   if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
+    window.__craftWinOpen = false;
     if (win) win.hidden = true;
+    setSettle(false);
     replayLevel();
   });
+  if (bbtn) bbtn.addEventListener('click', function(){
+    if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){
+    el.addEventListener('change', function(){
+      if (!el.checked) return;
+      var ev = window.__eaSessionEvidence;
+      if (ev) ev.attribution = el.value;
+      if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(true);
+      if (typeof window.__eaUpdateAttrHint === 'function') window.__eaUpdateAttrHint(el.value);
+      if (typeof window.__eaEmitAttribution === 'function') window.__eaEmitAttribution();
+      if (wbtn) wbtn.disabled = false;
+    });
+  });
 
-  // gauge into hud
-  var hud = document.getElementById('essence-hud') || document.getElementById('dual-mode-hud') || document.getElementById('hud');
-  if (hud && !document.getElementById('craft-gauge')) {
-    var g = document.createElement('div');
-    g.id = 'craft-gauge';
-    g.innerHTML = '<span>目标仪表</span><strong id="craftGaugeVal">待测</strong>';
-    hud.appendChild(g);
-  }
-function showWin(extra){
+  function showWin(extra){
+    if (window.__craftWinOpen) {
+      var t0 = document.getElementById('craftWinText');
+      if (t0 && typeof extra === 'string' && extra) t0.textContent = extra;
+      return;
+    }
     if (win) {
+      window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
+      if (typeof window.__eaPrepareCraftWin === 'function') {
+        var ev0 = window.__eaSessionEvidence;
+        if (!ev0 || !ev0.evidenceSummary) window.__eaPrepareCraftWin();
+      }
+      try {
+        var msg = document.getElementById('messageBox');
+        if (msg) msg.classList.add('hidden');
+      } catch (e) {}
+      // prefer craft-win over long chapter summaries when both exist
+      try {
+        ['summary4','summary1','summary2','summary3','victory'].forEach(function(id){
+          var el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+      } catch (e2) {}
       win.hidden = false;
+      setSettle(true);
+      var ev = window.__eaSessionEvidence;
+      if (!(ev && ev.attribution)) {
+        if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(false);
+        if (wbtn) wbtn.disabled = true;
+      }
       var t = document.getElementById('craftWinText');
-      if (t && extra) t.textContent = extra;
+      if (t && typeof extra === 'string' && extra) t.textContent = extra;
     }
   }
   window.__craftShowWin = showWin;
 
-  // Hook common win paths
   var _emit = window.__emit;
   window.__emit = function(type, payload){
     if (typeof _emit === 'function') _emit(type, payload);
     if (type === 'win') showWin();
   };
-  // Observe win banners
   var obs = new MutationObserver(function(){
-    if (window.__craftWinDismissed) return;
-    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (window.__craftWinDismissed || window.__craftWinOpen) return;
+    var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
     if (el && el.offsetParent !== null) showWin();
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
 
-  // Live gauge from first range readout if possible
   function tick(){
-    var val = document.querySelector('#essence-bench .value-badge, #essence-bench .value, .observe-box .state, .observe-value, #craftGaugeVal');
-    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval');
+    var src = document.querySelector('.observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal');
     var gval = document.getElementById('craftGaugeVal');
     if (gval && src && src !== gval) gval.textContent = (src.textContent || '').trim() || '观测中';
     requestAnimationFrame(tick);
@@ -1944,5 +2368,32 @@ function showWin(extra){
 })();
 </script>
 
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
+})();
+</script>
 </body>
 </html>

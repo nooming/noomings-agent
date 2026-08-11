@@ -6,7 +6,7 @@
 <title>探究中…</title>
 <link rel="stylesheet" href="/static/ui/platform-shell.css">
 </head>
-<body class="platform-page play-page">
+<body class="platform-page edu-shell play-page">
 
 <div id="playEnterOverlay" class="play-enter-overlay" aria-hidden="true"></div>
 <div class="play-shell">
@@ -128,6 +128,8 @@ async function boot() {
   let craftSettleOpen = false;
   let pathChipWantVisible = false;
   let adviceChipWantVisible = false;
+  /** Monotonic token so stale strategy-path fetches cannot re-show chips after clear/interim. */
+  let pathChipFetchGen = 0;
 
   function applyPathChipVisibility() {
     if (pathChip) {
@@ -138,42 +140,240 @@ async function boot() {
     }
   }
 
+  function clearPathChips() {
+    pathChipFetchGen += 1;
+    pathChipWantVisible = false;
+    adviceChipWantVisible = false;
+    applyPathChipVisibility();
+  }
+
+  /** Mid-campaign / non-terminal wins must not surface path/advice chips. */
+  function isInterimWin(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    if (payload.interim === true) return true;
+    if (payload.final === false) return true;
+    return false;
+  }
+
   if (pathToggle) {
     pathToggle.checked = showPathType;
     pathToggle.addEventListener('change', () => {
       showPathType = pathToggle.checked;
       localStorage.setItem('platform-show-path-type', showPathType ? '1' : '0');
       if (!showPathType) {
-        pathChipWantVisible = false;
-        adviceChipWantVisible = false;
+        clearPathChips();
+      } else {
+        applyPathChipVisibility();
       }
-      applyPathChipVisibility();
     });
   }
+
+  /** Best-effort rules judge (idempotent on server). No student UI for scores. */
+  const NEW_ROUND_FLUSH_MS = 2500;
+  let leaveJudgeSent = false;
+  function requestAutoJudgeForSession(sid, reason, extras) {
+    if (!sid) return Promise.resolve(null);
+    const url = '/api/platform/auto-judge-on-leave';
+    const x = extras || {};
+    const payload = {
+      sessionId: sid,
+      mode: 'rules',
+      reason: reason || 'leave',
+    };
+    if (x.terminalOutcome) payload.terminalOutcome = x.terminalOutcome;
+    if (x.attemptsExhausted) payload.attemptsExhausted = true;
+    const body = JSON.stringify(payload);
+    const awaitResult = x.awaitResult === true;
+    const timeoutMs = x.timeoutMs != null ? x.timeoutMs : NEW_ROUND_FLUSH_MS;
+
+    // Unload path: prefer sendBeacon (no await). New-round path awaits fetch after flush.
+    if (!awaitResult) {
+      try {
+        if (typeof navigator.sendBeacon === 'function') {
+          const blob = new Blob([body], { type: 'application/json' });
+          if (navigator.sendBeacon(url, blob)) return Promise.resolve({ ok: true, beacon: true });
+        }
+      } catch (_) { /* fall through to fetch */ }
+    }
+
+    const fetchP = fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+    }).then((r) => r.json().catch(() => ({ ok: !!r.ok }))).catch(() => null);
+
+    if (!awaitResult) {
+      fetchP.catch(() => {});
+      return fetchP;
+    }
+    return Promise.race([
+      fetchP,
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, timedOut: true }), timeoutMs)),
+    ]);
+  }
+  function requestAutoJudgeOnLeave() {
+    if (leaveJudgeSent) return;
+    const sid = (typeof PlatformTraceAdapter.getSessionId === 'function'
+      ? PlatformTraceAdapter.getSessionId()
+      : null) || traceSessionId;
+    if (!sid) return;
+    leaveJudgeSent = true;
+    requestAutoJudgeForSession(sid, 'leave');
+  }
+
+  /**
+   * One terminal round = one session file. After exhausted retry / craft「再玩一次」,
+   * flush terminal tip on the old id → auto-judge → rotate sessionId.
+   */
+  let rotatingRound = false;
+  async function beginPlatformTraceNewRound(detail) {
+    if (rotatingRound) return null;
+    rotatingRound = true;
+    const reason = (detail && detail.reason) || 'retry';
+    const judgeReason = reason === 'craft_win_replay' ? 'new_round_pass' : 'new_round';
+    const terminalOutcome = reason === 'craft_win_replay'
+      ? 'pass'
+      : (reason === 'exhausted_retry' ? 'exhausted_fail' : null);
+    try {
+      const oldSid = (typeof PlatformTraceAdapter.getSessionId === 'function'
+        ? PlatformTraceAdapter.getSessionId()
+        : null) || null;
+
+      // 1) Ensure old-session terminal signal is on disk before judge / rotate.
+      // Game emits live on the iframe adapter; shell phase events on the parent — flush both.
+      if (oldSid) {
+        try {
+          let child = null;
+          try { child = frame.contentWindow && frame.contentWindow.PlatformTraceAdapter; } catch (_) { child = null; }
+          if (child && typeof child.flushPending === 'function') {
+            await child.flushPending(NEW_ROUND_FLUSH_MS);
+          }
+          if (typeof PlatformTraceAdapter.markTerminalAndFlush === 'function' && terminalOutcome) {
+            await PlatformTraceAdapter.markTerminalAndFlush({
+              outcome: terminalOutcome,
+              reason,
+              timeoutMs: NEW_ROUND_FLUSH_MS,
+              // Safety tip if the game's attempts_exhausted ingest was lost; duplicates are OK.
+              emitEvents: terminalOutcome === 'exhausted_fail',
+            });
+          } else if (typeof PlatformTraceAdapter.flushPending === 'function') {
+            await PlatformTraceAdapter.flushPending(NEW_ROUND_FLUSH_MS);
+          }
+          // Tip on child too (same sessionId) without re-emitting events.
+          if (child && typeof child.markTerminalAndFlush === 'function' && terminalOutcome) {
+            await child.markTerminalAndFlush({
+              outcome: terminalOutcome,
+              reason,
+              timeoutMs: NEW_ROUND_FLUSH_MS,
+              emitEvents: false,
+            });
+          }
+        } catch (_) { /* rotate anyway after short wait */ }
+      }
+
+      // 2) Auto-judge old session (prefer after flush; short await, do not set leaveJudgeSent).
+      if (oldSid) {
+        try {
+          await requestAutoJudgeForSession(oldSid, judgeReason, {
+            terminalOutcome: terminalOutcome || undefined,
+            attemptsExhausted: terminalOutcome === 'exhausted_fail',
+            awaitResult: true,
+            timeoutMs: NEW_ROUND_FLUSH_MS,
+          });
+        } catch (_) { /* best-effort */ }
+      }
+
+      leaveJudgeSent = false;
+      clearPathChips();
+      craftSettleOpen = false;
+
+      // 3) Rotate to a fresh sessionId.
+      const newId = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      if (typeof PlatformTraceAdapter.beginNewRound === 'function') {
+        await PlatformTraceAdapter.beginNewRound({
+          ...traceCfg,
+          sessionId: newId,
+          reason,
+          skipBindControls: true,
+        });
+      } else {
+        await PlatformTraceAdapter.start({
+          ...traceCfg,
+          sessionId: newId,
+          skipBindControls: true,
+        });
+      }
+
+      try {
+        const cw = frame.contentWindow;
+        const child = cw && cw.PlatformTraceAdapter;
+        if (child && typeof child.start === 'function') {
+          await child.start({
+            ...traceCfg,
+            sessionId: newId,
+            skipPuzzleOpen: true,
+            skipBindControls: true,
+          });
+          if (currentPhase) notePhaseFromGame(currentPhase);
+        }
+      } catch (_) { /* iframe may be mid-reload */ }
+
+      if (statusEl) {
+        statusEl.textContent = '新一局 · 轨迹已切换会话';
+      }
+      return { oldSessionId: oldSid, sessionId: newId, reason };
+    } finally {
+      rotatingRound = false;
+    }
+  }
+  window.__platformTraceNewRound = (detail) => {
+    beginPlatformTraceNewRound(detail).catch(() => {});
+  };
 
   window.addEventListener('message', (ev) => {
     const data = ev && ev.data;
     if (!data || typeof data !== 'object') return;
     if (data.type === 'platform-navigate' && data.to === 'student-list') {
+      requestAutoJudgeOnLeave();
       location.href = '/student.html';
+      return;
+    }
+    if (data.type === 'platform-trace-new-round') {
+      beginPlatformTraceNewRound(data).catch(() => {});
+      return;
+    }
+    // Mid-level advance / replay: chips are post-session only
+    if (data.type === 'platform-level-continue' || data.type === 'platform-path-chips-clear') {
+      clearPathChips();
       return;
     }
     if (data.type === 'craft-settle') {
       craftSettleOpen = !!data.open;
-      applyPathChipVisibility();
+      // Closing a non-terminal settle must not leave sticky chips
+      if (!data.open && (data.final === false || data.interim === true)) {
+        clearPathChips();
+      } else {
+        applyPathChipVisibility();
+      }
     }
   });
 
-  function noteInteraction(type) {
+  function noteInteraction(type, payload) {
     if (type === 'win' || type === 'action' || type === 'tuning' || type === 'snapshot') {
       sawInteraction = true;
       if (idleHintEl) idleHintEl.hidden = true;
     }
     if (type === 'win' && showPathType) {
+      if (isInterimWin(payload)) {
+        clearPathChips();
+        return;
+      }
       const pkgGuess = (item.graphId || item.playUrl || '').match(/packages\/([^/]+)/)?.[1]
         || item.graphId
         || null;
       const sid = PlatformTraceAdapter.getSessionId?.() || traceSessionId;
+      const fetchGen = ++pathChipFetchGen;
       // Prefer real session events; fall back to synthetic demo only if session score fails
       fetch('/api/platform/strategy-path-summary', {
         method: 'POST',
@@ -191,7 +391,7 @@ async function boot() {
       })
         .then(r => r.json())
         .then(data => {
-          if (!showPathType || !pathChip) return;
+          if (fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
           if (data.ok && data.summary?.text) {
             pathChip.textContent = data.summary.text;
             pathChipWantVisible = true;
@@ -213,7 +413,7 @@ async function boot() {
               audience: 'student',
             }),
           }).then(r => r.json()).then(demo => {
-            if (!showPathType || !pathChip) return;
+            if (fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
             if (demo.ok && demo.summary?.text) {
               pathChip.textContent = demo.summary.text + ' · 演示';
               pathChipWantVisible = true;
@@ -243,7 +443,7 @@ async function boot() {
 
   const shellOrigRecord = PlatformTraceAdapter.record.bind(PlatformTraceAdapter);
   PlatformTraceAdapter.record = (type, payload) => {
-    noteInteraction(type);
+    noteInteraction(type, payload);
     if (type === 'phase_change' && payload?.phase) {
       currentPhase = payload.phase === 'challenge' ? 'challenge' : 'explore';
       document.body.dataset.playPhase = currentPhase;
@@ -286,7 +486,7 @@ async function boot() {
         const childAdapter = frame.contentWindow.PlatformTraceAdapter;
         const childRecord = childAdapter.record.bind(childAdapter);
         childAdapter.record = (type, payload) => {
-          noteInteraction(type);
+          noteInteraction(type, payload);
           return childRecord(type, payload);
         };
         frame.contentWindow.__platformTraceSetPhase = (phase) => {
@@ -348,8 +548,19 @@ async function boot() {
     statusEl.textContent = '已导出会话信息（完整轨迹已由平台自动记录，教师可在学情中心查看）';
   });
 
+  document.querySelector('a.play-fab-item[href="/student.html"]')?.addEventListener('click', () => {
+    requestAutoJudgeOnLeave();
+  });
+
   setFabMenuOpen(false);
-  window.addEventListener('beforeunload', () => clearTimeout(idleHintTimer));
+  window.addEventListener('pagehide', () => requestAutoJudgeOnLeave());
+  window.addEventListener('beforeunload', () => {
+    clearTimeout(idleHintTimer);
+    requestAutoJudgeOnLeave();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') requestAutoJudgeOnLeave();
+  });
 }
 
 boot();

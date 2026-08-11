@@ -47,12 +47,26 @@ function secondaryAv(c) {
   return avs[1]?.controlId || opControls(c)[1] || null;
 }
 function ev(ts, type, payload) { return { ts, ch: 0, type, payload }; }
-function trial(events, ts, tunings, fireId, winOk) {
+function isMultiLevelPkg(pkgId) {
+  return /projectile-cannon|cannon/i.test(String(pkgId || ''));
+}
+function trial(events, ts, tunings, fireId, winOk, opts = {}) {
   let t = ts;
   for (const [control, value] of tunings) events.push(ev(t++, 'tuning', { control, value }));
   events.push(ev(t++, 'action', { control: fireId }));
-  events.push(ev(t++, 'snapshot', { winOk: !!winOk, hintKey: winOk ? 'ok' : 'retry' }));
-  if (winOk) events.push(ev(t++, 'win', { winOk: true }));
+  const snapPayload = { winOk: !!winOk, hintKey: winOk ? 'ok' : 'retry' };
+  const winPayload = { winOk: true };
+  if (winOk && opts.multiLevelComplete) {
+    const n = Number(opts.levelsTotal) > 0 ? Math.round(Number(opts.levelsTotal)) : 4;
+    Object.assign(snapPayload, {
+      final: true, interim: false, levelsCleared: n, levelsTotal: n, level: n,
+    });
+    Object.assign(winPayload, {
+      final: true, interim: false, levelsCleared: n, levelsTotal: n, level: n,
+    });
+  }
+  events.push(ev(t++, 'snapshot', snapPayload));
+  if (winOk) events.push(ev(t++, 'win', winPayload));
   return t;
 }
 function withPhases(build) {
@@ -63,19 +77,26 @@ function withPhases(build) {
   build(events, ts);
   return events;
 }
-function synthS1(c) {
+function synthS1(c, pkgId) {
   const p = primaryAv(c); const f = fireCtrl(c);
+  const multiDone = isMultiLevelPkg(pkgId);
   return withPhases((e, ts) => {
     let t = ts;
     for (let i = 0; i < 3; i++) t = trial(e, t, [[p, 10 + i]], f, false);
-    trial(e, t, [[p, 14]], f, true);
+    trial(e, t, [[p, 14]], f, true, { multiLevelComplete: multiDone, levelsTotal: 4 });
   });
 }
-function synthS2(c) {
+function synthS2(c, pkgId) {
   const a = primaryAv(c); const b = secondaryAv(c) || a; const f = fireCtrl(c);
+  const multiDone = isMultiLevelPkg(pkgId);
   return withPhases((e, ts) => {
     let t = ts;
-    for (let i = 0; i < 4; i++) t = trial(e, t, [[a, 10 + i], [b, 20 + i]], f, i === 3);
+    for (let i = 0; i < 4; i++) {
+      t = trial(e, t, [[a, 10 + i], [b, 20 + i]], f, i === 3, {
+        multiLevelComplete: multiDone && i === 3,
+        levelsTotal: 4,
+      });
+    }
   });
 }
 function synthS3(c) {
@@ -123,8 +144,8 @@ async function main() {
     const chapter = loadChapter(id);
     const catalogId = `demo-${id}`;
     const cases = [
-      ['S1', synthS1(chapter)],
-      ['S2', synthS2(chapter)],
+      ['S1', synthS1(chapter, id)],
+      ['S2', synthS2(chapter, id)],
       ['S3', synthS3(chapter)],
       ['S4', synthS4(chapter)],
     ];

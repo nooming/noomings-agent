@@ -298,7 +298,15 @@ const PACKAGES = {
   },
   'multi-kp': {
     wave: 3,
-    skip: 'multi-kp：多知识点结构，过程评估不宜套单局短归因最小集',
+    question: '就你这几发的对照来看，过环并停减速带主要跟着哪一项变？',
+    avs: [
+      { id: 's-height', label: '起始高度', option: '主要是起始高度 h' },
+      { id: 's-speed', label: '释放速度', option: '主要是释放速度 v' },
+    ],
+    readingLabel: '过环/停靠',
+    readingSel: '#observeText, #winMessage, #craftGaugeVal, .observe-box .state, .observe-value',
+    actionLabel: '发射',
+    cv: '小车质量只改观感大小，不改过环能量判据（旁路）。',
     sample: { dir: '机械能', file: '机械能.html' },
   },
 };
@@ -558,6 +566,7 @@ function buildGoldRuntime() {
   }
   if (wbtn) wbtn.addEventListener('click', function(){
     if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
     if (win) win.hidden = true;
     setSettle(false);
@@ -724,16 +733,20 @@ function staticCheck(html) {
 }
 
 function main() {
+  const onlyId = process.argv[2] || '';
   const completed = [];
   const skipped = [];
   const failed = [];
 
   // Always skip pilots
-  skipped.push({ id: 'ramp-rolling-collision', reason: '已有完整归因试点', wave: 1 });
-  skipped.push({ id: 'projectile-basic', reason: '已有完整归因试点', wave: 1 });
+  if (!onlyId) {
+    skipped.push({ id: 'ramp-rolling-collision', reason: '已有完整归因试点', wave: 1 });
+    skipped.push({ id: 'projectile-basic', reason: '已有完整归因试点', wave: 1 });
+  }
 
   const ids = Object.keys(PACKAGES);
   for (const id of ids) {
+    if (onlyId && id !== onlyId) continue;
     const cfg = PACKAGES[id];
     if (cfg.skip) {
       skipped.push({ id, reason: cfg.skip, wave: cfg.wave });
@@ -766,70 +779,74 @@ function main() {
   }
 
   // Also scan remaining craft packages not in list
-  const allDirs = fs.readdirSync(PKG_ROOT, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .filter((n) => !['reports', 'vendor'].includes(n));
-  for (const id of allDirs) {
-    if (PACKAGES[id] || id === 'ramp-rolling-collision' || id === 'projectile-basic') continue;
-    const file = path.join(PKG_ROOT, id, 'game.html');
-    if (!fs.existsSync(file)) continue;
-    const raw = fs.readFileSync(file, 'utf8');
-    if (!raw.includes('id="craft-win"')) {
-      skipped.push({ id, reason: '无 #craft-win（未列入批次且无结算卡）', wave: '?' });
-      continue;
+  if (!onlyId) {
+    const allDirs = fs.readdirSync(PKG_ROOT, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .filter((n) => !['reports', 'vendor'].includes(n));
+    for (const id of allDirs) {
+      if (PACKAGES[id] || id === 'ramp-rolling-collision' || id === 'projectile-basic') continue;
+      const file = path.join(PKG_ROOT, id, 'game.html');
+      if (!fs.existsSync(file)) continue;
+      const raw = fs.readFileSync(file, 'utf8');
+      if (!raw.includes('id="craft-win"')) {
+        skipped.push({ id, reason: '无 #craft-win（未列入批次且无结算卡）', wave: '?' });
+        continue;
+      }
+      if (/name="craftAttr"/.test(raw)) {
+        completed.push({ id, wave: '?', status: 'already-other', checks: staticCheck(raw), sample: null });
+        continue;
+      }
+      skipped.push({ id, reason: '有 craft-win 但未列入本波配置（需人工补配置）', wave: '?' });
     }
-    if (/name="craftAttr"/.test(raw)) {
-      completed.push({ id, wave: '?', status: 'already-other', checks: staticCheck(raw), sample: null });
-      continue;
-    }
-    skipped.push({ id, reason: '有 craft-win 但未列入本波配置（需人工补配置）', wave: '?' });
   }
 
-  ensureDir(path.join(PKG_ROOT, 'reports'));
   const reportPath = path.join(PKG_ROOT, 'reports', 'evidence-attribution-expand.md');
-  const lines = [];
-  lines.push('# 证据 + 短归因扩包 · 短报');
-  lines.push('');
-  lines.push('日期：2026-08-08 · 未 commit');
-  lines.push('');
-  lines.push('## 完成');
-  lines.push('');
-  lines.push('| 波次 | 包 id | 状态 | 样本同步 | 静态检查 |');
-  lines.push('|------|-------|------|----------|----------|');
-  for (const c of completed) {
-    const sampleTxt = c.sample && c.sample.status === 'synced' ? c.sample.path : (c.sample && c.sample.status) || '-';
-    const chk = c.checks && c.checks.ok ? 'OK' : JSON.stringify(c.checks);
-    lines.push(`| ${c.wave} | \`${c.id}\` | ${c.status} | ${sampleTxt} | ${chk} |`);
-  }
-  lines.push('');
-  lines.push('## 跳过');
-  lines.push('');
-  lines.push('| 波次 | 包 id | 原因 |');
-  lines.push('|------|-------|------|');
-  for (const s of skipped) {
-    lines.push(`| ${s.wave} | \`${s.id}\` | ${s.reason} |`);
-  }
-  if (failed.length) {
+  if (!onlyId) {
+    ensureDir(path.join(PKG_ROOT, 'reports'));
+    const lines = [];
+    lines.push('# 证据 + 短归因扩包 · 短报');
     lines.push('');
-    lines.push('## 静态检查未过');
+    lines.push('日期：2026-08-08 · 未 commit');
     lines.push('');
-    for (const f of failed) {
-      lines.push(`- \`${f.id}\`: ${JSON.stringify(f.checks)}`);
+    lines.push('## 完成');
+    lines.push('');
+    lines.push('| 波次 | 包 id | 状态 | 样本同步 | 静态检查 |');
+    lines.push('|------|-------|------|----------|----------|');
+    for (const c of completed) {
+      const sampleTxt = c.sample && c.sample.status === 'synced' ? c.sample.path : (c.sample && c.sample.status) || '-';
+      const chk = c.checks && c.checks.ok ? 'OK' : JSON.stringify(c.checks);
+      lines.push(`| ${c.wave} | \`${c.id}\` | ${c.status} | ${sampleTxt} | ${chk} |`);
     }
+    lines.push('');
+    lines.push('## 跳过');
+    lines.push('');
+    lines.push('| 波次 | 包 id | 原因 |');
+    lines.push('|------|-------|------|');
+    for (const s of skipped) {
+      lines.push(`| ${s.wave} | \`${s.id}\` | ${s.reason} |`);
+    }
+    if (failed.length) {
+      lines.push('');
+      lines.push('## 静态检查未过');
+      lines.push('');
+      for (const f of failed) {
+        lines.push(`- \`${f.id}\`: ${JSON.stringify(f.checks)}`);
+      }
+    }
+    lines.push('');
+    lines.push('## 约定（与试点一致）');
+    lines.push('');
+    lines.push('1. 过关自动「本局证据」一行（读数 + 主调控件次数）');
+    lines.push('2. 归因单选：本局对照问法（含 mixed/unsure）');
+    lines.push('3. 点选前隐藏 `.craft-reveal`；「再玩一次」需先点选');
+    lines.push("4. 点选后 `__emit('snapshot', { attribution, evidenceSummary, winOk: true })`");
+    lines.push('5. 不改 judge 用 attribution 判分');
+    lines.push('');
+    fs.writeFileSync(reportPath, lines.join('\n'), 'utf8');
   }
-  lines.push('');
-  lines.push('## 约定（与试点一致）');
-  lines.push('');
-  lines.push('1. 过关自动「本局证据」一行（读数 + 主调控件次数）');
-  lines.push('2. 归因单选：本局对照问法（含 mixed/unsure）');
-  lines.push('3. 点选前隐藏 `.craft-reveal`；「再玩一次」需先点选');
-  lines.push("4. 点选后 `__emit('snapshot', { attribution, evidenceSummary, winOk: true })`");
-  lines.push('5. 不改 judge 用 attribution 判分');
-  lines.push('');
-  fs.writeFileSync(reportPath, lines.join('\n'), 'utf8');
 
-  console.log(JSON.stringify({ completed: completed.length, skipped: skipped.length, failed: failed.length, reportPath }, null, 2));
+  console.log(JSON.stringify({ onlyId: onlyId || null, completed: completed.length, skipped: skipped.length, failed: failed.length, reportPath }, null, 2));
   for (const c of completed) console.log('OK', c.wave, c.id, c.status, c.sample && c.sample.status);
   for (const s of skipped) console.log('SKIP', s.wave, s.id, s.reason);
   for (const f of failed) console.log('FAIL', f.id, f.checks);

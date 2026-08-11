@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节介质/间距/面积并读取电容 | O1 | operation | 调参+读取 |\n| 介质选择判定 | C1 | constraint | 非空气介质 |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 间距下限判定 | C2 | constraint | d≥3.5mm |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 面积上限判定 | C3 | constraint | A≤100cm² |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 击穿判定 | C4 | constraint | E>Ebd击穿 |\n| 是→击穿重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 电容目标带判定 | C5 | constraint | 49-52pF |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | - | - | skip retry |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 调节介质/间距/面积并读取电容 | O1 | operation | 调参+读取 |\n| 介质选择判定 | C1 | constraint | 非空气介质 |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 间距下限判定 | C2 | constraint | d≥3.5mm |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 面积上限判定 | C3 | constraint | A≤100cm² |\n| 是→继续 | - | - | skip retry |\n| 否→提示重试 | - | - | skip retry |\n| 击穿判定 | C4 | constraint | E>Ebd击穿 |\n| 是→击穿重试 | - | - | skip retry |\n| 否→继续 | - | - | skip retry |\n| 电容目标带判定 | C5 | constraint | 目标C±约1.8% |\n| 是→过关 | R1 | result | 胜利 |\n| 否→重试 | - | - | skip retry |",
   "kg": {
     "title": "电容实验一：介质与击穿",
     "sub": "介质台 · 击穿探究",
@@ -69,7 +69,7 @@
         "layer": "play",
         "level": 2,
         "r": 22,
-        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）",
+        "desc": "电容读数在目标带内（探究约 ±1.8%；竞赛约 ±1.0%）",
         "constraintKind": "physics"
       },
       {
@@ -228,7 +228,7 @@
                               "_e": "否",
                               "n": "电容目标带判定",
                               "t": "decision",
-                              "d": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）",
+                              "d": "电容读数在目标带内（探究约 ±1.8%；竞赛约 ±1.0%）",
                               "children": [
                                 {
                                   "_e": "否",
@@ -720,10 +720,10 @@
         "mapsToKg": "O1",
         "role": "adjustment",
         "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
+          "min": 0.5,
+          "max": 10,
+          "step": 0.01,
+          "unit": "mm"
         }
       },
       {
@@ -735,10 +735,10 @@
         "mapsToKg": "O1",
         "role": "adjustment",
         "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
+          "min": 10,
+          "max": 600,
+          "step": 0.1,
+          "unit": "cm2"
         }
       },
       {
@@ -788,7 +788,7 @@
       {
         "kgId": "C5",
         "label": "电容目标带判定",
-        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）"
+        "desc": "电容读数在目标带内（探究约 ±1.8%；竞赛约 ±1.0%）"
       }
     ],
     "observeFeedbackLoop": true,
@@ -985,7 +985,7 @@
       {
         "name": "电容目标带判定",
         "type": "decision",
-        "desc": "电容读数在 49–52 pF 范围内（目标 50 pF ±3%）"
+        "desc": "电容读数在目标带内（探究约 ±1.8%；竞赛约 ±1.0%）"
       },
       {
         "name": "重试",

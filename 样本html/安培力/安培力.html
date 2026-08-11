@@ -32,7 +32,7 @@
     .irrelevant-area { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .irrelevant-area button { background: #e2e8f0; color: #2d3748; font-size: 0.8rem; padding: 4px 14px; }
     .irrelevant-area button:hover { background: #cbd5e0; }
-    .win-badge { background: #f6e05e; color: #1a202c; font-weight: 600; padding: 4px 14px; border-radius: 30px; font-size: 0.9rem; }
+    .pass-badge { background: #f6e05e; color: #1a202c; font-weight: 600; padding: 4px 14px; border-radius: 30px; font-size: 0.9rem; }
     .flex { display: flex; align-items: center; gap: 8px; }
   
 /* === essence-sidebar-shell (auto) === */
@@ -590,6 +590,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:.75rem!important;
   opacity:.75!important;
 }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
 </style>
 </head>
 <body>
@@ -671,7 +698,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <span id="irrMsg" style="display:none;font-size:0.8rem; color:var(--craft-muted);"></span>
 
   <!-- 过关标记（隐藏） -->
-  <div id="winIndicator" class="win-badge" style="display:none; margin-top:10px;">✓ 过关！安培力达标</div>
+  <div id="winIndicator" class="pass-badge" style="display:none; margin-top:10px;">✓ 过关！安培力达标</div>
 </div>
 
 <!-- trace-adapter-hook (埋点) -->
@@ -1452,8 +1479,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     emit('win', { winOk: true });
   }
   var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  var __legacyWinScanTimer = null;
   function scanWinText() {
-    var text = document.body ? document.body.innerText : '';
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return false;
+    var nodes = document.querySelectorAll(
+      '.win-banner,#winBanner,[data-win="1"],.pass-badge,#winIndicator,.toast,.banner,.observe-item,[class*="win"]'
+    );
+    var text = '';
+    for (var n = 0; n < nodes.length; n++) {
+      text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
+      if (text.length > 8000) break;
+    }
+    if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {
         emitWin('text_' + i);
@@ -1462,10 +1499,43 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     return false;
   }
+  function scheduleScanWinText(muts) {
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return;
+    if (__legacyWinScanTimer) return;
+    __legacyWinScanTimer = setTimeout(function() {
+      __legacyWinScanTimer = null;
+      var suspect = !muts || !muts.length;
+      if (!suspect) {
+        for (var i = 0; i < muts.length && !suspect; i++) {
+          var m = muts[i];
+          if (m.type === 'characterData') {
+            var pt = m.target && m.target.parentElement;
+            var t = ((pt && (pt.innerText || pt.textContent)) || (m.target && m.target.data) || '').slice(0, 240);
+            if (/过关|命中|胜利|🏆|🎯/.test(t)) suspect = true;
+          } else if (m.addedNodes && m.addedNodes.length) {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              var node = m.addedNodes[j];
+              if (!node || (node.nodeType !== 1 && node.nodeType !== 3)) continue;
+              var tx = node.nodeType === 3
+                ? (node.data || '')
+                : ((node.innerText || node.textContent || '') + ' ' + (node.className || '') + ' ' + (node.id || ''));
+              if (/过关|命中|胜利|🏆|🎯|win-banner|win-badge|pass-badge|winBanner/.test(tx)) {
+                suspect = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (suspect) scanWinText();
+    }, 200);
+  }
   document.addEventListener('DOMContentLoaded', function() {
-    var obs = new MutationObserver(function() { scanWinText(); });
+    var obs = new MutationObserver(function(muts) { scheduleScanWinText(muts); });
     if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    setInterval(scanWinText, 800);
+    setInterval(function(){
+      if (!window.__legacyWinEmitted && !window.__craftWinOpen && !window.__craftWinDismissed) scanWinText();
+    }, 2000);
   });
 })();
 </script>
@@ -1574,6 +1644,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
 
   function applyMode(mode){
+    hideAttemptsExhausted();
     state.mode = mode === 'challenge' ? 'challenge' : 'explore';
     var label = $('modeLabel');
     var stats = $('challengeStats');
@@ -1599,6 +1670,131 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode, attempts: state.attempts } }));
   }
 
+
+  /* === attempts-exhausted-settle === */
+  var __exhaustTimer = null;
+  var __exhaustBound = false;
+  function __isChallengeWonNow(){
+    if (window.__craftWinOpen) return true;
+    if (window.__challengeWon) return true;
+    var win = $('craft-win');
+    if (win && !win.hidden && win.getAttribute('hidden') == null) {
+      try { if (win.offsetParent !== null || getComputedStyle(win).display !== 'none') return true; } catch (e) { return true; }
+    }
+    if (win && win.hidden === false) return true;
+    return false;
+  }
+  function hideAttemptsExhausted(){
+    if (__exhaustTimer) { clearTimeout(__exhaustTimer); __exhaustTimer = null; }
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureAttemptsExhaustedUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        applyMode('explore');
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      state.attempts = MAX_ATTEMPTS;
+      renderAttempts();
+      gateActions();
+      applyMode('challenge');
+      var sel = $('modeSelect');
+      if (sel) sel.value = 'challenge';
+    });
+    if (bList) {
+      if (typeof window.__eaNavigateToStudentList !== 'function' && !document.getElementById('craftBackBtn')) {
+        bList.hidden = true;
+      } else {
+        bList.addEventListener('click', function(){
+          hideAttemptsExhausted();
+          if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+          else {
+            var bb = document.getElementById('craftBackBtn');
+            if (bb) bb.click();
+          }
+        });
+      }
+    }
+  }
+  function showAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__isChallengeWonNow()) return;
+    ensureAttemptsExhaustedUi();
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  function scheduleAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__exhaustTimer) clearTimeout(__exhaustTimer);
+    __exhaustTimer = setTimeout(function(){
+      __exhaustTimer = null;
+      showAttemptsExhausted();
+    }, 650);
+  }
+  function bindExhaustWinGuard(){
+    if (__exhaustBound) return;
+    __exhaustBound = true;
+    var prev = window.__craftShowWin;
+    if (typeof prev === 'function') {
+      window.__craftShowWin = function(){
+        hideAttemptsExhausted();
+        return prev.apply(this, arguments);
+      };
+    }
+    try {
+      var obs = new MutationObserver(function(){
+        if (__isChallengeWonNow()) hideAttemptsExhausted();
+      });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    } catch (e) {}
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
     var t = e.target.closest('button');
@@ -1612,6 +1808,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     state.attempts -= 1;
     renderAttempts();
     gateActions();
+    if (state.attempts <= 0) scheduleAttemptsExhausted();
   }
 
   function ensureUi(){
@@ -1667,6 +1864,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
     ft.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
+    setTimeout(bindExhaustWinGuard, 0);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
@@ -1851,7 +2049,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
   if (wbtn) wbtn.addEventListener('click', function(){
     if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
+    window.__craftWinOpen = false;
     if (win) win.hidden = true;
     setSettle(false);
     replayLevel();
@@ -1872,7 +2072,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   });
 
   function showWin(extra){
+    if (window.__craftWinOpen) {
+      var t0 = document.getElementById('craftWinText');
+      if (t0 && typeof extra === 'string' && extra) t0.textContent = extra;
+      return;
+    }
     if (win) {
+      window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
       if (typeof window.__eaPrepareCraftWin === 'function') {
         var ev0 = window.__eaSessionEvidence;
@@ -1908,8 +2114,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (type === 'win') showWin();
   };
   var obs = new MutationObserver(function(){
-    if (window.__craftWinDismissed) return;
-    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (window.__craftWinDismissed || window.__craftWinOpen) return;
+    var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
     if (el && el.offsetParent !== null) showWin();
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
@@ -1924,5 +2130,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 })();
 </script>
 
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
+})();
+</script>
 </body>
 </html>

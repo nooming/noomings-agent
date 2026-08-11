@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#007baa">
+<meta name="theme-color" content="#0c8aad">
 <title>教师工作台 · 物理探究教学平台</title>
 <link rel="stylesheet" href="/static/ui/platform-shell.css">
 <link rel="stylesheet" href="/static/ui/agent-shell.css">
 </head>
-<body class="platform-page">
+<body class="platform-page edu-shell">
 
 <div id="platformHeader"></div>
 
@@ -65,6 +65,7 @@
           <div class="verdict-pills" id="verdictPills"></div>
         </div>
         <ul class="judged-student-chips" id="judgedStudentChips"></ul>
+        <p class="hint judged-chips-hint" id="judgedChipsHint" hidden></p>
       </div>
 
       <div class="tool-link-row sessions-toolbar">
@@ -88,8 +89,9 @@
         <div class="student-list-panel">
           <div class="student-list-header">
             <span>学生</span>
-            <span class="student-list-header-hint" title="过程档取当前筛选下最近一局有路径摘要的会话（无则未评估）；结果档：任一达标→达标，否则有待评→待评，否则未达标">过程·最近有效局 · 结果·当前筛选</span>
+            <span class="student-list-header-hint" title="综合分/过程/结果仅计终局会话（过关或机会用尽）；各任务取最近 1–2 局有限能力分均值后再对任务均分；结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·结果（仅终局）</span>
           </div>
+          <p class="hint student-list-trunc-hint" id="studentListTruncHint" hidden>列表可能已截断，请搜索/筛选以定位更多学生</p>
           <ul class="student-list" id="studentList">
             <li class="empty-state" style="padding:24px">加载中…</li>
           </ul>
@@ -98,9 +100,14 @@
           <div class="session-detail-empty">请从左侧选择学生</div>
         </div>
       </div>
+      <div class="edu-panel session-ability-panel" id="sessionAbilityPanel" hidden>
+        <h4>本局能力</h4>
+        <p class="hint">当前选中游玩会话的四维能力分与过程依据（任务 / 阶段 / 路径）；随左侧时间轴换局刷新。未终局局不计入下方学情画像综合分与前五维。</p>
+        <div id="sessionAbilitySummary"></div>
+      </div>
       <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
-        <h4>跨游戏学情对比</h4>
-        <p class="hint">同一学生在多个探究任务上的参数调节次数与评判摘要。</p>
+        <h4>学情画像</h4>
+        <p class="hint">六维雷达（结果 / 探究 / 竞赛 / 效率 / 一致性 / 完成度）· 综合分与前五维仅终局；完成度 = 终局/(终局+未终局)。与左侧列表同源。</p>
         <div id="crossGameSummary"></div>
       </div>
     </div>
@@ -306,6 +313,7 @@
 <script src="/static/ui/platform-nav.js"></script>
 <script src="/static/ui/catalog-badges.js"></script>
 <script src="/static/ui/graph-preview-url.js"></script>
+<script src="/static/ui/session-terminal.js"></script>
 <script>
 if (!PlatformNav.requireTeacherSession()) { throw new Error('redirect_teacher_login'); }
 PlatformNav.installTeacherFetchAuth();
@@ -497,6 +505,12 @@ let studentItems = [];
 let selectedStudentKey = null;
 let selectedSessionId = null;
 let selectedSessionIds = new Set();
+/** Per-student: whether non-terminal timeline rows are expanded. */
+const nonTerminalTimelineExpanded = new Map();
+/** Per-student: whether older-terminal fold is expanded. */
+const olderTerminalTimelineExpanded = new Map();
+/** Visible recent terminal rows before「更早的终局」fold. */
+const TERMINAL_TIMELINE_VISIBLE_N = 6;
 let searchDebounce = null;
 let graphIndexItems = [];
 let playUrlIndexItems = [];
@@ -506,9 +520,19 @@ let judgingSessionId = null;
 let filterGraphInitialized = false;
 /** 上次成功渲染详情的学生；同学生切换会话时用于恢复 #sessionDetail 滚动位置 */
 let lastDetailRenderedStudentKey = null;
+/** 已评判概览：默认隐藏达标×0；true 时显示全部芯片 */
+let judgedChipsShowAll = false;
+let lastJudgedOverviewStats = null;
 
-const FILTER_GRAPH_KEY = 'teacher.sessions.filterGraph';
+/** v2：旧键曾被自动锁到最近单任务；升键后首次回到「全部探究任务」 */
+const FILTER_GRAPH_KEY = 'teacher.sessions.filterGraph.v2';
 const HIDE_PLAYTEST_KEY = 'teacher.sessions.hidePlaytest';
+/** 课堂看板路径类型摘要 Top-N */
+const CLASSROOM_PATH_TYPE_TOP_N = 6;
+/** 与 API listTraceStudents 默认对齐；上限 300 */
+const STUDENTS_LIST_LIMIT = 200;
+/** 最近一次 students API 是否触达 limit（截断提示用，按过滤前条数） */
+let studentsListTruncated = false;
 
 function isPlaytestIdentity(studentKey, studentLabel) {
   const key = String(studentKey || '');
@@ -544,20 +568,6 @@ function writeStoredFilterGraph(value) {
   } catch { /* ignore */ }
 }
 
-async function pickRecentGraphWithData(optionValues) {
-  const allowed = new Set(optionValues || []);
-  if (!allowed.size) return '';
-  try {
-    const r = await fetch('/api/platform/traces');
-    const data = await r.json();
-    const items = data.items || [];
-    for (const item of items) {
-      if (item.graphId && allowed.has(item.graphId)) return item.graphId;
-    }
-  } catch { /* ignore */ }
-  return optionValues[0] || '';
-}
-
 async function fillFilterGraphOptions() {
   const filter = document.getElementById('filterGraph');
   if (!filter) return;
@@ -566,15 +576,14 @@ async function fillFilterGraphOptions() {
   const opts = catalogItems.map(i => `<option value="${esc(i.graphId)}">${esc(i.title)}</option>`).join('');
   filter.innerHTML = '<option value="">全部探究任务</option>' + opts;
   const validValues = new Set([...filter.options].map(o => o.value));
-  const nonEmpty = [...filter.options].map(o => o.value).filter(Boolean);
 
   let next;
   if (wasInit && validValues.has(prev)) {
     next = prev;
   } else {
+    // 记住上次筛选（含「全部」空串）；首次/无存储默认全部，避免锁到单一任务误以为数据丢失
     const saved = readStoredFilterGraph();
     if (saved != null && validValues.has(saved)) next = saved;
-    else if (nonEmpty.length) next = await pickRecentGraphWithData(nonEmpty);
     else next = '';
   }
   filter.value = next;
@@ -1324,6 +1333,18 @@ function filterParams() {
   return params;
 }
 
+function studentsQueryParams(base) {
+  const params = base || filterParams();
+  params.set('limit', String(STUDENTS_LIST_LIMIT));
+  return params;
+}
+
+function updateStudentListTruncHint() {
+  const el = document.getElementById('studentListTruncHint');
+  if (!el) return;
+  el.hidden = !studentsListTruncated;
+}
+
 function fmtTime(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -1351,8 +1372,48 @@ function verdictClass(v) {
   return 'verdict-other';
 }
 
-function buildJudgeBlock(jr) {
+/** Normalize for near-duplicate compare (亮点 ↔ summary). */
+function normalizeJudgeText(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/[。．.！!？?；;，,：:、··]/g, '');
+}
+
+function judgeTextsNearlySame(a, b) {
+  const na = normalizeJudgeText(a);
+  const nb = normalizeJudgeText(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  if (na.length >= 6 && nb.length >= 6 && (na.includes(nb) || nb.includes(na))) return true;
+  return false;
+}
+
+/** 默认弱句：勿同时占满摘要 + 亮点。 */
+function isWeakJudgePhrase(s) {
+  const n = normalizeJudgeText(s);
+  if (!n) return false;
+  return n === '有基本操作与状态记录'
+    || n === '有基本操作记录'
+    || n.startsWith('有基本操作与状态记录')
+    || n.startsWith('有基本操作记录');
+}
+
+function sessionPhaseShortLabel(phase) {
+  if (phase === 'challenge') return '竞赛';
+  if (phase === 'explore') return '探索';
+  return '进行中';
+}
+
+/**
+ * 评判卡：去重亮点/摘要；路径在能力卡已展示时降为短徽标；控制变量长提示折入 details。
+ * opts.pathShownElsewhere（默认 true）：与能力卡过程依据共存时瘦路径文案。
+ * opts.bare：不包外层 judge-result-box（供未终局「展开评语」内嵌）。
+ */
+function buildJudgeBlock(jr, opts = {}) {
   if (!jr) return '';
+  const pathShownElsewhere = opts.pathShownElsewhere !== false;
   const ts = jr.teacherSummary || {};
   const level = ts.level ?? null;
   let summary = ts.summary || '';
@@ -1360,14 +1421,35 @@ function buildJudgeBlock(jr) {
     summary = jr.comment.replace(/^\[规则模式\]\s*/, '').split('；待改进：')[0].trim();
   }
   if (!summary && jr.comment && jr.comment.length <= 120) summary = jr.comment;
-  const strengths = (ts.strengths?.length ? ts.strengths : jr.strengths || []).slice(0, 2);
+  let strengths = (ts.strengths?.length ? ts.strengths : jr.strengths || []).slice(0, 2);
   const gaps = (ts.gaps?.length ? ts.gaps : jr.gaps || []).slice(0, 2);
-  const suggestion = ts.suggestion || '';
-  const pathHint = jr.inquiryPath?.pathSteps?.length
-    ? `探究路径：${jr.inquiryPath.pathSteps.join(' → ')}`
+  let suggestion = ts.suggestion || '';
+
+  // 亮点与 summary 相同/高度重复 → 不渲染该亮点
+  strengths = strengths.filter(s => !judgeTextsNearlySame(s, summary));
+  // 弱句只保留一处：优先摘要；亮点里再滤掉弱句
+  strengths = strengths.filter(s => !isWeakJudgePhrase(s));
+  if (isWeakJudgePhrase(summary) && !strengths.length && !gaps.length) {
+    // 仅弱摘要：保留一行即可
+  } else if (isWeakJudgePhrase(summary) && strengths.length) {
+    summary = '';
+  }
+  // 建议与待改进重复时只留 gaps 列表
+  if (suggestion && gaps.some(g => judgeTextsNearlySame(g, suggestion))) {
+    suggestion = '';
+  }
+
+  const pathSteps = Array.isArray(jr.inquiryPath?.pathSteps) ? jr.inquiryPath.pathSteps : [];
+  const pathBadge = pathSteps.length
+    ? `<span class="badge badge-path judge-path-badge" title="探究路径 ${esc(pathSteps.join(' → '))}">${esc(pathSteps.join('→'))}</span>`
     : '';
-  const mainRouteHint = jr.inquiryPath?.strategyRouteGuess === 'main'
-    ? '<p class="judge-route-hint">本关推荐控制变量：每次只改一项参数（优于同时调节多参）。</p>'
+  const pathHint = (!pathShownElsewhere && pathSteps.length)
+    ? `<p class="judge-path-hint">探究路径：${esc(pathSteps.join(' → '))}</p>`
+    : '';
+  const mainRouteDetails = jr.inquiryPath?.strategyRouteGuess === 'main'
+    ? (pathShownElsewhere
+      ? `<details class="judge-legacy-details judge-route-details"><summary>控制变量提示</summary><p class="judge-route-hint">本关推荐控制变量：每次只改一项参数（优于同时调节多参）。</p></details>`
+      : '<p class="judge-route-hint">本关推荐控制变量：每次只改一项参数（优于同时调节多参）。</p>')
     : '';
   const showLegacy = jr.comment && jr.comment.length > 120
     && jr.comment !== summary
@@ -1389,15 +1471,17 @@ function buildJudgeBlock(jr) {
     : '';
 
   const modeLabel = jr.mode === 'llm' ? 'LLM' : '规则';
-  return `<div class="judge-result-box">
+  const wrapClass = opts.bare ? 'judge-result-inner' : 'judge-result-box';
+  return `<div class="${wrapClass}">
     <div class="judge-result-head">
       <span class="judge-verdict badge-verdict ${verdictClass(jr.verdict)}">${esc(verdictLabel(jr.verdict))}</span>
       ${levelBadge}
+      ${pathShownElsewhere ? pathBadge : ''}
       <span class="badge badge-phase">${esc(modeLabel)}</span>
       ${jr.judgedAt ? `<span class="judge-time">${fmtTime(jr.judgedAt)}</span>` : ''}
     </div>
-    ${pathHint ? `<p class="judge-path-hint">${esc(pathHint)}</p>` : ''}
-    ${mainRouteHint}
+    ${pathHint}
+    ${mainRouteDetails}
     ${summary ? `<p class="judge-summary">${esc(summary)}</p>` : ''}
     ${bullets}
     ${suggestion ? `<p class="judge-suggestion"><strong>建议：</strong>${esc(suggestion)}</p>` : ''}
@@ -1405,9 +1489,34 @@ function buildJudgeBlock(jr) {
   </div>`;
 }
 
+/** 未终局详情评判区：一行级摘要；完整评判卡收入「展开评语」。 */
+function buildIncompleteJudgeArea(jr, session, summary) {
+  const phase = sessionPhaseShortLabel(summary?.currentPhase || session?.currentPhase || null);
+  const n = session?.eventCount ?? summary?.total ?? summary?.eventCount ?? 0;
+  const line = `未完成 · ${phase} · ${n}事件 · 不计入综合分`;
+  const full = jr ? buildJudgeBlock(jr, { pathShownElsewhere: true, bare: true }) : '';
+  return `<div class="judge-result-box judge-result-incomplete">
+    <p class="judge-incomplete-line">${esc(line)}</p>
+    ${full
+      ? `<details class="judge-incomplete-expand"><summary>展开评语</summary>${full}</details>`
+      : '<p class="hint judge-incomplete-hint">尚未评判（可强制规则/LLM 评判）</p>'}
+  </div>`;
+}
+
+function buildJudgeAreaHtml(jr, session, summary) {
+  if (session && !isTerminalSessionRow(session)) {
+    return buildIncompleteJudgeArea(jr, session, summary);
+  }
+  return jr ? buildJudgeBlock(jr, { pathShownElsewhere: true }) : '';
+}
+
 function renderJudgeResult(jr) {
   const box = document.getElementById('judgeResult');
-  if (box) box.innerHTML = buildJudgeBlock(jr);
+  if (box) {
+    const student = currentStudent();
+    const sess = student?.sessions?.find(s => s.sessionId === (selectedSessionId || judgingSessionId)) || null;
+    box.innerHTML = buildJudgeAreaHtml(jr, sess, { currentPhase: sess?.currentPhase, total: sess?.eventCount });
+  }
   const btn = document.getElementById('judgeBtn');
   if (btn) {
     btn.disabled = false;
@@ -1447,48 +1556,97 @@ function displayStudentName(key, label) {
   return key;
 }
 
+function judgedPassCount(j) {
+  if (typeof j?.passCount === 'number') return j.passCount;
+  return j?.verdict === 'pass' ? 1 : 0;
+}
+
 function renderJudgedOverview(stats) {
   const panel = document.getElementById('judgedOverview');
   const pills = document.getElementById('verdictPills');
   const chips = document.getElementById('judgedStudentChips');
+  const hint = document.getElementById('judgedChipsHint');
+  lastJudgedOverviewStats = stats;
   let judged = stats.judgedStudents || [];
   if (hidePlaytestEnabled()) {
     judged = judged.filter(j => !isPlaytestIdentity(j.studentKey, j.studentLabel));
   }
-  const summary = { pass: 0, in_progress: 0, learning: 0, other: 0 };
+  // 局数合计：优先 passCount；兼容旧 API（每生一条 verdict）
+  const summary = { pass: 0, exhausted_fail: 0, incomplete: 0 };
   for (const j of judged) {
-    const v = j.verdict || 'other';
-    if (summary[v] != null) summary[v] += 1;
-    else summary.other += 1;
+    if (typeof j.passCount === 'number') {
+      summary.pass += j.passCount || 0;
+      summary.exhausted_fail += j.exhaustedFailCount || 0;
+      summary.incomplete += j.incompleteCount || 0;
+    } else {
+      const v = j.verdict || 'other';
+      if (v === 'pass') summary.pass += 1;
+      else if (v === 'learning') summary.exhausted_fail += 1;
+      else summary.incomplete += 1;
+    }
   }
   if (!judged.length) {
     panel.hidden = true;
+    if (hint) { hint.hidden = true; hint.innerHTML = ''; }
     return;
   }
   panel.hidden = false;
   const pillOrder = [
-    ['pass', '达标'],
-    ['in_progress', '探索中'],
-    ['learning', '需改进'],
+    ['pass', '达标', 'verdict-pass'],
+    ['exhausted_fail', '未达标', 'verdict-learning'],
+    ['incomplete', '未完成', 'verdict-progress'],
   ];
   pills.innerHTML = pillOrder
     .filter(([k]) => (summary[k] || 0) > 0)
-    .map(([k, label]) => `<span class="verdict-pill ${verdictClass(k)}">${label} ${summary[k]}</span>`)
+    .map(([k, label, cls]) => `<span class="verdict-pill ${cls}">${label} ${summary[k]}</span>`)
     .join('') || '<span class="hint" style="font-size:0.82rem">暂无分类统计</span>';
-  chips.innerHTML = judged.map(j => `
+
+  const withPass = [];
+  const zeroPass = [];
+  for (const j of judged) {
+    const n = judgedPassCount(j);
+    (n > 0 ? withPass : zeroPass).push({ j, n });
+  }
+  const visible = judgedChipsShowAll ? [...withPass, ...zeroPass] : withPass;
+  chips.innerHTML = visible.map(({ j, n }) => {
+    const chipClass = n > 0 ? 'verdict-pass' : 'verdict-other';
+    return `
     <li>
-      <button type="button" class="judged-chip ${verdictClass(j.verdict)}" data-key="${esc(j.studentKey)}" data-sid="${esc(j.sessionId)}">
+      <button type="button" class="judged-chip ${chipClass}" data-key="${esc(j.studentKey)}" data-sid="${esc(j.sessionId || '')}">
         <span class="judged-chip-name">${esc(displayStudentName(j.studentKey, j.studentLabel))}</span>
-        <span class="judged-chip-verdict">${esc(verdictLabel(j.verdict))}</span>
+        <span class="judged-chip-verdict">达标×${n}</span>
       </button>
-    </li>`).join('');
+    </li>`;
+  }).join('');
   chips.querySelectorAll('.judged-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedStudentKey = btn.dataset.key;
-      selectedSessionId = btn.dataset.sid;
+      selectedSessionId = btn.dataset.sid || null;
       loadStudents();
     });
   });
+
+  if (hint) {
+    const hiddenN = zeroPass.length;
+    if (!hiddenN) {
+      hint.hidden = true;
+      hint.innerHTML = '';
+    } else if (judgedChipsShowAll) {
+      hint.hidden = false;
+      hint.innerHTML = `<button type="button" class="linkish judged-chips-toggle" id="judgedChipsToggle">隐藏暂无达标</button>`;
+    } else if (!withPass.length) {
+      hint.hidden = false;
+      hint.innerHTML = `暂无达标生 · <button type="button" class="linkish judged-chips-toggle" id="judgedChipsToggle">显示全部 ${hiddenN} 名</button>`;
+    } else {
+      hint.hidden = false;
+      hint.innerHTML = `另有 ${hiddenN} 名暂无达标局 · <button type="button" class="linkish judged-chips-toggle" id="judgedChipsToggle">显示全部</button>`;
+    }
+    hint.querySelector('#judgedChipsToggle')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      judgedChipsShowAll = !judgedChipsShowAll;
+      if (lastJudgedOverviewStats) renderJudgedOverview(lastJudgedOverviewStats);
+    });
+  }
 }
 
 function applyStatsFromStudents(items, lastActivityAt) {
@@ -1518,7 +1676,7 @@ async function loadStats() {
   const data = await r.json();
   const s = data.stats || {};
   if (hidePlaytestEnabled()) {
-    const sr = await fetch('/api/platform/traces/students?' + params.toString());
+    const sr = await fetch('/api/platform/traces/students?' + studentsQueryParams(params).toString());
     const sd = await sr.json();
     const items = filterOutPlaytestStudents(sd.items || []);
     applyStatsFromStudents(items, s.lastActivityAt);
@@ -1535,6 +1693,22 @@ async function loadStats() {
 
 let lastClassroomBoard = null;
 
+/** 路径类型摘要：按出现次数 Top-N，其余折叠为「其余 n 类」。 */
+function formatPathTypeDistTopN(dist, topN = CLASSROOM_PATH_TYPE_TOP_N) {
+  const entries = Object.entries(dist || {})
+    .sort((a, b) => (b[1] - a[1]) || String(a[0]).localeCompare(String(b[0]), 'zh'));
+  if (!entries.length) return '暂无路径类型';
+  const n = Math.max(1, Number(topN) || CLASSROOM_PATH_TYPE_TOP_N);
+  const top = entries.slice(0, n);
+  const rest = entries.slice(n);
+  const parts = top.map(([k, v]) => `${esc(k)} ${v}`);
+  if (rest.length) {
+    const restSessions = rest.reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
+    parts.push(`其余 ${rest.length} 类（${restSessions}）`);
+  }
+  return parts.join(' · ');
+}
+
 async function loadClassroomBoard() {
   const params = new URLSearchParams();
   const graphId = document.getElementById('filterGraph')?.value;
@@ -1549,9 +1723,7 @@ async function loadClassroomBoard() {
     return;
   }
   const s = board.summary || {};
-  const dist = Object.entries(s.pathTypeDist || {})
-    .map(([k, v]) => `${esc(k)} ${v}`)
-    .join(' · ') || '暂无路径类型';
+  const dist = formatPathTypeDistTopN(s.pathTypeDist, CLASSROOM_PATH_TYPE_TOP_N);
   if (sumEl) {
     sumEl.innerHTML = `
       <span>会话 <strong>${s.sessionCount ?? 0}</strong></span>
@@ -1597,13 +1769,93 @@ function downloadBlob(filename, text, mime) {
 /** 严重过程 gaps：有则不宜标「清楚」。 */
 const SEVERE_PROCESS_GAP_RE = /多参|混调|盲调|混淆|无关|旁路|对照不足|偏少对照|少对照|缺少连续|散乱|空操作|观察偏少/;
 
+/**
+ * 与 packages/judge/ability-score.js 的 ABILITY_SCORE_VERSION 对齐。
+ * 浏览器无法 require 该模块；若 path-summary 返回 abilityScoreVersion 则优先用服务端值，
+ * 避免 scorer 升版后教师页再硬编码落后。
+ */
+const ABILITY_SCORE_VERSION = 3;
+let serverAbilityScoreVersion = null;
+
+function expectedAbilityScoreVersion() {
+  return serverAbilityScoreVersion != null ? Number(serverAbilityScoreVersion) : ABILITY_SCORE_VERSION;
+}
+
+function noteAbilityScoreVersionFromApi(payload) {
+  const v = payload?.abilityScoreVersion ?? payload?.abilityScore?.version;
+  if (v != null && Number.isFinite(Number(v))) serverAbilityScoreVersion = Number(v);
+}
+
 function sessionHasPathSummary(session) {
   const { explore, challenge, full, primary } = resolvePathSummariesByPhase(session);
   return !!(pathTypeFullText(explore) || pathTypeFullText(challenge)
     || pathTypeFullText(full) || pathTypeFullText(primary));
 }
 
-/** 过程档取局：仅认有路径摘要的会话（无路径 → 未评估，不再用「已评无路径」凑档）。 */
+function sessionAbilityScore(session) {
+  const a = session?.abilityScore;
+  if (!a || Number(a.version) !== Number(expectedAbilityScoreVersion())) return null;
+  return a;
+}
+
+/**
+ * 列表/详情回写冻结：
+ * - 当前版本已有有限 total → 整对象冻结，绝不换成 null/pending/新对象；
+ * - 仅当 incoming 有限且 version 更新（Number 比较）时才允许替换；
+ * - 否则仅补缺（existing 无有限分时采用 incoming）。
+ */
+/** 有限能力分：拒绝 null/''（Number(null)===0 不能当得分）。 */
+function isFiniteAbilityTotal(v) {
+  if (v == null || v === '') return false;
+  return Number.isFinite(Number(v));
+}
+
+function mergeAbilityScorePreferFinite(existing, incoming) {
+  if (!incoming) return existing || null;
+  if (!existing) return incoming;
+  const exp = Number(expectedAbilityScoreVersion());
+  const exVer = Number(existing.version);
+  const inVer = Number(incoming.version);
+  const exFinite = isFiniteAbilityTotal(existing.total);
+  const inFinite = isFiniteAbilityTotal(incoming.total);
+  const exCurrent = Number.isFinite(exVer) && exVer === exp;
+  const inCurrent = Number.isFinite(inVer) && inVer === exp;
+
+  // Freeze: 当前版本有限总分 → 保持整个 existing 对象
+  if (exFinite && exCurrent) {
+    if (inFinite && Number.isFinite(inVer) && inVer > exVer) return incoming;
+    return existing;
+  }
+  // 有限但版本落后：允许当前版本有限分替换
+  if (exFinite && inFinite && inCurrent && (!Number.isFinite(exVer) || inVer > exVer)) {
+    return incoming;
+  }
+  if (exFinite && !inFinite) return existing;
+  if (inFinite && inCurrent) return incoming;
+  if (inFinite && !exFinite) return incoming;
+  if (inCurrent && !exCurrent) return incoming;
+  if (exCurrent && !inCurrent) return existing;
+  return existing;
+}
+
+function sessionHasCurrentAbilityTotal(session) {
+  const a = session?.abilityScore;
+  return !!(a
+    && Number(a.version) === Number(expectedAbilityScoreVersion())
+    && isFiniteAbilityTotal(a.total));
+}
+
+/** 冻结会话：path-summary 回写不得再改 abilityScore。 */
+function sessionAbilityScoreFrozen(session) {
+  return sessionHasCurrentAbilityTotal(session);
+}
+
+/** 需能力分补缺/版本升级：缺失、非当前公式版本、或无有限 total（与服务端 path-summary 重算条件一致）。 */
+function sessionNeedsAbilityRescore(session) {
+  return !sessionHasCurrentAbilityTotal(session);
+}
+
+/** 过程档取局：优先有能力分或路径摘要的会话（详情回退用）。 */
 function pickLatestPathSession(sessions) {
   const list = Array.isArray(sessions) ? sessions.slice() : [];
   list.sort((a, b) => {
@@ -1611,7 +1863,178 @@ function pickLatestPathSession(sessions) {
     const tb = b.updatedAt || b.startedAt || '';
     return String(tb).localeCompare(String(ta));
   });
-  return list.find(sessionHasPathSummary) || null;
+  return list.find(s => sessionAbilityScore(s) || sessionHasPathSummary(s)) || null;
+}
+
+function sessionTaskKey(session) {
+  return String(
+    session?.catalogId
+    || session?.graphId
+    || session?.packageId
+    || session?.taskCode
+    || 'unknown',
+  );
+}
+
+function sessionFiniteAbilityTotal(session) {
+  const a = sessionAbilityScore(session);
+  if (!a || a.pending || !isFiniteAbilityTotal(a.total)) return null;
+  return Number(a.total);
+}
+
+function sortSessionsNewestFirst(sessions) {
+  return (Array.isArray(sessions) ? sessions.slice() : []).sort((a, b) => {
+    const ta = String(a?.updatedAt || a?.startedAt || '');
+    const tb = String(b?.updatedAt || b?.startedAt || '');
+    return tb.localeCompare(ta);
+  });
+}
+
+function isTerminalSessionRow(session) {
+  if (typeof SessionTerminal !== 'undefined' && SessionTerminal.isTerminalSession) {
+    return SessionTerminal.isTerminalSession(session);
+  }
+  const o = session?.terminalOutcome || session?.sessionOutcome;
+  if (o === 'pass' || o === 'exhausted_fail') return true;
+  if (session?.verdict === 'pass' || session?.abilityScore?.bands?.result === '达标') return true;
+  return false;
+}
+
+function terminalSessionsOf(student) {
+  return (Array.isArray(student?.sessions) ? student.sessions : []).filter(isTerminalSessionRow);
+}
+
+/**
+ * 方案 B：按任务聚合能力分。
+ * 每任务取最近 1–2 局当前版本有限 total 的均值；学生综合分 = 任务均分（四舍五入整数）。
+ * 范围：当前筛选下的可见终局 sessions（过关或机会用尽；与列表同源）。
+ */
+function aggregateStudentAbilityByTask(student) {
+  const sessions = terminalSessionsOf(student);
+  const byTask = new Map();
+  for (const s of sessions) {
+    const key = sessionTaskKey(s);
+    if (!byTask.has(key)) byTask.set(key, []);
+    byTask.get(key).push(s);
+  }
+  const taskScores = [];
+  const representativeSessions = [];
+  for (const [taskKey, list] of byTask) {
+    const scored = sortSessionsNewestFirst(list)
+      .filter(s => sessionFiniteAbilityTotal(s) != null);
+    if (!scored.length) continue;
+    const reps = scored.slice(0, 2);
+    const vals = reps.map(s => sessionFiniteAbilityTotal(s));
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    taskScores.push({ taskKey, score: mean, sessions: reps });
+    representativeSessions.push(...reps);
+  }
+  const composite = taskScores.length
+    ? Math.round(taskScores.reduce((a, t) => a + t.score, 0) / taskScores.length)
+    : null;
+  return { taskScores, representativeSessions, composite };
+}
+
+/** 代表局过程档：全同取该档；多数票（>半）取多数；否则「部分清楚」。 */
+function mapAggregateProcessBand(sessions) {
+  const bands = (Array.isArray(sessions) ? sessions : [])
+    .map(mapSessionProcessBand)
+    .filter(b => b && b !== '未评估');
+  if (!bands.length) return '未评估';
+  const unique = [...new Set(bands)];
+  if (unique.length === 1) return unique[0];
+  const counts = Object.create(null);
+  for (const b of bands) counts[b] = (counts[b] || 0) + 1;
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (ranked.length >= 2 && ranked[0][1] === ranked[1][1]) return '部分清楚';
+  if (ranked[0][1] > bands.length / 2) return ranked[0][0];
+  return '部分清楚';
+}
+
+function meanFinite(nums) {
+  const xs = (Array.isArray(nums) ? nums : []).filter(n => Number.isFinite(n));
+  if (!xs.length) return null;
+  return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+/** 一致性：100 * (1 - min(1, σ / max(μ, 1)))；样本 <2 → null。σ 用总体标准差。 */
+function consistencyFromTotals(totals) {
+  const xs = (Array.isArray(totals) ? totals : []).filter(n => Number.isFinite(n));
+  if (xs.length < 2) return null;
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const variance = xs.reduce((a, x) => a + (x - mean) ** 2, 0) / xs.length;
+  const sd = Math.sqrt(variance);
+  return Math.round(100 * (1 - Math.min(1, sd / Math.max(mean, 1))));
+}
+
+function abilityPartRaw(session, partKey) {
+  const raw = sessionAbilityScore(session)?.parts?.[partKey]?.raw;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** 可见会话终局/未终局计数（完成度分母含未终局）。 */
+function countSessionTerminalStats(student) {
+  const sessions = Array.isArray(student?.sessions) ? student.sessions : [];
+  let terminalN = 0;
+  let incompleteN = 0;
+  for (const s of sessions) {
+    if (isTerminalSessionRow(s)) terminalN += 1;
+    else incompleteN += 1;
+  }
+  return { terminalN, incompleteN, totalN: terminalN + incompleteN };
+}
+
+/**
+ * 完成度 = round(100 * N_terminal / (N_terminal + N_incomplete))；无会话 → null。
+ */
+function computeCompletionScore(student) {
+  const { terminalN, incompleteN, totalN } = countSessionTerminalStats(student);
+  if (!totalN) return null;
+  return Math.round(100 * terminalN / (terminalN + incompleteN));
+}
+
+/** 未终局过多：incomplete≥5，或 incomplete/total≥50% 且 incomplete≥3。 */
+function incompleteTooMany(stats) {
+  const incompleteN = Number(stats?.incompleteN) || 0;
+  const totalN = Number(stats?.totalN) || 0;
+  if (incompleteN >= 5) return true;
+  if (totalN > 0 && incompleteN / totalN >= 0.5 && incompleteN >= 3) return true;
+  return false;
+}
+
+/**
+ * 六维雷达：前五维与综合分同一套终局代表局；完成度含未终局。
+ * 一致性优先用任务分序列；仅一任务时用代表局总分序列。
+ */
+function computeStudentRadarDims(student) {
+  const agg = aggregateStudentAbilityByTask(student);
+  const reps = agg.representativeSessions;
+  let result = meanFinite(reps.map(s => abilityPartRaw(s, 'result')));
+  if (result == null) {
+    const terminal = terminalSessionsOf(student);
+    if (terminal.length) {
+      result = (terminal.filter(s => s.verdict === 'pass' || s.terminalOutcome === 'pass'
+        || s.abilityScore?.bands?.result === '达标').length / terminal.length) * 100;
+    }
+  }
+  const exploreProcess = meanFinite(reps.map(s => abilityPartRaw(s, 'exploreProcess')));
+  const challengeProcess = meanFinite(reps.map(s => abilityPartRaw(s, 'challengeProcess')));
+  const efficiency = meanFinite(reps.map(s => abilityPartRaw(s, 'efficiency')));
+  const consistencySources = agg.taskScores.length >= 2
+    ? agg.taskScores.map(t => t.score)
+    : reps.map(s => sessionFiniteAbilityTotal(s));
+  const consistency = consistencyFromTotals(consistencySources);
+  const completionStats = countSessionTerminalStats(student);
+  const completion = computeCompletionScore(student);
+  return {
+    composite: agg.composite,
+    dims: { result, exploreProcess, challengeProcess, efficiency, consistency, completion },
+    repCount: reps.length,
+    taskCount: agg.taskScores.length,
+    consistencyN: consistencySources.filter(n => Number.isFinite(n)).length,
+    completionStats,
+  };
 }
 
 function pathEnumKind(enumShort) {
@@ -1646,14 +2069,14 @@ function sessionGaps(session) {
 }
 
 /**
- * 单局 → 过程四态（常驻）。边界：无清晰单变量证据时不标「清楚」。
- * - 清楚：探究/竞赛至少一端单变量（或主路径单变量），且无严重 gaps；两端不一致则降为部分清楚
- * - 部分清楚：有结构但有 gaps，或一端清一端浊，或仅「其它」结构
- * - 尚不清晰：尚不清晰/观察偏少/多参混调为主
- * - 未评估：无路径摘要可判（含已评但无路径）
+ * 单局 → 过程四态（常驻）。
+ * 优先能力总分（当前公式版本）的 bands.process（option B）；无能力分时回退路径枚举规则。
  */
 function mapSessionProcessBand(session) {
   if (!session) return '未评估';
+  const ability = sessionAbilityScore(session);
+  if (ability?.bands?.process) return ability.bands.process;
+
   const kinds = sessionPathEnumKinds(session);
   const gaps = sessionGaps(session);
   const severeGaps = gaps.some(g => SEVERE_PROCESS_GAP_RE.test(String(g || '')));
@@ -1680,25 +2103,67 @@ function mapSessionProcessBand(session) {
   return '未评估';
 }
 
-/** 结果三态：达标 > 待评 > 未达标；无会话 → null。 */
+/** 结果三态：达标 > 未达标(机会用尽) > 未完成；无会话 → null；仅未终局 → 未完成。 */
 function mapStudentResultBand(sessions) {
   const list = Array.isArray(sessions) ? sessions : [];
-  if (!list.length) return null;
-  if (list.some(s => s.verdict === 'pass')) return '达标';
-  if (list.some(s => !s.judged)) return '待评';
-  return '未达标';
+  const terminal = list.filter(isTerminalSessionRow);
+  if (!terminal.length) return list.length ? '未完成' : null;
+  if (terminal.some(s => s.verdict === 'pass' || s.terminalOutcome === 'pass'
+    || s.abilityScore?.bands?.result === '达标')) {
+    return '达标';
+  }
+  if (terminal.some(s => s.terminalOutcome === 'exhausted_fail'
+    || s.abilityScore?.bands?.result === '未达标'
+    || (typeof SessionTerminal !== 'undefined' && SessionTerminal.isAttemptsExhaustedFail?.(s)))) {
+    return '未达标';
+  }
+  return '未完成';
+}
+
+/** Compat: older abilityScore may still have written 待评 → 展示为未完成。 */
+function normalizeResultBandLabel(band) {
+  if (band === '待评') return '未完成';
+  return band;
+}
+
+function mapSessionResultBand(session) {
+  if (!session) return '未完成';
+  // Terminal outcome wins over a stale abilityScore.bands.result === '未完成'
+  // (race: leaveAuto skipped before attempts_exhausted landed, then later tip/events upgraded).
+  if (typeof SessionTerminal !== 'undefined' && SessionTerminal.deriveTerminalOutcome) {
+    const o = SessionTerminal.deriveTerminalOutcome(session);
+    if (o === 'pass') return '达标';
+    if (o === 'exhausted_fail') return '未达标';
+  } else {
+    if (session.verdict === 'pass' || session.terminalOutcome === 'pass') return '达标';
+    if (session.terminalOutcome === 'exhausted_fail') return '未达标';
+  }
+  const abilityBand = normalizeResultBandLabel(sessionAbilityScore(session)?.bands?.result);
+  if (abilityBand === '达标' || abilityBand === '未达标') return abilityBand;
+  return '未完成';
 }
 
 function aggregateStudentBands(student) {
   const sessions = student?.sessions || [];
   if (!sessions.length) {
-    return { processBand: '未评估', resultBand: null, effectiveSession: null };
+    return {
+      processBand: '未评估',
+      resultBand: null,
+      effectiveSession: null,
+      abilityTotal: null,
+      agg: null,
+    };
   }
-  const effective = pickLatestPathSession(sessions);
+  const agg = aggregateStudentAbilityByTask(student);
+  const reps = agg.representativeSessions;
+  const terminal = terminalSessionsOf(student);
+  const fallback = pickLatestPathSession(terminal.length ? terminal : sessions);
   return {
-    processBand: effective ? mapSessionProcessBand(effective) : '未评估',
+    processBand: reps.length ? mapAggregateProcessBand(reps) : '未评估',
     resultBand: mapStudentResultBand(sessions),
-    effectiveSession: effective,
+    effectiveSession: reps[0] || fallback,
+    abilityTotal: agg.composite,
+    agg,
   };
 }
 
@@ -1711,38 +2176,65 @@ function processBandClass(band) {
 }
 
 function resultBandClass(band) {
-  if (band === '达标') return 'band-result-pass';
-  if (band === '待评') return 'band-result-pending';
-  if (band === '未达标') return 'band-result-fail';
+  const b = normalizeResultBandLabel(band);
+  if (b === '达标') return 'band-result-pass';
+  if (b === '未完成' || b === '待评') return 'band-result-pending';
+  if (b === '未达标') return 'band-result-fail';
   return '';
+}
+
+function abilityScoreBadgeHtml(total, { pending = false, title = '能力总分' } = {}) {
+  // pending 不得盖住已有有限总分；null 不得因 Number(null)===0 显示成 0
+  if (isFiniteAbilityTotal(total)) {
+    const n = Math.round(Number(total));
+    return `<span class="badge badge-ability" title="${esc(title)}">${n}</span>`;
+  }
+  const suffix = pending || total == null ? '（未完成）' : '';
+  return `<span class="badge badge-ability" title="${esc(title)}${suffix}">—</span>`;
+}
+
+function incompleteBadgeHtml(student) {
+  const stats = countSessionTerminalStats(student);
+  if (!incompleteTooMany(stats)) return '';
+  const n = stats.incompleteN;
+  return `<span class="badge badge-band badge-incomplete" title="未终局会话偏多（${n}/${stats.totalN}）；不计入综合分与前五维">未×${n}</span>`;
 }
 
 function studentAggBadgesHtml(student) {
   const sessions = student?.sessions || [];
   if (!sessions.length) return '';
-  const { processBand, resultBand } = aggregateStudentBands(student);
-  const proc = processBand || '未评估';
-  const res = resultBand || '待评';
+  const { resultBand, abilityTotal, effectiveSession } = aggregateStudentBands(student);
+  const res = normalizeResultBandLabel(resultBand) || '未完成';
+  const pending = !!sessionAbilityScore(effectiveSession)?.pending && abilityTotal == null;
   return [
-    `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档（最近有路径摘要的局；无则未评估）">${esc(proc)}</span>`,
-    `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="结果档（当前筛选）">${esc(res)}</span>`,
-  ].join('');
+    abilityScoreBadgeHtml(abilityTotal, { pending, title: '综合分（按任务均分·仅终局）' }),
+    `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="结果档（达标/未完成/未达标）">${esc(res)}</span>`,
+    incompleteBadgeHtml(student),
+  ].filter(Boolean).join('');
 }
 
 function studentAggMetaHtml(student) {
   const sessions = student?.sessions || [];
   if (!sessions.length) return '';
-  const { processBand, resultBand } = aggregateStudentBands(student);
+  const { processBand, resultBand, abilityTotal, agg } = aggregateStudentBands(student);
   const graphId = document.getElementById('filterGraph')?.value;
   const scope = graphId ? '当前任务' : '当前筛选';
   const proc = processBand || '未评估';
-  const res = resultBand || '待评';
-  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·最近有效局）：过程·${esc(proc)} · 结果·${esc(res)}</p>`;
+  const res = normalizeResultBandLabel(resultBand) || '未完成';
+  const scoreTxt = abilityTotal != null ? String(abilityTotal) : '—';
+  const taskN = agg?.taskScores?.length || 0;
+  const taskHint = taskN ? ` · ${taskN} 个任务` : '';
+  const stats = countSessionTerminalStats(student);
+  const termHint = stats.totalN ? ` · 终局 ${stats.terminalN}/${stats.totalN}` : '';
+  const completion = computeCompletionScore(student);
+  const compHint = completion != null ? ` · 完成度 ${completion}` : '';
+  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·按任务均分${esc(taskHint)}${esc(termHint)}${esc(compHint)}；综合分仅终局）：综合分 ${esc(scoreTxt)} · 过程·${esc(proc)} · 结果·${esc(res)}</p>`;
 }
 
 function renderStudentList() {
   const list = document.getElementById('studentList');
   if (!list) return;
+  updateStudentListTruncHint();
   if (!studentItems.length) {
     list.innerHTML = '<li class="empty-state" style="padding:24px">暂无学情 — 请让学生从学生端进入游戏</li>';
     return;
@@ -1758,8 +2250,8 @@ function renderStudentList() {
       <div class="student-list-row">
         <span class="student-list-name">${esc(name)}</span>
         ${multi}
-        <span class="student-list-badges">${badges}</span>
       </div>
+      ${badges ? `<div class="student-list-badges">${badges}</div>` : ''}
     </li>`;
   }).join('');
   list.querySelectorAll('.student-list-item').forEach(el => {
@@ -1773,6 +2265,7 @@ function renderStudentList() {
       else {
         lastDetailRenderedStudentKey = null;
         document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">该学生暂无会话</div>';
+        loadSessionAbilitySummary({ student });
       }
       loadCrossGameSummary(student);
       const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
@@ -1785,9 +2278,12 @@ function renderStudentList() {
 }
 
 async function loadStudents(options = {}) {
-  const r = await fetch('/api/platform/traces/students?' + filterParams().toString());
+  const r = await fetch('/api/platform/traces/students?' + studentsQueryParams().toString());
   const data = await r.json();
-  studentItems = filterOutPlaytestStudents(data.items || []);
+  const rawItems = data.items || [];
+  const limitUsed = Number(data.limit) || STUDENTS_LIST_LIMIT;
+  studentsListTruncated = data.truncated === true || rawItems.length >= limitUsed;
+  studentItems = filterOutPlaytestStudents(rawItems);
   if (!studentItems.length) {
     selectedStudentKey = null;
     selectedSessionId = null;
@@ -1795,6 +2291,8 @@ async function loadStudents(options = {}) {
     lastDetailRenderedStudentKey = null;
     renderStudentList();
     document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
+    loadSessionAbilitySummary(null);
+    loadCrossGameSummary(null);
     return;
   }
   if (!selectedStudentKey || !studentItems.find(s => s.studentKey === selectedStudentKey)) {
@@ -1805,6 +2303,10 @@ async function loadStudents(options = {}) {
   renderStudentList();
   if (selectedSessionId && !options.skipDetail && !judgingSessionId) {
     loadSessionDetail(selectedSessionId);
+  } else if (!selectedSessionId) {
+    const student = currentStudent();
+    loadSessionAbilitySummary({ student });
+    loadCrossGameSummary(student);
   }
   const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
   for (const id of [...selectedSessionIds]) {
@@ -1813,33 +2315,209 @@ async function loadStudents(options = {}) {
   updateSelectionUi();
 }
 
-async function loadCrossGameSummary(student) {
+function radarDimDisplay(value) {
+  if (!Number.isFinite(Number(value))) return '—';
+  return String(Math.round(Number(value)));
+}
+
+/** Lightweight SVG radar (no npm). values 0–100; null → 0 on plot but dashed legend. */
+function renderAbilityRadarSvg(dims) {
+  const axes = [
+    { key: 'result', label: '结果', value: dims.result },
+    { key: 'exploreProcess', label: '探究', value: dims.exploreProcess },
+    { key: 'challengeProcess', label: '竞赛', value: dims.challengeProcess },
+    { key: 'efficiency', label: '效率', value: dims.efficiency },
+    { key: 'consistency', label: '一致性', value: dims.consistency },
+    { key: 'completion', label: '完成度', value: dims.completion },
+  ];
+  const n = axes.length;
+  const cx = 120;
+  const cy = 120;
+  const rMax = 78;
+  const angleAt = (i) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
+  const pt = (i, t) => {
+    const a = angleAt(i);
+    return [cx + Math.cos(a) * rMax * t, cy + Math.sin(a) * rMax * t];
+  };
+  const rings = [0.25, 0.5, 0.75, 1].map((t) => {
+    const pts = Array.from({ length: n }, (_, i) => pt(i, t).map(v => v.toFixed(1)).join(',')).join(' ');
+    return `<polygon class="radar-ring" points="${pts}" />`;
+  }).join('');
+  const spokes = axes.map((_, i) => {
+    const [x, y] = pt(i, 1);
+    return `<line class="radar-spoke" x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" />`;
+  }).join('');
+  const labelEls = axes.map((ax, i) => {
+    const [x, y] = pt(i, 1.22);
+    return `<text class="radar-label" x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle">${esc(ax.label)}</text>`;
+  }).join('');
+  const dataPts = axes.map((ax, i) => {
+    const t = Number.isFinite(Number(ax.value)) ? Math.max(0, Math.min(100, Number(ax.value))) / 100 : 0;
+    return pt(i, t);
+  });
+  const poly = dataPts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const dots = dataPts.map(([x, y], i) => {
+    const missing = !Number.isFinite(Number(axes[i].value));
+    return `<circle class="radar-dot${missing ? ' is-missing' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" />`;
+  }).join('');
+  return `<svg class="student-radar-svg" viewBox="0 0 240 240" role="img" aria-label="六维学情雷达">${rings}${spokes}<polygon class="radar-area" points="${poly}" />${dots}${labelEls}</svg>`;
+}
+
+function renderStudentRadarHtml(radar) {
+  const d = radar?.dims || {};
+  const compositeTxt = radarDimDisplay(radar?.composite);
+  const legend = [
+    ['结果', d.result],
+    ['探究过程', d.exploreProcess],
+    ['竞赛过程', d.challengeProcess],
+    ['效率', d.efficiency],
+    ['一致性', d.consistency],
+    ['完成度', d.completion],
+  ].map(([label, v]) => (
+    `<li><span class="radar-legend-label">${esc(label)}</span>`
+    + `<span class="radar-legend-value">${esc(radarDimDisplay(v))}</span></li>`
+  )).join('');
+  const hints = [];
+  if (!radar?.repCount) hints.push('当前筛选下尚无终局有限能力分，前五维仅作占位。');
+  if (radar?.consistencyN != null && radar.consistencyN < 2) {
+    hints.push('一致性需至少 2 个任务分或代表局，样本不足暂不评分。');
+  }
+  const cs = radar?.completionStats;
+  if (cs?.totalN) {
+    hints.push(`完成度按终局 ${cs.terminalN}/${cs.totalN}（含未终局 ${cs.incompleteN}）。`);
+  } else if (d.completion == null) {
+    hints.push('完成度暂无会话样本。');
+  }
+  const hintHtml = hints.length
+    ? `<p class="hint radar-hint">${hints.map(h => esc(h)).join(' ')}</p>`
+    : '';
+  return `
+    <div class="student-radar">
+      <div class="student-radar-main">
+        <div class="student-radar-score" title="综合分（按任务均分·仅终局）">
+          <span class="student-radar-score-label">综合分</span>
+          <span class="student-radar-score-value">${esc(compositeTxt)}</span>
+        </div>
+        ${renderAbilityRadarSvg(d)}
+      </div>
+      <ul class="student-radar-legend">${legend}</ul>
+    </div>
+    ${hintHtml}`;
+}
+
+function loadCrossGameSummary(student) {
   const panel = document.getElementById('crossGamePanel');
   const box = document.getElementById('crossGameSummary');
-  if (!panel || !box || !student?.studentLabel) {
+  if (!panel || !box || !student) {
     if (panel) panel.hidden = true;
     return;
   }
-  const r = await fetch('/api/platform/traces/students/' + encodeURIComponent(student.studentLabel) + '/summary');
-  const data = await r.json();
-  if (!data.ok || !data.games?.length) {
+  const sessions = student.sessions || [];
+  if (!sessions.length) {
     panel.hidden = true;
     return;
   }
   panel.hidden = false;
-  const rows = data.games.map(g => {
-    const fromVars = g.variableAdjustCounts
-      ? Object.entries(g.variableAdjustCounts).map(([k, v]) => `${esc(k)}×${v}`).join('、')
-      : '';
-    const tuning = fromVars
-      || Object.entries(g.controlTuningCounts || {}).map(([k, v]) => `${esc(k)}×${v}`).join('、')
-      || '—';
-    const verdicts = [...new Set(g.verdicts || [])].map(v => verdictLabel(v)).join('、') || '—';
-    const cat = catalogItems.find(c => c.id === g.catalogId);
-    const title = cat?.title || g.catalogId || g.graphId || '—';
-    return `<tr><td>${esc(title)}</td><td>${g.sessionCount}</td><td>${tuning}</td><td>${esc(verdicts)}</td></tr>`;
-  }).join('');
-  box.innerHTML = `<table class="edu-table edu-table-compact"><thead><tr><th>任务</th><th>会话</th><th>变量调节次数</th><th>评判</th></tr></thead><tbody>${rows}</tbody></table>`;
+  const radar = computeStudentRadarDims(student);
+  box.innerHTML = renderStudentRadarHtml(radar);
+}
+
+/** 无 phase_change 时不硬凑探究/竞赛双行；有分段时缺段在 path meta 注明「无操作」。 */
+function prepareDetailPathByPhase(pathByPhase, sawPhaseChange) {
+  const detail = { ...(pathByPhase || {}), sawPhaseChange: !!sawPhaseChange };
+  if (!sawPhaseChange) {
+    detail.explore = null;
+    detail.challenge = null;
+    if (!detail.full) detail.full = pathByPhase?.primary || null;
+  }
+  return detail;
+}
+
+/** 能力卡「过程依据」：任务/终局态 + 阶段 + 探究/竞赛路径；评分范围/建议默认折叠。 */
+function buildAbilityProcessEvidenceBlock({
+  taskTitle,
+  timeTxt,
+  terminalTxt,
+  currentPhase,
+  sawPhaseChange,
+  pathByPhase,
+  pathFailHint,
+  hideTask,
+  compact,
+} = {}) {
+  const metaBits = [];
+  if (!hideTask && taskTitle) metaBits.push(`任务：${esc(taskTitle)}`);
+  if (timeTxt) metaBits.push(esc(timeTxt));
+  if (terminalTxt) metaBits.push(esc(terminalTxt));
+  const metaLine = metaBits.length
+    ? `<p class="session-ability-meta">${metaBits.join(' · ')}</p>`
+    : '';
+  // 未终局 compact：阶段一行短写；长说明折入 path extras
+  const phaseLine = currentPhase
+    ? (compact
+      ? `<p class="hint session-phase-line">阶段：<strong>${currentPhase === 'challenge' ? '竞赛' : '探索'}</strong></p>`
+      : `<p class="hint session-phase-line">当前阶段：<strong>${currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`)
+    : '';
+  const pathBlock = buildSessionPathBlock(pathByPhase || {}, pathFailHint || '', { foldExtras: true });
+  return `<div class="session-ability-evidence">
+    <h4 class="session-section-label">过程依据</h4>
+    ${metaLine}
+    ${phaseLine}
+    ${pathBlock}
+  </div>`;
+}
+
+/** 本局能力独立卡：四维条 + 过程依据；随选中会话刷新；未选学生隐藏；有学生无会话显示空态。 */
+function loadSessionAbilitySummary(opts) {
+  const panel = document.getElementById('sessionAbilityPanel');
+  const box = document.getElementById('sessionAbilitySummary');
+  if (!panel || !box) return;
+  const student = opts?.student || null;
+  const session = opts?.session || null;
+  if (!student) {
+    panel.hidden = true;
+    box.innerHTML = '';
+    return;
+  }
+  panel.hidden = false;
+  if (!session) {
+    box.innerHTML = '<p class="hint session-ability-empty">请选择一条游玩会话以查看本局能力</p>';
+    return;
+  }
+  const cat = catalogItems.find(c => c.id === session.catalogId);
+  const taskTitle = opts?.taskTitle || cat?.title || session.catalogId || '—';
+  const timeTxt = fmtTime(session.startedAt || session.updatedAt);
+  const terminal = isTerminalSessionRow(session);
+  // 未终局用顶部横幅强调；meta 不再重复「不计入综合分」
+  const terminalTxt = terminal ? '终局' : null;
+  const ability = opts?.ability || session.abilityScore || null;
+  const graphFilter = document.getElementById('filterGraph')?.value;
+  const sawPhaseChange = opts?.sawPhaseChange;
+  let pathByPhase = opts?.pathByPhase;
+  if (pathByPhase == null) {
+    const resolved = resolvePathSummariesByPhase(session);
+    pathByPhase = sawPhaseChange != null
+      ? prepareDetailPathByPhase(resolved, sawPhaseChange)
+      : { ...resolved };
+  }
+  const incompleteBanner = terminal
+    ? ''
+    : '<div class="session-ability-incomplete-banner" role="status">未终局 · 不计入综合分</div>';
+  box.innerHTML = `
+    ${incompleteBanner}
+    ${buildAbilityScoreBlock(ability)}
+    ${buildAbilityProcessEvidenceBlock({
+      taskTitle,
+      timeTxt,
+      terminalTxt,
+      currentPhase: opts?.currentPhase || null,
+      sawPhaseChange: !!sawPhaseChange,
+      pathByPhase,
+      pathFailHint: opts?.pathFailHint || '',
+      hideTask: !!graphFilter,
+      compact: !terminal,
+    })}
+  `;
 }
 
 function scoredPhaseLabel(phase) {
@@ -1947,7 +2625,7 @@ function pathTypeBadgesHtml(session) {
     if (html) parts.push(html);
   }
   if (!parts.length) {
-    return '<span class="badge badge-path badge-path-uneval" title="打开详情或刷新路径摘要后计算">路径·未评估</span>';
+    return '<span class="badge badge-path badge-path-uneval" title="打开详情后自动计算">路径·未评估</span>';
   }
   return parts.join('');
 }
@@ -1956,12 +2634,107 @@ function sessionRowVerdictBadgeHtml(session) {
   if (session?.judged) {
     return `<span class="badge badge-verdict ${verdictClass(session.verdict)}">${esc(verdictLabel(session.verdict))}</span>`;
   }
-  return '<span class="badge badge-pending">待评</span>';
+  return '<span class="badge badge-pending" title="尚未规则/人工评判">未评判</span>';
 }
 
-/** 会话行常驻：路径区 + 评判区。 */
+/** 会话行常驻：总分 + 过程/结果短档（长路径类型进详情）。 */
 function sessionRowBadgesHtml(session) {
-  return `<span class="session-row-badges">${pathTypeBadgesHtml(session)}${sessionRowVerdictBadgeHtml(session)}</span>`;
+  const ability = sessionAbilityScore(session);
+  const total = ability?.total;
+  const scoreHtml = abilityScoreBadgeHtml(total, {
+    pending: !ability || (ability.pending && !isFiniteAbilityTotal(total)),
+    title: '本局能力总分',
+  });
+  const proc = mapSessionProcessBand(session);
+  const resBand = mapSessionResultBand(session);
+  return `<span class="session-row-badges">${scoreHtml}`
+    + `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档">${esc(proc)}</span>`
+    + `<span class="badge badge-band badge-result ${resultBandClass(resBand)}" title="结果档">${esc(resBand)}</span>`
+    + `</span>`;
+}
+
+function sessionTimelineItemHtml(s, activeSessionId) {
+  return `
+    <div class="session-timeline-item${s.sessionId === activeSessionId ? ' is-active' : ''}" data-sid="${esc(s.sessionId)}">
+      <input type="checkbox" class="session-pick-cb" data-sid="${esc(s.sessionId)}"${selectedSessionIds.has(s.sessionId) ? ' checked' : ''} aria-label="选择会话">
+      <span class="session-timeline-body">
+        <span>${fmtTime(s.startedAt || s.updatedAt)}</span>
+        <span class="session-timeline-meta">${s.eventCount || 0} 事件</span>
+        ${sessionRowBadgesHtml(s)}
+      </span>
+      <button type="button" class="edu-btn edu-btn-outline edu-btn-sm session-row-delete" data-sid="${esc(s.sessionId)}">删除</button>
+    </div>`;
+}
+
+/**
+ * Timeline: recent N terminals visible; older terminals + non-terminals collapsed
+ * by default (per-student expand). Active session inside a fold auto-expands it.
+ */
+function buildSessionTimelineHtml(student, activeSessionId) {
+  const sessions = Array.isArray(student?.sessions) ? student.sessions : [];
+  if (!sessions.length) return '';
+  const terminal = [];
+  const nonTerminal = [];
+  for (const s of sessions) {
+    if (isTerminalSessionRow(s)) terminal.push(s);
+    else nonTerminal.push(s);
+  }
+  const sortedTerminal = sortSessionsNewestFirst(terminal);
+  const recent = sortedTerminal.slice(0, TERMINAL_TIMELINE_VISIBLE_N);
+  const older = sortedTerminal.slice(TERMINAL_TIMELINE_VISIBLE_N);
+  const key = student.studentKey || selectedStudentKey || '';
+
+  if (activeSessionId && older.some(s => s.sessionId === activeSessionId)) {
+    olderTerminalTimelineExpanded.set(key, true);
+  }
+  if (activeSessionId && nonTerminal.some(s => s.sessionId === activeSessionId)) {
+    nonTerminalTimelineExpanded.set(key, true);
+  }
+
+  const parts = recent.map(s => sessionTimelineItemHtml(s, activeSessionId));
+  if (older.length) {
+    const expanded = !!olderTerminalTimelineExpanded.get(key);
+    const n = older.length;
+    parts.push(`
+      <div class="session-timeline-fold${expanded ? ' is-expanded' : ''}" data-fold-student="${esc(key)}" data-fold-kind="older-terminal">
+        <button type="button" class="session-timeline-fold-toggle" aria-expanded="${expanded ? 'true' : 'false'}">
+          <span class="session-timeline-fold-label">更早的终局 · ${n}</span>
+          <span class="session-timeline-fold-action">${expanded ? '收起' : '展开'}</span>
+        </button>
+        <div class="session-timeline-fold-body"${expanded ? '' : ' hidden'}>
+          ${older.map(s => sessionTimelineItemHtml(s, activeSessionId)).join('')}
+        </div>
+      </div>`);
+  }
+  if (nonTerminal.length) {
+    const expanded = !!nonTerminalTimelineExpanded.get(key);
+    const n = nonTerminal.length;
+    parts.push(`
+      <div class="session-timeline-fold${expanded ? ' is-expanded' : ''}" data-fold-student="${esc(key)}" data-fold-kind="non-terminal">
+        <button type="button" class="session-timeline-fold-toggle" aria-expanded="${expanded ? 'true' : 'false'}">
+          <span class="session-timeline-fold-label">${n} 条未终局会话（不计入汇总）</span>
+          <span class="session-timeline-fold-action">${expanded ? '收起' : '展开'}</span>
+        </button>
+        <div class="session-timeline-fold-body"${expanded ? '' : ' hidden'}>
+          ${nonTerminal.map(s => sessionTimelineItemHtml(s, activeSessionId)).join('')}
+        </div>
+      </div>`);
+  }
+  return parts.join('');
+}
+
+/** Keep active row visible inside the capped/scrolling `.session-timeline`. */
+function scrollSessionTimelineActiveIntoView(panel) {
+  const timeline = panel?.querySelector?.('.session-timeline');
+  const active = timeline?.querySelector?.('.session-timeline-item.is-active');
+  if (!timeline || !active) return;
+  const tRect = timeline.getBoundingClientRect();
+  const aRect = active.getBoundingClientRect();
+  if (aRect.top < tRect.top) {
+    timeline.scrollTop += aRect.top - tRect.top - 4;
+  } else if (aRect.bottom > tRect.bottom) {
+    timeline.scrollTop += aRect.bottom - tRect.bottom + 4;
+  }
 }
 
 function syncSessionTimelineRowBadges(student) {
@@ -1973,14 +2746,14 @@ function syncSessionTimelineRowBadges(student) {
     const body = row.querySelector('.session-timeline-body');
     if (!body) return;
     let wrap = body.querySelector('.session-row-badges');
+    const html = sessionRowBadgesHtml(sess);
     if (!wrap) {
-      wrap = document.createElement('span');
-      wrap.className = 'session-row-badges';
       const meta = body.querySelector('.session-timeline-meta');
-      if (meta) meta.after(wrap);
-      else body.appendChild(wrap);
+      if (meta) meta.insertAdjacentHTML('afterend', html);
+      else body.insertAdjacentHTML('beforeend', html);
+      return;
     }
-    wrap.innerHTML = pathTypeBadgesHtml(sess) + sessionRowVerdictBadgeHtml(sess);
+    wrap.outerHTML = html;
   });
 }
 
@@ -1999,10 +2772,11 @@ async function runPool(items, concurrency, worker) {
 }
 
 const PATH_REFRESH_CONCURRENCY = 3;
-const PATH_REFRESH_RECENT_N = 8;
+/** 按当前学生限流补刷上限（终局优先）；concurrency 仍 ≤ PATH_REFRESH_CONCURRENCY。 */
+const PATH_REFRESH_RECENT_N = 16;
 
-function applyPathRefreshResultToListSession(sess, r) {
-  if (!sess || !r?.refreshed) return false;
+function applyPathRefreshResultToListSession(sess, r, { allowAbilityUpdate = false } = {}) {
+  if (!sess || !r?.refreshed) return { applied: false, abilityUpdated: false };
   sess.scoredPhase = r.scoredPhase || null;
   sess.strategyPathSummary = r.pathByPhase?.primary || sess.strategyPathSummary || null;
   sess.strategyPathSummaryExplore = r.pathByPhase?.explore || null;
@@ -2011,36 +2785,157 @@ function applyPathRefreshResultToListSession(sess, r) {
     challenge: r.pathByPhase?.challenge || null,
     full: r.pathByPhase?.full || null,
   };
-  return true;
+  let abilityUpdated = false;
+  // 已冻结（当前版本有限总分）时永不改；allowAbilityUpdate 仅用于补缺/版本升级
+  if (allowAbilityUpdate && r.abilityScore && !sessionAbilityScoreFrozen(sess)) {
+    const prev = sess.abilityScore;
+    const next = mergeAbilityScorePreferFinite(sess.abilityScore, r.abilityScore);
+    if (next !== prev) {
+      sess.abilityScore = next;
+      abilityUpdated = true;
+    } else {
+      sess.abilityScore = next;
+    }
+  }
+  return { applied: true, abilityUpdated };
 }
 
-/** 打开详情后：对当前学生缺路径摘要的近期会话限流补刷，并重绘行徽章。 */
-async function refreshMissingPathSummariesForStudent(student, {
+/** 终局优先，再按 updatedAt 新→旧。 */
+function sortSessionsForPathRefresh(sessions) {
+  return (Array.isArray(sessions) ? sessions.slice() : []).sort((a, b) => {
+    const termA = isTerminalSessionRow(a) ? 1 : 0;
+    const termB = isTerminalSessionRow(b) ? 1 : 0;
+    if (termB !== termA) return termB - termA;
+    const ta = a.updatedAt || a.startedAt || '';
+    const tb = b.updatedAt || b.startedAt || '';
+    return String(tb).localeCompare(String(ta));
+  });
+}
+
+function buildAbilityScoreBlock(ability) {
+  if (!ability || Number(ability.version) !== Number(expectedAbilityScoreVersion())) {
+    return '<p class="hint session-ability-empty">能力总分将在打开详情后自动计算</p>';
+  }
+  const totalTxt = (ability.pending || ability.total == null) ? '—' : String(Math.round(ability.total));
+  const p = ability.parts || {};
+  const fmt = (part, maxW) => {
+    const raw = part?.raw;
+    const contrib = part?.contrib;
+    const rawTxt = raw == null ? '—' : String(Math.round(raw));
+    // 固定权重：contrib 不超过名义分母；缺维按 0
+    const cNum = contrib == null || !Number.isFinite(Number(contrib)) ? 0 : Number(contrib);
+    const cClamped = maxW > 0 ? Math.min(cNum, maxW) : cNum;
+    const cTxt = String(cClamped);
+    return { rawTxt, cTxt, cNum: cClamped, maxW };
+  };
+  const r = fmt(p.result, 30);
+  const pe = fmt(p.exploreProcess, 25);
+  const pc = fmt(p.challengeProcess, 25);
+  const e = fmt(p.efficiency, 20);
+  const attr = p.attribution || {};
+  const attrTxt = attr.aligned ? `+${attr.contrib || 5}` : '+0';
+  const gate = p.efficiency?.processGate ? '通过' : '未通过';
+  const trials = p.efficiency?.challengeTrials != null ? p.efficiency.challengeTrials : '—';
+  const exploreTrials = Number(p.efficiency?.exploreTrials || 0);
+  const peUnset = p.exploreProcess?.raw == null || exploreTrials <= 0;
+  const peValTxt = peUnset ? `未探究 · +${pe.cTxt}/25` : `+${pe.cTxt}/25`;
+  const bar = (label, contrib, maxW, tone, valOverride) => {
+    const c = Number(contrib);
+    const w = maxW > 0 ? Math.max(0, Math.min(100, (c / maxW) * 100)) : 0;
+    const val = valOverride != null ? valOverride : `${contrib}/${maxW}`;
+    return `<div class="ability-bar-row" title="${esc(label)}">`
+      + `<span class="ability-bar-label">${esc(label)}</span>`
+      + `<span class="ability-bar-track"><span class="ability-bar-fill ability-bar-${tone}" style="width:${w}%"></span></span>`
+      + `<span class="ability-bar-val">${esc(String(val))}</span>`
+      + `</div>`;
+  };
+  return `<div class="session-ability-block">
+    <h4 class="session-section-label">能力总分 <strong class="ability-total-num">${esc(totalTxt)}</strong></h4>
+    <div class="ability-group ability-group-main">
+      <div class="ability-group-label">主分</div>
+      <div class="ability-bars">
+        ${bar('结果', r.cTxt, 30, 'result')}
+        ${bar('竞赛', pc.cTxt, 25, 'challenge')}
+        ${bar('效率', e.cTxt, 20, 'eff')}
+      </div>
+    </div>
+    <div class="ability-group ability-group-explore">
+      <div class="ability-group-label">探究（占25分·本任务）</div>
+      <div class="ability-bars">
+        ${bar('探究', pe.cTxt, 25, 'explore', peValTxt)}
+      </div>
+    </div>
+    <div class="ability-bars ability-bars-attr">
+      <div class="ability-bar-row ability-bar-attr" title="归因一致小奖励（加权和后加分，封顶100）">
+        <span class="ability-bar-label">+归因</span>
+        <span class="ability-bar-track ability-bar-track-flat"><span class="ability-attr-chip">${esc(attrTxt)}</span></span>
+        <span class="ability-bar-val">${esc(attr.note || (attr.aligned ? '一致' : '无/未对齐'))}</span>
+      </div>
+    </div>
+    <details class="ability-raw-details">
+      <summary>原始分与门闩</summary>
+      <p class="session-path-meta">原始分：结果 ${esc(r.rawTxt)} · 探究 ${esc(pe.rawTxt)} · 竞赛 ${esc(pc.rawTxt)} · 效率 ${esc(e.rawTxt)} · 过程门闩 ${esc(gate)} · 竞赛试次 ${esc(String(trials))}</p>
+    </details>
+  </div>`;
+}
+
+/**
+ * 打开学情后：对当前学生限流补刷「缺路径摘要」或「需能力分升级/补缺」的会话。
+ * - 已是当前版本有限总分 → 跳过（冻结）
+ * - 需 rescore 时 allowAbilityUpdate: true（落盘由 path-summary API 完成）
+ * - 仅缺路径且已有当前有限分 → 只刷路径，不改 ability
+ */
+async function refreshStaleAbilityScoresForStudent(student, {
   excludeSessionId = null,
   reqId = null,
   concurrency = PATH_REFRESH_CONCURRENCY,
   recentN = PATH_REFRESH_RECENT_N,
 } = {}) {
-  if (!student?.sessions?.length) return { ok: 0, fail: 0 };
-  const sorted = student.sessions.slice().sort((a, b) => {
-    const ta = a.updatedAt || a.startedAt || '';
-    const tb = b.updatedAt || b.startedAt || '';
-    return String(tb).localeCompare(String(ta));
-  });
+  if (!student?.sessions?.length) return { ok: 0, fail: 0, abilityUpdated: 0 };
+  const sorted = sortSessionsForPathRefresh(student.sessions);
   const targets = sorted
-    .filter(s => s.sessionId !== excludeSessionId && !sessionHasPathSummary(s))
+    .filter(s => s.sessionId !== excludeSessionId
+      && (!sessionHasPathSummary(s) || sessionNeedsAbilityRescore(s)))
     .slice(0, recentN);
-  if (!targets.length) return { ok: 0, fail: 0 };
+  if (!targets.length) return { ok: 0, fail: 0, abilityUpdated: 0 };
   let ok = 0;
   let fail = 0;
+  let abilityUpdated = 0;
   await runPool(targets, concurrency, async (sess) => {
     if (reqId != null && reqId !== detailRequestSeq) return;
-    const r = await refreshTeacherPathSummary(sess, reqId);
+    if (student.studentKey !== selectedStudentKey) return;
+    const allowAbility = sessionNeedsAbilityRescore(sess);
+    const r = await refreshTeacherPathSummary(sess, reqId, { allowAbilityUpdate: allowAbility });
     if (r?.aborted) return;
-    if (applyPathRefreshResultToListSession(sess, r)) ok += 1;
-    else fail += 1;
+    if (reqId != null && reqId !== detailRequestSeq) return;
+    if (student.studentKey !== selectedStudentKey) return;
+    const applied = applyPathRefreshResultToListSession(sess, r, { allowAbilityUpdate: allowAbility });
+    // refreshTeacherPathSummary 可能已就地写入 ability；以「是否已是当前版本有限分」为准
+    const scoredNow = allowAbility && sessionHasCurrentAbilityTotal(sess);
+    if (applied.applied) {
+      ok += 1;
+      if (scoredNow || applied.abilityUpdated) {
+        abilityUpdated += 1;
+        // 补刷过程中徽章/综合分陆续从 — 变为数字
+        syncSessionTimelineRowBadges(student);
+        renderStudentList();
+      } else {
+        syncSessionTimelineRowBadges(student);
+      }
+    } else if (scoredNow) {
+      abilityUpdated += 1;
+      syncSessionTimelineRowBadges(student);
+      renderStudentList();
+    } else {
+      fail += 1;
+    }
   });
-  return { ok, fail };
+  return { ok, fail, abilityUpdated };
+}
+
+/** @deprecated 名称保留；实际含路径补缺 + 过期能力分升级。 */
+async function refreshMissingPathSummariesForStudent(student, opts) {
+  return refreshStaleAbilityScoresForStudent(student, opts);
 }
 
 function pathScopeMetaLabel(pathByPhase) {
@@ -2054,12 +2949,13 @@ function pathScopeMetaLabel(pathByPhase) {
   return bits.length ? bits.join(' + ') : null;
 }
 
-function buildSessionPathBlock(pathByPhase, pathFailHint) {
+function buildSessionPathBlock(pathByPhase, pathFailHint, opts = {}) {
+  const foldExtras = opts.foldExtras !== false;
   const { explore, challenge, full, primary, sawPhaseChange } = pathByPhase || {};
   const advice = (challenge || primary || explore || full)?.advice || '';
   const lines = [];
   if (explore || challenge) {
-    // 有数据的段分行全文展示；缺段不堆空行，仅在 meta 里轻量注明
+    // 默认各一行：类型 + 策略分；评分范围/长建议折叠
     if (explore) {
       const typeText = pathTypeFullText(explore) || '—';
       const score = explore.score != null ? `（策略分 ${Number(explore.score).toFixed(2)}）` : '';
@@ -2074,7 +2970,8 @@ function buildSessionPathBlock(pathByPhase, pathFailHint) {
     const sum = full || primary;
     const typeText = pathTypeFullText(sum);
     if (typeText) {
-      lines.push(`<p class="hint session-path-type">路径类型：<strong>${esc(typeText)}</strong></p>`);
+      const score = sum.score != null ? `（策略分 ${Number(sum.score).toFixed(2)}）` : '';
+      lines.push(`<p class="hint session-path-type">路径类型：<strong>${esc(typeText)}</strong>${score}</p>`);
     }
   }
   if (!lines.length && !pathFailHint) {
@@ -2085,13 +2982,18 @@ function buildSessionPathBlock(pathByPhase, pathFailHint) {
   if (scopeLabel) meta.push(`评分范围：${esc(scopeLabel)}`);
   if (sawPhaseChange && explore && !challenge) meta.push('竞赛段无操作');
   if (sawPhaseChange && challenge && !explore) meta.push('探究段无操作');
-  if (!(explore || challenge) && (full || primary)?.score != null) {
-    meta.push(`策略分：<strong>${Number((full || primary).score).toFixed(2)}</strong>`);
-  }
+  // 全会话策略分已并入类型行时不再在 meta 重复
+  const extras = [];
+  if (meta.length) extras.push(`<p class="session-path-meta">${meta.join(' · ')}</p>`);
+  if (advice) extras.push(`<p class="hint session-path-advice">建议：${esc(advice)}</p>`);
+  const extrasHtml = extras.length
+    ? (foldExtras
+      ? `<details class="session-path-extras"><summary>评分范围与建议</summary>${extras.join('')}</details>`
+      : extras.join(''))
+    : '';
   return `<div class="session-path-block">
     ${lines.join('')}
-    ${meta.length ? `<p class="session-path-meta">${meta.join(' · ')}</p>` : ''}
-    ${advice ? `<p class="hint session-path-advice">建议：${esc(advice)}</p>` : ''}
+    ${extrasHtml}
     ${pathFailHint || ''}
   </div>`;
 }
@@ -2163,7 +3065,9 @@ async function fetchTeacherPathSummaryOnce(session, phaseScope) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return r.json();
+  const data = await r.json();
+  noteAbilityScoreVersionFromApi(data);
+  return data;
 }
 
 function applyPathSummariesToSession(session, exploreSum, primarySum) {
@@ -2185,8 +3089,13 @@ function applyPathSummariesToSession(session, exploreSum, primarySum) {
   return resolvePathSummariesByPhase(session);
 }
 
-async function refreshTeacherPathSummary(session, reqId) {
+async function refreshTeacherPathSummary(session, reqId, opts = {}) {
   const cachedByPhase = resolvePathSummariesByPhase(session);
+  // 默认：仅当前打开的会话允许 ability 回写；背景 list stub 一律 path-only
+  const allowAbilityUpdate = opts.allowAbilityUpdate != null
+    ? !!opts.allowAbilityUpdate
+    : !!(session?.sessionId && session.sessionId === selectedSessionId);
+  const frozen = sessionAbilityScoreFrozen(session);
   try {
     // 并行双 scope：探究段 + 竞赛段（无竞赛操作时服务端回退 full）
     const [exploreData, challengeData] = await Promise.all([
@@ -2197,12 +3106,19 @@ async function refreshTeacherPathSummary(session, reqId) {
 
     const exploreSum = normalizePathSummaryPayload(exploreData);
     const challengeSum = normalizePathSummaryPayload(challengeData);
+    const abilityScore = challengeData?.abilityScore || exploreData?.abilityScore || null;
+    // 冻结或非活跃会话：不把 API 返回的 abilityScore 写回 session
+    if (allowAbilityUpdate && !frozen && abilityScore) {
+      session.abilityScore = mergeAbilityScorePreferFinite(session.abilityScore, abilityScore);
+    }
     if (!exploreSum && !challengeSum) {
       return {
         pathSummary: cachedByPhase.primary,
         pathByPhase: cachedByPhase,
         scoredPhase: cachedByPhase.primary?.scoredPhase || null,
+        abilityScore: session.abilityScore || null,
         refreshed: false,
+        abilityUpdated: false,
         error: challengeData?.error || exploreData?.error || 'path_summary_failed',
       };
     }
@@ -2211,7 +3127,9 @@ async function refreshTeacherPathSummary(session, reqId) {
       pathSummary: pathByPhase.primary,
       pathByPhase,
       scoredPhase: pathByPhase.primary?.scoredPhase || null,
+      abilityScore: session.abilityScore || null,
       refreshed: true,
+      abilityUpdated: allowAbilityUpdate && !frozen && !!abilityScore,
     };
   } catch (err) {
     if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
@@ -2219,7 +3137,9 @@ async function refreshTeacherPathSummary(session, reqId) {
       pathSummary: cachedByPhase.primary,
       pathByPhase: cachedByPhase,
       scoredPhase: cachedByPhase.primary?.scoredPhase || null,
+      abilityScore: session.abilityScore || null,
       refreshed: false,
+      abilityUpdated: false,
       error: err.message || 'path_summary_network_error',
     };
   }
@@ -2237,6 +3157,7 @@ async function loadSessionDetail(sessionId) {
   if (!student) {
     lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
+    loadSessionAbilitySummary(null);
     return;
   }
   // 同学生切换会话时保留旧 DOM，避免加载占位把列表顶出视口
@@ -2250,11 +3171,13 @@ async function loadSessionDetail(sessionId) {
     if (reqId !== detailRequestSeq) return;
     lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">会话不存在</div>';
+    loadSessionAbilitySummary({ student });
     return;
   }
   const session = data.session;
   const summary = data.summary || {};
-  const pathRefresh = await refreshTeacherPathSummary(session, reqId);
+  // 当前打开会话允许 ability 回写（仍受 freeze / merge 保护）
+  const pathRefresh = await refreshTeacherPathSummary(session, reqId, { allowAbilityUpdate: true });
   if (pathRefresh.aborted || reqId !== detailRequestSeq) return;
   const pathByPhase = pathRefresh.pathByPhase || resolvePathSummariesByPhase(session);
   // 先回写列表缓存，再渲染会话行短标签
@@ -2264,6 +3187,20 @@ async function loadSessionDetail(sessionId) {
     listSess.strategyPathSummaryExplore = session.strategyPathSummaryExplore || null;
     listSess.strategyPathByPhase = session.strategyPathByPhase || null;
     listSess.scoredPhase = pathRefresh.scoredPhase || session.scoredPhase || null;
+    {
+      const incoming = pathRefresh.abilityScore || session.abilityScore || null;
+      // 冻结：有限总分不被 null/pending 覆盖；仅补缺或升版本
+      if (incoming && !sessionAbilityScoreFrozen(listSess)) {
+        listSess.abilityScore = mergeAbilityScorePreferFinite(listSess.abilityScore, incoming);
+      } else if (incoming && sessionAbilityScoreFrozen(listSess)) {
+        // 保持 list 冻结对象；详情侧若被冲掉则用 list 回灌
+        if (!sessionAbilityScoreFrozen(session)) {
+          session.abilityScore = listSess.abilityScore;
+        }
+      } else if (!listSess.abilityScore && session.abilityScore) {
+        listSess.abilityScore = session.abilityScore;
+      }
+    }
     if (session.judgeResult) {
       listSess.judged = true;
       listSess.verdict = session.judgeResult.verdict || listSess.verdict || null;
@@ -2275,42 +3212,33 @@ async function loadSessionDetail(sessionId) {
   }
   const cat = catalogItems.find(c => c.id === session.catalogId);
   const taskTitle = cat?.title || session.catalogId || '—';
-  const graphFilter = document.getElementById('filterGraph').value;
 
-  const sessionRows = student.sessions.map(s => `
-    <div class="session-timeline-item${s.sessionId === sessionId ? ' is-active' : ''}" data-sid="${esc(s.sessionId)}">
-      <input type="checkbox" class="session-pick-cb" data-sid="${esc(s.sessionId)}"${selectedSessionIds.has(s.sessionId) ? ' checked' : ''} aria-label="选择会话">
-      <span class="session-timeline-body">
-        <span>${fmtTime(s.startedAt || s.updatedAt)}</span>
-        <span class="session-timeline-meta">${s.eventCount || 0} 事件</span>
-        ${sessionRowBadgesHtml(s)}
-      </span>
-      <button type="button" class="edu-btn edu-btn-outline edu-btn-sm session-row-delete" data-sid="${esc(s.sessionId)}">删除</button>
-    </div>`).join('');
+  const sessionRows = buildSessionTimelineHtml(student, sessionId);
 
   const jr = session.judgeResult;
-  const judgeBlock = jr ? buildJudgeBlock(jr) : '';
-  const taskLine = graphFilter ? '' : `<p class="hint session-task-line">任务：${esc(taskTitle)}</p>`;
-  const phaseLine = summary.currentPhase
-    ? `<p class="hint session-phase-line">当前阶段：<strong>${summary.currentPhase === 'challenge' ? '竞赛' : '探索'}</strong>${summary.sawPhaseChange ? '' : '（未上报 phase_change，评判含全段轨迹）'}</p>`
-    : '';
+  const judgeBlock = buildJudgeAreaHtml(jr, session, summary);
   const pathFailHint = (!pathRefresh.refreshed && pathRefresh.error)
     ? `<p class="hint session-path-error">路径摘要刷新失败：${esc(pathRefresh.error)}（已显示缓存或留空）</p>`
     : '';
-  // 无 phase_change 时不硬凑探究/竞赛双行；有分段时缺段在 meta 注明「无操作」
-  const detailPathByPhase = { ...pathByPhase, sawPhaseChange: !!summary.sawPhaseChange };
-  if (!summary.sawPhaseChange) {
-    detailPathByPhase.explore = null;
-    detailPathByPhase.challenge = null;
-    if (!detailPathByPhase.full) detailPathByPhase.full = pathByPhase.primary;
-  }
-  const pathLine = buildSessionPathBlock(detailPathByPhase, pathFailHint);
+  const detailPathByPhase = prepareDetailPathByPhase(pathByPhase, !!summary.sawPhaseChange);
+  const abilityScore = session.abilityScore || pathRefresh.abilityScore || listSess?.abilityScore;
   const tuningBlock = buildSessionTuningBlock(summary);
   const modeBadge = jr?.mode === 'llm'
     ? '<span class="hint">上次：LLM</span>'
     : (jr ? '<span class="hint">上次：规则</span>' : '<span class="hint">默认规则评判（无需 API Key）</span>');
 
   if (reqId !== detailRequestSeq) return;
+  // 任务 / 阶段 / 路径并入上方「本局能力」过程依据；详情不再重复裸文本
+  loadSessionAbilitySummary({
+    student,
+    session,
+    ability: abilityScore,
+    taskTitle,
+    currentPhase: summary.currentPhase || null,
+    sawPhaseChange: !!summary.sawPhaseChange,
+    pathByPhase: detailPathByPhase,
+    pathFailHint,
+  });
   loadCrossGameSummary(student);
   const aggMeta = studentAggMetaHtml(student);
   panel.innerHTML = `
@@ -2327,7 +3255,6 @@ async function loadSessionDetail(sessionId) {
             <input type="checkbox" id="selectAllSessionsLocal" aria-label="全选当前学生的会话"${student.sessions?.length ? '' : ' disabled'}>
             <span>全选</span>
           </label>
-          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshPathSummariesLocal" title="按探究段 + 竞赛段分别重算当前学生会话路径">刷新路径摘要</button>
           <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
         </div>
       </div>
@@ -2339,27 +3266,37 @@ async function loadSessionDetail(sessionId) {
       </div>
       <div id="judgeResult">${judgeBlock}</div>
     </section>
-    <section class="session-detail-section session-detail-summary">
-      ${taskLine}
-      ${phaseLine}
-      ${pathLine}
-    </section>
-    ${tuningBlock ? `<section class="session-detail-section session-detail-tuning">${tuningBlock}</section>` : ''}`;
+    ${tuningBlock ? `<details class="session-detail-section session-detail-tuning"><summary class="session-section-label">调参明细</summary>${tuningBlock}</details>` : ''}`;
 
   syncSessionCheckboxes();
   updateSelectionUi();
   lastDetailRenderedStudentKey = selectedStudentKey;
   panel.scrollTop = preserveScroll ? savedScrollTop : 0;
+  scrollSessionTimelineActiveIntoView(panel);
 
-  // 后台限流补刷同学生其它缺摘要会话，刷新后重绘行徽章（落盘由 API 完成）
-  refreshMissingPathSummariesForStudent(student, {
+  // 后台限流：缺路径 / 过期能力分一并补刷（需 rescore 时允许落盘 abilityScore）
+  refreshStaleAbilityScoresForStudent(student, {
     excludeSessionId: sessionId,
     reqId,
   }).then((stats) => {
     if (reqId !== detailRequestSeq) return;
-    if (!stats?.ok) return;
+    // ok 为成功条数；勿用 !stats.ok（ok===0 时也会误判）
+    if (!(stats && (stats.ok > 0 || stats.abilityUpdated > 0))) return;
     renderStudentList();
     syncSessionTimelineRowBadges(student);
+    // 综合分 / 能力卡：选中局若被更新（一般已 exclude）或聚合分变化时刷新
+    const sel = student.sessions.find(s => s.sessionId === selectedSessionId);
+    if (sel && selectedSessionId === sessionId && (stats.abilityUpdated > 0 || stats.ok > 0)) {
+      loadSessionAbilitySummary({
+        student,
+        session: sel,
+        ability: sel.abilityScore || abilityScore,
+        taskTitle,
+        currentPhase: summary.currentPhase || null,
+        sawPhaseChange: !!summary.sawPhaseChange,
+        pathByPhase: prepareDetailPathByPhase(resolvePathSummariesByPhase(sel), !!summary.sawPhaseChange),
+      });
+    }
   }).catch(() => {});
 }
 
@@ -2400,18 +3337,48 @@ async function judgeSession(sessionId, mode = 'rules') {
     };
     renderJudgeResult(jr);
     const student = studentItems.find(s => s.studentKey === selectedStudentKey);
-    if (student) {
-      const sess = student.sessions.find(s => s.sessionId === sessionId);
-      if (sess) {
-        sess.judged = true;
-        sess.verdict = data.verdict;
-        sess.gaps = Array.isArray(data.teacherSummary?.gaps)
-          ? data.teacherSummary.gaps
-          : (Array.isArray(data.gaps) ? data.gaps : null);
-      }
+    let sess = student?.sessions?.find(s => s.sessionId === sessionId) || null;
+    if (sess) {
+      sess.judged = true;
+      sess.verdict = data.verdict;
+      sess.gaps = Array.isArray(data.teacherSummary?.gaps)
+        ? data.teacherSummary.gaps
+        : (Array.isArray(data.gaps) ? data.gaps : null);
+      sess.judgeResult = jr;
+      // 能力分以 judge 刚写入为准；勿走 merge（会冻住旧有限分）
+      if (data.abilityScore) sess.abilityScore = data.abilityScore;
     }
     syncSessionTimelineVerdict(sessionId, data.verdict);
+    // 本局强制重算路径（explore+challenge POST）；能力分不让 path 回写覆盖
+    if (sess) {
+      try {
+        const pathR = await refreshTeacherPathSummary(sess, null, { allowAbilityUpdate: false });
+        if (!pathR?.aborted) {
+          applyPathRefreshResultToListSession(sess, pathR, { allowAbilityUpdate: false });
+        }
+      } catch (_) { /* 路径失败不阻断评判结果展示 */ }
+      if (student) {
+        syncSessionTimelineRowBadges(student);
+        renderStudentList();
+      }
+    }
     await loadSessionsData({ skipDetail: true });
+    // 详情重载：服务端已有 judgeResult + 新路径；能力卡过程依据一并重绘
+    if (selectedSessionId === sessionId) {
+      await loadSessionDetail(sessionId);
+    } else {
+      const stu2 = studentItems.find(s => s.studentKey === selectedStudentKey);
+      const sess2 = stu2?.sessions?.find(s => s.sessionId === sessionId) || sess;
+      if (stu2 && sess2) {
+        loadSessionAbilitySummary({
+          student: stu2,
+          session: sess2,
+          ability: sess2.abilityScore || data.abilityScore || null,
+          pathByPhase: resolvePathSummariesByPhase(sess2),
+        });
+      }
+      renderJudgeResult(jr);
+    }
   } catch (e) {
     const errBox = document.getElementById('judgeResult');
     if (errBox) errBox.innerHTML = `<div class="judge-result-box">错误: ${esc(e.message)}</div>`;
@@ -2420,33 +3387,6 @@ async function judgeSession(sessionId, mode = 'rules') {
     if (llmBtn) llmBtn.disabled = false;
   } finally {
     judgingSessionId = null;
-  }
-}
-
-async function refreshPathSummariesForStudent() {
-  const student = studentItems.find(s => s.studentKey === selectedStudentKey);
-  if (!student?.sessions?.length) return;
-  const btn = document.getElementById('refreshPathSummariesLocal');
-  if (btn) { btn.disabled = true; btn.textContent = '刷新中…'; }
-  let ok = 0;
-  let fail = 0;
-  const sorted = student.sessions.slice().sort((a, b) => {
-    const ta = a.updatedAt || a.startedAt || '';
-    const tb = b.updatedAt || b.startedAt || '';
-    return String(tb).localeCompare(String(ta));
-  });
-  await runPool(sorted, PATH_REFRESH_CONCURRENCY, async (sess) => {
-    const r = await refreshTeacherPathSummary(sess, null);
-    if (r?.aborted) return;
-    if (applyPathRefreshResultToListSession(sess, r)) ok += 1;
-    else fail += 1;
-  });
-  if (btn) { btn.disabled = false; btn.textContent = '刷新路径摘要'; }
-  renderStudentList();
-  syncSessionTimelineRowBadges(student);
-  if (selectedSessionId) await loadSessionDetail(selectedSessionId);
-  else {
-    alert(`路径摘要：成功 ${ok}，失败 ${fail}`);
   }
 }
 
@@ -2463,6 +3403,28 @@ function bindSessionDetailDelegation() {
     if (e.target.closest('#deleteSelectedSessionsLocal')) {
       e.preventDefault();
       deleteSelectedTraces();
+      return;
+    }
+    const foldToggle = e.target.closest('.session-timeline-fold-toggle');
+    if (foldToggle) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fold = foldToggle.closest('.session-timeline-fold');
+      const key = fold?.dataset?.foldStudent || selectedStudentKey || '';
+      const kind = fold?.dataset?.foldKind || 'non-terminal';
+      const expandMap = kind === 'older-terminal'
+        ? olderTerminalTimelineExpanded
+        : nonTerminalTimelineExpanded;
+      const next = !expandMap.get(key);
+      expandMap.set(key, next);
+      if (fold) {
+        fold.classList.toggle('is-expanded', next);
+        const body = fold.querySelector('.session-timeline-fold-body');
+        if (body) body.hidden = !next;
+        foldToggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+        const action = foldToggle.querySelector('.session-timeline-fold-action');
+        if (action) action.textContent = next ? '收起' : '展开';
+      }
       return;
     }
     const rowDelete = e.target.closest('.session-row-delete');
@@ -2484,11 +3446,6 @@ function bindSessionDetailDelegation() {
     }
     if (e.target.closest('#judgeLlmBtn')) {
       if (selectedSessionId) judgeSession(selectedSessionId, 'llm');
-      return;
-    }
-    if (e.target.closest('#refreshPathSummariesLocal')) {
-      e.preventDefault();
-      refreshPathSummariesForStudent();
       return;
     }
     const row = e.target.closest('.session-timeline-item');

@@ -99,13 +99,20 @@ canvas { position:fixed; top:0; left:0; display:block; }
 .mcard-mica.sel { box-shadow:0 0 12px rgba(185,130,255,0.25); }
 .mcard-ceramic.sel { box-shadow:0 0 12px rgba(250,162,70,0.22); }
 .mcard-glass.sel { box-shadow:0 0 12px rgba(110,195,255,0.22); }
-.srow { display:flex; align-items:center; gap:14px; margin:8px 0; }
-.slabel { font-size:12px; color:#7eb8c8; width:138px; flex-shrink:0; }
+.srow { display:flex; align-items:center; gap:10px; margin:6px 0; }
+.slabel { font-size:12px; color:#7eb8c8; width:108px; flex-shrink:0; }
 .slabel small { display:block; font-size:10px; color:rgba(255,255,255,0.80); margin-top:2px; }
-input[type=range] { flex:1; height:28px; -webkit-appearance:none; appearance:none; background:transparent; border-radius:2px; outline:none; margin:0; }
+input[type=range] { flex:1 1 auto; min-width:96px; height:28px; -webkit-appearance:none; appearance:none; background:transparent; border-radius:2px; outline:none; margin:0; }
 input[type=range]::-webkit-slider-runnable-track { height:5px; background:rgba(0,200,255,0.14); border-radius:2px; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; margin-top:-6.5px; border-radius:50%; background:#00c8ff; cursor:pointer; box-shadow:0 0 7px rgba(0,200,255,0.85); }
 .sval { font-size:12px; color:#00c8ff; width:74px; text-align:right; flex-shrink:0; }
+
+/* fine-tune: editable value pills (slider coarse / number fine) */
+.sval-edit{display:flex;align-items:center;gap:3px;width:78px;flex-shrink:0;justify-content:flex-end;}
+.sval-num{-moz-appearance:textfield;appearance:textfield;width:54px;background:rgba(0,30,50,0.75);border:1px solid rgba(0,200,255,0.4);border-radius:999px;color:#00c8ff;font-size:12px;text-align:right;padding:2px 7px;font-family:inherit;outline:none;}
+.sval-num:focus{border-color:rgba(0,200,255,0.85);box-shadow:0 0 8px rgba(0,200,255,0.25);}
+.sval-num::-webkit-outer-spin-button,.sval-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.sval-unit{font-size:11px;color:rgba(0,200,255,0.78);white-space:nowrap;}
 #bd-warn { background:rgba(255,36,36,0.12); border:1px solid rgba(255,80,80,0.34); border-radius:5px; padding:7px 12px; font-size:12px; color:#ff8888; margin-top:8px; display:none; }
 #ch0-constraint, #ch1-constraint, .cap-constraint { display:none; margin-top:8px; font-size:11px; text-align:center; color:rgba(255,200,80,0.85); letter-spacing:0.5px; }
 .prog-wrap { margin-top:10px; }
@@ -134,7 +141,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; h
 #v-btn { margin-top:30px; font-size:12px; letter-spacing:2px; color:rgba(120,222,255,0.92); opacity:0; transition:opacity 1.8s ease 2.2s; cursor:pointer; pointer-events:none; border:1px solid rgba(0,200,255,0.45); padding:9px 26px; border-radius:4px; animation:blink 2s infinite 2.5s; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
 #v-btn:hover { background:rgba(0,200,255,0.09); }
 .srow-irrelevant { margin:4px 0; }
-.srow-irrelevant .slabel { width:120px; }
+.srow-irrelevant .slabel { width:108px; }
 .srow-irrelevant .slabel small { color:rgba(140,150,170,0.75); }
 .srow-irrelevant .sval { color:rgba(140,150,170,0.85); }
 
@@ -184,14 +191,10 @@ body.victory-nav-ready #v-btn {
   background:rgba(12,14,28,0.94);
   border:1px solid rgba(255,140,0,0.28); box-sizing:border-box;
 }
-.ch2-caps { display:flex; gap:10px; margin-bottom:12px; }
-.ch2-cap { flex:1; min-width:0; background:rgba(255,140,0,0.05); border:1px solid rgba(255,140,0,0.22); border-radius:6px; padding:10px 12px; overflow:hidden; }
-.ch2-cap.c3 { border-color:rgba(0,200,255,0.25); background:rgba(0,50,88,0.12); }
-.ch2-cap input[type=range] { width:100%; display:block; }
-.ch2-cap-label { font-size:10px; letter-spacing:3px; color:rgba(255,160,40,0.55); margin-bottom:5px; text-transform:uppercase; }
-.ch2-cap.c3 .ch2-cap-label { color:rgba(0,200,255,0.55); }
-.ch2-cap-val { font-size:20px; font-weight:bold; color:#ffb040; text-shadow:0 0 10px rgba(255,160,40,0.5); margin-bottom:8px; }
-.ch2-cap.c3 .ch2-cap-val { color:#00c8ff; text-shadow:0 0 10px rgba(0,200,255,0.5); }
+/* 侧栏纵向列表：每行 标签 | 长滑条 | 数字 pill（对齐 ch1 .srow） */
+.ch2-caps { display:flex; flex-direction:column; gap:2px; margin-bottom:12px; }
+.ch2-caps .srow { margin:5px 0; }
+.ch2-caps .srow .slabel { width:108px; }
 #ch2-overload { background:rgba(255,60,0,0.12); border:1px solid rgba(255,80,0,0.38); border-radius:5px; padding:7px 12px; font-size:12px; color:#ff8860; margin-top:8px; display:none; }
 /* ── Map ── */
 #sfx-btn {
@@ -578,9 +581,8 @@ input[type=range].c6-slider::-webkit-slider-thumb { background:#a060ff; box-shad
   #mat-grid { gap: 5px; }
   .mcard { padding: 6px 3px; }
   .mname { font-size: 11px; } .mer { font-size: 9px; } .mdesc { font-size: 8px; line-height: 1.3; }
-  .ch2-caps { gap: 6px; }
-  .ch2-cap { padding: 7px 8px; }
-  .ch2-cap-val { font-size: 16px; }
+  .ch2-caps { gap: 0; }
+  .ch2-caps .srow .slabel { width: auto; flex: 0 1 96px; min-width: 72px; }
   #ch2-formula { font-size: 11px; line-height: 1.7; }
 
   #dialogue { width: 94vw; bottom: 110px; padding: 14px 16px; }
@@ -942,6 +944,21 @@ input[type=range]::-webkit-slider-thumb{
   cursor:pointer;
 }
 
+/* Horizontal .srow: craft width:100% crushes flex range — reclaim track length */
+.srow{gap:10px;margin:6px 0;}
+.srow .slabel,.srow-irrelevant .slabel{width:108px!important;flex-shrink:0;}
+.srow input[type=range],
+.c5-srow input[type=range],
+.c6-srow input[type=range]{
+  flex:1 1 auto!important;
+  width:auto!important;
+  min-width:96px;
+  margin:0!important;
+}
+.c5-srow,.c6-srow{gap:10px;}
+.c5-slabel{width:110px!important;}
+.c6-slabel{width:110px!important;}
+
 /* Label + value badge */
 #essence-bench label,
 .slider-group label,
@@ -1049,6 +1066,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:.75rem!important;
   opacity:.75!important;
 }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
+
 </style>
 </head>
 <body class="cap-dark">
@@ -1141,25 +1185,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="c-meta" id="c2-meta">目标：<strong>500</strong> µF &emsp; 电压：<strong>5000 V</strong></div>
   </div>
   <div class="ch2-caps">
-    <div class="ch2-cap">
-      <div class="ch2-cap-label">C₁ · 并联组 A</div>
-      <div class="ch2-cap-val" id="c2v-1">200 µF</div>
-      <input type="range" id="s-c1" min="100" max="2000" value="200" step="10">
+    <div class="srow">
+      <div class="slabel">C₁ · 并联组 A<small>并联支路电容</small></div>
+      <input type="range" id="s-c1" min="100" max="2000" value="200" step="1">
+      <div class="sval-edit"><input type="number" class="sval-num" id="n-c1" min="100" max="2000" step="1" value="200" aria-label="C1数值"><span class="sval-unit">µF</span></div>
     </div>
-    <div class="ch2-cap">
-      <div class="ch2-cap-label">C₂ · 并联组 A</div>
-      <div class="ch2-cap-val" id="c2v-2">200 µF</div>
-      <input type="range" id="s-c2" min="100" max="2000" value="200" step="10">
+    <div class="srow">
+      <div class="slabel">C₂ · 并联组 A<small>并联支路电容</small></div>
+      <input type="range" id="s-c2" min="100" max="2000" value="200" step="1">
+      <div class="sval-edit"><input type="number" class="sval-num" id="n-c2" min="100" max="2000" step="1" value="200" aria-label="C2数值"><span class="sval-unit">µF</span></div>
     </div>
-    <div class="ch2-cap c3">
-      <div class="ch2-cap-label">C₃ · 串联</div>
-      <div class="ch2-cap-val" id="c2v-3">300 µF</div>
-      <input type="range" id="s-c3" min="100" max="2000" value="300" step="10">
+    <div class="srow">
+      <div class="slabel">C₃ · 串联<small>串联支路电容</small></div>
+      <input type="range" id="s-c3" min="100" max="2000" value="300" step="1">
+      <div class="sval-edit"><input type="number" class="sval-num" id="n-c3" min="100" max="2000" step="1" value="300" aria-label="C3数值"><span class="sval-unit">µF</span></div>
     </div>
-    <div class="ch2-cap">
-      <div class="ch2-cap-label">L · 馈线长度</div>
-      <div class="ch2-cap-val" id="c2v-L">40 m</div>
+    <div class="srow srow-irrelevant">
+      <div class="slabel">L · 馈线<small>旁路·不改总电容</small></div>
       <input type="range" id="s-cable" min="10" max="100" value="40" step="1">
+      <div class="sval" id="c2v-L">40 m</div>
     </div>
   </div>
   <div class="prog-wrap">
@@ -2073,6 +2117,22 @@ function showWin() {
   ['controls','controls2','controls3','controls4','controls5','controls6','controls7','cap-formula','ch2-formula'].forEach(
     id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 
+  // 竞赛过关：优先证据→归因卡，勿再播 #victory / 章节 summary 抢戏
+  var craftWinEl = document.getElementById('craft-win');
+  if (craftWinEl) {
+    if (typeof window.__craftShowWin === 'function') {
+      try { window.__craftShowWin(); } catch (eCraft) {}
+    } else {
+      craftWinEl.hidden = false;
+    }
+    var vSkip = document.getElementById('victory');
+    if (vSkip) {
+      vSkip.style.display = 'none';
+      vSkip.style.background = 'rgba(0,26,44,0)';
+    }
+    return;
+  }
+
   if ((ch === 0 || ch === 1) && typeof genCity === 'function') genCity();
 
   const d = WIN_DATA[ch];
@@ -2771,6 +2831,57 @@ if (sTh) {
 ;(function(){var el=document.getElementById('s-c1');if(el)el.addEventListener('input',function(){ measuredCh2=null; if(typeof SFX!=='undefined')SFX.tick('sliderTick'); c2_c1=+this.value; if(typeof syncCh2UI==='function')syncCh2UI(); });})();
 ;(function(){var el=document.getElementById('s-c2');if(el)el.addEventListener('input',function(){ measuredCh2=null; if(typeof SFX!=='undefined')SFX.tick('sliderTick'); c2_c2=+this.value; if(typeof syncCh2UI==='function')syncCh2UI(); });})();
 ;(function(){var el=document.getElementById('s-c3');if(el)el.addEventListener('input',function(){ measuredCh2=null; if(typeof SFX!=='undefined')SFX.tick('sliderTick'); c2_c3=+this.value; if(typeof syncCh2UI==='function')syncCh2UI(); });})();
+
+/* FINE-TUNE-BIND-HELPER */
+function __bindRangeNumber(rangeEl, numEl, opts){
+  if(!rangeEl||!numEl) return;
+  opts=opts||{};
+  var decimals=opts.decimals;
+  var onApply=opts.onApply;
+  function fmt(v){
+    v=+v;
+    if(!isFinite(v)) return rangeEl.value;
+    if(decimals!=null) return v.toFixed(decimals);
+    return String(v);
+  }
+  function clamp(v){
+    var min=+rangeEl.min, max=+rangeEl.max, step=+rangeEl.step||1;
+    if(!isFinite(v)) return +rangeEl.value;
+    v=Math.min(max, Math.max(min, v));
+    if(isFinite(step)&&step>0){
+      var n=Math.round((v-min)/step);
+      v=min+n*step;
+      var d=decimals!=null?decimals:(String(step).split('.')[1]||'').length;
+      if(d>0) v=parseFloat(v.toFixed(d));
+    }
+    return Math.min(max, Math.max(min, v));
+  }
+  function syncFromRange(){
+    if(document.activeElement===numEl) return;
+    numEl.value=fmt(rangeEl.value);
+  }
+  function applyFromNum(){
+    var v=clamp(parseFloat(numEl.value));
+    numEl.value=fmt(v);
+    if(+rangeEl.value!==v) rangeEl.value=String(v);
+    rangeEl.dispatchEvent(new Event('input',{bubbles:true}));
+    rangeEl.dispatchEvent(new Event('change',{bubbles:true}));
+    if(typeof onApply==='function') onApply(v);
+  }
+  rangeEl.addEventListener('input', syncFromRange);
+  numEl.addEventListener('change', applyFromNum);
+  numEl.addEventListener('keydown', function(e){
+    if(e.key==='Enter'){ e.preventDefault(); applyFromNum(); numEl.blur(); }
+  });
+  syncFromRange();
+}
+
+(function(){
+  var r1=document.getElementById('s-c1'), r2=document.getElementById('s-c2'), r3=document.getElementById('s-c3');
+  __bindRangeNumber(r1, document.getElementById('n-c1'), {decimals:0});
+  __bindRangeNumber(r2, document.getElementById('n-c2'), {decimals:0});
+  __bindRangeNumber(r3, document.getElementById('n-c3'), {decimals:0});
+})();
 ;(function(){var br=document.getElementById('btn-read-ch2');if(br)br.addEventListener('click',function(){revealCh2Reading();});})();
 ;(function(){var el=document.getElementById('s-r3');if(el)el.addEventListener('input',function(){ if(typeof SFX!=='undefined')SFX.tick('sliderTick'); c3_r=+this.value; if(typeof syncCh3UI==='function')syncCh3UI(); });})();
 ;(function(){var el=document.getElementById('s-cv3');if(el)el.addEventListener('input',function(){ if(typeof SFX!=='undefined')SFX.tick('sliderTick'); c3_c=+this.value; if(typeof syncCh3UI==='function')syncCh3UI(); });})();
@@ -3445,7 +3556,7 @@ let CH2_WIN_LO  = 0.97;
 let CH2_WIN_HI  = 1.03;
 function syncCh2WinBand() {
   if (_cap2PlayMode === 'challenge') {
-    CH2_WIN_LO = 0.988; CH2_WIN_HI = 1.012;
+    CH2_WIN_LO = 0.985; CH2_WIN_HI = 1.015;
   } else {
     CH2_WIN_LO = 0.97; CH2_WIN_HI = 1.03;
   }
@@ -3496,6 +3607,15 @@ function ch2TryWin() {
   if (measuredCh2 == null) return;
   const ct = measuredCh2.ct;
   if (!ch2IsSafe() || !ch2InTargetBand(ct)) return;
+  // 探究：对照带命中只观察，不 emit win / 不进 craft 结算
+  if (_cap2PlayMode !== 'challenge') {
+    const hint = document.getElementById('hint2') || document.getElementById('hint');
+    if (hint) {
+      hint.textContent = '总容进入对照带 · 继续对比串/并联与取值';
+      hint.style.color = 'rgba(125,186,140,0.95)';
+    }
+    return;
+  }
   won = true;
   ch2LockSliders(true);
   if (typeof Telemetry !== 'undefined') Telemetry.log('solution_locked', { after: Telemetry.snapshot() });
@@ -3550,9 +3670,13 @@ function syncCh2UI() {
   const anyFault = ovl || bCp || bC3;
   const tgt = CH2_TARGET;
 
-  document.getElementById('c2v-1').textContent = c2_c1 + ' µF';
-  document.getElementById('c2v-2').textContent = c2_c2 + ' µF';
-  document.getElementById('c2v-3').textContent = c2_c3 + ' µF';
+  var nC1=document.getElementById('n-c1'), nC2=document.getElementById('n-c2'), nC3=document.getElementById('n-c3');
+  if(nC1 && document.activeElement!==nC1) nC1.value=String(Math.round(c2_c1));
+  if(nC2 && document.activeElement!==nC2) nC2.value=String(Math.round(c2_c2));
+  if(nC3 && document.activeElement!==nC3) nC3.value=String(Math.round(c2_c3));
+  var leg1=document.getElementById('c2v-1'); if(leg1) leg1.textContent=c2_c1+' µF';
+  var leg2=document.getElementById('c2v-2'); if(leg2) leg2.textContent=c2_c2+' µF';
+  var leg3=document.getElementById('c2v-3'); if(leg3) leg3.textContent=c2_c3+' µF';
   document.getElementById('f-cp').textContent  = measuredCh2 == null ? '—' : String(cp);
   document.getElementById('f-ct').textContent  = measuredCh2 == null ? '—' : measuredCh2.ct.toFixed(1);
   document.getElementById('f-e').textContent   = measuredCh2 == null ? '—' : measuredCh2.E.toFixed(2);
@@ -4736,8 +4860,18 @@ if (document.readyState === 'loading') {
     emit('win', { winOk: true });
   }
   var WIN_TEXT = [/完美命中/, /游戏胜利/, /过关！/, /命中目标！/, /🎯\s*命中目标/, /🏆\s*过关/];
+  var __legacyWinScanTimer = null;
   function scanWinText() {
-    var text = document.body ? document.body.innerText : '';
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return false;
+    var nodes = document.querySelectorAll(
+      '.win-banner,#winBanner,[data-win="1"],.pass-badge,#winIndicator,.toast,.banner,.observe-item,[class*="win"]'
+    );
+    var text = '';
+    for (var n = 0; n < nodes.length; n++) {
+      text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
+      if (text.length > 8000) break;
+    }
+    if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {
         emitWin('text_' + i);
@@ -4746,10 +4880,43 @@ if (document.readyState === 'loading') {
     }
     return false;
   }
+  function scheduleScanWinText(muts) {
+    if (window.__legacyWinEmitted || window.__craftWinOpen || window.__craftWinDismissed) return;
+    if (__legacyWinScanTimer) return;
+    __legacyWinScanTimer = setTimeout(function() {
+      __legacyWinScanTimer = null;
+      var suspect = !muts || !muts.length;
+      if (!suspect) {
+        for (var i = 0; i < muts.length && !suspect; i++) {
+          var m = muts[i];
+          if (m.type === 'characterData') {
+            var pt = m.target && m.target.parentElement;
+            var t = ((pt && (pt.innerText || pt.textContent)) || (m.target && m.target.data) || '').slice(0, 240);
+            if (/过关|命中|胜利|🏆|🎯/.test(t)) suspect = true;
+          } else if (m.addedNodes && m.addedNodes.length) {
+            for (var j = 0; j < m.addedNodes.length; j++) {
+              var node = m.addedNodes[j];
+              if (!node || (node.nodeType !== 1 && node.nodeType !== 3)) continue;
+              var tx = node.nodeType === 3
+                ? (node.data || '')
+                : ((node.innerText || node.textContent || '') + ' ' + (node.className || '') + ' ' + (node.id || ''));
+              if (/过关|命中|胜利|🏆|🎯|win-banner|win-badge|pass-badge|winBanner/.test(tx)) {
+                suspect = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (suspect) scanWinText();
+    }, 200);
+  }
   document.addEventListener('DOMContentLoaded', function() {
-    var obs = new MutationObserver(function() { scanWinText(); });
+    var obs = new MutationObserver(function(muts) { scheduleScanWinText(muts); });
     if (document.body) obs.observe(document.body, { subtree: true, childList: true, characterData: true });
-    setInterval(scanWinText, 800);
+    setInterval(function(){
+      if (!window.__legacyWinEmitted && !window.__craftWinOpen && !window.__craftWinDismissed) scanWinText();
+    }, 2000);
   });
 })();
 </script>
@@ -4808,16 +4975,139 @@ window.startTransition = window.startTransition || function(){
     },1000);
   }
   function apply(mode){
+    hideAttemptsExhausted();
     state.mode=mode==='challenge'?'challenge':'explore';
     if(state.mode==='challenge'){ stop(); state.attempts=MAX; }
     else startTimer();
     render(); setPhase(state.mode);
     document.dispatchEvent(new CustomEvent('dual-mode-change',{detail:{mode:state.mode,attempts:state.attempts}}));
   }
+
+  /* === attempts-exhausted-settle === */
+  var __exhaustTimer = null;
+  var __exhaustBound = false;
+  function __isChallengeWonNow(){
+    if (window.__craftWinOpen) return true;
+    if (window.__challengeWon) return true;
+    var win = $('craft-win');
+    if (win && win.hidden === false) return true;
+    return false;
+  }
+  function hideAttemptsExhausted(){
+    if (__exhaustTimer) { clearTimeout(__exhaustTimer); __exhaustTimer = null; }
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureAttemptsExhaustedUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) {
+        sel.value = 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        apply('explore');
+      }
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      state.attempts = MAX;
+      render();
+      apply('challenge');
+      var sel = $('modeSelect');
+      if (sel) sel.value = 'challenge';
+    });
+    if (bList) {
+      if (typeof window.__eaNavigateToStudentList !== 'function' && !document.getElementById('craftBackBtn')) {
+        bList.hidden = true;
+      } else {
+        bList.addEventListener('click', function(){
+          hideAttemptsExhausted();
+          if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+          else {
+            var bb = document.getElementById('craftBackBtn');
+            if (bb) bb.click();
+          }
+        });
+      }
+    }
+  }
+  function showAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__isChallengeWonNow()) return;
+    ensureAttemptsExhaustedUi();
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+
+  }
+  function scheduleAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__exhaustTimer) clearTimeout(__exhaustTimer);
+    __exhaustTimer = setTimeout(function(){
+      __exhaustTimer = null;
+      showAttemptsExhausted();
+    }, 650);
+  }
+  function bindExhaustWinGuard(){
+    if (__exhaustBound) return;
+    __exhaustBound = true;
+    var prev = window.__craftShowWin;
+    if (typeof prev === 'function') {
+      window.__craftShowWin = function(){
+        hideAttemptsExhausted();
+        return prev.apply(this, arguments);
+      };
+    }
+    try {
+      var obs = new MutationObserver(function(){
+        if (__isChallengeWonNow()) hideAttemptsExhausted();
+      });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    } catch (e) {}
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+
   function consume(){
     if(state.mode!=='challenge') return true;
     if(state.attempts<=0) return false;
     state.attempts--; render();
+    if(state.attempts<=0) scheduleAttemptsExhausted();
     return state.attempts>=0;
   }
   window.__dualModeConsumeAttempt=consume;
@@ -4827,6 +5117,7 @@ window.startTransition = window.startTransition || function(){
     if(!sel) return;
     sel.addEventListener('change',function(){ apply(sel.value); });
     apply(sel.value||'explore');
+    setTimeout(bindExhaustWinGuard,0);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
   else boot();
@@ -5027,7 +5318,9 @@ window.startTransition = window.startTransition || function(){
   }
   if (wbtn) wbtn.addEventListener('click', function(){
     if (wbtn.disabled) return;
+    try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
+    window.__craftWinOpen = false;
     if (win) win.hidden = true;
     setSettle(false);
     replayLevel();
@@ -5048,7 +5341,13 @@ window.startTransition = window.startTransition || function(){
   });
 
   function showWin(extra){
+    if (window.__craftWinOpen) {
+      var t0 = document.getElementById('craftWinText');
+      if (t0 && typeof extra === 'string' && extra) t0.textContent = extra;
+      return;
+    }
     if (win) {
+      window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
       if (typeof window.__eaPrepareCraftWin === 'function') {
         var ev0 = window.__eaSessionEvidence;
@@ -5058,12 +5357,14 @@ window.startTransition = window.startTransition || function(){
         var msg = document.getElementById('messageBox');
         if (msg) msg.classList.add('hidden');
       } catch (e) {}
-      // prefer craft-win over long chapter summaries when both exist
+      // prefer craft-win over long chapter summaries / victory / path floats
       try {
-        ['summary4','summary1','summary2','summary3','victory'].forEach(function(id){
+        ['summary4','summary1','summary2','summary3','victory','cap-formula','ch2-formula'].forEach(function(id){
           var el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
+        var vbox = document.getElementById('victory');
+        if (vbox) vbox.style.background = 'rgba(0,26,44,0)';
       } catch (e2) {}
       win.hidden = false;
       setSettle(true);
@@ -5080,12 +5381,15 @@ window.startTransition = window.startTransition || function(){
 
   var _emit = window.__emit;
   window.__emit = function(type, payload){
-    if (typeof _emit === 'function') _emit(type, payload);
-    if (type === 'win') showWin();
+    try {
+      if (typeof _emit === 'function') _emit(type, payload);
+    } finally {
+      if (type === 'win') showWin();
+    }
   };
   var obs = new MutationObserver(function(){
-    if (window.__craftWinDismissed) return;
-    var el = document.querySelector('.win-banner,.win-badge,#winBanner,[data-win="1"]');
+    if (window.__craftWinDismissed || window.__craftWinOpen) return;
+    var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
     if (el && el.offsetParent !== null) showWin();
   });
   obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style','hidden']});
@@ -5395,7 +5699,13 @@ window.startTransition = window.startTransition || function(){
           var c = curCh();
           if (DERIV[c] && !seen[c]) {
             seen[c] = true;
-            setTimeout(function(){ show(c); }, 600);
+            // 有 craft 归因卡时勿自动盖推导层；仅开放重看按钮
+            var cwOpen = document.getElementById('craft-win');
+            if (cwOpen && !cwOpen.hidden) {
+              showReopenForCurrent();
+            } else {
+              setTimeout(function(){ show(c); }, 600);
+            }
           } else {
             showReopenForCurrent();
           }
@@ -5987,6 +6297,33 @@ window.startTransition = window.startTransition || function(){
 
   setInterval(function(){var c=curCh();if(ACC[c])setTheme(c);},400);
   requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+/* === trace-new-round-on-retry === */
+(function(){
+  if (window.__platformTraceRequestNewRound) return;
+  window.__platformTraceRequestNewRound = function(reason){
+    var r = reason || 'retry';
+    try {
+      if (window.parent && window.parent !== window) {
+        if (typeof window.parent.__platformTraceNewRound === 'function') {
+          window.parent.__platformTraceNewRound({ reason: r });
+          return true;
+        }
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: r }, '*');
+        return true;
+      }
+    } catch (e) {}
+    try {
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.beginNewRound === 'function') {
+        window.PlatformTraceAdapter.beginNewRound({ reason: r });
+        return true;
+      }
+    } catch (e2) {}
+    return false;
+  };
 })();
 </script>
 </body>

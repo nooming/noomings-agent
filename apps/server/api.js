@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { judge } = require('../../packages/judge/judge');
 const { buildJudgeRequest, normalizeTrace } = require('../../packages/judge/game-trace');
+const { judgeAndSaveSession } = require('../../packages/platform/judge-session-core');
 const { generateGraph } = require('../../packages/generate/pipeline');
 const { runAnalyzeThreeStep } = require('../../packages/generate/analyze-three-step');
 const { generateMultiLevelGraph } = require('../../packages/generate/multi-level-pipeline');
@@ -33,7 +34,6 @@ const {
   listTraceStudents,
   summarizeSessionEvents,
   getTraceSession,
-  saveJudgeResult,
   saveTraceSession,
   deleteTraceSessions,
   getStudentTraceSummary,
@@ -44,6 +44,10 @@ const {
 const { getPackageGamePath, getPackageChapterPath } = require('../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../packages/judge/strategy-segment-score');
 const { resolveStrategyPathScoreScope } = require('../../packages/judge/trace-normalize');
+const {
+  computeAbilityScore,
+  ABILITY_SCORE_VERSION,
+} = require('../../packages/judge/ability-score');
 const { formatSummary, detectNearTies } = require('../web/ui/strategy-path-summary');
 const { loadAdapter } = require('../../packages/platform/adapters');
 const { generateGameHtml } = require('../../packages/generate/html-codegen');
@@ -536,43 +540,98 @@ async function handleTraceIngest(req, res) {
   }
 }
 
-async function handlePlatformJudgeSession(req, res) {
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
+ * @param {{ leaveAuto?: boolean }} [opts]
+ * leaveAuto / body.reason==='leave': rules-only, skip if already judged (idempotent).
+ */
+async function handlePlatformJudgeSession(req, res, opts = {}) {
   cors(res);
   try {
     const body = await readBody(req);
-    const session = getTraceSession(body.sessionId);
-    if (!session) {
+    if (!body.sessionId) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'sessionId_required' }));
+      return;
+    }
+    const reasonLc = String(body.reason || '').toLowerCase();
+    const isLeave = opts.leaveAuto === true || reasonLc === 'leave';
+    const tipOutcomeRaw = body.terminalOutcome != null ? String(body.terminalOutcome) : '';
+    const tipOutcome = (tipOutcomeRaw === 'pass' || tipOutcomeRaw === 'exhausted_fail' || tipOutcomeRaw === 'incomplete')
+      ? tipOutcomeRaw
+      : null;
+    const tipExhausted = body.attemptsExhausted === true || tipOutcome === 'exhausted_fail';
+    // 离开自动评判仅 rules；教师端默认 rules，显式 mode=llm 才走 LLM（无 Key 仍降级 rules）
+    // leave：已评判则幂等跳过；教师手动评判默认 force 重评
+    // new_round(+terminal tip)：允许在 events 稍晚时先标终局再 judge，避免 incomplete skip
+    const result = await judgeAndSaveSession(body.sessionId, {
+      mode: isLeave ? 'rules' : String(body.mode || 'rules').toLowerCase(),
+      force: !isLeave,
+      leaveAuto: isLeave,
+      graphId: body.graphId,
+      packageId: body.packageId,
+      ch: body.ch,
+      llmOpts: LLM_OPTS(),
+      reason: body.reason,
+      terminalOutcome: tipOutcome || undefined,
+      attemptsExhausted: tipExhausted || undefined,
+    });
+    if (!result.ok && result.error === 'session_not_found') {
       res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: false, error: 'session_not_found' }));
       return;
     }
-    const graphId = body.graphId || session.graphId;
-    const chapter = loadChapterForGraph(graphId);
-    if (!chapter) {
+    if (!result.ok && result.error === 'chapter_not_found') {
       res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: false, error: 'chapter_not_found' }));
       return;
     }
-    const ch = body.ch ?? session.ch ?? 0;
-    const base = buildJudgeRequest({
-      ch,
-      trace: normalizeTrace({ events: session.events, ch, game: session.game }, ch),
-      chapter,
-    });
-    const graph = base.graph;
-    // 教师端默认规则评判（稳定可复现）；显式 mode=llm 时才走 LLM（无 Key 仍降级 rules）
-    const judgeMode = String(body.mode || 'rules').toLowerCase();
-    const result = await judge(
-      { ...body, ...base, graph, chapter, mode: judgeMode },
-      LLM_OPTS(),
-    );
-    saveJudgeResult(session.sessionId, { ...result, judgedAt: new Date().toISOString() });
+    if (!result.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: result.error || 'judge_failed' }));
+      return;
+    }
+    if (result.skipped) {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: true,
+        skipped: true,
+        reason: result.reason || 'already_judged',
+        sessionId: result.sessionId,
+        terminalOutcome: result.terminalOutcome || undefined,
+        abilityScore: result.abilityScore || undefined,
+      }));
+      return;
+    }
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ ok: true, sessionId: session.sessionId, ch, ...result }));
+    res.end(JSON.stringify({
+      ok: true,
+      sessionId: result.sessionId,
+      ch: result.ch,
+      skipped: false,
+      reason: isLeave ? 'leave' : undefined,
+      mode: result.mode,
+      verdict: result.verdict,
+      comment: result.comment,
+      strengths: result.strengths,
+      gaps: result.gaps,
+      inquiryPath: result.inquiryPath,
+      teacherSummary: result.teacherSummary,
+      judgedAt: result.judgedAt,
+      terminalOutcome: result.terminalOutcome || undefined,
+      // 仅回传给教师调用方；学生端不读此字段作展示
+      abilityScore: result.abilityScore || undefined,
+    }));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: false, error: e.message }));
   }
+}
+
+/** Student leave: fire-and-forget rules judge; no teacher auth. */
+async function handlePlatformAutoJudgeOnLeave(req, res) {
+  return handlePlatformJudgeSession(req, res, { leaveAuto: true });
 }
 
 function handlePlatformCatalog(req, res, publishedOnly) {
@@ -722,10 +781,19 @@ function handlePlatformTraceStudents(req, res) {
   const catalogId = url.searchParams.get('catalogId') || undefined;
   const q = url.searchParams.get('q') || undefined;
   const status = url.searchParams.get('status') || undefined;
+  const limitRaw = url.searchParams.get('limit');
+  let limit = 200;
+  if (limitRaw != null && limitRaw !== '') {
+    const n = Number(limitRaw);
+    if (Number.isFinite(n)) limit = Math.max(1, Math.min(300, Math.floor(n)));
+  }
+  const items = listTraceStudents({ graphId, catalogId, q, status, limit });
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify({
     ok: true,
-    items: listTraceStudents({ graphId, catalogId, q, status }),
+    items,
+    limit,
+    truncated: items.length >= limit,
   }));
 }
 
@@ -932,6 +1000,24 @@ async function handleSessionStrategyPathSummary(req, res) {
         { primaryStrategy: null, score: null, breakdown: {} },
         { audience, showScore: false, alignmentOk: false, degradeReason: 'events_empty', scoredPhase },
       );
+      if (audience === 'teacher') {
+        const hasFiniteEmpty = !!(session.abilityScore
+          && Number(session.abilityScore.version) === Number(ABILITY_SCORE_VERSION)
+          && Number.isFinite(Number(session.abilityScore.total)));
+        if (!hasFiniteEmpty) {
+          try {
+            session.abilityScore = computeAbilityScore({
+              events: [],
+              chapter,
+              verdict: session.judgeResult?.verdict || null,
+              judged: !!session.judged || !!session.judgeResult,
+              packageId: body.packageId || session.packageId || session.catalogId || null,
+              graphId,
+            });
+            saveTraceSession(session);
+          } catch (_) { /* ignore */ }
+        }
+      }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({
         ok: true,
@@ -942,6 +1028,8 @@ async function handleSessionStrategyPathSummary(req, res) {
         summary,
         degraded: true,
         variableAdjustCounts: session.variableAdjustCounts,
+        abilityScore: audience === 'teacher' ? (session.abilityScore || null) : undefined,
+        abilityScoreVersion: audience === 'teacher' ? ABILITY_SCORE_VERSION : undefined,
         source: 'session-events',
       }));
       return;
@@ -992,9 +1080,47 @@ async function handleSessionStrategyPathSummary(req, res) {
         session.strategyPathSummary = pathPayload;
       }
     }
+    // 能力总分：仅缺失 / 非有限 total / 公式版本不符时懒重算。
+    // 已有当前版本有限总分时整段跳过（教师受众也绝不重算/落盘覆盖）。
+    const hasFiniteAbility = !!(session.abilityScore
+      && Number(session.abilityScore.version) === Number(ABILITY_SCORE_VERSION)
+      && Number.isFinite(Number(session.abilityScore.total)));
+    if (!hasFiniteAbility) {
+      try {
+        const pkgId = body.packageId
+          || session.packageId
+          || session.catalogId
+          || null;
+        const computed = computeAbilityScore({
+          events: allEvents,
+          chapter,
+          verdict: session.judgeResult?.verdict || session.verdict || null,
+          judged: !!session.judged || !!session.judgeResult,
+          packageId: pkgId,
+          graphId,
+        });
+        // 二次护栏：若并发间已有有限分，不落盘覆盖
+        const stillMissing = !session.abilityScore
+          || Number(session.abilityScore.version) !== Number(ABILITY_SCORE_VERSION)
+          || !Number.isFinite(Number(session.abilityScore.total));
+        if (stillMissing) session.abilityScore = computed;
+      } catch (abilityErr) {
+        // 不计分失败不影响路径摘要；勿覆盖已有有效分
+        if (!session.abilityScore
+          || Number(session.abilityScore.version) !== Number(ABILITY_SCORE_VERSION)
+          || !Number.isFinite(Number(session.abilityScore.total))) {
+          session.abilityScore = {
+            version: ABILITY_SCORE_VERSION,
+            total: null,
+            pending: true,
+            error: abilityErr.message || String(abilityErr),
+            computedAt: new Date().toISOString(),
+          };
+        }
+      }
+    }
     saveTraceSession(session);
-    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({
+    const payload = {
       ok: true,
       sessionId: session.sessionId,
       graphId,
@@ -1009,10 +1135,17 @@ async function handleSessionStrategyPathSummary(req, res) {
       variableAdjustCounts: session.variableAdjustCounts,
       source: 'session-events',
       contract: {
-        student: 'summary.text + summary.advice（不剧透最优；默认无分数；竞赛过关按竞赛段评分）',
-        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段；explore/challenge 可分次请求',
+        student: 'summary.text + summary.advice（不剧透最优；默认无分数；竞赛过关按竞赛段评分；不含能力总分展示）',
+        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段；explore/challenge 可分次请求；abilityScore 为平台能力总分 v2',
       },
-    }));
+    };
+    // 学生受众不附带能力总分，避免 student-play 误展示
+    if (audience === 'teacher') {
+      payload.abilityScore = session.abilityScore || null;
+      payload.abilityScoreVersion = ABILITY_SCORE_VERSION;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(payload));
   } catch (e) {
     res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
@@ -1199,6 +1332,11 @@ async function routeApi(req, res) {
   if (req.method === 'POST' && req.url === '/api/platform/judge-session') {
     if (!requireTeacherAuth(req, res)) return true;
     await handlePlatformJudgeSession(req, res);
+    return true;
+  }
+  // 学生离开探究页：rules 自动评判（幂等）；无需教师鉴权；供 sendBeacon / keepalive
+  if (req.method === 'POST' && req.url === '/api/platform/auto-judge-on-leave') {
+    await handlePlatformAutoJudgeOnLeave(req, res);
     return true;
   }
   return false;

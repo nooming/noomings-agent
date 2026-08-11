@@ -79,14 +79,38 @@ function ev(ts, type, payload) {
   return { ts, ch: 0, type, payload };
 }
 
-function trial(events, ts, tunings, fireId, winOk) {
+function isMultiLevelPkg(pkgId) {
+  return /projectile-cannon|cannon/i.test(String(pkgId || ''));
+}
+
+function trial(events, ts, tunings, fireId, winOk, opts = {}) {
   let t = ts;
   for (const [control, value] of tunings) {
     events.push(ev(t++, 'tuning', { control, value }));
   }
   events.push(ev(t++, 'action', { control: fireId }));
-  events.push(ev(t++, 'snapshot', { winOk: !!winOk, hintKey: winOk ? 'ok' : 'retry' }));
-  if (winOk) events.push(ev(t++, 'win', { winOk: true }));
+  const snapPayload = { winOk: !!winOk, hintKey: winOk ? 'ok' : 'retry' };
+  const winPayload = { winOk: true };
+  // 多关整包过关夹具：带 final + levelsCleared，避免 legacy 单 win 只记 1/4
+  if (winOk && opts.multiLevelComplete) {
+    const n = Number(opts.levelsTotal) > 0 ? Math.round(Number(opts.levelsTotal)) : 4;
+    Object.assign(snapPayload, {
+      final: true,
+      interim: false,
+      levelsCleared: n,
+      levelsTotal: n,
+      level: n,
+    });
+    Object.assign(winPayload, {
+      final: true,
+      interim: false,
+      levelsCleared: n,
+      levelsTotal: n,
+      level: n,
+    });
+  }
+  events.push(ev(t++, 'snapshot', snapPayload));
+  if (winOk) events.push(ev(t++, 'win', winPayload));
   return t;
 }
 
@@ -105,27 +129,35 @@ function withPhases(build) {
 }
 
 /** S1: 纯高优单变量 + 最后一发 win */
-function synthS1(chapter) {
+function synthS1(chapter, pkgId) {
   const primary = primaryAv(chapter);
   const fireId = fireCtrl(chapter);
+  const multiDone = isMultiLevelPkg(pkgId);
   const events = withPhases((evs, ts) => {
     let t = ts;
     for (let i = 0; i < 3; i++) t = trial(evs, t, [[primary, 10 + i]], fireId, false);
-    t = trial(evs, t, [[primary, 14]], fireId, true);
+    t = trial(evs, t, [[primary, 14]], fireId, true, {
+      multiLevelComplete: multiDone,
+      levelsTotal: 4,
+    });
     return t;
   });
   return { kind: 'S1_pure_high_av_win', events, hasCv: false };
 }
 
 /** S2: 多参盲调陷阱（可带 win 以测 trap 倾向） */
-function synthS2(chapter) {
+function synthS2(chapter, pkgId) {
   const a = primaryAv(chapter);
   const b = secondaryAv(chapter) || a;
   const fireId = fireCtrl(chapter);
+  const multiDone = isMultiLevelPkg(pkgId);
   const events = withPhases((evs, ts) => {
     let t = ts;
     for (let i = 0; i < 4; i++) {
-      t = trial(evs, t, [[a, 10 + i], [b, 20 + i]], fireId, i === 3);
+      t = trial(evs, t, [[a, 10 + i], [b, 20 + i]], fireId, i === 3, {
+        multiLevelComplete: multiDone && i === 3,
+        levelsTotal: 4,
+      });
     }
     return t;
   });
@@ -221,8 +253,8 @@ function expectAccept(kind, judge, seg, chapter) {
   return { ok: failures.length === 0, failures, notes, rate, route, verdict };
 }
 
-function evalCase(chapter, synthFn) {
-  const synth = synthFn(chapter);
+function evalCase(chapter, synthFn, pkgId) {
+  const synth = synthFn(chapter, pkgId);
   if (synth.skipped || !synth.events) {
     return {
       kind: synth.kind,
@@ -293,8 +325,8 @@ async function teacherToken() {
 
 async function ingestAndJudge(pkgId, caseRow, chapter, token) {
   if (caseRow.skipped) return null;
-  const synth = SYNTHS.find(fn => fn(chapter).kind === caseRow.kind);
-  const built = synth(chapter);
+  const synth = SYNTHS.find(fn => fn(chapter, pkgId).kind === caseRow.kind);
+  const built = synth(chapter, pkgId);
   if (!built.events) return null;
   const catalogId = `demo-${pkgId}`;
   const ingest = await httpJson('POST', '/api/trace/ingest', {
@@ -366,7 +398,7 @@ async function main() {
       continue;
     }
     const meta = metaOf(chapter);
-    const cases = SYNTHS.map(fn => evalCase(chapter, fn));
+    const cases = SYNTHS.map(fn => evalCase(chapter, fn, id));
     let api = null;
     if (DO_INGEST) {
       api = {};

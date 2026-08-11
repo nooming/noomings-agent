@@ -5,6 +5,11 @@ const {
   filterEventsByChallengePhase,
   filterEventsByExplorePhase,
 } = require('../judge/trace-normalize');
+const { cloneTraceEvents } = require('./trace-win-fields');
+const {
+  deriveTerminalOutcome,
+  mergeTerminalOutcome,
+} = require('../judge/session-terminal');
 
 function ensureTracesRoot() {
   fs.mkdirSync(getTracesRoot(), { recursive: true });
@@ -139,10 +144,18 @@ function ingestTrace(body) {
   if (!catalogId && !graphId) {
     return { ok: false, error: 'catalogId_or_graphId_required' };
   }
-  const events = Array.isArray(body.events) ? body.events : [];
-  if (!events.length) {
+  const rawEvents = Array.isArray(body.events) ? body.events : [];
+  const tipOutcomeRaw = body.terminalOutcome != null ? String(body.terminalOutcome) : '';
+  const tipOutcome = (tipOutcomeRaw === 'pass' || tipOutcomeRaw === 'exhausted_fail' || tipOutcomeRaw === 'incomplete')
+    ? tipOutcomeRaw
+    : null;
+  const tipExhausted = body.attemptsExhausted === true || tipOutcome === 'exhausted_fail';
+  // Allow empty events when client only tips a terminalOutcome (new-round flush race).
+  if (!rawEvents.length && !tipOutcome && !tipExhausted) {
     return { ok: false, error: 'events_required' };
   }
+  // Clone payloads intact so interim/final/levelsCleared/level survive disk write.
+  const events = cloneTraceEvents(rawEvents);
 
   let chapter = body.chapter || null;
   if (!chapter && graphId) {
@@ -158,13 +171,19 @@ function ingestTrace(body) {
   const existingId = body.sessionId ? String(body.sessionId) : null;
   if (existingId && fs.existsSync(sessionPath(existingId))) {
     record = JSON.parse(fs.readFileSync(sessionPath(existingId), 'utf8'));
-    record.events.push(...events);
+    if (events.length) {
+      record.events.push(...events);
+      record.eventCount = record.events.length;
+    }
     record.updatedAt = new Date().toISOString();
-    record.eventCount = record.events.length;
     if (studentId) record.studentId = studentId;
     if (taskCode) record.taskCode = taskCode;
     if (body.studentLabel) record.studentLabel = studentLabel;
   } else {
+    if (!events.length && (tipOutcome || tipExhausted)) {
+      // Tip-only requires an existing session file.
+      return { ok: false, error: 'session_not_found' };
+    }
     const sessionId = existingId || makeSessionId();
     record = {
       sessionId,
@@ -185,6 +204,18 @@ function ingestTrace(body) {
 
   enrichRecordMetrics(record, chapter);
 
+  // Client-declared terminal tip (monotonic) — covers late events vs new-round race.
+  if (tipExhausted) record.attemptsExhausted = true;
+  if (tipOutcome) {
+    record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, tipOutcome);
+  } else if (tipExhausted) {
+    record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, 'exhausted_fail');
+  }
+
+  // Persist terminalOutcome from win / attempts_exhausted events (monotonic upgrade).
+  const derived = deriveTerminalOutcome(record);
+  record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, derived);
+
   fs.writeFileSync(sessionPath(record.sessionId), JSON.stringify(record, null, 2), 'utf8');
   return {
     ok: true,
@@ -193,6 +224,7 @@ function ingestTrace(body) {
     controlTuningCounts: record.controlTuningCounts,
     variableAdjustCounts: record.variableAdjustCounts,
     currentPhase: record.currentPhase,
+    terminalOutcome: record.terminalOutcome || null,
   };
 }
 
@@ -205,6 +237,9 @@ function readFilteredTraceRows({ graphId, catalogId } = {}) {
       const row = JSON.parse(fs.readFileSync(path.join(getTracesRoot(), file), 'utf8'));
       if (graphId && row.graphId !== graphId) continue;
       if (catalogId && row.catalogId !== catalogId) continue;
+      const terminalOutcome = row.terminalOutcome
+        || deriveTerminalOutcome(row)
+        || null;
       rows.push({
         sessionId: row.sessionId,
         catalogId: row.catalogId,
@@ -224,6 +259,9 @@ function readFilteredTraceRows({ graphId, catalogId } = {}) {
         strategyPathByPhase: row.strategyPathByPhase || null,
         scoredPhase: row.strategyPathSummary?.scoredPhase || null,
         currentPhase: row.currentPhase || null,
+        // 列表必须带 abilityScore，否则 loadStudents 重载会把内存中的有限总分冲成「—」
+        abilityScore: row.abilityScore || null,
+        terminalOutcome,
       });
     } catch { /* skip corrupt */ }
   }
@@ -249,25 +287,68 @@ function getTraceStats({ graphId, catalogId } = {}) {
   let pendingJudge = 0;
   let totalEvents = 0;
   let lastActivityAt = null;
-  const verdictSummary = { pass: 0, in_progress: 0, learning: 0, other: 0 };
+  // Session-level terminal counts among judged sessions (局数，非「每生最近一局」)
+  const verdictSummary = { pass: 0, exhausted_fail: 0, incomplete: 0 };
   const judgedByStudent = new Map();
 
   for (const row of rows) {
     if (!row.judged) pendingJudge += 1;
     else {
-      const v = row.judgeResult?.verdict || 'other';
-      if (verdictSummary[v] != null) verdictSummary[v] += 1;
-      else verdictSummary.other += 1;
+      // Re-derive so stale stored terminalOutcome cannot hide pass/ability 达标
+      const outcome = deriveTerminalOutcome({
+        terminalOutcome: row.terminalOutcome,
+        verdict: row.judgeResult?.verdict,
+        judgeResult: row.judgeResult,
+        abilityScore: row.abilityScore,
+        attemptsExhausted: row.attemptsExhausted,
+      });
+      if (verdictSummary[outcome] != null) verdictSummary[outcome] += 1;
+      else verdictSummary.incomplete += 1;
+
       const key = studentGroupKey(row);
-      const prev = judgedByStudent.get(key);
-      if (!prev || (row.updatedAt || '') > (prev.updatedAt || '')) {
-        judgedByStudent.set(key, {
+      let entry = judgedByStudent.get(key);
+      if (!entry) {
+        entry = {
           studentKey: key,
           studentLabel: row.studentLabel || '匿名学生',
-          verdict: v,
-          updatedAt: row.updatedAt,
-          sessionId: row.sessionId,
-        });
+          passCount: 0,
+          exhaustedFailCount: 0,
+          incompleteCount: 0,
+          judgedCount: 0,
+          updatedAt: null,
+          sessionId: null,
+          // click-target helpers (stripped before return)
+          _passSessionId: null,
+          _passUpdatedAt: null,
+          _failSessionId: null,
+          _failUpdatedAt: null,
+          _anySessionId: null,
+          _anyUpdatedAt: null,
+        };
+        judgedByStudent.set(key, entry);
+      }
+      entry.judgedCount += 1;
+      if (outcome === 'pass') entry.passCount += 1;
+      else if (outcome === 'exhausted_fail') entry.exhaustedFailCount += 1;
+      else entry.incompleteCount += 1;
+
+      if (row.studentLabel) entry.studentLabel = row.studentLabel;
+      if ((row.updatedAt || '') > (entry.updatedAt || '')) {
+        entry.updatedAt = row.updatedAt;
+      }
+
+      // Prefer click target: latest pass → latest exhausted_fail → latest judged
+      if ((row.updatedAt || '') > (entry._anyUpdatedAt || '')) {
+        entry._anyUpdatedAt = row.updatedAt || '';
+        entry._anySessionId = row.sessionId;
+      }
+      if (outcome === 'pass' && (row.updatedAt || '') > (entry._passUpdatedAt || '')) {
+        entry._passUpdatedAt = row.updatedAt || '';
+        entry._passSessionId = row.sessionId;
+      } else if (outcome === 'exhausted_fail'
+        && (row.updatedAt || '') > (entry._failUpdatedAt || '')) {
+        entry._failUpdatedAt = row.updatedAt || '';
+        entry._failSessionId = row.sessionId;
       }
     }
     totalEvents += row.eventCount || 0;
@@ -277,7 +358,27 @@ function getTraceStats({ graphId, catalogId } = {}) {
   }
   const totalSessions = rows.length;
   const judgedStudents = [...judgedByStudent.values()]
-    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    .map((entry) => {
+      const sessionId = entry._passSessionId
+        || entry._failSessionId
+        || entry._anySessionId
+        || null;
+      return {
+        studentKey: entry.studentKey,
+        studentLabel: entry.studentLabel,
+        passCount: entry.passCount,
+        exhaustedFailCount: entry.exhaustedFailCount,
+        incompleteCount: entry.incompleteCount,
+        judgedCount: entry.judgedCount,
+        updatedAt: entry.updatedAt,
+        sessionId,
+      };
+    })
+    .sort((a, b) => {
+      const byPass = (b.passCount || 0) - (a.passCount || 0);
+      if (byPass !== 0) return byPass;
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+    });
   return {
     uniqueStudents: studentKeys.size,
     totalSessions,
@@ -291,7 +392,7 @@ function getTraceStats({ graphId, catalogId } = {}) {
   };
 }
 
-function listTraceStudents({ graphId, catalogId, q, status, limit = 100 } = {}) {
+function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) {
   const rows = readFilteredTraceRows({ graphId, catalogId });
   const groups = new Map();
   for (const row of rows) {
@@ -325,6 +426,9 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 100 } = {}) 
       : (Array.isArray(jr?.gaps) ? jr.gaps : null);
     g.sessions.push({
       sessionId: row.sessionId,
+      catalogId: row.catalogId || null,
+      graphId: row.graphId || null,
+      taskCode: row.taskCode || null,
       startedAt: row.startedAt,
       updatedAt: row.updatedAt,
       eventCount: row.eventCount,
@@ -336,6 +440,8 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 100 } = {}) 
       strategyPathSummaryExplore: row.strategyPathSummaryExplore || null,
       strategyPathByPhase: row.strategyPathByPhase || null,
       scoredPhase: row.scoredPhase || row.strategyPathSummary?.scoredPhase || null,
+      abilityScore: row.abilityScore || null,
+      terminalOutcome: row.terminalOutcome || null,
     });
   }
 
@@ -466,13 +572,30 @@ function saveTraceSession(record) {
   return { ok: true, sessionId: record.sessionId };
 }
 
-function saveJudgeResult(sessionId, judgeResult) {
+function saveJudgeResult(sessionId, judgeResult, extras = {}) {
   const record = getTraceSession(sessionId);
   if (!record) return { ok: false, error: 'session_not_found' };
   record.judgeResult = judgeResult;
   record.judgedAt = new Date().toISOString();
+  if (extras && extras.abilityScore) {
+    record.abilityScore = extras.abilityScore;
+    record.abilityScoreComputedAt = extras.abilityScore.computedAt
+      || new Date().toISOString();
+  }
+  if (extras && extras.terminalOutcome) {
+    record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, extras.terminalOutcome);
+  } else {
+    record.terminalOutcome = mergeTerminalOutcome(
+      record.terminalOutcome,
+      deriveTerminalOutcome({
+        ...record,
+        verdict: judgeResult?.verdict || record.verdict,
+        abilityScore: record.abilityScore,
+      }),
+    );
+  }
   fs.writeFileSync(sessionPath(sessionId), JSON.stringify(record, null, 2), 'utf8');
-  return { ok: true, sessionId };
+  return { ok: true, sessionId, terminalOutcome: record.terminalOutcome || null };
 }
 
 const SESSION_ID_RE = /^sess-[a-zA-Z0-9-]+$/;

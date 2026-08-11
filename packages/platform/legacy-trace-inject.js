@@ -4,15 +4,17 @@ const TRACE_HOOK = `<!-- trace-adapter-hook -->
 <script>
 (function(){
   function emit(type, payload) {
+    // Pass payload through intact (interim/final/levelsCleared/level must not be stripped).
+    var p = payload && typeof payload === 'object' ? payload : {};
     try {
       if (window.PlatformTraceAdapter) {
-        window.PlatformTraceAdapter.record(type, payload || {});
+        window.PlatformTraceAdapter.record(type, p);
         return;
       }
     } catch (e) {}
     try {
       if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) {
-        window.parent.PlatformTraceAdapter.record(type, payload || {});
+        window.parent.PlatformTraceAdapter.record(type, p);
       }
     } catch (e) {}
   }
@@ -24,22 +26,38 @@ const TRACE_HOOK = `<!-- trace-adapter-hook -->
     });
     return o;
   }
-  document.addEventListener('DOMContentLoaded', function() {
-    emit('puzzle_open', {});
+  // Bind sync so late DOMContentLoaded / craft wrappers cannot miss __emit.
+  window.__emit = emit;
+  window.__snapControls = snapControls;
+  function bindControls() {
     document.querySelectorAll('input[type="range"], input[type="number"]').forEach(function(el) {
+      if (el.__platformTraceBound) return;
+      el.__platformTraceBound = true;
       el.addEventListener('change', function() {
         if (window.__platformTraceControlsBound) return;
         emit('tuning', { control: el.id || el.name || 'slider', value: el.value });
       });
     });
     document.querySelectorAll('button, [role="button"]').forEach(function(el) {
+      if (el.__platformTraceBound) return;
+      el.__platformTraceBound = true;
       el.addEventListener('click', function() {
         emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
       });
     });
-    window.__emit = emit;
-    window.__snapControls = snapControls;
-  });
+  }
+  function onReady() {
+    if (!window.__platformPuzzleOpenEmitted) {
+      window.__platformPuzzleOpenEmitted = true;
+      emit('puzzle_open', {});
+    }
+    bindControls();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
+  }
 })();
 </script>`;
 

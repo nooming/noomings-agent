@@ -50,7 +50,11 @@ function run() {
   assert.ok(clock.includes("hintKey: 'pendulum_clock'"), 'clock win hint');
 
   const cannon = fs.readFileSync(path.join(pkgRoot, 'projectile-cannon', 'game.html'), 'utf8');
-  assert.ok(cannon.includes("hintKey: 'cannon_hit'"), 'cannon win hint');
+  assert.ok(
+    cannon.includes("hintKey: 'cannon_fort_hit'") || cannon.includes("hintKey: 'cannon_hit'"),
+    'cannon win hint',
+  );
+  assert.ok(/interim:\s*interim|levelsCleared/.test(cannon), 'cannon win carries interim/levelsCleared');
 
   const events = [
     { type: 'phase_change', payload: { phase: 'explore' } },

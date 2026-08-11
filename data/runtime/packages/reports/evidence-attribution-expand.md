@@ -1,17 +1,17 @@
 # 证据 + 短归因扩包 · 短报
 
-日期：2026-08-08 · 未 commit
+日期：2026-08-08 · 补记 2026-08-11（`multi-kp`）· 未 commit
 
 模式对齐试点：`ramp-rolling-collision` / `projectile-basic`（证据行 → 本局归因点选 → `.craft-reveal` → 再玩一次）。  
-批量脚本：`scripts/patch-evidence-attribution-expand.js`（可幂等重跑）。
+批量脚本：`scripts/patch-evidence-attribution-expand.js`（可幂等重跑；支持 `node scripts/patch-evidence-attribution-expand.js multi-kp` 单包）。
 
 ## 汇总
 
 | 类别 | 数量 |
 |------|------|
 | 第二波完成 | 12 |
-| 第三波完成 | 9 |
-| 跳过（含试点） | 3 |
+| 第三波完成 | 10（含补录 `multi-kp`） |
+| 跳过（含试点） | 2 |
 | judge 是否用 attribution 判分 | 否（未改） |
 
 ## 完成
@@ -39,8 +39,11 @@
 | 3 | `efield-charge` | s-fieldStrength, s-charge | `样本html/电场/电场.html` | OK |
 | 3 | `thin-lens-implicit` | s-object-distance, s-focal-length | `样本html/透镜/透镜.html` | OK |
 | 3 | `projectile-cannon` | in-angle, in-power, in-drag, in-wind | `样本html/抛体大炮/抛体大炮.html` | OK |
+| 3 | `multi-kp` | s-height, s-speed | `样本html/机械能/机械能.html` | OK |
 
 每包均含：`craftAttr` + 自动证据行 + `.craft-reveal` 门闩 + 点选后 `snapshot` emit `attribution`/`evidenceSummary`；另有 `mixed`/`unsure`。
+
+`multi-kp` 补录说明：竞赛过关才弹 `#craft-win`；探究成功改用 `pass-badge`（不用 `.win-badge`），避免 MutationObserver 误弹结算。
 
 ## 跳过
 
@@ -48,7 +51,6 @@
 |------|-------|------|
 | 1 | `ramp-rolling-collision` | 已有完整归因试点 |
 | 1 | `projectile-basic` | 已有完整归因试点 |
-| 3 | `multi-kp` | 多知识点结构，不宜套单局短归因最小集 |
 
 ## 约定（与试点一致）
 

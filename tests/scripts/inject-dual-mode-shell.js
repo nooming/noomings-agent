@@ -62,6 +62,32 @@ const DUAL_CSS = `
 }
 #essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
 button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
+
+/* === attempts-exhausted-settle === */
+#attempts-exhausted{
+  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
+}
+#attempts-exhausted[hidden]{display:none!important;}
+#attempts-exhausted .craft-card{
+  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
+}
+#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
+#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions button{
+  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
+  background:var(--craft-accent,#c9a227);color:#0b1020;
+}
+#attempts-exhausted .craft-btn-secondary{
+  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
+  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
+}
+#attempts-exhausted .craft-btn-ghost{
+  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
+  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
+}
 `;
 
 const DUAL_JS = `
@@ -144,6 +170,7 @@ const DUAL_JS = `
   }
 
   function applyMode(mode){
+    hideAttemptsExhausted();
     state.mode = mode === 'challenge' ? 'challenge' : 'explore';
     var label = $('modeLabel');
     var stats = $('challengeStats');
@@ -165,6 +192,105 @@ const DUAL_JS = `
     gateActions();
   }
 
+  /* === attempts-exhausted-settle === */
+  var __exhaustTimer = null;
+  var __exhaustBound = false;
+  function __isChallengeWonNow(){
+    if (window.__craftWinOpen) return true;
+    if (window.__challengeWon) return true;
+    var win = $('craft-win');
+    if (win && win.hidden === false) return true;
+    return false;
+  }
+  function hideAttemptsExhausted(){
+    if (__exhaustTimer) { clearTimeout(__exhaustTimer); __exhaustTimer = null; }
+    var el = $('attempts-exhausted');
+    if (el) el.hidden = true;
+  }
+  function ensureAttemptsExhaustedUi(){
+    if ($('attempts-exhausted')) return;
+    var wrap = document.createElement('div');
+    wrap.id = 'attempts-exhausted';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="craft-card" role="dialog" aria-labelledby="attemptsExhaustedTitle">' +
+        '<h2 id="attemptsExhaustedTitle">机会用尽</h2>' +
+        '<p id="attemptsExhaustedDesc">本局急单未完成。目标仍按本局规则（口位/标定带等）锁定；可返回探究继续调参，或再开一局竞赛。</p>' +
+        '<div class="craft-actions">' +
+          '<button type="button" id="attemptsExhaustedExplore">返回探究</button>' +
+          '<button type="button" id="attemptsExhaustedRetry" class="craft-btn-secondary">再开一局竞赛</button>' +
+          '<button type="button" id="attemptsExhaustedList" class="craft-btn-ghost">返回列表</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    var bExplore = $('attemptsExhaustedExplore');
+    var bRetry = $('attemptsExhaustedRetry');
+    var bList = $('attemptsExhaustedList');
+    if (bExplore) bExplore.addEventListener('click', function(){
+      hideAttemptsExhausted();
+      var sel = $('modeSelect');
+      if (sel) { sel.value = 'explore'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      else applyMode('explore');
+    });
+    if (bRetry) bRetry.addEventListener('click', function(){
+      try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('exhausted_retry'); } catch (__nr) {}
+      hideAttemptsExhausted();
+      applyMode('challenge');
+      var sel = $('modeSelect');
+      if (sel) sel.value = 'challenge';
+    });
+    if (bList) {
+      if (typeof window.__eaNavigateToStudentList !== 'function' && !document.getElementById('craftBackBtn')) bList.hidden = true;
+      else bList.addEventListener('click', function(){
+        hideAttemptsExhausted();
+        if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
+        else { var bb = document.getElementById('craftBackBtn'); if (bb) bb.click(); }
+      });
+    }
+  }
+  function showAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__isChallengeWonNow()) return;
+    ensureAttemptsExhaustedUi();
+    var el = $('attempts-exhausted');
+    if (!el) return;
+    var firstShow = !!el.hidden;
+    el.hidden = false;
+    /* === attempts-exhausted-emit === */
+    if (firstShow) {
+      try {
+        var __exPayload = { attempts: 0, mode: 'challenge' };
+        var __exSnap = { winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' };
+        if (typeof window.__emit === 'function') {
+          window.__emit('attempts_exhausted', __exPayload);
+          window.__emit('snapshot', __exSnap);
+        } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.record === 'function') {
+          window.PlatformTraceAdapter.record('attempts_exhausted', __exPayload);
+          window.PlatformTraceAdapter.record('snapshot', __exSnap);
+        }
+      } catch (__exErr) {}
+    }
+  }
+  function scheduleAttemptsExhausted(){
+    if (state.mode !== 'challenge' || state.attempts > 0) return;
+    if (__exhaustTimer) clearTimeout(__exhaustTimer);
+    __exhaustTimer = setTimeout(function(){ __exhaustTimer = null; showAttemptsExhausted(); }, 650);
+  }
+  function bindExhaustWinGuard(){
+    if (__exhaustBound) return;
+    __exhaustBound = true;
+    var prev = window.__craftShowWin;
+    if (typeof prev === 'function') {
+      window.__craftShowWin = function(){ hideAttemptsExhausted(); return prev.apply(this, arguments); };
+    }
+    try {
+      var obs = new MutationObserver(function(){ if (__isChallengeWonNow()) hideAttemptsExhausted(); });
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    } catch (e) {}
+  }
+  window.__showAttemptsExhausted = showAttemptsExhausted;
+  window.__hideAttemptsExhausted = hideAttemptsExhausted;
+
   function onPrimaryClick(e){
     if (state.mode !== 'challenge') return;
     var t = e.target.closest('button');
@@ -178,6 +304,7 @@ const DUAL_JS = `
     state.attempts -= 1;
     renderAttempts();
     gateActions();
+    if (state.attempts <= 0) scheduleAttemptsExhausted();
   }
 
   function ensureUi(){
@@ -233,6 +360,7 @@ const DUAL_JS = `
     var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
     ft.addEventListener('click', onPrimaryClick, true);
     applyMode(sel.value || 'explore');
+    setTimeout(bindExhaustWinGuard, 0);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
