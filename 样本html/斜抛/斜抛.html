@@ -665,6 +665,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             birds: [],
             sparks: [],
             hitFlash: 0,
+            challengeWinTimer: null,
             
             // 挑战模式数据
             targetX: 0,
@@ -1003,6 +1004,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             // 模式切换：同时刷新目标文案与判据（靶心仅竞赛出现）
             ui.modeSelect.addEventListener('change', (e) => {
                 if (typeof window.__hideAttemptsExhausted === 'function') window.__hideAttemptsExhausted();
+                if (state.challengeWinTimer) {
+                    clearTimeout(state.challengeWinTimer);
+                    state.challengeWinTimer = null;
+                }
                 state.mode = e.target.value;
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
                 refreshModeGoals();
@@ -1579,9 +1584,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     hintKey: 'hit_target',
                     evidenceSummary: sessionEvidence.evidenceSummary
                   });
-                  window.__emit('win', { winOk: true });
+                  // 先播落点火花/闪白，约 0.75s 后再 emit win（壳层会立刻弹 #craft-win）
+                  try { window.__legacyWinEmitted = true; } catch (e0) {}
+                  if (state.challengeWinTimer) clearTimeout(state.challengeWinTimer);
+                  state.challengeWinTimer = setTimeout(function() {
+                    state.challengeWinTimer = null;
+                    if (state.mode !== 'challenge') return;
+                    if (window.__emit) window.__emit('win', { winOk: true });
+                  }, 750);
                 }
-                // 命中：不叠 messageBox；直接进 #craft-win（由 __emit('win') 打开）
+                // 命中：不叠 messageBox；延后进 #craft-win，让落点特效可见
                 // 历史弹道默认保留，便于对照；需清场时点「清空轨迹」
                 hideMessage();
             } else {

@@ -971,6 +971,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let playMode = 'explore';
     let lockedBand = null; // { min, max } 竞赛锁定
     let challengeWon = false;
+    /** 竞赛过关：先转圆轨再 emit/ShowWin，避免总结盖住轨道 */
+    let challengeWinTimer = null;
     /** 仅发射后揭示轨道半径 r */
     let measuredR = null;
     /** 轨道尾迹（纯视觉） */
@@ -979,6 +981,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // 是否已经过关 (防止重复触发)
     let hasWon = false;
+
+    function clearChallengeWinTimer() {
+      if (challengeWinTimer) {
+        clearTimeout(challengeWinTimer);
+        challengeWinTimer = null;
+      }
+    }
+    function challengeWinDelayMs() {
+      // 约 1 圈，并夹在 0.8–1.2s，保证圆轨可见
+      const periodMs = angularVel > 1e-6 ? (2 * Math.PI / angularVel) * 1000 : 1000;
+      return Math.max(800, Math.min(1200, periodMs));
+    }
 
     const MODE_GOALS = {
       explore: {
@@ -1021,6 +1035,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       // 开局张力：默认参数往往偏出环带（r≈0.75）
       sMag.value = '2.0';
       sVel.value = '1.5';
+      clearChallengeWinTimer();
       challengeWon = false;
       hasWon = false;
       syncUI();
@@ -1033,6 +1048,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     function applyExploreBand() {
       lockedBand = null;
+      clearChallengeWinTimer();
       challengeWon = false;
       hasWon = false;
       TARGET_R_MIN = 2.0;
@@ -1524,12 +1540,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             winRadiusSpan.textContent = r.toFixed(2);
             winOverlay.classList.add('show');
             if (!challengeWon) {
+              // 先置位 + 侧栏；先转圆轨，再 emit/ShowWin（壳层会把 win 钩成立刻弹总结）
               challengeWon = true;
+              try { window.__legacyWinEmitted = true; } catch (e0) {}
               emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'cyclo_rush' });
-              emit('win', { winOk: true });
-              if (typeof window.__craftShowWin === 'function') {
-                window.__craftShowWin('提取环本局锁定。半径 r=mv/(qB)：B 增大半径缩小，v 增大半径变大。');
-              }
+              ensureFeedbackVisible();
+              startSim();
+              clearChallengeWinTimer();
+              challengeWinTimer = setTimeout(function() {
+                challengeWinTimer = null;
+                if (playMode !== 'challenge' || !challengeWon) return;
+                const emitLater = window.__emit || emit;
+                if (emitLater) emitLater('win', { winOk: true });
+                if (typeof window.__craftShowWin === 'function') {
+                  window.__craftShowWin('提取环本局锁定。半径 r=mv/(qB)：B 增大半径缩小，v 增大半径变大。');
+                }
+              }, challengeWinDelayMs());
+            } else {
+              ensureFeedbackVisible();
+              startSim();
             }
             hasWon = true;
         } else {
@@ -1539,10 +1568,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             feedbackMsg.innerHTML = `<span class="fail"><span class="fail-main">${sideTxt}</span><span class="fail-sub">r=${r.toFixed(2)} m · 环带 ${TARGET_R_MIN.toFixed(1)}–${TARGET_R_MAX.toFixed(1)} m</span></span>`;
             winOverlay.classList.remove('show');
             emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+            ensureFeedbackVisible();
+            startSim();
         }
-
-        ensureFeedbackVisible();
-        startSim();
     }
 
     // ---------- 复位 ----------
