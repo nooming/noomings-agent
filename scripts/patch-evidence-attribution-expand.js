@@ -183,7 +183,7 @@ const PACKAGES = {
     avs: [
       { id: 's-pressure', label: '压强', option: '主要是压强 p' },
       { id: 's-volume', label: '体积', option: '主要是体积 V' },
-      { id: 's-temp', label: '温度', option: '主要是温度 T' },
+      { id: 's-piston-mass', label: '活塞质量', option: '主要是活塞质量' },
     ],
     readingLabel: 'pV 读数',
     sample: { dir: '理想气体', file: '理想气体.html' },

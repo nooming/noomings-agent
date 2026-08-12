@@ -108,7 +108,7 @@ const PACKAGE_AV_SPEC = {
   'gas-ideal': [
     { controlId: 's-pressure', responseShape: 'linear-approx', notes: 'rank1：过关看 p·V，压强线性主控' },
     { controlId: 's-volume', responseShape: 'linear-approx', notes: 'rank2：体积与压强对偶进 pV' },
-    { controlId: 's-temp', responseShape: 'unknown', notes: 'rank3：标称温度滑条未进 pV 判据，近无效最低', residual: true },
+    { controlId: 's-piston-mass', responseShape: 'unknown', notes: 'rank3：活塞质量滑条未进 pV 判据，近无效最低（本关旁路）', residual: true },
   ],
   'heat-conduction': [
     { controlId: 's-thermal-conductivity', responseShape: 'linear-approx', notes: 'rank1：导热系数 k 线性进热流，材料主控' },

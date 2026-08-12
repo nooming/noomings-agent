@@ -625,7 +625,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="craft-intro">
   <div class="craft-card">
     <h2>气室 · 活塞实验桌</h2>
-    <p>压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。</p>
+    <p>压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。活塞质量为本关旁路，不进乘积。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后标定带本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -639,7 +639,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <div class="craft-attr-options">
         <label><input type="radio" name="craftAttr" value="s-pressure"> 主要是压强 p</label>
         <label><input type="radio" name="craftAttr" value="s-volume"> 主要是体积 V</label>
-        <label><input type="radio" name="craftAttr" value="s-temp"> 主要是温度 T</label>
+        <label><input type="radio" name="craftAttr" value="s-piston-mass"> 主要是活塞质量</label>
         <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
         <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
       </div>
@@ -647,7 +647,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     </div>
     <div class="craft-reveal" id="craftReveal" hidden>
       <div class="formula" id="craftWinFormula">pV = 常数（等温）</div>
-      <p id="craftWinText">温度不变时，压强与体积成反比，二者乘积保持恒定。</p>
+      <p id="craftWinText">等温下压强与体积成反比，乘积由 p、V 决定；活塞质量为本关旁路，不进 pV。</p>
       <p id="craftCv" class="craft-cv" hidden></p>
     </div>
     <div class="craft-actions">
@@ -673,7 +673,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <aside id="essence-bench">
     <div class="essence-scroll">
       <div class="card">
-    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">调 p 或 V，看乘积是否近似恒定。</p>
+    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">调 p 或 V，看乘积是否近似恒定；活塞质量为本关旁路。</p>
     <div class="control-grid">
         <div class="slider-group">
             <label for="s-pressure">压强 <span id="pValDisplay">3.0 atm</span></label>
@@ -684,8 +684,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <input type="range" id="s-volume" min="1" max="10" step="0.1" value="5.0">
         </div>
         <div class="slider-group">
-            <label for="s-temp">标称温度 T <span id="tValDisplay">300 K</span></label>
-            <input type="range" id="s-temp" min="250" max="400" step="1" value="300">
+            <label for="s-piston-mass">活塞质量 m <span id="mValDisplay">200 g</span></label>
+            <input type="range" id="s-piston-mass" min="50" max="500" step="10" value="200">
         </div>
     </div>
 
@@ -772,10 +772,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     (function() {
         const pSlider = document.getElementById('s-pressure');
         const vSlider = document.getElementById('s-volume');
-        const tSlider = document.getElementById('s-temp');
+        const mSlider = document.getElementById('s-piston-mass');
         const pDisplay = document.getElementById('pValDisplay');
         const vDisplay = document.getElementById('vValDisplay');
-        const tDisplay = document.getElementById('tValDisplay');
+        const mDisplay = document.getElementById('mValDisplay');
         const pvDisplay = document.getElementById('pvDisplay');
         const hintMsg = document.getElementById('hintMessage');
         const winIndicator = document.getElementById('winIndicator');
@@ -797,11 +797,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const MODE_GOALS = {
           explore: {
             hud: '试压：观察 p·V 乘积如何变化',
-            side: '调 p 或 V，看乘积是否近似恒定。'
+            side: '调 p 或 V，看乘积是否近似恒定；活塞质量为本关旁路。'
           },
           challenge: {
             hud: '限次把乘积打进本局标定带（打偏不换带）',
-            side: '限次把乘积打进本局标定带（打偏不换带）。'
+            side: '限次把乘积打进本局标定带（打偏不换带）；活塞质量为本关旁路。'
           }
         };
         function refreshGasGoals() {
@@ -1194,16 +1194,23 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 ctx.fill();
             }
 
-            // 黄铜活塞
+            // 黄铜活塞（厚度/阴影随旁路质量略变，不改物理）
+            const massG = mSlider ? (parseFloat(mSlider.value) || 200) : 200;
+            const massNorm = Math.max(0, Math.min(1, (massG - 50) / 450));
             const pistonX = innerX + gasW;
-            const pistonW = 16;
+            const pistonW = 12 + massNorm * 10;
             const brassGrad = ctx.createLinearGradient(pistonX, innerY, pistonX + pistonW, innerY + innerH);
             brassGrad.addColorStop(0, C.brassHi);
             brassGrad.addColorStop(0.45, C.brass);
             brassGrad.addColorStop(1, C.brassDark);
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,' + (0.18 + massNorm * 0.32).toFixed(2) + ')';
+            ctx.shadowBlur = 3 + massNorm * 10;
+            ctx.shadowOffsetX = 2 + massNorm * 2;
             ctx.fillStyle = brassGrad;
             rr(pistonX - 1, innerY - 2, pistonW, innerH + 4, 3);
             ctx.fill();
+            ctx.restore();
             ctx.strokeStyle = 'rgba(255,255,255,0.25)';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -1302,7 +1309,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             const { p, V, pv } = computePV();
             pDisplay.textContent = p.toFixed(1) + ' atm';
             vDisplay.textContent = V.toFixed(1) + ' L';
-            if (tDisplay && tSlider) tDisplay.textContent = parseFloat(tSlider.value).toFixed(0) + ' K';
+            if (mDisplay && mSlider) mDisplay.textContent = parseFloat(mSlider.value).toFixed(0) + ' g';
             pvDisplay.textContent = measuredPV == null ? '—' : measuredPV.toFixed(2);
             drawScene(p, V, pv);
         }
@@ -1337,7 +1344,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 hintMsg.textContent = '急单完成 · 乘积已入标定带';
                 if (!challengeWon && typeof window.__craftShowWin === 'function') {
                   challengeWon = true;
-                  window.__craftShowWin('急单标定带本局锁定。温度不变时，压强与体积成反比，乘积近似恒定。');
+                  window.__craftShowWin('急单标定带本局锁定。等温下 pV 由 p、V 决定；活塞质量为本关旁路，不进乘积。');
                 }
             } else {
                 // FixedChallenge：失败不换带；偏高/偏低可区分
@@ -1372,7 +1379,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             hintMsg.textContent = '调节中… 点「测试 · 观察乘积」查看结果';
             winIndicator.innerHTML = '';
         });
-        if (tSlider) tSlider.addEventListener('input', function() {
+        if (mSlider) mSlider.addEventListener('input', function() {
             updateAll();
         });
         btnTest.addEventListener('click', fireSnapshotAndWin);
@@ -1860,7 +1867,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 /* === ea-minset-helper (gas-ideal) === */
 (function(){
   if (window.__eaMinset) return; window.__eaMinset = true;
-  var AV_LABELS = {"s-pressure":"压强","s-volume":"体积","s-temp":"温度"};
+  var AV_LABELS = {"s-pressure":"压强","s-volume":"体积","s-piston-mass":"活塞质量"};
   var READING_SEL = "#craftGaugeVal, .observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal, #obs-current";
   var READING_LABEL = "pV 读数";
   var ACTION_LABEL = "操作";

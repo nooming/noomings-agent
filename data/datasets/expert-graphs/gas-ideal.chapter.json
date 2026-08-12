@@ -23,7 +23,7 @@
       },
       {
         "id": "O1",
-        "label": "调节压强/体积/温度并测试",
+        "label": "调节压强/体积/活塞质量并测试",
         "group": "operation",
         "layer": "play"
       },
@@ -156,8 +156,8 @@
       },
       {
         "id": "AV2",
-        "controlId": "s-temp",
-        "label": "温度",
+        "controlId": "s-piston-mass",
+        "label": "活塞质量",
         "type": "range",
         "role": "secondary",
         "priorityRank": 2,
@@ -196,8 +196,8 @@
         "score": 1
       },
       {
-        "id": "main_s-temp",
-        "label": "单变量·温度",
+        "id": "main_s-piston-mass",
+        "label": "单变量·活塞质量",
         "priorityRank": 2,
         "score": 0.85
       },

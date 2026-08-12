@@ -298,12 +298,14 @@
 html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
 body { display:block !important; min-height:0 !important; align-items:stretch !important; justify-content:stretch !important; }
 #app {
-  max-width:none !important; width:100% !important; height:100% !important;
+  max-width:none !important; width:100% !important; height:100% !important; min-height:0 !important;
   border-radius:0 !important; box-shadow:none !important; margin:0 !important;
+  display:flex !important; flex-direction:column !important;
 }
-.main-layout { flex:1; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
+.main-layout { flex:1 1 0; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
 #simCanvasArea {
-  flex:1 1 auto !important; min-width:0 !important; min-height:0 !important;
+  /* desktop 也保底高度，避免 craft 壳 min-height:0 + aspect-ratio:auto 时 iframe 首帧塌成 0 */
+  flex:1 1 0 !important; min-width:0 !important; min-height:max(240px, 40vh) !important;
   max-height:none !important; aspect-ratio:auto !important;
 }
 #controlsPanel {
@@ -1157,11 +1159,38 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       return y;
     }
 
+    // iframe 首帧可能宽高≈0；过小时不写入近零尺寸，延后重试
+    let _canvasResizeRetry = 0;
+    const CANVAS_RESIZE_RETRY_MAX = 12;
+
+    function afterCanvasResize() {
+        if (!state.launched) draw();
+    }
+
+    function scheduleCanvasResizeRetry() {
+        if (_canvasResizeRetry >= CANVAS_RESIZE_RETRY_MAX) return;
+        _canvasResizeRetry++;
+        const n = _canvasResizeRetry;
+        requestAnimationFrame(function() {
+            if (resizeCanvas()) afterCanvasResize();
+        });
+        if (n === 1 || n === 3 || n === 6) {
+            setTimeout(function() {
+                if (resizeCanvas()) afterCanvasResize();
+            }, 40 * n);
+        }
+    }
+
     function resizeCanvas() {
         const rect = area.getBoundingClientRect();
         dpr = window.devicePixelRatio || 1;
         const w = rect.width;
         const h = rect.height;
+        if (w < 2 || h < 2) {
+            scheduleCanvasResizeRetry();
+            return false;
+        }
+        _canvasResizeRetry = 0;
         canvas.width = Math.max(1, Math.floor(w * dpr));
         canvas.height = Math.max(1, Math.floor(h * dpr));
         canvas.style.width = w + 'px';
@@ -1185,6 +1214,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         state.fieldRect.h = H - 60;
         // 复位粒子位置
         resetParticle();
+        return true;
     }
 
     function resetParticle() {
@@ -1677,13 +1707,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             resetSim();
         });
         window.addEventListener('resize', () => {
-            resizeCanvas();
-            if (!state.launched) draw();
+            if (resizeCanvas()) afterCanvasResize();
         });
         if (window.ResizeObserver) {
           new ResizeObserver(function() {
-            resizeCanvas();
-            if (!state.launched) draw();
+            if (resizeCanvas()) afterCanvasResize();
           }).observe(area);
         }
         // 启动 RAF

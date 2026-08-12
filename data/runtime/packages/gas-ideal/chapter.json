@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式 |\n| 否(探究) | O1 | operation | 探究模式 |\n| 调节压强/体积/温度并测试 | O1 | operation | 调节s-pressure/s-volume/s-temp并点击测试 |\n| 乘积在标定带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 乘积偏低? | C3 | constraint | 偏低提示 |\n| 是 | — | — | skip retry |\n| 否(偏高) | — | — | skip retry |\n| 探究: 观察乘积变化 | S1 | core | teach 节点 |\n| 竞赛: 限次命中标定带 | S2 | core | teach 节点 |\n| verify 边 | — | — | 连回 O1 |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | — |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是(竞赛) | O1 | operation | 竞赛模式 |\n| 否(探究) | O1 | operation | 探究模式 |\n| 调节压强/体积/活塞质量并测试 | O1 | operation | 调节s-pressure/s-volume/s-piston-mass并点击测试 |\n| 乘积在标定带内? | C2 | constraint | 过关判定 |\n| 是 | R1 | result | 过关 |\n| 否 | — | — | skip retry |\n| 乘积偏低? | C3 | constraint | 偏低提示 |\n| 是 | — | — | skip retry |\n| 否(偏高) | — | — | skip retry |\n| 探究: 观察乘积变化 | S1 | core | teach 节点 |\n| 竞赛: 限次命中标定带 | S2 | core | teach 节点 |\n| verify 边 | — | — | 连回 O1 |",
   "kg": {
     "title": "气体 · 玻意耳定律",
     "sub": "气室 · 活塞实验桌",
@@ -25,12 +25,12 @@
       },
       {
         "id": "O1",
-        "label": "调节压强/体积/温度并测试",
+        "label": "调节压强/体积/活塞质量并测试",
         "group": "operation",
         "layer": "play",
         "level": 2,
         "r": 22,
-        "desc": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积"
+        "desc": "通过滑条调节压强、体积、活塞质量，点击测试按钮观察乘积"
       },
       {
         "id": "C2",
@@ -188,7 +188,7 @@
           ]
         },
         {
-          "n": "调节压强/体积/温度并测试",
+          "n": "调节压强/体积/活塞质量并测试",
           "t": "step",
           "d": "调参后点击测试按钮",
           "children": [
@@ -213,12 +213,12 @@
                       "_e": "是",
                       "n": "乘积偏低",
                       "t": "junction",
-                      "d": "提示偏低，重试，回到调节压强/体积/温度并测试后重试",
+                      "d": "提示偏低，重试，回到调节压强/体积/活塞质量并测试后重试",
                       "children": [
                         {
-                          "n": "调节压强/体积/温度并测试",
+                          "n": "调节压强/体积/活塞质量并测试",
                           "t": "step",
-                          "d": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积",
+                          "d": "通过滑条调节压强、体积、活塞质量，点击测试按钮观察乘积",
                           "children": []
                         }
                       ]
@@ -227,12 +227,12 @@
                       "_e": "否",
                       "n": "未达标重试",
                       "t": "retry",
-                      "d": "提示偏高，重试，回到调节压强/体积/温度并测试后重试",
+                      "d": "提示偏高，重试，回到调节压强/体积/活塞质量并测试后重试",
                       "children": [
                         {
-                          "n": "调节压强/体积/温度并测试",
+                          "n": "调节压强/体积/活塞质量并测试",
                           "t": "step",
-                          "d": "通过滑条调节压强、体积、温度，点击测试按钮观察乘积",
+                          "d": "通过滑条调节压强、体积、活塞质量，点击测试按钮观察乘积",
                           "children": []
                         }
                       ]
@@ -260,7 +260,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-temp": {
+      "s-piston-mass": {
         "kgId": "O1",
         "role": "operation"
       },
@@ -280,7 +280,7 @@
         "kgId": "I1",
         "role": "irrelevant"
       },
-      "tValDisplay": {
+      "mValDisplay": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -307,7 +307,7 @@
   "strategy": {
     "title": "气体 · 玻意耳定律",
     "sub": "气室 · 活塞实验桌",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大温度]\nObserve2a -->|偏高| Adjust2a2[减小温度]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·温度| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nExploreCore --> Tune[调整压强/体积/温度]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[多参盲调]\nChallengeCore --> Tune2[调整压强/体积/温度]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult\nProbeCV[试探·无关控件]\nTrap --> Fire\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjust1a --> Fire1a\nAdjust1a2 --> Fire1a\nAdjust2a --> Fire2a\nAdjust2a2 --> Fire2a\nBackFromCV --> StrategySelect\nCheck -->|偏高| RetryHigh[提示偏高，重试]:::stratRetry\nCheck -->|偏低| RetryLow[提示偏低，重试]:::stratRetry\nFire --> Observe{观察乘积变化?}:::stratCond\nFire1a --> Observe1a{观察乘积?}:::stratCond\nFire2 --> Observe2{乘积在标定带内?}:::stratCond\nFire2a --> Observe2a{观察乘积?}:::stratCond\nObserve -->|未达标| Adjust[调整单个滑条]\nObserve -->|达标| Win[过关]:::stratResult\nObserve1a -->|偏低| Adjust1a[增大压强]\nObserve1a -->|偏高| Adjust1a2[减小压强]\nObserve1a -->|达标| Win1[过关]:::stratResult\nObserve2 -->|否| Check{偏低或偏高?}:::stratCond\nObserve2 -->|是| Win2[过关]:::stratResult\nObserve2a -->|偏低| Adjust2a[增大活塞质量]\nObserve2a -->|偏高| Adjust2a2[减小活塞质量]\nObserve2a -->|达标| Win2a[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStart --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·压强| Tune\nStrategySelect -->|单变量·体积| Tune1a\nStrategySelect -->|单变量·活塞质量| Tune2\nTune --> Fire[点击测试]\nTune1a --> Fire1a[点击测试]\nTune2 --> Fire2[点击测试]\nExploreCore --> Tune[调整压强/体积/活塞质量]\nModeSelect -->|探究| ExploreCore[探究模式：自由调参观察乘积]:::stratCore\nStart([开始]):::stratStart\nTrap[多参盲调]\nChallengeCore --> Tune2[调整压强/体积/活塞质量]\nRetryHigh --> Tune2\nRetryLow --> Tune2\nTune2 --> Adjust2a\nModeSelect -->|竞赛| ChallengeCore[竞赛模式：限次命中锁定标定带]:::stratResult\nProbeCV[试探·无关控件]\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -409,8 +409,8 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "main_s-temp",
-        "label": "单变量·温度",
+        "id": "main_s-piston-mass",
+        "label": "单变量·活塞质量",
         "mapsTo": [
           "P1",
           "O1",
@@ -666,14 +666,14 @@
       },
       {
         "id": "AV3",
-        "controlId": "s-temp",
-        "label": "温度",
+        "controlId": "s-piston-mass",
+        "label": "活塞质量",
         "type": "range",
         "role": "secondary",
         "mapsToKg": "O1",
         "monotonicity": "unknown",
         "affects": [],
-        "notes": "rank3：标称温度滑条未进 pV 判据，近无效最低",
+        "notes": "rank3：活塞质量滑条未进 pV 判据，近无效最低（本关旁路）",
         "priorityRank": 3,
         "responseShape": "unknown"
       }
@@ -692,7 +692,7 @@
       "OV1"
     ],
     "narrative": {
-      "intro": "压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。",
+      "intro": "压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。活塞质量为本关旁路，不进乘积。",
       "steps": [
         {
           "order": 1,
@@ -777,10 +777,10 @@
         }
       },
       {
-        "id": "s-temp",
+        "id": "s-piston-mass",
         "type": "range",
-        "label": "温度",
-        "symbol": "温度",
+        "label": "活塞质量",
+        "symbol": "活塞质量",
         "unit": null,
         "mapsToKg": "O1",
         "role": "adjustment",
@@ -850,7 +850,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-temp": {
+      "s-piston-mass": {
         "kgId": "O1",
         "role": "operation"
       },
@@ -870,7 +870,7 @@
         "kgId": "I1",
         "role": "irrelevant"
       },
-      "tValDisplay": {
+      "mValDisplay": {
         "kgId": "I1",
         "role": "irrelevant"
       },
@@ -906,10 +906,10 @@
         "source": "state.s-pressure"
       },
       {
-        "label": "温度",
-        "symbol": "温度",
+        "label": "活塞质量",
+        "symbol": "活塞质量",
         "unit": "",
-        "source": "state.s-temp"
+        "source": "state.s-piston-mass"
       },
       {
         "label": "体积",
@@ -962,10 +962,10 @@
       },
       {
         "type": "tuning",
-        "controlId": "s-temp",
+        "controlId": "s-piston-mass",
         "kgId": "O1",
         "required": true,
-        "description": "学生调节 s-temp → KG O1"
+        "description": "学生调节 s-piston-mass → KG O1"
       },
       {
         "type": "tuning",
@@ -997,10 +997,10 @@
       },
       {
         "type": "irrelevant_touch",
-        "controlId": "tValDisplay",
+        "controlId": "mValDisplay",
         "kgId": "I1",
         "required": false,
-        "description": "混淆/无关控件触碰 tValDisplay"
+        "description": "混淆/无关控件触碰 mValDisplay"
       },
       {
         "type": "irrelevant_touch",
@@ -1053,12 +1053,12 @@
       {
         "name": "乘积偏低",
         "type": "retry",
-        "desc": "提示偏低，重试，回到调节压强/体积/温度并测试后重试"
+        "desc": "提示偏低，重试，回到调节压强/体积/活塞质量并测试后重试"
       },
       {
         "name": "乘积偏高",
         "type": "retry",
-        "desc": "提示偏高，重试，回到调节压强/体积/温度并测试后重试"
+        "desc": "提示偏高，重试，回到调节压强/体积/活塞质量并测试后重试"
       }
     ],
     "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰可选记录，但不计入主探究路径得分。",

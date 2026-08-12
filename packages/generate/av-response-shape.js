@@ -141,8 +141,8 @@ function inquiryPriorityScore(av, domain) {
   }
   // RC: supply V does not enter τ=RC
   if (/supply-v|电源电压/.test(blob) && domain === 'rc') score -= 16;
-  // Gas: T slider unused in PV win
-  if (/s-temp|标称温度/.test(blob) && domain === 'gas') score -= 16;
+  // Gas: bypass slider unused in PV win (legacy T / piston mass)
+  if (/s-temp|标称温度|s-piston-mass|活塞质量/.test(blob) && domain === 'gas') score -= 16;
   // Photoelectric intensity: scales I but not threshold
   if (/intensity|光强/.test(blob)) score -= 8;
 

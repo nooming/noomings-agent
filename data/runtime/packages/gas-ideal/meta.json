@@ -11,7 +11,7 @@
     "errors": [],
     "warnings": [
       "strategy.routes[main]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
-      "strategy.routes[main_s-temp]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
+      "strategy.routes[main_s-piston-mass]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
       "strategy.routes[main_s-volume]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）",
       "strategy.routes[trap]: mapsTo 与 KG play 链顺序不一致（应沿 premise→operation→constraint→result）"
     ],
@@ -91,7 +91,7 @@
       "id": "priority",
       "label": "单变量优先级",
       "status": "done",
-      "summary": "s-pressure(rank=1, unknown) ｜ s-temp(rank=2, unknown)"
+      "summary": "s-pressure(rank=1, unknown) ｜ s-piston-mass(rank=2, unknown)"
     },
     {
       "id": "graph",

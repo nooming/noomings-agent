@@ -287,12 +287,14 @@
 html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
 body { display:block !important; min-height:0 !important; align-items:stretch !important; justify-content:stretch !important; }
 #app {
-  max-width:none !important; width:100% !important; height:100% !important;
+  max-width:none !important; width:100% !important; height:100% !important; min-height:0 !important;
   border-radius:0 !important; box-shadow:none !important; margin:0 !important;
+  display:flex !important; flex-direction:column !important;
 }
-.main-layout { flex:1; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
+.main-layout { flex:1 1 0; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
 #simCanvasArea {
-  flex:1 1 auto !important; min-width:0 !important; min-height:0 !important;
+  /* desktop 也保底高度，避免 craft 壳 min-height:0 + aspect-ratio:auto 时 iframe 首帧塌成 0 */
+  flex:1 1 0 !important; min-width:0 !important; min-height:max(240px, 40vh) !important;
   max-height:none !important; aspect-ratio:auto !important;
 }
 #controlsPanel {
@@ -860,7 +862,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         </div>
         <div id="controlsPanel">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
-              <strong style="font-size:13px;color:#1f2a44">束流控制台</strong>
+              <strong style="font-size:13px;color:var(--craft-text)">束流控制台</strong>
               <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
             </div>
             <p id="sideGoal" style="margin:0 0 8px;font-size:12px;line-height:1.45;color:var(--craft-text)">调 B、v，看轨道半径怎么变。</p>
@@ -1070,11 +1072,38 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     };
 
     // ---------- 画布尺寸 (DPR) ----------
+    // iframe 首帧可能 clientWidth/Height≈0；过小时不写入近零尺寸，延后重试
+    let _canvasResizeRetry = 0;
+    const CANVAS_RESIZE_RETRY_MAX = 12;
+
+    function afterCanvasResize() {
+        if (!simRunning) drawStatic();
+    }
+
+    function scheduleCanvasResizeRetry() {
+        if (_canvasResizeRetry >= CANVAS_RESIZE_RETRY_MAX) return;
+        _canvasResizeRetry++;
+        const n = _canvasResizeRetry;
+        requestAnimationFrame(function() {
+            if (resizeCanvas()) afterCanvasResize();
+        });
+        if (n === 1 || n === 3 || n === 6) {
+            setTimeout(function() {
+                if (resizeCanvas()) afterCanvasResize();
+            }, 40 * n);
+        }
+    }
+
     function resizeCanvas() {
         const area = canvasArea;
         const dpr = window.devicePixelRatio || 1;
         const w = area.clientWidth;
         const h = area.clientHeight;
+        if (w < 2 || h < 2) {
+            scheduleCanvasResizeRetry();
+            return false;
+        }
+        _canvasResizeRetry = 0;
         canvas.width = Math.max(1, Math.floor(w * dpr));
         canvas.height = Math.max(1, Math.floor(h * dpr));
         canvas.style.width = w + 'px';
@@ -1088,6 +1117,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const maxDim = Math.min(w, h) * 0.38;
         // 默认最大半径约 4m，scale = maxDim/4
         scale = Math.max(30, maxDim / 4.5);
+        return true;
     }
 
     // ---------- 更新物理 (根据当前滑条) ----------
@@ -1602,9 +1632,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         feedbackMsg.innerHTML = '等待发射……';
         // 窗口resize
         window.addEventListener('resize', () => {
-            resizeCanvas();
-            if (!simRunning) drawStatic();
+            if (resizeCanvas()) afterCanvasResize();
         });
+        // 观察舞台区域：iframe/flex 布局变化时恢复尺寸与重绘
+        if (typeof ResizeObserver !== 'undefined' && canvasArea) {
+            new ResizeObserver(function() {
+                if (resizeCanvas()) afterCanvasResize();
+            }).observe(canvasArea);
+        }
         // 模拟埋点适配器 (开发用)
         window.__traceAdapter = {
             emit: (evt, data) => console.log(`[adapter] ${evt}`, data)

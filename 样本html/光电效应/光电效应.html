@@ -636,7 +636,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>暗箱 · 光电门禁</h2>
     <p>暗箱门禁换了阴极材料，指示灯时亮时灭。调频率与逸出功，看何时出现光电流。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛打偏换新目标。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛须把频率卡在阈值附近急单带，拉满无效。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -710,7 +710,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div id="hintMessage" class="hint-area">回路未导通 · 调参后点发射光</div>
 
   <!-- 过关横幅（默认隐藏） -->
-  <div id="winBanner" class="win-banner" style="display: none;">过关 · 成功观察到光电流。</div>
+  <div id="winBanner" class="win-banner" style="display: none;">过关 · 频率卡在阈值附近。</div>
 
   <input type="hidden" id="I1" value="irrelevant">
 </div>
@@ -801,13 +801,36 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       { name: '铜', W: 4.5 },
       { name: '银', W: 4.3 }
     ];
-    /** f_max=10e14 → E_max≈4.14 eV；竞赛材料必须 W < E_max - ε 才可出光电流 */
+    /** f_max=10e14 → E_max≈4.14 eV；竞赛材料须阈值附近带可调进且拉满落在带外 */
     const F_MAX_UNITS = 10; // ×1e14 Hz
+    const F_SLIDER_STEP = 0.1;
     const PHOTO_E_MAX = h * F_MAX_UNITS * 1e14;
     const PHOTO_W_EPS = 0.08;
+    /** 竞赛急单带：f ∈ (f0, f0·(1+δ)]，δ=15%；f0=W/h（滑条单位 ×1e14 Hz） */
+    const CHALLENGE_BAND_REL = 0.15;
+    function thresholdFUnits(W) {
+      return W / (h * 1e14);
+    }
+    function challengeBandForW(W) {
+      const f0 = thresholdFUnits(W);
+      return { f0: f0, fHi: f0 * (1 + CHALLENGE_BAND_REL) };
+    }
+    function isInChallengeBand(fVal, W) {
+      const b = challengeBandForW(W);
+      return fVal > b.f0 && fVal <= b.fHi + 1e-9;
+    }
+    function challengeBandReachable(W) {
+      const b = challengeBandForW(W);
+      const firstTick = Math.ceil((b.f0 + 1e-12) / F_SLIDER_STEP) * F_SLIDER_STEP;
+      return firstTick <= b.fHi + 1e-9
+        && b.fHi < F_MAX_UNITS - 1e-9
+        && firstTick <= F_MAX_UNITS
+        && W < PHOTO_E_MAX - PHOTO_W_EPS;
+    }
     function challengeMaterialPool() {
-      const pool = MATERIALS.filter(function(m) { return m.W < PHOTO_E_MAX - PHOTO_W_EPS; });
-      return pool.length ? pool : MATERIALS.filter(function(m) { return m.W <= 3.3; });
+      const pool = MATERIALS.filter(function(m) { return challengeBandReachable(m.W); });
+      if (pool.length) return pool;
+      return MATERIALS.filter(function(m) { return m.W <= 3.3 && challengeBandReachable(m.W); });
     }
     const MODE_GOALS = {
       explore: {
@@ -815,8 +838,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         side: '调频率与逸出功，看何时出现光电流。'
       },
       challenge: {
-        hud: '限次点亮当前急单材料（打偏换新目标）',
-        side: '限次点亮当前急单材料（打偏换新目标）。'
+        hud: '限次命中急单：频率须略高于阈值（打偏换新目标）',
+        side: '频率须略高于阈值、落在急单带内，拉满无效。'
       }
     };
     function refreshPhotoGoals() {
@@ -825,9 +848,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const side = document.getElementById('sideGoal');
       const badge = document.getElementById('materialBadge');
       if (playMode === 'challenge' && lockedMat) {
-        if (mission) mission.textContent = '急单材料：' + lockedMat.name + ' · W=' + lockedMat.W.toFixed(1) + ' eV · 打偏换新目标';
-        if (side) side.textContent = '竞赛急单：限次对 ' + lockedMat.name + ' 调出光电流；打偏换新目标。';
-        if (badge) { badge.style.display = 'block'; badge.textContent = '当前阴极：' + lockedMat.name + ' · 逸出功 ' + lockedMat.W.toFixed(1) + ' eV（打偏换新目标）'; }
+        const band = challengeBandForW(lockedMat.W);
+        const bandTxt = band.f0.toFixed(1) + '–' + band.fHi.toFixed(1) + 'e14 Hz';
+        if (mission) mission.textContent = '急单：' + lockedMat.name + ' · W=' + lockedMat.W.toFixed(1) + ' eV · f 须落在阈值附近带 ' + bandTxt + '（拉满无效）';
+        if (side) side.textContent = '竞赛急单：对 ' + lockedMat.name + ' 调出光电流，且频率须略高于阈值、落在急单带 ' + bandTxt + ' 内；拉满到最大无效；打偏换新目标。';
+        if (badge) { badge.style.display = 'block'; badge.textContent = '当前阴极：' + lockedMat.name + ' · 逸出功 ' + lockedMat.W.toFixed(1) + ' eV · 急单带 ' + bandTxt + '（打偏换新目标）'; }
         workSlider.disabled = true;
         workSlider.value = String(lockedMat.W);
       } else {
@@ -841,11 +866,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       const pool = challengeMaterialPool();
       lockedMat = pool[Math.floor(Math.random() * pool.length)];
       workSlider.value = String(lockedMat.W);
-      // 打乱频率，避免贴旧解（仍保证存在 f 使 hf>W）
-      const fMinWin = Math.min(F_MAX_UNITS - 0.2, (lockedMat.W / (h * 1e14)) + 0.3);
-      let fRoll = 2 + Math.random() * 4;
-      if (fRoll * 1e14 * h <= lockedMat.W) {
-        fRoll = Math.min(F_MAX_UNITS, Math.max(fMinWin, 6));
+      // 打乱到急单带外，避免开局贴解；仍保证滑条上存在可进带刻度
+      const band = challengeBandForW(lockedMat.W);
+      let fRoll;
+      if (Math.random() < 0.55 && band.f0 > 1.6) {
+        fRoll = 1 + Math.random() * Math.max(0.3, band.f0 - 1.3);
+      } else if (band.fHi + 0.3 < F_MAX_UNITS) {
+        fRoll = band.fHi + 0.3 + Math.random() * (F_MAX_UNITS - band.fHi - 0.3);
+      } else {
+        fRoll = Math.max(1, band.f0 - 1.2);
+      }
+      fRoll = Math.max(1, Math.min(F_MAX_UNITS, Math.round(fRoll / F_SLIDER_STEP) * F_SLIDER_STEP));
+      if (isInChallengeBand(fRoll, lockedMat.W)) {
+        fRoll = Math.max(1, Math.floor((band.f0 - 0.05) / F_SLIDER_STEP) * F_SLIDER_STEP);
       }
       freqSlider.value = String(fRoll.toFixed(1));
     }
@@ -856,16 +889,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       winAchieved = false;
       refreshPhotoGoals();
       updateUI(false, false);
-      hintDiv.textContent = '急单已下发 · ' + lockedMat.name + '（打偏换新目标）';
+      hintDiv.textContent = '急单已下发 · ' + lockedMat.name + ' · 频率须略高于阈值落在急单带内（拉满无效）';
       winBanner.style.display = 'none';
     }
-    function rerollChallengeMaterial() {
+    function rerollChallengeMaterial(failHint) {
       rollChallengeMaterial();
       challengeWon = false;
       winAchieved = false;
       refreshPhotoGoals();
       updateUI(false, false);
-      hintDiv.textContent = '未命中 · 已换新目标 ' + lockedMat.name;
+      hintDiv.textContent = (failHint ? (failHint + ' · ') : '未命中 · ') + '已换新目标 ' + lockedMat.name;
       winBanner.style.display = 'none';
     }
     function applyExploreMaterial() {
@@ -937,18 +970,34 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       // 绘制 canvas (可视化)；动画可用 live I / 频率色相，数字用 measured
       drawCanvas(fVal, workEv, I, intensity);
 
-      // 判定过关条件: 产生光电流 (I > 0) 且频率/逸出功在范围内
+      // 判定过关：探究仅观察；竞赛需 I>0 且 f 落在阈值附近急单带（拉满远超带不过关）
       const freqOk = (freqHz >= 1e14 && freqHz <= 1e15);
       const workOk = (workEv >= 1.0 && workEv <= 5.0);
       const currentOk = (I > 0.0);
-      const winOk = freqOk && workOk && currentOk;
+      const lockW = lockedMat ? lockedMat.W : workEv;
+      const band = challengeBandForW(lockW);
+      const bandOk = playMode !== 'challenge' || !lockedMat || isInChallengeBand(fVal, lockedMat.W);
+      const winOk = freqOk && workOk && currentOk && bandOk;
 
-      // 更新提示
+      // 更新提示（竞赛区分：无电流/过低/有电流但过高）
       let hintKey = '';
       if (!freqOk) hintKey = '频率超出范围 (1e14~1e15 Hz)';
       else if (!workOk) hintKey = '逸出功超出范围 (1~5 eV)';
-      else if (!currentOk) hintKey = '未产生光电流，尝试增大频率或减小逸出功';
-      else hintKey = '光电流已产生 · 条件满足';
+      else if (playMode === 'challenge' && lockedMat) {
+        if (!currentOk) {
+          hintKey = fVal <= band.f0
+            ? '无光电流：频率过低（未过阈值），请略微调高 f'
+            : '未产生光电流，请对照阈值条件再试';
+        } else if (!bandOk) {
+          hintKey = '有光电流，但频率过高：已超出阈值附近急单带，拉满无效，请回落到略高于阈值';
+        } else {
+          hintKey = '光电流已产生 · 频率落在急单带内';
+        }
+      } else if (!currentOk) {
+        hintKey = '未产生光电流，尝试增大频率或减小逸出功';
+      } else {
+        hintKey = '光电流已产生 · 条件满足';
+      }
 
       if (isFire || emitSnapshot) {
         const controls = snapControls();
@@ -962,11 +1011,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           winAchieved = true;
           challengeWon = true;
           winBanner.style.display = 'block';
-          hintDiv.textContent = '🎉 急单完成：' + (lockedMat ? lockedMat.name : '') + ' 已出光电流';
+          winBanner.textContent = '过关 · 频率卡在阈值附近急单带。';
+          hintDiv.textContent = '🎉 急单完成：' + (lockedMat ? lockedMat.name : '') + ' · 频率卡在阈值附近';
           emit('snapshot', { controls: controls, winOk: true, hintKey: '过关' });
           emit('win', { winOk: true });
           if (typeof window.__craftShowWin === 'function') {
-            window.__craftShowWin('换材料后仍能命中：说明你掌握了阈值条件，而不是背频率。');
+            window.__craftShowWin('换材料后仍能卡在阈值附近：说明你掌握了阈值条件，而不是把频率拧满。');
           }
         } else if (winOk && winAchieved) {
           hintDiv.textContent = '已过关 · 可继续观察';
@@ -975,7 +1025,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           // RerollChallenge：失败换材料/W
           winBanner.style.display = 'none';
           emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
-          if (isFire) rerollChallengeMaterial();
+          if (isFire) rerollChallengeMaterial(hintKey);
           else hintDiv.textContent = hintKey;
         }
       } else {
@@ -1422,7 +1472,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       if (measuredI == null) {
         ctx.fillText('电流待测 · 点发射后显示', boxX + 10, boxY + 38);
       } else if (playMode === 'challenge') {
-        ctx.fillText(measuredI > 0 ? '门禁已开锁' : '打偏换新目标', boxX + 10, boxY + 38);
+        var inBand = lockedMat && isInChallengeBand(fVal, lockedMat.W);
+        ctx.fillText(measuredI > 0 ? (inBand ? '门禁已开锁' : '有电流·未进急单带') : '打偏换新目标', boxX + 10, boxY + 38);
       } else {
         ctx.fillText(measuredI > 0 ? '回路已导通' : '回路未导通', boxX + 10, boxY + 38);
       }
