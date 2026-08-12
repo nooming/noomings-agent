@@ -790,7 +790,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let prevTheta = theta;
     let lastTime = 0, animId = null;
     let challengeWon = false;
+    let challengeWinTimer = null;
+    const CHALLENGE_WIN_DELAY_MS = 800;
     let lockedCartSpec = null; // FixedChallenge：进竞赛锁定一次
+
+    function clearChallengeWinTimer() {
+      if (challengeWinTimer) {
+        clearTimeout(challengeWinTimer);
+        challengeWinTimer = null;
+      }
+    }
 
     const MODE_GOALS = {
       explore: {
@@ -896,6 +905,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       lengthSlider.value = String(L);
       angleSlider.value = '-60';
       massSlider.value = '3';
+      clearChallengeWinTimer();
       challengeWon = false;
       resetPhysics();
       updateUI();
@@ -906,6 +916,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     function applyExploreCart() {
       lockedCartSpec = null;
+      clearChallengeWinTimer();
       challengeWon = false;
       syncConfuseForMode();
       loadLevel(currentLevel || 1);
@@ -1150,12 +1161,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           };
           if (playMode === 'challenge') {
             if (!challengeWon) {
+              // 先置位 + snapshot；停稳约 0.8s 后再 emit/ShowWin，避免盖住落点演出
               challengeWon = true;
+              try { window.__legacyWinEmitted = true; } catch (e0) {}
               window.__emit('snapshot', { controls: c, winOk: true, hintKey: 'pendulum_rush' });
-              window.__emit('win', { winOk: true });
-              if (typeof window.__craftShowWin === 'function') {
-                window.__craftShowWin('急单矿车工况本局锁定：落点由摆长与释放角决定，与质量 m 无关。');
-              }
+              if (statusMsg) statusMsg.textContent = '命中矿车！落点已进入接矿区';
+              clearChallengeWinTimer();
+              challengeWinTimer = setTimeout(function() {
+                challengeWinTimer = null;
+                if (playMode !== 'challenge' || !challengeWon) return;
+                if (window.__emit) window.__emit('win', { winOk: true });
+                if (typeof window.__craftShowWin === 'function') {
+                  window.__craftShowWin('急单矿车工况本局锁定：落点由摆长与释放角决定，与质量 m 无关。');
+                }
+              }, CHALLENGE_WIN_DELAY_MS);
             }
           } else {
             // 探究命中：观察反馈 only，不 emit win / 不过关结算

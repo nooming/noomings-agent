@@ -780,9 +780,39 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   let playMode = 'explore';
   let lockedTargetFrac = null; // FixedChallenge：横向比例
   let challengeWon = false;
+  /** 竞赛过关：侧栏先更新，等光路 eventAnim settle 后再 emit/ShowWin */
+  let pendingChallengeWin = false;
+  let challengeWinTimer = null;
+  const CHALLENGE_WIN_SETTLE_PAD_MS = 150;
   let measuredTheta2 = null; // 测后门控：发射后才揭示 θ₂
   /** 事件动画 FSM：idle(null) | windup | peak | settle；点击时冻结 drivers */
   let eventAnim = null;
+
+  function clearChallengeWinTimer() {
+    if (challengeWinTimer) {
+      clearTimeout(challengeWinTimer);
+      challengeWinTimer = null;
+    }
+  }
+  function flushChallengeWin() {
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
+    if (playMode !== 'challenge' || !challengeWon) return;
+    try {
+      const emitFn = window.__emit || window.emit;
+      if (emitFn) emitFn('win', { winOk: true });
+    } catch (e) {}
+    if (typeof window.__craftShowWin === 'function') {
+      window.__craftShowWin('急单靶位本局锁定。折射角由 θ₁ 与 n₂ 决定；水温不改变折射角，本关 n₂ 已给定。');
+    }
+  }
+  function scheduleChallengeWinAfterSettle() {
+    clearChallengeWinTimer();
+    challengeWinTimer = setTimeout(function() {
+      challengeWinTimer = null;
+      flushChallengeWin();
+    }, CHALLENGE_WIN_SETTLE_PAD_MS);
+  }
   let ambientT = 0;
   let lastFrameTs = 0;
   let lastFireHit = null;
@@ -814,7 +844,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   /** FixedChallenge：仅进入竞赛时锁定一次靶位 */
   function lockChallengeTarget() {
     lockedTargetFrac = 0.55 + Math.random() * 0.28; // 0.55–0.83
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
     challengeWon = false;
+    eventAnim = null;
     angleSlider.value = '45';
     indexSlider.value = '1.3';
     tempTouchedSinceFire = false;
@@ -826,7 +859,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   }
   function applyExploreTarget() {
     lockedTargetFrac = null;
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
     challengeWon = false;
+    eventAnim = null;
     tempTouchedSinceFire = false;
     lastFireAvKey = parseFloat(angleSlider.value).toFixed(0) + '|' + parseFloat(indexSlider.value).toFixed(1);
     refreshRefractGoals();
@@ -942,7 +978,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     } else if (eventAnim.phase === 'settle') {
       const p = Math.min(1, eventAnim.t / ph.settleDur);
       if (eventAnim.drivers.hit) eventAnim.flashHit = Math.max(0, 1 - p * 2.5);
-      if (eventAnim.t >= ph.settleDur) eventAnim = null;
+      if (eventAnim.t >= ph.settleDur) {
+        eventAnim = null;
+        if (pendingChallengeWin) scheduleChallengeWinAfterSettle();
+      }
     }
   }
 
@@ -1568,10 +1607,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
       if (hit) {
         feedback.textContent = '急单完成 · 命中锁定水下靶';
-        winMessageDiv.innerHTML = '<span class="pass-badge">🎉 过关！命中锁定靶</span>';
-        if (!challengeWon && typeof window.__craftShowWin === 'function') {
+        // 徽章文案避免匹配 legacy「过关！」扫描，以免抢在光路动画前弹总结
+        winMessageDiv.innerHTML = '<span class="pass-badge">命中锁定靶</span>';
+        if (!challengeWon) {
           challengeWon = true;
-          window.__craftShowWin('急单靶位本局锁定。折射角由 θ₁ 与 n₂ 决定；水温不改变折射角，本关 n₂ 已给定。');
+          pendingChallengeWin = true;
+          try { window.__legacyWinEmitted = true; } catch (e0) {}
         }
         tempTouchedSinceFire = false;
         lastFireAvKey = avKey;
@@ -1638,16 +1679,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     } catch (e) {}
 
-    // 如果过关，额外 fire win
-    if (winOk) {
-      try {
-        const winPayload = { winOk: true };
-        if (window.PlatformTraceAdapter) {
-          window.PlatformTraceAdapter.record('win', winPayload);
-        } else if (window.parent && window.parent.PlatformTraceAdapter) {
-          window.parent.PlatformTraceAdapter.record('win', winPayload);
-        }
-      } catch (e) {}
+    // 竞赛过关：不在此处立刻 emit/ShowWin；等 eventAnim settle（见 stepEventAnim）
+    // 若未启动动画则短延后补发，保证光路至少可见约 0.7s
+    if (winOk && pendingChallengeWin && !eventAnim) {
+      clearChallengeWinTimer();
+      challengeWinTimer = setTimeout(function() {
+        challengeWinTimer = null;
+        flushChallengeWin();
+      }, 700);
     }
   }
 

@@ -365,7 +365,7 @@ body.chapter-8 #map-btn:hover {
 }
 #c4-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 #c4-readout { font-size:26px; font-weight:bold; color:#ffbe1e; text-shadow:0 0 14px rgba(255,190,30,0.6); letter-spacing:1px; min-width:100px; text-align:right; }
-#c4-charges-row { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+#c4-charges-row { display:none!important; }
 .c4-charges-label { font-size:10px; letter-spacing:3px; color:rgba(255,190,30,0.40); }
 .c4-pip { width:13px; height:13px; border-radius:3px; background:rgba(255,190,30,0.75); box-shadow:0 0 5px rgba(255,190,30,0.45); display:inline-block; transition:all 0.35s; }
 .c4-pip.used { background:rgba(255,190,30,0.11); box-shadow:none; }
@@ -1100,7 +1100,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </head>
 <body class="cap-dark">
 
-<div id="craft-intro">
+<div id="craft-intro" hidden>
   <div class="craft-card">
     <h2>储能台 · 充放电</h2>
     <p>储能台读数要卡准——能量随 C、V 怎么涨？调电容与电压，看储能怎么变。</p>
@@ -3616,9 +3616,7 @@ function triggerCh4Discharge() {
     m.textContent = '请先选择电容量 C 和充电电压 V'; m.className = '';
     return;
   }
-  if (ch4ChargesLeft <= 0) return;
-  ch4ChargesLeft--;
-  updateCh4Pips();
+  // 次数只走壳层「剩余机会」（竞赛）；探究不限次。不再扣/拦 ch4ChargesLeft，避免双扣。
 
   const e = ch4CalcE(ch4SelCI, ch4SelVI);
   measuredE4 = e;
@@ -3636,7 +3634,7 @@ function triggerCh4Discharge() {
 
   if (typeof Telemetry !== 'undefined') Telemetry.log('discharge_attempt', {
     C: ch4Choices_C[ch4SelCI], V: ch4Choices_V[ch4SelVI], E: +e.toFixed(1),
-    result: ch4DischargeResult, attempt_in_round: 5 - ch4ChargesLeft, charges_left: ch4ChargesLeft,
+    result: ch4DischargeResult,
   });
   ch4AnimState = 'charge_up';
   ch4AnimTick = 0;
@@ -3746,26 +3744,15 @@ function tickCh4Anim() {
     }
     ch4AnimState = 'idle';
     buildCh4ChoiceGrid();
-    if (ch4ChargesLeft <= 0) {
-      setTimeout(() => {
-        const m2 = document.getElementById('c4-result-msg');
-        m2.textContent = '电源耗尽——充电系统重启，电容参数已重新校准';
-        m2.className = '';
-        ch4ChargesLeft = 5;
-        ch4SelCI = -1; ch4SelVI = -1;
-        ch4GateLevel = 0;
-        generateCh4Puzzle();
-        syncCh4UI();
-        if (typeof Telemetry !== 'undefined') Telemetry.log('round_reset', { puzzle: Telemetry.puzzleSpec() });
-      }, 1800);
-    }
+    // 耗尽提示/重置只跟壳层 attempts；关卡内不再因 ch4ChargesLeft 重置
   }
   ch4AnimSfxFrom(sfxWas);
 }
 
 function initCh4() {
   markChapterComplete(3);
-  ch=4; beginChapterIntro();
+  ch=4;
+  // 平台/单关入口直进工作台，跳过 INTRO+对白；「游戏规则」仍可手动重看
   cityBright=CITY_BRIGHT_MIN; tgtBright=CITY_BRIGHT_MIN; stormIntensity=0; dangerPulse=0;
   won=false; ch4GateTick=0;
   ch4AnimState='idle'; ch4AnimTick=0;
@@ -3776,6 +3763,11 @@ function initCh4() {
   generateCh4Puzzle();
   document.getElementById('chapter-badge').textContent=CH_NAMES[4];
   syncCh4UI();
+  try {
+    var craftIntro = document.getElementById('craft-intro');
+    if (craftIntro) craftIntro.hidden = true;
+  } catch (eCi) {}
+  openPuzzle();
   if (typeof Telemetry !== 'undefined') Telemetry.log('level_start', { puzzle: Telemetry.puzzleSpec(), init: Telemetry.snapshot() });
 }
 

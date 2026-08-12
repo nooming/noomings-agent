@@ -840,6 +840,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let sawFail = false;
     let exploreWon = false;
     let challengeWon = false;
+    let challengeWinTimer = null;
+    const CHALLENGE_WIN_DELAY_MS = 800;
+
+    function clearChallengeWinTimer() {
+      if (challengeWinTimer) {
+        clearTimeout(challengeWinTimer);
+        challengeWinTimer = null;
+      }
+    }
 
     const MODE_GOALS = {
       explore: {
@@ -862,6 +871,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     window.__mechApplyMode = function(mode) {
       playMode = mode === 'challenge' ? 'challenge' : 'explore';
+      clearChallengeWinTimer();
       winOk = false;
       exploreWon = false;
       challengeWon = false;
@@ -1364,17 +1374,24 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             return;
           }
           if (challengeWon) return;
+          // 先置位防重复；侧栏/绿光已在 finishFire 更新，总结层延后以免盖住停稳演出
           challengeWon = true;
           winOk = true;
           hintKey = 'rush_loop';
           winMessage.innerHTML = '<span class="pass-badge">夜场试车成功</span>';
           if (emitFn) {
             emitFn('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: hintKey });
-            emitFn('win', { winOk: true });
           }
-          if (typeof window.__craftShowWin === 'function') {
-            window.__craftShowWin('限次试车中，你把机械能调到合适区间，车厢翻过了固定环顶并停在减速带内。');
-          }
+          clearChallengeWinTimer();
+          challengeWinTimer = setTimeout(function() {
+            challengeWinTimer = null;
+            if (playMode !== 'challenge' || !challengeWon) return;
+            var emitLater = window.__emit || window.emit;
+            if (emitLater) emitLater('win', { winOk: true });
+            if (typeof window.__craftShowWin === 'function') {
+              window.__craftShowWin('限次试车中，你把机械能调到合适区间，车厢翻过了固定环顶并停在减速带内。');
+            }
+          }, CHALLENGE_WIN_DELAY_MS);
           return;
         }
         // 探究：必须同时见过成功与失败（掉落或冲出减速带皆算失败体验），才算摸清临界
@@ -1524,6 +1541,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const E0 = outcome.E0;
         const loopRadiusM = L.loopRadius * L.metersPerPixel;
         const ANIM_SCALE = 3.4;
+        // 斜面段略降时间倍率，让「由慢到快」更可读；环/减速带仍用 ANIM_SCALE
+        const RAMP_ANIM_SCALE = ANIM_SCALE * 0.65;
         const entryX = L.loopCenterX;
         const entryY = L.loopCenterY + L.loopRadius;
         const brake = brakeZoneGeom(L);
@@ -1547,9 +1566,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             var dt = Math.min(0.032, (ts - lastTs) / 1000);
             lastTs = ts;
             if (phase === 'ramp') {
-                var hm = animHeightM(heightMetersAtY(sy0 + (entryY - 8 - sy0) * (rampS / rampLenPx) + 10, L));
-                var spd = Math.max(0.35, speedFromEnergy(E0, hm, gPhys));
-                rampS += spd * ANIM_SCALE * dt / L.metersPerPixel;
+                // 斜面用真实几何高度：避免 animHeightM 在顶端注入假动能，观感才是匀加速
+                var hm = heightMetersAtY(sy0 + (entryY - 8 - sy0) * (rampS / rampLenPx) + 10, L);
+                var spd = Math.max(0.04, speedFromEnergy(E0, hm, gPhys));
+                rampS += spd * RAMP_ANIM_SCALE * dt / L.metersPerPixel;
                 if (rampS >= rampLenPx) {
                     rampS = rampLenPx;
                     // 能量够过顶：走完整环再进减速带；能量不够：中途掉落

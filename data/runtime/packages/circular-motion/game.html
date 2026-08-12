@@ -1383,17 +1383,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     if (playMode === 'challenge') {
       if (winOk) {
-        if (!challengeWon) {
+        var firstWin = !challengeWon;
+        if (firstWin) {
           challengeWon = true;
           hintMsg.textContent = '巡检通过！v、F 均落在安全带内。';
           winMsg.innerHTML = '<span class="pass-badge">巡检过关</span>';
           emit('snapshot', { controls: controls, winOk: true, hintKey: 'circ_challenge' });
+        }
+        // 先播巡航转动，结束后再 emit win / 弹总结（与失败路径对称，避免总结层盖住舞台）
+        startRideAnim('ok', r, omega, firstWin ? function() {
           emit('win', { winOk: true });
           if (typeof window.__craftShowWin === 'function') {
             window.__craftShowWin('你在本局锁定的安全带内调对了半径与角速度：过慢不够、过快会飞出。');
           }
-        }
-        startRideAnim('ok', r, omega, null);
+        } : null);
       } else {
         let msg = failKind === 'fly' ? '超速飞出：' : '动力不足：';
         if (vLow) msg += 'v偏低 ';

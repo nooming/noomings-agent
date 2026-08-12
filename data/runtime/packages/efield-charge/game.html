@@ -1002,6 +1002,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     };
     let playMode = 'explore';
     let challengeWon = false;
+    let challengeWinTimer = null;
+    const CHALLENGE_WIN_DELAY_MS = 750;
+    function clearChallengeWinTimer() {
+      if (challengeWinTimer) {
+        clearTimeout(challengeWinTimer);
+        challengeWinTimer = null;
+      }
+    }
     const MODE_GOALS = {
       explore: {
         hud: '试射：观察光点偏转随 E、q 变化',
@@ -1062,6 +1070,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       fieldSlider.value = '200';
       chargeSlider.value = '2';
       updateFromSliders();
+      clearChallengeWinTimer();
       challengeWon = false;
       resetParticle();
       refreshEfieldGoals();
@@ -1070,6 +1079,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     function applyExploreTarget() {
       state.lockedTargetYFrac = null;
+      clearChallengeWinTimer();
       challengeWon = false;
       placeExploreTargetZone();
       fieldSlider.value = '500';
@@ -1291,13 +1301,23 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 if (playMode === 'challenge') {
                   observeMsg.innerHTML = '<span class="win">急单完成：光点打进锁定靶区！</span>';
                   if (!challengeWon) {
+                    // 先侧栏反馈；等 hitSpark 播完（或约 0.75s）再 emit/ShowWin
                     challengeWon = true;
+                    try { window.__legacyWinEmitted = true; } catch (e0) {}
                     winOverlay.classList.add('show');
                     emit('snapshot', { controls: { 's-fieldStrength': state.fieldStrength, 's-charge': state.charge }, winOk: true, hintKey: 'efield_rush' });
-                    emit('win', { winOk: true });
-                    if (typeof window.__craftShowWin === 'function') {
-                      window.__craftShowWin('急单靶区本局锁定：偏转由 F=qE 决定（场强与电荷量），与极板间距无关。');
-                    }
+                    const sparkMs = state.hitSpark ? Math.ceil(state.hitSpark.dur * 1000) : 0;
+                    const delayMs = Math.max(CHALLENGE_WIN_DELAY_MS, sparkMs);
+                    clearChallengeWinTimer();
+                    challengeWinTimer = setTimeout(function() {
+                      challengeWinTimer = null;
+                      if (playMode !== 'challenge' || !challengeWon) return;
+                      const emitLater = window.__emit || emit;
+                      if (emitLater) emitLater('win', { winOk: true });
+                      if (typeof window.__craftShowWin === 'function') {
+                        window.__craftShowWin('急单靶区本局锁定：偏转由 F=qE 决定（场强与电荷量），与极板间距无关。');
+                      }
+                    }, delayMs);
                   }
                 } else {
                   // 探究：只给观察反馈，不弹过关、不 emit win、不进 craft 结算

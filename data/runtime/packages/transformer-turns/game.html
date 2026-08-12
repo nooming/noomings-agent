@@ -819,7 +819,41 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   let playMode = 'explore';
   let lockedBand = null;
   let challengeWon = false;
+  /** 竞赛过关：侧栏先更新，等 eventAnim settle 后再 emit/ShowWin，避免盖住舞台 */
+  let pendingChallengeWin = false;
+  let challengeWinTimer = null;
+  const CHALLENGE_WIN_SETTLE_PAD_MS = 200;
   const targetU2Display = document.getElementById('targetU2Display');
+
+  function clearChallengeWinTimer() {
+    if (challengeWinTimer) {
+      clearTimeout(challengeWinTimer);
+      challengeWinTimer = null;
+    }
+  }
+  function flushChallengeWin() {
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
+    if (playMode !== 'challenge' || !challengeWon) return;
+    try {
+      const emitFn = window.__emit || window.emit;
+      if (emitFn) {
+        emitFn('win', { winOk: true });
+      } else {
+        document.dispatchEvent(new CustomEvent('win', { detail: { winOk: true } }));
+      }
+    } catch (e) {}
+    if (typeof window.__craftShowWin === 'function') {
+      window.__craftShowWin('急单电压带本局锁定。理想变压器近似满足 U₁/U₂ ≈ N₁/N₂。');
+    }
+  }
+  function scheduleChallengeWinAfterSettle() {
+    clearChallengeWinTimer();
+    challengeWinTimer = setTimeout(function() {
+      challengeWinTimer = null;
+      flushChallengeWin();
+    }, CHALLENGE_WIN_SETTLE_PAD_MS);
+  }
 
   const MODE_GOALS = {
     explore: {
@@ -851,7 +885,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     U2_LO = Math.round((mid - half) * 10) / 10;
     U2_HI = Math.round((mid + half) * 10) / 10;
     lockedBand = { lo: U2_LO, hi: U2_HI };
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
     challengeWon = false;
+    eventAnim = null;
     sN1.value = '800';
     sN2.value = '200';
     sU1.value = '5';
@@ -862,7 +899,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function applyExploreBand() {
     lockedBand = null;
     U2_LO = 8.0; U2_HI = 12.0;
+    clearChallengeWinTimer();
+    pendingChallengeWin = false;
     challengeWon = false;
+    eventAnim = null;
     sN1.value = '500';
     sN2.value = '500';
     sU1.value = '5';
@@ -910,7 +950,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     } else if (eventAnim.phase === 'peak') {
       if (eventAnim.t >= peakDur) { eventAnim.phase = 'settle'; eventAnim.t = 0; }
     } else if (eventAnim.phase === 'settle') {
-      if (eventAnim.t >= settleDur) eventAnim = null;
+      if (eventAnim.t >= settleDur) {
+        eventAnim = null;
+        // settle 清掉后再弹总结（短缓冲），避免盖住 windup→peak→settle
+        if (pendingChallengeWin) scheduleChallengeWinAfterSettle();
+      }
     }
   }
   function getEventSurge() {
@@ -1431,7 +1475,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       drawTransformer(n1, n2, U1, measuredU2 != null ? measuredU2 : NaN, U2rounded);
     }
 
-    // 如果是测试按钮触发，立即 snapshot / win（不延迟 emit）
+    // 测试：立即 snapshot + 侧栏反馈；竞赛过关延到 eventAnim settle 后再 emit/ShowWin
     if (isTest) {
       const controlsSnapshot = {
         's-n1': n1,
@@ -1439,27 +1483,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         's-U1': U1
       };
       try {
-        if (window.emit) {
-          window.emit('snapshot', { controls: controlsSnapshot, winOk: winOk, hintKey: hintKey });
+        const emitSnap = window.__emit || window.emit;
+        if (emitSnap) {
+          emitSnap('snapshot', { controls: controlsSnapshot, winOk: winOk, hintKey: hintKey });
         } else {
           const evt = new CustomEvent('snapshot', { detail: { controls: controlsSnapshot, winOk, hintKey } });
           document.dispatchEvent(evt);
         }
       } catch (e) {}
 
-      if (winOk) {
-        try {
-          if (window.emit) {
-            window.emit('win', { winOk: true });
-          } else {
-            const evt = new CustomEvent('win', { detail: { winOk: true } });
-            document.dispatchEvent(evt);
-          }
-        } catch (e) {}
-        if (!challengeWon && typeof window.__craftShowWin === 'function') {
-          challengeWon = true;
-          window.__craftShowWin('急单电压带本局锁定。理想变压器近似满足 U₁/U₂ ≈ N₁/N₂。');
-        }
+      if (winOk && playMode === 'challenge' && !challengeWon) {
+        challengeWon = true;
+        pendingChallengeWin = true;
+        try { window.__legacyWinEmitted = true; } catch (e0) {}
       }
     }
   }

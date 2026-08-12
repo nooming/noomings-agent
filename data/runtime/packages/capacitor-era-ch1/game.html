@@ -3988,13 +3988,13 @@ cvs.addEventListener('touchend', function(e) {
 //  Shared capacitor puzzle UI (Ch0–1)
 // ══════════════════════════════════════════════
 
-const CAP_WIN_HALF = { 0: 0.03, 1: 0.018 };
+const CAP_WIN_HALF = { 0: 0.03, 1: 0.048 };
 let _capBandPrev = false;
 let _capBdPrev = false;
-// 探究较宽；竞赛收紧约一半，同参未必两边同结论
+// 探究约 ±4.8%（ch1≈190–210）；竞赛再收紧但仍明显宽于旧 ±1% 带
 function capHalfBand() {
   const base = CAP_WIN_HALF[ch] ?? 0.03;
-  return (_capEraPlayMode === 'challenge') ? base * 0.55 : base;
+  return (_capEraPlayMode === 'challenge') ? base * 0.78 : base;
 }
 
 function capWinLo(tgt) { return tgt * (1 - capHalfBand()); }

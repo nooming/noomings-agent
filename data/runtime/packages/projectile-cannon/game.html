@@ -1024,6 +1024,7 @@ class PixelGame {
         this.state = 'READY';
         this.level = 1;
         this.playMode = 'explore'; // explore | challenge
+        this.challengeWinTimer = null;
         
         this.totalScore = 0;
         this.attemptsInLevel = 0; 
@@ -1088,6 +1089,10 @@ class PixelGame {
     }
 
     applyPlayMode(mode) {
+        if (this.challengeWinTimer) {
+            clearTimeout(this.challengeWinTimer);
+            this.challengeWinTimer = null;
+        }
         this.playMode = mode === 'challenge' ? 'challenge' : 'explore';
         this.state = 'READY';
         this.proj = null;
@@ -1552,12 +1557,19 @@ class PixelGame {
                 levelsCleared: levelsCleared,
                 levelsTotal: 4
               };
+              // 先 snapshot + 积分弹出；爆炸粒子约 0.8s 后再 emit/ShowWin，避免盖住特效
               window.__emit('snapshot', Object.assign({ controls: c, hintKey: 'cannon_fort_hit' }, winProg));
-              window.__emit('win', winProg);
-              // 终关：emit 后仍弹 craft-win（与钟表/动量一致；避免 Adapter/包装吞掉结算层）
-              if (!interim && typeof window.__craftShowWin === 'function') {
-                window.__craftShowWin('要塞四关急单已攻破：落点由发射角与初速主导，弹种仅改外观。');
-              }
+              try { window.__legacyWinEmitted = true; } catch (e0) {}
+              if (this.challengeWinTimer) clearTimeout(this.challengeWinTimer);
+              var self = this;
+              this.challengeWinTimer = setTimeout(function() {
+                self.challengeWinTimer = null;
+                if (self.playMode !== 'challenge') return;
+                if (window.__emit) window.__emit('win', winProg);
+                if (!interim && typeof window.__craftShowWin === 'function') {
+                  window.__craftShowWin('要塞四关急单已攻破：落点由发射角与初速主导，弹种仅改外观。');
+                }
+              }, 800);
             }
             earnedScore = this.calculatePotentialScore();
             this.totalScore += earnedScore;
