@@ -596,8 +596,8 @@
       <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
     </div>
     <div class="craft-reveal" id="craftReveal" hidden>
-      <div class="formula">爬升高度由碰撞后动能决定——靶球同时带着<strong>平动</strong>与<strong>转动</strong>能量上坡。</div>
-      <p id="craftWinText">对照各次发射的高度读数，你摸清了质量比、初速、倾角与形状怎样影响结果。</p>
+      <div class="formula">爬升高度由碰撞后动能决定——靶球同时带着<strong>平动</strong>与<strong>转动</strong>能量上坡。理想纯滚动、无额外耗散时，最大竖直高度与倾角无关。</div>
+      <p id="craftWinText">对照各次发射的高度读数，你摸清了质量比、初速与形状怎样影响结果；倾角主要改变沿坡路程。</p>
       <p id="craftCv" class="craft-cv">轨温不改变爬升高度（视觉旁路）。</p>
     </div>
     <div class="craft-actions">
@@ -771,7 +771,9 @@
             fellOff: false,
             fall_x: 0, fall_y: 0, fall_vx: 0, fall_vy: 0,
             lastAchievedH: null,
-            peakClimbH: 0
+            peakClimbH: 0,
+            /** 上坡入口速率对应的理想纯滚动最大高度（与 θ 无关） */
+            coastH: null
         };
 
         /** AV 快照（不含轨温），用于「只拧轨温再发射」复盘 */
@@ -901,7 +903,7 @@
             }
             if (ui.craftWinText) {
                 ui.craftWinText.textContent =
-                    '对照各次发射的高度读数，你摸清了质量比、初速、倾角与形状怎样影响结果。';
+                    '对照各次发射的高度读数，你摸清了质量比、初速与形状怎样影响结果；倾角主要改变沿坡路程。';
             }
             resetWinAttributionUi();
         }
@@ -1320,6 +1322,7 @@
                 state.v1 = state.v0;
                 state.v2 = 0;
                 state.peakClimbH = 0;
+                state.coastH = null;
                 state.phase = 'rolling';
                 ui.btnLaunch.classList.add('is-disabled');
                 updateClimbHud(0);
@@ -1542,6 +1545,7 @@
             state.fall_vx = 0;
             state.fall_vy = 0;
             state.peakClimbH = 0;
+            state.coastH = null;
 
             updateBallPos(ball1, state.u1);
             updateBallPos(ball2, state.u2);
@@ -1650,25 +1654,34 @@
                         } else {
                             a_ramp = -(5 / 7) * g * Math.sin(state.theta);
                         }
+                        // 理想纯滚动：h_max = β v²/g，与倾角无关；用入口速率锁定，避免欧拉积分随 θ 漂移
+                        if (state.coastH == null || !isFinite(state.coastH)) {
+                            const vEnter = Math.max(0, state.v2);
+                            state.coastH = rollingHeightFactor(state.targetShape) * vEnter * vEnter / g;
+                        }
                         state.v2 += a_ramp * dt;
                         state.s2 += state.v2 * dt;
                         state.u2 = state.s2;
                         ball2.rotation.z -= (state.v2 * dt) / R;
 
-                        let max_s = 10.0 / Math.sin(state.theta);
+                        const sinT = Math.sin(state.theta);
+                        const hNow = Math.max(0, state.s2 * sinT);
+                        let max_s = 10.0 / Math.max(sinT, 1e-6);
                         if (state.mode === 'challenge' && state.targetH > 0) {
-                            max_s = (state.targetH + TOLERANCE_H) / Math.sin(state.theta);
+                            max_s = (state.targetH + TOLERANCE_H) / Math.max(sinT, 1e-6);
                         }
 
                         if (state.s2 > max_s && state.v2 > 0) {
-                            state.peakClimbH = Math.max(state.peakClimbH, max_s * Math.sin(state.theta));
+                            state.peakClimbH = Math.max(state.peakClimbH, max_s * sinT);
                             state.phase = 'falling';
                             state.fellOff = true;
                             state.fall_vx = state.v2 * Math.cos(state.theta);
                             state.fall_vy = state.v2 * Math.sin(state.theta);
                             state.fall_x = max_s * Math.cos(state.theta);
-                            state.fall_y = R + max_s * Math.sin(state.theta);
-                        } else if (state.v2 <= 0) {
+                            state.fall_y = R + max_s * sinT;
+                        } else if (hNow >= state.coastH || state.v2 <= 0) {
+                            state.s2 = sinT > 1e-6 ? state.coastH / sinT : state.s2;
+                            state.u2 = state.s2;
                             state.v2 = 0;
                             state.phase = 'end';
                             checkResult();
@@ -1760,14 +1773,15 @@
             const railTip = onlyRailTempProbe
                 ? `<br><br><span style="color:var(--craft-muted);font-size:0.9rem">对比上次发射：仅轨温变化时爬升高度不变——轨温不改变爬升高度。</span>`
                 : '';
+            const angleTip = `<br><br><span style="color:var(--craft-muted);font-size:0.9rem">提示：理想纯滚动、无额外耗散时，最大竖直高度由碰后速率决定，与倾角无关（倾角只改变沿坡路程）。</span>`;
             const velInfo = `<br><br><div class="vel-info"><div class="v1">入射球 v₁' = ${state.v1_post.toFixed(2)} m/s</div><div class="v2">靶 球 v₂' = ${state.v2_post.toFixed(2)} m/s</div></div>`;
 
             if (state.mode === 'explore') {
                 emitHeightSnapshot(achievedHeight);
                 if (state.fellOff) {
-                    showMessage("探究结果", `靶球动能过大，冲出斜坡顶端坠落。<br>当前参数足以支撑更高爬升。${railTip}${velInfo}`, true, resetScene);
+                    showMessage("探究结果", `靶球动能过大，冲出斜坡顶端坠落。<br>当前参数足以支撑更高爬升。${railTip}${angleTip}${velInfo}`, true, resetScene);
                 } else {
-                    showMessage("探究结果", `靶球到达的最大垂直高度为: <span class="hl-em">${achievedHeight.toFixed(2)} m</span>${railTip}${velInfo}`, true, resetScene);
+                    showMessage("探究结果", `靶球到达的最大垂直高度为: <span class="hl-em">${achievedHeight.toFixed(2)} m</span>${railTip}${angleTip}${velInfo}`, true, resetScene);
                 }
             } else {
                 if (state.fellOff) {

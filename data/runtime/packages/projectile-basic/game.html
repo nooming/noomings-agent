@@ -1474,8 +1474,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                             r: 1.5 + Math.random() * 2
                         });
                     }
-                    // 加入历史轨迹数组
-                    state.projectiles.push({...b, active: false});
+                    // 加入历史轨迹（深拷贝 path，默认保留供对照；仅「清空轨迹」/切模式清除）
+                    const landPt = { x: b.x, y: b.y };
+                    const archivedPath = b.path.slice();
+                    if (!archivedPath.length ||
+                        archivedPath[archivedPath.length - 1].x !== landPt.x ||
+                        archivedPath[archivedPath.length - 1].y !== landPt.y) {
+                        archivedPath.push(landPt);
+                    }
+                    state.projectiles.push({ ...b, path: archivedPath, active: false });
+                    // 防止叠太密卡顿：保留最近若干条
+                    if (state.projectiles.length > 24) state.projectiles.splice(0, state.projectiles.length - 24);
                     
                     // 挑战模式判定
                     if (state.mode === 'challenge') {
@@ -1502,10 +1511,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             ctx.clearRect(0, 0, state.viewW, state.viewH);
             drawScene();
 
-            // 绘制历史轨迹 (幽灵线)
-            ctx.lineWidth = 2;
+            // 绘制历史轨迹 (幽灵线，默认多发保留)
+            ctx.lineWidth = 2.5;
             state.projectiles.forEach(p => {
-                ctx.strokeStyle = 'rgba(156, 163, 175, 0.4)'; // 灰色半透明
+                ctx.strokeStyle = 'rgba(71, 85, 105, 0.72)';
                 ctx.beginPath();
                 if (p.path.length > 0) {
                     ctx.moveTo(p.path[0].x, p.path[0].y);
@@ -1515,7 +1524,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 }
                 ctx.stroke();
                 // 落点标记
-                ctx.fillStyle = 'rgba(107, 114, 128, 0.5)';
+                ctx.fillStyle = 'rgba(71, 85, 105, 0.7)';
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
@@ -1602,29 +1611,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                   window.__emit('win', { winOk: true });
                 }
                 // 命中：不叠 messageBox；直接进 #craft-win（由 __emit('win') 打开）
+                // 历史弹道默认保留，便于对照；需清场时点「清空轨迹」
                 hideMessage();
-                state.projectiles = []; // 清空场地；靶距保持至切回探究再进竞赛
             } else {
                 let diffMeters = (distance / state.PPM).toFixed(1);
                 let dir = landX > state.targetX ? "远了" : "近了";
                 const lockDist = ((state.targetX - state.cannonBaseX) / state.PPM).toFixed(1);
-                // FixedChallenge：失败只扣次数，靶距不变
+                // FixedChallenge：失败只扣次数，靶距不变；轨迹默认保留供对比
                 if (state.attempts > 0) {
                     showMessage(
                         `偏${dir} ${diffMeters}m`,
                         `靶距仍为约 ${lockDist} m（本局固定）。剩余机会 ${state.attempts}。`,
-                        false,
-                        () => { state.projectiles = []; }
+                        false
                     );
                 } else {
-                    state.projectiles = [];
                     hideMessage();
                     if (typeof window.__showAttemptsExhausted === 'function') {
                         window.__showAttemptsExhausted('未能在限次内命中约 ' + lockDist + ' m 靶心。目标靶距仍按本局锁定；可返回探究继续试射，或再开一局竞赛。');
                     } else {
-                        showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true, () => {
-                            state.projectiles = [];
-                        });
+                        showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true);
                     }
                 }
             }

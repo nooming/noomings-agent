@@ -196,7 +196,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 .craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
 
 .craft-card{
-  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  width:min(440px,92vw);max-height:min(90vh,640px);overflow-y:auto;background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
@@ -856,12 +856,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       }
     };
 
-    /** 不扣次：按当前锁定口位预测 0.65s 后包件2是否进区 */
+    /** 不扣次：按动摩擦滑行停稳后包件2是否进区 */
     window.__momHitProbe = function(m1p, m2p, v1p, v2p) {
       syncCanvasSize();
       const L = layoutMetrics();
       const r1 = ballRadius(m1p), r2 = ballRadius(m2p);
-      const postTime = 0.65;
       let collided = false, collisionTime = 0;
       let vf = computeCollision(m1p, m2p, v1p, v2p);
       if (v1p > v2p) {
@@ -872,12 +871,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       let end2;
       if (collided) {
         const c2 = L.BALL2_INIT_X + v2p * collisionTime * L.PX_PER_M;
-        end2 = c2 + vf.v2f * postTime * L.PX_PER_M;
+        end2 = coastEndPx(c2, vf.v2f, L.PX_PER_M, r2).x;
       } else {
-        end2 = L.BALL2_INIT_X + v2p * 0.55 * L.PX_PER_M;
+        end2 = coastEndPx(L.BALL2_INIT_X, v2p, L.PX_PER_M, r2).x;
       }
-      if (end2 > W - r2) end2 = W - r2;
-      if (end2 < r2) end2 = r2;
       const win = end2 >= L.TARGET_LEFT && end2 <= L.TARGET_RIGHT;
       return {
         winOk: win, end2: +end2.toFixed(1), collided: collided,
@@ -936,6 +933,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let winOk = false;
     let hintKey = 'initial';
     let animating = false;
+    let postStopTimer = null;
+
+    // 气垫导轨动摩擦因数 μ（偏小以拉长滑行；原恒速截断 0.65s 等效摩擦偏大）
+    const MU = 0.05;
+    const G = 9.8;
+    const HOLD_AFTER_STOP_MS = 750;
 
     function computeCollision(m1, m2, v1, v2) {
         const sum = m1 + m2;
@@ -943,6 +946,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const v1f = ((m1 - m2) * v1 + 2 * m2 * v2) / sum;
         const v2f = ((m2 - m1) * v2 + 2 * m1 * v1) / sum;
         return { v1f, v2f };
+    }
+
+    function coastStopTime(v0) {
+        const a = MU * G;
+        if (a <= 0 || Math.abs(v0) < 1e-9) return 0;
+        return Math.abs(v0) / a;
+    }
+    function coastPosPx(x0, v0, t, pxPerM) {
+        const a = MU * G;
+        if (Math.abs(v0) < 1e-9) return x0;
+        const sign = v0 >= 0 ? 1 : -1;
+        const te = Math.max(0, Math.min(t, Math.abs(v0) / a));
+        return x0 + (v0 * te - 0.5 * sign * a * te * te) * pxPerM;
+    }
+    function coastEndPx(x0, v0, pxPerM, r) {
+        const tStop = coastStopTime(v0);
+        let x = coastPosPx(x0, v0, tStop, pxPerM);
+        if (x > W - r) x = W - r;
+        if (x < r) x = r;
+        return { x: x, tStop: tStop };
+    }
+    function clearPostStopTimer() {
+        if (postStopTimer) { clearTimeout(postStopTimer); postStopTimer = null; }
     }
 
     function updateSliderLabels() {
@@ -966,6 +992,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
 
     function resetSim(keepControls = true) {
+        clearPostStopTimer();
         if (keepControls) readControls();
         syncCanvasSize();
         var L = layoutMetrics();
@@ -1261,7 +1288,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
 
     function fire() {
-        if (animating) return;
+        if (animating || postStopTimer) return;
+        clearPostStopTimer();
         readControls();
         syncCanvasSize();
         var L = layoutMetrics();
@@ -1286,29 +1314,30 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             }
         }
 
-        const postTime = 0.65;
-        let end1, end2;
+        let end1, end2, coastT1 = 0, coastT2 = 0;
+        let c1x = L.BALL1_INIT_X, c2x = L.BALL2_INIT_X;
         if (collided && collisionTime > 0) {
-            const c1 = L.BALL1_INIT_X + v1 * collisionTime * L.PX_PER_M;
-            const c2 = L.BALL2_INIT_X + v2 * collisionTime * L.PX_PER_M;
-            end1 = c1 + v1f * postTime * L.PX_PER_M;
-            end2 = c2 + v2f * postTime * L.PX_PER_M;
+            c1x = L.BALL1_INIT_X + v1 * collisionTime * L.PX_PER_M;
+            c2x = L.BALL2_INIT_X + v2 * collisionTime * L.PX_PER_M;
+            var e1 = coastEndPx(c1x, v1f, L.PX_PER_M, r1);
+            var e2 = coastEndPx(c2x, v2f, L.PX_PER_M, r2);
+            end1 = e1.x; end2 = e2.x;
+            coastT1 = e1.tStop; coastT2 = e2.tStop;
         } else {
-            // 不相撞：各自按初速匀速一小段（v2=0 时物块2保持静止）
+            // 不相撞：各自按初速受 μ 减速滑行（v2=0 时物块2保持静止）
             v1f = v1;
             v2f = v2;
             collisionTime = 0;
-            const t = 0.55;
-            end1 = L.BALL1_INIT_X + v1 * t * L.PX_PER_M;
-            end2 = L.BALL2_INIT_X + v2 * t * L.PX_PER_M;
+            var e1n = coastEndPx(L.BALL1_INIT_X, v1, L.PX_PER_M, r1);
+            var e2n = coastEndPx(L.BALL2_INIT_X, v2, L.PX_PER_M, r2);
+            end1 = e1n.x; end2 = e2n.x;
+            coastT1 = e1n.tStop; coastT2 = e2n.tStop;
         }
         function clampX(x, r) {
             if (x > W - r) return W - r;
             if (x < r) return r;
             return x;
         }
-        end1 = clampX(end1, r1);
-        end2 = clampX(end2, r2);
 
         const inTarget = (end2 >= L.TARGET_LEFT && end2 <= L.TARGET_RIGHT);
         winOk = inTarget;
@@ -1326,9 +1355,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         ball1X = L.BALL1_INIT_X;
         ball2X = L.BALL2_INIT_X;
         let t0 = null;
+        const coastDur = Math.max(coastT1, coastT2, 0.35);
         const totalDur = collided
-          ? Math.max(0.35, collisionTime) + postTime
-          : 0.55;
+          ? Math.max(0.35, collisionTime) + coastDur
+          : coastDur;
         function step(ts) {
             if (!t0) t0 = ts;
             const elapsed = Math.min(totalDur, (ts - t0) / 1000);
@@ -1339,14 +1369,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     ball2X = L.BALL2_INIT_X + v2 * elapsed * L.PX_PER_M;
                 } else {
                     const te = elapsed - collisionTime;
-                    const c1 = L.BALL1_INIT_X + v1 * collisionTime * L.PX_PER_M;
-                    const c2 = L.BALL2_INIT_X + v2 * collisionTime * L.PX_PER_M;
-                    ball1X = c1 + v1f * te * L.PX_PER_M;
-                    ball2X = c2 + v2f * te * L.PX_PER_M;
+                    ball1X = coastPosPx(c1x, v1f, te, L.PX_PER_M);
+                    ball2X = coastPosPx(c2x, v2f, te, L.PX_PER_M);
                 }
             } else {
-                ball1X = L.BALL1_INIT_X + v1 * elapsed * L.PX_PER_M;
-                ball2X = L.BALL2_INIT_X + v2 * elapsed * L.PX_PER_M;
+                ball1X = coastPosPx(L.BALL1_INIT_X, v1, elapsed, L.PX_PER_M);
+                ball2X = coastPosPx(L.BALL2_INIT_X, v2, elapsed, L.PX_PER_M);
             }
             ball1X = clampX(ball1X, r1);
             ball2X = clampX(ball2X, r2);
@@ -1384,33 +1412,38 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     's-vel1': sVel1.value,
                     's-vel2': sVel2.value
                 };
-                if (playMode === 'challenge') {
-                  if (winOk) {
-                    if (!challengeWon) {
-                      challengeWon = true;
-                      emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'mom_rush' });
-                      emit('win', { winOk: true });
-                      if (typeof window.__craftShowWin === 'function') {
-                        window.__craftShowWin('急单接货口本局锁定，你用动量守恒把包件2投进了指定口位。');
+                // 停稳后短暂停顿再结算/刷新，便于看清落点
+                clearPostStopTimer();
+                postStopTimer = setTimeout(function() {
+                    postStopTimer = null;
+                    if (playMode === 'challenge') {
+                      if (winOk) {
+                        if (!challengeWon) {
+                          challengeWon = true;
+                          emit('snapshot', { controls: controlsSnapshot, winOk: true, hintKey: 'mom_rush' });
+                          emit('win', { winOk: true });
+                          if (typeof window.__craftShowWin === 'function') {
+                            window.__craftShowWin('急单接货口本局锁定，你用动量守恒把包件2投进了指定口位。');
+                          }
+                        }
+                      } else {
+                        emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+                        // FixedChallenge：失败不换口，只复位场景（保留学生刚调的 m/v）
+                        resetSim(true);
+                        refreshGoalUI();
+                        hintMsg.textContent = '未投进 · 接货口仍在约 ' + Math.round(targetCenterFrac * 100) + '% 处（本局固定）';
                       }
+                      return;
                     }
-                  } else {
+                    exploreShots += 1;
+                    if (winOk) sawIn = true; else sawMiss = true;
                     emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
-                    // FixedChallenge：失败不换口，只复位场景（保留学生刚调的 m/v）
-                    resetSim(true);
-                    refreshGoalUI();
-                    hintMsg.textContent = '未投进 · 接货口仍在约 ' + Math.round(targetCenterFrac * 100) + '% 处（本局固定）';
-                  }
-                  return;
-                }
-                exploreShots += 1;
-                if (winOk) sawIn = true; else sawMiss = true;
-                emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
-                if (!exploreWon && exploreShots >= 3 && sawIn && sawMiss) {
-                  exploreWon = true;
-                  hintMsg.textContent = '已见过进区与未进 · 可切换竞赛接急单（口位本局固定）';
-                  emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
-                }
+                    if (!exploreWon && exploreShots >= 3 && sawIn && sawMiss) {
+                      exploreWon = true;
+                      hintMsg.textContent = '已见过进区与未进 · 可切换竞赛接急单（口位本局固定）';
+                      emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
+                    }
+                }, HOLD_AFTER_STOP_MS);
             }
         }
         requestAnimationFrame(step);
@@ -1468,7 +1501,34 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     btnFire.addEventListener('click', fire);
     btnReset.addEventListener('click', function() { resetSim(true); emit('snapshot', { controls: snapControls(), winOk: false, hintKey: 'manual_reset' }); });
 
-    window.__physics = { computeCollision, fire, resetSim };
+    window.__physics = { computeCollision, fire, resetSim, MU: MU };
+    window.__craftReplay = function() {
+      clearPostStopTimer();
+      challengeWon = false;
+      exploreWon = false;
+      window.__legacyWinEmitted = false;
+      window.__craftWinDismissed = false;
+      try {
+        var ev = window.__eaSessionEvidence;
+        if (ev) {
+          ev.attribution = null;
+          ev.evidenceSummary = '';
+          ev.fireCount = 0;
+          if (ev.tuneCounts) {
+            Object.keys(ev.tuneCounts).forEach(function(k){ ev.tuneCounts[k] = 0; });
+          }
+        }
+      } catch (e0) {}
+      var sel = document.getElementById('modeSelect');
+      if (sel) {
+        sel.value = playMode === 'challenge' ? 'challenge' : 'explore';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (typeof window.__momApplyMode === 'function') {
+        window.__momApplyMode(playMode);
+      } else {
+        resetSim(true);
+      }
+    };
 })();
 </script>
 
@@ -2146,8 +2206,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       || document.querySelector('#btnReset, button.btn-reset, [data-action="reset"]');
     if (rbtn) { try { rbtn.click(); } catch (e) {} }
   }
+  function unlockWinBtn(){
+    if (!wbtn) return;
+    wbtn.disabled = false;
+    wbtn.removeAttribute('disabled');
+  }
+  function onAttrChosen(el){
+    if (!el || !el.checked) return;
+    var ev = window.__eaSessionEvidence;
+    if (ev) ev.attribution = el.value;
+    if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(true);
+    if (typeof window.__eaUpdateAttrHint === 'function') window.__eaUpdateAttrHint(el.value);
+    if (typeof window.__eaEmitAttribution === 'function') window.__eaEmitAttribution();
+    unlockWinBtn();
+  }
   if (wbtn) wbtn.addEventListener('click', function(){
-    if (wbtn.disabled) return;
+    if (wbtn.disabled) {
+      var tip = document.getElementById('craftAttrHint');
+      if (tip) {
+        tip.hidden = false;
+        tip.textContent = '请先点选上方归因，再点「再玩一次」';
+      }
+      return;
+    }
     try { if (typeof window.__platformTraceRequestNewRound === 'function') window.__platformTraceRequestNewRound('craft_win_replay'); } catch (__nr) {}
     window.__craftWinDismissed = true;
     window.__craftWinOpen = false;
@@ -2159,15 +2240,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (typeof window.__eaNavigateToStudentList === 'function') window.__eaNavigateToStudentList();
   });
   document.querySelectorAll('input[name="craftAttr"]').forEach(function(el){
-    el.addEventListener('change', function(){
-      if (!el.checked) return;
-      var ev = window.__eaSessionEvidence;
-      if (ev) ev.attribution = el.value;
-      if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(true);
-      if (typeof window.__eaUpdateAttrHint === 'function') window.__eaUpdateAttrHint(el.value);
-      if (typeof window.__eaEmitAttribution === 'function') window.__eaEmitAttribution();
-      if (wbtn) wbtn.disabled = false;
-    });
+    el.addEventListener('change', function(){ onAttrChosen(el); });
+    el.addEventListener('click', function(){ onAttrChosen(el); });
   });
 
   function showWin(extra){
@@ -2180,8 +2254,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       window.__craftWinOpen = true;
       window.__craftWinDismissed = false;
       if (typeof window.__eaPrepareCraftWin === 'function') {
-        var ev0 = window.__eaSessionEvidence;
-        if (!ev0 || !ev0.evidenceSummary) window.__eaPrepareCraftWin();
+        // 每局结束卡刷新证据，并重置归因门禁
+        window.__eaPrepareCraftWin();
       }
       try {
         var msg = document.getElementById('messageBox');
@@ -2197,9 +2271,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       win.hidden = false;
       setSettle(true);
       var ev = window.__eaSessionEvidence;
-      if (!(ev && ev.attribution)) {
+      if (ev && ev.attribution) {
+        unlockWinBtn();
+        if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(true);
+      } else {
         if (typeof window.__eaSetCraftRevealVisible === 'function') window.__eaSetCraftRevealVisible(false);
-        if (wbtn) wbtn.disabled = true;
+        if (wbtn) {
+          wbtn.disabled = true;
+          wbtn.setAttribute('disabled', 'disabled');
+        }
+        var tip = document.getElementById('craftAttrHint');
+        if (tip) {
+          tip.hidden = false;
+          tip.textContent = '请先点选上方归因，再点「再玩一次」';
+        }
       }
       var t = document.getElementById('craftWinText');
       if (t && typeof extra === 'string' && extra) t.textContent = extra;

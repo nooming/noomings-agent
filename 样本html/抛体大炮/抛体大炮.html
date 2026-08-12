@@ -1425,6 +1425,19 @@ class PixelGame {
             }
         }
 
+        // 命中须先于落地：地面要塞 target.y≈groundY 时，同帧会同时满足命中盒与接地，
+        // 若先判落地会误报未中，win/过关 UI 永不触发（与 probeHit 顺序对齐）
+        if (this.target) {
+            const dx = p.x - this.target.x;
+            const dy = p.y - this.target.y;
+            if (Math.abs(dx) < (p.size + this.target.w / 2) && Math.abs(dy) < (p.size + this.target.h / 2)) {
+                this.createExplosion(this.target.x, this.target.y, p.color, 30);
+                this.shakeScreen();
+                this.endSim(true, "要塞目标击中!");
+                return;
+            }
+        }
+
         if(p.y + p.size >= this.groundY) {
             if (this.playMode === 'explore') {
                 this.endSim(false, "落点已记录");
@@ -1445,15 +1458,6 @@ class PixelGame {
             let reason = p.x > this.width ? "飞出右边界" : "飞出左边界";
             this.endSim(false, reason);
             return;
-        }
-
-        if (!this.target) return;
-        const dx = p.x - this.target.x;
-        const dy = p.y - this.target.y;
-        if(Math.abs(dx) < (p.size + this.target.w/2) && Math.abs(dy) < (p.size + this.target.h/2)) {
-            this.createExplosion(this.target.x, this.target.y, p.color, 30);
-            this.shakeScreen();
-            this.endSim(true, "要塞目标击中!");
         }
     }
 
