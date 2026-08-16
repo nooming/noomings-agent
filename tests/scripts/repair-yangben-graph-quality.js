@@ -23,7 +23,7 @@ const { applyStrategyMermaidSanitize } = require('../../packages/contract/strate
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
 const { resolveAvLabel } = require('../../packages/generate/control-label');
 const { detectDomain } = require('../../packages/contract/repair/inquiry-script-sanitize');
-const { getPackagesRoot, getPackageGamePath } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getPackageGamePath, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml');
@@ -200,7 +200,7 @@ function main() {
     exportPassed: rows.filter(r => r.export?.ok).length,
     rows,
   };
-  const out = path.join(getPackagesRoot(), 'reports', 'repair-yangben-graph-quality.json');
+  const out = path.join(getReportsRoot(), 'repair-yangben-graph-quality.json');
   fs.writeFileSync(out, JSON.stringify(report, null, 2), 'utf8');
   console.log(`Done: ${report.passed}/${report.total} quality; export ${report.exportPassed}/${report.total}`);
   console.log('Wrote', out);

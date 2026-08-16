@@ -7,17 +7,10 @@
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
+const { getReportsRoot } = require('../packages/shared/data-paths');
 
 const BASE = process.env.ROLE_SIM_BASE || 'http://localhost:3001';
-const REPORT_PATH = path.join(
-  __dirname,
-  '..',
-  'data',
-  'runtime',
-  'packages',
-  'reports',
-  'role-sim-play-log.md',
-);
+const REPORT_PATH = path.join(getReportsRoot(), 'role-sim-play-log.md');
 const TRACE_DIR = path.join(__dirname, '..', 'data', 'runtime', 'platform', 'traces');
 
 const PACKS = [

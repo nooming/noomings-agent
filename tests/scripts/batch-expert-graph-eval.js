@@ -3,7 +3,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const {
   MATCH_RULES_DOC,
   matchNodes,
@@ -15,7 +15,7 @@ const { assessNarrativeCleanliness } = require('../lib/narrative-cleanliness');
 
 const ROOT = path.resolve(__dirname, '../..');
 const EXPERT_ROOT = path.join(ROOT, 'data/datasets/expert-graphs');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 const HAND_AUTHORED = new Set(['projectile-basic', 'pendulum-clock']);
 
 function argValue(flag) {

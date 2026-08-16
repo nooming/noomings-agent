@@ -9,6 +9,7 @@
 <body class="platform-page edu-shell play-page">
 
 <div id="playEnterOverlay" class="play-enter-overlay" aria-hidden="true"></div>
+<div id="playSoftTip" class="play-soft-tip" hidden role="status"></div>
 <div class="play-shell">
   <div id="playIdleHint" class="play-idle-hint" hidden>💡 请先调节参数，再点击页面内的<strong>发射</strong>或<strong>测试</strong>按钮开始模拟</div>
   <div id="pathTypeChip" class="play-path-type-chip" hidden></div>
@@ -121,6 +122,52 @@ async function boot() {
 
   const frame = document.getElementById('gameFrame');
   let currentPhase = 'explore';
+  let sawExploreSuccess = false;
+  let exploreActionCount = 0;
+  const CHALLENGE_SOFT_GATE = true; // 巩固探究门控：未达探究门槛进竞赛仅软提示
+  // 门槛：已有 explore_success，或探究段有效调节/发射 ≥3 次（见 maybeWarnChallengeGate）
+  const SOFT_TERMINAL_LIMIT = 5;
+  const softTipEl = document.getElementById('playSoftTip');
+  let softTipTimer = null;
+
+  function showSoftTip(msg, ms) {
+    if (!softTipEl || !msg) return;
+    softTipEl.hidden = false;
+    softTipEl.textContent = msg;
+    if (softTipTimer) clearTimeout(softTipTimer);
+    softTipTimer = setTimeout(() => { softTipEl.hidden = true; }, ms || 5200);
+  }
+
+  function maybeWarnChallengeGate() {
+    if (!CHALLENGE_SOFT_GATE) return;
+    if (sawExploreSuccess || exploreActionCount >= 3) return;
+    showSoftTip('建议先在探究模式多试几组参数并完成探究对照（explore_success），再进入挑战（本次仅提示，不拦截）。');
+  }
+
+  async function maybeWarnSoftTerminalLimit() {
+    if (!studentId || !item.graphId) return;
+    try {
+      const key = `platform-soft-limit-warned:${studentId}:${item.graphId}`;
+      if (sessionStorage.getItem(key) === '1') return;
+      // 轻量：用本机 localStorage 计数（无学生读学情 API）；终局后由 play 页递增
+      const countKey = `platform-terminal-count:${studentId}:${item.graphId}`;
+      const n = Number(localStorage.getItem(countKey) || '0') || 0;
+      if (n >= SOFT_TERMINAL_LIMIT) {
+        sessionStorage.setItem(key, '1');
+        showSoftTip(`本任务有效终局已约 ${n} 次（建议上限 ${SOFT_TERMINAL_LIMIT}）。可继续练习，但请优先保证每次认真完成。`, 7000);
+      }
+    } catch { /* ignore */ }
+  }
+
+  function bumpTerminalLocalCount() {
+    if (!studentId || !item.graphId) return;
+    try {
+      const countKey = `platform-terminal-count:${studentId}:${item.graphId}`;
+      const n = (Number(localStorage.getItem(countKey) || '0') || 0) + 1;
+      localStorage.setItem(countKey, String(n));
+    } catch { /* ignore */ }
+  }
+
   const pathChip = document.getElementById('pathTypeChip');
   const adviceChip = document.getElementById('pathAdviceChip');
   const pathToggle = document.getElementById('pathTypeToggle');
@@ -364,6 +411,14 @@ async function boot() {
       sawInteraction = true;
       if (idleHintEl) idleHintEl.hidden = true;
     }
+    if (type === 'explore_success') sawExploreSuccess = true;
+    if (currentPhase !== 'challenge' && (type === 'action' || type === 'tuning' || type === 'snapshot')) {
+      exploreActionCount += 1;
+    }
+    if (type === 'win' || type === 'attempts_exhausted'
+        || (type === 'snapshot' && payload && payload.attemptsExhausted)) {
+      bumpTerminalLocalCount();
+    }
     if (type === 'win' && showPathType) {
       if (isInterimWin(payload)) {
         clearPathChips();
@@ -432,7 +487,11 @@ async function boot() {
   }
 
   function notePhaseFromGame(phase) {
-    currentPhase = phase === 'challenge' ? 'challenge' : 'explore';
+    const next = phase === 'challenge' ? 'challenge' : 'explore';
+    if (next === 'challenge' && currentPhase !== 'challenge') {
+      maybeWarnChallengeGate();
+    }
+    currentPhase = next;
     document.body.dataset.playPhase = currentPhase;
     PlatformTraceAdapter.setPhase(currentPhase);
   }
@@ -445,7 +504,9 @@ async function boot() {
   PlatformTraceAdapter.record = (type, payload) => {
     noteInteraction(type, payload);
     if (type === 'phase_change' && payload?.phase) {
-      currentPhase = payload.phase === 'challenge' ? 'challenge' : 'explore';
+      const next = payload.phase === 'challenge' ? 'challenge' : 'explore';
+      if (next === 'challenge' && currentPhase !== 'challenge') maybeWarnChallengeGate();
+      currentPhase = next;
       document.body.dataset.playPhase = currentPhase;
     }
     return shellOrigRecord(type, payload);
@@ -529,6 +590,7 @@ async function boot() {
     dismissEnterOverlay();
   });
   frame.src = item.playUrl;
+  maybeWarnSoftTerminalLimit();
   if (frame.contentDocument?.readyState === 'complete') {
     injectGameTrace();
     dismissEnterOverlay();

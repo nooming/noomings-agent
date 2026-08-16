@@ -10,15 +10,19 @@ const ROOT = path.resolve(__dirname, '../../../..');
 const SRC = path.join(ROOT, '组员做的样本');
 
 function run() {
-  const htmlFiles = fs.readdirSync(SRC).filter((f) => f.endsWith('.html')).sort();
-  const bySrc = new Map(TEAM_MAP.map((s) => [s.src, s]));
-  assert.strictEqual(
-    htmlFiles.length,
-    TEAM_MAP.length,
-    `teammate dir has ${htmlFiles.length} html, map has ${TEAM_MAP.length}`,
-  );
-  for (const f of htmlFiles) {
-    assert.ok(bySrc.has(f), `unmapped teammate file: ${f}`);
+  // Source dump dir is optional locally; packages under data/runtime/packages are canonical
+  const srcPresent = fs.existsSync(SRC);
+  if (srcPresent) {
+    const htmlFiles = fs.readdirSync(SRC).filter((f) => f.endsWith('.html')).sort();
+    const bySrc = new Map(TEAM_MAP.map((s) => [s.src, s]));
+    assert.strictEqual(
+      htmlFiles.length,
+      TEAM_MAP.length,
+      `teammate dir has ${htmlFiles.length} html, map has ${TEAM_MAP.length}`,
+    );
+    for (const f of htmlFiles) {
+      assert.ok(bySrc.has(f), `unmapped teammate file: ${f}`);
+    }
   }
 
   const manifest = JSON.parse(fs.readFileSync(path.join(getPackagesRoot(), 'manifest.json'), 'utf8'));
@@ -38,7 +42,7 @@ function run() {
   }
 
   console.log('teammate-coverage-check: ok', {
-    files: htmlFiles.length,
+    srcDir: srcPresent ? 'present' : 'optional-missing',
     packages: TEAM_MAP.map((s) => s.id),
   });
 }

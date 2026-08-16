@@ -24,17 +24,17 @@
 <main class="platform-main">
   <section class="platform-hero" style="padding-bottom:20px">
     <h1 style="font-size:1.4rem">学生进入课堂</h1>
-    <p>填写学号即可查看探究任务；姓名选填，便于教师识别。</p>
+    <p>请填写真实学号与姓名，便于教师按学号汇总学情。</p>
   </section>
 
   <form class="edu-panel platform-auth-panel" id="joinForm" autocomplete="on">
     <div class="form-row">
       <label for="studentId">学号 <span class="platform-req">必填</span></label>
-      <input type="text" id="studentId" name="studentId" placeholder="例如：20260101" required maxlength="32" autocomplete="username">
+      <input type="text" id="studentId" name="studentId" placeholder="例如：20260101" required maxlength="32" autocomplete="username" inputmode="text">
     </div>
     <div class="form-row">
-      <label for="studentName">姓名 <span class="platform-opt">选填，鼓励填写</span></label>
-      <input type="text" id="studentName" name="studentName" placeholder="例如：张三" maxlength="32" autocomplete="name">
+      <label for="studentName">姓名 <span class="platform-req">必填</span></label>
+      <input type="text" id="studentName" name="studentName" placeholder="例如：张三" required maxlength="32" autocomplete="name">
     </div>
     <p class="hint" id="joinError" hidden></p>
     <div class="tool-link-row" style="margin-top:8px">
@@ -48,9 +48,73 @@
 const ID_KEY = 'platform-student-id';
 const NAME_KEY = 'platform-student-name';
 
+/** 与 packages/platform/student-identity.js 保持语义一致（前端内联，免额外请求） */
+const NAME_BLACKLIST = [
+  '李四', '王五', '小明', '小红', '张三丰',
+  'playtest', 'full-eval', 'full_eval', 'test', 'testing',
+  '全检', '全量试玩', '试玩', '匿名', '匿名学生',
+  'student', 'admin', 'null', 'undefined',
+];
+
+function isDateLikeId(id) {
+  if (!/^\d{6}$|^\d{8}$/.test(id)) return false;
+  if (id.length === 8) {
+    const y = Number(id.slice(0, 4));
+    const m = Number(id.slice(4, 6));
+    const d = Number(id.slice(6, 8));
+    return y >= 1990 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  }
+  const m = Number(id.slice(2, 4));
+  const d = Number(id.slice(4, 6));
+  return m >= 1 && m <= 12 && d >= 1 && d <= 31;
+}
+
+function validateStudentId(raw) {
+  const id = String(raw || '').trim();
+  if (!id) return { ok: false, message: '请填写学号' };
+  if (id.length < 4 || id.length > 32) return { ok: false, message: '学号长度需为 4–32 位' };
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(id)) {
+    return { ok: false, message: '学号仅允许字母、数字、下划线与短横线' };
+  }
+  if (/^\d{6}$/.test(id) && isDateLikeId(id)) {
+    return { ok: false, message: '学号不能是日期串，请使用学校学号' };
+  }
+  const lower = id.toLowerCase();
+  if (NAME_BLACKLIST.some((b) => lower === String(b).toLowerCase())) {
+    return { ok: false, message: '该学号不可用，请使用真实学号' };
+  }
+  return { ok: true, studentId: id };
+}
+
+function validateStudentName(raw) {
+  const name = String(raw || '').trim().replace(/\s+/g, ' ');
+  if (!name) return { ok: false, message: '请填写姓名' };
+  if (name.length < 2 || name.length > 32) return { ok: false, message: '姓名长度需为 2–32 字' };
+  if (/^\d+$/.test(name)) return { ok: false, message: '姓名不能为纯数字' };
+  if (/^\d{6,8}$/.test(name) && isDateLikeId(name)) {
+    return { ok: false, message: '姓名不能是日期串' };
+  }
+  const lower = name.toLowerCase();
+  const blocked = NAME_BLACKLIST.some((b) => {
+    const bl = String(b).toLowerCase();
+    if (/^[a-z0-9_-]+$/i.test(b)) return lower === bl || lower.includes(bl);
+    return name === b;
+  });
+  if (blocked) return { ok: false, message: '请填写真实姓名（勿用占位昵称）' };
+  return { ok: true, studentName: name };
+}
+
 const savedId = localStorage.getItem(ID_KEY);
-if (savedId && savedId.trim()) {
-  location.replace('/student.html');
+const savedName = localStorage.getItem(NAME_KEY);
+if (savedId && savedId.trim() && savedName && savedName.trim()) {
+  const idOk = validateStudentId(savedId);
+  const nameOk = validateStudentName(savedName);
+  if (idOk.ok && nameOk.ok) {
+    location.replace('/student.html');
+  } else {
+    localStorage.removeItem(ID_KEY);
+    localStorage.removeItem(NAME_KEY);
+  }
 }
 
 const form = document.getElementById('joinForm');
@@ -58,7 +122,7 @@ const errEl = document.getElementById('joinError');
 const idInput = document.getElementById('studentId');
 const nameInput = document.getElementById('studentName');
 
-const savedName = localStorage.getItem(NAME_KEY);
+if (savedId) idInput.value = savedId;
 if (savedName) nameInput.value = savedName;
 
 function showError(msg) {
@@ -69,16 +133,20 @@ function showError(msg) {
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   showError('');
-  const id = idInput.value.trim();
-  const name = nameInput.value.trim();
-  if (!id) {
-    showError('请填写学号后再进入课堂');
+  const idRes = validateStudentId(idInput.value);
+  if (!idRes.ok) {
+    showError(idRes.message);
     idInput.focus();
     return;
   }
-  localStorage.setItem(ID_KEY, id);
-  if (name) localStorage.setItem(NAME_KEY, name);
-  else localStorage.removeItem(NAME_KEY);
+  const nameRes = validateStudentName(nameInput.value);
+  if (!nameRes.ok) {
+    showError(nameRes.message);
+    nameInput.focus();
+    return;
+  }
+  localStorage.setItem(ID_KEY, idRes.studentId);
+  localStorage.setItem(NAME_KEY, nameRes.studentName);
   location.replace('/student.html');
 });
 </script>

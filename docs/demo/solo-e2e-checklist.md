@@ -57,7 +57,7 @@ npm run batch-graph-quality-eval
 npm run batch-html-dataset -- --dry-run
 ```
 
-报告位置：[`data/runtime/packages/reports/`](../../data/runtime/packages/reports/)（`graph-quality-report.md`、`agent-a-report.md`）
+报告位置：[`data/runtime/analysis/reports/`](../../data/runtime/analysis/reports/)（`graph-quality-report.md`、`agent-a-report.md`）
 
 ## 常见问题
 

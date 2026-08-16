@@ -5,19 +5,17 @@ const { generateDesignGraph } = require('../../packages/generate/design-pipeline
 const { generateGameHtml } = require('../../packages/generate/html-codegen');
 const { validateGeneratedHtml } = require('../../packages/generate/html-post-validate');
 const { evaluateDesignSample } = require('../lib/design-sample-eval');
-const {
-  getPackageManifestPath,
+const { getPackageManifestPath,
   getPackageGamePath,
   getPackageChapterPath,
   getPackageDir,
   getPackagesRoot,
-  resolveRepoRelative,
-} = require('../../packages/shared/data-paths');
+  resolveRepoRelative, getReportsRoot } = require('../../packages/shared/data-paths');
 
 require('../../packages/shared/load-env').loadEnv();
 
 const MANIFEST = getPackageManifestPath();
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 const opts = {
   apiKey: process.env.DEEPSEEK_API_KEY,

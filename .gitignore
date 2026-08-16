@@ -11,6 +11,10 @@ data/runtime/output/**
 # 迁服临时入库已结束，恢复忽略课堂轨迹
 data/runtime/platform/traces/*
 !data/runtime/platform/traces/.gitignore
+# PCA/分析快照（大 JSON）；目录占位见 data/runtime/analysis/.gitignore
+data/runtime/analysis/traces-全部-*/
+# 禁止根目录长期留 traces 快照包
+/traces-全部-*/
 data/output/design-runs/
 data/platform/traces/
 _archive/

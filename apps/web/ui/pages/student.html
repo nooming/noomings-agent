@@ -15,6 +15,9 @@
   <section class="platform-hero student-hero">
     <h1>探究游戏</h1>
     <p>选择任务开始实验。你的操作会自动记录，供教师分析探究过程。</p>
+    <p class="hint student-notice-actions">
+      <button type="button" class="platform-session-link" id="showInquiryNoticeBtn">再看探究说明</button>
+    </p>
   </section>
 
   <div id="gameGrid">
@@ -48,21 +51,30 @@ const MACRO_CARD = {
   'macro-other': { accent: '#64748b', hint: '近代物理台' },
 };
 
+function isObserveOnly(item) {
+  return (item.sampleTags || []).includes('observe-only');
+}
+
 function renderGameCard(item) {
   const topic = item.topicKey || '';
   const cat = item.categoryId || '';
   const meta = MACRO_CARD[cat] || { accent: 'var(--edu-student)', hint: '物理探究台' };
+  const observe = isObserveOnly(item);
+  const observeBadge = observe
+    ? '<span class="game-card-badge game-card-badge-observe" title="观察包：单阶段观察，不计竞赛通关">观察</span>'
+    : '';
   return `
-    <article class="game-card" data-macro="${esc(cat)}" style="--card-accent:${meta.accent}">
+    <article class="game-card${observe ? ' is-observe-only' : ''}" data-macro="${esc(cat)}" style="--card-accent:${meta.accent}">
       <div class="game-card-accent" aria-hidden="true"></div>
       <div class="game-card-body">
         <div class="game-card-meta">
           ${topic ? `<span class="game-card-topic">${esc(topic)}</span>` : ''}
-          <span class="game-card-hint">${esc(meta.hint)}</span>
+          ${observeBadge}
+          <span class="game-card-hint">${esc(observe ? '观察实验台' : meta.hint)}</span>
         </div>
         <h3>${esc(item.title)}</h3>
-        <p>${esc(item.description || '物理探究实验')}</p>
-        <a class="game-card-play" href="/student-play.html?id=${encodeURIComponent(item.id)}">开始探究</a>
+        <p>${esc(item.description || (observe ? '单阶段观察实验（不计竞赛通关）' : '物理探究实验'))}</p>
+        <a class="game-card-play" href="/student-play.html?id=${encodeURIComponent(item.id)}">${observe ? '开始观察' : '开始探究'}</a>
       </div>
     </article>`;
 }
@@ -92,9 +104,10 @@ function isCategoryOpen(catId, savedOpen) {
   return savedOpen.includes(catId);
 }
 
-function renderCategorySection(catId, title, group, savedOpen) {
+function renderCategorySection(catId, title, group, savedOpen, extraClass) {
   const openAttr = isCategoryOpen(catId, savedOpen) ? ' open' : '';
-  return `<details class="student-category-section" data-category-id="${esc(catId)}"${openAttr}>
+  const cls = extraClass ? ` ${extraClass}` : '';
+  return `<details class="student-category-section${cls}" data-category-id="${esc(catId)}"${openAttr}>
     <summary class="student-category-title">
       <span class="student-category-label">${esc(title)}</span>
       <span class="student-category-count">${group.length}</span>
@@ -120,8 +133,15 @@ function renderGameGrid(items, macroNames) {
     return;
   }
 
-  const byCategory = new Map();
+  const observeItems = [];
+  const mainItems = [];
   for (const item of items) {
+    if (isObserveOnly(item)) observeItems.push(item);
+    else mainItems.push(item);
+  }
+
+  const byCategory = new Map();
+  for (const item of mainItems) {
     const key = item.categoryId || '';
     if (!byCategory.has(key)) byCategory.set(key, []);
     byCategory.get(key).push(item);
@@ -143,6 +163,16 @@ function renderGameGrid(items, macroNames) {
     if (rendered.has(catId)) continue;
     const title = catId ? (macroNames[catId] || '其它') : '未分类';
     sections.push(renderCategorySection(catId, title, group, savedOpen));
+  }
+
+  if (observeItems.length) {
+    sections.push(renderCategorySection(
+      '__observe-only',
+      '观察包（单阶段 · 不计竞赛通关）',
+      observeItems,
+      savedOpen,
+      'is-observe-section'
+    ));
   }
 
   grid.innerHTML = sections.join('');
@@ -175,6 +205,124 @@ async function loadGames() {
 
 loadGames();
 bindCategoryTogglePersistence();
+
+/* —— 探究说明 / 知情同意：每日首次、教师强制、可手动重开 —— */
+(function setupInquiryNotice() {
+  const ACK_KEY = 'platform-inquiry-notice-v1';
+  const DAY_KEY_PREFIX = 'platform-inquiry-notice-day-';
+  const FORCE_KEY = 'platform-inquiry-force-v1';
+
+  function todayKey() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return DAY_KEY_PREFIX + y + m + day;
+  }
+
+  function shouldShow(force) {
+    if (force) return true;
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('forceNotice') === '1' || params.get('notice') === '1') return true;
+      if (localStorage.getItem(FORCE_KEY) === '1') return true;
+      if (localStorage.getItem(todayKey()) === '1') return false;
+      // 兼容旧「仅首访」键：若今日未确认，仍弹出
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
+  function showInquiryNotice(opts) {
+    const force = !!(opts && opts.force);
+    if (!force && !shouldShow(false)) return;
+    if (document.querySelector('.inquiry-notice-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'inquiry-notice-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'inquiryNoticeTitle');
+    overlay.innerHTML = `
+      <div class="inquiry-notice-card edu-panel">
+        <h2 id="inquiryNoticeTitle">开始探究前请了解</h2>
+        <ul class="inquiry-notice-list">
+          <li><strong>先探究、再挑战</strong>：每个任务先自由探究，摸清变量关系后再进入竞赛挑战。</li>
+          <li><strong>探究达成 ≠ 竞赛通关</strong>：探究段有对比操作记为探究达成；竞赛通关才计入竞赛结果。</li>
+          <li><strong>有效完成</strong>：探究段有对比、竞赛段有明确终局（通关或次数用尽），才便于教师看学情。</li>
+          <li><strong>数据用于教学研究</strong>：操作轨迹会记录并供教师分析；请使用真实学号与姓名。</li>
+        </ul>
+        <label class="inquiry-notice-check">
+          <input type="checkbox" id="inquiryNoticeAck"> 我已阅读并了解上述说明
+        </label>
+        <div class="tool-link-row" style="margin-top:14px">
+          <button type="button" class="edu-btn edu-btn-primary" id="inquiryNoticeBtn" disabled>进入任务列表</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const ack = overlay.querySelector('#inquiryNoticeAck');
+    const btn = overlay.querySelector('#inquiryNoticeBtn');
+    ack.addEventListener('change', () => { btn.disabled = !ack.checked; });
+    btn.addEventListener('click', () => {
+      try {
+        localStorage.setItem(ACK_KEY, '1');
+        localStorage.setItem(todayKey(), '1');
+        localStorage.removeItem(FORCE_KEY);
+      } catch { /* ignore */ }
+      overlay.remove();
+      try {
+        const u = new URL(location.href);
+        if (u.searchParams.has('forceNotice') || u.searchParams.has('notice')) {
+          u.searchParams.delete('forceNotice');
+          u.searchParams.delete('notice');
+          history.replaceState(null, '', u.pathname + u.search + u.hash);
+        }
+      } catch { /* ignore */ }
+    });
+  }
+
+  document.getElementById('showInquiryNoticeBtn')?.addEventListener('click', () => {
+    showInquiryNotice({ force: true });
+  });
+
+  showInquiryNotice({ force: false });
+  window.PlatformInquiryNotice = { show: showInquiryNotice, FORCE_KEY };
+})();
 </script>
+<style>
+.inquiry-notice-overlay {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(15, 23, 42, 0.45);
+}
+.inquiry-notice-card {
+  max-width: 440px; width: 100%;
+  padding: 22px 24px 20px;
+}
+.inquiry-notice-card h2 { margin: 0 0 12px; font-size: 1.15rem; }
+.inquiry-notice-list {
+  margin: 0 0 14px; padding-left: 1.2em;
+  line-height: 1.55; color: var(--edu-muted, #475569); font-size: 0.92rem;
+}
+.inquiry-notice-list strong { color: var(--edu-text, #0f172a); font-weight: 600; }
+.inquiry-notice-check {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 0.9rem; cursor: pointer;
+}
+.student-notice-actions { margin-top: 8px; }
+.game-card-badge {
+  display: inline-block; font-size: 0.72rem; font-weight: 600;
+  padding: 1px 6px; border-radius: 4px; margin-right: 4px;
+}
+.game-card-badge-observe {
+  background: rgba(100, 116, 139, 0.14); color: #475569;
+}
+.game-card.is-observe-only { opacity: 0.96; }
+.student-category-section.is-observe-section > summary {
+  color: #475569;
+}
+</style>
 </body>
 </html>

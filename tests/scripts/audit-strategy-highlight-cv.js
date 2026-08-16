@@ -1,16 +1,16 @@
 /**
  * Audit sparse highlights + CV visibility across runtime chapters / 图谱.html.
- * Writes: data/runtime/packages/reports/strategy-highlight-cv-analysis.md
+ * Writes: data/runtime/analysis/reports/strategy-highlight-cv-analysis.md
  */
 const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
 const { expandRouteHighlight } = require('../../packages/shared/strategy-mermaid-parse.js');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORT_DIR = path.join(getPackagesRoot(), 'reports');
+const REPORT_DIR = getReportsRoot();
 
 const SKELETON = new Set(['Start', 'StrategySelect', 'Win', 'ModeExplore', 'ModeCompete', 'Env']);
 

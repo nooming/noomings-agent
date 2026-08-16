@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
 const ROOT = getPackagesRoot();
@@ -96,7 +96,7 @@ async function main() {
     console.log(pkgId, `play=${play.status}`, `game=${game.status}`, `spoil=${!ux.noSpoil}`, `challengeBtn=${!!flags.hasChallengeBtn}`);
   }
 
-  const outDir = path.join(ROOT, 'reports');
+  const outDir = getReportsRoot();
   fs.mkdirSync(outDir, { recursive: true });
   const report = { generatedAt: new Date().toISOString(), count: rows.length, rows };
   const jp = path.join(outDir, 'student-play-smoke-http.json');

@@ -5,19 +5,19 @@
  *
  * Writes:
  *   apps/web/ui/data/sample-quality-overview.json
- *   data/runtime/packages/reports/sample-quality-overview.json
+ *   data/runtime/analysis/reports/sample-quality-overview.json
  */
 const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { inquiryValidityTier } = require('../lib/inquiry-validity');
 const { assessNarrativeCleanliness } = require('../lib/narrative-cleanliness');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml'); // 样本html
 const UI_DATA = path.join(ROOT, 'apps/web/ui/data');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 function readJson(p) {
   try {

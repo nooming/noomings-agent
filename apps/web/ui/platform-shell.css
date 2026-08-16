@@ -875,6 +875,10 @@ a.teacher-tab {
 .badge-eval { background: rgba(12, 138, 173, 0.14); color: #0a5f78; }
 .badge-legacy { background: rgba(90, 96, 100, 0.14); color: #4b5563; }
 .badge-confound { background: rgba(194, 65, 12, 0.10); color: #c2410c; }
+.badge-observe { background: rgba(100, 116, 139, 0.14); color: #475569; }
+.badge-craft-gold { background: rgba(180, 140, 20, 0.14); color: #8a6d00; }
+.badge-craft-pilot { background: rgba(12, 138, 173, 0.12); color: #0a6f8c; }
+.badge-craft-draft { background: rgba(100, 116, 139, 0.10); color: #64748b; }
 .catalog-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -1112,6 +1116,23 @@ body.play-page {
 
 .play-enter-overlay.is-done {
   opacity: 0;
+}
+
+.play-soft-tip {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  z-index: 70;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
 .play-shell {
@@ -2018,6 +2039,19 @@ button.linkish:hover {
   line-height: 1.35;
   white-space: nowrap;
   border: 1px solid transparent;
+}
+
+.badge-quality {
+  padding: 1px 6px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .badge-process.band-process-clear {

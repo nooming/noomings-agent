@@ -1308,6 +1308,12 @@ function startMeasure() {
     btn.textContent = '\u23f1 启动计时 · 测一个周期';
     Telemetry.log('measure_result', { n: measureCount, T: +T.toFixed(4),
       in_band: inTBand(T), theta_ok: thetaOk(), after: Telemetry.snapshot() });
+    if (playMode !== 'challenge') {
+      try {
+        var __esControls0 = window.__snapControls ? window.__snapControls() : {};
+        if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit || null, __esControls0);
+      } catch (_es0) {}
+    }
     if (winOk(T)) {
       if (playMode === 'challenge') {
         won = true;   // 滑块保持锁定
@@ -1317,6 +1323,11 @@ function startMeasure() {
         // 探究：周期落入对照带只给观察反馈，不进过关/结算
         lockControls(false);
         Telemetry.log('explore_in_band', { after: Telemetry.snapshot() });
+        try {
+          var __esControls = window.__snapControls ? window.__snapControls() : {};
+          if (window.__emit) window.__emit('snapshot', { controls: __esControls, winOk: false, hintKey: 'explore_observe' });
+          if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit || null, __esControls);
+        } catch (_es) {}
       }
     } else {
       lockControls(false);
@@ -2056,6 +2067,33 @@ syncUI();
     } catch (e2) {}
     return false;
   };
+})();
+</script>
+<script>
+/* === explore_success gate (百人复测) === */
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      if (g.done || g.n < 3) return;
+      g.done = true;
+      var emit = emitFn || window.__emit || window.__traceEmit;
+      if (typeof emit === 'function') {
+        emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+      }
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+      }
+    } catch (e) {}
+  });
 })();
 </script>
 </body>

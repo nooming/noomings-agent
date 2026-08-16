@@ -11,6 +11,45 @@ const {
   deriveTerminalOutcome,
   mergeTerminalOutcome,
 } = require('../judge/session-terminal');
+const { validateStudentId } = require('./student-identity');
+
+/** Per-sessionId serial queue — avoids concurrent RMW clobbering the same JSON. */
+const sessionWriteQueues = new Map();
+
+function enqueueSessionWrite(sessionId, fn) {
+  const key = String(sessionId || '');
+  const prev = sessionWriteQueues.get(key) || Promise.resolve();
+  const run = prev.then(
+    () => fn(),
+    () => fn(),
+  );
+  const follower = run.then(
+    () => {},
+    () => {},
+  );
+  sessionWriteQueues.set(key, follower);
+  follower.finally(() => {
+    if (sessionWriteQueues.get(key) === follower) sessionWriteQueues.delete(key);
+  });
+  return run;
+}
+
+function writeSessionAtomic(sessionId, record) {
+  const finalPath = sessionPath(sessionId);
+  const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
+  const json = JSON.stringify(record, null, 2);
+  fs.writeFileSync(tmpPath, json, 'utf8');
+  try {
+    fs.renameSync(tmpPath, finalPath);
+  } catch (e) {
+    // Windows: replace existing target
+    try {
+      fs.writeFileSync(finalPath, json, 'utf8');
+    } finally {
+      try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+    }
+  }
+}
 
 function ensureTracesRoot() {
   fs.mkdirSync(getTracesRoot(), { recursive: true });
@@ -139,8 +178,10 @@ function ingestTrace(body) {
   ensureTracesRoot();
   const catalogId = String(body.catalogId || body.gameId || '').trim();
   const graphId = String(body.graphId || '').trim();
-  const studentLabel = String(body.studentLabel || body.studentId || '匿名学生').trim();
-  const studentId = String(body.studentId || body.studentNo || '').trim();
+  const studentIdRaw = String(body.studentId || body.studentNo || '').trim();
+  const idCheck = validateStudentId(studentIdRaw);
+  const studentId = idCheck.ok ? idCheck.studentId : '';
+  const studentLabel = String(body.studentLabel || body.studentName || studentId || '匿名学生').trim();
   const taskCode = String(body.taskCode || body.classCode || body.catalogId || '').trim();
   if (!catalogId && !graphId) {
     return { ok: false, error: 'catalogId_or_graphId_required' };
@@ -172,6 +213,10 @@ function ingestTrace(body) {
   const existingId = body.sessionId ? String(body.sessionId) : null;
   if (existingId && fs.existsSync(sessionPath(existingId))) {
     record = JSON.parse(fs.readFileSync(sessionPath(existingId), 'utf8'));
+    // Tip-only / append on existing session: allow missing studentId if already stored
+    if (!record.studentId && !studentId) {
+      return { ok: false, error: 'student_id_required', message: idCheck.message || 'student_id_required' };
+    }
     if (events.length) {
       record.events.push(...events);
       record.eventCount = record.events.length;
@@ -179,8 +224,11 @@ function ingestTrace(body) {
     record.updatedAt = new Date().toISOString();
     if (studentId) record.studentId = studentId;
     if (taskCode) record.taskCode = taskCode;
-    if (body.studentLabel) record.studentLabel = studentLabel;
+    if (body.studentLabel || body.studentName) record.studentLabel = studentLabel;
   } else {
+    if (!studentId) {
+      return { ok: false, error: 'student_id_required', message: idCheck.message || 'student_id_required' };
+    }
     if (!events.length && (tipOutcome || tipExhausted)) {
       // Tip-only requires an existing session file.
       return { ok: false, error: 'session_not_found' };
@@ -191,7 +239,7 @@ function ingestTrace(body) {
       catalogId,
       graphId,
       studentLabel,
-      studentId: studentId || null,
+      studentId,
       taskCode: taskCode || catalogId || null,
       ch: body.ch ?? 0,
       game: body.game || catalogId,
@@ -217,7 +265,7 @@ function ingestTrace(body) {
   const derived = deriveTerminalOutcome(record);
   record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, derived);
 
-  fs.writeFileSync(sessionPath(record.sessionId), JSON.stringify(record, null, 2), 'utf8');
+  writeSessionAtomic(record.sessionId, record);
   return {
     ok: true,
     sessionId: record.sessionId,
@@ -227,6 +275,13 @@ function ingestTrace(body) {
     currentPhase: record.currentPhase,
     terminalOutcome: record.terminalOutcome || null,
   };
+}
+
+/** Queued ingest — same result shape as ingestTrace; serializes by sessionId. */
+function ingestTraceQueued(body) {
+  const existingId = body && body.sessionId ? String(body.sessionId) : makeSessionId();
+  const payload = body && body.sessionId ? body : { ...body, sessionId: existingId };
+  return enqueueSessionWrite(existingId, () => ingestTrace(payload));
 }
 
 function readFilteredTraceRows({ graphId, catalogId } = {}) {
@@ -311,6 +366,7 @@ function getTraceStats({ graphId, catalogId } = {}) {
       if (!entry) {
         entry = {
           studentKey: key,
+          studentId: row.studentId || null,
           studentLabel: row.studentLabel || '匿名学生',
           passCount: 0,
           exhaustedFailCount: 0,
@@ -333,7 +389,8 @@ function getTraceStats({ graphId, catalogId } = {}) {
       else if (outcome === 'exhausted_fail') entry.exhaustedFailCount += 1;
       else entry.incompleteCount += 1;
 
-      if (row.studentLabel) entry.studentLabel = row.studentLabel;
+      if (row.studentId) entry.studentId = row.studentId;
+      if (row.studentLabel && row.studentLabel !== '匿名学生') entry.studentLabel = row.studentLabel;
       if ((row.updatedAt || '') > (entry.updatedAt || '')) {
         entry.updatedAt = row.updatedAt;
       }
@@ -366,6 +423,7 @@ function getTraceStats({ graphId, catalogId } = {}) {
         || null;
       return {
         studentKey: entry.studentKey,
+        studentId: entry.studentId || null,
         studentLabel: entry.studentLabel,
         passCount: entry.passCount,
         exhaustedFailCount: entry.exhaustedFailCount,
@@ -401,6 +459,7 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) 
     if (!groups.has(key)) {
       groups.set(key, {
         studentKey: key,
+        studentId: row.studentId || null,
         studentLabel: row.studentLabel || '匿名学生',
         sessionCount: 0,
         pendingCount: 0,
@@ -411,6 +470,8 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) 
       });
     }
     const g = groups.get(key);
+    if (row.studentId) g.studentId = row.studentId;
+    if (row.studentLabel && row.studentLabel !== '匿名学生') g.studentLabel = row.studentLabel;
     g.sessionCount += 1;
     if (!row.judged) g.pendingCount += 1;
     g.totalEvents += row.eventCount || 0;
@@ -451,7 +512,8 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) 
   if (query) {
     items = items.filter(i =>
       i.studentKey.toLowerCase().includes(query)
-      || i.studentLabel.toLowerCase().includes(query),
+      || i.studentLabel.toLowerCase().includes(query)
+      || String(i.studentId || '').toLowerCase().includes(query),
     );
   }
   if (status === 'pending') items = items.filter(i => i.pendingCount > 0);
@@ -569,7 +631,7 @@ function saveTraceSession(record) {
   ensureTracesRoot();
   enrichRecordMetrics(record);
   record.updatedAt = record.updatedAt || new Date().toISOString();
-  fs.writeFileSync(sessionPath(record.sessionId), JSON.stringify(record, null, 2), 'utf8');
+  writeSessionAtomic(record.sessionId, record);
   return { ok: true, sessionId: record.sessionId };
 }
 
@@ -595,7 +657,7 @@ function saveJudgeResult(sessionId, judgeResult, extras = {}) {
       }),
     );
   }
-  fs.writeFileSync(sessionPath(sessionId), JSON.stringify(record, null, 2), 'utf8');
+  writeSessionAtomic(sessionId, record);
   return { ok: true, sessionId, terminalOutcome: record.terminalOutcome || null };
 }
 
@@ -1023,6 +1085,7 @@ function importAllTracesZip(zipBuffer) {
 
 module.exports = {
   ingestTrace,
+  ingestTraceQueued,
   listTraces,
   getTraceStats,
   listTraceStudents,

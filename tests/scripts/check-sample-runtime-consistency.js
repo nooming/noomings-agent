@@ -1,17 +1,18 @@
 /**
  * runtime ↔ 样本html ↔ 图谱 一致性校验
  * 用法: node tests/scripts/check-sample-runtime-consistency.js
- * 输出: data/runtime/packages/reports/sample-runtime-consistency.json (+ .md)
+ * 输出: data/runtime/analysis/reports/sample-runtime-consistency.json (+ .md)
  */
 const fs = require('fs');
 const path = require('path');
+const { getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const PKG_ROOT = path.join(ROOT, 'data/runtime/packages');
 const SAMPLE_ROOT = path.join(ROOT, '样本html');
 const MANIFEST = path.join(SAMPLE_ROOT, '清单.md');
-const OUT_JSON = path.join(PKG_ROOT, 'reports/sample-runtime-consistency.json');
-const OUT_MD = path.join(PKG_ROOT, 'reports/sample-runtime-consistency.md');
+const OUT_JSON = path.join(getReportsRoot(), 'sample-runtime-consistency.json');
+const OUT_MD = path.join(getReportsRoot(), 'sample-runtime-consistency.md');
 
 function parseManifest() {
   if (!fs.existsSync(MANIFEST)) return [];

@@ -40,6 +40,7 @@ function run() {
     sessionId,
     catalogId: 'demo-projectile-cannon',
     graphId: 'projectile-cannon',
+    studentId: '20260001',
     studentLabel: 'synth-win-progress',
     events: [
       { ts: 1, type: 'puzzle_open', payload: {}, ch: 0 },

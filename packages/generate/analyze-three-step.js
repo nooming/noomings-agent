@@ -49,7 +49,8 @@ function extractFormulasFromSource(sourceText, domain) {
     if (!isCleanFormula(f)) continue;
     if (!formulas.includes(f)) formulas.push(f);
   }
-  if (!formulas.length && domain === 'projectile' && /sin\s*\(\s*2/.test(text)) {
+  // Domain default when scrape yields only kinematic debris / no R= formula
+  if (!formulas.length && domain === 'projectile') {
     formulas.push('R = (v0² · sin(2θ)) / g');
   }
   if (!formulas.length && domain === 'capacitor') {

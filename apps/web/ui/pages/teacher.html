@@ -65,7 +65,7 @@
         <div class="student-list-panel">
           <div class="student-list-header">
             <span>学生</span>
-            <span class="student-list-header-hint" title="综合分/过程/竞赛结果仅计终局会话（过关或机会用尽）；各任务取最近 1–2 局有限能力分均值后再对任务均分；竞赛结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·竞赛结果（仅终局）</span>
+            <span class="student-list-header-hint" title="综合分/过程/竞赛结果仅计终局会话（通关或机会用尽）。探究达成（explore_success）≠ 竞赛通关（win）。各任务取最近 1–2 局有限能力分均值后再对任务均分；竞赛结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·竞赛结果（仅终局）</span>
           </div>
           <p class="hint student-list-trunc-hint" id="studentListTruncHint" hidden>列表可能已截断，请搜索/筛选以定位更多学生</p>
           <ul class="student-list" id="studentList">
@@ -83,7 +83,7 @@
       </div>
       <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
         <h4>学情画像</h4>
-        <p class="hint">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· 综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
+        <p class="hint">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· v4：探究达成 ≠ 竞赛通关。综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
         <div id="crossGameSummary"></div>
       </div>
     </div>
@@ -92,7 +92,11 @@
   <section class="teacher-panel" id="panel-catalog">
     <details class="edu-panel catalog-panel-details" id="catalogPanelDetails">
       <summary class="catalog-panel-summary">探究任务</summary>
-      <p class="hint">每个任务关联 Agent A 生成的事理图谱（graphId）与学生游玩的 HTML。可上/下架任务；试玩 HTML 与图谱预览请至「资源管理」Tab。样本集默认已上架。</p>
+      <p class="hint">每个任务关联 Agent A 生成的事理图谱（graphId）与学生游玩的 HTML。可上/下架任务；学生端仅展示 craft:gold / craft:pilot（draft 对学生隐藏）。观察包单独分组标注。试玩 HTML 与图谱预览请至「资源管理」Tab。</p>
+      <p class="hint">知情说明：学生每日首次进入列表会弹出；也可让学生打开 <code>/student.html?forceNotice=1</code> 强制重看。下方按钮可写入本机强制标记（便于教师演示）。</p>
+      <div class="tool-link-row" style="margin:0 0 12px">
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="forceStudentNoticeBtn">标记：下次学生需重看知情说明</button>
+      </div>
       <div class="catalog-toolbar">
         <label>来源
           <select id="catalogFilterSource">
@@ -1524,10 +1528,15 @@ function syncSessionTimelineVerdict(sessionId, verdict) {
   });
 }
 
-function displayStudentName(key, label) {
-  if (label && label !== '匿名学生') return label;
-  if (key.startsWith('匿名 · ')) return '匿名 ' + key.slice(-4);
-  return key;
+function displayStudentName(key, label, studentId) {
+  const id = String(studentId || (key && !String(key).startsWith('匿名') ? key : '') || '').trim();
+  const name = String(label || '').trim();
+  const nameOk = name && name !== '匿名学生' && name !== id;
+  if (nameOk && id) return `${name} · ${id}`;
+  if (nameOk) return name;
+  if (id) return id;
+  if (key && String(key).startsWith('匿名 · ')) return '匿名 ' + String(key).slice(-4);
+  return key || '匿名学生';
 }
 
 function judgedPassCount(j) {
@@ -1587,7 +1596,7 @@ function renderJudgedOverview(stats) {
     return `
     <li>
       <button type="button" class="judged-chip ${chipClass}" data-key="${esc(j.studentKey)}" data-sid="${esc(j.sessionId || '')}">
-        <span class="judged-chip-name">${esc(displayStudentName(j.studentKey, j.studentLabel))}</span>
+        <span class="judged-chip-name">${esc(displayStudentName(j.studentKey, j.studentLabel, j.studentId))}</span>
         <span class="judged-chip-verdict">达标×${n}</span>
       </button>
     </li>`;
@@ -2301,7 +2310,7 @@ function renderStudentList() {
     return;
   }
   list.innerHTML = studentItems.map(item => {
-    const name = displayStudentName(item.studentKey, item.studentLabel);
+    const name = displayStudentName(item.studentKey, item.studentLabel, item.studentId);
     const multi = item.sessionCount
       ? `<span class="student-list-count">${item.sessionCount}次</span>`
       : '';
@@ -2701,7 +2710,7 @@ function sessionRowVerdictBadgeHtml(session) {
   return '<span class="badge badge-pending" title="尚未规则/人工评判">未评判</span>';
 }
 
-/** 会话行常驻：总分 + 过程/结果短档（长路径类型进详情）。 */
+/** 会话行常驻：总分 + 过程/结果短档 + 质量角标（终局/挑战/事件量）。 */
 function sessionRowBadgesHtml(session) {
   const ability = sessionAbilityScore(session);
   const total = ability?.total;
@@ -2711,10 +2720,37 @@ function sessionRowBadgesHtml(session) {
   });
   const proc = mapSessionProcessBand(session);
   const resBand = mapSessionResultBand(session);
+  const quality = sessionQualityBadgesHtml(session);
   return `<span class="session-row-badges">${scoreHtml}`
     + `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档">${esc(proc)}</span>`
     + `<span class="badge badge-band badge-result ${resultBandClass(resBand)}" title="竞赛结果档">${esc(resBand)}</span>`
+    + quality
     + `</span>`;
+}
+
+/** 只读质量角标：终局类型 / 是否进挑战 / 事件量级 */
+function sessionQualityBadgesHtml(session) {
+  const parts = [];
+  const term = session?.terminalOutcome || null;
+  if (term === 'pass') {
+    parts.push('<span class="badge badge-quality" title="终局：通关">终局·通关</span>');
+  } else if (term === 'exhausted_fail') {
+    parts.push('<span class="badge badge-quality" title="终局：次数用尽">终局·尽</span>');
+  } else if (term === 'incomplete') {
+    parts.push('<span class="badge badge-quality" title="终局标记：未完成">终局·未完</span>');
+  }
+  const scored = session?.scoredPhase || session?.strategyPathSummary?.scoredPhase || null;
+  const byPhase = session?.strategyPathByPhase;
+  const sawChallenge = scored === 'challenge'
+    || !!(byPhase && byPhase.challenge)
+    || session?.currentPhase === 'challenge';
+  if (sawChallenge) {
+    parts.push('<span class="badge badge-quality" title="本局进入过竞赛段">进挑战</span>');
+  }
+  const n = Number(session?.eventCount) || 0;
+  if (n >= 80) parts.push('<span class="badge badge-quality" title="事件较多">事件多</span>');
+  else if (n > 0 && n < 12) parts.push('<span class="badge badge-quality" title="事件偏少">事件少</span>');
+  return parts.join('');
 }
 
 function sessionTimelineItemHtml(s, activeSessionId) {
@@ -3317,7 +3353,7 @@ async function loadSessionDetail(sessionId) {
   const aggMeta = studentAggMetaHtml(student);
   panel.innerHTML = `
     <section class="session-detail-section session-detail-head">
-      <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel))}</h3>
+      <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel, student.studentId))}</h3>
       ${aggMeta}
     </section>
     <section class="session-detail-section session-detail-play">
@@ -3586,6 +3622,15 @@ document.getElementById('filterStudent').addEventListener('input', () => {
     loadSessionsData();
   });
 })();
+
+document.getElementById('forceStudentNoticeBtn')?.addEventListener('click', () => {
+  try {
+    localStorage.setItem('platform-inquiry-force-v1', '1');
+    alert('已写入本机强制标记。学生同浏览器打开 /student.html 会再次看到知情说明；或发给学生链接 /student.html?forceNotice=1');
+  } catch (e) {
+    alert('无法写入本机存储：' + (e.message || e));
+  }
+});
 
 document.getElementById('publishBtn').addEventListener('click', async () => {
   const title = document.getElementById('pubTitle').value.trim();

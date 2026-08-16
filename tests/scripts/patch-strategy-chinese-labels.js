@@ -24,12 +24,12 @@ const {
   isOrphanStubHubId,
 } = require('../../packages/shared/collapse-orphan-strategy-stubs.js');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const PACKAGES = getPackagesRoot();
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORT = path.join(PACKAGES, 'reports', 'patch-strategy-chinese-labels.json');
+const REPORT = path.join(getReportsRoot(), 'patch-strategy-chinese-labels.json');
 
 const HAS_ZH = /[\u4e00-\u9fff]/;
 const SINGLE_VAR_LABEL_RE = /固定其余|只调|按观察单变量微调|^单变量微调$/;

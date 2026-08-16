@@ -6,11 +6,11 @@ const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
 const { annotateStrategyMermaidPriority } = require('../../packages/shared/strategy-priority-mermaid');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 const DOMAIN_LEAK = {
   projectile: /射程|抛射角|初速度|落点|弹道|斜抛/,

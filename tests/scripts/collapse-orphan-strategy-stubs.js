@@ -18,7 +18,7 @@ const {
 } = require('../../packages/shared/collapse-orphan-strategy-stubs.js');
 const { repairStrategyRouteHighlights } = require('../../packages/contract/repair/strategy-route-repair.js');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const {
   parseStrategyMermaidEdges,
   extractStrategyNodeLabels,
@@ -27,7 +27,7 @@ const {
 const ROOT = path.resolve(__dirname, '../..');
 const PACKAGES = getPackagesRoot();
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORT = path.join(PACKAGES, 'reports', 'collapse-orphan-strategy-stubs.json');
+const REPORT = path.join(getReportsRoot(), 'collapse-orphan-strategy-stubs.json');
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

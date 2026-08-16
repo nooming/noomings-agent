@@ -38,14 +38,15 @@
 
   function requireStudentSession() {
     const id = (localStorage.getItem(STUDENT_ID_KEY) || '').trim();
-    if (!id) {
+    const name = (localStorage.getItem(STUDENT_NAME_KEY) || '').trim();
+    if (!id || !name) {
       location.replace('/student-join.html');
       return false;
     }
     return true;
   }
 
-  /** Attach Bearer token to mutating /api requests from teacher pages. */
+  /** Attach Bearer token to teacher /api calls (incl. GET 学情只读). */
   function installTeacherFetchAuth() {
     if (global.__platformTeacherFetchInstalled) return;
     const token = sessionStorage.getItem(TEACHER_TOKEN_KEY);
@@ -55,13 +56,19 @@
       const opts = init ? { ...init } : {};
       const method = String(opts.method || 'GET').toUpperCase();
       const url = typeof input === 'string' ? input : (input && input.url) || '';
-      if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS'
-          && typeof url === 'string' && url.includes('/api/')) {
-        const headers = new Headers(opts.headers || {});
-        if (!headers.has('Authorization')) {
-          headers.set('Authorization', 'Bearer ' + token);
+      if (typeof url === 'string' && url.includes('/api/')) {
+        const isSafeMethod = method === 'HEAD' || method === 'OPTIONS';
+        const needsAuth = !isSafeMethod && (
+          method !== 'GET'
+          || url.includes('/api/platform/traces')
+        );
+        if (needsAuth) {
+          const headers = new Headers(opts.headers || {});
+          if (!headers.has('Authorization')) {
+            headers.set('Authorization', 'Bearer ' + token);
+          }
+          opts.headers = headers;
         }
-        opts.headers = headers;
       }
       return orig(input, opts);
     };

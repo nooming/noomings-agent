@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { evaluateTraceRules } = require('../../packages/judge/evaluate-rules');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = getPackagesRoot();
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
@@ -181,7 +181,7 @@ async function main() {
     console.log(id, Object.fromEntries(Object.entries(out.sessions).map(([k, v]) => [k, v.skipped ? 'skip' : `${v.verdict}/sv=${v.singleVariableRate}`])));
   }
 
-  const outDir = path.join(ROOT, 'reports');
+  const outDir = getReportsRoot();
   fs.mkdirSync(outDir, { recursive: true });
   const report = { generatedAt: new Date().toISOString(), note: 'ingest via API + local rule judge (no LLM)', rows };
   const p = path.join(outDir, 'student-agentb-ingest-rule-judge.json');

@@ -16,24 +16,18 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { getTracesRoot } = require('../../packages/platform/paths');
-const {
-  getPackageChapterPath,
+const { getPackageChapterPath,
   getPackagesRoot,
-  loadChapterForSample,
-} = require('../../packages/shared/data-paths');
+  loadChapterForSample, getReportsRoot } = require('../../packages/shared/data-paths');
 const {
   ABILITY_SCORE_VERSION,
   computeAbilityScore,
 } = require('../../packages/judge/ability-score');
 
-const REPORT_PATH = path.join(
-  getPackagesRoot(),
-  'reports',
+const REPORT_PATH = path.join(getReportsRoot(),
   'ability-score-calibration.md',
 );
-const HUMAN_REPORT_PATH = path.join(
-  getPackagesRoot(),
-  'reports',
+const HUMAN_REPORT_PATH = path.join(getReportsRoot(),
   'ability-score-calibration-human.md',
 );
 

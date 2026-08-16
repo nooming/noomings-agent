@@ -14,7 +14,7 @@ const YANG_MAP = require('../lib/yangben-sample-map');
 const { collapseTrapChainsInChapter } = require('../../packages/shared/collapse-trap-redundant-chains.js');
 const { repairStrategyRouteHighlights } = require('../../packages/contract/repair/strategy-route-repair.js');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const {
   parseStrategyMermaidEdges,
   extractStrategyNodeLabels,
@@ -23,7 +23,7 @@ const {
 const ROOT = path.resolve(__dirname, '../..');
 const PACKAGES = getPackagesRoot();
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORT = path.join(PACKAGES, 'reports', 'collapse-trap-redundant-chains.json');
+const REPORT = path.join(getReportsRoot(), 'collapse-trap-redundant-chains.json');
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

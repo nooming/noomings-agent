@@ -7,7 +7,7 @@ const path = require('path');
 const { generateGraph } = require('../../packages/generate/pipeline');
 const { extractGameHints } = require('../../packages/generate/hints');
 const { runAnalyzeThreeStep } = require('../../packages/generate/analyze-three-step');
-const { getPackagesRoot, getPackageGamePath } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getPackageGamePath, getReportsRoot } = require('../../packages/shared/data-paths');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
 const YANG_MAP = require('../lib/yangben-sample-map');
 
@@ -16,7 +16,7 @@ require('../../packages/shared/load-env').loadEnv();
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml'); // 样本html
 const MANIFEST = path.join(getPackagesRoot(), 'manifest.json');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 const opts = {
   apiKey: process.env.DEEPSEEK_API_KEY,

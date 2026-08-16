@@ -12,7 +12,7 @@ const {
   scoreTraceStrategy,
   MODE,
 } = require('../../packages/judge/strategy-segment-score');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = getPackagesRoot();
 const DO_INGEST = process.argv.includes('--ingest');
@@ -459,7 +459,7 @@ async function main() {
     rows,
   };
 
-  const outDir = path.join(ROOT, 'reports');
+  const outDir = getReportsRoot();
   fs.mkdirSync(outDir, { recursive: true });
   const jsonPath = path.join(outDir, 'student-agentb-full-eval.json');
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2), 'utf8');

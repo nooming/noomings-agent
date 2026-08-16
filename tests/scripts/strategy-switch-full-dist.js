@@ -4,14 +4,14 @@
  *   node tests/scripts/strategy-switch-full-dist.js
  *
  * 输出：
- *   data/runtime/packages/reports/strategy-switch-full-dist.json
- *   data/runtime/packages/reports/strategy-switch-full-dist.md
+ *   data/runtime/analysis/reports/strategy-switch-full-dist.json
+ *   data/runtime/analysis/reports/strategy-switch-full-dist.md
  */
 const fs = require('fs');
 const path = require('path');
 const { scoreTraceStrategy } = require('../../packages/judge/strategy-segment-score');
 const { evaluateTraceRules } = require('../../packages/judge/evaluate-rules');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const {
   listRuntimePackages,
   usableAvs,
@@ -210,7 +210,7 @@ function main() {
     packages: byPackage,
   };
 
-  const outDir = path.join(getPackagesRoot(), 'reports');
+  const outDir = getReportsRoot();
   fs.mkdirSync(outDir, { recursive: true });
   const jsonPath = path.join(outDir, 'strategy-switch-full-dist.json');
   const mdPath = path.join(outDir, 'strategy-switch-full-dist.md');

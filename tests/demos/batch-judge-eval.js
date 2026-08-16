@@ -9,14 +9,12 @@ const {
 } = require('../../packages/generate/trace-synth');
 const { loadChapter } = require('../lib/fixture-loader');
 const { loadAllSamples } = require('../lib/html-samples-manifest');
-const {
-  getPackagesRoot,
+const { getPackagesRoot,
   getJudgeFixturesPath,
-  loadChapterForSample,
-} = require('../../packages/shared/data-paths');
+  loadChapterForSample, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const FIXTURES = getJudgeFixturesPath();
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

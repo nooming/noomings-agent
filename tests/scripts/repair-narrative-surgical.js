@@ -29,7 +29,7 @@ const {
   isAdjustLikeNodeId,
 } = require('../../packages/shared/strategy-mermaid-parse');
 const { assessNarrativeCleanliness } = require('../lib/narrative-cleanliness');
-const { getPackagesRoot, getPackageGamePath } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getPackageGamePath, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml');
@@ -504,7 +504,7 @@ function main() {
     );
   }
 
-  const reportDir = path.join(getPackagesRoot(), 'reports');
+  const reportDir = getReportsRoot();
   fs.mkdirSync(reportDir, { recursive: true });
   const report = {
     generatedAt: new Date().toISOString(),

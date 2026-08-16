@@ -7,11 +7,11 @@
 const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '样本html');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 const CHECKS = [
   {

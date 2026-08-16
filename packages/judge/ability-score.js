@@ -74,7 +74,8 @@ function hasWin(events) {
 }
 
 /**
- * 探究达成：优先 explore_success；兼容旧轨迹探究段 win / snapshot.winOk。
+ * 探究达成：优先 explore_success（主口径）。
+ * 兼容旧轨迹探究段 win / snapshot.winOk（deprecated，新产品勿再发）。
  * 勿用于竞赛结果。
  */
 function hasExploreSuccess(events) {

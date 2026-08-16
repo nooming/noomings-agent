@@ -21,10 +21,10 @@ function run() {
   }
 
   const manifest = JSON.parse(fs.readFileSync(getPackageManifestPath(), 'utf8'));
-  const allowedOrigin = new Set(['agent', 'teammate']);
+  const allowedOrigin = new Set(['agent', 'teammate', 'ingest']);
   for (const s of manifest.samples || []) {
     assert(!s.existingHtml, `${s.id} must not have existingHtml`);
-    assert(allowedOrigin.has(s.htmlOrigin), `${s.id} htmlOrigin should be agent|teammate`);
+    assert(allowedOrigin.has(s.htmlOrigin), `${s.id} htmlOrigin should be agent|teammate|ingest`);
   }
 
   console.log('manual-backups-check: OK');

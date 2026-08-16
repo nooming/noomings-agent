@@ -17,13 +17,13 @@ const {
 } = require('../../packages/shared/collapse-duplicate-strategy-select.js');
 const { repairStrategyRouteHighlights } = require('../../packages/contract/repair/strategy-route-repair.js');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { parseStrategyMermaidEdges } = require('../../packages/shared/strategy-mermaid-parse.js');
 
 const ROOT = path.resolve(__dirname, '../..');
 const PACKAGES = getPackagesRoot();
 const YANG = path.join(ROOT, '\u6837\u672chtml');
-const REPORT = path.join(PACKAGES, 'reports', 'collapse-duplicate-strategy-select.json');
+const REPORT = path.join(getReportsRoot(), 'collapse-duplicate-strategy-select.json');
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

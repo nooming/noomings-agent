@@ -57,7 +57,7 @@ function buildTelemetrySpec(chapter) {
   events.push({
     type: 'explore_success',
     required: false,
-    description: '探究模式达成（命中/对照里程碑）。payload 可含 winOk、hintKey、controls；不计为竞赛通关',
+    description: '探究模式达成（命中/对照里程碑）。payload 可含 winOk、hintKey、controls；不计为竞赛通关【主口径】',
   });
   events.push({
     type: 'win',
@@ -68,8 +68,9 @@ function buildTelemetrySpec(chapter) {
   const paperNotes = [
     '按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。',
     'snapshot 事件在「发射/测试/提交」时记录各 control 当前值。',
-    '探究达成：emit(\'explore_success\', { winOk: true, hintKey, … })；勿用 win 冒充竞赛结果。',
+    '探究达成（主）：emit(\'explore_success\', { winOk: true, hintKey, … })；勿用 win 冒充竞赛结果。',
     '竞赛通关：emit(\'snapshot\', { winOk: true, … }) + emit(\'win\', { winOk: true })；仅 challenge。',
+    'deprecated：探究段 emit win 仅兼容旧轨迹；新产品禁止再用 win 表示探究达成。',
     '判分：探究结果认 explore_success（兼容旧轨迹探究段 win/winOk）；竞赛结果只认竞赛段 win/winOk，不认 explore_success。',
     '评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。',
     '混淆变量触碰可选记录，但不计入主探究路径得分。',

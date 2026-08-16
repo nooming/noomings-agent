@@ -61,6 +61,16 @@ function getPackagesRoot() {
   return resolveWithFallback('data/runtime/packages');
 }
 
+/** Offline analysis snapshots + reports (not package truth, not platform hot data). */
+function getAnalysisRoot() {
+  return resolveWithFallback('data/runtime/analysis');
+}
+
+/** Analysis / audit / PCA report output root (migrated from packages/reports). */
+function getReportsRoot() {
+  return path.join(getAnalysisRoot(), 'reports');
+}
+
 function getRuntimePlatformRoot() {
   return resolveWithFallback('data/runtime/platform', 'data/platform');
 }
@@ -158,6 +168,17 @@ function resolveRepoRelative(relPath) {
   }
   if (normalized.startsWith('data/runtime/packages/')) {
     candidates.push(normalized);
+    // Historical reports lived under packages/reports; prefer analysis/reports.
+    if (normalized.startsWith('data/runtime/packages/reports/')) {
+      candidates.unshift(
+        `data/runtime/analysis/reports/${normalized.slice('data/runtime/packages/reports/'.length)}`
+      );
+    } else if (normalized === 'data/runtime/packages/reports') {
+      candidates.unshift('data/runtime/analysis/reports');
+    }
+  }
+  if (normalized.startsWith('data/runtime/analysis/')) {
+    candidates.push(normalized);
   }
   if (normalized.startsWith('games/generated/')) {
     candidates.push(`data/games/generated/${normalized.slice('games/generated/'.length)}`);
@@ -183,6 +204,8 @@ module.exports = {
   getDatasetTrainingRoot,
   getRuntimeOutputRoot,
   getPackagesRoot,
+  getAnalysisRoot,
+  getReportsRoot,
   getPackageDir,
   getPackageGamePath,
   getPackageChapterPath,

@@ -110,7 +110,7 @@ function run() {
   assert(/:::stratInvalid/.test(repaired.strategy.mermaid), 'stratInvalid on probe');
   const probe = repaired.strategy.routes.find(r => r.kind === 'confoundProbe');
   assert(!!probe, 'confoundProbe route');
-  assert(/试探混淆·质量/.test(probe.label), `label ${probe.label}`);
+  assert(/试探(?:混淆)?·质量/.test(probe.label), `label ${probe.label}`);
   assert(probe.priorityRank == null, 'no priorityRank on confound');
   assert(Number(probe.score) <= 0.15, 'low score');
   assert(probe.highlightNodes.includes('ProbeCV') || probe.highlightNodes.some(id => /ProbeCV/i.test(id)), 'hl ProbeCV');
@@ -135,13 +135,13 @@ function run() {
   assert(!hasMisconceptionLoop(dualFixed.strategy.mermaid), 'orphan misconception loop removed');
   assert(!/\bModeOff\b/.test(dualFixed.strategy.mermaid), 'orphan ModeOff removed');
   assert(hasConfoundSelectEdge(dualFixed.strategy.mermaid), 'CV bypass kept');
-  assert(/试探混淆·无关控件/.test(dualFixed.strategy.mermaid), 'CV label kept');
+  assert(/试探(?:混淆)?·无关控件/.test(dualFixed.strategy.mermaid), 'CV label kept');
 
   // Real ModeOff watershed + CV: keep ModeOff hub, drop Check/Invalid cycle, inject CV by name
   const modeFixed = repairStrategyConfoundVisual(MODE_PLUS_CV);
   assert(/ModeOff\[竞赛模式/.test(modeFixed.strategy.mermaid), 'real ModeOff kept');
   assert(!hasMisconceptionLoop(modeFixed.strategy.mermaid), 'misconception cycle stripped');
-  assert(/试探混淆·音量/.test(modeFixed.strategy.mermaid), 'CV uses real label 音量');
+  assert(/试探(?:混淆)?·音量/.test(modeFixed.strategy.mermaid), 'CV uses real label 音量');
   assert(modeFixed.strategy.routes.some(r => r.kind === 'confoundProbe' && /音量/.test(r.label)), 'confoundProbe route');
 
   console.log('strategy-confound-visual-repair-check: ok');

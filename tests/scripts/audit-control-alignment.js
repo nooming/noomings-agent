@@ -9,12 +9,12 @@
 const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { extractHtmlControls } = require('../lib/html-controls');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '样本html');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

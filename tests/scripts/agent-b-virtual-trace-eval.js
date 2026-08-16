@@ -12,7 +12,7 @@ const {
   MODE,
 } = require('../../packages/judge/strategy-segment-score');
 const { rewardFromJudgeResult } = require('../../packages/judge/rl-reward');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const SAMPLE_IDS = [
   'projectile-basic',
@@ -249,7 +249,7 @@ function main() {
     },
   };
 
-  const outDir = path.join(getPackagesRoot(), 'reports');
+  const outDir = getReportsRoot();
   fs.mkdirSync(outDir, { recursive: true });
   const jsonPath = path.join(outDir, 'agent-b-virtual-trace-eval.json');
   fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2), 'utf8');

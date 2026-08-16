@@ -1778,6 +1778,18 @@
 
             if (state.mode === 'explore') {
                 emitHeightSnapshot(achievedHeight);
+                try {
+                  if (window.__noteExploreSuccess) {
+                    window.__noteExploreSuccess(window.__emit, window.__snapControls ? window.__snapControls() : {
+                      's-mass1': state.m1,
+                      's-speed': state.v0,
+                      's-mass2': state.m2,
+                      's-angle': (state.theta * 180 / Math.PI),
+                      's-shape': state.targetShape,
+                      's-rail-temp': state.railTemp
+                    });
+                  }
+                } catch (_es) {}
                 if (state.fellOff) {
                     showMessage("探究结果", `靶球动能过大，冲出斜坡顶端坠落。<br>当前参数足以支撑更高爬升。${railTip}${angleTip}${velInfo}`, true, resetScene);
                 } else {
@@ -2029,6 +2041,40 @@
     } catch (e2) {}
     return false;
   };
+})();
+</script>
+<script>
+/* === explore_success gate (百人复测) === */
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      if (g.done || g.n < 3) return;
+      g.done = true;
+      var emit = emitFn || window.__emit || window.__traceEmit;
+      if (typeof emit === 'function') {
+        emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+      }
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+      }
+    } catch (e) {}
+  });
+  document.addEventListener('change', function(ev) {
+    try {
+      if (ev.target && ev.target.id === 'modeSelect' && ev.target.value === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+      }
+    } catch (e) {}
+  }, true);
 })();
 </script>
 </body>

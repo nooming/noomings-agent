@@ -7,12 +7,12 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { SCORE_BY_RANK, TRAP_SCORE } = require('../../packages/contract/repair/strategy-route-score-repair');
 const { RESPONSE_SHAPES, monotonicityFromResponseShape } = require('../../packages/generate/av-response-shape');
 const YANG_MAP = require('../lib/yangben-sample-map');
 
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 function argValue(flag) {
   const idx = process.argv.indexOf(flag);

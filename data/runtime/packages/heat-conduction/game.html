@@ -1258,6 +1258,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 feedback.innerHTML = '本次测量 ' + Q.toFixed(0) + ' W · 继续对比导热与温差';
                 winArea.innerHTML = '';
                 if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+            try { if (window.__noteExploreSuccess) window.__noteExploreSuccess(typeof emit === 'function' ? emit : (window.__emit || null), (typeof controlsSnapshot !== 'undefined' ? controlsSnapshot : (typeof controls !== 'undefined' ? controls : {}))); } catch (_es) {}
                 return;
             }
             const winOk = Q >= TARGET_Q && Q <= TARGET_Q_HI;
@@ -2055,6 +2056,33 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     } catch (e2) {}
     return false;
   };
+})();
+</script>
+<script>
+/* === explore_success gate (百人复测) === */
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      if (g.done || g.n < 3) return;
+      g.done = true;
+      var emit = emitFn || window.__emit || window.__traceEmit;
+      if (typeof emit === 'function') {
+        emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+      }
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+      }
+    } catch (e) {}
+  });
 })();
 </script>
 </body>

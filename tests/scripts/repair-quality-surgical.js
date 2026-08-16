@@ -15,7 +15,7 @@ const { repairStrategyRouteScores } = require('../../packages/contract/repair/st
 const { repairMinStrategyRoutes } = require('../../packages/contract/repair/strategy-min-routes-repair');
 const { applyStrategyMermaidSanitize } = require('../../packages/contract/strategy/strategy-sanitize');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot, getPackageGamePath } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getPackageGamePath, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = path.resolve(__dirname, '../..');
 const YANG = path.join(ROOT, '\u6837\u672chtml');
@@ -553,7 +553,7 @@ function main() {
   }
   const passed = rows.filter(r => r.qualityOk).length;
   console.log(`Done: ${passed}/${rows.length} quality`);
-  const reportDir = path.join(getPackagesRoot(), 'reports');
+  const reportDir = getReportsRoot();
   fs.mkdirSync(reportDir, { recursive: true });
   fs.writeFileSync(
     path.join(reportDir, 'repair-quality-surgical.json'),

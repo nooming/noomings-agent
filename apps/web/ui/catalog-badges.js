@@ -9,6 +9,10 @@
     'minimal': { label: 'minimal', cls: 'badge-minimal' },
     'single-av': { label: '单变量', cls: 'badge-single' },
     'static-verify': { label: '静态验证', cls: 'badge-static' },
+    'observe-only': { label: '观察包', cls: 'badge-observe' },
+    'craft:gold': { label: 'gold', cls: 'badge-craft-gold' },
+    'craft:pilot': { label: 'pilot', cls: 'badge-craft-pilot' },
+    'craft:draft': { label: 'draft', cls: 'badge-craft-draft' },
   };
 
   function badgesForItem(item) {

@@ -4,6 +4,12 @@ const { getCatalogPath, getPlatformRoot } = require('./paths');
 const { getPackagesRoot } = require('../shared/data-paths');
 const { resolvePackageId } = require('../shared/package-layout');
 const { inferTopicFromCatalogItem, topicToMacroId } = require('./category-macros');
+const {
+  filterStudentCatalog,
+  isResearchInclude,
+  isObserveOnly,
+  craftTier,
+} = require('./catalog-visibility');
 
 function defaultCatalog() {
   return { version: 1, items: [] };
@@ -25,9 +31,10 @@ function writeCatalog(catalog) {
   fs.writeFileSync(getCatalogPath(), JSON.stringify(catalog, null, 2), 'utf8');
 }
 
-function listCatalog({ publishedOnly = false } = {}) {
+function listCatalog({ publishedOnly = false, studentVisible = false } = {}) {
   let items = readCatalog().items;
   if (publishedOnly) items = items.filter(i => i.published);
+  if (studentVisible) items = filterStudentCatalog(items);
   return items.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
 }
 
@@ -115,6 +122,7 @@ function publishGame(body) {
   if (body.source) item.source = body.source;
   if (body.sampleTags) item.sampleTags = body.sampleTags;
   if (body.featured != null) item.featured = !!body.featured;
+  if (typeof body.researchInclude === 'boolean') item.researchInclude = body.researchInclude;
   if (!item.categoryId) {
     const topic = inferTopicFromCatalogItem({ title: item.title, topicKey: body.topicKey });
     if (topic) {
@@ -154,4 +162,8 @@ module.exports = {
   deleteCatalogItem,
   findCatalogRefsForGraph,
   findCatalogRefsForPlayUrl,
+  filterStudentCatalog,
+  isResearchInclude,
+  isObserveOnly,
+  craftTier,
 };

@@ -3,10 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { loadAllSamples } = require('../lib/html-samples-manifest');
 const { auditHtmlContent, hasTraceHook, hasWinEmit } = require('../../packages/platform/legacy-trace-inject');
-const { getPackageGamePath, getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackageGamePath, getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
-const REPORT_MD = path.join(getPackagesRoot(), 'reports', 'playability-report.md');
-const REPORT_JSON = path.join(getPackagesRoot(), 'reports', 'playability-report.json');
+const REPORT_MD = path.join(getReportsRoot(), 'playability-report.md');
+const REPORT_JSON = path.join(getReportsRoot(), 'playability-report.json');
 
 function main() {
   const { samples } = loadAllSamples();

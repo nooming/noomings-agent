@@ -13,7 +13,7 @@
 | `catalog-demo.json` | 演示 catalog 子集 |
 | ~~`judge-fixtures.json`~~ | **已迁至** `tests/fixtures/judge-fixtures.json` |
 | ~~`chapters/`~~ | **已删除**；请读 `data/runtime/packages/{id}/chapter.json` |
-| 批跑报告 | `data/runtime/packages/reports/` |
+| 批跑报告 | `data/runtime/analysis/reports/` |
 
 ## 常用命令
 
@@ -26,4 +26,4 @@ npm run batch-graph-quality-eval
 npm run batch-judge-eval -- --fixtures-only
 ```
 
-详见 [`../../runtime/packages/reports/README.md`](../../runtime/packages/reports/README.md) 与退役报告 [`../../runtime/packages/reports/html-samples-retire.md`](../../runtime/packages/reports/html-samples-retire.md)。
+详见 [`../../runtime/analysis/reports/README.md`](../../runtime/analysis/reports/README.md)。（历史退役说明若存在：`html-samples-retire.md`，同目录。）

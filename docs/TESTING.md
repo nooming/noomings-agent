@@ -17,6 +17,16 @@ npm run check:export
 
 可选 filter：`node tests/regression/check.js --suite strategy --filter mermaid`
 
+## 平台冒烟（无 LLM）
+
+```bash
+npm start   # 另开终端
+npm run smoke:platform
+npm run smoke:ingest-concurrent
+```
+
+详见 `tests/scripts/platform-smoke.md`。
+
 ## Fixtures 布局
 
 | 文件 | 说明 |

@@ -10,12 +10,12 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { repairStrategyRouteScores } = require('../../packages/contract/repair/strategy-route-score-repair');
 const { syncMonotonicityWithShape } = require('../../packages/generate/av-response-shape');
 
 const ROOT = path.resolve(__dirname, '../..');
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 /**
  * Curated per-package AV order (by controlId).

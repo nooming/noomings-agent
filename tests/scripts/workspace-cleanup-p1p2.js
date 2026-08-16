@@ -14,8 +14,10 @@ function removeIfExists(srcRel) {
   console.log('removed:', srcRel);
 }
 
-// P1: obsolete duplicates (packages/reports + datasets/training are canonical)
+// P1: obsolete duplicates (analysis/reports + datasets/training are canonical;
+// packages/reports was migrated to data/runtime/analysis/reports)
 removeIfExists('data/datasets/html-samples/reports');
+removeIfExists('data/runtime/packages/reports');
 removeIfExists('data/training');
 removeIfExists('data/datasets/html-samples/REPORTS.md');
 removeIfExists('_archive');

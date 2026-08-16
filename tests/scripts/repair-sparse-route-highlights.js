@@ -11,7 +11,7 @@ const YANG_MAP = require('../lib/yangben-sample-map');
 const { repairStrategyRouteHighlights } = require('../../packages/contract/repair/strategy-route-repair');
 const { repairStrategyConfoundVisual } = require('../../packages/contract/repair/strategy-confound-visual-repair');
 const { writePriorityGraphFiles } = require('../../packages/generate/export/build-priority-graph-html');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { expandRouteHighlight } = require('../../packages/shared/strategy-mermaid-parse.js');
 
 const ROOT = path.resolve(__dirname, '../..');
@@ -124,7 +124,7 @@ function main() {
     passed: rows.filter(r => r.ok).length,
     rows,
   };
-  const out = path.join(getPackagesRoot(), 'reports', 'repair-sparse-route-highlights.json');
+  const out = path.join(getReportsRoot(), 'repair-sparse-route-highlights.json');
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, JSON.stringify(report, null, 2), 'utf8');
   for (const r of rows) {

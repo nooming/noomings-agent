@@ -11,6 +11,7 @@ function catalogPairIntegrityCheck() {
   for (const item of catalog.items) {
     if (item.source === 'teacher') {
       teacherCount += 1;
+      // Legacy monolith teacher entry; chapter splits use html-sample
       if (item.id !== 'capacitor-era') {
         throw new Error(`unexpected teacher catalog item: ${item.id}`);
       }
@@ -32,11 +33,12 @@ function catalogPairIntegrityCheck() {
     }
   }
 
-  if (teacherCount !== 1) {
-    throw new Error(`expected exactly 1 teacher catalog item, got ${teacherCount}`);
+  // Teacher monolith optional: catalog may only list capacitor-era-ch* packages
+  if (teacherCount > 1) {
+    throw new Error(`expected at most 1 teacher catalog item, got ${teacherCount}`);
   }
 
-  console.log(`catalog-pair-integrity: OK (${catalog.items.length} items, 1 teacher)`);
+  console.log(`catalog-pair-integrity: OK (${catalog.items.length} items, ${teacherCount} teacher)`);
 }
 
 module.exports = { run: catalogPairIntegrityCheck };

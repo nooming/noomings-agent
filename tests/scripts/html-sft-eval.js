@@ -8,6 +8,7 @@ const {
   loadChapterForSample,
   getDatasetTrainingRoot,
   getPackagesRoot,
+  getReportsRoot,
 } = require('../../packages/shared/data-paths');
 
 require('../../packages/shared/load-env').loadEnv();
@@ -80,7 +81,7 @@ function main() {
     console.log('  1. Baseline: unset FINETUNED_MODEL_ID, batch eval ids with --force');
     console.log('  2. Fine-tuned: set FINETUNED_MODEL_ID, repeat batch on eval ids');
     console.log('  3. Re-run: npm run html-sft-eval');
-    const reportPath = path.join(getPackagesRoot(), 'reports/html-sft-compare.json');
+    const reportPath = path.join(getReportsRoot(), 'html-sft-compare.json');
     if (fs.existsSync(reportPath)) {
       const cmp = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
       console.log('');

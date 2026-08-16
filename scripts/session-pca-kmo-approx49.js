@@ -12,14 +12,17 @@
  *   - drop playtest / full-eval / 全量* / anonymous junk; keep 李四/王五
  *
  * Writes:
- *   - data/runtime/packages/reports/session-pca-kmo-approx49.md  (full report)
+ *   - data/runtime/analysis/reports/session-pca-kmo-approx49.md  (full report)
  *   - radar-pca-analysis.md appendix pointer only (does not touch student body)
  *
  * Strict sensitivity (「四维均有限」): complete cases only — usually tiny under v4.
  *
  * Usage:
  *   node scripts/session-pca-kmo-approx49.js
- *   node scripts/session-pca-kmo-approx49.js --traces-root=./traces-全部-20260813
+ *   node scripts/session-pca-kmo-approx49.js --traces-root=./data/runtime/analysis/traces-全部-20260816
+ *   node scripts/session-pca-kmo-approx49.js --include-observe-only
+ *
+ * Default excludes observe-only / researchInclude=false sessions (same as radar-pca).
  */
 'use strict';
 
@@ -38,6 +41,7 @@ const {
   fmtPct,
 } = require('./radar-pca-analysis');
 const { deriveTerminalOutcome } = require('../packages/judge/session-terminal');
+const { getReportsRoot } = require('../packages/shared/data-paths');
 
 const SESSION_4D_LABELS_ZH = [
   '竞赛结果',
@@ -52,24 +56,8 @@ const DIM_KEYS = [
   'efficiency',
 ];
 
-const REPORT_MD = path.join(
-  __dirname,
-  '..',
-  'data',
-  'runtime',
-  'packages',
-  'reports',
-  'radar-pca-analysis.md',
-);
-const STANDALONE_MD = path.join(
-  __dirname,
-  '..',
-  'data',
-  'runtime',
-  'packages',
-  'reports',
-  'session-pca-kmo-approx49.md',
-);
+const REPORT_MD = path.join(getReportsRoot(), 'radar-pca-analysis.md');
+const STANDALONE_MD = path.join(getReportsRoot(), 'session-pca-kmo-approx49.md');
 
 function finiteRaw(v) {
   if (v == null || v === '') return null;
@@ -147,9 +135,10 @@ function fillMissingWithZero(rows) {
   return { rows: filled, meansObserved, columnMissing, fillMode: 'zero' };
 }
 
-function collectSessionRows(tracesRoot) {
+function collectSessionRows(tracesRoot, { excludeObserveOnly = true } = {}) {
   const { students, sessionFileN, scoreStats } = listStudentsFromTracesRoot(tracesRoot, {
     limit: 5000,
+    excludeObserveOnly,
   });
   const filteredOut = students.filter(isSyntheticLabel);
   const kept = students.filter((s) => !isSyntheticLabel(s));
@@ -230,7 +219,8 @@ function runMatrixStats(rowsImputed, labels) {
 }
 
 function analyzeRoot(tracesRoot) {
-  const collected = collectSessionRows(tracesRoot);
+  const includeObserve = process.argv.includes('--include-observe-only');
+  const collected = collectSessionRows(tracesRoot, { excludeObserveOnly: !includeObserve });
   // Drop rows with no competition result at all (cannot form 4D meaningfully).
   const eligible = collected.rows.filter((r) => Number.isFinite(r.challengeResult));
   const { rows: imputedRows, meansObserved, columnMissing, fillMode } = fillMissingWithZero(eligible);
@@ -522,7 +512,14 @@ function buildRadarAppendixPointer(primary) {
       `- **命名建议**：PC1「${names.PC1 || '—'}」；PC2「${names.PC2 || '—'}」；PC3「${names.PC3 || '—'}」`,
     );
   }
-  lines.push(`- 复算命令：\`node scripts/session-pca-kmo-approx49.js --traces-root=./${path.basename(meta.tracesRoot)}\``);
+  const relRoot = path
+    .relative(path.join(__dirname, '..'), meta.tracesRoot)
+    .split(path.sep)
+    .join('/');
+  const tracesRootArg = relRoot.startsWith('.') ? relRoot : `./${relRoot}`;
+  lines.push(
+    `- 复算命令：\`node scripts/session-pca-kmo-approx49.js --traces-root=${tracesRootArg}\``,
+  );
   lines.push('');
   return lines.join('\n');
 }
@@ -530,11 +527,21 @@ function buildRadarAppendixPointer(primary) {
 function resolveSiblingRoots(primaryRoot) {
   const repoRoot = path.join(__dirname, '..');
   const names = ['traces-全部-20260813', 'traces-全部-20260812', 'traces-全部-20260811'];
+  const parents = [
+    repoRoot,
+    path.join(repoRoot, 'data', 'runtime', 'analysis'),
+  ];
   const out = [];
-  for (const name of names) {
-    const p = path.join(repoRoot, name);
-    if (fs.existsSync(p) && path.resolve(p) !== path.resolve(primaryRoot)) {
-      out.push(p);
+  const seen = new Set();
+  for (const parent of parents) {
+    for (const name of names) {
+      const p = path.join(parent, name);
+      const key = path.resolve(p);
+      if (seen.has(key)) continue;
+      if (fs.existsSync(p) && key !== path.resolve(primaryRoot)) {
+        seen.add(key);
+        out.push(p);
+      }
     }
   }
   return out;

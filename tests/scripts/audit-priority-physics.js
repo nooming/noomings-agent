@@ -8,10 +8,10 @@
 const fs = require('fs');
 const path = require('path');
 const YANG_MAP = require('../lib/yangben-sample-map');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const { stripSingleVarPrefix, stripSpace, synKey } = require('../lib/expert-match');
 
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 /** Heuristic expectations: variable class → preferred monotonicity / relative priority */
 const RULES = {

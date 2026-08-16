@@ -1,13 +1,11 @@
 /** CLI: node tests/scripts/migrate-packages-layout.js [--dry-run] */
 const fs = require('fs');
 const path = require('path');
-const {
-  getPackagesRoot,
+const { getPackagesRoot,
   getDatasetHtmlSamplesRoot,
   getRuntimeOutputRoot,
   getGamesPresetRoot,
-  getPackageDir,
-} = require('../../packages/shared/data-paths');
+  getPackageDir, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const CAPACITOR_ERA_OUTPUT = '电容纪元-静电城邦-20260702-154833';
 const CAPACITOR_ERA_PKG = 'capacitor-era';
@@ -114,7 +112,7 @@ function migrateOutputProjects(packagesRoot, dryRun) {
 
 function migrateReports(packagesRoot, dryRun) {
   const src = path.join(getDatasetHtmlSamplesRoot(), 'reports');
-  const dest = path.join(packagesRoot, 'reports');
+  const dest = getReportsRoot();
   if (!fs.existsSync(src)) return;
   if (dryRun) {
     console.log(`copy reports ${src} -> ${dest}`);

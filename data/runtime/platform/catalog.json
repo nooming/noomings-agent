@@ -17,9 +17,11 @@
         "has-confounding",
         "button-action",
         "static-verify",
-        "craft:draft"
+        "craft:draft",
+        "observe-only"
       ],
-      "topicKey": "电容"
+      "topicKey": "电容",
+      "researchInclude": false
     },
     {
       "id": "demo-multi-kp",
@@ -38,7 +40,8 @@
         "button-action",
         "craft:pilot"
       ],
-      "topicKey": "机械能"
+      "topicKey": "机械能",
+      "researchInclude": true
     },
     {
       "id": "demo-projectile-basic",
@@ -57,7 +60,8 @@
         "confounding",
         "craft:gold"
       ],
-      "topicKey": "斜抛"
+      "topicKey": "斜抛",
+      "researchInclude": true
     },
     {
       "id": "demo-efield-charge",
@@ -76,7 +80,8 @@
         "button-action",
         "craft:draft"
       ],
-      "topicKey": "电场"
+      "topicKey": "电场",
+      "researchInclude": true
     },
     {
       "id": "demo-cyclotron-radius",
@@ -95,7 +100,8 @@
         "button-action",
         "craft:draft"
       ],
-      "topicKey": "回旋加速器"
+      "topicKey": "回旋加速器",
+      "researchInclude": true
     },
     {
       "id": "demo-series-parallel",
@@ -115,7 +121,8 @@
         "static-verify",
         "craft:draft"
       ],
-      "topicKey": "电路"
+      "topicKey": "电路",
+      "researchInclude": true
     },
     {
       "id": "demo-heat-conduction",
@@ -135,7 +142,8 @@
         "static-verify",
         "craft:draft"
       ],
-      "topicKey": "热传导"
+      "topicKey": "热传导",
+      "researchInclude": true
     },
     {
       "id": "demo-thin-lens-implicit",
@@ -155,7 +163,8 @@
         "static-verify",
         "craft:draft"
       ],
-      "topicKey": "透镜"
+      "topicKey": "透镜",
+      "researchInclude": true
     },
     {
       "id": "demo-refraction-snell",
@@ -174,7 +183,8 @@
         "static-verify",
         "craft:pilot"
       ],
-      "topicKey": "折射"
+      "topicKey": "折射",
+      "researchInclude": true
     },
     {
       "id": "demo-circular-motion",
@@ -192,7 +202,8 @@
         "button-action",
         "craft:pilot"
       ],
-      "topicKey": "圆周运动"
+      "topicKey": "圆周运动",
+      "researchInclude": true
     },
     {
       "id": "demo-momentum-collision",
@@ -211,7 +222,8 @@
         "button-action",
         "craft:draft"
       ],
-      "topicKey": "动量"
+      "topicKey": "动量",
+      "researchInclude": true
     },
     {
       "id": "demo-rc-circuit",
@@ -230,7 +242,8 @@
         "static-verify",
         "craft:pilot"
       ],
-      "topicKey": "RC电路"
+      "topicKey": "RC电路",
+      "researchInclude": true
     },
     {
       "id": "demo-friction-incline",
@@ -249,7 +262,8 @@
         "button-action",
         "static-verify",
         "craft:draft"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-magnetic-force",
@@ -268,7 +282,8 @@
         "button-action",
         "static-verify",
         "craft:draft"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-transformer-turns",
@@ -287,7 +302,8 @@
         "button-action",
         "static-verify",
         "craft:pilot"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-gas-ideal",
@@ -306,7 +322,8 @@
         "button-action",
         "static-verify",
         "craft:pilot"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-photoelectric",
@@ -325,7 +342,8 @@
         "button-action",
         "static-verify",
         "craft:pilot"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-pendulum-clock",
@@ -344,7 +362,8 @@
         "multi-av",
         "confounding",
         "craft:gold"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-pendulum-target",
@@ -363,7 +382,8 @@
         "multi-av",
         "confounding",
         "craft:gold"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-projectile-cannon",
@@ -382,12 +402,13 @@
         "multi-av",
         "confounding",
         "craft:gold"
-      ]
+      ],
+      "researchInclude": true
     },
     {
       "id": "demo-capacitor-era-ch1",
       "title": "电容 · capacitor-era-ch1",
-      "description": "过关：信号塔重建完成（介质与击穿目标） · 电容纪元第一章：调节极板面积、间距与介质，探究电容与击穿约束。",
+      "description": "过关：信号塔重建完成（介质与击穿目标） · 电容纪元第一章：调节极板面积、间距与介质，探究电容与击穿约束。（观察包·单阶段观察，非竞赛作业主路径）",
       "graphId": "capacitor-era-ch1",
       "playUrl": "/static/packages/capacitor-era-ch1/game.html",
       "published": true,
@@ -400,13 +421,15 @@
         "teammate",
         "multi-av",
         "confounding",
-        "craft:pilot"
-      ]
+        "craft:pilot",
+        "observe-only"
+      ],
+      "researchInclude": false
     },
     {
       "id": "demo-capacitor-era-ch2",
       "title": "电容 · capacitor-era-ch2",
-      "description": "过关：电站重启完成（串并联目标） · 电容纪元第二章：调节串并联电容配置，使电站等效电容达标。",
+      "description": "过关：电站重启完成（串并联目标） · 电容纪元第二章：调节串并联电容配置，使电站等效电容达标。（观察包·单阶段观察，非竞赛作业主路径）",
       "graphId": "capacitor-era-ch2",
       "playUrl": "/static/packages/capacitor-era-ch2/game.html",
       "published": true,
@@ -419,13 +442,15 @@
         "teammate",
         "multi-av",
         "confounding",
-        "craft:pilot"
-      ]
+        "craft:pilot",
+        "observe-only"
+      ],
+      "researchInclude": false
     },
     {
       "id": "demo-capacitor-era-ch4",
       "title": "电容 · capacitor-era-ch4",
-      "description": "电容纪元第四章：通过电容与电压组合探究储能，完成封印解除目标。",
+      "description": "电容纪元第四章：通过电容与电压组合探究储能，完成封印解除目标。（观察包·单阶段观察，非竞赛作业主路径）",
       "graphId": "capacitor-era-ch4",
       "playUrl": "/static/packages/capacitor-era-ch4/game.html",
       "published": true,
@@ -438,8 +463,10 @@
         "teammate",
         "multi-av",
         "confounding",
-        "craft:pilot"
-      ]
+        "craft:pilot",
+        "observe-only"
+      ],
+      "researchInclude": false
     },
     {
       "id": "demo-ramp-rolling-collision",
@@ -459,7 +486,8 @@
         "confounding",
         "button-action",
         "craft:pilot"
-      ]
+      ],
+      "researchInclude": true
     }
   ]
 }

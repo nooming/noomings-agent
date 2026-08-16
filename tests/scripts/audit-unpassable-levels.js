@@ -3,11 +3,11 @@
 
 const path = require('path');
 const fs = require('fs');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 const R = require('../lib/unpassable-reachability');
 
 const asJson = process.argv.includes('--json');
-const REPORT_JSON = path.join(getPackagesRoot(), 'reports', 'unpassable-levels-report.json');
+const REPORT_JSON = path.join(getReportsRoot(), 'unpassable-levels-report.json');
 
 function main() {
   const report = {

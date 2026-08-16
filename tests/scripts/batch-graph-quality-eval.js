@@ -4,13 +4,11 @@
 const fs = require('fs');
 const path = require('path');
 const { loadAllSamples } = require('../lib/html-samples-manifest');
-const {
-  getPackagesRoot,
+const { getPackagesRoot,
   getPackageChapterPath,
-  loadMetaForSample,
-} = require('../../packages/shared/data-paths');
+  loadMetaForSample, getReportsRoot } = require('../../packages/shared/data-paths');
 
-const REPORTS = path.join(getPackagesRoot(), 'reports');
+const REPORTS = getReportsRoot();
 
 const LAYER_RULES = [
   { layer: 'kg', re: /^(play|teach|verify|kg|nodeCount|coupledEnv|coupledStrat|chapterScope)/i },

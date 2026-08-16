@@ -16,6 +16,7 @@ const {
   resolveAvLabel,
   inferLabelFromControlId,
 } = require('../../generate/control-label');
+const { isTraceMapExcludedControlId } = require('../../generate/hints');
 
 /** Reject non-formula garbage scraped from HTML/JS/CSS. */
 function isCleanFormula(text) {
@@ -255,6 +256,14 @@ function separateConfoundingFromAdjustment(chapter, gameHints) {
     const nextControls = { ...controls };
     let changed = false;
     for (const cid of cvIds) {
+      // HUD / mode toggles stay out of traceMap (purged by ensureTraceMap)
+      if (isTraceMapExcludedControlId(cid)) {
+        if (nextControls[cid]) {
+          delete nextControls[cid];
+          changed = true;
+        }
+        continue;
+      }
       const cur = nextControls[cid];
       if (cur?.role === 'operation') {
         nextControls[cid] = { ...cur, role: 'irrelevant', kgId: irrNode.id };

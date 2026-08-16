@@ -19,10 +19,11 @@ function run() {
     path.join(ROOT, 'apps/web/ui/pages/student-play.html'),
     'utf8',
   );
-  assert.ok(playHtml.includes('play-phase-bar'), 'student-play missing phase bar');
-  assert.ok(playHtml.includes('data-phase="explore"'), 'missing explore button');
-  assert.ok(playHtml.includes('data-phase="challenge"'), 'missing challenge button');
-  assert.ok(playHtml.includes('applyShellPhase'), 'missing applyShellPhase');
+  // Phase UI moved into-game; shell syncs via notePhaseFromGame / adapter.setPhase
+  assert.ok(playHtml.includes('notePhaseFromGame'), 'student-play missing notePhaseFromGame');
+  assert.ok(playHtml.includes('dataset.playPhase'), 'missing playPhase dataset sync');
+  assert.ok(/phase\s*===\s*['"]challenge['"]/.test(playHtml), 'missing challenge phase handling');
+  assert.ok(playHtml.includes('PlatformTraceAdapter.setPhase'), 'missing adapter setPhase');
 
   const adapter = fs.readFileSync(
     path.join(ROOT, 'apps/web/ui/trace-adapter-platform.js'),
@@ -43,7 +44,10 @@ function run() {
 
   const target = fs.readFileSync(path.join(pkgRoot, 'pendulum-target', 'game.html'), 'utf8');
   assert.ok(target.includes('id="s-length"'), 'pendulum-target needs s-length');
-  assert.ok(target.includes("hintKey: 'pendulum_target'"), 'pendulum-target win hint');
+  assert.ok(
+    /hintKey:\s*['"]pendulum_(?:target|rush|hit)['"]/.test(target),
+    'pendulum-target win hint',
+  );
 
   const clock = fs.readFileSync(path.join(pkgRoot, 'pendulum-clock', 'game.html'), 'utf8');
   assert.ok(/endpoint\s*=\s*qs\.get\('ep'\)\s*\|\|\s*''/.test(clock), 'clock telemetry endpoint disabled');

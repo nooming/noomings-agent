@@ -14,15 +14,20 @@
  * Traces root (priority):
  *   1) --traces-root=<path>
  *   2) TRACES_ROOT env
- *   3) newest ./traces-全部-YYYYMMDD if present (e.g. 20260813 > 20260812)
+ *   3) newest traces-全部-YYYYMMDD under ./ or data/runtime/analysis/
+ *      (e.g. 20260816 > 20260813; analysis/ is the preferred snapshot home)
  *   4) platform traces dir
+ *
+ * Observe-only / researchInclude=false sessions are excluded by default.
+ * Pass --include-observe-only to keep them.
  */
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { getTracesRoot } = require('../packages/platform/paths');
-const { loadChapterForGraph } = require('../packages/platform/catalog');
-const { loadChapterForSample } = require('../packages/shared/data-paths');
+const { loadChapterForGraph, getCatalogItem, readCatalog } = require('../packages/platform/catalog');
+const { isResearchInclude } = require('../packages/platform/catalog-visibility');
+const { loadChapterForSample, getReportsRoot } = require('../packages/shared/data-paths');
 const { computeAbilityScore } = require('../packages/judge/ability-score');
 const {
   deriveTerminalOutcome,
@@ -896,13 +901,24 @@ function namesTable(names) {
 }
 
 function parseArgs(argv) {
-  const out = { tracesRoot: null };
+  const out = {
+    tracesRoot: null,
+    /** Default true: exclude observe-only / researchInclude=false sessions from PCA. */
+    excludeObserveOnly: true,
+    includeObserveOnly: false,
+  };
   for (const a of argv) {
     if (a.startsWith('--traces-root=')) out.tracesRoot = a.slice('--traces-root='.length);
     else if (a === '--traces-root') out._nextTraces = true;
     else if (out._nextTraces) {
       out.tracesRoot = a;
       out._nextTraces = false;
+    } else if (a === '--include-observe-only') {
+      out.includeObserveOnly = true;
+      out.excludeObserveOnly = false;
+    } else if (a === '--exclude-observe-only') {
+      out.excludeObserveOnly = true;
+      out.includeObserveOnly = false;
     }
   }
   delete out._nextTraces;
@@ -911,18 +927,24 @@ function parseArgs(argv) {
 
 function resolveNewestBundledTracesRoot() {
   const repoRoot = path.join(__dirname, '..');
+  const scanDirs = [
+    repoRoot,
+    path.join(repoRoot, 'data', 'runtime', 'analysis'),
+  ];
   let best = null;
   let bestDate = '';
-  try {
-    for (const name of fs.readdirSync(repoRoot)) {
-      const m = /^traces-全部-(\d{8})$/.exec(name);
-      if (!m) continue;
-      if (m[1] > bestDate) {
-        bestDate = m[1];
-        best = path.join(repoRoot, name);
+  for (const dir of scanDirs) {
+    try {
+      for (const name of fs.readdirSync(dir)) {
+        const m = /^traces-全部-(\d{8})$/.exec(name);
+        if (!m) continue;
+        if (m[1] > bestDate) {
+          bestDate = m[1];
+          best = path.join(dir, name);
+        }
       }
-    }
-  } catch { /* fall through */ }
+    } catch { /* try next scan dir */ }
+  }
   return best && fs.existsSync(best) ? best : null;
 }
 
@@ -1005,7 +1027,27 @@ function ensureAbilityScoreOnSession(session, stats) {
   return session;
 }
 
-function listStudentsFromTracesRoot(tracesRoot, { limit = 1000 } = {}) {
+function catalogItemForSession(row) {
+  const id = String(row?.catalogId || '').trim();
+  if (id) {
+    const item = getCatalogItem(id);
+    if (item) return item;
+  }
+  const graphId = String(row?.graphId || row?.packageId || '').trim();
+  if (!graphId) return null;
+  const catalog = readCatalog();
+  return (catalog.items || []).find((i) => i.graphId === graphId || String(i.graphId || '').endsWith(graphId)) || null;
+}
+
+function sessionIncludedInResearch(row) {
+  const item = catalogItemForSession(row);
+  if (item) return isResearchInclude(item);
+  // No catalog hit: keep unless tags on row itself say observe-only
+  if (Array.isArray(row?.sampleTags) && row.sampleTags.includes('observe-only')) return false;
+  return true;
+}
+
+function listStudentsFromTracesRoot(tracesRoot, { limit = 1000, excludeObserveOnly = false } = {}) {
   if (!fs.existsSync(tracesRoot)) {
     throw new Error(`traces root not found: ${tracesRoot}`);
   }
@@ -1017,6 +1059,7 @@ function listStudentsFromTracesRoot(tracesRoot, { limit = 1000 } = {}) {
     skipNoEvents: 0,
     skipNoChapter: 0,
     skipComputeError: 0,
+    skippedObserveOnly: 0,
   };
   const groups = new Map();
   let sessionFileN = 0;
@@ -1029,6 +1072,10 @@ function listStudentsFromTracesRoot(tracesRoot, { limit = 1000 } = {}) {
     }
     if (!row || !row.sessionId) continue;
     sessionFileN += 1;
+    if (excludeObserveOnly && !sessionIncludedInResearch(row)) {
+      scoreStats.skippedObserveOnly += 1;
+      continue;
+    }
     ensureAbilityScoreOnSession(row, scoreStats);
     const key = studentGroupKey(row);
     if (!groups.has(key)) {
@@ -1092,9 +1139,11 @@ function listStudentsFromTracesRoot(tracesRoot, { limit = 1000 } = {}) {
 }
 
 function main() {
+  const cli = parseArgs(process.argv.slice(2));
+  const excludeObserveOnly = cli.excludeObserveOnly !== false && !cli.includeObserveOnly;
   const { students, sessionFileN, scoreStats, tracesRoot } = listStudentsFromTracesRoot(
-    resolveTracesRoot(),
-    { limit: 1000 },
+    resolveTracesRoot(process.argv.slice(2)),
+    { limit: 1000, excludeObserveOnly },
   );
   const filteredOut = students.filter(isSyntheticLabel);
   const kept = students.filter(s => !isSyntheticLabel(s));
@@ -1211,15 +1260,7 @@ function main() {
     }
   }
 
-  const reportPath = path.join(
-    __dirname,
-    '..',
-    'data',
-    'runtime',
-    'packages',
-    'reports',
-    'radar-pca-analysis.md',
-  );
+  const reportPath = path.join(getReportsRoot(), 'radar-pca-analysis.md');
 
   const lines = [];
   lines.push('# 雷达能力维度 PCA 分析（学生级主分析）');

@@ -2,10 +2,10 @@
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const { getPackagesRoot } = require('../../packages/shared/data-paths');
+const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-paths');
 
 const ROOT = getPackagesRoot();
-const REPORTS = path.join(ROOT, 'reports');
+const REPORTS = getReportsRoot();
 const priority = [
   'projectile-basic', 'series-parallel', 'refraction-snell', 'thin-lens-implicit',
   'pendulum-clock', 'multi-kp', 'rc-circuit', 'magnetic-force', 'efield-charge',
@@ -157,12 +157,12 @@ async function main() {
   md.push('');
   md.push('## 5. 报告路径');
   md.push('');
-  md.push('- `data/runtime/packages/reports/student-agentb-full-eval.{json,md}`');
-  md.push('- `data/runtime/packages/reports/student-agentb-ingest-rule-judge.json`');
-  md.push('- `data/runtime/packages/reports/student-play-smoke-http.json`');
-  md.push('- `data/runtime/packages/reports/agent-b-virtual-trace-eval.{json,md}`（5 样本 25/25）');
-  md.push('- `data/runtime/packages/reports/student-agentb-full-matrix.json`');
-  md.push('- `data/runtime/packages/reports/student-agentb-full-playtest-report.md`（本文件）');
+  md.push('- `data/runtime/analysis/reports/student-agentb-full-eval.{json,md}`');
+  md.push('- `data/runtime/analysis/reports/student-agentb-ingest-rule-judge.json`');
+  md.push('- `data/runtime/analysis/reports/student-play-smoke-http.json`');
+  md.push('- `data/runtime/analysis/reports/agent-b-virtual-trace-eval.{json,md}`（5 样本 25/25）');
+  md.push('- `data/runtime/analysis/reports/student-agentb-full-matrix.json`');
+  md.push('- `data/runtime/analysis/reports/student-agentb-full-playtest-report.md`（本文件）');
 
   const mdPath = path.join(REPORTS, 'student-agentb-full-playtest-report.md');
   fs.writeFileSync(mdPath, md.join('\n'), 'utf8');
