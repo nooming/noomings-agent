@@ -360,7 +360,7 @@ async function boot() {
   });
 
   function noteInteraction(type, payload) {
-    if (type === 'win' || type === 'action' || type === 'tuning' || type === 'snapshot') {
+    if (type === 'win' || type === 'explore_success' || type === 'action' || type === 'tuning' || type === 'snapshot') {
       sawInteraction = true;
       if (idleHintEl) idleHintEl.hidden = true;
     }

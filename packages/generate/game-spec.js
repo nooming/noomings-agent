@@ -171,7 +171,7 @@ function buildGameSpec(chapter, gameHints) {
       '含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致',
       '过关时显示 winSync.title 或等效文案',
       '页面顶部一行提示：「调节参数后点击发射/测试」',
-      '过关 UI 显示时必须 emit snapshot(winOk,hintKey) 与 emit win',
+      '竞赛通关必须 emit snapshot(winOk,hintKey) 与 emit win；探究达成用 explore_success，勿用 win',
       needsContinuousSim
         ? '运动类须 requestAnimationFrame + update/draw 分离 + dt 限幅，禁止调参即过关'
         : '力学/抛体/碰撞/振子/圆周类须 requestAnimationFrame 或发射后≥1s 过渡动画',

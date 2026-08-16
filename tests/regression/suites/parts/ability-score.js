@@ -1,5 +1,5 @@
 /**
- * 能力总分 v3：画像 A–G（固定权重 / 门闩 / 多关 R / Pe 占 25 / 归因 / 幸运一发）
+ * 能力总分 v4：画像 A–G + 探究/竞赛结果拆分（固定权重 / 门闩 / 多关 R / Pe 占 24 / Er 占 8 / 归因 / 幸运一发）
  */
 const { assert } = require('../../../lib/assert');
 const {
@@ -9,6 +9,8 @@ const {
   ATTRIBUTION_BONUS,
   LUCKY_ONESHOT_E,
   LUCKY_ONESHOT_TOTAL_CAP,
+  EXPLORE_RESULT_LUCKY,
+  EXPLORE_RESULT_SOLID,
   mapProcessBand,
   fixedWeightedSum,
   ABILITY_SCORE_WEIGHTS,
@@ -55,6 +57,9 @@ function phase(ts, p) {
 }
 function win(ts, payload) {
   return { ts, type: 'win', payload: payload || { winOk: true }, ch: 0 };
+}
+function exploreSuccess(ts, payload) {
+  return { ts, type: 'explore_success', payload: payload || { winOk: true }, ch: 0 };
 }
 
 /** A: 探究单变量清楚 → 竞赛单参 1 试次过关 */
@@ -154,6 +159,69 @@ function personaF() {
   return events;
 }
 
+/** H: 探究段 win（扎实过程）但未进竞赛 — 探究结果 solid，竞赛结果不得被顶替 */
+function personaH_exploreWinOnly() {
+  const events = [phase(1, 'explore')];
+  let t = 10;
+  for (let i = 0; i < 4; i++) {
+    events.push(tune(t++, 's-a', 10 + i));
+    events.push(fire(t++));
+    events.push(snap(t++));
+  }
+  events.push(snap(t++, { winOk: true }));
+  events.push(win(t++));
+  return events;
+}
+
+/** I: 探究段一发 win + 过程不足 → lucky */
+function personaI_exploreLucky() {
+  const events = [phase(1, 'explore')];
+  let t = 10;
+  events.push(tune(t++, 's-a', 40));
+  events.push(tune(t++, 's-b', 20));
+  events.push(fire(t++));
+  events.push(snap(t++, { winOk: true }));
+  events.push(win(t++));
+  return events;
+}
+
+/** J: 规范 explore_success + 扎实过程 → solid；竞赛不得被抬高 */
+function personaJ_exploreSuccessSolid() {
+  const events = [phase(1, 'explore')];
+  let t = 10;
+  for (let i = 0; i < 4; i++) {
+    events.push(tune(t++, 's-a', 10 + i));
+    events.push(fire(t++));
+    events.push(snap(t++));
+  }
+  events.push(exploreSuccess(t++, { winOk: true, hintKey: 'hit_target' }));
+  return events;
+}
+
+/** K: 规范 explore_success 一发不足 → lucky */
+function personaK_exploreSuccessLucky() {
+  const events = [phase(1, 'explore')];
+  let t = 10;
+  events.push(tune(t++, 's-a', 40));
+  events.push(tune(t++, 's-b', 20));
+  events.push(fire(t++));
+  events.push(exploreSuccess(t++, { winOk: true, hintKey: 'hit_target' }));
+  return events;
+}
+
+/** L: 旧轨迹兼容——探究段仅 snapshot.winOk（无 explore_success / win）→ 仍算达成 */
+function personaL_legacySnapWinOk() {
+  const events = [phase(1, 'explore')];
+  let t = 10;
+  for (let i = 0; i < 4; i++) {
+    events.push(tune(t++, 's-a', 10 + i));
+    events.push(fire(t++));
+    events.push(snap(t++));
+  }
+  events.push(snap(t++, { winOk: true, hintKey: 'hit_target' }));
+  return events;
+}
+
 /** G: 大炮通 3/4 */
 function personaG() {
   const events = [phase(1, 'challenge')];
@@ -168,7 +236,7 @@ function personaG() {
 }
 
 function run() {
-  assert(ABILITY_SCORE_VERSION === 3, `version const is 3, got ${ABILITY_SCORE_VERSION}`);
+  assert(ABILITY_SCORE_VERSION === 4, `version const is 4, got ${ABILITY_SCORE_VERSION}`);
 
   // A: skilled one-shot
   const a = computeAbilityScore({
@@ -184,9 +252,20 @@ function run() {
   assert(a.parts.attribution.aligned === true, 'A attribution aligned');
   assert(a.parts.attribution.contrib === ATTRIBUTION_BONUS, 'A attribution +5');
   assert(a.parts.exploreProcess.contrib > 0, 'A Pe contrib > 0');
-  assert(a.parts.exploreProcess.contrib <= 25, `A Pe contrib ≤25, got ${a.parts.exploreProcess.contrib}`);
-  assert(a.parts.result.contrib <= 30, `A R contrib ≤30, got ${a.parts.result.contrib}`);
+  assert(a.parts.exploreProcess.contrib <= 24, `A Pe contrib ≤24, got ${a.parts.exploreProcess.contrib}`);
+  assert(a.parts.result.contrib <= 25, `A R contrib ≤25, got ${a.parts.result.contrib}`);
+  assert(a.parts.challengeResult?.raw === a.parts.result.raw, 'A challengeResult aliases result');
+  assert(a.parts.exploreResult != null, 'A has exploreResult part');
+  // A 探究有操作未达成 → Er raw=0，contrib=0（不摊权重）
+  assert(a.parts.exploreResult.raw === 0, `A Er none=0, got ${a.parts.exploreResult.raw}`);
+  assert(a.parts.exploreResult.contrib === 0, `A Er contrib 0, got ${a.parts.exploreResult.contrib}`);
   assert(a.bands.process === '清楚' || a.bands.process === '部分清楚', `A process band ${a.bands.process}`);
+  assert(
+    Math.abs(ABILITY_SCORE_WEIGHTS.R + ABILITY_SCORE_WEIGHTS.Er + ABILITY_SCORE_WEIGHTS.Pe
+      + ABILITY_SCORE_WEIGHTS.Pc + ABILITY_SCORE_WEIGHTS.E - 1) < 1e-9,
+    'weights sum to 1',
+  );
+  assert(ABILITY_SCORE_WEIGHTS.Er === 0.08, `Er weight 0.08, got ${ABILITY_SCORE_WEIGHTS.Er}`);
 
   // B: observe-then-transfer one-shot
   const b = computeAbilityScore({
@@ -198,7 +277,7 @@ function run() {
   assert(b.total != null && b.total >= 55, `B mid-high total, got ${b.total}`);
   assert(b.parts.efficiency.raw >= 85, `B E high, got ${b.parts.efficiency.raw}`);
   assert(b.parts.challengeProcess.raw != null, 'B has Pc');
-  assert(b.parts.result.contrib <= 30, `B R contrib ≤30, got ${b.parts.result.contrib}`);
+  assert(b.parts.result.contrib <= 25, `B R contrib ≤25, got ${b.parts.result.contrib}`);
 
   // C: lucky multi-param one-shot → lower E/Pc than A/D（v2 更严）
   const c = computeAbilityScore({
@@ -255,7 +334,7 @@ function run() {
   assert(e2.total != null && e2.total <= 55, `E2 low total, got ${e2.total}`);
   assert(e2.bands.process === '尚不清晰' || e2.bands.process === '部分清楚', `E2 band ${e2.bands.process}`);
 
-  // F: explore only → 固定权重预览，不伪高分
+  // F: explore only → 固定权重预览，不伪高分；竞赛结果未完成；探究未达成
   const f = computeAbilityScore({
     events: personaF(),
     chapter: CHAPTER,
@@ -264,12 +343,86 @@ function run() {
   });
   assert(f.parts.challengeProcess.raw == null, 'F Pc null');
   assert(f.parts.exploreProcess.raw != null, 'F Pe present');
-  assert(f.parts.exploreProcess.contrib <= 25, `F Pe contrib ≤25, got ${f.parts.exploreProcess.contrib}`);
+  assert(f.parts.exploreProcess.contrib <= 24, `F Pe contrib ≤24, got ${f.parts.exploreProcess.contrib}`);
   assert(f.total == null, `F total null (incomplete), got ${f.total}`);
   assert(f.pending === true, 'F pending');
   assert(f.parts.exploreProcess.raw != null, 'F Pe preview still available');
+  assert(f.parts.result.raw == null, 'F challenge result null (no challenge)');
+  assert(f.parts.exploreResult.raw === 0, `F exploreResult none=0, got ${f.parts.exploreResult.raw}`);
+  assert(f.parts.exploreResult.tier === 'none', 'F exploreResult tier none');
+  assert(f.parts.exploreResult.contrib === 0, `F Er contrib 0 (raw=0), got ${f.parts.exploreResult.contrib}`);
+  assert(f.bands.challengeResult === '未完成' || f.bands.result === '未完成', 'F challenge band 未完成');
 
-  // G: multi-level 3/4 · 仅竞赛无探究
+  // H: 探究 win 扎实 → exploreResult solid；竞赛结果不得被探究 win / verdict=pass 顶替
+  const h = computeAbilityScore({
+    events: personaH_exploreWinOnly(),
+    chapter: CHAPTER,
+    verdict: 'pass',
+    judged: true,
+  });
+  assert(h.parts.exploreResult.tier === 'solid', `H explore solid, got ${h.parts.exploreResult.tier}`);
+  assert(h.parts.exploreResult.raw === EXPLORE_RESULT_SOLID, `H Er=${EXPLORE_RESULT_SOLID}, got ${h.parts.exploreResult.raw}`);
+  // solid × 0.08 = 8；竞赛未完成 → total 仍 null（不摊权重、不解除 pending）
+  assert(h.parts.exploreResult.contrib === 8, `H Er contrib=8, got ${h.parts.exploreResult.contrib}`);
+  assert(h.parts.result.raw == null, `H challenge R must not use explore win, got ${h.parts.result.raw}`);
+  assert(h.parts.challengeResult.raw == null, 'H challengeResult null');
+  assert(h.bands.result === '未完成', `H challenge band 未完成, got ${h.bands.result}`);
+  assert(h.bands.exploreResult === '扎实达成', `H explore band, got ${h.bands.exploreResult}`);
+  assert(h.total == null, `H total null (challenge incomplete), got ${h.total}`);
+
+  // I: 探究幸运一发 → contrib 弱于 solid（40×0.08=3.2）
+  const i = computeAbilityScore({
+    events: personaI_exploreLucky(),
+    chapter: CHAPTER,
+    verdict: 'pass',
+    judged: true,
+  });
+  assert(i.parts.exploreResult.tier === 'lucky', `I explore lucky, got ${i.parts.exploreResult.tier}`);
+  assert(i.parts.exploreResult.raw === EXPLORE_RESULT_LUCKY, `I Er=${EXPLORE_RESULT_LUCKY}, got ${i.parts.exploreResult.raw}`);
+  assert(i.parts.exploreResult.contrib === 3.2, `I Er contrib=3.2, got ${i.parts.exploreResult.contrib}`);
+  assert(i.parts.exploreResult.contrib < h.parts.exploreResult.contrib, 'I lucky Er < H solid Er');
+  assert(i.parts.result.raw == null, 'I challenge R not filled by explore');
+  assert(i.bands.exploreResult === '幸运一发', `I explore band, got ${i.bands.exploreResult}`);
+
+  // J: explore_success → solid；竞赛结果不被 explore_success 抬高
+  const j = computeAbilityScore({
+    events: personaJ_exploreSuccessSolid(),
+    chapter: CHAPTER,
+    verdict: 'pass',
+    judged: true,
+  });
+  assert(j.parts.exploreResult.tier === 'solid', `J explore_success solid, got ${j.parts.exploreResult.tier}`);
+  assert(j.parts.exploreResult.raw === EXPLORE_RESULT_SOLID, `J Er=${EXPLORE_RESULT_SOLID}, got ${j.parts.exploreResult.raw}`);
+  assert(j.parts.exploreResult.contrib === 8, `J Er contrib=8, got ${j.parts.exploreResult.contrib}`);
+  assert(j.parts.result.raw == null, `J challenge R must ignore explore_success, got ${j.parts.result.raw}`);
+  assert(j.bands.result === '未完成', `J challenge band 未完成, got ${j.bands.result}`);
+  assert(j.bands.exploreResult === '扎实达成', `J explore band, got ${j.bands.exploreResult}`);
+  assert(j.total == null, `J total null (challenge incomplete), got ${j.total}`);
+
+  // K: explore_success 幸运一发
+  const k = computeAbilityScore({
+    events: personaK_exploreSuccessLucky(),
+    chapter: CHAPTER,
+    verdict: 'pass',
+    judged: true,
+  });
+  assert(k.parts.exploreResult.tier === 'lucky', `K explore_success lucky, got ${k.parts.exploreResult.tier}`);
+  assert(k.parts.exploreResult.raw === EXPLORE_RESULT_LUCKY, `K Er=${EXPLORE_RESULT_LUCKY}, got ${k.parts.exploreResult.raw}`);
+  assert(k.parts.exploreResult.contrib === 3.2, `K Er contrib=3.2, got ${k.parts.exploreResult.contrib}`);
+  assert(k.parts.result.raw == null, 'K challenge R not filled by explore_success');
+  assert(k.bands.exploreResult === '幸运一发', `K explore band, got ${k.bands.exploreResult}`);
+
+  // L: 旧轨迹 snapshot.winOk 兼容 → solid
+  const l = computeAbilityScore({
+    events: personaL_legacySnapWinOk(),
+    chapter: CHAPTER,
+    judged: false,
+  });
+  assert(l.parts.exploreResult.tier === 'solid', `L legacy winOk solid, got ${l.parts.exploreResult.tier}`);
+  assert(l.parts.exploreResult.raw === EXPLORE_RESULT_SOLID, `L Er solid, got ${l.parts.exploreResult.raw}`);
+  assert(l.parts.result.raw == null, 'L challenge R not filled by explore snap winOk');
+
+  // G: multi-level 3/4 · 仅竞赛无探究（Er null → contrib 0）
   const gProg = detectMultiLevelProgress(personaG(), { packageId: 'projectile-cannon' });
   assert(gProg && gProg.levelsCleared === 3 && gProg.levelsTotal === 4, `G progress ${JSON.stringify(gProg)}`);
   const g = computeAbilityScore({
@@ -282,18 +435,26 @@ function run() {
   assert(g.parts.result.progress?.levelsCleared === 3, 'G levelsCleared');
   assert(g.parts.exploreProcess.raw == null, 'G Pe null (challenge-only)');
   assert(g.parts.exploreProcess.contrib === 0, `G Pe contrib 0, got ${g.parts.exploreProcess.contrib}`);
-  assert(g.parts.result.contrib <= 30, `G R contrib ≤30 (no renorm), got ${g.parts.result.contrib}`);
-  // 75 * 0.30 = 22.5
-  assert(g.parts.result.contrib === 22.5, `G R contrib=22.5, got ${g.parts.result.contrib}`);
+  assert(g.parts.exploreResult.raw == null, 'G Er null (未探究)');
+  assert(g.parts.exploreResult.contrib === 0, `G Er contrib 0, got ${g.parts.exploreResult.contrib}`);
+  assert(g.parts.result.contrib <= 25, `G R contrib ≤25 (no renorm), got ${g.parts.result.contrib}`);
+  // 75 * 0.25 = 18.75 → round1 → 18.8
+  assert(g.parts.result.contrib === 18.8, `G R contrib=18.8, got ${g.parts.result.contrib}`);
 
-  // Fixed-weight unit: missing Pe does not inflate others
+  // Fixed-weight unit: missing Pe/Er does not inflate others
   const fw = fixedWeightedSum(
-    { R: 100, Pe: null, Pc: 80, E: 50 },
+    { R: 100, Er: null, Pe: null, Pc: 80, E: 50 },
     ABILITY_SCORE_WEIGHTS,
   );
   assert(fw != null, 'fixedWeightedSum returns');
-  const expectedFw = 0.30 * 100 + 0.25 * 80 + 0.20 * 50; // 30+20+10=60
+  const expectedFw = 0.25 * 100 + 0.24 * 80 + 0.19 * 50; // 25+19.2+9.5=53.7
   assert(Math.abs(fw - expectedFw) < 1e-9, `fixed sum ${fw} == ${expectedFw}`);
+  const fwEr = fixedWeightedSum(
+    { R: 100, Er: EXPLORE_RESULT_LUCKY, Pe: null, Pc: null, E: null },
+    ABILITY_SCORE_WEIGHTS,
+  );
+  const expectedFwEr = 0.25 * 100 + 0.08 * EXPLORE_RESULT_LUCKY; // 25+3.2=28.2
+  assert(Math.abs(fwEr - expectedFwEr) < 1e-9, `fixed sum with Er ${fwEr} == ${expectedFwEr}`);
 
   // Attribution: no event → 0
   const noAttr = computeAbilityScore({
@@ -335,7 +496,7 @@ function run() {
     verdict: 'pass',
   });
   assert(legacyScore.parts.result.raw === 75, `legacy R=75, got ${legacyScore.parts.result.raw}`);
-  assert(legacyScore.parts.result.contrib <= 30, `legacy R contrib ≤30, got ${legacyScore.parts.result.contrib}`);
+  assert(legacyScore.parts.result.contrib <= 25, `legacy R contrib ≤25, got ${legacyScore.parts.result.contrib}`);
   assert(legacyScore.parts.exploreProcess.contrib === 0, 'legacy Pe +0');
 
   // levelsCleared payload wins over win count
@@ -363,7 +524,7 @@ function run() {
   });
   assert(peNullScore.parts.exploreProcess.raw == null, `Pe null when exploreTrials=0, got ${peNullScore.parts.exploreProcess.raw}`);
   assert(peNullScore.parts.exploreProcess.contrib === 0, `Pe contrib 0, got ${peNullScore.parts.exploreProcess.contrib}`);
-  assert(peNullScore.parts.result.contrib <= 30, `Pe-null R contrib ≤30, got ${peNullScore.parts.result.contrib}`);
+  assert(peNullScore.parts.result.contrib <= 25, `Pe-null R contrib ≤25, got ${peNullScore.parts.result.contrib}`);
   assert(peNullScore.parts.challengeProcess.raw != null, 'Pc still scored');
   assert(peNullScore.total != null, 'total still present with Pe=0 block');
   // process band should not be forced to 尚不清晰 solely by Pe=0
@@ -399,7 +560,7 @@ function run() {
     'Pe-null + Pc high + trials≥2 → 清楚',
   );
 
-  // 无 phase_change：整局不算探究加分
+  // 无 phase_change：整局不算探究加分；Er 不计
   const noPhase = computeAbilityScore({
     events: [
       tune(1, 's-a', 10),
@@ -415,11 +576,13 @@ function run() {
     judged: true,
   });
   assert(noPhase.parts.exploreProcess.raw == null, 'no-phase Pe null');
-  assert(noPhase.parts.exploreProcess.contrib === 0, 'no-phase Pe +0/25');
+  assert(noPhase.parts.exploreProcess.contrib === 0, 'no-phase Pe +0/24');
+  assert(noPhase.parts.exploreResult.raw == null, 'no-phase Er null');
+  assert(noPhase.parts.exploreResult.contrib === 0, 'no-phase Er +0/8');
   assert(noPhase.parts.challengeProcess.raw == null, 'no-phase Pc null');
-  assert(noPhase.parts.result.contrib <= 30, `no-phase R ≤30, got ${noPhase.parts.result.contrib}`);
+  assert(noPhase.parts.result.contrib <= 25, `no-phase R ≤25, got ${noPhase.parts.result.contrib}`);
 
-  // Multi-level: no wins → R=0 even if verdict pass
+  // Multi-level: 无竞赛 win 时整局 verdict=pass 不得顶替 → 竞赛结果未完成（非 R=0 伪终局）
   const noWinCannon = computeAbilityScore({
     events: [phase(1, 'challenge'), tune(2, 's-a', 1), fire(3)],
     chapter: CHAPTER,
@@ -427,8 +590,9 @@ function run() {
     verdict: 'pass',
     judged: true,
   });
-  assert(noWinCannon.parts.result.raw === 0, `no-win cannon R=0, got ${noWinCannon.parts.result.raw}`);
+  assert(noWinCannon.parts.result.raw == null, `no-win cannon R pending, got ${noWinCannon.parts.result.raw}`);
   assert(noWinCannon.parts.result.progress?.levelsCleared === 0, 'no-win cleared=0');
+  assert(noWinCannon.bands.result === '未完成', `no-win band 未完成, got ${noWinCannon.bands.result}`);
 
   // Full-eval style complete win payload → 4/4
   const fullClear = detectMultiLevelProgress(
@@ -446,6 +610,11 @@ function run() {
     E: e.total,
     F: f.total,
     G: g.total,
+    H: { total: h.total, Er: h.parts.exploreResult.tier, R: h.parts.result.raw },
+    I: { total: i.total, Er: i.parts.exploreResult.tier },
+    J: { total: j.total, Er: j.parts.exploreResult.tier, R: j.parts.result.raw },
+    K: { Er: k.parts.exploreResult.tier },
+    L: { Er: l.parts.exploreResult.tier },
     bands: { A: a.bands.process, C: c.bands.process, E: e.bands.process },
     peNull: {
       Rcontrib: peNullScore.parts.result.contrib,

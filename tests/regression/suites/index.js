@@ -49,6 +49,7 @@ const SUITES = {
     { name: 'strategy-path-summary', module: './parts/strategy-path-summary' },
     { name: 'strategy-path-summary-challenge-scope', module: './parts/strategy-path-summary-challenge-scope' },
     { name: 'ability-score', module: './parts/ability-score' },
+    { name: 'radar-avoid-null-reps', module: './parts/radar-avoid-null-reps' },
     { name: 'trace-win-progress-persist', module: './parts/trace-win-progress-persist' },
     { name: 'strategy-layout', module: './parts/strategy-layout' },
   ],

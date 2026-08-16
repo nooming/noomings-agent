@@ -383,7 +383,7 @@ function buildReport({ tracesRoot, stats, rows, sample, generatedAt, humanOnly =
   }
   lines.push(`本趟回填：更新 ${stats.updated} · 跳过 ${stats.skipped} · 失败 ${stats.failed} · 扫描 ${stats.total}（跳过=version+inputsHash 未变）`);
   lines.push(`分布基于磁盘上 ${n} 条会话的 abilityScore（含本趟跳过未改写者）。`);
-  lines.push(`公式版本：abilityScore.version=${ABILITY_SCORE_VERSION} · 权重 R 30 / Pe 25 / Pc 25 / E 20 · 归因对齐 +5 · 仅教师侧`);
+  lines.push(`公式版本：abilityScore.version=${ABILITY_SCORE_VERSION} · 权重 R 25 / Er 8 / Pe 24 / Pc 24 / E 19 · 归因对齐 +5 · 仅教师侧`);
   lines.push('');
   lines.push('## 1. 总体分布');
   lines.push('');

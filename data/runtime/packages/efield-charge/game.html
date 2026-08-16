@@ -1350,10 +1350,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     }, delayMs);
                   }
                 } else {
-                  // 探究：只给观察反馈，不弹过关、不 emit win、不进 craft 结算
+                  // 探究命中：explore_success；不弹过关、不 emit win、不进 craft 结算
                   observeMsg.innerHTML = '<span class="win">光点进入目标区域</span>';
                   winOverlay.classList.remove('show');
-                  emit('snapshot', { controls: { 's-fieldStrength': state.fieldStrength, 's-charge': state.charge }, winOk: false, hintKey: 'explore_observe' });
+                  var exControls = { 's-fieldStrength': state.fieldStrength, 's-charge': state.charge };
+                  emit('snapshot', { controls: exControls, winOk: false, hintKey: 'explore_observe' });
+                  emit('explore_success', { winOk: true, hintKey: 'efield_hit', controls: exControls });
                 }
             } else {
                 const tooHighOnScreen = state.y < tz.y; // canvas y 向上更小

@@ -26,8 +26,9 @@ const HTMLGEN_SYSTEM = `你是物理教育互动课件的前端开发者。根�
 - 调节变量用 range 或明确 UI；混淆变量按 confoundingUi.uiStrategy（teach_only 仅教案区说明，勿做成主滑条）
 - 物理公式与过关判定对齐 gameSpec.constraints 与 winCondition
 - 含 Observe 反馈：测试/发射后可看到结果提示，支持 retry 式再调
-- 预留注释 <!-- trace-adapter-hook --> 供后期埋点（含 emit/snapshot/win 模板，与 heat-conduction 样本一致）
-- 过关 UI 出现时必须调用 emit('snapshot', { controls, winOk: true, hintKey }) 与 emit('win', { winOk: true })
+- 预留注释 <!-- trace-adapter-hook --> 供后期埋点（含 emit/snapshot/win/explore_success 模板，与 heat-conduction 样本一致）
+- 竞赛通关 UI：emit('snapshot', { controls, winOk: true, hintKey }) 与 emit('win', { winOk: true })（仅 challenge）
+- 探究达成（命中/对照里程碑）：emit('explore_success', { winOk: true, hintKey, … })；禁止用 win 冒充竞赛结果
 - 页面顶部显示操作提示：「调节参数后点击发射/测试」
 - 布局：canvas 主仿真区（id=simCanvas 或 gameSpec.layout.canvasId）+ 控件侧栏/下方（controlsPanel）；range 滑条与数值显示双向同步
 - gameSpec.needsContinuousSim 为 true 时：须 requestAnimationFrame 驱动连续动画，update(dt)/draw() 分离，dt=Math.min(50, now-last)；实时显示 gameSpec.dataReadouts 中的物理量；禁止调参即过关（须可见轨迹/读数变化）

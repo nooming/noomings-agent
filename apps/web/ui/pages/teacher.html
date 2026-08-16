@@ -65,7 +65,7 @@
         <div class="student-list-panel">
           <div class="student-list-header">
             <span>学生</span>
-            <span class="student-list-header-hint" title="综合分/过程/结果仅计终局会话（过关或机会用尽）；各任务取最近 1–2 局有限能力分均值后再对任务均分；结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·结果（仅终局）</span>
+            <span class="student-list-header-hint" title="综合分/过程/竞赛结果仅计终局会话（过关或机会用尽）；各任务取最近 1–2 局有限能力分均值后再对任务均分；竞赛结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·竞赛结果（仅终局）</span>
           </div>
           <p class="hint student-list-trunc-hint" id="studentListTruncHint" hidden>列表可能已截断，请搜索/筛选以定位更多学生</p>
           <ul class="student-list" id="studentList">
@@ -83,7 +83,7 @@
       </div>
       <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
         <h4>学情画像</h4>
-        <p class="hint">六维雷达（结果 / 探究 / 竞赛 / 效率 / 一致性 / 完成度）· 综合分与前五维仅终局；完成度 = 终局/(终局+未终局)。与左侧列表同源。</p>
+        <p class="hint">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· 综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
         <div id="crossGameSummary"></div>
       </div>
     </div>
@@ -1757,7 +1757,10 @@ const SEVERE_PROCESS_GAP_RE = /多参|混调|盲调|混淆|无关|旁路|对照�
  * 浏览器无法 require 该模块；若 path-summary 返回 abilityScoreVersion 则优先用服务端值，
  * 避免 scorer 升版后教师页再硬编码落后。
  */
-const ABILITY_SCORE_VERSION = 3;
+const ABILITY_SCORE_VERSION = 4;
+/** 一致性门槛：终局≥3 且任务≥2 才显示（不进主六维雷达槽） */
+const MIN_CONSISTENCY_TERMINAL = 3;
+const MIN_CONSISTENCY_TASKS = 2;
 let serverAbilityScoreVersion = null;
 
 function expectedAbilityScoreVersion() {
@@ -1951,9 +1954,59 @@ function consistencyFromTotals(totals) {
 }
 
 function abilityPartRaw(session, partKey) {
-  const raw = sessionAbilityScore(session)?.parts?.[partKey]?.raw;
+  const parts = sessionAbilityScore(session)?.parts;
+  if (!parts) return null;
+  let raw = parts?.[partKey]?.raw;
+  // 兼容：旧分无 challengeResult 时用 result；新分优先 challengeResult
+  if (partKey === 'challengeResult' && (raw == null || raw === '')) {
+    raw = parts?.result?.raw;
+  }
+  if (partKey === 'result' && (raw == null || raw === '') && parts?.challengeResult) {
+    raw = parts.challengeResult.raw;
+  }
+  // 注意：Number(null)===0，必须先排除 null/''，才能区分「未探究」与 raw=0
+  if (raw == null || raw === '') return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * 按维选代表局：在候选会话中取对应 parts.*.raw 非 null 的最近 n 局。
+ * 0（有探究未达成等）算有值；仅 null/非有限才跳过。
+ */
+function pickRepSessionsForPart(sessions, partKey, n = 2) {
+  const limit = Number.isFinite(Number(n)) && Number(n) > 0 ? Math.floor(Number(n)) : 2;
+  return sortSessionsNewestFirst(sessions)
+    .filter(s => abilityPartRaw(s, partKey) != null)
+    .slice(0, limit);
+}
+
+/** 各任务终局且有限总分的候选池（与综合分代表局同源过滤）。 */
+function finiteTerminalSessionsByTask(student) {
+  const byTask = new Map();
+  for (const s of terminalSessionsOf(student)) {
+    if (sessionFiniteAbilityTotal(s) == null) continue;
+    const key = sessionTaskKey(s);
+    if (!byTask.has(key)) byTask.set(key, []);
+    byTask.get(key).push(s);
+  }
+  return byTask;
+}
+
+/**
+ * 按任务、按维避 null：每任务取该维非 null 最近 1–2 终局均值，再跨任务均分。
+ * 同任务若无任何非 null 局则该任务不贡献；全部任务都无 → null。
+ */
+function meanPartByTaskAvoidNull(student, partKey) {
+  const byTask = finiteTerminalSessionsByTask(student);
+  const taskMeans = [];
+  for (const [, list] of byTask) {
+    const reps = pickRepSessionsForPart(list, partKey, 2);
+    if (!reps.length) continue;
+    const m = meanFinite(reps.map(s => abilityPartRaw(s, partKey)));
+    if (m != null) taskMeans.push(m);
+  }
+  return meanFinite(taskMeans);
 }
 
 /** 可见会话终局/未终局计数（完成度分母含未终局）。 */
@@ -1987,34 +2040,56 @@ function incompleteTooMany(stats) {
 }
 
 /**
- * 六维雷达：前五维与综合分同一套终局代表局；完成度含未终局。
- * 一致性优先用任务分序列；仅一任务时用代表局总分序列。
+ * 六维雷达（主槽）：探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度。
+ * 综合分：各任务最近 1–2 局有限总分均值。
+ * 探究/竞赛/效率：按维在终局有限总分候选中取非 null 最近 1–2 局再跨任务均分（0 计入）。
+ * 完成度含未终局；一致性门槛旁注，不进主六维槽。
  */
 function computeStudentRadarDims(student) {
   const agg = aggregateStudentAbilityByTask(student);
   const reps = agg.representativeSessions;
-  let result = meanFinite(reps.map(s => abilityPartRaw(s, 'result')));
-  if (result == null) {
+  let challengeResult = meanPartByTaskAvoidNull(student, 'challengeResult');
+  if (challengeResult == null) {
+    challengeResult = meanPartByTaskAvoidNull(student, 'result');
+  }
+  if (challengeResult == null) {
     const terminal = terminalSessionsOf(student);
     if (terminal.length) {
-      result = (terminal.filter(s => s.verdict === 'pass' || s.terminalOutcome === 'pass'
+      challengeResult = (terminal.filter(s => s.verdict === 'pass' || s.terminalOutcome === 'pass'
+        || s.abilityScore?.bands?.challengeResult === '达标'
         || s.abilityScore?.bands?.result === '达标').length / terminal.length) * 100;
     }
   }
-  const exploreProcess = meanFinite(reps.map(s => abilityPartRaw(s, 'exploreProcess')));
-  const challengeProcess = meanFinite(reps.map(s => abilityPartRaw(s, 'challengeProcess')));
-  const efficiency = meanFinite(reps.map(s => abilityPartRaw(s, 'efficiency')));
-  const consistencySources = agg.taskScores.length >= 2
-    ? agg.taskScores.map(t => t.score)
-    : reps.map(s => sessionFiniteAbilityTotal(s));
-  const consistency = consistencyFromTotals(consistencySources);
+  const exploreResult = meanPartByTaskAvoidNull(student, 'exploreResult');
+  const exploreProcess = meanPartByTaskAvoidNull(student, 'exploreProcess');
+  const challengeProcess = meanPartByTaskAvoidNull(student, 'challengeProcess');
+  const efficiency = meanPartByTaskAvoidNull(student, 'efficiency');
   const completionStats = countSessionTerminalStats(student);
   const completion = computeCompletionScore(student);
+  const taskCount = agg.taskScores.length;
+  const consistencyEligible = completionStats.terminalN >= MIN_CONSISTENCY_TERMINAL
+    && taskCount >= MIN_CONSISTENCY_TASKS;
+  const consistencySources = consistencyEligible
+    ? agg.taskScores.map(t => t.score)
+    : [];
+  const consistency = consistencyEligible
+    ? consistencyFromTotals(consistencySources)
+    : null;
   return {
     composite: agg.composite,
-    dims: { result, exploreProcess, challengeProcess, efficiency, consistency, completion },
+    dims: {
+      exploreResult,
+      challengeResult,
+      result: challengeResult,
+      exploreProcess,
+      challengeProcess,
+      efficiency,
+      completion,
+      consistency,
+    },
     repCount: reps.length,
-    taskCount: agg.taskScores.length,
+    taskCount,
+    consistencyEligible,
     consistencyN: consistencySources.filter(n => Number.isFinite(n)).length,
     completionStats,
   };
@@ -2121,7 +2196,10 @@ function mapSessionResultBand(session) {
     if (session.verdict === 'pass' || session.terminalOutcome === 'pass') return '达标';
     if (session.terminalOutcome === 'exhausted_fail') return '未达标';
   }
-  const abilityBand = normalizeResultBandLabel(sessionAbilityScore(session)?.bands?.result);
+  const ability = sessionAbilityScore(session);
+  const abilityBand = normalizeResultBandLabel(
+    ability?.bands?.challengeResult || ability?.bands?.result,
+  );
   if (abilityBand === '达标' || abilityBand === '未达标') return abilityBand;
   return '未完成';
 }
@@ -2191,7 +2269,7 @@ function studentAggBadgesHtml(student) {
   const pending = !!sessionAbilityScore(effectiveSession)?.pending && abilityTotal == null;
   return [
     abilityScoreBadgeHtml(abilityTotal, { pending, title: '综合分（按任务均分·仅终局）' }),
-    `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="结果档（达标/未完成/未达标）">${esc(res)}</span>`,
+    `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="竞赛结果档（达标/未完成/未达标）">${esc(res)}</span>`,
     incompleteBadgeHtml(student),
   ].filter(Boolean).join('');
 }
@@ -2211,7 +2289,7 @@ function studentAggMetaHtml(student) {
   const termHint = stats.totalN ? ` · 终局 ${stats.terminalN}/${stats.totalN}` : '';
   const completion = computeCompletionScore(student);
   const compHint = completion != null ? ` · 完成度 ${completion}` : '';
-  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·按任务均分${esc(taskHint)}${esc(termHint)}${esc(compHint)}；综合分仅终局）：综合分 ${esc(scoreTxt)} · 过程·${esc(proc)} · 结果·${esc(res)}</p>`;
+  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·按任务均分${esc(taskHint)}${esc(termHint)}${esc(compHint)}；综合分仅终局）：综合分 ${esc(scoreTxt)} · 过程·${esc(proc)} · 竞赛结果·${esc(res)}</p>`;
 }
 
 function renderStudentList() {
@@ -2306,11 +2384,11 @@ function radarDimDisplay(value) {
 /** Lightweight SVG radar (no npm). values 0–100; null → 0 on plot but dashed legend. */
 function renderAbilityRadarSvg(dims) {
   const axes = [
-    { key: 'result', label: '结果', value: dims.result },
-    { key: 'exploreProcess', label: '探究', value: dims.exploreProcess },
-    { key: 'challengeProcess', label: '竞赛', value: dims.challengeProcess },
+    { key: 'exploreResult', label: '探究结果', value: dims.exploreResult },
+    { key: 'challengeResult', label: '竞赛结果', value: dims.challengeResult ?? dims.result },
+    { key: 'exploreProcess', label: '探究过程', value: dims.exploreProcess },
+    { key: 'challengeProcess', label: '竞赛过程', value: dims.challengeProcess },
     { key: 'efficiency', label: '效率', value: dims.efficiency },
-    { key: 'consistency', label: '一致性', value: dims.consistency },
     { key: 'completion', label: '完成度', value: dims.completion },
   ];
   const n = axes.length;
@@ -2350,20 +2428,23 @@ function renderStudentRadarHtml(radar) {
   const d = radar?.dims || {};
   const compositeTxt = radarDimDisplay(radar?.composite);
   const legend = [
-    ['结果', d.result],
+    ['探究结果', d.exploreResult],
+    ['竞赛结果', d.challengeResult ?? d.result],
     ['探究过程', d.exploreProcess],
     ['竞赛过程', d.challengeProcess],
     ['效率', d.efficiency],
-    ['一致性', d.consistency],
     ['完成度', d.completion],
   ].map(([label, v]) => (
     `<li><span class="radar-legend-label">${esc(label)}</span>`
     + `<span class="radar-legend-value">${esc(radarDimDisplay(v))}</span></li>`
   )).join('');
   const hints = [];
-  if (!radar?.repCount) hints.push('当前筛选下尚无终局有限能力分，前五维仅作占位。');
-  if (radar?.consistencyN != null && radar.consistencyN < 2) {
-    hints.push('一致性需至少 2 个任务分或代表局，样本不足暂不评分。');
+  if (!radar?.repCount) hints.push('当前筛选下尚无终局有限能力分，过程/结果维仅作占位。');
+  hints.push('探究等维取最近有该维记录的局，避免最近未探究导致空白。');
+  if (radar?.consistencyEligible && Number.isFinite(d.consistency)) {
+    hints.push(`一致性（门槛旁注，不占主六维）：${radarDimDisplay(d.consistency)}。`);
+  } else {
+    hints.push(`一致性需终局≥${MIN_CONSISTENCY_TERMINAL}且任务≥${MIN_CONSISTENCY_TASKS}，未达标不显示。`);
   }
   const cs = radar?.completionStats;
   if (cs?.totalN) {
@@ -2632,7 +2713,7 @@ function sessionRowBadgesHtml(session) {
   const resBand = mapSessionResultBand(session);
   return `<span class="session-row-badges">${scoreHtml}`
     + `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档">${esc(proc)}</span>`
-    + `<span class="badge badge-band badge-result ${resultBandClass(resBand)}" title="结果档">${esc(resBand)}</span>`
+    + `<span class="badge badge-band badge-result ${resultBandClass(resBand)}" title="竞赛结果档">${esc(resBand)}</span>`
     + `</span>`;
 }
 
@@ -2811,17 +2892,26 @@ function buildAbilityScoreBlock(ability) {
     const cTxt = String(cClamped);
     return { rawTxt, cTxt, cNum: cClamped, maxW };
   };
-  const r = fmt(p.result, 30);
-  const pe = fmt(p.exploreProcess, 25);
-  const pc = fmt(p.challengeProcess, 25);
-  const e = fmt(p.efficiency, 20);
+  const challengePart = p.challengeResult || p.result;
+  const r = fmt(challengePart, 25);
+  const er = fmt(p.exploreResult, 8);
+  const pe = fmt(p.exploreProcess, 24);
+  const pc = fmt(p.challengeProcess, 24);
+  const e = fmt(p.efficiency, 19);
   const attr = p.attribution || {};
   const attrTxt = attr.aligned ? `+${attr.contrib || 5}` : '+0';
   const gate = p.efficiency?.processGate ? '通过' : '未通过';
   const trials = p.efficiency?.challengeTrials != null ? p.efficiency.challengeTrials : '—';
   const exploreTrials = Number(p.efficiency?.exploreTrials || 0);
   const peUnset = p.exploreProcess?.raw == null || exploreTrials <= 0;
-  const peValTxt = peUnset ? `未探究 · +${pe.cTxt}/25` : `+${pe.cTxt}/25`;
+  const peValTxt = peUnset ? `未探究 · +${pe.cTxt}/24` : `+${pe.cTxt}/24`;
+  const erTier = p.exploreResult?.tier || ability?.bands?.exploreResult || '';
+  const erTierLabel = erTier === 'solid' || erTier === '扎实达成'
+    ? '扎实'
+    : (erTier === 'lucky' || erTier === '幸运一发' ? '幸运' : (er.rawTxt === '0' ? '未达成' : ''));
+  const erValTxt = er.rawTxt === '—'
+    ? `未探究 · +${er.cTxt}/8`
+    : `+${er.cTxt}/8${erTierLabel ? ` · ${erTierLabel}` : ''}`;
   const bar = (label, contrib, maxW, tone, valOverride) => {
     const c = Number(contrib);
     const w = maxW > 0 ? Math.max(0, Math.min(100, (c / maxW) * 100)) : 0;
@@ -2835,17 +2925,18 @@ function buildAbilityScoreBlock(ability) {
   return `<div class="session-ability-block">
     <h4 class="session-section-label">能力总分 <strong class="ability-total-num">${esc(totalTxt)}</strong></h4>
     <div class="ability-group ability-group-main">
-      <div class="ability-group-label">主分</div>
+      <div class="ability-group-label">主分（竞赛结果 25 · 过程 24 · 效率 19）</div>
       <div class="ability-bars">
-        ${bar('结果', r.cTxt, 30, 'result')}
-        ${bar('竞赛', pc.cTxt, 25, 'challenge')}
-        ${bar('效率', e.cTxt, 20, 'eff')}
+        ${bar('竞赛结果', r.cTxt, 25, 'result')}
+        ${bar('竞赛过程', pc.cTxt, 24, 'challenge')}
+        ${bar('效率', e.cTxt, 19, 'eff')}
       </div>
     </div>
     <div class="ability-group ability-group-explore">
-      <div class="ability-group-label">探究（占25分·本任务）</div>
+      <div class="ability-group-label">探究（过程 24 · 结果 8 小权重）</div>
       <div class="ability-bars">
-        ${bar('探究', pe.cTxt, 25, 'explore', peValTxt)}
+        ${bar('探究过程', pe.cTxt, 24, 'explore', peValTxt)}
+        ${bar('探究结果', er.cTxt, 8, 'explore', erValTxt)}
       </div>
     </div>
     <div class="ability-bars ability-bars-attr">
@@ -2857,7 +2948,7 @@ function buildAbilityScoreBlock(ability) {
     </div>
     <details class="ability-raw-details">
       <summary>原始分与门闩</summary>
-      <p class="session-path-meta">原始分：结果 ${esc(r.rawTxt)} · 探究 ${esc(pe.rawTxt)} · 竞赛 ${esc(pc.rawTxt)} · 效率 ${esc(e.rawTxt)} · 过程门闩 ${esc(gate)} · 竞赛试次 ${esc(String(trials))}</p>
+      <p class="session-path-meta">原始分：探究结果 ${esc(er.rawTxt)} · 竞赛结果 ${esc(r.rawTxt)} · 探究过程 ${esc(pe.rawTxt)} · 竞赛过程 ${esc(pc.rawTxt)} · 效率 ${esc(e.rawTxt)} · 过程门闩 ${esc(gate)} · 竞赛试次 ${esc(String(trials))}</p>
     </details>
   </div>`;
 }

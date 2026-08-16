@@ -33,7 +33,8 @@
     const events = session.events;
     const hasEvents = Array.isArray(events);
     const verdict = session.verdict || session.judgeResult?.verdict || null;
-    const abilityResult = session.abilityScore?.bands?.result;
+    const abilityResult = session.abilityScore?.bands?.challengeResult
+      || session.abilityScore?.bands?.result;
 
     const won = verdict === 'pass'
       || abilityResult === '达标'

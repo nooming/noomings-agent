@@ -1,0 +1,168 @@
+{
+  "sessionId": "sess-1786514093852-hinxdry",
+  "catalogId": "demo-pendulum-clock",
+  "graphId": "pendulum-clock",
+  "studentLabel": "王五",
+  "studentId": "123",
+  "taskCode": "demo-pendulum-clock",
+  "ch": 0,
+  "game": "demo-pendulum-clock",
+  "traceVersion": 1,
+  "startedAt": "2026-08-12T05:54:53.969Z",
+  "updatedAt": "2026-08-12T05:56:37.899Z",
+  "eventCount": 15,
+  "events": [
+    {
+      "ts": 1786514093913,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514093912,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786514094054,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786514095232,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514095232,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514099346,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.93"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514103314,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.8"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514104714,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.845"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514107674,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.935"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514110386,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.89"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514114097,
+      "type": "tuning",
+      "payload": {
+        "control": "s-angle",
+        "value": "21"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514122274,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.795"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514176523,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.51"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514189122,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "1.435"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514197842,
+      "type": "tuning",
+      "payload": {
+        "control": "s-len",
+        "value": "0.925"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-len": 9,
+    "s-angle": 1
+  },
+  "actionCounts": {
+    "craftIntroBtn": 2
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-len",
+      "label": "s-len",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 9
+    },
+    {
+      "controlId": "s-angle",
+      "label": "s-angle",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    }
+  ],
+  "currentPhase": "explore",
+  "sawPhaseChange": true,
+  "terminalOutcome": "incomplete"
+}

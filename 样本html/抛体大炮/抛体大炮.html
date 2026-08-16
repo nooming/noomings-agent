@@ -1487,10 +1487,11 @@ class PixelGame {
         const windOk = this.exploreWindSeen.size >= 2;
         if (this.exploreShots < 3 || !(dragOk || windOk)) return;
         this.exploreWon = true;
-        // 探究：轻量提示 only，不 emit win / 不打开过关结算卡
+        // 探究达成：explore_success；不 emit win / 不打开过关结算卡
         if (window.__emit) {
             var c = window.__snapControls ? window.__snapControls() : {};
             window.__emit('snapshot', { controls: c, winOk: false, hintKey: 'explore_observe' });
+            window.__emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
         }
         const tip = document.createElement('div');
         tip.className = 'score-pop';

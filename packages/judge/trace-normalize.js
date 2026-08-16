@@ -6,6 +6,7 @@
 /** 已是规范语义的事件类型：禁止被 legacyTypes 重映射（否则 win→tuning 会丢通关） */
 const IMMUTABLE_EVENT_TYPES = new Set([
   'win',
+  'explore_success',
   'snapshot',
   'phase_change',
   'puzzle_open',

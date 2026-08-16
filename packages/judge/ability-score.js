@@ -1,16 +1,19 @@
 /**
- * 平台能力总分 v3（教师侧排序/详情拆解；非 RL、非包内玩法分）。
+ * 平台能力总分 v4（教师侧排序/详情拆解；非 RL、非包内玩法分）。
  *
- * S = 0.30*R + 0.25*Pe + 0.25*Pc + 0.20*E
+ * S = 0.25*R + 0.08*Er + 0.24*Pe + 0.24*Pc + 0.19*E
  * 固定权重求和：缺维（null）该项贡献 0，**不**把权重摊给其它维。
- * 探究 Pe 占满分 100 中固定 25：有本局探究过程才计分，否则 +0/25。
+ * R = 竞赛结果（challengeResult）；Er = 探究结果（exploreResult，小权重）。
+ * Er raw：none=0 / lucky=40 / solid=100；null（未探究）→ 贡献 0、不摊权重。
+ * lucky 对总分弱于 solid（权重×raw：3.2 vs 8）。
+ * 探究 Pe 占满分 100 中固定 24：有本局探究过程才计分，否则 +0/24。
  * 归因一致时加权和后再 +5（封顶 100）。
  *
- * v3 相对 v2：取消 renorm（消灭缺 Pe 时结果条 40/30）；无 phase_change 不再整局算探究；
- * Pe 永不抬高 R/Pc/E。
+ * v4：拆「探究结果 / 竞赛结果」；竞赛结果仅看竞赛段（禁止用探究 win / explore_success 顶替）；
+ * 探究结果 = none/lucky/solid（探究段 explore_success，兼容旧轨迹 win/winOk × 探究过程门闩）。
+ * 向后兼容：parts.result / bands.result 仍写出，语义 = 竞赛结果。
  *
- * v2：幸运一发（pass + challengeTrials==1 + !processGate）更严压 E/总分；
- * Pe-null 时「清楚」需竞赛有效试次≥2；多关无 win → R=0。
+ * v3 相对 v2：取消 renorm；无 phase_change 不再整局算探究；Pe 永不抬高 R/Pc/E。
  *
  * 过程档（option B）：由 Pe/Pc/processGate/cvOver/trap 映射为
  * 清楚 / 部分清楚 / 尚不清晰 / 未评估。
@@ -23,17 +26,24 @@ const {
   resolveStrategyPathScoreScope,
 } = require('./trace-normalize');
 
-const ABILITY_SCORE_VERSION = 3;
+const ABILITY_SCORE_VERSION = 4;
 
 /** 幸运一发：E 上限与总分软封顶 */
 const LUCKY_ONESHOT_E = 25;
 const LUCKY_ONESHOT_TOTAL_CAP = 62;
 
+/** 探究结果展示分：none→0（有探究操作）或 null（未探究）；lucky / solid */
+const EXPLORE_RESULT_LUCKY = 40;
+const EXPLORE_RESULT_SOLID = 100;
+
 const ABILITY_SCORE_WEIGHTS = Object.freeze({
-  R: 0.30,
-  Pe: 0.25,
-  Pc: 0.25,
-  E: 0.20,
+  /** 竞赛结果 */
+  R: 0.25,
+  /** 探究结果（小权重；lucky/solid 靠 raw 拉开） */
+  Er: 0.08,
+  Pe: 0.24,
+  Pc: 0.24,
+  E: 0.19,
 });
 
 /** 归因一致 → 加权和后扁平加分（封顶 100）；无归因不罚 */
@@ -58,8 +68,22 @@ function countOps(events) {
   return (events || []).filter(isTuningOrFire).length;
 }
 
+/** 竞赛通关：仅 win / snapshot.winOk；不认 explore_success */
 function hasWin(events) {
   return (events || []).some(e => e.type === 'win' || (e.type === 'snapshot' && e.payload?.winOk));
+}
+
+/**
+ * 探究达成：优先 explore_success；兼容旧轨迹探究段 win / snapshot.winOk。
+ * 勿用于竞赛结果。
+ */
+function hasExploreSuccess(events) {
+  return (events || []).some((e) => {
+    if (e?.type === 'explore_success') return true;
+    if (e?.type === 'win') return true;
+    if (e?.type === 'snapshot' && e.payload?.winOk) return true;
+    return false;
+  });
 }
 
 function hasAttemptsExhausted(events) {
@@ -414,7 +438,7 @@ function evaluateAttributionBonus(events, chapter, preferScore, fallbackScore) {
  * v1/v2 遗留：缺维时对非 null 权重归一。v3 主路径已不用；保留供对照/迁移。
  */
 function renormWeightedSum(parts, weights) {
-  const keys = ['R', 'Pe', 'Pc', 'E'];
+  const keys = ['R', 'Er', 'Pe', 'Pc', 'E'];
   let wSum = 0;
   const active = [];
   for (const k of keys) {
@@ -432,11 +456,11 @@ function renormWeightedSum(parts, weights) {
 }
 
 /**
- * v3 固定权重：S = Σ w_i * raw_i；缺维跳过（贡献 0），不抬高其它维。
- * raw 为 0–100；w 为份额（如 0.30 → 满分贡献 30）。
+ * v3/v4 固定权重：S = Σ w_i * raw_i；缺维跳过（贡献 0），不抬高其它维。
+ * raw 为 0–100；w 为份额（如 0.25 → 满分贡献 25）。
  */
 function fixedWeightedSum(parts, weights) {
-  const keys = ['R', 'Pe', 'Pc', 'E'];
+  const keys = ['R', 'Er', 'Pe', 'Pc', 'E'];
   let any = false;
   let s = 0;
   for (const k of keys) {
@@ -495,6 +519,87 @@ function mapResultBand(resultPart, verdict, pending, opts = {}) {
   return '未完成';
 }
 
+/**
+ * 探究过程门闩（对齐竞赛幸运一发）：Pe 够格、有效试次≥2、非混调/thrash。
+ * 仅用于探究结果 solid vs lucky，不写入竞赛结果。
+ */
+function computeExploreResultGate(pe) {
+  const peOk = pe?.raw != null && pe.raw >= 60;
+  const trials = pe?.effectiveTrials || 0;
+  const trialsOk = trials >= 2;
+  const notMuddy = !pe?.trap && pe?.switchKind !== 'thrash';
+  const ok = !!(peOk && trialsOk && notMuddy);
+  return {
+    ok,
+    reasons: { peOk, trialsOk, notMuddy, trials },
+  };
+}
+
+/**
+ * 探究结果：none / lucky / solid。
+ * - 无分段或未探究操作 → raw null（不进均值）
+ * - 有探究操作但无探究达成（explore_success；兼容旧 win/winOk）→ raw 0（none）
+ * - 有探究达成但过程门闩失败 → lucky=40
+ * - 达成且门闩通过 → solid=100
+ * 禁止用本结果填竞赛结果；竞赛段不认 explore_success。
+ */
+function computeExploreResult(exploreEvents, pe, hasPhase) {
+  if (!hasPhase) {
+    return {
+      raw: null,
+      tier: 'none',
+      note: '无分段·不计探究结果',
+      gate: false,
+      gateReasons: null,
+    };
+  }
+  const exploreOps = phaseHasOps(exploreEvents);
+  const exploreWon = hasExploreSuccess(exploreEvents);
+  if (!exploreOps && !exploreWon) {
+    return {
+      raw: null,
+      tier: 'none',
+      note: '未探究',
+      gate: false,
+      gateReasons: null,
+    };
+  }
+  if (!exploreWon) {
+    return {
+      raw: 0,
+      tier: 'none',
+      note: '探究未达成',
+      gate: false,
+      gateReasons: null,
+    };
+  }
+  const { ok: gate, reasons: gateReasons } = computeExploreResultGate(pe);
+  if (gate) {
+    return {
+      raw: EXPLORE_RESULT_SOLID,
+      tier: 'solid',
+      note: '探究扎实达成',
+      gate: true,
+      gateReasons,
+    };
+  }
+  return {
+    raw: EXPLORE_RESULT_LUCKY,
+    tier: 'lucky',
+    note: '探究幸运一发/过程不足',
+    gate: false,
+    gateReasons,
+  };
+}
+
+function mapExploreResultBand(exploreResult) {
+  const tier = exploreResult?.tier || 'none';
+  if (tier === 'solid') return '扎实达成';
+  if (tier === 'lucky') return '幸运一发';
+  if (exploreResult?.raw == null) return null;
+  return '未达成';
+}
+
 function shortPathLabel(primary, phaseKey) {
   const s = String(primary || '').trim();
   const prefix = phaseKey === 'explore' ? '探究' : (phaseKey === 'challenge' ? '竞赛' : '路径');
@@ -540,15 +645,6 @@ function computeAbilityScore(input = {}) {
   const attemptsExhausted = hasAttemptsExhausted(events)
     || input.attemptsExhausted === true
     || input.terminalOutcome === 'exhausted_fail';
-  const resultInfo = computeResultRaw(events, {
-    verdict: input.verdict,
-    judged: input.judged,
-    packageId: input.packageId,
-    graphId: input.graphId,
-    levelsTotal: input.levelsTotal,
-    multiLevel: input.multiLevel,
-    attemptsExhausted,
-  });
 
   const hasPhase = events.some(e => e.type === 'phase_change');
   let exploreEvents;
@@ -557,12 +653,15 @@ function computeAbilityScore(input = {}) {
     exploreEvents = filterEventsByExplorePhase(events);
     challengeEvents = filterEventsByChallengePhase(events);
   } else {
-    // v3: 无分段 → 不把整局当探究；Pe/Pc 皆不计过程块
+    // 无分段 → 不把整局当探究；Pe/Pc 皆不计过程块
     exploreEvents = [];
     challengeEvents = [];
   }
 
-  // 有分段时用 resolve 校验竞赛段；无分段不抬竞赛过程
+  // 竞赛结果用相位过滤后的完整竞赛段（含仅 win、无 tuning 的多关局）；勿被过程评分清空
+  const challengeEventsForResult = hasPhase ? challengeEvents.slice() : events;
+
+  // 有分段时用 resolve 校验竞赛段；无分段不抬竞赛过程（仅影响 Pc，不影响竞赛结果）
   if (hasPhase) {
     const challengeScope = resolveStrategyPathScoreScope(events, { phaseScope: 'challenge' });
     if (challengeScope.scoredPhase === 'challenge') {
@@ -571,6 +670,27 @@ function computeAbilityScore(input = {}) {
       challengeEvents = [];
     }
   }
+
+  // 竞赛结果：仅竞赛段（有分段时）；禁止用探究 win / explore_success / 整局 verdict=pass 顶替
+  const challengeWon = hasWin(challengeEventsForResult)
+    || (!hasPhase && (input.verdict === 'pass' || hasWin(events)));
+  const challengeAttemptsExhausted = hasPhase
+    ? (hasAttemptsExhausted(challengeEventsForResult) || attemptsExhausted)
+    : attemptsExhausted;
+  const resultInfo = computeResultRaw(challengeEventsForResult, {
+    // 有分段且竞赛未赢：不把整局 pass 传给结果分
+    verdict: hasPhase
+      ? (challengeWon ? 'pass' : (challengeAttemptsExhausted ? (input.verdict || 'learning') : null))
+      : input.verdict,
+    judged: hasPhase
+      ? (challengeWon || challengeAttemptsExhausted || phaseHasOps(challengeEventsForResult) || !!input.judged)
+      : input.judged,
+    packageId: input.packageId,
+    graphId: input.graphId,
+    levelsTotal: input.levelsTotal,
+    multiLevel: input.multiLevel,
+    attemptsExhausted: challengeAttemptsExhausted && !challengeWon,
+  });
 
   const pe = (input.exploreScore && hasPhase)
     ? hydrateFromScoreResult(input.exploreScore, 'explore')
@@ -586,13 +706,14 @@ function computeAbilityScore(input = {}) {
     pe.raw = null;
   }
 
+  const exploreResultInfo = computeExploreResult(exploreEvents, pe, hasPhase);
+
   const { processGate, reasons: gateReasons } = computeProcessGate(pe, pc);
   const challengeTrials = pc.effectiveTrials || 0;
   const exploreTrials = pe.effectiveTrials || 0;
   let eRaw = efficiencyRaw(processGate, challengeTrials, exploreTrials);
 
-  const won = hasWin(events) || input.verdict === 'pass';
-  const luckyOneShot = !!(won && challengeTrials === 1 && !processGate);
+  const luckyOneShot = !!(challengeWon && challengeTrials === 1 && !processGate);
   if (luckyOneShot && eRaw != null) {
     eRaw = Math.min(eRaw, LUCKY_ONESHOT_E);
   }
@@ -601,15 +722,19 @@ function computeAbilityScore(input = {}) {
 
   const rawParts = {
     R: resultInfo.raw,
+    Er: exploreResultInfo.raw,
     Pe: pe.raw,
     Pc: pc.raw,
     E: eRaw,
   };
 
   let weighted = fixedWeightedSum(rawParts, weights);
-  // 未完成/待评且无过关：列表显示「—」，不伪造成高能力分（分项仍可在详情预览）
+  // 竞赛结果未完成且未通关：列表显示「—」（探究 win 不解除 pending）
   // 机会用尽失败是终局，不算 incompletePending
-  const incompletePending = !!resultInfo.pending && resultInfo.raw == null && !won && !attemptsExhausted;
+  const incompletePending = !!resultInfo.pending
+    && resultInfo.raw == null
+    && !challengeWon
+    && !challengeAttemptsExhausted;
 
   // 两端皆无有效过程试次且结果也空 → total null
   let total = null;
@@ -617,11 +742,14 @@ function computeAbilityScore(input = {}) {
     if (weighted != null) {
       total = clamp(Math.round(weighted + (attr.aligned ? ATTRIBUTION_BONUS : 0)), 0, 100);
     } else if (resultInfo.raw != null && eRaw == null && pe.raw == null && pc.raw == null) {
-      // 仅有结果、无过程：固定权重下只拿 R 份额（不再 renorm 成满分）
-      total = clamp(Math.round(weights.R * resultInfo.raw), 0, 100);
+      // 仅有竞赛结果、无过程：固定权重下只拿 R（+ 若有 Er）份额（不再 renorm 成满分）
+      const erPart = exploreResultInfo.raw != null && Number.isFinite(exploreResultInfo.raw)
+        ? weights.Er * exploreResultInfo.raw
+        : 0;
+      total = clamp(Math.round(weights.R * resultInfo.raw + erPart), 0, 100);
     }
   }
-  // v2：幸运一发总分软封顶（相对扎实一发拉开）
+  // 幸运一发总分软封顶（相对扎实一发拉开）
   if (luckyOneShot && total != null) {
     total = Math.min(total, LUCKY_ONESHOT_TOTAL_CAP);
   }
@@ -638,10 +766,27 @@ function computeAbilityScore(input = {}) {
   const processBand = mapProcessBand({
     pe, pc, processGate, total, pending: !!resultInfo.pending && total == null,
   });
-  const resultBand = mapResultBand(resultInfo, input.verdict, resultInfo.pending, {
-    won,
-    attemptsExhausted: attemptsExhausted && !won,
+  // 档位判定勿把整局 verdict=pass（可能来自探究 win）当成竞赛达标
+  const resultBand = mapResultBand(resultInfo, challengeWon ? 'pass' : null, resultInfo.pending, {
+    won: challengeWon,
+    attemptsExhausted: challengeAttemptsExhausted && !challengeWon,
   });
+  const exploreResultBand = mapExploreResultBand(exploreResultInfo);
+
+  const challengeResultPart = {
+    raw: resultInfo.raw,
+    contrib: contrib(resultInfo.raw, weights.R),
+    note: resultInfo.note,
+    progress: resultInfo.progress,
+  };
+  const exploreResultPart = {
+    raw: exploreResultInfo.raw,
+    contrib: contrib(exploreResultInfo.raw, weights.Er),
+    tier: exploreResultInfo.tier,
+    note: exploreResultInfo.note,
+    gate: exploreResultInfo.gate,
+    gateReasons: exploreResultInfo.gateReasons,
+  };
 
   return {
     version: ABILITY_SCORE_VERSION,
@@ -649,12 +794,10 @@ function computeAbilityScore(input = {}) {
     pending,
     weights: { ...weights },
     parts: {
-      result: {
-        raw: resultInfo.raw,
-        contrib: contrib(resultInfo.raw, weights.R),
-        note: resultInfo.note,
-        progress: resultInfo.progress,
-      },
+      // 兼容：result = 竞赛结果（语义收窄后）
+      result: challengeResultPart,
+      challengeResult: challengeResultPart,
+      exploreResult: exploreResultPart,
       exploreProcess: {
         raw: pe.raw,
         contrib: contrib(pe.raw, weights.Pe),
@@ -690,6 +833,8 @@ function computeAbilityScore(input = {}) {
     bands: {
       process: processBand,
       result: resultBand,
+      challengeResult: resultBand,
+      exploreResult: exploreResultBand,
     },
     labelsShort: {
       pathExplore: shortPathLabel(pe.primary, 'explore'),
@@ -735,14 +880,20 @@ module.exports = {
   ATTRIBUTION_BONUS,
   LUCKY_ONESHOT_E,
   LUCKY_ONESHOT_TOTAL_CAP,
+  EXPLORE_RESULT_LUCKY,
+  EXPLORE_RESULT_SOLID,
   computeAbilityScore,
   detectMultiLevelProgress,
   computeResultRaw,
+  computeExploreResult,
+  computeExploreResultGate,
   computeProcessGate,
   efficiencyRaw,
   mapProcessBand,
   mapResultBand,
+  mapExploreResultBand,
   hasWin,
+  hasExploreSuccess,
   hasAttemptsExhausted,
   evaluateAttributionBonus,
   renormWeightedSum,

@@ -1435,6 +1435,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       winMsg.innerHTML = '';
       hintMsg.textContent = '已对比多组读数 · 可切换竞赛接安全巡检（安全带本局固定）';
       emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+      emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controls });
     }
   }
 

@@ -73,8 +73,8 @@ function main() {
   const payload = {
     generatedAt: new Date().toISOString(),
     contract: {
-      events: ['tuning', 'action', 'snapshot', 'win', 'phase_change', 'mode'],
-      note: '学生端 PlatformTraceAdapter 统一上报；游戏内可挂 GameTrace 桥。缺桥接时教师看板只能看到壳层事件。',
+      events: ['tuning', 'action', 'snapshot', 'win', 'explore_success', 'phase_change', 'mode'],
+      note: '学生端 PlatformTraceAdapter 统一上报；游戏内可挂 GameTrace 桥。缺桥接时教师看板只能看到壳层事件。explore_success=探究达成；win=竞赛通关。',
     },
     summary: {
       covered: rows.filter(r => r.ok).length,
@@ -94,7 +94,8 @@ function main() {
     '- `tuning`：控件调节',
     '- `action` / `snapshot`：发射或尝试边界',
     '- `phase_change` / `mode`：探究↔竞赛',
-    '- `win`：过关',
+    '- `explore_success`：探究达成（不计竞赛通关）',
+    '- `win`：竞赛通关',
     '',
     `有缺口样本：**${withGaps.length}** / ${payload.summary.covered}`,
     '',

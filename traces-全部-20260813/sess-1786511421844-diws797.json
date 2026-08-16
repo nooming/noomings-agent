@@ -1,0 +1,835 @@
+{
+  "sessionId": "sess-1786511421844-diws797",
+  "catalogId": "demo-series-parallel",
+  "graphId": "series-parallel",
+  "studentLabel": "22",
+  "studentId": "22",
+  "taskCode": "demo-series-parallel",
+  "ch": 0,
+  "game": "demo-series-parallel",
+  "traceVersion": 1,
+  "startedAt": "2026-08-12T05:10:23.027Z",
+  "updatedAt": "2026-08-12T05:38:12.221Z",
+  "eventCount": 33,
+  "events": [
+    {
+      "ts": 1786511422011,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786511422012,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511422209,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786511422209,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786511441853,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511441852,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511444741,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511444741,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511444737,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-r1": "50",
+          "s-r2": "50",
+          "s-meter-r": "0.5",
+          "btn-connect": "series",
+          "mode": "series"
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786512022215,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513050540,
+      "type": "action",
+      "payload": {
+        "control": "btn-connect"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513050541,
+      "type": "action",
+      "payload": {
+        "control": "btn-connect"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513050539,
+      "type": "tuning",
+      "payload": {
+        "control": "btn-connect",
+        "value": "parallel"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513053254,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513053253,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-r1": "80",
+          "s-r2": "80",
+          "s-meter-r": "0.5",
+          "btn-connect": "parallel",
+          "mode": "parallel"
+        },
+        "winOk": false,
+        "hintKey": "电流偏大，增大电阻"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513053254,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513071290,
+      "type": "tuning",
+      "payload": {
+        "control": "s-meter-r",
+        "value": "5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513074377,
+      "type": "tuning",
+      "payload": {
+        "control": "s-meter-r",
+        "value": "2.2"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513075956,
+      "type": "tuning",
+      "payload": {
+        "control": "s-r2",
+        "value": "100"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513077407,
+      "type": "tuning",
+      "payload": {
+        "control": "s-r1",
+        "value": "100"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513078873,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513078871,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-r1": "100",
+          "s-r2": "100",
+          "s-meter-r": "2.2",
+          "btn-connect": "parallel",
+          "mode": "parallel"
+        },
+        "winOk": false,
+        "hintKey": "电流偏大，增大电阻"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513078873,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513081541,
+      "type": "action",
+      "payload": {
+        "control": "btn-connect"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513081540,
+      "type": "tuning",
+      "payload": {
+        "control": "btn-connect",
+        "value": "series"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513081541,
+      "type": "action",
+      "payload": {
+        "control": "btn-connect"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513085688,
+      "type": "tuning",
+      "payload": {
+        "control": "s-r2",
+        "value": "1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513087989,
+      "type": "win",
+      "payload": {
+        "winOk": true
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513087988,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-r1": "100",
+          "s-r2": "1",
+          "s-meter-r": "2.2",
+          "btn-connect": "series",
+          "mode": "series"
+        },
+        "winOk": true,
+        "hintKey": "win"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513087991,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513087991,
+      "type": "action",
+      "payload": {
+        "control": "btn-test-ft"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513091189,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513091188,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "btn-connect": 2,
+    "s-meter-r": 2,
+    "s-r2": 2,
+    "s-r1": 1
+  },
+  "actionCounts": {
+    "craftIntroBtn": 2,
+    "btn-test-ft": 8,
+    "btn-connect": 4,
+    "craftBackBtn": 2
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-meter-r",
+      "label": "电表内阻",
+      "role": "adjustment",
+      "priorityRank": 3,
+      "adjustCount": 2
+    },
+    {
+      "controlId": "s-r2",
+      "label": "电阻R2",
+      "role": "adjustment",
+      "priorityRank": 2,
+      "adjustCount": 2
+    },
+    {
+      "controlId": "btn-connect",
+      "label": "btn-connect",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 2
+    },
+    {
+      "controlId": "s-r1",
+      "label": "电阻R1",
+      "role": "adjustment",
+      "priorityRank": 1,
+      "adjustCount": 1
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "pass",
+  "strategyPathByPhase": {
+    "full": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "full",
+      "teacherDetail": {
+        "score": 0,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 0,
+        "avTunings": 0,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·电阻R1",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "full"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·电阻R1",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-12T05:18:56.437Z"
+    },
+    "explore": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 0,
+        "avTunings": 0,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·电阻R1",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·电阻R1",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-12T05:18:56.441Z"
+    }
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 0,
+      "avTunings": 0,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·电阻R1",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·电阻R1",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-12T05:18:56.441Z"
+  },
+  "abilityScore": {
+    "version": 3,
+    "total": 50,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 100,
+        "contrib": 30,
+        "note": "过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": 0,
+        "primary": null,
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": 44.1,
+        "contrib": 11,
+        "strategyScore": 0.441,
+        "primary": "单变量·电阻R2",
+        "switchKind": "thrash",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 45,
+        "contrib": 9,
+        "processGate": false,
+        "challengeTrials": 2,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": false,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "尚不清晰",
+      "result": "达标"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-12T05:38:12.319Z"
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 0,
+      "avTunings": 0,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·电阻R1",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·电阻R1",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-12T05:18:56.441Z"
+  },
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "pass",
+    "strengths": [
+      "失败后快照显示约束有向过关方向修正。"
+    ],
+    "gaps": [
+      "策略块切换偏散，缺少连续单变量对照。",
+      "请对照过关说明调整：配电间 · 接线板"
+    ],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 25,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "电流偏大，增大电阻",
+        "win"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 7,
+        "main_s-r2": 4,
+        "main_s-meter-r": 3,
+        "trap": 1,
+        "confound_CV1": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 0.441,
+        "breakdown": {
+          "base": 0.525,
+          "mainClarityBonus": 0,
+          "switchPenalty": 0.084,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 1,
+          "nBlockSwitch": 1,
+          "switchKind": "thrash",
+          "strategySequence": [
+            {
+              "label": "多参盲调",
+              "count": 1,
+              "bypass": false
+            },
+            {
+              "label": "单变量·电阻R2",
+              "count": 1,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 0.5,
+          "dominantLabel": "单变量·电阻R2",
+          "dominantShare": 0.5,
+          "cvTunings": 0,
+          "avTunings": 5,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "多参盲调": 1,
+            "单变量·电阻R2": 1
+          },
+          "effectiveTrials": 2
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "空操作",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "btn-connect",
+                "value": "parallel",
+                "role": null
+              }
+            ],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 1,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 2,
+            "label": "多参盲调",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-meter-r",
+                "value": "5",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-meter-r",
+                "value": "2.2",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-r2",
+                "value": "100",
+                "role": "operation"
+              },
+              {
+                "type": "tuning",
+                "control": "s-r1",
+                "value": "100",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 3,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 4,
+            "label": "单变量·电阻R2",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "btn-connect",
+                "value": "series",
+                "role": null
+              },
+              {
+                "type": "tuning",
+                "control": "s-r2",
+                "value": "1",
+                "role": "operation"
+              }
+            ],
+            "fireType": "win",
+            "effective": true
+          },
+          {
+            "index": 5,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 6,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "多参盲调",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·电阻R2",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "switchKind": "thrash",
+        "primaryStrategy": "单变量·电阻R2",
+        "lastSegmentLabel": "单变量·电阻R2"
+      },
+      "metrics": {
+        "singleVariableRate": 0.75,
+        "rationalCorrectionRate": 0.5,
+        "boundaryAware": null,
+        "tunedControls": [
+          "btn-connect",
+          "s-meter-r",
+          "s-r2",
+          "s-r1"
+        ],
+        "operationControlCount": 3,
+        "parameterCoverage": 1.33,
+        "parameterCoverageChallenge": 1.33,
+        "parameterCoverageSource": "union",
+        "strategyScore": 0.441,
+        "primaryStrategy": "单变量·电阻R2",
+        "switchKind": "thrash",
+        "strategySequence": [
+          {
+            "label": "多参盲调",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·电阻R2",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 1,
+        "nBlockSwitch": 1,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 7,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "win"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 4,
+      "summary": "失败后快照显示约束有向过关方向修正。",
+      "strengths": [
+        "失败后快照显示约束有向过关方向修正。"
+      ],
+      "gaps": [
+        "策略块切换偏散，缺少连续单变量对照。",
+        "请对照过关说明调整：配电间 · 接线板"
+      ],
+      "suggestion": "策略块切换偏散，缺少连续单变量对照。"
+    },
+    "comment": "[规则模式] 失败后快照显示约束有向过关方向修正。；待改进：策略块切换偏散，缺少连续单变量对照。；请对照过关说明调整：配电间 · 接线板",
+    "judgedAt": "2026-08-12T05:38:12.318Z"
+  },
+  "judgedAt": "2026-08-12T05:38:12.319Z",
+  "abilityScoreComputedAt": "2026-08-12T05:38:12.319Z"
+}

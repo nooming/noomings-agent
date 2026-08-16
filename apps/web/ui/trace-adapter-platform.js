@@ -82,8 +82,8 @@
   }
 
   function record(type, payload) {
-    // Full shallow copy — do not allowlist/strip win progress fields
-    // (interim / final / levelsCleared / level / levelIndex / winOk / hintKey).
+    // Full shallow copy — no type allowlist (explore_success / win / snapshot all ingest).
+    // Do not strip win progress fields (interim / final / levelsCleared / level / levelIndex / winOk / hintKey).
     const p = { ...(payload || {}) };
     if (p.control) p.control = mapControlId(p.control);
     if (p.controls && typeof p.controls === 'object') {

@@ -1,0 +1,797 @@
+{
+  "sessionId": "sess-1786513097394-tpugnyd",
+  "catalogId": "demo-capacitor-confound-ui",
+  "graphId": "capacitor-confound-ui",
+  "studentLabel": "22",
+  "studentId": "22",
+  "taskCode": "demo-capacitor-confound-ui",
+  "ch": 0,
+  "game": "demo-capacitor-confound-ui",
+  "traceVersion": 1,
+  "startedAt": "2026-08-12T05:38:18.606Z",
+  "updatedAt": "2026-08-12T05:39:36.255Z",
+  "eventCount": 26,
+  "events": [
+    {
+      "ts": 1786513097574,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513097573,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786513097809,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786513099153,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513104656,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513104655,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.05",
+          "s-distance": "0.005",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513115356,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513121803,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "0.044"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513123221,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.044",
+          "s-distance": "0.008",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "cap_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513123223,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513129088,
+      "type": "tuning",
+      "payload": {
+        "control": "s-distance",
+        "value": "0.0029"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513130187,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.05",
+          "s-distance": "0.0029",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "cap_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513130190,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513155257,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513155255,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.07",
+          "s-distance": "0.003",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "cap_high"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513162937,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.03",
+          "s-distance": "0.004",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "cap_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513162939,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513170946,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "0.091"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172273,
+      "type": "action",
+      "payload": {
+        "control": "testBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172271,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-area": "0.091",
+          "s-distance": "0.002",
+          "s-plate-mass": "0.2"
+        },
+        "winOk": false,
+        "hintKey": "cap_high"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172935,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172934,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172935,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513172935,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513175056,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge",
+        "reason": "exhausted_retry"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786513175056,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-area": 2,
+    "s-distance": 1
+  },
+  "actionCounts": {
+    "craftIntroBtn": 1,
+    "testBtn": 6
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-area",
+      "label": "s-area",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 2
+    },
+    {
+      "controlId": "s-distance",
+      "label": "s-distance",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "exhausted_fail",
+  "attemptsExhausted": true,
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "in_progress",
+    "strengths": [],
+    "gaps": [
+      "策略块切换偏散，缺少连续单变量对照。",
+      "请对照过关说明调整：通过调参与观察，验证了C=ε₀εᵣA/…"
+    ],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 21,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "cap_low",
+        "cap_high",
+        "attempts_exhausted"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 4,
+        "main_s-area": 3,
+        "trap": 1,
+        "confound_s_plate_mass": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 0.812,
+        "breakdown": {
+          "base": 0.9,
+          "mainClarityBonus": 0.08,
+          "switchPenalty": 0.168,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 2,
+          "nBlockSwitch": 2,
+          "switchKind": "thrash",
+          "strategySequence": [
+            {
+              "label": "单变量·极板面积",
+              "count": 1,
+              "bypass": false
+            },
+            {
+              "label": "单变量·极板间距",
+              "count": 1,
+              "bypass": false
+            },
+            {
+              "label": "单变量·极板面积",
+              "count": 1,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 0.5,
+          "dominantLabel": "单变量·极板面积",
+          "dominantShare": 0.667,
+          "cvTunings": 0,
+          "avTunings": 3,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "单变量·极板面积": 2,
+            "单变量·极板间距": 1
+          },
+          "effectiveTrials": 3
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "单变量·极板面积",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-area",
+                "value": "0.044",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 1,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 2,
+            "label": "单变量·极板间距",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-distance",
+                "value": "0.0029",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 3,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 4,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 5,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 6,
+            "label": "单变量·极板面积",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-area",
+                "value": "0.091",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板间距",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "switchKind": "thrash",
+        "primaryStrategy": "单变量·极板面积",
+        "lastSegmentLabel": "单变量·极板面积"
+      },
+      "metrics": {
+        "singleVariableRate": 0.75,
+        "rationalCorrectionRate": 0,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-area",
+          "s-distance"
+        ],
+        "operationControlCount": 3,
+        "parameterCoverage": 0.67,
+        "parameterCoverageChallenge": 0.67,
+        "parameterCoverageSource": "union",
+        "strategyScore": 0.812,
+        "primaryStrategy": "单变量·极板面积",
+        "switchKind": "thrash",
+        "strategySequence": [
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板间距",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 2,
+        "nBlockSwitch": 2,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 3,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "attempts_exhausted"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 3,
+      "summary": "有基本操作记录",
+      "strengths": [],
+      "gaps": [
+        "策略块切换偏散，缺少连续单变量对照。",
+        "请对照过关说明调整：通过调参与观察，验证了C=ε₀εᵣA/…"
+      ],
+      "suggestion": "策略块切换偏散，缺少连续单变量对照。"
+    },
+    "comment": "[规则模式] 有基本操作记录；待改进：策略块切换偏散，缺少连续单变量对照。；请对照过关说明调整：通过调参与观察，验证了C=ε₀εᵣA/…",
+    "judgedAt": "2026-08-12T05:39:36.454Z"
+  },
+  "judgedAt": "2026-08-12T05:39:36.455Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 43,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 20,
+        "contrib": 6,
+        "note": "机会用尽未过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": 0,
+        "primary": null,
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": 81.2,
+        "contrib": 20.3,
+        "strategyScore": 0.812,
+        "primary": "单变量·极板面积",
+        "switchKind": "thrash",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 85,
+        "contrib": 17,
+        "processGate": true,
+        "challengeTrials": 3,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": true,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "清楚",
+      "result": "未达标"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-12T05:39:36.455Z"
+  },
+  "abilityScoreComputedAt": "2026-08-12T05:39:36.455Z",
+  "strategyPathByPhase": {
+    "challenge": {
+      "text": "你的探究路径类型：单变量探究（极板面积）（本局策略吻合度 0.81）",
+      "type": "单变量探究（极板面积）",
+      "advice": "竞赛段里，策略切换较散、缺少连续对照块；先选定一个量连续试几发，看清趋势再换方向。",
+      "primary": "单变量·极板面积",
+      "score": 0.812,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "challenge",
+      "teacherDetail": {
+        "score": 0.812,
+        "primaryStrategy": "单变量·极板面积",
+        "nSwitch": 2,
+        "nBlockSwitch": 2,
+        "switchKind": "thrash",
+        "strategySequence": [
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板间距",
+            "count": 1,
+            "bypass": false
+          },
+          {
+            "label": "单变量·极板面积",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "cvTunings": 0,
+        "avTunings": 3,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 3,
+        "segmentCounts": {
+          "单变量·极板面积": 2,
+          "单变量·极板间距": 1
+        },
+        "nearTies": [
+          {
+            "label": "单变量·极板间距",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "challenge"
+      },
+      "primaryStrategy": "单变量·极板面积",
+      "mode": "compete",
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-13T07:19:27.859Z"
+    },
+    "explore": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 0,
+        "avTunings": 0,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·极板间距",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-13T07:19:27.860Z"
+    }
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：单变量探究（极板面积）（本局策略吻合度 0.81）",
+    "type": "单变量探究（极板面积）",
+    "advice": "竞赛段里，策略切换较散、缺少连续对照块；先选定一个量连续试几发，看清趋势再换方向。",
+    "primary": "单变量·极板面积",
+    "score": 0.812,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "challenge",
+    "teacherDetail": {
+      "score": 0.812,
+      "primaryStrategy": "单变量·极板面积",
+      "nSwitch": 2,
+      "nBlockSwitch": 2,
+      "switchKind": "thrash",
+      "strategySequence": [
+        {
+          "label": "单变量·极板面积",
+          "count": 1,
+          "bypass": false
+        },
+        {
+          "label": "单变量·极板间距",
+          "count": 1,
+          "bypass": false
+        },
+        {
+          "label": "单变量·极板面积",
+          "count": 1,
+          "bypass": false
+        }
+      ],
+      "cvTunings": 0,
+      "avTunings": 3,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 3,
+      "segmentCounts": {
+        "单变量·极板面积": 2,
+        "单变量·极板间距": 1
+      },
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "challenge"
+    },
+    "primaryStrategy": "单变量·极板面积",
+    "mode": "compete",
+    "nearTies": [
+      {
+        "label": "单变量·极板间距",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-13T07:19:27.859Z"
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 0,
+      "avTunings": 0,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·极板间距",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·极板间距",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-13T07:19:27.860Z"
+  }
+}

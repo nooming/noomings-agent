@@ -1,0 +1,758 @@
+{
+  "sessionId": "sess-1786514010229-jyvdv4g",
+  "catalogId": "demo-heat-conduction",
+  "graphId": "heat-conduction",
+  "studentLabel": "22",
+  "studentId": "22",
+  "taskCode": "demo-heat-conduction",
+  "ch": 0,
+  "game": "demo-heat-conduction",
+  "traceVersion": 1,
+  "startedAt": "2026-08-12T05:53:31.443Z",
+  "updatedAt": "2026-08-12T05:54:59.762Z",
+  "eventCount": 25,
+  "events": [
+    {
+      "ts": 1786514010400,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786514010401,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514010631,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786514015588,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514027436,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thermal-conductivity",
+        "value": "65.1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514032557,
+      "type": "tuning",
+      "payload": {
+        "control": "s-temperature-diff",
+        "value": "39"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514035995,
+      "type": "tuning",
+      "payload": {
+        "control": "s-area",
+        "value": "0.091"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514035996,
+      "type": "irrelevant_touch",
+      "payload": {
+        "control": "s-area",
+        "value": "click"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514067721,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514067720,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-thermal-conductivity": "65.1",
+          "s-temperature-diff": "39",
+          "s-area": "0.091"
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514071123,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514076102,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thermal-conductivity",
+        "value": "263"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514077454,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514077453,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-thermal-conductivity": "263",
+          "s-temperature-diff": "20",
+          "s-area": "0.05"
+        },
+        "winOk": false,
+        "hintKey": "retry_overheat"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514085583,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thermal-conductivity",
+        "value": "65.1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514087035,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-thermal-conductivity": "65.1",
+          "s-temperature-diff": "20",
+          "s-area": "0.05"
+        },
+        "winOk": false,
+        "hintKey": "retry_overheat"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514087035,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514090721,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thermal-conductivity",
+        "value": "46.5"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514091907,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-thermal-conductivity": "46.5",
+          "s-temperature-diff": "20",
+          "s-area": "0.05"
+        },
+        "winOk": false,
+        "hintKey": "retry_low_heat"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514091908,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514095422,
+      "type": "tuning",
+      "payload": {
+        "control": "s-thermal-conductivity",
+        "value": "54.1"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514096522,
+      "type": "win",
+      "payload": {
+        "winOk": true
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514096521,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-thermal-conductivity": "54.1",
+          "s-temperature-diff": "20",
+          "s-area": "0.05"
+        },
+        "winOk": true,
+        "hintKey": "win_ok"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514096522,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786514098720,
+      "type": "action",
+      "payload": {
+        "control": "craftBackBtn"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-thermal-conductivity": 5,
+    "s-temperature-diff": 1,
+    "s-area": 1
+  },
+  "actionCounts": {
+    "craftIntroBtn": 1,
+    "btn-test": 5,
+    "craftBackBtn": 1
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-thermal-conductivity",
+      "label": "s-thermal-conductivity",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 5
+    },
+    {
+      "controlId": "s-area",
+      "label": "s-area",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    },
+    {
+      "controlId": "s-temperature-diff",
+      "label": "s-temperature-diff",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 1
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "pass",
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "pass",
+    "strengths": [
+      "符合控制变量途径，坚持单参调节。"
+    ],
+    "gaps": [
+      "请对照过关说明调整：热流随导热与温差增大；太小供暖不足，太…"
+    ],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 16,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "retry_overheat",
+        "retry_low_heat",
+        "win_ok"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 8,
+        "main_s-thermal-conductivity": 5,
+        "main_s-temperature-diff": 3,
+        "trap": 1,
+        "confound_CV1": 0
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 1,
+        "breakdown": {
+          "base": 1,
+          "mainClarityBonus": 0.08,
+          "switchPenalty": 0,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 0,
+          "nBlockSwitch": 0,
+          "switchKind": "stable",
+          "strategySequence": [
+            {
+              "label": "单变量·导热系数",
+              "count": 4,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 1,
+          "dominantLabel": "单变量·导热系数",
+          "dominantShare": 1,
+          "cvTunings": 0,
+          "avTunings": 4,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "单变量·导热系数": 4
+          },
+          "effectiveTrials": 4
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "单变量·导热系数",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-thermal-conductivity",
+                "value": "263",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 1,
+            "label": "单变量·导热系数",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-thermal-conductivity",
+                "value": "65.1",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 2,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 3,
+            "label": "单变量·导热系数",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-thermal-conductivity",
+                "value": "46.5",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 4,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 5,
+            "label": "单变量·导热系数",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-thermal-conductivity",
+                "value": "54.1",
+                "role": "operation"
+              }
+            ],
+            "fireType": "win",
+            "effective": true
+          },
+          {
+            "index": 6,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "单变量·导热系数",
+            "count": 4,
+            "bypass": false
+          }
+        ],
+        "switchKind": "stable",
+        "primaryStrategy": "单变量·导热系数",
+        "lastSegmentLabel": "单变量·导热系数"
+      },
+      "metrics": {
+        "singleVariableRate": 1,
+        "rationalCorrectionRate": 0.33,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-thermal-conductivity"
+        ],
+        "operationControlCount": 4,
+        "parameterCoverage": 0.25,
+        "parameterCoverageChallenge": 0.25,
+        "parameterCoverageSource": "union",
+        "strategyScore": 1,
+        "primaryStrategy": "单变量·导热系数",
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "单变量·导热系数",
+            "count": 4,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 4,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "win_ok"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 4,
+      "summary": "符合控制变量途径，坚持单参调节。",
+      "strengths": [
+        "符合控制变量途径，坚持单参调节。"
+      ],
+      "gaps": [
+        "请对照过关说明调整：热流随导热与温差增大；太小供暖不足，太…"
+      ],
+      "suggestion": "请对照过关说明调整：热流随导热与温差增大；太小供暖不足，太大则炉墙过热"
+    },
+    "comment": "[规则模式] 符合控制变量途径，坚持单参调节。；待改进：请对照过关说明调整：热流随导热与温差增大；太小供暖不足，太…",
+    "judgedAt": "2026-08-12T05:54:59.820Z"
+  },
+  "judgedAt": "2026-08-12T05:54:59.821Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 75,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 100,
+        "contrib": 30,
+        "note": "过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": 22.5,
+        "contrib": 5.6,
+        "strategyScore": 0.225,
+        "primary": "多参盲调",
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": 100,
+        "contrib": 25,
+        "strategyScore": 1,
+        "primary": "单变量·导热系数",
+        "switchKind": "stable",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 70,
+        "contrib": 14,
+        "processGate": true,
+        "challengeTrials": 4,
+        "exploreTrials": 1,
+        "gateReasons": {
+          "gateScore": true,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "尚不清晰",
+      "result": "达标"
+    },
+    "labelsShort": {
+      "pathExplore": "探究·混调",
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-12T05:54:59.821Z"
+  },
+  "abilityScoreComputedAt": "2026-08-12T05:54:59.821Z",
+  "strategyPathByPhase": {
+    "explore": {
+      "text": "你的探究路径类型：多参混调型（本局策略吻合度 0.23）",
+      "type": "多参混调型",
+      "advice": "本局主路径像「多量一起拧」。想看清因果时，固定其余、只改一项再观察。",
+      "primary": "多参盲调",
+      "score": 0.225,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0.225,
+        "primaryStrategy": "多参盲调",
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "多参盲调",
+            "count": 1,
+            "bypass": false
+          }
+        ],
+        "cvTunings": 1,
+        "avTunings": 3,
+        "cvOver": false,
+        "cvProbe": true,
+        "effectiveTrials": 1,
+        "segmentCounts": {
+          "多参盲调": 1
+        },
+        "nearTies": [
+          {
+            "label": "单变量·导热系数",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": "多参盲调",
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·导热系数",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-13T07:19:27.730Z"
+    },
+    "challenge": {
+      "text": "你的探究路径类型：单变量探究（导热系数）（本局策略吻合度 1.00）",
+      "type": "单变量探究（导热系数）",
+      "advice": "竞赛段里，你大体保持了单变量节奏，继续用「改一项→观察→再决定」即可。",
+      "primary": "单变量·导热系数",
+      "score": 1,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "challenge",
+      "teacherDetail": {
+        "score": 1,
+        "primaryStrategy": "单变量·导热系数",
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [
+          {
+            "label": "单变量·导热系数",
+            "count": 4,
+            "bypass": false
+          }
+        ],
+        "cvTunings": 0,
+        "avTunings": 4,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 4,
+        "segmentCounts": {
+          "单变量·导热系数": 4
+        },
+        "nearTies": [
+          {
+            "label": "单变量·导热系数",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "challenge"
+      },
+      "primaryStrategy": "单变量·导热系数",
+      "mode": "compete",
+      "nearTies": [
+        {
+          "label": "单变量·导热系数",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-13T07:19:27.733Z"
+    }
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：多参混调型（本局策略吻合度 0.23）",
+    "type": "多参混调型",
+    "advice": "本局主路径像「多量一起拧」。想看清因果时，固定其余、只改一项再观察。",
+    "primary": "多参盲调",
+    "score": 0.225,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0.225,
+      "primaryStrategy": "多参盲调",
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [
+        {
+          "label": "多参盲调",
+          "count": 1,
+          "bypass": false
+        }
+      ],
+      "cvTunings": 1,
+      "avTunings": 3,
+      "cvOver": false,
+      "cvProbe": true,
+      "effectiveTrials": 1,
+      "segmentCounts": {
+        "多参盲调": 1
+      },
+      "nearTies": [
+        {
+          "label": "单变量·导热系数",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": "多参盲调",
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·导热系数",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-13T07:19:27.730Z"
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：单变量探究（导热系数）（本局策略吻合度 1.00）",
+    "type": "单变量探究（导热系数）",
+    "advice": "竞赛段里，你大体保持了单变量节奏，继续用「改一项→观察→再决定」即可。",
+    "primary": "单变量·导热系数",
+    "score": 1,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "challenge",
+    "teacherDetail": {
+      "score": 1,
+      "primaryStrategy": "单变量·导热系数",
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [
+        {
+          "label": "单变量·导热系数",
+          "count": 4,
+          "bypass": false
+        }
+      ],
+      "cvTunings": 0,
+      "avTunings": 4,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 4,
+      "segmentCounts": {
+        "单变量·导热系数": 4
+      },
+      "nearTies": [
+        {
+          "label": "单变量·导热系数",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "challenge"
+    },
+    "primaryStrategy": "单变量·导热系数",
+    "mode": "compete",
+    "nearTies": [
+      {
+        "label": "单变量·导热系数",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-13T07:19:27.733Z"
+  }
+}

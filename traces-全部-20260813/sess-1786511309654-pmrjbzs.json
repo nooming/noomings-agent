@@ -1,0 +1,790 @@
+{
+  "sessionId": "sess-1786511309654-pmrjbzs",
+  "catalogId": "demo-rc-circuit",
+  "graphId": "rc-circuit",
+  "studentLabel": "22",
+  "studentId": "22",
+  "taskCode": "demo-rc-circuit",
+  "ch": 0,
+  "game": "demo-rc-circuit",
+  "traceVersion": 1,
+  "startedAt": "2026-08-12T05:08:30.837Z",
+  "updatedAt": "2026-08-12T05:09:12.072Z",
+  "eventCount": 26,
+  "events": [
+    {
+      "ts": 1786511309823,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786511309824,
+      "type": "phase_change",
+      "payload": {
+        "phase": "explore"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511310030,
+      "type": "puzzle_open",
+      "payload": {},
+      "ch": 0
+    },
+    {
+      "ts": 1786511311504,
+      "type": "action",
+      "payload": {
+        "control": "craftIntroBtn"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511316286,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 20,
+          "s-capacitance": 30
+        },
+        "winOk": false,
+        "hintKey": "explore_observe"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511316286,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511322187,
+      "type": "phase_change",
+      "payload": {
+        "phase": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511328612,
+      "type": "tuning",
+      "payload": {
+        "control": "s-capacitance",
+        "value": "40"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511329889,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511329888,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 20,
+          "s-capacitance": 40
+        },
+        "winOk": false,
+        "hintKey": "tau_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511334164,
+      "type": "tuning",
+      "payload": {
+        "control": "s-capacitance",
+        "value": "3"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511335486,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 20,
+          "s-capacitance": 3
+        },
+        "winOk": false,
+        "hintKey": "tau_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511335487,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511337847,
+      "type": "tuning",
+      "payload": {
+        "control": "s-capacitance",
+        "value": "100"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511339203,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 20,
+          "s-capacitance": 100
+        },
+        "winOk": false,
+        "hintKey": "tau_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511339203,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511344223,
+      "type": "tuning",
+      "payload": {
+        "control": "s-resistance",
+        "value": "25"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511345636,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511345636,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 25,
+          "s-capacitance": 100
+        },
+        "winOk": false,
+        "hintKey": "tau_high"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511348998,
+      "type": "tuning",
+      "payload": {
+        "control": "s-resistance",
+        "value": "20"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511350387,
+      "type": "snapshot",
+      "payload": {
+        "controls": {
+          "s-resistance": 20,
+          "s-capacitance": 100
+        },
+        "winOk": false,
+        "hintKey": "tau_low"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511350387,
+      "type": "action",
+      "payload": {
+        "control": "btn-test"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511351053,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511351054,
+      "type": "snapshot",
+      "payload": {
+        "winOk": false,
+        "attemptsExhausted": true,
+        "hintKey": "attempts_exhausted"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511351052,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    },
+    {
+      "ts": 1786511351053,
+      "type": "attempts_exhausted",
+      "payload": {
+        "attempts": 0,
+        "mode": "challenge"
+      },
+      "ch": 0
+    }
+  ],
+  "controlTuningCounts": {
+    "s-capacitance": 3,
+    "s-resistance": 2
+  },
+  "actionCounts": {
+    "craftIntroBtn": 1,
+    "btn-test": 6
+  },
+  "variableAdjustCounts": [
+    {
+      "controlId": "s-capacitance",
+      "label": "s-capacitance",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 3
+    },
+    {
+      "controlId": "s-resistance",
+      "label": "s-resistance",
+      "role": null,
+      "priorityRank": null,
+      "adjustCount": 2
+    }
+  ],
+  "currentPhase": "challenge",
+  "sawPhaseChange": true,
+  "terminalOutcome": "exhausted_fail",
+  "judgeResult": {
+    "mode": "rule",
+    "verdict": "in_progress",
+    "strengths": [
+      "先聚焦再换向，策略切换有节奏。",
+      "符合控制变量途径，坚持单参调节。"
+    ],
+    "gaps": [
+      "请对照过关说明调整：通过调参与观察，验证了 τ=RC",
+      "探究段维度尚未扫全，可换另一单参继续对照"
+    ],
+    "dtAlignment": [],
+    "inquiryPath": {
+      "eventCount": 21,
+      "chaptersTouched": [
+        0
+      ],
+      "pathSteps": [
+        "O1"
+      ],
+      "irrelevantTouches": [],
+      "misconceptionTouches": [],
+      "retryHints": [
+        "tau_low",
+        "tau_high",
+        "attempts_exhausted"
+      ],
+      "strategyRouteGuess": "main",
+      "routeScores": {
+        "main": 4,
+        "main_s-resistance": 4,
+        "main_s-capacitance": 3,
+        "trap": 1
+      },
+      "strategySegmentScore": {
+        "mode": "compete",
+        "score": 0.889,
+        "breakdown": {
+          "base": 0.91,
+          "mainClarityBonus": 0,
+          "switchPenalty": 0.021,
+          "cvPenalty": 0,
+          "cvProbeBonus": 0,
+          "convergeBonus": 0,
+          "nSwitch": 1,
+          "nBlockSwitch": 1,
+          "switchKind": "focused_redirect",
+          "strategySequence": [
+            {
+              "label": "单变量·电容",
+              "count": 3,
+              "bypass": false
+            },
+            {
+              "label": "单变量·电阻",
+              "count": 2,
+              "bypass": false
+            }
+          ],
+          "lateDominantShare": 0.667,
+          "dominantLabel": "单变量·电容",
+          "dominantShare": 0.6,
+          "cvTunings": 0,
+          "avTunings": 5,
+          "cvRatio": 0,
+          "cvOver": false,
+          "cvProbe": false,
+          "cvRaised": false,
+          "segmentCounts": {
+            "单变量·电容": 3,
+            "单变量·电阻": 2
+          },
+          "effectiveTrials": 5
+        },
+        "segments": [
+          {
+            "index": 0,
+            "label": "单变量·电容",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-capacitance",
+                "value": "40",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 1,
+            "label": "单变量·电容",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-capacitance",
+                "value": "3",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 2,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 3,
+            "label": "单变量·电容",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-capacitance",
+                "value": "100",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 4,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          },
+          {
+            "index": 5,
+            "label": "单变量·电阻",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-resistance",
+                "value": "25",
+                "role": "operation"
+              }
+            ],
+            "fireType": "action",
+            "effective": true
+          },
+          {
+            "index": 6,
+            "label": "单变量·电阻",
+            "tunings": [
+              {
+                "type": "tuning",
+                "control": "s-resistance",
+                "value": "20",
+                "role": "operation"
+              }
+            ],
+            "fireType": "snapshot",
+            "effective": true
+          },
+          {
+            "index": 7,
+            "label": "空操作",
+            "tunings": [],
+            "fireType": "action",
+            "effective": false
+          }
+        ],
+        "strategySequence": [
+          {
+            "label": "单变量·电容",
+            "count": 3,
+            "bypass": false
+          },
+          {
+            "label": "单变量·电阻",
+            "count": 2,
+            "bypass": false
+          }
+        ],
+        "switchKind": "focused_redirect",
+        "primaryStrategy": "单变量·电容",
+        "lastSegmentLabel": "单变量·电阻"
+      },
+      "metrics": {
+        "singleVariableRate": 1,
+        "rationalCorrectionRate": 0,
+        "boundaryAware": null,
+        "tunedControls": [
+          "s-capacitance",
+          "s-resistance"
+        ],
+        "operationControlCount": 4,
+        "parameterCoverage": 0.5,
+        "parameterCoverageChallenge": 0.5,
+        "parameterCoverageSource": "union",
+        "strategyScore": 0.889,
+        "primaryStrategy": "单变量·电容",
+        "switchKind": "focused_redirect",
+        "strategySequence": [
+          {
+            "label": "单变量·电容",
+            "count": 3,
+            "bypass": false
+          },
+          {
+            "label": "单变量·电阻",
+            "count": 2,
+            "bypass": false
+          }
+        ],
+        "nSwitch": 1,
+        "nBlockSwitch": 1,
+        "playMode": "compete",
+        "cvTunings": 0,
+        "avTunings": 5,
+        "cvRatio": 0,
+        "cvOverAv": 0,
+        "cvHeavy": false
+      },
+      "align": {
+        "dtPath": [],
+        "hintKey": "attempts_exhausted"
+      },
+      "normalizeMeta": {
+        "legacyAliasesApplied": 0
+      }
+    },
+    "teacherSummary": {
+      "level": 3,
+      "summary": "先聚焦再换向，策略切换有节奏。",
+      "strengths": [
+        "先聚焦再换向，策略切换有节奏。",
+        "符合控制变量途径，坚持单参调节。"
+      ],
+      "gaps": [
+        "请对照过关说明调整：通过调参与观察，验证了 τ=RC",
+        "探究段维度尚未扫全，可换另一单参继续对照"
+      ],
+      "suggestion": "请对照过关说明调整：通过调参与观察，验证了 τ=RC"
+    },
+    "comment": "[规则模式] 先聚焦再换向，策略切换有节奏。；待改进：请对照过关说明调整：通过调参与观察，验证了 τ=RC",
+    "judgedAt": "2026-08-12T05:09:17.844Z"
+  },
+  "judgedAt": "2026-08-12T05:09:17.844Z",
+  "abilityScore": {
+    "version": 3,
+    "total": 42,
+    "pending": false,
+    "weights": {
+      "R": 0.3,
+      "Pe": 0.25,
+      "Pc": 0.25,
+      "E": 0.2
+    },
+    "parts": {
+      "result": {
+        "raw": 20,
+        "contrib": 6,
+        "note": "机会用尽未过关",
+        "progress": null
+      },
+      "exploreProcess": {
+        "raw": null,
+        "contrib": 0,
+        "strategyScore": 0,
+        "primary": null,
+        "switchKind": "stable"
+      },
+      "challengeProcess": {
+        "raw": 88.9,
+        "contrib": 22.2,
+        "strategyScore": 0.889,
+        "primary": "单变量·电容",
+        "switchKind": "focused_redirect",
+        "cvOver": false,
+        "trap": false
+      },
+      "efficiency": {
+        "raw": 70,
+        "contrib": 14,
+        "processGate": true,
+        "challengeTrials": 5,
+        "exploreTrials": 0,
+        "gateReasons": {
+          "gateScore": true,
+          "cvOk": true,
+          "singleTrialTrap": false
+        }
+      },
+      "attribution": {
+        "raw": 0,
+        "contrib": 0,
+        "attribution": null,
+        "aligned": false,
+        "note": "无归因事件"
+      }
+    },
+    "bands": {
+      "process": "清楚",
+      "result": "未达标"
+    },
+    "labelsShort": {
+      "pathExplore": null,
+      "pathChallenge": "竞赛·单变量"
+    },
+    "computedAt": "2026-08-12T05:09:17.844Z"
+  },
+  "abilityScoreComputedAt": "2026-08-12T05:09:17.844Z",
+  "strategyPathByPhase": {
+    "explore": {
+      "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+      "type": "尚不清晰",
+      "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+      "primary": null,
+      "score": 0,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "explore",
+      "teacherDetail": {
+        "score": 0,
+        "primaryStrategy": null,
+        "nSwitch": 0,
+        "nBlockSwitch": 0,
+        "switchKind": "stable",
+        "strategySequence": [],
+        "cvTunings": 0,
+        "avTunings": 0,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 0,
+        "segmentCounts": {},
+        "nearTies": [
+          {
+            "label": "单变量·电阻",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "explore"
+      },
+      "primaryStrategy": null,
+      "mode": "explore",
+      "nearTies": [
+        {
+          "label": "单变量·电阻",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-12T05:18:56.549Z"
+    },
+    "challenge": {
+      "text": "你的探究路径类型：单变量探究（电容）（本局策略吻合度 0.89）",
+      "type": "单变量探究（电容）",
+      "advice": "竞赛段里，你先围绕一个量连续试了几发，再换到另一个量——这是聚焦换向，方向清楚即可。",
+      "primary": "单变量·电容",
+      "score": 0.889,
+      "audience": "teacher",
+      "degraded": false,
+      "degradeReason": null,
+      "scoredPhase": "challenge",
+      "teacherDetail": {
+        "score": 0.889,
+        "primaryStrategy": "单变量·电容",
+        "nSwitch": 1,
+        "nBlockSwitch": 1,
+        "switchKind": "focused_redirect",
+        "strategySequence": [
+          {
+            "label": "单变量·电容",
+            "count": 3,
+            "bypass": false
+          },
+          {
+            "label": "单变量·电阻",
+            "count": 2,
+            "bypass": false
+          }
+        ],
+        "cvTunings": 0,
+        "avTunings": 5,
+        "cvOver": false,
+        "cvProbe": false,
+        "effectiveTrials": 5,
+        "segmentCounts": {
+          "单变量·电容": 3,
+          "单变量·电阻": 2
+        },
+        "nearTies": [
+          {
+            "label": "单变量·电阻",
+            "score": 1
+          }
+        ],
+        "scoredPhase": "challenge"
+      },
+      "primaryStrategy": "单变量·电容",
+      "mode": "compete",
+      "nearTies": [
+        {
+          "label": "单变量·电阻",
+          "score": 1
+        }
+      ],
+      "scoredAt": "2026-08-12T05:18:56.553Z"
+    }
+  },
+  "strategyPathSummaryExplore": {
+    "text": "你的探究路径类型：尚不清晰（本局策略吻合度 0.00）",
+    "type": "尚不清晰",
+    "advice": "有效发射/测试偏少，信息不够稳；可以在同一设置下多观察一次再下结论。",
+    "primary": null,
+    "score": 0,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "explore",
+    "teacherDetail": {
+      "score": 0,
+      "primaryStrategy": null,
+      "nSwitch": 0,
+      "nBlockSwitch": 0,
+      "switchKind": "stable",
+      "strategySequence": [],
+      "cvTunings": 0,
+      "avTunings": 0,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 0,
+      "segmentCounts": {},
+      "nearTies": [
+        {
+          "label": "单变量·电阻",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "explore"
+    },
+    "primaryStrategy": null,
+    "mode": "explore",
+    "nearTies": [
+      {
+        "label": "单变量·电阻",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-12T05:18:56.549Z"
+  },
+  "strategyPathSummary": {
+    "text": "你的探究路径类型：单变量探究（电容）（本局策略吻合度 0.89）",
+    "type": "单变量探究（电容）",
+    "advice": "竞赛段里，你先围绕一个量连续试了几发，再换到另一个量——这是聚焦换向，方向清楚即可。",
+    "primary": "单变量·电容",
+    "score": 0.889,
+    "audience": "teacher",
+    "degraded": false,
+    "degradeReason": null,
+    "scoredPhase": "challenge",
+    "teacherDetail": {
+      "score": 0.889,
+      "primaryStrategy": "单变量·电容",
+      "nSwitch": 1,
+      "nBlockSwitch": 1,
+      "switchKind": "focused_redirect",
+      "strategySequence": [
+        {
+          "label": "单变量·电容",
+          "count": 3,
+          "bypass": false
+        },
+        {
+          "label": "单变量·电阻",
+          "count": 2,
+          "bypass": false
+        }
+      ],
+      "cvTunings": 0,
+      "avTunings": 5,
+      "cvOver": false,
+      "cvProbe": false,
+      "effectiveTrials": 5,
+      "segmentCounts": {
+        "单变量·电容": 3,
+        "单变量·电阻": 2
+      },
+      "nearTies": [
+        {
+          "label": "单变量·电阻",
+          "score": 1
+        }
+      ],
+      "scoredPhase": "challenge"
+    },
+    "primaryStrategy": "单变量·电容",
+    "mode": "compete",
+    "nearTies": [
+      {
+        "label": "单变量·电阻",
+        "score": 1
+      }
+    ],
+    "scoredAt": "2026-08-12T05:18:56.553Z"
+  }
+}

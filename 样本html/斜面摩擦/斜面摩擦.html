@@ -1368,11 +1368,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           return;
         }
         if (testCount < 3 || !sawSlide || !sawRest) return;
-        // 探究：有卡住+卸下即可给轻量提示；不 emit win / 不进 craft 结算
+        // 探究达成：explore_success；不 emit win / 不进 craft 结算
         if (won) return;
         won = true; // 仅作「已提示过」标记，避免重复刷屏
         hintMsg.textContent = '已对比卡住与卸下 · 可切换竞赛接急单（摩擦系数本局锁定）';
         emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
+        emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controls });
       }
 
       function fireTest() {

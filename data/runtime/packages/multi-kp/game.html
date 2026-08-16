@@ -1407,6 +1407,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         winMessage.innerHTML = '<span style="color:#7dba8c;font-size:12px">已对照成功与失败 · 可切换竞赛接夜场试车</span>';
         if (emitFn) {
           emitFn('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
+          emitFn('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controlsSnapshot });
         }
     }
 

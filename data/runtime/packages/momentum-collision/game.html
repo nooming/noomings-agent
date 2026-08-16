@@ -1442,6 +1442,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                       exploreWon = true;
                       hintMsg.textContent = '已见过进区与未进 · 可切换竞赛接急单（口位本局固定）';
                       emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
+                      emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controlsSnapshot });
                     }
                 }, HOLD_AFTER_STOP_MS);
             }

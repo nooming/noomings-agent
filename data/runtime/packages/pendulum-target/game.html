@@ -1177,9 +1177,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
               }, CHALLENGE_WIN_DELAY_MS);
             }
           } else {
-            // 探究命中：观察反馈 only，不 emit win / 不过关结算
+            // 探究命中：explore_success；不 emit win / 不过关结算
             if (statusMsg) statusMsg.textContent = '落点进入矿车区域 · 对照摆长与释放角再试';
             window.__emit('snapshot', { controls: c, winOk: false, hintKey: 'explore_observe' });
+            window.__emit('explore_success', { winOk: true, hintKey: 'pendulum_hit', controls: c });
           }
         } else if (!hit && window.__emit) {
           const missSide = x < left ? 'miss_short' : 'miss_long';

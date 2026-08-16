@@ -53,9 +53,24 @@ function buildTelemetrySpec(chapter) {
     }
   });
 
+  // 规范结果事件（非 control 派生）：竞赛 win vs 探究 explore_success
+  events.push({
+    type: 'explore_success',
+    required: false,
+    description: '探究模式达成（命中/对照里程碑）。payload 可含 winOk、hintKey、controls；不计为竞赛通关',
+  });
+  events.push({
+    type: 'win',
+    required: false,
+    description: '竞赛模式通关。仅 challenge 段应 emit；探究达成请用 explore_success',
+  });
+
   const paperNotes = [
     '按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。',
     'snapshot 事件在「发射/测试/提交」时记录各 control 当前值。',
+    '探究达成：emit(\'explore_success\', { winOk: true, hintKey, … })；勿用 win 冒充竞赛结果。',
+    '竞赛通关：emit(\'snapshot\', { winOk: true, … }) + emit(\'win\', { winOk: true })；仅 challenge。',
+    '判分：探究结果认 explore_success（兼容旧轨迹探究段 win/winOk）；竞赛结果只认竞赛段 win/winOk，不认 explore_success。',
     '评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。',
     '混淆变量触碰可选记录，但不计入主探究路径得分。',
   ].join('\n');
@@ -67,7 +82,7 @@ function buildTelemetrySpec(chapter) {
     events,
     dtCheckpoints: dtCheckpoints.slice(0, 24),
     paperNotes,
-    adapterNote: '后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。',
+    adapterNote: '后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。ingest 不白名单过滤类型，explore_success 会原样落盘。',
   };
 }
 

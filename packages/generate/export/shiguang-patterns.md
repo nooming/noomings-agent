@@ -56,7 +56,8 @@ requestAnimationFrame(loop);
 
 - 仿真区旁或下方：≥2 个物理量实时读数（速度、位移、能量等）
 - Observe 区：测试/发射后显示判定结果，支持再调 retry
-- 过关态：明确文案 + `emit('snapshot', …)` + `emit('win', …)`
+- 竞赛过关态：明确文案 + `emit('snapshot', …)` + `emit('win', …)`（仅 challenge）
+- 探究达成：`emit('explore_success', { winOk: true, hintKey, … })`；勿用 `win` 冒充竞赛结果
 
 ## Agent 生成约束（相对拾光的差异）
 
