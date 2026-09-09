@@ -653,6 +653,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+
+/* === classroom-visual-p0 === */
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
+  font-size:14px!important;line-height:1.55!important;
+}
+.side-goal-wrap,#sideGoalBox{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
+}
+.side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
+  font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
+}
+#essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
+.probe-group,.cv-card.probe-group{
+  margin-top:4px!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
+.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
+#btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
+  background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
+}
+#modeSelect{min-height:34px;}
+
 </style>
 </head>
 <body>
@@ -682,7 +708,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="craft-reveal" id="craftReveal" hidden>
       <div class="formula" id="craftWinFormula">a = v²/r</div>
       <p id="craftWinText">对照多组读数，你摸清了线速度、向心力如何随半径与转速变化。</p>
-      <p id="craftCv" class="craft-cv">底座倾角只改观感倾斜，不改 v/F 物理（视觉旁路）。</p>
+      <p id="craftCv" class="craft-cv">底座倾角 φ：本关旁路，不进 v/F 判定，只改台架观感。</p>
     </div>
     <div class="craft-actions">
       <button type="button" id="craftWinBtn" disabled>再玩一次</button>
@@ -707,8 +733,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <aside id="essence-bench">
     <div class="essence-scroll">
       <div class="container">
-  <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
-  <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">调 r、ω，看线速度与向心力怎么变。</p>
+  <div class="side-goal-wrap">
+    <div class="side-goal-cap">当前目标</div>
+    <p id="sideGoal" style="margin:0;color:var(--craft-text)">调 r、ω，看线速度与向心力怎么变。</p>
+  </div>
 
   <!-- 调节变量 -->
   <div class="control-panel">
@@ -722,7 +750,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <input type="range" id="s-omega" min="0.5" max="5.0" step="0.5" value="2.0">
       <span class="value-badge" id="omegaDisplay">2.0 rad/s</span>
     </div>
-    <div class="slider-row">
+    <div class="slider-row probe-group">
+      <div class="probe-cap">次要参数 · 不进判定 / 仅改观感</div>
       <label for="s-base-tilt">底座倾角 φ</label>
       <input type="range" id="s-base-tilt" min="0" max="15" step="1" value="0">
       <span class="value-badge" id="tiltDisplay">0°</span>
@@ -735,7 +764,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <!-- 动作按钮 -->
   <!-- Observe 反馈 -->
   <div class="observe-box" id="observeBox">
-    <h3>📊 观测读数</h3>
+    <h3>观测读数</h3>
     <div class="observe-grid">
       <div class="observe-item"><span>线速度 v = </span><span class="val" id="vDisplay">—</span><span class="unit">m/s</span></div>
       <div class="observe-item"><span>向心力 F = </span><span class="val" id="fDisplay">—</span><span class="unit">N</span></div>
@@ -1619,13 +1648,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function $(id){ return document.getElementById(id); }
 
   function setPhase(phase){
+    var p = phase === 'challenge' ? 'challenge' : 'explore';
     try {
       if (typeof window.__platformTraceSetPhase === 'function') {
-        window.__platformTraceSetPhase(phase);
-      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
-        window.PlatformTraceAdapter.setPhase(phase);
+        window.__platformTraceSetPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
+      }
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
       }
     } catch (e) { /* offline */ }
+    if (window.__craftPhaseEmitted === p) return;
+    window.__craftPhaseEmitted = p;
+    try {
+      if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: p });
+      else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: p });
+    } catch (e2) {}
   }
 
   function fmt(sec){
@@ -1893,7 +1934,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
         '<select id="modeSelect" aria-label="探究阶段">' +
           '<option value="explore">自由探究</option>' +
-          '<option value="challenge">竞赛挑战</option>' +
+          '<option value="challenge">竞赛</option>' +
         '</select>';
       bench.insertBefore(hd, bench.firstChild);
     } else if (!$('modeSelect')) {
@@ -1902,7 +1943,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       if (chip && !$('modeSelect')) {
         var sel = document.createElement('select');
         sel.id = 'modeSelect';
-        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛</option>';
         chip.appendChild(sel);
       }
     }

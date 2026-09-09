@@ -131,3 +131,20 @@
 
 **验证**：五关 HTML 仍含 `explore_success` / `win`（或 `__craftShowWin`）关键字；`trace-package-hooks` 回归 OK。  
 **样本同步**：`斜抛.html` / `抛体大炮.html` / `钟表铺校时.html` / `理想气体.html` / `热传导.html`。
+
+---
+
+## 已落实 1 / 5–11（续）
+
+> 日期：2026-09-09 · 与 `mechanics-thermo-level-audit.md` §7 对齐。
+
+| # | 摘要 |
+|---|---|
+| **1** | 学生可见收窄为 5 关；cannon/target/momentum/circular/ramp unpublished。 |
+| **5** | 进阶五关视觉 P0（字号、旁路、emoji、模式文案、主色）。 |
+| **6** | heat 截面积 / circular 倾角：UI + craft 归因 + chapter 旁路一致。 |
+| **7** | cannon 质量文案改为旁路说明。 |
+| **8** | 相关关 `phase_change` 兜底（同模式不重复 emit）。 |
+| **9** | `docs/demo/thermo-pilot-note.md` 口播；checklist 链接。 |
+| **10** | `_shared/craft-tokens.css` 引入**上架 5 关**（未强制进阶关 / 未重写 ramp）。 |
+| **11** | ramp 明确后置，不进默认演示串。 |

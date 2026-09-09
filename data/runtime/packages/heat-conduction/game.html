@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>热工台 · 导热棒</title>
@@ -647,6 +648,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 #modeSelect{min-height:34px;}
 #heatCanvas{border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);}
 
+
+/* === classroom-visual-p0 === */
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
+  font-size:14px!important;line-height:1.55!important;
+}
+.side-goal-wrap,#sideGoalBox{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
+}
+.side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
+  font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
+}
+#essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
+.probe-group,.cv-card.probe-group{
+  margin-top:4px!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
+.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
+#btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
+  background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
+}
+#modeSelect{min-height:34px;}
+
 </style>
 </head>
 <body>
@@ -667,7 +694,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <p class="craft-attr-label">就你这几发的对照来看，热流主要跟着哪一项变？</p>
       <div class="craft-attr-options">
         <label><input type="radio" name="craftAttr" value="s-thermal-conductivity"> 主要是导热系数 κ</label>
-        <label><input type="radio" name="craftAttr" value="s-area"> 主要是截面积 A</label>
         <label><input type="radio" name="craftAttr" value="s-temperature-diff"> 主要是温差 ΔT</label>
         <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
         <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
@@ -677,7 +703,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="craft-reveal" id="craftReveal" hidden>
       <div class="formula" id="craftWinFormula">Q/t = κAΔT / d</div>
       <p id="craftWinText">热流随导热与温差增大；太小供暖不足，太大则炉墙过热——合适区间才稳妥。</p>
-      <p id="craftCv" class="craft-cv" hidden></p>
+      <p id="craftCv" class="craft-cv">截面积 A 本关不进热流判定（固定物理截面）；滑条仅对照旁路。</p>
     </div>
     <div class="craft-actions">
       <button type="button" id="craftWinBtn" disabled>再玩一次</button>
@@ -721,8 +747,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     </div>
 
     <div class="slider-group probe-group">
-        <div class="probe-cap">次要参数 · 本关旁路试探</div>
-        <label>截面积 A <span class="value" id="a-value"><input type="number" id="n-area" min="0.01" max="0.10" step="0.001" value="0.05" aria-label="截面积" style="width:64px;background:rgba(0,0,0,.2);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:2px 6px"></span> m²</label>
+        <div class="probe-cap">次要参数 · 不进判定 / 旁路试探</div>
+        <label>截面积 A（旁路） <span class="value" id="a-value"><input type="number" id="n-area" min="0.01" max="0.10" step="0.001" value="0.05" aria-label="截面积" style="width:64px;background:rgba(0,0,0,.2);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:2px 6px"></span> m²</label>
         <input type="range" id="s-area" min="0.01" max="0.10" step="0.001" value="0.05">
     </div>
 
@@ -1498,13 +1524,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function $(id){ return document.getElementById(id); }
 
   function setPhase(phase){
+    var p = phase === 'challenge' ? 'challenge' : 'explore';
     try {
       if (typeof window.__platformTraceSetPhase === 'function') {
-        window.__platformTraceSetPhase(phase);
-      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
-        window.PlatformTraceAdapter.setPhase(phase);
+        window.__platformTraceSetPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
+      }
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
       }
     } catch (e) { /* offline */ }
+    if (window.__craftPhaseEmitted === p) return;
+    window.__craftPhaseEmitted = p;
+    try {
+      if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: p });
+      else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: p });
+    } catch (e2) {}
   }
 
   function fmt(sec){
@@ -1811,7 +1849,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 /* === ea-minset-helper (heat-conduction) === */
 (function(){
   if (window.__eaMinset) return; window.__eaMinset = true;
-  var AV_LABELS = {"s-thermal-conductivity":"导热系数","s-area":"截面积","s-temperature-diff":"温差"};
+  var AV_LABELS = {"s-thermal-conductivity":"导热系数","s-temperature-diff":"温差"};
   var READING_SEL = "#craftGaugeVal, .observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal, #obs-current";
   var READING_LABEL = "热流读数";
   var ACTION_LABEL = "操作";

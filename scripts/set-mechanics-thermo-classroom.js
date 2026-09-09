@@ -25,26 +25,31 @@ const { getPackagesRoot } = require('../packages/shared/data-paths');
 
 const DRY = process.argv.includes('--dry-run');
 
-/** graphId whitelist (must exist under data/runtime/packages) */
+/**
+ * Default classroom demo: 3 required + 2 optional (5 total).
+ * Unpublished / deferred: cannon, pendulum-target, momentum, circular, ramp, non mech/thermo.
+ */
 const WHITELIST = [
   'projectile-basic',
-  'projectile-cannon',
-  'friction-incline',
   'pendulum-clock',
-  'pendulum-target',
-  'momentum-collision',
-  'circular-motion',
-  'ramp-rolling-collision',
   'gas-ideal',
+  'friction-incline',
   'heat-conduction',
 ];
 
 const KEEP_GOLD = new Set([
   'projectile-basic',
-  'projectile-cannon',
   'pendulum-clock',
-  'pendulum-target',
 ]);
+
+/** Explicitly not on student catalog (kept as packages for self-study / later) */
+const DEFERRED = [
+  'projectile-cannon',
+  'pendulum-target',
+  'momentum-collision',
+  'circular-motion',
+  'ramp-rolling-collision',
+];
 
 const CLASSROOM_LABEL = '力学与热学课堂';
 const CLASSROOM_CODE = DEV_DEFAULT_CLASS_CODE; // wuli2609
@@ -79,7 +84,7 @@ function ensureClassConfig() {
     classCode: code,
     label: CLASSROOM_LABEL,
     name: CLASSROOM_LABEL,
-    note: '仅上架力学+热学白名单；学生端见 craft:gold/pilot 且 published',
+    note: '默认上架 5 关（必上 basic/clock/gas + 可选 friction/heat）；cannon/target/momentum/circular/ramp 后置 unpublished',
     updatedAt: new Date().toISOString(),
   };
 
@@ -163,6 +168,7 @@ function main() {
   console.log(DRY ? '=== DRY RUN (no write) ===' : '=== Applied ===');
   console.log('Classroom:', classInfo.label, '| code:', classInfo.classCode, `| source→file (${classInfo.source} was prior)`);
   console.log('Published (whitelist):', published.join(', '));
+  console.log('Deferred (kept unpublished):', DEFERRED.join(', '));
   console.log('Unpublished:', unpublished.length ? unpublished.join(', ') : '(none newly)');
   if (craftUpgraded.length) {
     console.log('Craft upgrades:');

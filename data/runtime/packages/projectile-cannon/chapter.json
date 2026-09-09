@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | skip retry |\n| 调节参数并发射 | O1 | operation | skip retry |\n| 飞出边界? | C1 | constraint | 是→retry, 否→继续 |\n| 撞到障碍物? | C2 | constraint | 是→retry, 否→继续 |\n| 命中要塞目标? | C3 | constraint | 是→result, 否→retry |\n| 过关 | R1 | result | skip retry |\n| 重试 | - | - | skip retry |\n| 阻力与风影响弹道 | S1 | core | teach |\n| 质量影响惯性 | S2 | core | teach |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n|---|---|---|---|\n| 进入关卡 | P1 | premise | skip retry |\n| 调节参数并发射 | O1 | operation | skip retry |\n| 飞出边界? | C1 | constraint | 是→retry, 否→继续 |\n| 撞到障碍物? | C2 | constraint | 是→retry, 否→继续 |\n| 命中要塞目标? | C3 | constraint | 是→result, 否→retry |\n| 过关 | R1 | result | skip retry |\n| 重试 | - | - | skip retry |\n| 阻力与风影响弹道 | S1 | core | teach |\n| 质量为本关旁路 | S2 | core | teach |",
   "kg": {
     "title": "炮台 · 抛体",
     "sub": "炮台 · 抛体",
@@ -72,12 +72,12 @@
       },
       {
         "id": "S2",
-        "label": "质量影响惯性",
+        "label": "质量为本关旁路（观感对照）",
         "group": "core",
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "质量越大惯性越强，受阻力和风的影响越小"
+        "desc": "本关将质量标为旁路/对照：勿当作通关主因；主看角度、力度、阻力与风"
       },
       {
         "id": "I1",
@@ -868,12 +868,12 @@
       "CV1"
     ],
     "narrative": {
-      "intro": "本关探究：阻力与风影响弹道、质量影响惯性",
+      "intro": "本关探究：阻力与风影响弹道、质量为本关旁路",
       "steps": [
         {
           "order": 1,
           "title": "明确知识点",
-          "body": "回顾：阻力与风影响弹道；质量影响惯性",
+          "body": "回顾：阻力与风影响弹道；质量为本关旁路",
           "mapsToKg": [
             "S1",
             "S2"

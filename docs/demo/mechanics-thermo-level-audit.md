@@ -1,7 +1,7 @@
 # 力学 + 热学课堂 · 关卡审计报告
 
-> 审计日期：2026-09-09  
-> 范围：白名单 10 关（`scripts/set-mechanics-thermo-classroom.js` / `docs/demo/classroom-demo-checklist.md`）  
+> 审计日期：2026-09-09（§7 已落实课堂优化 1/5–11）  
+> 范围：默认学生可见 **5 关**（`scripts/set-mechanics-thermo-classroom.js` / `docs/demo/classroom-demo-checklist.md`）；进阶关包文件仍保留但 unpublished。  
 > 方法：文件完整性、publish gate、`chapter.json` inquiryScript、HTML 埋点/双模粗检；并对 **chapter 公式串台 / AV·CV 错位** 做了小修（未改玩法数值、未 commit）。
 
 ---
@@ -139,13 +139,13 @@
 | **P0** | friction / pendulum-clock OV、domain 误标抛体 | 改为摩擦态 / 周期·摆幅 | ✅ 已修 |
 | **P0** | gas 活塞质量、heat 截面积、circular 倾角、momentum 轨温误标 AV | 迁入 CV + traceMap irrelevant | ✅ chapter 已修 |
 | **P0** | pendulum/cannon catalog 落在 `macro-other` | `categoryId`→`macro-mechanics` | ✅ 已修 |
-| **P1** | heat / gas / circular HTML 旁路滑条仍与主 AV 同权展示 | UI 降权或移入「试探」区；craft 单选去掉旁路项 | ❌ 提案 |
-| **P1** | cannon「质量影响惯性」vs mass=CV | 统一物理或统一文案 | ❌ 提案 |
-| **P1** | 除 clock 外包内无原生 `phase_change` | 模式切换处补 `emit('phase_change')` 兜底（直开也分段） | ❌ 提案 |
-| **P1** | momentum/circular strategy 仍有「拧旁路」高优路由 | 策略图与 CV 对齐或降权 | ❌ 提案 |
+| **P1** | heat / gas / circular HTML 旁路滑条仍与主 AV 同权展示 | UI 降权或移入「试探」区；craft 单选去掉旁路项 | ✅ 已修（heat/circular；gas 先前已降权） |
+| **P1** | cannon「质量影响惯性」vs mass=CV | 统一物理或统一文案 | ✅ 文案统一为旁路（未改物理积分） |
+| **P1** | 除 clock 外包内无原生 `phase_change` | 模式切换处补 `emit('phase_change')` 兜底（直开也分段） | ✅ 已修（去重 emit） |
+| **P1** | momentum/circular strategy 仍有「拧旁路」高优路由 | 策略图与 CV 对齐或降权 | ✅ circular 倾角路由降权；heat 截面积同 |
 | **P2** | inquiry narrative 模板重复、friction 重置按钮刷屏 | 重生 narrative | ❌ 提案 |
-| **P2** | 力学 8 关偏冗余 | 课堂默认只发布 3–5 关；ramp 默认 unpublished | ❌ 提案（可用现脚本改白名单） |
-| **P2** | 热学仅 2 关偏瘦 | 中期补 1 关（如比热/相变 observe） | ❌ 大改 |
+| **P2** | 力学 8 关偏冗余 | 课堂默认只发布 3–5 关；ramp 默认 unpublished | ✅ 已落实（默认 5 关） |
+| **P2** | 热学仅 2 关偏瘦 | 中期补 1 关（如比热/相变 observe） | 🟡 口播试点文已补；未开新关 |
 
 ---
 
@@ -157,7 +157,7 @@
 | 2 | **demo-pendulum-clock** | 探究：摆长主导周期；竞赛：窄目标带校时；质量无关 |
 | 3 | **demo-gas-ideal** | 等温 p–V；打进标定带；强调活塞质量不进 pV |
 
-备选替换：若强调临界条件，用 `demo-friction-incline` 换 gas；若必须露热传导，用 `demo-heat-conduction` 换 gas，并口播「面积滑条本关不改判定」。
+备选替换：若强调临界条件，用 `demo-friction-incline` 换 gas；若必须露热传导，用 `demo-heat-conduction` 换 gas，并口播「面积滑条本关不改判定」。热学口播短文见 [`thermo-pilot-note.md`](./thermo-pilot-note.md)。
 
 ---
 
@@ -167,3 +167,23 @@
 - `data/runtime/platform/catalog.json`（3 条 categoryId）
 
 未改：各关 `game.html` 玩法数值、竞赛阈值、白名单脚本。
+
+---
+
+## 7. 已落实优化项 1 / 5–11（2026-09-09）
+
+| # | 项 | 结果 |
+|---|---|---|
+| **1** | 默认只上架 3–5 关 | 白名单 → `projectile-basic` / `pendulum-clock` / `gas-ideal` / `friction-incline` / `heat-conduction`（5）。cannon、target、momentum、circular、**ramp 后置** unpublished。脚本 + checklist 已改并写 catalog。 |
+| **5** | 进阶五关视觉 P0 | `friction-incline` / `pendulum-target` / `momentum-collision` / `circular-motion` / `ramp-rolling-collision`：目标≥14px、旁路降权、去 💀/📊、模式「探究/竞赛」、accent 靠 `#0c8aad`；样本已同步。 |
+| **6** | heat + circular 旁路 | UI「不进判定」；craft 归因去掉截面积；chapter 策略路由降为试探旁路（score 0.15）。 |
+| **7** | cannon 质量文案 | chapter + 手册统一为「质量为本关旁路」，去掉「惯性决定通关」口径。 |
+| **8** | `phase_change` 兜底 | 上架 5 关 + 进阶改过的关：`setPhase` / 模式切换带 `__craftPhaseEmitted` 去重；无平台适配器时 `__emit('phase_change')`。clock 仍用原 log。 |
+| **9** | 热学偏瘦 | 新增 [`thermo-pilot-note.md`](./thermo-pilot-note.md)；checklist 已链；heat 留在可选 5 关内。未做新玩法大工程。 |
+| **10** | 关与关皮肤 | 新增 `data/runtime/packages/_shared/craft-tokens.css`；**当前上架 5 关** `<link>` 引入。ramp 仅轻量对齐 accent，未重写 Three 整页。 |
+| **11** | ramp 后置 | catalog unpublished；脚本排除；checklist 写明进阶/后置不进默认演示串。 |
+
+**学生可见 id（`listCatalog({studentVisible:true})`）**：  
+`demo-projectile-basic` · `demo-pendulum-clock` · `demo-gas-ideal` · `demo-friction-incline` · `demo-heat-conduction`
+
+**未做彻底**：项 10 仅覆盖上架 5 关共享 token（进阶关未统一 link tokens）；cannon 物理仍可能读质量数值但教文案已按 CV/旁路统一；未做花名册(2)。

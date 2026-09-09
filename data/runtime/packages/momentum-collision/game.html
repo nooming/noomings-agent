@@ -158,7 +158,7 @@ button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor
 
 
 /* === craft-gold-shell === */
-:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#c878a0;--craft-bg:#120c12;--craft-panel:#221820;--craft-text:#f0e4ec;--craft-muted:#a08898;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#0c8aad;--craft-bg:#120c12;--craft-panel:#221820;--craft-text:#f0e4ec;--craft-muted:#a08898;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -313,7 +313,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 
 /* === craft-scene-tokens (momentum-collision) === */
 :root{
-  --craft-accent:#c878a0;--craft-bg:#120c12;--craft-panel:#221820;
+  --craft-accent:#0c8aad;--craft-bg:#120c12;--craft-panel:#221820;
   --craft-text:#f0e4ec;--craft-muted:#a08898;
   --scene-ink:#120c12;--scene-mid:#2e2430;--scene-hi:#e8a8c8;
   --scene-glow:#e060a0;--scene-metal:#7a8490;--scene-ok:#6fae8f;
@@ -647,6 +647,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+
+/* === classroom-visual-p0 === */
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
+  font-size:14px!important;line-height:1.55!important;
+}
+.side-goal-wrap,#sideGoalBox{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
+}
+.side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
+  font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
+}
+#essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
+.probe-group,.cv-card.probe-group{
+  margin-top:4px!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
+.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
+#btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
+  background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
+}
+#modeSelect{min-height:34px;}
+
 </style>
 </head>
 <body>
@@ -702,8 +728,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   </div>
   <aside id="essence-bench">
     <div class="essence-scroll">
-    <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:.04em;margin-bottom:4px">当前目标</div>
-    <p id="sideGoal" style="margin:0 0 12px;font-size:12px;line-height:1.45;color:rgba(226,232,240,.92)">调质量与初速，看包件 2 何时进接货口。</p>
+    <div class="side-goal-wrap">
+      <div class="side-goal-cap">当前目标</div>
+      <p id="sideGoal" style="margin:0;color:var(--craft-text)">调质量与初速，看包件 2 何时进接货口。</p>
+    </div>
       <!-- 调节变量 (4个滑条) -->
     <div class="control-panel">
         <div class="slider-group">
@@ -722,7 +750,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <label>包件2初速 v₂ <span class="value-badge" id="vel2Val">0.0 m/s</span></label>
             <input type="range" id="s-vel2" min="0" max="10" step="0.1" value="0.0">
         </div>
-        <div class="slider-group">
+        <div class="slider-group probe-group">
+            <div class="probe-cap">次要参数 · 仅改观感 / 不进判定</div>
             <label>导轨温度 T <span class="value-badge" id="railTempVal">22 °C</span></label>
             <input type="range" id="s-rail-temp" min="5" max="60" step="1" value="22">
         </div>
@@ -1032,7 +1061,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         var TARGET_LEFT = L.TARGET_LEFT, TARGET_RIGHT = L.TARGET_RIGHT;
         var TARGET_Y_TOP = L.TARGET_Y_TOP, TARGET_Y_BOT = L.TARGET_Y_BOT;
 
-        var SC = { ink:'#120c12', mid:'#2e2430', hi:'#e8a8c8', glow:'#e060a0', metal:'#7a8490', accent:'#c878a0', ok:'#6fae8f' };
+        var SC = { ink:'#120c12', mid:'#2e2430', hi:'#e8a8c8', glow:'#e060a0', metal:'#7a8490', accent:'#0c8aad', ok:'#6fae8f' };
 
         // 冷色实验台背景 + 纵深
         const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -1726,13 +1755,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function $(id){ return document.getElementById(id); }
 
   function setPhase(phase){
+    var p = phase === 'challenge' ? 'challenge' : 'explore';
     try {
       if (typeof window.__platformTraceSetPhase === 'function') {
-        window.__platformTraceSetPhase(phase);
-      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
-        window.PlatformTraceAdapter.setPhase(phase);
+        window.__platformTraceSetPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
+      }
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
       }
     } catch (e) { /* offline */ }
+    if (window.__craftPhaseEmitted === p) return;
+    window.__craftPhaseEmitted = p;
+    try {
+      if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: p });
+      else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: p });
+    } catch (e2) {}
   }
 
   function fmt(sec){
@@ -2000,7 +2041,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
         '<select id="modeSelect" aria-label="探究阶段">' +
           '<option value="explore">自由探究</option>' +
-          '<option value="challenge">竞赛挑战</option>' +
+          '<option value="challenge">竞赛</option>' +
         '</select>';
       bench.insertBefore(hd, bench.firstChild);
     } else if (!$('modeSelect')) {
@@ -2009,7 +2050,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       if (chip && !$('modeSelect')) {
         var sel = document.createElement('select');
         sel.id = 'modeSelect';
-        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛</option>';
         chip.appendChild(sel);
       }
     }

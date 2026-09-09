@@ -960,7 +960,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 </div>
                 <div class="guide-section">
                     <h3>6. 弹药质量</h3>
-                    <p>质量越大，惯性越强。重物受风力和阻力减速的影响较小。</p>
+                    <p>本关质量为旁路/观感量：不作为通关主因。可试拧对照，重点仍看角度、力度、阻力与风。</p>
                 </div>
                 <div class="guide-section" style="border: none;">
                     <h3>7. 弹种</h3>
@@ -2178,10 +2178,14 @@ window.onload = () => {
   var state={mode:'explore',attempts:MAX,timeLeft:EXP,timerId:null};
   function $(id){return document.getElementById(id);}
   function setPhase(p){
+    p = p === 'challenge' ? 'challenge' : 'explore';
     try{
-      if(typeof window.__platformTraceSetPhase==='function') window.__platformTraceSetPhase(p);
-      else if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase) window.PlatformTraceAdapter.setPhase(p);
+      if(typeof window.__platformTraceSetPhase==='function'){ window.__platformTraceSetPhase(p); window.__craftPhaseEmitted=p; return; }
+      if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){ window.PlatformTraceAdapter.setPhase(p); window.__craftPhaseEmitted=p; return; }
     }catch(e){}
+    if(window.__craftPhaseEmitted===p) return;
+    window.__craftPhaseEmitted=p;
+    try{ if(typeof window.__emit==='function') window.__emit('phase_change',{phase:p}); else if(typeof window.__traceEmit==='function') window.__traceEmit('phase_change',{phase:p}); }catch(e2){}
   }
   function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
   function stop(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}

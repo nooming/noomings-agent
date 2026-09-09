@@ -1,0 +1,19 @@
+/**
+ * Shared craft tokens for classroom demo packages.
+ * Domain tint may override --craft-accent only; keep bg/panel/text/radius aligned.
+ */
+:root {
+  --craft-bg: #0e1418;
+  --craft-panel: #162028;
+  --craft-accent: #0c8aad;
+  --craft-text: #e6eef2;
+  --craft-muted: #8a9aa6;
+  --craft-radius: 12px;
+  --craft-radius-sm: 8px;
+  --craft-platform-teal: #0c8aad;
+}
+
+body {
+  --craft-bg: var(--craft-bg, #0e1418);
+  --craft-panel: var(--craft-panel, #162028);
+}

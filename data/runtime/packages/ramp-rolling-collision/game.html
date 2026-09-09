@@ -11,7 +11,7 @@
             --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", sans-serif;
             --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
             --font-display: var(--font-sans);
-            --craft-accent: #b8956c;
+            --craft-accent:#0c8aad;
             --craft-bg: #161412;
             --craft-panel: #252018;
             --craft-text: #f2ebe0;
@@ -565,6 +565,32 @@
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+
+/* === classroom-visual-p0 === */
+#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
+  font-size:14px!important;line-height:1.55!important;
+}
+.side-goal-wrap,#sideGoalBox{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
+}
+.side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
+  font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
+}
+#essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
+.probe-group,.cv-card.probe-group{
+  margin-top:4px!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
+.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
+#btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
+  background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
+}
+#modeSelect{min-height:34px;}
+
 </style>
 </head>
 <body>
@@ -639,14 +665,14 @@
             <h1>斜轨工作台</h1>
             <select id="modeSelect" aria-label="探究阶段">
                 <option value="explore">自由探究</option>
-                <option value="challenge">定高挑战</option>
+                <option value="challenge">竞赛</option>
             </select>
         </div>
 
         <div class="side-body">
             <div>
-                <div class="section-label">当前目标</div>
-                <p id="sideGoal">调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。</p>
+                <div class="section-label side-goal-cap">当前目标</div>
+                <p id="sideGoal" style="font-size:14px;line-height:1.55">调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。</p>
             </div>
 
             <div class="param-card">
@@ -694,7 +720,8 @@
                 </div>
             </div>
 
-            <div class="param-card cv-card">
+            <div class="param-card cv-card probe-group">
+                <div class="probe-cap">次要参数 · 仅改观感 / 不进判定</div>
                 <h3>轨温</h3>
                 <div class="slider-row">
                     <div class="row-top">
@@ -1288,10 +1315,15 @@
                 state.mode = e.target.value;
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
                 try {
+                    var __p = state.mode === 'challenge' ? 'challenge' : 'explore';
                     if (typeof window.__platformTraceSetPhase === 'function') {
-                        window.__platformTraceSetPhase(state.mode);
+                        window.__platformTraceSetPhase(__p); window.__craftPhaseEmitted = __p;
                     } else if (window.PlatformTraceAdapter && window.PlatformTraceAdapter.setPhase) {
-                        window.PlatformTraceAdapter.setPhase(state.mode);
+                        window.PlatformTraceAdapter.setPhase(__p); window.__craftPhaseEmitted = __p;
+                    } else if (window.__craftPhaseEmitted !== __p) {
+                        window.__craftPhaseEmitted = __p;
+                        if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: __p });
+                        else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: __p });
                     }
                 } catch (_) {}
 
@@ -1912,7 +1944,7 @@
   }
 })();
 </script>
-<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;try{if(window.__platformTraceSetPhase)window.__platformTraceSetPhase(s.value||'explore');}catch(e){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;var p=s.value==='challenge'?'challenge':'explore';try{if(window.__platformTraceSetPhase){window.__platformTraceSetPhase(p);window.__craftPhaseEmitted=p;return;}if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){window.PlatformTraceAdapter.setPhase(p);window.__craftPhaseEmitted=p;return;}}catch(e){}if(window.__craftPhaseEmitted===p)return;window.__craftPhaseEmitted=p;try{if(window.__emit)window.__emit('phase_change',{phase:p});else if(window.__traceEmit)window.__traceEmit('phase_change',{phase:p});}catch(e2){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
 
 <script>
 /* === attempts-exhausted-settle standalone === */

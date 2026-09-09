@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>靶场 · 斜抛</title>
@@ -1070,8 +1071,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
                 refreshModeGoals();
                 try {
-                  if (typeof window.__platformTraceSetPhase === 'function') window.__platformTraceSetPhase(state.mode);
-                  else if (window.PlatformTraceAdapter && window.PlatformTraceAdapter.setPhase) window.PlatformTraceAdapter.setPhase(state.mode);
+                  var __p = state.mode === 'challenge' ? 'challenge' : 'explore';
+                  if (typeof window.__platformTraceSetPhase === 'function') { window.__platformTraceSetPhase(__p); window.__craftPhaseEmitted = __p; }
+                  else if (window.PlatformTraceAdapter && window.PlatformTraceAdapter.setPhase) { window.PlatformTraceAdapter.setPhase(__p); window.__craftPhaseEmitted = __p; }
+                  else if (window.__craftPhaseEmitted !== __p) {
+                    window.__craftPhaseEmitted = __p;
+                    if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: __p });
+                    else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: __p });
+                  }
                 } catch (_) {}
                 
                 if (state.mode === 'challenge') {
@@ -1863,7 +1870,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   });
 })();
 </script>
-<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;try{if(window.__platformTraceSetPhase)window.__platformTraceSetPhase(s.value||'explore');}catch(e){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;var p=s.value==='challenge'?'challenge':'explore';try{if(window.__platformTraceSetPhase){window.__platformTraceSetPhase(p);window.__craftPhaseEmitted=p;return;}if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){window.PlatformTraceAdapter.setPhase(p);window.__craftPhaseEmitted=p;return;}}catch(e){}if(window.__craftPhaseEmitted===p)return;window.__craftPhaseEmitted=p;try{if(window.__emit)window.__emit('phase_change',{phase:p});else if(window.__traceEmit)window.__traceEmit('phase_change',{phase:p});}catch(e2){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
 
 <script>
 /* === craft-gold-runtime === */

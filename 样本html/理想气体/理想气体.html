@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>气室 · 活塞实验桌</title>
@@ -663,7 +664,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <div class="craft-attr-options">
         <label><input type="radio" name="craftAttr" value="s-pressure"> 主要是压强 p</label>
         <label><input type="radio" name="craftAttr" value="s-volume"> 主要是体积 V</label>
-        <label><input type="radio" name="craftAttr" value="s-piston-mass"> 主要是活塞质量</label>
         <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
         <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
       </div>
@@ -1584,13 +1584,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function $(id){ return document.getElementById(id); }
 
   function setPhase(phase){
+    var p = phase === 'challenge' ? 'challenge' : 'explore';
     try {
       if (typeof window.__platformTraceSetPhase === 'function') {
-        window.__platformTraceSetPhase(phase);
-      } else if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
-        window.PlatformTraceAdapter.setPhase(phase);
+        window.__platformTraceSetPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
+      }
+      if (window.PlatformTraceAdapter && typeof window.PlatformTraceAdapter.setPhase === 'function') {
+        window.PlatformTraceAdapter.setPhase(p);
+        window.__craftPhaseEmitted = p;
+        return;
       }
     } catch (e) { /* offline */ }
+    if (window.__craftPhaseEmitted === p) return;
+    window.__craftPhaseEmitted = p;
+    try {
+      if (typeof window.__emit === 'function') window.__emit('phase_change', { phase: p });
+      else if (typeof window.__traceEmit === 'function') window.__traceEmit('phase_change', { phase: p });
+    } catch (e2) {}
   }
 
   function fmt(sec){
@@ -1901,7 +1913,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 /* === ea-minset-helper (gas-ideal) === */
 (function(){
   if (window.__eaMinset) return; window.__eaMinset = true;
-  var AV_LABELS = {"s-pressure":"压强","s-volume":"体积","s-piston-mass":"活塞质量"};
+  var AV_LABELS = {"s-pressure":"压强","s-volume":"体积"};
   var READING_SEL = "#craftGaugeVal, .observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal, #obs-current";
   var READING_LABEL = "pV 读数";
   var ACTION_LABEL = "操作";

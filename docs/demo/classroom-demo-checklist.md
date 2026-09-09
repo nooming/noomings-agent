@@ -2,24 +2,23 @@
 
 给老师 / 助教在演示或真实课堂前快速核对。更完整的平台说明见 `data/runtime/platform/README.md`。
 
-## 0. 当前演示课堂：力学 + 热学
+## 0. 当前演示课堂：力学 + 热学（默认 5 关）
 
 本仓库默认演示课堂已圈定为 **仅力学与热学**（电容 / 光电 / 磁 / 折射 / 电路 / 电场等已下架，包文件仍保留）。
 
+学生可见收窄为 **5 关**：必上 3 + 可选 2。以下 **不进默认演示串**（catalog `unpublished`，包保留）：`projectile-cannon`、`pendulum-target`、`momentum-collision`、`circular-motion`，以及 **进阶/后置** `ramp-rolling-collision`。
+
+热学试点口播见 [`thermo-pilot-note.md`](./thermo-pilot-note.md)。
+
 ### 对学生可见的 catalog id（published + craft:gold|pilot）
 
-| 领域 | catalog id | graphId | craft |
-|------|------------|---------|-------|
-| 力学 | `demo-projectile-basic` | projectile-basic | gold |
-| 力学 | `demo-projectile-cannon` | projectile-cannon | gold |
-| 力学 | `demo-friction-incline` | friction-incline | pilot |
-| 力学 | `demo-pendulum-clock` | pendulum-clock | gold |
-| 力学 | `demo-pendulum-target` | pendulum-target | gold |
-| 力学 | `demo-momentum-collision` | momentum-collision | pilot |
-| 力学 | `demo-circular-motion` | circular-motion | pilot |
-| 力学 | `demo-ramp-rolling-collision` | ramp-rolling-collision | pilot |
-| 热学 | `demo-gas-ideal` | gas-ideal | pilot |
-| 热学 | `demo-heat-conduction` | heat-conduction | pilot |
+| 优先级 | 领域 | catalog id | graphId | craft |
+|--------|------|------------|---------|-------|
+| **必上** | 力学 | `demo-projectile-basic` | projectile-basic | gold |
+| **必上** | 力学 | `demo-pendulum-clock` | pendulum-clock | gold |
+| **必上** | 热学 | `demo-gas-ideal` | gas-ideal | pilot |
+| 可选 | 力学 | `demo-friction-incline` | friction-incline | pilot |
+| 可选 | 热学 | `demo-heat-conduction` | heat-conduction | pilot |
 
 一键重跑（上架白名单、下架其它、写入课堂备注）：
 
@@ -29,7 +28,7 @@ node scripts/set-mechanics-thermo-classroom.js
 node scripts/set-mechanics-thermo-classroom.js --dry-run
 ```
 
-校验学生可见列表（与上面一致）：
+校验学生可见列表（应为上表 5 个）：
 
 ```bash
 node -e "const {listCatalog}=require('./packages/platform/catalog'); console.log(listCatalog({studentVisible:true}).map(i=>i.id).join('\n'))"
@@ -58,8 +57,9 @@ node -e "const {listCatalog}=require('./packages/platform/catalog'); console.log
 
 1. 跑一遍 `node scripts/set-mechanics-thermo-classroom.js`（或确认 catalog 已按上表上架、其余 `published: false`）。
 2. 教师登录 → 打开 **探究任务发布**：学生端只会看到 gold/pilot 且已发布的任务；draft 即使 published 也对隐藏。
-3. 把课堂码发给学生；学生经 `/student-join.html` 签到后进 `/student.html`，列表应只有上表 10 个。
+3. 把课堂码发给学生；学生经 `/student-join.html` 签到后进 `/student.html`，列表应只有上表 **5** 个。
 4. 勿在演示前把电容 / 光电 / 折射等重新上架；需要恢复时再改 catalog 或调整脚本白名单后重跑。
+5. **ramp 等进阶关**仅自学/后置，不进默认演示串。
 
 观察包（`demo-capacitor-era-*` 等）当前已下架；若临时上架仅作观察演示，勿按竞赛通关口径解读。
 
