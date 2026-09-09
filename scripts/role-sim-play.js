@@ -465,7 +465,7 @@ async function ensureAbilityViaTeacherApi(base, sessionId) {
       body: JSON.stringify({
         sessionId,
         reason: 'role_sim',
-        accessCode: process.env.TEACHER_ACCESS_CODE || 'test-class-2026',
+        accessCode: process.env.TEACHER_ACCESS_CODE || 'teach2609',
       }),
     });
     return r.json().catch(() => ({ ok: r.ok }));
@@ -488,7 +488,7 @@ async function pathSummaryRescore(base, session) {
         showScore: true,
         audience: 'teacher',
         persistAbility: true,
-        accessCode: process.env.TEACHER_ACCESS_CODE || 'test-class-2026',
+        accessCode: process.env.TEACHER_ACCESS_CODE || 'teach2609',
       }),
     });
     return r.json().catch(() => ({ ok: r.ok }));

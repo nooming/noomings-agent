@@ -908,6 +908,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     playMode = mode === 'challenge' ? 'challenge' : 'explore';
     exploreWon = false;
     challengeWon = false;
+    try { window.__challengeWon = false; } catch (e) {}
     measured = false;
     rideAnim = null;
     window.__legacyWinEmitted = false;
@@ -1386,6 +1387,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         var firstWin = !challengeWon;
         if (firstWin) {
           challengeWon = true;
+          // 须在动画前同步置位：末次机会时 dual-mode 已扣到 0 并 schedule 650ms exhausted；
+          // 巡航动画约 1.1s 才 __craftShowWin，否则会先弹「机会用尽」并 emit attempts_exhausted。
+          try { window.__challengeWon = true; } catch (e) {}
+          try { if (typeof window.__hideAttemptsExhausted === 'function') window.__hideAttemptsExhausted(); } catch (e2) {}
           hintMsg.textContent = '巡检通过！v、F 均落在安全带内。';
           winMsg.innerHTML = '<span class="pass-badge">巡检过关</span>';
           emit('snapshot', { controls: controls, winOk: true, hintKey: 'circ_challenge' });

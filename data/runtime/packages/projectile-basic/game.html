@@ -497,6 +497,34 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+/* === demo-visual-polish (classroom) === */
+#sideGoalBox .side-goal-cap{font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent)!important;}
+#sideGoal,p#sideGoal,#proj-side #sideGoal{font-size:14px!important;line-height:1.55!important;margin-top:6px!important;}
+#dual-mode-hud #goalMission,#goalMission{display:none!important;}
+.probe-group{
+  margin-top:4px!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;
+  border-radius:10px!important;opacity:.7!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px!important;letter-spacing:.05em;color:var(--craft-muted)!important;margin:0 0 6px;}
+.probe-group label,.probe-group .text-sm{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.probe-group .text-xs,#messageBox{display:none!important;}
+#craftStageTip{
+  position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:40;pointer-events:none;
+  max-width:min(420px,86%);padding:10px 14px;border-radius:12px;text-align:center;
+  background:rgba(14,20,18,.92);border:1px solid color-mix(in srgb,#0c8aad 42%,var(--craft-accent));
+  color:var(--craft-text);box-shadow:0 12px 32px rgba(0,0,0,.4);font-size:13px;line-height:1.45;
+}
+#craftStageTip strong{display:block;color:var(--craft-accent);font-size:14px;margin-bottom:2px;}
+.craft-card{border-radius:14px!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
+  background:color-mix(in srgb,var(--craft-accent) 55%,#0c8aad)!important;border-radius:10px!important;
+}
+#btnLaunch{min-height:44px!important;border-radius:10px!important;}
+#btnClear{min-height:40px!important;opacity:.85;}
+#proj-side input[type=range]{min-height:28px;}
+#modeSelect{min-height:36px;border-radius:8px!important;}
+
 </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row min-h-0">
@@ -569,21 +597,21 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div id="proj-side" class="w-full md:w-80 md:max-w-[340px] h-[42vh] md:h-full glass-panel flex flex-col z-10 border-t md:border-t-0 md:border-l border-gray-200 min-h-0">
         <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
             <div>
-                <h1 class="text-base font-bold text-gray-800 leading-tight">野战炮台</h1>
+                <h1 class="text-base font-bold text-gray-800 leading-tight">靶场 · 斜抛</h1>
                 <p class="text-xs text-gray-500 mt-0.5">角度 · 速度 · 高度</p>
             </div>
             <div class="flex items-center space-x-2">
                 <select id="modeSelect" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 focus:outline-none focus:border-blue-500">
                     <option value="explore">自由探究</option>
-                    <option value="challenge">靶心挑战</option>
+                    <option value="challenge">竞赛</option>
                 </select>
             </div>
         </div>
 
         <div id="sideGoalBox" class="px-4 pt-3 pb-1 shrink-0">
             <div class="rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2">
-                <div class="text-[11px] font-semibold text-blue-700 tracking-wide">当前目标</div>
-                <p id="sideGoal" class="text-xs mt-0.5 leading-relaxed" style="color:var(--craft-text)">调角度、初速与高度，看落点怎么变。</p>
+                <div class="side-goal-cap text-blue-700 tracking-wide">当前目标</div>
+                <p id="sideGoal" class="mt-0.5 leading-relaxed" style="color:var(--craft-text)">调角度、初速与高度，看落点怎么变。</p>
             </div>
         </div>
 
@@ -615,14 +643,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 <input type="range" id="s-height" min="0" max="30" value="10" step="0.1" class="w-full">
             </div>
 
-            <!-- 质量控制（教学陷阱） -->
-            <div>
+            <!-- 质量控制（教学旁路 · 视觉降权） -->
+            <div class="probe-group">
+                <div class="probe-cap">次要参数 · 仅改观感</div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">小球质量 (kg)</label>
                     <span id="valMass" class="text-sm text-blue-600 font-mono">5</span>
                 </div>
                 <input type="range" id="s-mass" min="1" max="20" value="5" step="1" class="w-full">
-                <p class="text-xs text-gray-400 mt-1">注: 改变质量会影响小球大小。</p>
+                <p class="text-xs text-gray-400 mt-1">不进落点判定</p>
             </div>
         </div>
 
@@ -1650,33 +1679,46 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     if (typeof window.__showAttemptsExhausted === 'function') {
                         window.__showAttemptsExhausted('未能在限次内命中约 ' + lockDist + ' m 靶心。目标靶距仍按本局锁定；可返回探究继续试射，或再开一局竞赛。');
                     } else {
-                        showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「靶心挑战」重开一局。`, true);
+                        showMessage("机会用尽", `未能在限次内命中约 ${lockDist} m 靶心。可切回探究后再选「竞赛」重开一局。`, true);
                     }
                 }
             }
         }
 
-        function showMessage(title, desc, showBtn = false, callback = null) {
-            ui.msgTitle.textContent = title;
-            ui.msgDesc.textContent = desc;
-            ui.msgBox.classList.remove('hidden');
-            if (showBtn) {
-                ui.msgBtn.classList.remove('hidden');
-                ui.msgBtn.onclick = () => {
-                    hideMessage();
-                    if (callback) callback();
-                };
-            } else {
-                ui.msgBtn.classList.add('hidden');
-                setTimeout(() => {
-                    hideMessage();
-                    if (callback) callback();
-                }, 2000);
+        function showStageTip(title, desc) {
+            const stage = document.getElementById('proj-stage');
+            if (!stage) return;
+            let tip = document.getElementById('craftStageTip');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'craftStageTip';
+                stage.appendChild(tip);
             }
+            tip.innerHTML = '<strong></strong><span></span>';
+            tip.querySelector('strong').textContent = title || '';
+            tip.querySelector('span').textContent = desc || '';
+            tip.style.display = 'block';
+            clearTimeout(showStageTip._t);
+            showStageTip._t = setTimeout(() => { tip.style.display = 'none'; }, 2200);
+        }
+
+        function showMessage(title, desc, showBtn = false, callback = null) {
+            // 演示路径：不用浅色 messageBox；机会用尽走 craft 弹层，其余用舞台短提示
+            if (showBtn && String(title || '').indexOf('机会用尽') >= 0 && typeof window.__showAttemptsExhausted === 'function') {
+                window.__showAttemptsExhausted(desc || '');
+                return;
+            }
+            if (showBtn && typeof callback === 'function') {
+                callback();
+                return;
+            }
+            showStageTip(title, desc);
         }
 
         function hideMessage() {
-            ui.msgBox.classList.add('hidden');
+            const tip = document.getElementById('craftStageTip');
+            if (tip) tip.style.display = 'none';
+            if (ui.msgBox) ui.msgBox.classList.add('hidden');
         }
 
         // 倒计时系统

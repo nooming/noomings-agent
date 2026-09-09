@@ -306,6 +306,7 @@ module.exports = {
   readRawBody,
   parseMultipartFiles,
   checkIngestQuota,
+  extractBearerToken,
   clientIp,
   IMPORT_ZIP_MAX_BYTES,
   INGEST_MAX_BYTES,

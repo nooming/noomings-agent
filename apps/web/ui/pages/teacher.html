@@ -54,12 +54,19 @@
           <option value="pending">有待评判</option>
           <option value="judged">全部已评判</option>
         </select>
+        <input type="search" id="filterClassCode" class="sessions-search" placeholder="按课堂码过滤…" maxlength="64" title="仅显示该课堂码上报的学情；留空显示全部">
         <input type="search" id="filterStudent" class="sessions-search" placeholder="搜索学生姓名/组号…">
         <label class="sessions-hide-playtest" title="默认隐藏 playtest / full-eval / 全量试玩 等评测身份；「全检-*」等课堂验收身份不受影响。需要看评测号时再取消勾选。">
           <input type="checkbox" id="hidePlaytest" checked>
           隐藏试玩
         </label>
       </div>
+      <p class="hint" id="classCodeBar" style="margin-top:8px">
+        当前课堂码：<strong id="classCodeDisplay">加载中…</strong>
+        <button type="button" class="platform-session-link" id="btnCopyClassCode" hidden>复制</button>
+        <button type="button" class="platform-session-link" id="btnEditClassCode" hidden>修改</button>
+        <span id="classCodeSourceHint" class="hint"></span>
+      </p>
 
       <div class="sessions-split">
         <div class="student-list-panel">
@@ -1304,10 +1311,12 @@ function filterParams() {
   const graphId = document.getElementById('filterGraph').value;
   const status = document.getElementById('filterStatus').value;
   const q = document.getElementById('filterStudent').value.trim();
+  const classCode = (document.getElementById('filterClassCode')?.value || '').trim();
   const params = new URLSearchParams();
   if (graphId) params.set('graphId', graphId);
   if (status) params.set('status', status);
   if (q) params.set('q', q);
+  if (classCode) params.set('classCode', classCode);
   return params;
 }
 
@@ -3604,6 +3613,93 @@ document.getElementById('filterStudent').addEventListener('input', () => {
   }, 300);
 });
 
+document.getElementById('filterClassCode')?.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    selectedStudentKey = null;
+    selectedSessionId = null;
+    selectedSessionIds.clear();
+    loadSessionsData();
+  }, 300);
+});
+
+let currentClassCodeMeta = { classCode: '', source: '', envOverridesFile: false };
+
+async function loadClassConfigBar() {
+  const display = document.getElementById('classCodeDisplay');
+  const copyBtn = document.getElementById('btnCopyClassCode');
+  const editBtn = document.getElementById('btnEditClassCode');
+  const hint = document.getElementById('classCodeSourceHint');
+  if (!display) return;
+  try {
+    const r = await fetch('/api/platform/class-config');
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) {
+      display.textContent = '未配置';
+      if (copyBtn) copyBtn.hidden = true;
+      if (editBtn) {
+        editBtn.hidden = false;
+        editBtn.textContent = '设置';
+      }
+      if (hint) hint.textContent = data.message || '';
+      return;
+    }
+    currentClassCodeMeta = {
+      classCode: data.classCode || '',
+      source: data.source || '',
+      envOverridesFile: !!data.envOverridesFile,
+    };
+    display.textContent = data.classCode;
+    if (copyBtn) copyBtn.hidden = false;
+    if (editBtn) {
+      editBtn.hidden = false;
+      editBtn.textContent = data.envOverridesFile ? '查看说明' : '修改';
+    }
+    if (hint) {
+      const srcLabel = data.source === 'env' ? '（环境变量）'
+        : data.source === 'file' ? '（工作台配置）'
+        : data.source === 'dev-default' ? '（开发默认）' : '';
+      hint.textContent = srcLabel + ' · 请告知学生此码进入课堂';
+    }
+  } catch {
+    display.textContent = '加载失败';
+  }
+}
+
+document.getElementById('btnCopyClassCode')?.addEventListener('click', async () => {
+  const code = currentClassCodeMeta.classCode;
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    alert('已复制课堂码');
+  } catch {
+    prompt('复制课堂码：', code);
+  }
+});
+
+document.getElementById('btnEditClassCode')?.addEventListener('click', async () => {
+  if (currentClassCodeMeta.envOverridesFile) {
+    alert('当前课堂码由环境变量 CLASS_ACCESS_CODE 锁定。演示时可改 .env 后重启服务。');
+    return;
+  }
+  const next = prompt('设置课堂码（4–64 位，字母数字._-）：', currentClassCodeMeta.classCode || '');
+  if (next == null) return;
+  const r = await fetch('/api/platform/class-config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ classCode: next.trim() }),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || !data.ok) {
+    alert(data.message || data.error || '保存失败');
+    return;
+  }
+  await loadClassConfigBar();
+  const filterEl = document.getElementById('filterClassCode');
+  if (filterEl && !filterEl.value.trim()) filterEl.value = data.classCode || '';
+  loadSessionsData();
+});
+
 (function initHidePlaytestToggle() {
   const el = document.getElementById('hidePlaytest');
   if (!el) return;
@@ -3687,6 +3783,7 @@ async function bootstrapTeacherPage() {
     loadGraphOptions(),
     loadPlayUrlOptions(),
     loadPublishPairOptions(),
+    loadClassConfigBar(),
   ]);
   await loadCatalog();
   await loadSessionsData();

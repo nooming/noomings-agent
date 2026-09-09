@@ -79,6 +79,18 @@ const {
   IMPORT_ZIP_MAX_BYTES,
   INGEST_MAX_BYTES,
 } = require('../api-shared');
+const {
+  validateStudentId,
+  validateStudentName,
+} = require('../../../packages/platform/student-identity');
+const {
+  getClassAccessCode,
+  getClassCodeSource,
+  setClassAccessCode,
+  matchClassCode,
+  deriveStudentSession,
+  STUDENT_SESSION_TTL_MS,
+} = require('../../../packages/platform/class-access');
 
 const LLM_OPTS = () => ({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -394,6 +406,110 @@ function handlePlatformAdapter(req, res) {
 }
 
 
+/** Student enter classroom: validate id/name + class code; issue short-lived session. */
+async function handleStudentJoin(req, res) {
+  cors(res);
+  try {
+    const body = await readBody(req, 8 * 1024);
+    const idCheck = validateStudentId(body.studentId || body.studentNo);
+    if (!idCheck.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: idCheck.error || 'student_id_invalid',
+        message: idCheck.message || '学号无效',
+      }));
+      return;
+    }
+    const nameCheck = validateStudentName(body.studentName || body.studentLabel);
+    if (!nameCheck.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: nameCheck.error || 'student_name_invalid',
+        message: nameCheck.message || '姓名无效',
+      }));
+      return;
+    }
+    const classCheck = matchClassCode(body.classCode || body.code);
+    if (!classCheck.ok) {
+      const status = classCheck.error === 'class_access_not_configured' ? 503 : 401;
+      res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: classCheck.error,
+        message: classCheck.message,
+      }));
+      return;
+    }
+    const issuedAt = Date.now();
+    const studentSession = deriveStudentSession(idCheck.studentId, classCheck.classCode, issuedAt);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: true,
+      studentId: idCheck.studentId,
+      studentName: nameCheck.studentName,
+      classCode: classCheck.classCode,
+      studentSession,
+      expiresInMs: STUDENT_SESSION_TTL_MS,
+      issuedAt,
+    }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
+
+function handleClassConfigGet(req, res) {
+  cors(res);
+  const code = getClassAccessCode();
+  const source = getClassCodeSource();
+  if (!code) {
+    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: false,
+      error: 'class_access_not_configured',
+      message: '未配置课堂码，请设置 CLASS_ACCESS_CODE 或在工作台写入',
+      source,
+    }));
+    return;
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify({
+    ok: true,
+    classCode: code,
+    source,
+    envOverridesFile: source === 'env',
+  }));
+}
+
+async function handleClassConfigSet(req, res) {
+  cors(res);
+  try {
+    const body = await readBody(req, 8 * 1024);
+    if (String(process.env.CLASS_ACCESS_CODE || process.env.PLATFORM_CLASS_CODE || '').trim()) {
+      res.writeHead(409, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: 'class_code_locked_by_env',
+        message: '当前课堂码由环境变量 CLASS_ACCESS_CODE 锁定，请改环境变量后重启',
+      }));
+      return;
+    }
+    const result = setClassAccessCode(body.classCode || body.code);
+    if (!result.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(result));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
+
 module.exports = {
   handleJudge,
   handlePlatformJudgeSession,
@@ -410,4 +526,7 @@ module.exports = {
   handlePlatformPackageSource,
   handlePlatformStudentSummary,
   handlePlatformAdapter,
+  handleStudentJoin,
+  handleClassConfigGet,
+  handleClassConfigSet,
 };

@@ -182,7 +182,9 @@ function ingestTrace(body) {
   const idCheck = validateStudentId(studentIdRaw);
   const studentId = idCheck.ok ? idCheck.studentId : '';
   const studentLabel = String(body.studentLabel || body.studentName || studentId || '匿名学生').trim();
-  const taskCode = String(body.taskCode || body.classCode || body.catalogId || '').trim();
+  // taskCode = catalog/task id; classCode = classroom access code (do not conflate)
+  const classCode = String(body.classCode || '').trim();
+  const taskCode = String(body.taskCode || body.catalogId || '').trim();
   if (!catalogId && !graphId) {
     return { ok: false, error: 'catalogId_or_graphId_required' };
   }
@@ -224,6 +226,7 @@ function ingestTrace(body) {
     record.updatedAt = new Date().toISOString();
     if (studentId) record.studentId = studentId;
     if (taskCode) record.taskCode = taskCode;
+    if (classCode) record.classCode = classCode;
     if (body.studentLabel || body.studentName) record.studentLabel = studentLabel;
   } else {
     if (!studentId) {
@@ -241,6 +244,7 @@ function ingestTrace(body) {
       studentLabel,
       studentId,
       taskCode: taskCode || catalogId || null,
+      classCode: classCode || null,
       ch: body.ch ?? 0,
       game: body.game || catalogId,
       traceVersion: body.traceVersion || 1,
@@ -284,7 +288,7 @@ function ingestTraceQueued(body) {
   return enqueueSessionWrite(existingId, () => ingestTrace(payload));
 }
 
-function readFilteredTraceRows({ graphId, catalogId } = {}) {
+function readFilteredTraceRows({ graphId, catalogId, classCode } = {}) {
   ensureTracesRoot();
   const files = fs.readdirSync(getTracesRoot()).filter(f => f.endsWith('.json'));
   const rows = [];
@@ -293,6 +297,7 @@ function readFilteredTraceRows({ graphId, catalogId } = {}) {
       const row = JSON.parse(fs.readFileSync(path.join(getTracesRoot(), file), 'utf8'));
       if (graphId && row.graphId !== graphId) continue;
       if (catalogId && row.catalogId !== catalogId) continue;
+      if (classCode && String(row.classCode || '') !== String(classCode)) continue;
       const terminalOutcome = row.terminalOutcome
         || deriveTerminalOutcome(row)
         || null;
@@ -303,6 +308,7 @@ function readFilteredTraceRows({ graphId, catalogId } = {}) {
         studentLabel: row.studentLabel || '匿名学生',
         studentId: row.studentId || null,
         taskCode: row.taskCode || row.catalogId || null,
+        classCode: row.classCode || null,
         ch: row.ch,
         startedAt: row.startedAt,
         updatedAt: row.updatedAt,
@@ -331,14 +337,14 @@ function studentGroupKey(row) {
   return `匿名 · ${String(row.sessionId || '').slice(-6)}`;
 }
 
-function listTraces({ graphId, catalogId, limit = 50 } = {}) {
-  const rows = readFilteredTraceRows({ graphId, catalogId });
+function listTraces({ graphId, catalogId, classCode, limit = 50 } = {}) {
+  const rows = readFilteredTraceRows({ graphId, catalogId, classCode });
   rows.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
   return rows.slice(0, limit).map(({ judgeResult, ...rest }) => rest);
 }
 
-function getTraceStats({ graphId, catalogId } = {}) {
-  const rows = readFilteredTraceRows({ graphId, catalogId });
+function getTraceStats({ graphId, catalogId, classCode } = {}) {
+  const rows = readFilteredTraceRows({ graphId, catalogId, classCode });
   const studentKeys = new Set(rows.map(studentGroupKey));
   let pendingJudge = 0;
   let totalEvents = 0;
@@ -451,8 +457,8 @@ function getTraceStats({ graphId, catalogId } = {}) {
   };
 }
 
-function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) {
-  const rows = readFilteredTraceRows({ graphId, catalogId });
+function listTraceStudents({ graphId, catalogId, classCode, q, status, limit = 200 } = {}) {
+  const rows = readFilteredTraceRows({ graphId, catalogId, classCode });
   const groups = new Map();
   for (const row of rows) {
     const key = studentGroupKey(row);
@@ -491,6 +497,7 @@ function listTraceStudents({ graphId, catalogId, q, status, limit = 200 } = {}) 
       catalogId: row.catalogId || null,
       graphId: row.graphId || null,
       taskCode: row.taskCode || null,
+      classCode: row.classCode || null,
       startedAt: row.startedAt,
       updatedAt: row.updatedAt,
       eventCount: row.eventCount,
@@ -688,7 +695,7 @@ function deleteTraceSessions(sessionIds) {
 /**
  * Classroom one-pager: sessions × games with inquiry-style aggregates.
  */
-function getClassroomBoard({ graphId, catalogId, taskCode } = {}) {
+function getClassroomBoard({ graphId, catalogId, taskCode, classCode } = {}) {
   ensureTracesRoot();
   const files = fs.readdirSync(getTracesRoot()).filter(f => f.endsWith('.json'));
   const sessions = [];
@@ -709,6 +716,7 @@ function getClassroomBoard({ graphId, catalogId, taskCode } = {}) {
     if (graphId && row.graphId !== graphId) continue;
     if (catalogId && row.catalogId !== catalogId) continue;
     if (taskCode && String(row.taskCode || row.catalogId || '') !== String(taskCode)) continue;
+    if (classCode && String(row.classCode || '') !== String(classCode)) continue;
 
     const vars = row.variableAdjustCounts || [];
     let avN = 0;
@@ -735,6 +743,7 @@ function getClassroomBoard({ graphId, catalogId, taskCode } = {}) {
       studentLabel: row.studentLabel || '匿名学生',
       studentId: row.studentId || null,
       taskCode: row.taskCode || row.catalogId || null,
+      classCode: row.classCode || null,
       graphId: row.graphId,
       catalogId: row.catalogId,
       eventCount: row.eventCount || row.events?.length || 0,
@@ -757,7 +766,12 @@ function getClassroomBoard({ graphId, catalogId, taskCode } = {}) {
   return {
     ok: true,
     generatedAt: new Date().toISOString(),
-    filters: { graphId: graphId || null, catalogId: catalogId || null, taskCode: taskCode || null },
+    filters: {
+      graphId: graphId || null,
+      catalogId: catalogId || null,
+      taskCode: taskCode || null,
+      classCode: classCode || null,
+    },
     summary: {
       sessionCount: sessions.length,
       uniqueStudents: new Set(sessions.map(s => s.studentId || s.studentLabel)).size,

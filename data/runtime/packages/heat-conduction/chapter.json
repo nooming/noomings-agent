@@ -258,8 +258,8 @@
         "role": "operation"
       },
       "s-area": {
-        "kgId": "O1",
-        "role": "operation"
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -654,8 +654,7 @@
         "id": "KP1",
         "label": "热传导 · 探究",
         "formulas": [
-          "C = ε₀εᵣA / d",
-          "E = V/d（击穿：E > Ebd）"
+          "Q/t = κ A ΔT / d"
         ],
         "mapsToKg": [
           "S1"
@@ -678,19 +677,6 @@
       },
       {
         "id": "AV2",
-        "controlId": "s-area",
-        "label": "截面积",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "rank2：截面积 A 线性进热流",
-        "priorityRank": 2,
-        "responseShape": "linear-approx"
-      },
-      {
-        "id": "AV3",
         "controlId": "s-temperature-diff",
         "label": "温差",
         "type": "range",
@@ -699,27 +685,26 @@
         "monotonicity": "monotone",
         "affects": [],
         "notes": "rank3：温差 ΔT 线性进热流，与 k/A 等价通道靠后",
-        "priorityRank": 3,
+        "priorityRank": 2,
         "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项"
+        "controlId": "s-area",
+        "label": "截面积",
+        "reason": "竞赛/判定用固定 A_PHYS；滑条为对照量（irrelevant_touch）"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
       "AV2",
-      "AV3",
       "CV1"
     ],
     "narrative": {
-      "intro": "本关探究：导热系数与温差影响热流、截面积A对热流的影响",
+      "intro": "本关探究：热流速率受导热系数 κ 与温差 ΔT 主导（Q/t = κAΔT/d）；截面积滑条为对照旁路。",
       "steps": [
         {
           "order": 1,
@@ -762,24 +747,22 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "过关结果",
-        "symbol": "",
-        "unit": "",
+        "label": "热流速率",
+        "symbol": "Q/t",
+        "unit": "W",
         "role": "primary",
-        "source": "observe"
+        "source": "formula"
       }
     ],
     "domain": "heat"
   },
   "physicsModel": {
     "formulas": [
-      "C = ε₀εᵣA / d",
-      "E = V/d（击穿：E > Ebd）"
+      "Q/t = κ A ΔT / d"
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
     "confoundingVariables": [
       "CV1"
@@ -789,8 +772,7 @@
     ],
     "core": {
       "formulas": [
-        "C = ε₀εᵣA / d",
-        "E = V/d（击穿：E > Ebd）"
+        "Q/t = κ A ΔT / d"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
@@ -804,21 +786,6 @@
     "winCondition": "热流落在安全带区间内，竞赛急单完成，显示过关",
     "knowledgeSummary": "热传导 · 探究",
     "controls": [
-      {
-        "id": "s-area",
-        "type": "range",
-        "label": "截面积",
-        "symbol": "截面积",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
       {
         "id": "s-thermal-conductivity",
         "type": "range",
@@ -859,10 +826,10 @@
     ],
     "confoundingUi": [
       {
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项",
-        "uiStrategy": "narrative_only"
+        "controlId": "s-area",
+        "label": "截面积",
+        "reason": "物理判定用固定截面积；滑条为对照旁路",
+        "uiStrategy": "teach_only"
       }
     ],
     "confoundingMustNotBePrimarySlider": false,

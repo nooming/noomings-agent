@@ -761,8 +761,8 @@
         "id": "KP1",
         "label": "炮台 · 抛体",
         "formulas": [
-          "F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用",
-          "v0 = parseFloat(this.dom.inputs.power.value)"
+          "F_d ∝ −k(v−v_w)|v−v_w|（风仅在阻力>0时起作用）",
+          "弹道由发射角、初速、g、阻力与风速共同决定"
         ],
         "mapsToKg": [
           "S1"
@@ -933,8 +933,8 @@
   },
   "physicsModel": {
     "formulas": [
-      "F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用",
-      "v0 = parseFloat(this.dom.inputs.power.value)"
+      "F_d ∝ −k(v−v_w)|v−v_w|（风仅在阻力>0时起作用）",
+      "弹道由发射角、初速、g、阻力与风速共同决定"
     ],
     "independentVariables": [
       "AV1",
@@ -953,8 +953,8 @@
     ],
     "core": {
       "formulas": [
-        "F_d ∝ −k(v−v_w)|v−v_w|；风只有在阻力存在时才起作用",
-        "v0 = parseFloat(this.dom.inputs.power.value)"
+        "F_d ∝ −k(v−v_w)|v−v_w|（风仅在阻力>0时起作用）",
+        "弹道由发射角、初速、g、阻力与风速共同决定"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",

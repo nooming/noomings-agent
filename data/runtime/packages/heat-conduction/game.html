@@ -622,6 +622,31 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+/* === demo-visual-polish (classroom) === */
+#sideGoal,p#sideGoal,#essence-bench #sideGoal{font-size:14px!important;line-height:1.55!important;margin:0!important;}
+.side-goal-wrap{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#e07060) 40%,transparent);
+}
+.side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--scene-hi,var(--craft-accent));margin-bottom:4px;}
+#essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
+.probe-group{
+  margin:8px 0!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
+.probe-group label,.probe-group .value{font-size:11px!important;font-weight:500!important;}
+.probe-group input[type=number]{opacity:.85;border-color:color-mix(in srgb,var(--craft-muted) 50%,transparent)!important;}
+.craft-card{border-radius:14px!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
+  background:color-mix(in srgb,var(--craft-accent,#e07060) 45%,#0c8aad)!important;border-radius:10px!important;
+}
+#btn-test{min-height:44px!important;}
+#essence-bench input[type=range]{min-height:28px;}
+#modeSelect{min-height:34px;}
+#heatCanvas{border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.28);}
+
 </style>
 </head>
 <body>
@@ -677,7 +702,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <aside id="essence-bench">
     <div class="essence-scroll">
       <div class="app">
-    <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:var(--craft-text)">调导热与温差，看穿墙热流怎么变。</p>
+    <div class="side-goal-wrap">
+      <div class="side-goal-cap">当前目标</div>
+      <p id="sideGoal" style="color:var(--craft-text)">调导热与温差，看穿墙热流怎么变。</p>
+    </div>
 
     <!-- canvas 示意热流 -->
     <!-- 调节变量：导热系数 -->
@@ -692,7 +720,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         <input type="range" id="s-temperature-diff" min="10" max="100" step="0.5" value="20">
     </div>
 
-    <div class="slider-group">
+    <div class="slider-group probe-group">
+        <div class="probe-cap">次要参数 · 本关旁路试探</div>
         <label>截面积 A <span class="value" id="a-value"><input type="number" id="n-area" min="0.01" max="0.10" step="0.001" value="0.05" aria-label="截面积" style="width:64px;background:rgba(0,0,0,.2);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:2px 6px"></span> m²</label>
         <input type="range" id="s-area" min="0.01" max="0.10" step="0.001" value="0.05">
     </div>
@@ -1742,7 +1771,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
         '<select id="modeSelect" aria-label="探究阶段">' +
           '<option value="explore">自由探究</option>' +
-          '<option value="challenge">竞赛挑战</option>' +
+          '<option value="challenge">竞赛</option>' +
         '</select>';
       bench.insertBefore(hd, bench.firstChild);
     } else if (!$('modeSelect')) {
@@ -1751,7 +1780,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       if (chip && !$('modeSelect')) {
         var sel = document.createElement('select');
         sel.id = 'modeSelect';
-        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛</option>';
         chip.appendChild(sel);
       }
     }
@@ -1761,6 +1790,10 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   function boot(){
     if (!ensureUi()) return;
     var sel = $('modeSelect');
+    try {
+      var opt = sel.querySelector('option[value="challenge"]');
+      if (opt) opt.textContent = '竞赛';
+    } catch (e) {}
     sel.addEventListener('change', function(){ applyMode(sel.value); });
     var ft = document.querySelector('#essence-bench .essence-ft') || $('essence-bench') || document.body;
     ft.addEventListener('click', onPrimaryClick, true);

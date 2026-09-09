@@ -130,6 +130,43 @@ function run() {
     'rc-circuit: must not emit tuning directly from input',
   );
 
+  // circular-motion: last-attempt win must arm __challengeWon before deferred craft settle,
+  // otherwise dual-mode scheduleAttemptsExhausted(650ms) fires fail UI ahead of ~1.1s ride anim.
+  {
+    const circPath = getPackageGamePath('circular-motion');
+    const circHtml = fs.readFileSync(circPath, 'utf8');
+    assert(
+      /challengeWon\s*=\s*true[\s\S]{0,280}window\.__challengeWon\s*=\s*true/.test(circHtml),
+      'circular-motion: challenge win must set window.__challengeWon immediately',
+    );
+    assert(
+      /challengeWon\s*=\s*true[\s\S]{0,400}__hideAttemptsExhausted/.test(circHtml),
+      'circular-motion: challenge win must cancel pending attempts-exhausted overlay',
+    );
+    assert(
+      /__circApplyMode[\s\S]{0,400}window\.__challengeWon\s*=\s*false/.test(circHtml),
+      'circular-motion: mode reset must clear window.__challengeWon',
+    );
+
+    // Sync race model: last attempt consumed → win arms flag → exhausted timer fires before craft UI.
+    let attempts = 1;
+    let exhaustedEmitted = false;
+    let craftWinOpen = false;
+    let challengeWonFlag = false;
+    const isWon = () => craftWinOpen || challengeWonFlag;
+    const showExhausted = () => {
+      if (attempts > 0 || isWon()) return;
+      exhaustedEmitted = true;
+    };
+    attempts -= 1;
+    challengeWonFlag = true; // fixed: arm before deferred __craftShowWin
+    showExhausted();
+    assert(!exhaustedEmitted, 'last-attempt win must not emit attempts_exhausted before craft UI');
+    challengeWonFlag = false;
+    showExhausted();
+    assert(exhaustedEmitted, 'without win flag, exhausted path still fires');
+  }
+
   console.log('trace-package-hooks: OK');
 }
 

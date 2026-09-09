@@ -28,6 +28,9 @@ const {
   handlePlatformPackageSource,
   handlePlatformStudentSummary,
   handlePlatformAdapter,
+  handleStudentJoin,
+  handleClassConfigGet,
+  handleClassConfigSet,
 } = platform;
 
 const {
@@ -72,6 +75,7 @@ async function routeApi(req, res) {
       traceIngest: true,
       graphPreview: true,
       teacherCodeConfigured: !!(process.env.TEACHER_ACCESS_CODE || process.env.PLATFORM_TEACHER_PASS),
+      classCodeConfigured: !!require('../../packages/platform/class-access').getClassAccessCode(),
     }));
     return true;
   }
@@ -81,6 +85,20 @@ async function routeApi(req, res) {
   }
   if (req.method === 'POST' && req.url === '/api/platform/teacher-login') {
     await handleTeacherLogin(req, res);
+    return true;
+  }
+  if (req.method === 'POST' && req.url === '/api/platform/student-join') {
+    await handleStudentJoin(req, res);
+    return true;
+  }
+  if (req.method === 'GET' && (req.url === '/api/platform/class-config' || req.url.startsWith('/api/platform/class-config?'))) {
+    if (!requireTeacherAuth(req, res)) return true;
+    handleClassConfigGet(req, res);
+    return true;
+  }
+  if (req.method === 'POST' && req.url === '/api/platform/class-config') {
+    if (!requireTeacherAuth(req, res)) return true;
+    await handleClassConfigSet(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/strategy-path-summary') {

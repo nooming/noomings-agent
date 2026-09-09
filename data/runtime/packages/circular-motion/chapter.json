@@ -349,8 +349,8 @@
         "role": "operation"
       },
       "s-base-tilt": {
-        "kgId": "O1",
-        "role": "operation"
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -762,7 +762,8 @@
         "id": "KP1",
         "label": "夜市飞椅 · 圆周运动",
         "formulas": [
-          "R = rideAnim ? rideAnim.r0 : r"
+          "v = ω r",
+          "F = m ω² r"
         ],
         "mapsToKg": [
           "S1"
@@ -795,34 +796,20 @@
         "notes": "rank2：F∝r 近似线性，次优先",
         "priorityRank": 2,
         "responseShape": "linear-approx"
-      },
-      {
-        "id": "AV3",
-        "controlId": "s-base-tilt",
-        "label": "倾角",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "rank3：底座倾角不进 F 计算，近无效最低",
-        "priorityRank": 3,
-        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项"
+        "controlId": "s-base-tilt",
+        "label": "底座倾角",
+        "reason": "仅改观感倾斜，不改线速度/向心力物理量"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
       "AV2",
-      "AV3",
       "CV1"
     ],
     "narrative": {
@@ -869,33 +856,43 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "过关结果",
-        "symbol": "",
-        "unit": "",
+        "label": "线速度",
+        "symbol": "v",
+        "unit": "m/s",
         "role": "primary",
-        "source": "observe"
+        "source": "formula"
+      },
+      {
+        "id": "OV2",
+        "label": "向心力",
+        "symbol": "F",
+        "unit": "N",
+        "role": "secondary",
+        "source": "formula"
       }
     ],
     "domain": "circular"
   },
   "physicsModel": {
     "formulas": [
-      "R = rideAnim ? rideAnim.r0 : r"
+      "v = ω r",
+      "F = m ω² r"
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
     "confoundingVariables": [
       "CV1"
     ],
     "dependentVariables": [
-      "OV1"
+      "OV1",
+      "OV2"
     ],
     "core": {
       "formulas": [
-        "R = rideAnim ? rideAnim.r0 : r"
+        "v = ω r",
+        "F = m ω² r"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
@@ -940,21 +937,6 @@
         }
       },
       {
-        "id": "s-base-tilt",
-        "type": "range",
-        "label": "倾角",
-        "symbol": "倾角",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
         "id": "modeSelect",
         "type": "discrete",
         "label": "选择模式",
@@ -964,10 +946,10 @@
     ],
     "confoundingUi": [
       {
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项",
-        "uiStrategy": "narrative_only"
+        "controlId": "s-base-tilt",
+        "label": "底座倾角",
+        "reason": "视觉旁路，不改 v/F",
+        "uiStrategy": "teach_only"
       }
     ],
     "confoundingMustNotBePrimarySlider": false,

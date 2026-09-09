@@ -616,8 +616,8 @@
         "id": "KP1",
         "label": "单摆投靶 · 探究游戏",
         "formulas": [
-          "C = ε₀εᵣA / d",
-          "E = V/d（击穿：E > Ebd）"
+          "T ≈ 2π√(L/g)",
+          "落点由摆长 L 与释放角 θ₀ 共同决定"
         ],
         "mapsToKg": [
           "S1"
@@ -713,8 +713,8 @@
   },
   "physicsModel": {
     "formulas": [
-      "C = ε₀εᵣA / d",
-      "E = V/d（击穿：E > Ebd）"
+      "T ≈ 2π√(L/g)",
+      "落点由摆长 L 与释放角 θ₀ 共同决定"
     ],
     "independentVariables": [
       "AV1",
@@ -728,8 +728,8 @@
     ],
     "core": {
       "formulas": [
-        "C = ε₀εᵣA / d",
-        "E = V/d（击穿：E > Ebd）"
+        "T ≈ 2π√(L/g)",
+        "落点由摆长 L 与释放角 θ₀ 共同决定"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",

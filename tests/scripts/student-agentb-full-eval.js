@@ -17,7 +17,7 @@ const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-
 const ROOT = getPackagesRoot();
 const DO_INGEST = process.argv.includes('--ingest');
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
-const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || 'test-class-2026';
+const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || 'teach2609';
 
 function listPackageIds() {
   return fs

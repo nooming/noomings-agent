@@ -41,6 +41,8 @@ const params = new URLSearchParams(location.search);
 const catalogId = params.get('id');
 const studentId = (localStorage.getItem('platform-student-id') || '').trim();
 const studentLabel = (localStorage.getItem('platform-student-name') || '').trim() || studentId || '学生';
+const classCode = (localStorage.getItem('platform-class-code') || '').trim();
+const studentSession = (localStorage.getItem('platform-student-session') || '').trim();
 const taskCode = localStorage.getItem('platform-task-code') || params.get('taskCode') || catalogId || '';
 const pathTypeEnabled = params.get('showPathType') === '1'
   || localStorage.getItem('platform-show-path-type') === '1';
@@ -104,6 +106,8 @@ async function boot() {
     graphId: item.graphId,
     studentLabel,
     studentId: studentId || undefined,
+    classCode: classCode || undefined,
+    studentSession: studentSession || undefined,
     taskCode: taskCode || item.id,
     ch: 0,
   };

@@ -78,7 +78,13 @@ const {
   checkIngestQuota,
   IMPORT_ZIP_MAX_BYTES,
   INGEST_MAX_BYTES,
+  extractBearerToken,
 } = require('../api-shared');
+const {
+  getClassAccessCode,
+  matchClassCode,
+  verifyStudentSession,
+} = require('../../../packages/platform/class-access');
 
 const LLM_OPTS = () => ({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -127,6 +133,49 @@ async function handleTraceIngest(req, res) {
       res.end(JSON.stringify({ ok: false, error: quota.error || 'ingest_rate_limited' }));
       return;
     }
+
+    const classCodeRaw = String(body.classCode || '').trim();
+    const configuredClass = getClassAccessCode();
+    if (classCodeRaw && configuredClass) {
+      const classCheck = matchClassCode(classCodeRaw);
+      if (!classCheck.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: classCheck.error || 'invalid_class_code',
+          message: classCheck.message || '课堂码不正确',
+        }));
+        return;
+      }
+      body.classCode = classCheck.classCode;
+    }
+
+    const studentSession = String(
+      body.studentSession || extractBearerToken(req) || '',
+    ).trim();
+    const studentId = String(body.studentId || body.studentNo || '').trim();
+    if (studentSession) {
+      if (!studentId || !body.classCode) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: 'student_session_mismatch',
+          message: '学生会话与学号/课堂码不一致',
+        }));
+        return;
+      }
+      const ver = verifyStudentSession(studentSession, studentId, body.classCode);
+      if (!ver.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: ver.expired ? 'student_session_expired' : 'student_session_invalid',
+          message: ver.expired ? '签到已过期，请重新进入课堂' : '学生会话无效，请重新进入课堂',
+        }));
+        return;
+      }
+    }
+
     const item = getCatalogItem(body.catalogId);
     if (item && !body.graphId) body.graphId = item.graphId;
     const result = await ingestTraceQueued(body);
@@ -149,8 +198,9 @@ function handlePlatformTraces(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const graphId = url.searchParams.get('graphId') || undefined;
   const catalogId = url.searchParams.get('catalogId') || undefined;
+  const classCode = url.searchParams.get('classCode') || undefined;
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify({ ok: true, items: listTraces({ graphId, catalogId }) }));
+  res.end(JSON.stringify({ ok: true, items: listTraces({ graphId, catalogId, classCode }) }));
 }
 
 function handlePlatformTraceStats(req, res) {
@@ -158,8 +208,9 @@ function handlePlatformTraceStats(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const graphId = url.searchParams.get('graphId') || undefined;
   const catalogId = url.searchParams.get('catalogId') || undefined;
+  const classCode = url.searchParams.get('classCode') || undefined;
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-  res.end(JSON.stringify({ ok: true, stats: getTraceStats({ graphId, catalogId }) }));
+  res.end(JSON.stringify({ ok: true, stats: getTraceStats({ graphId, catalogId, classCode }) }));
 }
 
 function handleClassroomBoard(req, res) {
@@ -168,8 +219,9 @@ function handleClassroomBoard(req, res) {
   const graphId = url.searchParams.get('graphId') || undefined;
   const catalogId = url.searchParams.get('catalogId') || undefined;
   const taskCode = url.searchParams.get('taskCode') || undefined;
+  const classCode = url.searchParams.get('classCode') || undefined;
   const format = (url.searchParams.get('format') || 'json').toLowerCase();
-  const board = getClassroomBoard({ graphId, catalogId, taskCode });
+  const board = getClassroomBoard({ graphId, catalogId, taskCode, classCode });
   if (format === 'csv') {
     const csv = exportClassroomCsv(board);
     res.writeHead(200, {
@@ -188,6 +240,7 @@ function handlePlatformTraceStudents(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const graphId = url.searchParams.get('graphId') || undefined;
   const catalogId = url.searchParams.get('catalogId') || undefined;
+  const classCode = url.searchParams.get('classCode') || undefined;
   const q = url.searchParams.get('q') || undefined;
   const status = url.searchParams.get('status') || undefined;
   const limitRaw = url.searchParams.get('limit');
@@ -196,7 +249,7 @@ function handlePlatformTraceStudents(req, res) {
     const n = Number(limitRaw);
     if (Number.isFinite(n)) limit = Math.max(1, Math.min(300, Math.floor(n)));
   }
-  const items = listTraceStudents({ graphId, catalogId, q, status, limit });
+  const items = listTraceStudents({ graphId, catalogId, classCode, q, status, limit });
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify({
     ok: true,

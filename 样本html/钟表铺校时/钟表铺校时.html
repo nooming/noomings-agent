@@ -541,6 +541,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+/* === demo-visual-polish (classroom) === */
+#sideGoal,p#sideGoal{font-size:14px!important;line-height:1.55!important;margin:0 0 12px!important;}
+.side-goal-wrap{
+  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(201,151,63,.35);
+}
+.side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--brass-hi,#f0cf8a);margin-bottom:4px;}
+.probe-group,.srow.probe-group{
+  margin-top:6px!important;padding:8px 10px!important;
+  border:1px dashed rgba(201,151,63,.32)!important;border-radius:10px!important;
+  opacity:.68!important;background:rgba(0,0,0,.18)!important;
+}
+.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:rgba(239,227,200,.55);margin:0 0 6px;}
+.probe-group .slabel,.probe-group .slabel span,.probe-group .slabel small{font-size:11px!important;opacity:.9;}
+.craft-card{border-radius:14px!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
+  background:color-mix(in srgb,var(--brass,#c9973f) 60%,#0c8aad)!important;border-radius:10px!important;color:#1a1208!important;
+}
+#btn-measure{min-height:44px!important;}
+#bench input[type=range]{min-height:28px;}
+#modeSelect{min-height:34px;}
+#sfx{opacity:.72;font-size:11px!important;}
+
 </style>
 </head>
 <body>
@@ -611,10 +634,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         <span class="bench-hd-title">钟表铺工作台</span>
         <span class="bench-hd-sub" id="benchGoalSub">自由校时：对照计时看周期变化</span>
       </div>
-      <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
+      <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛</option></select>
     </div>
     <div class="bench-scroll">
-      <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:rgba(240,207,138,.92)">调摆长与摆角，看周期怎么变。</p>
+      <div class="side-goal-wrap">
+        <div class="side-goal-cap">当前目标</div>
+        <p id="sideGoal" style="margin:0;color:rgba(240,207,138,.92)">调摆长与摆角，看周期怎么变。</p>
+      </div>
       <div class="tband-wrap">
         <div class="tband-cap" id="tbandCap">周期尺 · <em>绿区 = 探究带</em></div>
         <div id="tband">
@@ -637,8 +663,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           <input type="range" id="s-angle" min="5" max="45" value="20" step="1">
         </div>
       </div>
-      <div class="srow">
-        <div class="slabel"><span>摆锤质量 m</span><span class="sval" id="v-mass">1.5 kg</span><small>黄铜配重</small></div>
+      <div class="srow probe-group">
+        <div class="probe-cap">次要参数 · 旁路试探</div>
+        <div class="slabel"><span>摆锤质量 m</span><span class="sval" id="v-mass">1.5 kg</span><small>黄铜配重 · 不进判定</small></div>
         <div class="srow-track">
           <input type="range" id="s-mass" min="0.5" max="3" value="1.5" step="0.1">
         </div>
@@ -1308,6 +1335,12 @@ function startMeasure() {
     btn.textContent = '\u23f1 启动计时 · 测一个周期';
     Telemetry.log('measure_result', { n: measureCount, T: +T.toFixed(4),
       in_band: inTBand(T), theta_ok: thetaOk(), after: Telemetry.snapshot() });
+    if (playMode !== 'challenge') {
+      try {
+        var __esControls0 = window.__snapControls ? window.__snapControls() : {};
+        if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit || null, __esControls0);
+      } catch (_es0) {}
+    }
     if (winOk(T)) {
       if (playMode === 'challenge') {
         won = true;   // 滑块保持锁定
@@ -1317,6 +1350,11 @@ function startMeasure() {
         // 探究：周期落入对照带只给观察反馈，不进过关/结算
         lockControls(false);
         Telemetry.log('explore_in_band', { after: Telemetry.snapshot() });
+        try {
+          var __esControls = window.__snapControls ? window.__snapControls() : {};
+          if (window.__emit) window.__emit('snapshot', { controls: __esControls, winOk: false, hintKey: 'explore_observe' });
+          if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit || null, __esControls);
+        } catch (_es) {}
       }
     } else {
       lockControls(false);
@@ -2056,6 +2094,33 @@ syncUI();
     } catch (e2) {}
     return false;
   };
+})();
+</script>
+<script>
+/* === explore_success gate (百人复测) === */
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      if (g.done || g.n < 3) return;
+      g.done = true;
+      var emit = emitFn || window.__emit || window.__traceEmit;
+      if (typeof emit === 'function') {
+        emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+      }
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+      }
+    } catch (e) {}
+  });
 })();
 </script>
 </body>

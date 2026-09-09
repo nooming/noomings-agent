@@ -332,7 +332,7 @@
         "role": "operation"
       },
       "s-rail-temp": {
-        "kgId": "C6",
+        "kgId": "I1",
         "role": "irrelevant"
       },
       "modeSelect": {
@@ -965,8 +965,7 @@
         "id": "KP1",
         "label": "动量守恒 · 碰撞实验",
         "formulas": [
-          "C = ε₀εᵣA / d",
-          "E = V/d（击穿：E > Ebd）"
+          "m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′"
         ],
         "mapsToKg": [
           "S1"
@@ -1025,27 +1024,14 @@
         "notes": "rank4：质量2对称通道",
         "priorityRank": 4,
         "responseShape": "linear-approx"
-      },
-      {
-        "id": "AV5",
-        "controlId": "s-rail-temp",
-        "label": "导轨温度",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "rank5：导轨温度不进碰撞公式，近无效最低",
-        "priorityRank": 5,
-        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项"
+        "controlId": "s-rail-temp",
+        "label": "导轨温度",
+        "reason": "仅改观感色温/雾气，不参与一维动量分配与过关归因"
       }
     ],
     "inquiryFlow": [
@@ -1053,6 +1039,7 @@
       "AV1",
       "AV2",
       "AV3",
+      "AV4",
       "CV1"
     ],
     "narrative": {
@@ -1101,9 +1088,9 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "过关结果",
-        "symbol": "",
-        "unit": "",
+        "label": "碰撞后速度/进区",
+        "symbol": "v'",
+        "unit": "m/s",
         "role": "primary",
         "source": "observe"
       }
@@ -1112,15 +1099,13 @@
   },
   "physicsModel": {
     "formulas": [
-      "C = ε₀εᵣA / d",
-      "E = V/d（击穿：E > Ebd）"
+      "m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′"
     ],
     "independentVariables": [
       "AV1",
       "AV2",
       "AV3",
-      "AV4",
-      "AV5"
+      "AV4"
     ],
     "confoundingVariables": [
       "CV1"
@@ -1130,8 +1115,7 @@
     ],
     "core": {
       "formulas": [
-        "C = ε₀εᵣA / d",
-        "E = V/d（击穿：E > Ebd）"
+        "m₁v₁ + m₂v₂ = m₁v₁′ + m₂v₂′"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
@@ -1165,21 +1149,6 @@
         "type": "range",
         "label": "速度2",
         "symbol": "速度2",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
-        "id": "s-rail-temp",
-        "type": "range",
-        "label": "导轨温度",
-        "symbol": "导轨温度",
         "unit": null,
         "mapsToKg": "O1",
         "role": "adjustment",
@@ -1230,10 +1199,10 @@
     ],
     "confoundingUi": [
       {
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项",
-        "uiStrategy": "narrative_only"
+        "controlId": "s-rail-temp",
+        "label": "导轨温度",
+        "reason": "仅改观感，不参与动量守恒归因",
+        "uiStrategy": "teach_only"
       }
     ],
     "confoundingMustNotBePrimarySlider": false,

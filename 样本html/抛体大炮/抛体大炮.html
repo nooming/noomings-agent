@@ -746,6 +746,27 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-weight:600!important;padding:8px!important;font-size:.88rem!important;
 }
 
+/* === demo-visual-polish (classroom) === */
+#sideGoalBox .side-goal-cap{font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#c88850)!important;}
+#sideGoal,p#sideGoal{font-size:14px!important;line-height:1.55!important;}
+#dual-mode-hud #goalMission,#goalMission{display:none!important;}
+#modal-overlay,#level-clear-overlay{display:none!important;opacity:0!important;pointer-events:none!important;}
+.probe-group{
+  margin:8px 0!important;padding:8px 10px!important;
+  border:1px dashed color-mix(in srgb,var(--craft-accent,#c88850) 30%,transparent)!important;
+  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.22)!important;
+}
+.probe-group .probe-cap{font-size:10px!important;letter-spacing:.05em;color:var(--craft-muted,#9aa)!important;margin:0 0 6px;}
+.probe-group .label-row,.probe-group .label-row span{font-size:11px!important;opacity:.9;}
+.craft-card{border-radius:14px!important;}
+.craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
+  background:color-mix(in srgb,var(--craft-accent,#c88850) 55%,#0c8aad)!important;border-radius:10px!important;
+}
+#btn-fire{min-height:44px!important;border-radius:10px!important;}
+#controls-area input[type=range]{min-height:28px;}
+#modeSelect{min-height:34px;}
+#hud-panel{border:1px solid color-mix(in srgb,var(--craft-accent,#c88850) 28%,transparent)!important;box-shadow:none!important;}
+
 </style>
 </head>
 <body>
@@ -826,11 +847,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     </div>
 
     <aside id="controls-area">
-        <div class="ctrl-hd"><div class="dual-bench-row"><span>炮台操控</span><select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">要塞突击</option></select></div></div>
+        <div class="ctrl-hd"><div class="dual-bench-row"><span>炮台操控</span><select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛</option></select></div></div>
         <div id="sideGoalBox" style="padding:10px 12px 0">
           <div style="border:1px solid rgba(122,242,204,.35);background:rgba(0,0,0,.28);border-radius:10px;padding:8px 10px">
-            <div style="font-size:11px;font-weight:700;color:#7af2cc;letter-spacing:.04em">当前目标</div>
-            <p id="sideGoal" style="margin:4px 0 0;font-size:12px;line-height:1.45;color:rgba(255,255,255,.88)">换阻力或风速，看落点怎么变。</p>
+            <div class="side-goal-cap" style="color:#7af2cc">当前目标</div>
+            <p id="sideGoal" style="margin:4px 0 0;color:rgba(255,255,255,.88)">换阻力或风速，看落点怎么变。</p>
           </div>
         </div>
         <div class="ctrl-scroll">
@@ -844,11 +865,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <input type="range" id="in-power" min="10" max="200" value="90">
         </div>
 
-        <div class="input-group" id="group-grav">
-            <div class="label-row"><span>重力</span> <span class="val-display" id="val-grav">9.8</span></div>
-            <input type="range" id="in-grav" min="1" max="25" step="0.1" value="9.8">
-        </div>
-
         <div class="input-group" id="group-drag">
             <div class="label-row"><span>空气阻力</span> <span class="val-display" id="val-drag">0.005</span></div>
             <input type="range" id="in-drag" min="0" max="0.1" step="0.001" value="0.005">
@@ -859,14 +875,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <input type="range" id="in-wind" min="-50" max="50" step="1" value="0">
         </div>
 
-        <div class="input-group" id="group-mass">
-            <div class="label-row"><span>弹药质量</span> <span class="val-display" id="val-mass">1.0</span></div>
-            <input type="range" id="in-mass" min="0.1" max="5.0" step="0.1" value="1.0">
-        </div>
-
-        <div class="input-group" id="group-material">
-            <div class="label-row"><span>弹种</span> <span class="val-display" id="val-material">钢</span></div>
-            <input type="range" id="in-material" min="1" max="3" step="1" value="2">
+        <div class="probe-group">
+            <div class="probe-cap">次要参数 · 可试探</div>
+            <div class="input-group" id="group-grav" style="margin:0 0 8px">
+                <div class="label-row"><span>重力</span> <span class="val-display" id="val-grav">9.8</span></div>
+                <input type="range" id="in-grav" min="1" max="25" step="0.1" value="9.8">
+            </div>
+            <div class="input-group" id="group-mass" style="margin:0 0 8px">
+                <div class="label-row"><span>弹药质量</span> <span class="val-display" id="val-mass">1.0</span></div>
+                <input type="range" id="in-mass" min="0.1" max="5.0" step="0.1" value="1.0">
+            </div>
+            <div class="input-group" id="group-material" style="margin:0">
+                <div class="label-row"><span>弹种（仅外观）</span> <span class="val-display" id="val-material">钢</span></div>
+                <input type="range" id="in-material" min="1" max="3" step="1" value="2">
+            </div>
         </div>
         </div>
         <div class="ctrl-ft">
@@ -1318,6 +1340,7 @@ class PixelGame {
         for (let p = 15; p <= 140; p += 1) powers.push(p);
         const dragTries = [drag0, 0, 0.002, 0.005, 0.01];
         const windTries = [wind0];
+        // 有强制风时也试邻近风速（滑条可拧）
         for (let dw = -10; dw <= 10; dw += 5) windTries.push(wind0 + dw);
         const seen = {};
         for (let di = 0; di < dragTries.length; di++) {
@@ -1339,7 +1362,7 @@ class PixelGame {
 
     fire() {
         if(this.state !== 'READY') return;
-
+        
         this.attemptsInLevel++;
 
         const angle = parseFloat(this.dom.inputs.angle.value) * Math.PI / 180;
@@ -1495,7 +1518,7 @@ class PixelGame {
         }
         const tip = document.createElement('div');
         tip.className = 'score-pop';
-        tip.innerText = '已对比阻力/风速落点 · 可切要塞突击';
+        tip.innerText = '已对比阻力/风速落点 · 可切竞赛';
         tip.style.left = '50%';
         tip.style.top = '22%';
         tip.style.transform = 'translateX(-50%)';
@@ -1605,7 +1628,24 @@ class PixelGame {
         this.dom.modal.next.style.display = win ? "inline-block" : "none";
         this.dom.modal.next.innerText = '下一关';
         this.dom.modal.next.onclick = () => this.nextLevel();
-        setTimeout(() => { this.dom.modal.overlay.classList.add('active'); }, 500);
+        // 演示：不弹 pixel「下一关/自由模式」层；中途过关自动推进，未中用舞台短提示
+        if (win) {
+            if (this.level < 4) {
+                setTimeout(() => { try { this.nextLevel(); } catch (e) {} }, 900);
+            }
+        } else {
+            const tip = document.createElement('div');
+            tip.className = 'score-pop';
+            tip.innerText = msgContent.split('\n')[0] || '未攻破';
+            tip.style.left = '50%';
+            tip.style.top = '26%';
+            tip.style.transform = 'translateX(-50%)';
+            tip.style.color = '#fca5a5';
+            tip.style.fontSize = '14px';
+            this.dom.stage.appendChild(tip);
+            setTimeout(() => tip.remove(), 1400);
+            this.reset();
+        }
     }
 
     closeModal() {
@@ -1616,7 +1656,7 @@ class PixelGame {
     nextLevel() {
         if (this.level === 4) {
             this.dom.modal.overlay.classList.remove('active');
-            this.dom.levelClear.overlay.classList.add('active');
+            // 末关已由 craft-win 结算；不再弹出「解锁自由模式」
         } else {
             // Mid-campaign continue: tell shell to keep path/advice chips hidden
             try {

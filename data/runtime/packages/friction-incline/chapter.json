@@ -709,7 +709,8 @@
         "id": "KP1",
         "label": "仓库卸货滑道 · 摩擦探究",
         "formulas": [
-          "R = 32"
+          "下滑临界：μ < tanθ",
+          "质量 m 不影响下滑临界条件"
         ],
         "mapsToKg": [
           "S1"
@@ -810,26 +811,27 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "射程",
-        "symbol": "R",
-        "unit": "m",
+        "label": "是否下滑/停驻",
+        "symbol": "state",
+        "unit": "",
         "role": "primary",
-        "source": "formula"
+        "source": "observe"
       },
       {
         "id": "OV2",
-        "label": "最大高度",
-        "symbol": "H",
-        "unit": "m",
+        "label": "接货区命中",
+        "symbol": "hit",
+        "unit": "",
         "role": "secondary",
-        "source": "formula"
+        "source": "observe"
       }
     ],
-    "domain": "projectile"
+    "domain": "friction"
   },
   "physicsModel": {
     "formulas": [
-      "R = 32"
+      "下滑临界：μ < tanθ",
+      "质量 m 不影响下滑临界条件"
     ],
     "independentVariables": [
       "AV1",
@@ -844,12 +846,13 @@
     ],
     "core": {
       "formulas": [
-        "R = 32"
+        "下滑临界：μ < tanθ",
+        "质量 m 不影响下滑临界条件"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
       "winConditionSummary": "命中/过关判定函数驱动 win 事件",
-      "domain": "projectile"
+      "domain": "friction"
     }
   },
   "gameSpec": {
@@ -1004,15 +1007,15 @@
         "source": "state.s-friction"
       },
       {
-        "label": "射程",
-        "symbol": "R",
-        "unit": "m",
+        "label": "是否下滑/停驻",
+        "symbol": "state",
+        "unit": "",
         "source": "computed"
       },
       {
-        "label": "最大高度",
-        "symbol": "H",
-        "unit": "m",
+        "label": "接货区命中",
+        "symbol": "hit",
+        "unit": "",
         "source": "computed"
       }
     ],

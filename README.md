@@ -5,7 +5,7 @@ Agent A 生成事理图谱 · 学生试玩上报轨迹 · 教师端 Agent B 过�
 ## 启动
 
 ```bash
-cp .env.example .env   # 填写 DEEPSEEK_API_KEY、TEACHER_ACCESS_CODE
+cp .env.example .env   # 填写 DEEPSEEK_API_KEY、TEACHER_ACCESS_CODE、CLASS_ACCESS_CODE
 npm start              # http://localhost:3001/
 ```
 

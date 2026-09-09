@@ -2,6 +2,8 @@
   const TEACHER_TOKEN_KEY = 'platform-teacher-token';
   const STUDENT_ID_KEY = 'platform-student-id';
   const STUDENT_NAME_KEY = 'platform-student-name';
+  const CLASS_CODE_KEY = 'platform-class-code';
+  const STUDENT_SESSION_KEY = 'platform-student-session';
   const TASK_CODE_KEY = 'platform-task-code';
 
   function esc(s) {
@@ -15,7 +17,9 @@
   function getStudentIdentity() {
     const id = (localStorage.getItem(STUDENT_ID_KEY) || '').trim();
     const name = (localStorage.getItem(STUDENT_NAME_KEY) || '').trim();
-    return { id, name };
+    const classCode = (localStorage.getItem(CLASS_CODE_KEY) || '').trim();
+    const studentSession = (localStorage.getItem(STUDENT_SESSION_KEY) || '').trim();
+    return { id, name, classCode, studentSession };
   }
 
   function clearTeacherSession() {
@@ -25,6 +29,8 @@
   function clearStudentSession() {
     localStorage.removeItem(STUDENT_ID_KEY);
     localStorage.removeItem(STUDENT_NAME_KEY);
+    localStorage.removeItem(CLASS_CODE_KEY);
+    localStorage.removeItem(STUDENT_SESSION_KEY);
     localStorage.removeItem(TASK_CODE_KEY);
   }
 
@@ -37,9 +43,9 @@
   }
 
   function requireStudentSession() {
-    const id = (localStorage.getItem(STUDENT_ID_KEY) || '').trim();
-    const name = (localStorage.getItem(STUDENT_NAME_KEY) || '').trim();
-    if (!id || !name) {
+    const { id, name, classCode, studentSession } = getStudentIdentity();
+    if (!id || !name || !classCode || !studentSession) {
+      clearStudentSession();
       location.replace('/student-join.html');
       return false;
     }
@@ -61,6 +67,7 @@
         const needsAuth = !isSafeMethod && (
           method !== 'GET'
           || url.includes('/api/platform/traces')
+          || url.includes('/api/platform/class-config')
         );
         if (needsAuth) {
           const headers = new Headers(opts.headers || {});
@@ -84,13 +91,14 @@
           <button type="button" class="platform-session-link" data-platform-action="teacher-logout">退出登录</button>
         </div>`;
     } else if (activeRole === 'student') {
-      const { id, name } = getStudentIdentity();
+      const { id, name, classCode } = getStudentIdentity();
       const label = name ? `${name} · ${id}` : (id || '未签到');
+      const classHint = classCode ? `课堂 ${classCode}` : '';
       meta = `
         <div class="platform-session-meta">
           <span class="platform-role-badge is-student">学生</span>
-          <span class="platform-session-id" title="${esc(label)}">${esc(label)}</span>
-          <button type="button" class="platform-session-link" data-platform-action="student-rejoin">更换身份</button>
+          <span class="platform-session-id" title="${esc(label)}${classHint ? ' · ' + esc(classHint) : ''}">${esc(label)}</span>
+          <button type="button" class="platform-session-link" data-platform-action="student-logout">退出课堂</button>
         </div>`;
     } else {
       meta = `
@@ -124,7 +132,7 @@
       if (action === 'teacher-logout') {
         clearTeacherSession();
         location.replace('/teacher-login.html');
-      } else if (action === 'student-rejoin') {
+      } else if (action === 'student-logout' || action === 'student-rejoin') {
         clearStudentSession();
         location.replace('/student-join.html');
       }
@@ -143,5 +151,7 @@
     TEACHER_TOKEN_KEY,
     STUDENT_ID_KEY,
     STUDENT_NAME_KEY,
+    CLASS_CODE_KEY,
+    STUDENT_SESSION_KEY,
   };
 })(window);

@@ -261,8 +261,8 @@
         "role": "operation"
       },
       "s-piston-mass": {
-        "kgId": "O1",
-        "role": "operation"
+        "kgId": "I1",
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -629,8 +629,7 @@
         "id": "KP1",
         "label": "气体 · 玻意耳定律",
         "formulas": [
-          "C = ε₀εᵣA / d",
-          "E = V/d（击穿：E > Ebd）"
+          "等温过程：p V ≈ 常数"
         ],
         "mapsToKg": [
           "S1"
@@ -663,33 +662,21 @@
         "notes": "rank2：体积与压强对偶进 pV",
         "priorityRank": 2,
         "responseShape": "linear-approx"
-      },
-      {
-        "id": "AV3",
-        "controlId": "s-piston-mass",
-        "label": "活塞质量",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "rank3：活塞质量滑条未进 pV 判据，近无效最低（本关旁路）",
-        "priorityRank": 3,
-        "responseShape": "unknown"
       }
     ],
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项"
+        "controlId": "s-piston-mass",
+        "label": "活塞质量",
+        "reason": "本关旁路：不进入 p·V 乘积判定"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
-      "OV1"
+      "AV2",
+      "CV1"
     ],
     "narrative": {
       "intro": "压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。活塞质量为本关旁路，不进乘积。",
@@ -718,11 +705,11 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "过关结果",
-        "symbol": "",
+        "label": "压强×体积乘积",
+        "symbol": "pV",
         "unit": "",
         "role": "primary",
-        "source": "observe"
+        "source": "formula"
       }
     ],
     "domain": "gas"
@@ -730,13 +717,11 @@
   "inquiryProfile": "generic",
   "physicsModel": {
     "formulas": [
-      "C = ε₀εᵣA / d",
-      "E = V/d（击穿：E > Ebd）"
+      "等温过程：p V ≈ 常数"
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
     "confoundingVariables": [
       "CV1"
@@ -746,8 +731,7 @@
     ],
     "core": {
       "formulas": [
-        "C = ε₀εᵣA / d",
-        "E = V/d（击穿：E > Ebd）"
+        "等温过程：p V ≈ 常数"
       ],
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
@@ -766,21 +750,6 @@
         "type": "range",
         "label": "压强",
         "symbol": "压强",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
-        "id": "s-piston-mass",
-        "type": "range",
-        "label": "活塞质量",
-        "symbol": "活塞质量",
         "unit": null,
         "mapsToKg": "O1",
         "role": "adjustment",
@@ -816,10 +785,10 @@
     ],
     "confoundingUi": [
       {
-        "controlId": null,
-        "label": "无关控件",
-        "reason": "与过关判定无关的装饰或误导项",
-        "uiStrategy": "narrative_only"
+        "controlId": "s-piston-mass",
+        "label": "活塞质量",
+        "reason": "旁路，不进 pV",
+        "uiStrategy": "teach_only"
       }
     ],
     "confoundingMustNotBePrimarySlider": false,

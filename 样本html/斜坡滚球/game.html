@@ -764,7 +764,7 @@
             v1_post: 0,
             v2_post: 0,
             s2: 0,
-            attempts: 3,
+            attempts: 5,
             /* === exhausted-mode-reenter-new-round === */
             __exhaustedNeedsNewRound: false,
             dt: 1/60,
@@ -1303,7 +1303,7 @@
                     }
                     ui.challengeStats.classList.add('is-visible');
                     ui.sideGoal.textContent = '竞赛：在限次内让靶球停在 HUD 目标高度附近（±0.2 m）。';
-                    state.attempts = 3;
+                    state.attempts = 5;
                     renderAttempts();
                     generateChallenge();
                 } else {
@@ -1365,7 +1365,7 @@
 
         function renderAttempts() {
             ui.attemptsDisplay.innerHTML = '';
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 5; i++) {
                 const d = document.createElement('div');
                 d.className = 'attempt-dot' + (i < state.attempts ? ' on' : '');
                 ui.attemptsDisplay.appendChild(d);

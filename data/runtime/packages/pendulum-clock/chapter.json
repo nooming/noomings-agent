@@ -825,8 +825,7 @@
         "mapsToKg": "O1",
         "monotonicity": "monotone",
         "affects": [
-          "R",
-          "H"
+          "T"
         ],
         "notes": "rank2：摆角仅弱 θ² 修正周期，并需满足最小摆幅",
         "priorityRank": 2,
@@ -891,22 +890,22 @@
     "outputVariables": [
       {
         "id": "OV1",
-        "label": "射程",
-        "symbol": "R",
-        "unit": "m",
+        "label": "实测周期",
+        "symbol": "T",
+        "unit": "s",
         "role": "primary",
-        "source": "formula"
+        "source": "measure"
       },
       {
         "id": "OV2",
-        "label": "最大高度",
-        "symbol": "H",
-        "unit": "m",
+        "label": "摆幅",
+        "symbol": "θ₀",
+        "unit": "°",
         "role": "secondary",
-        "source": "formula"
+        "source": "control"
       }
     ],
-    "domain": "projectile"
+    "domain": "pendulum"
   },
   "inquiryProfile": "generic",
   "physicsModel": {
@@ -931,7 +930,7 @@
       "constants": [],
       "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
       "winConditionSummary": "命中/过关判定函数驱动 win 事件",
-      "domain": "projectile"
+      "domain": "pendulum"
     }
   },
   "gameSpec": {
@@ -1082,16 +1081,16 @@
         "source": "state.s-len"
       },
       {
-        "label": "射程",
-        "symbol": "R",
-        "unit": "m",
+        "label": "实测周期",
+        "symbol": "T",
+        "unit": "s",
         "source": "computed"
       },
       {
-        "label": "最大高度",
-        "symbol": "H",
-        "unit": "m",
-        "source": "computed"
+        "label": "摆幅",
+        "symbol": "θ₀",
+        "unit": "°",
+        "source": "state.s-angle"
       }
     ],
     "uiRequirements": [
