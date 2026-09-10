@@ -1,0 +1,37 @@
+{
+  "id": "maxwell-speed-dist",
+  "title": "分布台 · 麦克斯韦速率",
+  "craft": "pilot",
+  "topic": "麦克斯韦速率分布",
+  "knowledgeText": "v_p = √(2kT/m)",
+  "note": "thermo-three replacement; craft:pilot",
+  "avSummary": [
+    {
+      "controlId": "s-T",
+      "label": "温度",
+      "priorityRank": 1
+    },
+    {
+      "controlId": "s-m",
+      "label": "分子质量",
+      "priorityRank": 2
+    }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-palette",
+      "label": "直方图配色",
+      "effect": "视觉；不进 win"
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "score": 90
+  }
+}

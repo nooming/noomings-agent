@@ -666,13 +666,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
 }
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
-.probe-group,.cv-card.probe-group{
+.,.cv-card.{
   margin-top:4px!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
-.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+. label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
 #btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
   background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
@@ -750,9 +749,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <input type="range" id="s-omega" min="0.5" max="5.0" step="0.5" value="2.0">
       <span class="value-badge" id="omegaDisplay">2.0 rad/s</span>
     </div>
-    <div class="slider-row probe-group">
-      <div class="probe-cap">次要参数 · 不进判定 / 仅改观感</div>
-      <label for="s-base-tilt">底座倾角 φ</label>
+    <div class="slider-row">
+<label for="s-base-tilt">底座倾角 φ</label>
       <input type="range" id="s-base-tilt" min="0" max="15" step="1" value="0">
       <span class="value-badge" id="tiltDisplay">0°</span>
     </div>

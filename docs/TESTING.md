@@ -17,6 +17,8 @@ npm run check:export
 
 可选 filter：`node tests/regression/check.js --suite strategy --filter mermaid`
 
+课堂演示前清单见 [demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)。
+
 ## 平台冒烟（无 LLM）
 
 ```bash

@@ -2,6 +2,8 @@
 
 本目录存放与项目方向相关的微信截图与说明，供写论文与迭代 Agent 时对照。
 
+> **现行课堂演示（6 关：力学 3 + 热学三新关）**：[docs/demo/classroom-demo-checklist.md](../demo/classroom-demo-checklist.md)
+
 ## 截图索引
 
 | 文件 | 主题 |
@@ -10,15 +12,17 @@
 | `Snipaste_2026-06-30_22-33-39.png` | **产物边界**：Agent 产出物理模型 + 事理图，非完整游戏 UI；脚本可喂大模型再生成程序；无关变量勿标在滑条上 |
 | `Snipaste_2026-06-30_22-33-51.png` | **论文数据**：每款游戏 + 事理图谱分析学生行为；按图谱设定要上报的操作数据 |
 
+## 规格与评价
+
+- [样本规格 sample-spec](./sample-spec.md)：轨迹、双模式、埋点与探究脚本字段
+- [精品验收表 sample-craft-rubric](./sample-craft-rubric.md)：主题视觉、intro/win、目标仪表、可验证 CV 等
+- [过程性评价 · 教师半页说明](./process-assessment-teacher-note.md)：路径摘要 / 变量表 / strengths·gaps 怎么读；附录可选映射到观点·证据·论证（UI 不用 CER 品牌）
+
 ## 与代码的对应
 
 - 设计轨 / 分析轨双模式：Agent A 页面「设计图谱 / 分析源码」
 - `inquiryScript` + `physicsModel` + `gameSpec` + `telemetrySpec`：见 [探究脚本与论文对齐计划](../../.cursor/plans/探究脚本与论文对齐.plan.md)
-- 游戏 HTML 样本：`data/games/preset/`（电容纪元）、`data/games/legacy/`（历史样本）
-
-## 过程性评价（教师半页）
-
-- [过程性评价 · 教师半页说明](./process-assessment-teacher-note.md)：路径摘要 / 变量表 / strengths·gaps 怎么读；附录可选映射到观点·证据·论证（UI 不用 CER 品牌）。
+- 游戏 HTML 样本：`data/games/preset/`（电容纪元）、`data/games/legacy/`（历史样本）；课堂包见 `data/runtime/packages/`
 
 ## 演示反馈（2026）
 

@@ -502,14 +502,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 #sideGoalBox .side-goal-cap{font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent)!important;}
 #sideGoal,p#sideGoal,#proj-side #sideGoal{font-size:14px!important;line-height:1.55!important;margin-top:6px!important;}
 #dual-mode-hud #goalMission,#goalMission{display:none!important;}
-.probe-group{
+.{
   margin-top:4px!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent) 28%,transparent)!important;
   border-radius:10px!important;opacity:.7!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px!important;letter-spacing:.05em;color:var(--craft-muted)!important;margin:0 0 6px;}
-.probe-group label,.probe-group .text-sm{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
-.probe-group .text-xs,#messageBox{display:none!important;}
+. label,. .text-sm{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+. .text-xs,#messageBox{display:none!important;}
 #craftStageTip{
   position:absolute;left:50%;top:22%;transform:translateX(-50%);z-index:40;pointer-events:none;
   max-width:min(420px,86%);padding:10px 14px;border-radius:12px;text-align:center;
@@ -644,16 +643,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 <input type="range" id="s-height" min="0" max="30" value="10" step="0.1" class="w-full">
             </div>
 
-            <!-- 质量控制（教学旁路 · 视觉降权） -->
-            <div class="probe-group">
-                <div class="probe-cap">次要参数 · 仅改观感</div>
-                <div class="flex justify-between mb-1">
+            <!-- 质量控制 -->
+            <div>
+<div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">小球质量 (kg)</label>
                     <span id="valMass" class="text-sm text-blue-600 font-mono">5</span>
                 </div>
                 <input type="range" id="s-mass" min="1" max="20" value="5" step="1" class="w-full">
-                <p class="text-xs text-gray-400 mt-1">不进落点判定</p>
-            </div>
+</div>
         </div>
 
         <div class="p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3">

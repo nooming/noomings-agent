@@ -94,7 +94,7 @@
 ## 给老师演示前（摘要）
 
 1. 配置教师通行码 + 课堂码，并告知学生课堂码
-2. 上架力学/热学建议包（如 `demo-projectile-basic`、`demo-friction-incline`、`demo-pendulum-*`、`demo-gas-ideal`、`demo-heat-conduction`）
+2. 跑 `node scripts/set-mechanics-thermo-classroom.js`，确认学生可见 **6 关**（力学 `projectile-basic` / `pendulum-clock` / `ramp-rolling-collision` + 热学 `gas-pressure-micro` / `maxwell-speed-dist` / `adiabatic-process`）；详见 `docs/demo/classroom-demo-checklist.md`
 3. 学生入口 `/student-join.html`，教师入口 `/teacher-login.html`
 4. 跑一遍 `npm run smoke:platform`
 5. 注意知情说明弹窗与发布门禁警告

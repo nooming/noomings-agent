@@ -1,0 +1,629 @@
+{
+  "mapping": "| DT | KG |\n| --- | --- |\n| 进入 | P1 |\n| 模式 | C1 |\n| 调参测试 | O1 |\n| 命中 | C2 |\n| 过关 | R1 |",
+  "kg": {
+    "title": "分布台 · 麦克斯韦速率",
+    "sub": "直方图随 T、m 移动",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究或竞赛"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究或竞赛 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节参数并测试",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节滑条并点击测试"
+      },
+      {
+        "id": "C2",
+        "label": "命中目标带",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛判定 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛模式下 v_p 落入本局特征区间"
+      },
+      {
+        "id": "S1",
+        "label": "探究核心",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "v_p = √(2kT/m)"
+      },
+      {
+        "id": "I1",
+        "label": "无关/混淆控件",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "混淆控件"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "P1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "R1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "分布台 · 麦克斯韦速率",
+    "sub": "直方图随 T、m 移动",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "探究或竞赛",
+          "children": [
+            {
+              "_e": "否",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究"
+            },
+            {
+              "_e": "是",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次挑战"
+            }
+          ]
+        },
+        {
+          "n": "调节参数并测试",
+          "t": "step",
+          "d": "调参后测试",
+          "children": [
+            {
+              "n": "命中目标带?",
+              "t": "decision",
+              "d": "竞赛判定",
+              "children": [
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "竞赛模式下 v_p 落入本局特征区间"
+                },
+                {
+                  "_e": "否",
+                  "n": "未达标重试",
+                  "t": "retry",
+                  "d": "调整后重试",
+                  "children": [
+                    {
+                      "n": "调节参数并测试",
+                      "t": "step",
+                      "d": "重试",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 你学到了什么",
+    "sub": "分布台 · 麦克斯韦速率"
+  },
+  "traceMap": {
+    "controls": {
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "s-T": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-m": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-palette": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-T"
+      },
+      "action": {
+        "canonical": "action",
+        "control": "btn-test"
+      }
+    }
+  },
+  "strategy": {
+    "title": "分布台 · 麦克斯韦速率",
+    "sub": "直方图随 T、m 移动",
+    "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打带]:::stratResult\nExplore --> Tune[单变量调参]\nChallenge --> Tune\nTune --> Fire[点击测试]\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| Tune\n",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·温度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
+        "warn": "同时拧多个滑条难归因",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Tune",
+          "Fire",
+          "Observe"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探·柱描边粗细",
+        "mapsTo": [],
+        "warn": "拧对照量通常无增益，回到单变量主路径",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightNodes": [
+          "Start",
+          "ModeSelect"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ]
+        ],
+        "highlightFailureBranches": false
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "分布台 · 麦克斯韦速率",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "分布台 · 麦克斯韦速率",
+        "formulas": [
+          "v_p = √(2kT/m)"
+        ],
+        "mapsToKg": [
+          "S1"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-T",
+        "label": "温度",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank1：T↑ → v_p↑",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-m",
+        "label": "分子质量",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [],
+        "notes": "rank2：m↑ → v_p↓",
+        "priorityRank": 2,
+        "responseShape": "nonlinear-monotone"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-palette",
+        "label": "柱描边粗细",
+        "reason": "外观对照量"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "直方图随 T、m 移动",
+      "steps": [
+        {
+          "order": 1,
+          "title": "自由探究",
+          "body": "调节参数并测试，观察读数变化。",
+          "mapsToKg": [
+            "O1",
+            "S1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "竞赛挑战",
+          "body": "切换竞赛，限次打进本局锁定目标带。",
+          "mapsToKg": [
+            "C1",
+            "C2"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "最概然速率",
+        "symbol": "v_p",
+        "unit": "",
+        "role": "primary",
+        "source": "formula"
+      }
+    ],
+    "domain": "gas"
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "v_p = √(2kT/m)"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "v_p = √(2kT/m)"
+      ],
+      "constants": [],
+      "updateLoopSummary": "requestAnimationFrame 舞台动画 + 测试读数",
+      "winConditionSummary": "竞赛模式下 v_p 落入本局特征区间",
+      "domain": "gas"
+    }
+  },
+  "gameSpec": {
+    "title": "分布台 · 麦克斯韦速率",
+    "subtitle": "直方图随 T、m 移动",
+    "winCondition": "竞赛模式下 v_p 落入本局特征区间",
+    "knowledgeSummary": "分布台 · 麦克斯韦速率",
+    "controls": [
+      {
+        "id": "s-T",
+        "type": "range",
+        "label": "温度",
+        "symbol": "温度",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-m",
+        "type": "range",
+        "label": "分子质量",
+        "symbol": "分子质量",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      },
+      {
+        "id": "btn-test",
+        "type": "button",
+        "label": "测试",
+        "mapsToKg": "O1",
+        "role": "action"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "s-palette",
+        "label": "柱描边粗细",
+        "reason": "外观对照量",
+        "uiStrategy": "teach_only"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "探究或竞赛"
+      },
+      {
+        "kgId": "C2",
+        "label": "命中目标带",
+        "desc": "竞赛模式下 v_p 落入本局特征区间"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "s-T": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-m": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-palette": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      }
+    },
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "optional_raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "最概然速率",
+        "symbol": "v_p",
+        "unit": "",
+        "source": "computed"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示",
+      "canvas 主仿真区 + 控件侧栏",
+      "测试按钮 + 复位按钮"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML",
+      "过关时 emit snapshot 与 win",
+      "探究达成 emit explore_success"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "s-T",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节 s-T"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-m",
+        "kgId": "O1",
+        "required": true,
+        "description": "调节 s-m"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-palette",
+        "kgId": "I1",
+        "required": false,
+        "description": "对照 s-palette"
+      },
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "模式选择"
+      },
+      {
+        "type": "action",
+        "canonical": "action",
+        "control": "btn-test",
+        "required": true
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "探究或竞赛"
+      },
+      {
+        "name": "命中目标带?",
+        "type": "decision",
+        "desc": "竞赛判定"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "竞赛模式下 v_p 落入本局特征区间"
+      }
+    ],
+    "paperNotes": "traceMap 上报；混淆触碰可选记录。",
+    "adapterNote": "PlatformTraceAdapter"
+  },
+  "meta": {
+    "generationMode": "manual-thermo-three"
+  }
+}

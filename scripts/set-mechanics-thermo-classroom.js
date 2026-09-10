@@ -26,15 +26,19 @@ const { getPackagesRoot } = require('../packages/shared/data-paths');
 const DRY = process.argv.includes('--dry-run');
 
 /**
- * Default classroom demo: 3 required + 2 optional (5 total).
- * Unpublished / deferred: cannon, pendulum-target, momentum, circular, ramp, non mech/thermo.
+ * Default classroom demo: 3 mechanics + 3 thermo (6 total).
+ * Thermo replaced: gas-pressure-micro / maxwell-speed-dist / adiabatic-process
+ *   (gas-ideal & heat-conduction unpublished; packages kept).
+ * Unpublished / deferred: cannon, pendulum-target, momentum, circular, friction, non mech/thermo.
+ * ramp-rolling-collision replaces friction-incline (same incline line; avoid friction+rolling overlap).
  */
 const WHITELIST = [
   'projectile-basic',
   'pendulum-clock',
-  'gas-ideal',
-  'friction-incline',
-  'heat-conduction',
+  'ramp-rolling-collision',
+  'gas-pressure-micro',
+  'maxwell-speed-dist',
+  'adiabatic-process',
 ];
 
 const KEEP_GOLD = new Set([
@@ -48,7 +52,9 @@ const DEFERRED = [
   'pendulum-target',
   'momentum-collision',
   'circular-motion',
-  'ramp-rolling-collision',
+  'friction-incline',
+  'gas-ideal',
+  'heat-conduction',
 ];
 
 const CLASSROOM_LABEL = '力学与热学课堂';
@@ -84,7 +90,7 @@ function ensureClassConfig() {
     classCode: code,
     label: CLASSROOM_LABEL,
     name: CLASSROOM_LABEL,
-    note: '默认上架 5 关（必上 basic/clock/gas + 可选 friction/heat）；cannon/target/momentum/circular/ramp 后置 unpublished',
+    note: '默认上架 6 关（力学 basic/clock/ramp + 热学 micro/maxwell/adiabatic）；gas-ideal/heat 与 cannon/target/momentum/circular/friction 后置 unpublished',
     updatedAt: new Date().toISOString(),
   };
 

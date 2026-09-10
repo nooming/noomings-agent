@@ -1,5 +1,5 @@
 /**
- * Unidirectional sync: data/runtime/packages/*/game.html → 样本html/<topic>/
+ * Unidirectional sync: data/runtime/packages/{id}/game.html -> 样本html/{topic}/
  * Packages are the runtime source of truth; samples are edit mirrors.
  *
  * Usage:
@@ -15,12 +15,15 @@ const ROOT = path.join(__dirname, '..');
 const PKG_ROOT = path.join(ROOT, 'data/runtime/packages');
 const SAMPLE_ROOT = path.join(ROOT, '样本html');
 
-/** packageId → sample relative folder (under 样本html/) */
+/** packageId → sample relative folder (under 样本html/); keep aligned with tests/lib/yangben-sample-map.js */
 const MAP = {
   'ramp-rolling-collision': '斜坡滚球',
   'gas-ideal': '理想气体',
   'heat-conduction': '热传导',
-  'refraction-snell': '光的折射',
+  'gas-pressure-micro': '气体压强微观',
+  'maxwell-speed-dist': '麦克斯韦速率分布',
+  'adiabatic-process': '绝热过程',
+  'refraction-snell': '折射',
   'series-parallel': '串并联电路',
   'thin-lens-implicit': '透镜',
   'transformer-turns': '变压器',
@@ -28,15 +31,15 @@ const MAP = {
   'photoelectric': '光电效应',
   'magnetic-force': '安培力',
   'cyclotron-radius': '回旋加速器',
-  'pendulum-clock': '单摆与校时',
+  'pendulum-clock': '钟表铺校时',
   'projectile-basic': '斜抛',
-  'projectile-cannon': '炮弹投射',
+  'projectile-cannon': '抛体大炮',
   'circular-motion': '圆周运动',
   'efield-charge': '电场',
   'friction-incline': '斜面摩擦',
   'momentum-collision': '动量碰撞',
-  'multi-kp': '多知识点',
-  'pendulum-target': '单摆打靶',
+  'multi-kp': '机械能',
+  'pendulum-target': '单摆投靶',
 };
 
 function hash(file) {

@@ -1,0 +1,42 @@
+{
+  "id": "gas-pressure-micro",
+  "title": "气室 · 压强微观模型",
+  "craft": "pilot",
+  "topic": "气体压强微观",
+  "knowledgeText": "P = NkT / V",
+  "note": "thermo-three replacement; craft:pilot",
+  "avSummary": [
+    {
+      "controlId": "s-N",
+      "label": "粒子数",
+      "priorityRank": 1
+    },
+    {
+      "controlId": "s-T",
+      "label": "温度",
+      "priorityRank": 2
+    },
+    {
+      "controlId": "s-V",
+      "label": "体积",
+      "priorityRank": 3
+    }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-wall",
+      "label": "器壁纹理",
+      "effect": "视觉；不进 win"
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "score": 90
+  }
+}

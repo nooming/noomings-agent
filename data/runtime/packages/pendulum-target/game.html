@@ -643,13 +643,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
 }
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
-.probe-group,.cv-card.probe-group{
+.,.cv-card.{
   margin-top:4px!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
-.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+. label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
 #btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
   background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
@@ -727,9 +726,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                     <div class="row"><label>角度</label><span class="slider-value" id="angleValue">-45°</span></div>
                     <input type="range" id="s-angle" min="-80" max="80" value="-45" step="1">
                 </div>
-                <div class="slider-item probe-group">
-                    <div class="probe-cap">次要参数 · 仅改观感 / 不进判定</div>
-                    <div class="row"><label>质量 m</label><span class="slider-value" id="massValue">3.0</span></div>
+                <div class="slider-item">
+<div class="row"><label>质量 m</label><span class="slider-value" id="massValue">3.0</span></div>
                     <input type="range" id="s-mass" min="1" max="5" value="3" step="0.5">
                 </div>
             </div>

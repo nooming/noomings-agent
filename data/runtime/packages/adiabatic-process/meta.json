@@ -1,0 +1,37 @@
+{
+  "id": "adiabatic-process",
+  "title": "过程台 · 绝热与等温",
+  "craft": "pilot",
+  "topic": "绝热过程",
+  "knowledgeText": "PV^γ = const（γ=1.4）",
+  "note": "thermo-three replacement; craft:pilot",
+  "avSummary": [
+    {
+      "controlId": "s-V",
+      "label": "体积",
+      "priorityRank": 1
+    },
+    {
+      "controlId": "s-T0",
+      "label": "初温",
+      "priorityRank": 2
+    }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-tag",
+      "label": "铭牌质量",
+      "effect": "装饰；不进 win"
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "score": 90
+  }
+}

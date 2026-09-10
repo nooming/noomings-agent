@@ -631,14 +631,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 .side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--scene-hi,var(--craft-accent));margin-bottom:4px;}
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
-.probe-group{
+.{
   margin:8px 0!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
-.probe-group label,.probe-group .value{font-size:11px!important;font-weight:500!important;}
-.probe-group input[type=number]{opacity:.85;border-color:color-mix(in srgb,var(--craft-muted) 50%,transparent)!important;}
+. label,. .value{font-size:11px!important;font-weight:500!important;}
+. input[type=number]{opacity:.85;border-color:color-mix(in srgb,var(--craft-muted) 50%,transparent)!important;}
 .craft-card{border-radius:14px!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
   background:color-mix(in srgb,var(--craft-accent,#e07060) 45%,#0c8aad)!important;border-radius:10px!important;
@@ -661,13 +660,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
 }
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
-.probe-group,.cv-card.probe-group{
+.,.cv-card.{
   margin-top:4px!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
-.probe-group label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+. label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
 #btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
   background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
@@ -746,9 +744,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         <input type="range" id="s-temperature-diff" min="10" max="100" step="0.5" value="20">
     </div>
 
-    <div class="slider-group probe-group">
-        <div class="probe-cap">次要参数 · 不进判定 / 旁路试探</div>
-        <label>截面积 A（旁路） <span class="value" id="a-value"><input type="number" id="n-area" min="0.01" max="0.10" step="0.001" value="0.05" aria-label="截面积" style="width:64px;background:rgba(0,0,0,.2);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:2px 6px"></span> m²</label>
+    <div class="slider-group">
+<label>截面积 A <span class="value" id="a-value"><input type="number" id="n-area" min="0.01" max="0.10" step="0.001" value="0.05" aria-label="截面积" style="width:64px;background:rgba(0,0,0,.2);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:2px 6px"></span> m²</label>
         <input type="range" id="s-area" min="0.01" max="0.10" step="0.001" value="0.05">
     </div>
 
@@ -957,6 +954,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           lockedQHi = TARGET_Q + 500 + Math.round(Math.random() * 3) * 100;
           TARGET_Q_HI = lockedQHi;
           challengeWon = false;
+          try { window.__challengeWon = false; } catch (eCw) {}
+          try { window.__legacyWinEmitted = false; } catch (eLw) {}
           measuredQ = null;
           kSlider.value = '25';
           dtSlider.value = '20';
@@ -971,6 +970,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           lockedQ = null;
           lockedQHi = null;
           challengeWon = false;
+          try { window.__challengeWon = false; } catch (eCw) {}
+          try { window.__legacyWinEmitted = false; } catch (eLw) {}
           measuredQ = null;
           TARGET_Q = 2000;
           TARGET_Q_HI = 3200;
@@ -1319,24 +1320,43 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             const winOk = Q >= TARGET_Q && Q <= TARGET_Q_HI;
             const tooHot = Q > TARGET_Q_HI;
             if (winOk) {
-                feedback.innerHTML = '急单完成：热流落在安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W。';
+                // 先播热流浪涌，再 emit win / 弹结算；勿同步写「🏆 过关！」以免 legacy 扫描瞬间弹层
+                const settleMs = Math.round(1000 * Math.max(0.85, Math.min(1.15, (eventAnim && eventAnim.drivers && eventAnim.drivers.totalDur) || 0.9)));
+                feedback.innerHTML = '测量中… 热流已入安全带，确认读数';
+                winArea.innerHTML = '';
+                if (window.__emit) {
+                  window.__emit('snapshot', { controls: controls, winOk: true, hintKey: 'win_ok' });
+                }
                 if (!challengeWon) {
                   challengeWon = true;
-                  if (typeof window.__craftShowWin === 'function') {
-                    window.__craftShowWin('急单安全带本局锁定。热流随导热与温差增大；太小供暖不足，太大则炉墙过热。');
-                  }
+                  try { window.__challengeWon = true; } catch (eCw) {}
+                  try { window.__legacyWinEmitted = true; } catch (eLw) {}
+                  try { if (typeof window.__hideAttemptsExhausted === 'function') window.__hideAttemptsExhausted(); } catch (eHide) {}
+                  setTimeout(function() {
+                    feedback.innerHTML = '急单完成：热流落在安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W。';
+                    winArea.innerHTML = '<span class="pass-badge">🏆 过关！</span>';
+                    if (window.__emit) window.__emit('win', { winOk: true });
+                    if (typeof window.__craftShowWin === 'function') {
+                      window.__craftShowWin('急单安全带本局锁定。热流随导热与温差增大；太小供暖不足，太大则炉墙过热。');
+                    }
+                  }, settleMs);
+                } else {
+                  feedback.innerHTML = '急单完成：热流落在安全带 ' + TARGET_Q + '–' + TARGET_Q_HI + ' W。';
+                  winArea.innerHTML = '<span class="pass-badge">🏆 过关！</span>';
+                  if (window.__emit) window.__emit('win', { winOk: true });
                 }
-                winArea.innerHTML = '<span class="pass-badge">🏆 过关！</span>';
             } else if (tooHot) {
                 feedback.innerHTML = '<strong>炉墙过热</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 上限 ' + TARGET_Q_HI + ' W</span>';
                 winArea.innerHTML = '<span class="fail-badge" style="color:#fb7185;">未过关·过热</span>';
+                if (window.__emit) {
+                  window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'retry_overheat' });
+                }
             } else {
                 feedback.innerHTML = '<strong>供暖不足</strong><br><span style="font-size:0.82em;opacity:.92">当前 ' + Q.toFixed(0) + ' W · 下限 ' + TARGET_Q + ' W</span>';
                 winArea.innerHTML = '<span class="fail-badge" style="color:#fda4af;">未过关·不足</span>';
-            }
-            if (window.__emit) {
-                window.__emit('snapshot', { controls: controls, winOk: winOk, hintKey: winOk ? 'win_ok' : (tooHot ? 'retry_overheat' : 'retry_low_heat') });
-                if (winOk) window.__emit('win', { winOk: true });
+                if (window.__emit) {
+                  window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'retry_low_heat' });
+                }
             }
         }
 

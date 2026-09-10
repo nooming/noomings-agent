@@ -627,13 +627,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 .side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--scene-hi,var(--craft-accent));margin-bottom:4px;}
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
-.probe-group{
+.{
   margin-top:4px!important;padding:8px 10px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-.probe-group .probe-cap{font-size:10px;letter-spacing:.05em;color:var(--craft-muted);margin:0 0 6px;}
-.probe-group label{font-size:11px!important;font-weight:500!important;}
+. label{font-size:11px!important;font-weight:500!important;}
 .craft-card{border-radius:14px!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child{
   background:color-mix(in srgb,var(--craft-accent,#6a9ab8) 50%,#0c8aad)!important;border-radius:10px!important;
@@ -650,7 +649,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="craft-intro">
   <div class="craft-card">
     <h2>气室 · 活塞实验桌</h2>
-    <p>压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。活塞质量为本关旁路，不进乘积。</p>
+    <p>压舱气室读数飘了——等温下 p 与 V 还守不守乘积？调压强或体积，看 p·V 乘积怎么变。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后标定带本局固定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -699,7 +698,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <div class="card">
     <div class="side-goal-wrap">
       <div class="side-goal-cap">当前目标</div>
-      <p id="sideGoal" style="color:var(--craft-text)">调 p 或 V，看乘积是否近似恒定；活塞质量为本关旁路。</p>
+      <p id="sideGoal" style="color:var(--craft-text)">调 p 或 V，看乘积是否近似恒定。</p>
     </div>
     <div class="control-grid">
         <div class="slider-group">
@@ -710,9 +709,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <label for="s-volume">体积 <span id="vValDisplay">5.0 L</span></label>
             <input type="range" id="s-volume" min="1" max="10" step="0.1" value="5.0">
         </div>
-        <div class="slider-group probe-group">
-            <div class="probe-cap">次要参数 · 不进 pV 判定</div>
-            <label for="s-piston-mass">活塞质量 m <span id="mValDisplay">200 g</span></label>
+        <div class="slider-group">
+<label for="s-piston-mass">活塞质量 m <span id="mValDisplay">200 g</span></label>
             <input type="range" id="s-piston-mass" min="50" max="500" step="10" value="200">
         </div>
     </div>
@@ -825,7 +823,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const MODE_GOALS = {
           explore: {
             hud: '试压：观察 p·V 乘积如何变化',
-            side: '调 p 或 V，看乘积是否近似恒定；活塞质量为本关旁路。'
+            side: '调 p 或 V，看乘积是否近似恒定。'
           },
           challenge: {
             hud: '限次把乘积打进本局标定带（打偏不换带）',
@@ -852,6 +850,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           BAND_HI = Math.round((mid + half) * 10) / 10;
           lockedBand = { lo: BAND_LO, hi: BAND_HI };
           challengeWon = false;
+          try { window.__challengeWon = false; } catch (eCw) {}
+          try { window.__legacyWinEmitted = false; } catch (eLw) {}
           measuredPV = null;
           pSlider.value = '3.0';
           vSlider.value = '5.0';
@@ -864,6 +864,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           lockedBand = null;
           BAND_LO = 9.5; BAND_HI = 10.5;
           challengeWon = false;
+          try { window.__challengeWon = false; } catch (eCw) {}
+          try { window.__legacyWinEmitted = false; } catch (eLw) {}
           measuredPV = null;
           refreshGasGoals();
           updateAll();
@@ -1356,6 +1358,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         }
 
         function fireSnapshotAndWin() {
+            if (eventAnim) return;
             const { p, V, pv } = computePV();
             const { winOk, hintKey } = checkWin();
             measuredPV = pv;
@@ -1368,12 +1371,27 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 winIndicator.innerHTML = '';
                 hintMsg.textContent = '乘积 ' + pv.toFixed(2) + ' · 对照 p、V 再测';
             } else if (winOk) {
-                try { emit('win', { winOk: true }); } catch(e) {}
-                winIndicator.innerHTML = '<span class="pass-badge">过关 · 乘积落入锁定标定带</span>';
-                hintMsg.textContent = '急单完成 · 乘积已入标定带';
-                if (!challengeWon && typeof window.__craftShowWin === 'function') {
+                // 先播表针/管脉动，再 emit win / 弹结算（对齐 circular-motion，避免点测瞬间盖住舞台）
+                const settleMs = Math.round(1000 * Math.max(0.85, Math.min(1.15, (eventAnim && eventAnim.drivers && eventAnim.drivers.totalDur) || 0.9)));
+                winIndicator.innerHTML = '';
+                hintMsg.textContent = '测量中… 乘积已入标定带，确认读数';
+                if (!challengeWon) {
                   challengeWon = true;
-                  window.__craftShowWin('急单标定带本局锁定。等温下 pV 由 p、V 决定；活塞质量为本关旁路，不进乘积。');
+                  try { window.__challengeWon = true; } catch (eCw) {}
+                  try { window.__legacyWinEmitted = true; } catch (eLw) {}
+                  try { if (typeof window.__hideAttemptsExhausted === 'function') window.__hideAttemptsExhausted(); } catch (eHide) {}
+                  setTimeout(function() {
+                    try { emit('win', { winOk: true }); } catch(e) {}
+                    winIndicator.innerHTML = '<span class="pass-badge">过关 · 乘积落入锁定标定带</span>';
+                    hintMsg.textContent = '急单完成 · 乘积已入标定带';
+                    if (typeof window.__craftShowWin === 'function') {
+                      window.__craftShowWin('急单标定带本局锁定。等温下 pV 由 p、V 决定；活塞质量为本关旁路，不进乘积。');
+                    }
+                  }, settleMs);
+                } else {
+                  try { emit('win', { winOk: true }); } catch(e) {}
+                  winIndicator.innerHTML = '<span class="pass-badge">过关 · 乘积落入锁定标定带</span>';
+                  hintMsg.textContent = '急单完成 · 乘积已入标定带';
                 }
             } else {
                 // FixedChallenge：失败不换带；偏高/偏低可区分

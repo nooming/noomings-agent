@@ -1525,6 +1525,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       text += (nodes[n].innerText || nodes[n].textContent || '') + '\n';
       if (text.length > 8000) break;
     }
+  window.__emit = emit;
     if (!text) return false;
     for (var i = 0; i < WIN_TEXT.length; i++) {
       if (WIN_TEXT[i].test(text)) {

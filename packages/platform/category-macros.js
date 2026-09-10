@@ -13,7 +13,7 @@ const MACRO_TOPICS = {
   },
   'macro-thermal': {
     name: '热学',
-    topics: ['热传导', '理想气体'],
+    topics: ['热传导', '理想气体', '气体压强微观', '麦克斯韦速率分布', '绝热过程'],
   },
   'macro-other': {
     name: '近代与其它',

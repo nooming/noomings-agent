@@ -715,6 +715,107 @@
       },
       "demoCatalog": true,
       "htmlOrigin": "ingest"
+    },
+    {
+      "id": "gas-pressure-micro",
+      "topic": "气体压强微观",
+      "knowledgeText": "粒子碰壁 · N/T/V→P",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "P",
+          "N",
+          "T",
+          "V"
+        ],
+        "adjustmentLabelsContain": [
+          "粒子",
+          "温度",
+          "体积"
+        ],
+        "outputLabelsContain": [
+          "压强",
+          "P"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "maxwell-speed-dist",
+      "topic": "麦克斯韦速率分布",
+      "knowledgeText": "分布台 · v_p=√(2kT/m)",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "v_p",
+          "T",
+          "m"
+        ],
+        "adjustmentLabelsContain": [
+          "温度",
+          "质量"
+        ],
+        "outputLabelsContain": [
+          "最概然",
+          "v_p"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "adiabatic-process",
+      "topic": "绝热过程",
+      "knowledgeText": "绝热 PV^γ=const",
+      "tags": [
+        "generate",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "γ",
+          "P",
+          "V"
+        ],
+        "adjustmentLabelsContain": [
+          "体积",
+          "初温"
+        ],
+        "outputLabelsContain": [
+          "压强",
+          "P"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 2,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "htmlOrigin": "agent"
     }
   ]
 }

@@ -1,5 +1,7 @@
 # 数据目录布局
 
+> **现行课堂演示入口**：[docs/demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)（力学 3 + 热学三新关，默认 6 关）。
+
 磁盘路径与 HTTP URL 对照。路径解析见 [`packages/shared/data-paths.js`](../packages/shared/data-paths.js)。
 
 ## 三区（`data/runtime/`）
