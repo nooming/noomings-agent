@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>磁轨 · 安培力台</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:var(--font-sans); background: #f5f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 16px; }
@@ -780,7 +782,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 (function() {
   // ----- 物理常量 & DOM 引用 -----
   const canvas = document.getElementById('simCanvas');
-  const ctx = canvas.getContext('2d');
+  const CRAFT3 = {
+    bg: 0x0a1410, mid: 0x1e3428, hi: 0x80d0a0, glow: 0x40c878,
+    metal: 0x6a7870, accent: 0x4aaa78, ok: 0x6fae8f
+  };
+  let threeReady = false;
+  let renderer, scene, camera, orbit, clock;
+  let wireMesh, magnetGroup, scaleGroup, springMesh, hookMesh, BFieldGroup, badgeSprite, lampPivot, dustPoints;
+  let forceArrow, scaleReadSprite, linkMesh, poleNLabel, poleSLabel, iLabel, bLabel;
+  let powerBox, liftGroup;
+
+  function syncRendererSize() {
+    const wrap = canvas.parentElement;
+    const cssW = Math.max(2, (wrap && wrap.clientWidth) || canvas.clientWidth || 600);
+    const cssH = Math.max(2, (wrap && wrap.clientHeight) || canvas.clientHeight || 360);
+    W = cssW; H = cssH;
+    if (renderer && camera) {
+      const pr = Math.min(2, window.devicePixelRatio || 1);
+      renderer.setPixelRatio(pr);
+      renderer.setSize(cssW, cssH, false);
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      camera.aspect = cssW / Math.max(1, cssH);
+      camera.updateProjectionMatrix();
+    }
+  }
+
   const L = 0.8; // 固定导线长度 (m)
 
   const sCurrent = document.getElementById('s-current');
@@ -991,323 +1018,381 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     dpr = window.devicePixelRatio || 1;
     W = Math.max(320, rect.width);
     H = Math.max(240, rect.height);
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    syncRendererSize();
     const I = parseFloat(sCurrent.value) || 0;
     const B = parseFloat(sMagnetic.value) || 0;
     drawCanvas(I, B, computeForce(I, B));
   }
 
+  function makeLabelSprite(text, opts) {
+    opts = opts || {};
+    const c = document.createElement('canvas');
+    c.width = opts.w || 256; c.height = opts.h || 96;
+    const g = c.getContext('2d');
+    g.fillStyle = 'rgba(10,20,16,0.85)';
+    g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = 'rgba(64,200,120,0.5)';
+    g.strokeRect(4, 4, c.width - 8, c.height - 8);
+    g.fillStyle = '#80d0a0';
+    g.font = 'bold ' + (opts.fontSize || 26) + 'px "Microsoft YaHei",sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    String(text).split('\n').forEach(function(line, i, arr) {
+      g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 26);
+    });
+    const tex = new THREE.CanvasTexture(c);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+    spr.scale.set(opts.sx || 2.4, opts.sy || 0.85, 1);
+    spr.userData = { tex: tex, canvas: c, g: g, opts: opts };
+    return spr;
+  }
+
+  function updateSpriteText(spr, text) {
+    if (!spr || !spr.userData || !spr.userData.g) return;
+    const c = spr.userData.canvas, g = spr.userData.g, opts = spr.userData.opts || {};
+    g.clearRect(0, 0, c.width, c.height);
+    g.fillStyle = 'rgba(10,20,16,0.85)';
+    g.fillRect(0, 0, c.width, c.height);
+    g.strokeStyle = 'rgba(64,200,120,0.5)';
+    g.strokeRect(4, 4, c.width - 8, c.height - 8);
+    g.fillStyle = '#80d0a0';
+    g.font = 'bold ' + (opts.fontSize || 26) + 'px "Microsoft YaHei",sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    String(text).split('\n').forEach(function(line, i, arr) {
+      g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 26);
+    });
+    spr.userData.tex.needsUpdate = true;
+  }
+
+  function createMagBench() {
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(22, 14),
+      new THREE.MeshStandardMaterial({ color: 0x142018, roughness: 0.92 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const bench = new THREE.Mesh(
+      new THREE.BoxGeometry(12, 0.5, 4),
+      new THREE.MeshStandardMaterial({ color: 0x2a3a30, roughness: 0.75, metalness: 0.1 })
+    );
+    bench.position.set(0, 0.8, 0);
+    bench.castShadow = true;
+    scene.add(bench);
+
+    // 磁轭前后开口：N(身前 +z) → S(身后 −z)，B 向里 (−z / ⊗)
+    // 左手定则：I→(+x)、掌心迎 B(向里)、拇指向 F↑(+y)；右侧敞开留给测力环
+    // 前后用开口框（非实心板）+ 半透明极面，避免挡住导线/测力计
+    magnetGroup = new THREE.Group();
+    const yokeMat = new THREE.MeshStandardMaterial({ color: 0x3a4840, metalness: 0.45, roughness: 0.45 });
+    const bottom = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.45, 3.5), yokeMat);
+    bottom.position.set(-0.35, 1.2, 0);
+    magnetGroup.add(bottom);
+    const leftSpine = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.7, 3.5), yokeMat);
+    leftSpine.position.set(-2.9, 2.55, 0);
+    magnetGroup.add(leftSpine);
+    function addOpenFrame(zSign) {
+      const z = zSign * 1.72;
+      const railL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 2.5, 0.42), yokeMat);
+      railL.position.set(-2.35, 2.55, z);
+      magnetGroup.add(railL);
+      const railR = new THREE.Mesh(new THREE.BoxGeometry(0.45, 2.5, 0.42), yokeMat);
+      railR.position.set(1.75, 2.55, z);
+      magnetGroup.add(railR);
+      const railTop = new THREE.Mesh(new THREE.BoxGeometry(4.55, 0.35, 0.42), yokeMat);
+      railTop.position.set(-0.3, 3.62, z);
+      magnetGroup.add(railTop);
+      const railBot = new THREE.Mesh(new THREE.BoxGeometry(4.55, 0.35, 0.42), yokeMat);
+      railBot.position.set(-0.3, 1.48, z);
+      magnetGroup.add(railBot);
+    }
+    addOpenFrame(1);
+    addOpenFrame(-1);
+    const poleN = new THREE.Mesh(
+      new THREE.BoxGeometry(3.9, 1.7, 0.22),
+      new THREE.MeshStandardMaterial({
+        color: 0xe06060, emissive: 0x801818, emissiveIntensity: 0.42,
+        metalness: 0.2, roughness: 0.45, transparent: true, opacity: 0.72, depthWrite: false
+      })
+    );
+    poleN.position.set(-0.3, 2.55, 1.18);
+    magnetGroup.add(poleN);
+    const poleS = new THREE.Mesh(
+      new THREE.BoxGeometry(3.9, 1.7, 0.22),
+      new THREE.MeshStandardMaterial({
+        color: 0x6080e0, emissive: 0x182880, emissiveIntensity: 0.42,
+        metalness: 0.2, roughness: 0.45, transparent: true, opacity: 0.72, depthWrite: false
+      })
+    );
+    poleS.position.set(-0.3, 2.55, -1.18);
+    magnetGroup.add(poleS);
+    scene.add(magnetGroup);
+    poleNLabel = makeLabelSprite('N 极(前)', { w: 140, h: 44, fontSize: 20, sx: 1.05, sy: 0.34 });
+    poleNLabel.position.set(1.55, 3.55, 1.55);
+    scene.add(poleNLabel);
+    poleSLabel = makeLabelSprite('S 极(后)', { w: 140, h: 44, fontSize: 20, sx: 1.05, sy: 0.34 });
+    poleSLabel.position.set(1.55, 3.55, -1.55);
+    scene.add(poleSLabel);
+    bLabel = makeLabelSprite('B ⊗ 向里', { w: 160, h: 44, fontSize: 20, sx: 1.2, sy: 0.34 });
+    bLabel.position.set(-1.85, 3.85, 0.35);
+    scene.add(bLabel);
+
+    // B 箭头：指向 −z（垂直轨道平面向里）
+    BFieldGroup = new THREE.Group();
+    for (let i = -2; i <= 2; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const arrow = new THREE.Mesh(
+          new THREE.ConeGeometry(0.08, 0.35, 8),
+          new THREE.MeshBasicMaterial({ color: CRAFT3.hi, transparent: true, opacity: 0.7 })
+        );
+        arrow.position.set(i * 0.65, 2.55 + j * 0.45, 0.15);
+        arrow.rotation.x = -Math.PI / 2; // 锥尖朝 −z
+        BFieldGroup.add(arrow);
+      }
+    }
+    scene.add(BFieldGroup);
+
+    liftGroup = new THREE.Group();
+    wireMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 8.6, 12),
+      new THREE.MeshStandardMaterial({ color: 0xc89050, metalness: 0.55, roughness: 0.35, emissive: 0x804020, emissiveIntensity: 0.15 })
+    );
+    wireMesh.rotation.z = Math.PI / 2;
+    wireMesh.position.set(0, 2.55, 0);
+    liftGroup.add(wireMesh);
+    // 测力环：圆心落在磁轨轴线上（z=0、与导线同 y），放在右磁轭外侧以免被挡住
+    const RING_X = 4.25;
+    hookMesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.32, 0.06, 12, 28),
+      new THREE.MeshStandardMaterial({ color: 0x5eead4, metalness: 0.45, roughness: 0.35, emissive: 0x0d9488, emissiveIntensity: 0.35 })
+    );
+    hookMesh.rotation.y = Math.PI / 2;
+    hookMesh.position.set(RING_X, 2.55, 0);
+    liftGroup.add(hookMesh);
+    const ringLabel = makeLabelSprite('测力环', { w: 120, h: 40, fontSize: 18, sx: 0.95, sy: 0.32 });
+    ringLabel.position.set(RING_X + 0.75, 3.0, 0.4);
+    liftGroup.add(ringLabel);
+    const iArrow = new THREE.Mesh(
+      new THREE.ConeGeometry(0.14, 0.4, 10),
+      new THREE.MeshBasicMaterial({ color: CRAFT3.accent })
+    );
+    iArrow.rotation.z = -Math.PI / 2;
+    iArrow.position.set(3.85, 2.55, 0);
+    liftGroup.add(iArrow);
+    iLabel = makeLabelSprite('电流 I →', { w: 140, h: 44, fontSize: 20, sx: 1.1, sy: 0.34 });
+    iLabel.position.set(2.4, 3.05, 0.45);
+    liftGroup.add(iLabel);
+    // 导线受力方向（托起）
+    forceArrow = new THREE.Group();
+    const fStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.05, 0.9, 8),
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    fStem.position.y = 0.45;
+    forceArrow.add(fStem);
+    const fHead = new THREE.Mesh(
+      new THREE.ConeGeometry(0.14, 0.32, 10),
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    fHead.position.y = 1.05;
+    forceArrow.add(fHead);
+    const fLbl = makeLabelSprite('受力 F ↑', { w: 140, h: 44, fontSize: 20, sx: 1.1, sy: 0.34 });
+    fLbl.position.set(0.85, 0.7, 0.2);
+    forceArrow.add(fLbl);
+    forceArrow.position.set(0, 2.55, 0.35);
+    liftGroup.add(forceArrow);
+    scene.add(liftGroup);
+
+    powerBox = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 1.2, 1.0),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.4, roughness: 0.5 })
+    );
+    powerBox.position.set(-5.5, 1.6, 1.4);
+    scene.add(powerBox);
+
+    // 测力计与圆环共竖轴（同 x、同 z=0），叙事：环托导线 → 柱塞上提读力
+    scaleGroup = new THREE.Group();
+    const scaleBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 1.55, 0.55),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.45, roughness: 0.4, emissive: 0x000000, emissiveIntensity: 0 })
+    );
+    scaleBody.position.set(RING_X, 4.15, 0);
+    scaleGroup.add(scaleBody);
+    const dial = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.42, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x0a1a12, emissive: 0x143828, emissiveIntensity: 0.35 })
+    );
+    dial.position.set(RING_X, 4.65, 0.28);
+    scaleGroup.add(dial);
+    springMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.14, 1.05, 12),
+      new THREE.MeshStandardMaterial({ color: 0xc4b896, metalness: 0.55, roughness: 0.32 })
+    );
+    springMesh.position.set(RING_X, 3.15, 0);
+    scaleGroup.add(springMesh);
+    linkMesh = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 1, 8),
+      new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.6, roughness: 0.35 })
+    );
+    linkMesh.position.set(RING_X, 2.85, 0);
+    scaleGroup.add(linkMesh);
+    scaleReadSprite = makeLabelSprite('测力计\n待测', { w: 170, h: 78, fontSize: 20, sx: 1.25, sy: 0.55 });
+    scaleReadSprite.position.set(RING_X, 5.35, 0.35);
+    scaleGroup.add(scaleReadSprite);
+    const scaleName = makeLabelSprite('弹簧测力计', { w: 160, h: 44, fontSize: 18, sx: 1.2, sy: 0.34 });
+    scaleName.position.set(RING_X + 1.15, 4.15, 0.2);
+    scaleGroup.add(scaleName);
+    scaleGroup.userData.ringX = RING_X;
+    scene.add(scaleGroup);
+
+    lampPivot = new THREE.Group();
+    lampPivot.position.set(-1, 7.2, 2);
+    scene.add(lampPivot);
+    const cord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 1.6, 8),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.metal })
+    );
+    cord.position.y = -0.8;
+    lampPivot.add(cord);
+    const shade = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.48, 0.4, 14, 1, true),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.45, side: THREE.DoubleSide })
+    );
+    shade.position.y = -1.7;
+    lampPivot.add(shade);
+    const bulb = new THREE.PointLight(0xc8ffd0, 0.85, 16, 2);
+    bulb.position.y = -1.6;
+    lampPivot.add(bulb);
+
+    const dustGeo = new THREE.BufferGeometry();
+    const pos = new Float32Array(75);
+    for (let i = 0; i < 25; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 16;
+      pos[i * 3 + 1] = Math.random() * 6;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 8;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    dustPoints = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0x80d0a0, size: 0.04, transparent: true, opacity: 0.28 }));
+    scene.add(dustPoints);
+
+    // 角落小提示：力在右侧测力计读
+    badgeSprite = makeLabelSprite('力在右侧测力计读', { w: 260, h: 56, fontSize: 20, sx: 1.9, sy: 0.42 });
+    badgeSprite.position.set(-4.2, 5.6, 2.2);
+    scene.add(badgeSprite);
+  }
+
+  function initThree() {
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js missing');
+      return false;
+    }
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(CRAFT3.bg, 1);
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(CRAFT3.bg);
+    scene.fog = new THREE.Fog(CRAFT3.bg, 14, 34);
+    camera = new THREE.PerspectiveCamera(42, 1, 0.1, 80);
+    camera.position.set(2.2, 5.8, 11.5);
+    if (typeof THREE.OrbitControls !== 'undefined') {
+      orbit = new THREE.OrbitControls(camera, renderer.domElement);
+      orbit.enableDamping = true;
+      orbit.dampingFactor = 0.06;
+      orbit.target.set(1.2, 2.6, 0);
+      orbit.minDistance = 5;
+      orbit.maxDistance = 22;
+      orbit.maxPolarAngle = Math.PI * 0.48;
+    }
+    scene.add(new THREE.AmbientLight(0xa8c0b0, 0.42));
+    const dir = new THREE.DirectionalLight(0xe8ffe8, 0.85);
+    dir.position.set(6, 12, 8);
+    dir.castShadow = true;
+    scene.add(dir);
+    createMagBench();
+    clock = new THREE.Clock();
+    threeReady = true;
+    syncRendererSize();
+    return true;
+  }
+
   function drawCanvas(I, B, F) {
-    ctx.clearRect(0, 0, W, H);
-    var INK = '#0a1410', MID = '#1e3428', ACCENT = '#4aaa78';
-    var GLOW = '#40c878', METAL = '#6a7870', HI = '#80d0a0', OK = '#6fae8f';
+    if (!threeReady) return;
+    syncRendererSize();
     const drv = eventAnim ? eventAnim.drivers : null;
     const drawI = drv ? drv.I : I;
     const drawB = drv ? drv.B : B;
     const drawF = drv ? drv.F : F;
-    const band = drv ? drv.band : classifyBand(drawF);
-    const onBand = band === 'ok';
-    const animActive = !!eventAnim;
-    const power = Math.min(1, (drawI * drawB) / 8);
-    const fNorm = Math.min(1, drawF / 8);
-    const lift = displayLift;
+    const band = drv ? drv.band : (typeof classifyBand === 'function' ? classifyBand(drawF) : 'low');
+    const lift = typeof displayLift !== 'undefined' ? displayLift : 0;
     const springOff = eventAnim ? (eventAnim.springOffset || 0) : 0;
     const flashG = eventAnim ? (eventAnim.flashGreen || 0) : 0;
-    const bandColor = onBand ? OK : (band === 'high' ? '#f87171' : '#fb923c');
 
-    function rr(x, y, w, h, r) {
-      r = Math.min(r, w * 0.5, h * 0.5);
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
+    const liftM = Math.min(0.5, lift * 0.012);
+    liftGroup.position.y = liftM;
+    const iGlow = Math.min(1, drawI / 5);
+    wireMesh.material.emissiveIntensity = 0.1 + iGlow * 0.55 + flashG * 0.3;
+    const tWire = sWireTemp ? parseFloat(sWireTemp.value) : 25;
+    const tN = Math.max(0, Math.min(1, (tWire - 10) / 70));
+    wireMesh.material.color.setRGB(0.7 + tN * 0.2, 0.55 - tN * 0.2, 0.3 - tN * 0.15);
+
+    const bN = Math.min(1, drawB / 2);
+    BFieldGroup.children.forEach(function(a) {
+      a.material.opacity = 0.2 + bN * 0.75;
+      a.scale.setScalar(0.7 + bN * 0.7);
+    });
+
+    // 圆环在 liftGroup 内已随磁轨上移；测力柱同轴上提（勿反号）
+    const ringX = (scaleGroup && scaleGroup.userData && scaleGroup.userData.ringX) || 3.55;
+    const wireY = 2.55 + liftM;
+    const stretch = 1 + Math.min(1.2, drawF / 8) * 0.45 + Math.abs(springOff) * 0.02;
+    const springLift = Math.min(0.55, liftM * 0.85 + (stretch - 1) * 0.18);
+    springMesh.scale.y = stretch;
+    springMesh.position.set(ringX, 3.15 + springLift, 0);
+    if (linkMesh) {
+      const springBottom = springMesh.position.y - 0.525 * stretch;
+      const midY = (springBottom + wireY) / 2;
+      const len = Math.max(0.12, Math.abs(springBottom - wireY));
+      linkMesh.position.set(ringX, midY, 0);
+      linkMesh.scale.set(1, len, 1);
+    }
+    // 圆环轻微绕轴自转，强调「在导线上、随工况动」
+    if (hookMesh) {
+      hookMesh.rotation.x = (hookMesh.rotation.x || 0) + 0.01 * (0.3 + Math.min(1, drawF / 6));
+    }
+    if (forceArrow) {
+      const fScale = 0.55 + Math.min(1.2, drawF / 8) * 0.9;
+      forceArrow.scale.setScalar(fScale);
+      forceArrow.visible = drawF > 0.02 || measuredF != null;
     }
 
-    // 测力台背景
-    var bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#101c16');
-    bg.addColorStop(0.55, INK);
-    bg.addColorStop(1, '#060c08');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
+    window.__magProbe = {
+      liftY: liftGroup ? liftGroup.position.y : null,
+      springY: springMesh ? springMesh.position.y : null,
+      hookY: hookMesh ? (2.55 + (liftGroup ? liftGroup.position.y : 0)) : null,
+      hookX: hookMesh ? hookMesh.position.x : null,
+      hookZ: hookMesh ? hookMesh.position.z : null,
+      wireY: wireMesh ? (2.55 + (liftGroup ? liftGroup.position.y : 0)) : null,
+      springX: springMesh ? springMesh.position.x : null,
+      springZ: springMesh ? springMesh.position.z : null,
+      stretch: springMesh ? springMesh.scale.y : null,
+      F: drawF
+    };
 
-    // FAR: 天花板线槽 + 侧设备架 + 墙板（y≥100 避 HUD，在磁轭后）
-    ctx.strokeStyle = 'rgba(64,200,120,0.07)';
-    ctx.lineWidth = 1;
-    for (let p = 0; p < 5; p++) {
-      ctx.beginPath();
-      ctx.moveTo(W * 0.1, 12 + p * 6);
-      ctx.lineTo(W * 0.9, 12 + p * 6);
-      ctx.stroke();
-    }
-    ctx.fillStyle = 'rgba(10,16,12,0.68)';
-    for (let c = 0; c < 4; c++) {
-      ctx.fillRect(W * 0.14 + c * W * 0.2, 8, W * 0.11, 5);
-    }
-    ctx.fillStyle = 'rgba(12,20,16,0.72)';
-    ctx.fillRect(4, 100, 46, 88);
-    ctx.fillRect(W - 50, 100, 46, 88);
-    ctx.strokeStyle = 'rgba(74,170,120,0.06)';
-    for (let i = 0; i < 5; i++) {
-      ctx.strokeRect(56 + i * (W - 112) / 4, 102, (W - 112) / 4 - 4, 76);
+    const onBand = band === 'ok';
+    const col = onBand ? CRAFT3.ok : (band === 'high' ? 0xf87171 : 0xfb923c);
+    if (scaleGroup.children[0] && scaleGroup.children[0].material) {
+      scaleGroup.children[0].material.emissive.setHex(col);
+      scaleGroup.children[0].material.emissiveIntensity = onBand ? 0.35 + flashG * 0.4 : 0.08;
     }
 
-    var ambGlow = ctx.createRadialGradient(W * 0.5, H * 0.45, 30, W * 0.5, H * 0.45, W * 0.6);
-    const ambScale = animActive ? 0.22 : 1;
-    ambGlow.addColorStop(0, 'rgba(64,200,120,' + ((0.03 + power * 0.14) * ambScale + flashG * 0.18) + ')');
-    ambGlow.addColorStop(1, 'rgba(64,200,120,0)');
-    ctx.fillStyle = ambGlow;
-    ctx.fillRect(0, 0, W, H);
-
-    // 实验台地面
-    var floorY = H - 70;
-    var floorG = ctx.createLinearGradient(0, floorY, 0, H);
-    floorG.addColorStop(0, MID);
-    floorG.addColorStop(1, INK);
-    ctx.fillStyle = floorG;
-    ctx.fillRect(0, floorY, W, H - floorY);
-    ctx.fillStyle = METAL;
-    ctx.fillRect(0, floorY, W, 10);
-    ctx.strokeStyle = 'rgba(64,200,120,0.12)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, floorY);
-    ctx.lineTo(W, floorY);
-    ctx.stroke();
-
-    // 磁轭框架加厚（HERO ~50%H）
-    var yokeX = W * 0.1, yokeY = 100, yokeW = W * 0.78, yokeH = H * 0.52;
-    var yokeG = ctx.createLinearGradient(yokeX, yokeY, yokeX + yokeW, yokeY + yokeH);
-    yokeG.addColorStop(0, '#2a4034');
-    yokeG.addColorStop(0.45, MID);
-    yokeG.addColorStop(1, '#142018');
-    ctx.fillStyle = yokeG;
-    rr(yokeX, yokeY, yokeW, yokeH, 8);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(74,170,120,0.42)';
-    ctx.lineWidth = 4;
-    rr(yokeX, yokeY, yokeW, yokeH, 8);
-    ctx.stroke();
-    // 侧立柱加厚
-    ctx.fillStyle = '#243828';
-    rr(yokeX + 4, yokeY + 10, 28, yokeH - 20, 4);
-    ctx.fill();
-    rr(yokeX + yokeW - 32, yokeY + 10, 28, yokeH - 20, 4);
-    ctx.fill();
-    var poleH = yokeH * 0.2;
-    var poleG = ctx.createLinearGradient(yokeX, yokeY + 8, yokeX, yokeY + 8 + poleH);
-    poleG.addColorStop(0, '#889890');
-    poleG.addColorStop(0.5, METAL);
-    poleG.addColorStop(1, '#4a5850');
-    ctx.fillStyle = poleG;
-    rr(yokeX + 36, yokeY + 10, yokeW - 72, poleH, 4);
-    ctx.fill();
-    var botPoleY = yokeY + yokeH - poleH - 10;
-    ctx.fillStyle = poleG;
-    rr(yokeX + 36, botPoleY, yokeW - 72, poleH, 4);
-    ctx.fill();
-
-    // 铜绕组（上下极）
-    for (var wi = 0; wi < 8; wi++) {
-      var wy1 = yokeY + 14 + wi * (poleH / 8);
-      var wy2 = botPoleY + 4 + wi * (poleH / 8);
-      ctx.strokeStyle = wi % 2 ? '#c89050' : '#e8b060';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(yokeX + 40, wy1);
-      ctx.lineTo(yokeX + yokeW - 40, wy1);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(yokeX + 40, wy2);
-      ctx.lineTo(yokeX + yokeW - 40, wy2);
-      ctx.stroke();
-    }
-
-    // B × 标记（轻微脉动；事件中让位）
-    const dens = Math.max(4, Math.round(drawB * 7));
-    const bPulseBase = animActive ? 0.18 : (0.3 + 0.15 * Math.sin((typeof pulse === 'number' ? pulse : 0) * 6 + Date.now() * 0.003));
-    const bPulse = bPulseBase + drawB * 0.06;
-    for (let i = 0; i < dens; i++) {
-      for (let j = 0; j < 5; j++) {
-        const x = W * 0.18 + i * (W * 0.64) / dens;
-        const y = yokeY + poleH + 18 + j * ((yokeH - poleH * 2 - 36) / 4);
-        ctx.strokeStyle = 'rgba(64,200,120,' + Math.min(0.95, bPulse + drawB * 0.2 + power * 0.1) + ')';
-        ctx.lineWidth = 1.2 + drawB * 0.35;
-        ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = ACCENT;
-        ctx.font = '13px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('×', x, y + 4);
-      }
-    }
-
-    // 左电源柱
-    ctx.fillStyle = '#2a3830';
-    rr(16, H * 0.38, 36, 70, 4);
-    ctx.fill();
-    ctx.fillStyle = '#c04040';
-    ctx.beginPath(); ctx.arc(34, H * 0.42, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#3040c0';
-    ctx.beginPath(); ctx.arc(34, H * 0.52, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = HI;
-    ctx.font = '10px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('电源', 34, H * 0.38 - 6);
-
-    // 磁轨 + 载流导线
-    const yWire = H * 0.44;
-    var railG = ctx.createLinearGradient(0, yWire + 28, 0, yWire + 40);
-    railG.addColorStop(0, '#889890');
-    railG.addColorStop(0.5, METAL);
-    railG.addColorStop(1, '#4a5850');
-    ctx.fillStyle = railG;
-    ctx.fillRect(W * 0.1, yWire + 28, W * 0.72, 12);
-    ctx.strokeStyle = 'rgba(128,208,160,0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.1, yWire + 28);
-    ctx.lineTo(W * 0.82, yWire + 28);
-    ctx.stroke();
-    for (var ri = 0; ri < 6; ri++) {
-      var rx = W * 0.12 + ri * (W * 0.68 / 5);
-      ctx.fillStyle = '#4a5850';
-      ctx.fillRect(rx - 5, yWire + 40, 10, 16);
-    }
-    // 回流导线（轨下）
-    ctx.strokeStyle = 'rgba(168,128,72,0.55)';
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(52, H * 0.52);
-    ctx.lineTo(W * 0.1, yWire + 48);
-    ctx.lineTo(W * 0.82, yWire + 48);
-    ctx.lineTo(W * 0.86, yWire);
-    ctx.stroke();
-
-    var wireY = yWire - lift;
-    // 导线温度：冷蓝→暖铜→微红晕（不进 F=BIL 计算）
-    var tWire = sWireTemp ? parseFloat(sWireTemp.value) : 25;
-    var tNorm = Math.max(0, Math.min(1, (tWire - 10) / 70));
-    var wireCool = 'rgb(' + Math.round(120 + tNorm * 80) + ',' + Math.round(150 - tNorm * 40) + ',' + Math.round(200 - tNorm * 140) + ')';
-    var wireHot = 'rgb(' + Math.round(200 + tNorm * 40) + ',' + Math.round(176 - tNorm * 60) + ',' + Math.round(96 - tNorm * 40) + ')';
-    var wireDeep = 'rgb(' + Math.round(140 + tNorm * 60) + ',' + Math.round(100 - tNorm * 30) + ',' + Math.round(60 - tNorm * 20) + ')';
-    var wireG = ctx.createLinearGradient(0, wireY - 5, 0, wireY + 5);
-    wireG.addColorStop(0, wireCool);
-    wireG.addColorStop(0.45, wireHot);
-    wireG.addColorStop(1, wireDeep);
-    ctx.strokeStyle = wireG;
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    ctx.shadowColor = 'rgba(' + Math.round(180 + tNorm * 60) + ',' + Math.round(140 - tNorm * 40) + ',' + Math.round(80 - tNorm * 40) + ',' + (0.22 + Math.min(1, drawI / 5) * 0.5 + tNorm * 0.2) + ')';
-    ctx.shadowBlur = 6 + drawI * 3 + tNorm * 4;
-    ctx.beginPath();
-    ctx.moveTo(52, wireY);
-    ctx.lineTo(W * 0.82, wireY);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    // 电源→导线
-    ctx.strokeStyle = wireG;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(34, H * 0.42);
-    ctx.lineTo(52, wireY);
-    ctx.stroke();
-    ctx.fillStyle = HI;
-    ctx.font = 'bold 14px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('I →', W * 0.74, wireY - 14);
-
-    // 立体弹簧测力计
-    var scaleX = W * 0.9, scaleY = yWire - 10;
-    var scaleG = ctx.createLinearGradient(scaleX - 24, scaleY, scaleX + 24, scaleY);
-    scaleG.addColorStop(0, '#3a4840');
-    scaleG.addColorStop(0.5, METAL);
-    scaleG.addColorStop(1, '#5a6860');
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    rr(scaleX - 20, scaleY - 28, 48, 78, 5);
-    ctx.fill();
-    ctx.fillStyle = scaleG;
-    rr(scaleX - 22, scaleY - 36, 44, 72, 5);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(74,170,120,0.4)';
-    ctx.lineWidth = 2;
-    rr(scaleX - 22, scaleY - 36, 44, 72, 5);
-    ctx.stroke();
-    // 弹簧圈（springOffset 调制椭圆）
-    var tickH = Math.min(44, drawF * 11);
-    for (var sp = 0; sp < 6; sp++) {
-      var sy = scaleY - 20 + sp * 8 + (drawF > 0.05 ? tickH * 0.08 : 0) + springOff * (1 + sp * 0.12);
-      ctx.strokeStyle = '#a8b0a8';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(scaleX, sy, 10 + Math.abs(springOff) * 0.15, 3 + Math.abs(springOff) * 0.08, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = METAL;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(scaleX, scaleY - 36);
-    ctx.lineTo(W * 0.82, wireY);
-    ctx.stroke();
-    ctx.fillStyle = bandColor;
-    ctx.fillRect(scaleX - 7, scaleY + 24 - tickH, 14, tickH);
-    ctx.fillStyle = HI;
-    ctx.font = '11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('测力', scaleX, scaleY + 48);
-
-    // 安培力箭头
-    if (drawF > 0.05) {
-      const ax = W * 0.5;
-      const arrowPulse = animActive ? 0 : pulse * 4;
-      ctx.strokeStyle = onBand ? OK : (flashG > 0 ? OK : GLOW);
-      ctx.lineWidth = 2 + fNorm * 5;
-      ctx.shadowColor = onBand ? OK : (flashG > 0 ? OK : GLOW);
-      ctx.shadowBlur = 4 + fNorm * 14 + flashG * 10;
-      ctx.beginPath();
-      ctx.moveTo(ax, wireY + 10);
-      ctx.lineTo(ax, wireY + 10 + 36 + arrowPulse);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = onBand ? OK : (flashG > 0 ? OK : GLOW);
-      ctx.beginPath();
-      ctx.moveTo(ax, wireY + 52 + arrowPulse);
-      ctx.lineTo(ax - 8, wireY + 40 + arrowPulse);
-      ctx.lineTo(ax + 8, wireY + 40 + arrowPulse);
-      ctx.fill();
-      ctx.fillStyle = HI;
-      ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('F', ax + 12, wireY + 40);
-    }
-
-    // 目标力读数牌
-    ctx.fillStyle = 'rgba(10,20,16,0.85)';
-    rr(16, H - 58, 260, 40, 4);
-    ctx.fill();
-    ctx.strokeStyle = onBand ? 'rgba(111,174,143,0.6)' : (band === 'high' ? 'rgba(248,113,113,0.55)' : 'rgba(251,146,60,0.5)');
-    ctx.lineWidth = 1.5;
-    rr(16, H - 58, 260, 40, 4);
-    ctx.stroke();
-    ctx.fillStyle = HI;
-    ctx.font = '12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText((playMode==='challenge'?'急单':'参考') + ' F ≈ ' + F_TARGET.toFixed(1) + ' N (±' + forceTol() + ')', 26, H - 42);
-    ctx.fillStyle = measuredF != null ? (Math.abs(measuredF - F_TARGET) <= forceTol() ? OK : '#fca5a5') : '#7a9a88';
-    if (measuredF != null) {
-      ctx.fillText('当前 ' + measuredF.toFixed(2) + ' N · I=' + drawI.toFixed(1) + 'A B=' + drawB.toFixed(1) + 'T', 26, H - 26);
-    } else {
-      ctx.fillText('当前 F 待测 · I=' + drawI.toFixed(1) + 'A B=' + drawB.toFixed(1) + 'T', 26, H - 26);
-    }
+    let scaleTxt = '测力计';
+    if (measuredF != null) scaleTxt += '\nF=' + measuredF.toFixed(2) + ' N';
+    else scaleTxt += '\n点测试读数';
+    if (playMode === 'challenge' && lockedF != null) scaleTxt += '\n目标 ' + lockedF.toFixed(1) + 'N';
+    updateSpriteText(scaleReadSprite, scaleTxt);
+    updateSpriteText(badgeSprite, '力在右侧测力计读');
   }
-
   // ----- 测试/发射 事件 (snapshot + win) -----
   function onTest() {
     if (eventAnim) return;
@@ -1410,6 +1495,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
   window.addEventListener('resize', resizeCanvas);
   if (typeof ResizeObserver !== 'undefined' && wrap) new ResizeObserver(resizeCanvas).observe(wrap);
+
+  if (!initThree()) {
+    if (feedback) feedback.textContent = '3D engine missing: vendor/three.min.js';
+  } else {
+    (function renderLoop() {
+      const tNow = clock ? clock.getElapsedTime() : 0;
+      if (lampPivot) lampPivot.rotation.z = Math.sin(tNow * 1.1) * 0.04;
+      if (dustPoints) {
+        const arr = dustPoints.geometry.attributes.position.array;
+        for (let i = 0; i < arr.length; i += 3) {
+          arr[i + 1] += 0.0015;
+          if (arr[i + 1] > 7) arr[i + 1] = 0.3;
+        }
+        dustPoints.geometry.attributes.position.needsUpdate = true;
+      }
+      const I = parseFloat(sCurrent.value) || 0;
+      const B = parseFloat(sMagnetic.value) || 0;
+      drawCanvas(I, B, computeForce(I, B));
+      if (orbit) orbit.update();
+      if (renderer && scene && camera) renderer.render(scene, camera);
+      requestAnimationFrame(renderLoop);
+    })();
+  }
   resizeCanvas();
   updateAll();
   (function loop(now) {

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>投靶台 · 单摆</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         html, body {
@@ -648,7 +650,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
   border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
-. label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
+.slabel{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
 #btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
   background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
@@ -759,26 +761,38 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     const GROUND_Y = 360;
     const PIVOT_X = 200, PIVOT_Y = 70;
     const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
     const stage = document.getElementById('stage');
     let scale = 1, offX = 0, offY = 0;
+    const CRAFT3 = {
+      bg: 0x0f1c28, mid: 0x1e3347, hi: 0xfde68a, glow: 0xf59e0b,
+      metal: 0x94a3b8, accent: 0x86efac, ok: 0x6fae8f, wood: 0x6b4f2a
+    };
+    let threeReady = false;
+    let renderer, scene, camera, orbit, clock;
+    let pivotMesh, rodMesh, bobMesh, cartMesh, badgeSprite, pivotLabel, lampPivot, dustPoints, flyMesh;
+    let pendulumArm;
 
     function resize() {
         const w = stage.clientWidth || innerWidth;
         const h = stage.clientHeight || innerHeight;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
         scale = Math.min(w / DW, h / DH);
         offX = (w - DW * scale) / 2;
         offY = (h - DH * scale) / 2;
-        ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
-        if (typeof drawScene === 'function') drawScene();
+        if (renderer && camera) {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            renderer.setPixelRatio(dpr);
+            renderer.setSize(w, h, false);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+            camera.aspect = w / Math.max(1, h);
+            camera.updateProjectionMatrix();
+        } else {
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+        }
+        if (typeof drawScene === 'function' && threeReady) drawScene();
     }
-    window.addEventListener('resize', resize);
-    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(stage);
+
     const lengthSlider = document.getElementById('s-length');
     const angleSlider = document.getElementById('s-angle');
     const massSlider = document.getElementById('s-mass');
@@ -954,8 +968,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     function syncHealthHudForMode() {
       var chip = document.getElementById('healthDisplay');
-      if (chip) chip.style.display = playMode === 'challenge' ? 'none' : '';
-      if (playMode !== 'challenge') healthSpan.textContent = health;
+      // 生命条为旧 2D 残留；探究无限试，竞赛用 #challengeStats 次数
+      if (chip) chip.style.display = 'none';
+      if (playMode !== 'challenge' && healthSpan) healthSpan.textContent = health;
     }
     window.__pendApplyMode = function(mode) {
       playMode = mode === 'challenge' ? 'challenge' : 'explore';
@@ -1226,195 +1241,274 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         lastShotParams = { L: L, theta0: theta0, mass: mass };
     }
 
+    function designToWorld(x, y) {
+      const wx = (x / DW - 0.5) * 12;
+      const wy = (1 - y / DH) * 5.2 + 0.2;
+      return { x: wx, y: wy, z: 0 };
+    }
+
+    function makeLabelSprite(text, opts) {
+      opts = opts || {};
+      const c = document.createElement('canvas');
+      c.width = opts.w || 256; c.height = opts.h || 96;
+      const g = c.getContext('2d');
+      g.fillStyle = 'rgba(15,28,40,0.85)';
+      g.fillRect(0, 0, c.width, c.height);
+      g.strokeStyle = 'rgba(253,230,138,0.5)';
+      g.strokeRect(4, 4, c.width - 8, c.height - 8);
+      g.fillStyle = '#fde68a';
+      g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      String(text).split('\n').forEach(function(line, i, arr) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 28);
+      });
+      const tex = new THREE.CanvasTexture(c);
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+      spr.scale.set(opts.sx || 2.2, opts.sy || 0.8, 1);
+      spr.userData = { tex: tex, canvas: c, g: g, opts: opts };
+      return spr;
+    }
+
+    function updateSpriteText(spr, text) {
+      if (!spr || !spr.userData || !spr.userData.g) return;
+      const c = spr.userData.canvas, g = spr.userData.g, opts = spr.userData.opts || {};
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(15,28,40,0.85)';
+      g.fillRect(0, 0, c.width, c.height);
+      g.strokeStyle = 'rgba(253,230,138,0.5)';
+      g.strokeRect(4, 4, c.width - 8, c.height - 8);
+      g.fillStyle = '#fde68a';
+      g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      String(text).split('\n').forEach(function(line, i, arr) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 28);
+      });
+      spr.userData.tex.needsUpdate = true;
+    }
+
+    function createMine() {
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(24, 16),
+        new THREE.MeshStandardMaterial({ color: 0x3d4f3a, roughness: 0.92 })
+      );
+      floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+
+      const wall = new THREE.Mesh(
+        new THREE.BoxGeometry(24, 10, 0.5),
+        new THREE.MeshStandardMaterial({ color: 0x1a2834, roughness: 0.9 })
+      );
+      wall.position.set(0, 5, -4); scene.add(wall);
+
+      const piv = designToWorld(PIVOT_X, PIVOT_Y);
+      // 背景木柱退后，并避开摆动带，防止与摆杆画面重叠造成「穿模」错觉
+      for (let i = 0; i < 5; i++) {
+        const x = -8 + i * 4;
+        if (Math.abs(x - piv.x) < 2.4) continue;
+        const post = new THREE.Mesh(
+          new THREE.BoxGeometry(0.28, 5.5, 0.28),
+          new THREE.MeshStandardMaterial({ color: CRAFT3.wood, roughness: 0.85 })
+        );
+        post.position.set(x, 2.75, -3.2); scene.add(post);
+        const beam = new THREE.Mesh(
+          new THREE.BoxGeometry(2.4, 0.22, 0.22),
+          new THREE.MeshStandardMaterial({ color: CRAFT3.wood, roughness: 0.85 })
+        );
+        beam.position.set(x, 5.2, -3.2); scene.add(beam);
+      }
+
+      const railMat = new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.55, roughness: 0.4 });
+      [-0.35, 0.35].forEach(function(z) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(14, 0.06, 0.08), railMat);
+        rail.position.set(1.5, 0.08, z); scene.add(rail);
+      });
+      for (let i = 0; i < 18; i++) {
+        const tie = new THREE.Mesh(
+          new THREE.BoxGeometry(0.12, 0.05, 0.9),
+          new THREE.MeshStandardMaterial({ color: 0x5a4630, roughness: 0.9 })
+        );
+        tie.position.set(-5 + i * 0.8, 0.04, 0); scene.add(tie);
+      }
+
+      // 摆架：立柱偏右悬臂，支点在梁端，摆杆只在 z=0 摆动
+      const postX = piv.x + 1.05;
+      const standPost = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, Math.max(1.2, piv.y + 0.45), 0.32),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.wood, roughness: 0.85 })
+      );
+      standPost.position.set(postX, (piv.y + 0.45) / 2, -0.85);
+      scene.add(standPost);
+      const standBeam = new THREE.Mesh(
+        new THREE.BoxGeometry(1.45, 0.2, 0.26),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.wood, roughness: 0.85 })
+      );
+      standBeam.position.set((piv.x + postX) / 2, piv.y + 0.32, -0.4);
+      scene.add(standBeam);
+      const mount = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.22, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0x4a5564, metalness: 0.3, roughness: 0.55 })
+      );
+      mount.position.set(piv.x, piv.y + 0.2, -0.08); scene.add(mount);
+      pivotMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xc0d0e0, metalness: 0.5, roughness: 0.35 })
+      );
+      pivotMesh.position.set(piv.x, piv.y, 0); scene.add(pivotMesh);
+
+      // 摆臂：杆与球挂在同一局部坐标系，只转 arm，杜绝三件套错位
+      pendulumArm = new THREE.Group();
+      pendulumArm.position.set(piv.x, piv.y, 0);
+      scene.add(pendulumArm);
+      rodMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.055, 1, 12),
+        new THREE.MeshStandardMaterial({ color: 0xe8f0f8, metalness: 0.35, roughness: 0.4 })
+      );
+      pendulumArm.add(rodMesh);
+      bobMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.34, 20, 20),
+        new THREE.MeshStandardMaterial({
+          color: 0xff9a1a, emissive: 0xff8a00, emissiveIntensity: 0.45, metalness: 0.08, roughness: 0.55
+        })
+      );
+      bobMesh.castShadow = true;
+      pendulumArm.add(bobMesh);
+
+      flyMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.28, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0xf8e080, emissive: 0xf59e0b, emissiveIntensity: 0.35 })
+      );
+      flyMesh.visible = false; scene.add(flyMesh);
+
+      cartMesh = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 0.55, 0.9),
+        new THREE.MeshStandardMaterial({ color: 0x4b5563, metalness: 0.35, roughness: 0.5 })
+      );
+      body.position.y = 0.35; cartMesh.add(body);
+      const bed = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 0.12, 1.0),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.accent, emissive: CRAFT3.ok, emissiveIntensity: 0.15 })
+      );
+      bed.position.y = 0.68; cartMesh.add(bed);
+      [-0.45, 0.45].forEach(function(x) {
+        [-0.4, 0.4].forEach(function(z) {
+          const wh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.16, 0.16, 0.12, 12),
+            new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.4, roughness: 0.5 })
+          );
+          wh.rotation.z = Math.PI / 2; wh.position.set(x, 0.16, z); cartMesh.add(wh);
+        });
+      });
+      scene.add(cartMesh);
+
+      lampPivot = new THREE.Group();
+      lampPivot.position.set(-2, 7.5, 1.5); scene.add(lampPivot);
+      const cord = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 1.8, 8),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.metal })
+      );
+      cord.position.y = -0.9; lampPivot.add(cord);
+      const shade = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.5, 0.4, 14, 1, true),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.hi, emissive: CRAFT3.glow, emissiveIntensity: 0.5, side: THREE.DoubleSide })
+      );
+      shade.position.y = -1.9; lampPivot.add(shade);
+      const bulb = new THREE.PointLight(0xffe08a, 0.9, 16, 2);
+      bulb.position.y = -1.8; lampPivot.add(bulb);
+
+      const dustGeo = new THREE.BufferGeometry();
+      const pos = new Float32Array(90);
+      for (let i = 0; i < 30; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * 18;
+        pos[i * 3 + 1] = Math.random() * 7;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 8;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      dustPoints = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xfde68a, size: 0.04, transparent: true, opacity: 0.3 }));
+      scene.add(dustPoints);
+
+      // 小标签贴装置旁，避免舞台中央大招牌挡视野
+      badgeSprite = makeLabelSprite('接矿车', { w: 180, h: 56, fontSize: 22, sx: 1.35, sy: 0.42 });
+      badgeSprite.position.set(3.2, 1.35, 0.6); scene.add(badgeSprite);
+      pivotLabel = makeLabelSprite('摆支点', { w: 140, h: 48, fontSize: 20, sx: 1.05, sy: 0.36 });
+      const pivL = designToWorld(PIVOT_X, PIVOT_Y);
+      pivotLabel.position.set(pivL.x - 0.15, pivL.y + 0.85, 0.4); scene.add(pivotLabel);
+    }
+
+    function initThree() {
+      if (typeof THREE === 'undefined') { console.error('Three.js missing'); return false; }
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setClearColor(CRAFT3.bg, 1);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(CRAFT3.bg);
+      scene.fog = new THREE.Fog(CRAFT3.bg, 14, 36);
+      camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+      camera.position.set(-1.2, 5.4, 10.5);
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        orbit = new THREE.OrbitControls(camera, renderer.domElement);
+        orbit.enableDamping = true; orbit.dampingFactor = 0.06;
+        orbit.target.set(-2.2, 2.6, 0);
+        orbit.minDistance = 5; orbit.maxDistance = 22;
+        orbit.maxPolarAngle = Math.PI * 0.48;
+      }
+      scene.add(new THREE.AmbientLight(0xc8b898, 0.4));
+      const dir = new THREE.DirectionalLight(0xffe8c8, 0.85);
+      dir.position.set(6, 14, 8); dir.castShadow = true; scene.add(dir);
+      const fill = new THREE.PointLight(0xb8956c, 0.35, 30);
+      fill.position.set(-5, 5, 4); scene.add(fill);
+      createMine();
+      clock = new THREE.Clock();
+      threeReady = true;
+      resize();
+      return true;
+    }
+
     function drawScene() {
-        ctx.clearRect(0, 0, 800, 400);
-        // 矿井巷道场景
-        const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-        sky.addColorStop(0, '#0f1c28');
-        sky.addColorStop(1, '#1e3347');
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, 800, 400);
-        // 木支撑
-        for (let i = 0; i < 5; i++) {
-            const sx = 80 + i * 150;
-            ctx.strokeStyle = '#6b4f2a';
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.moveTo(sx, 20);
-            ctx.lineTo(sx, GROUND_Y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(sx - 40, 36);
-            ctx.lineTo(sx + 40, 36);
-            ctx.stroke();
-        }
-        // 巷道顶灯
-        ctx.fillStyle = 'rgba(250,204,21,0.15)';
-        for (let i = 0; i < 4; i++) {
-            const lx = 140 + i * 160;
-            ctx.beginPath();
-            ctx.moveTo(lx, 40);
-            ctx.lineTo(lx - 50, GROUND_Y);
-            ctx.lineTo(lx + 50, GROUND_Y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = '#fde68a';
-            ctx.beginPath();
-            ctx.arc(lx, 44, 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(250,204,21,0.15)';
-        }
-        ctx.fillStyle = '#3d4f3a';
-        ctx.fillRect(0, GROUND_Y, 800, 400 - GROUND_Y);
-        // 铁轨
-        ctx.strokeStyle = '#94a3b8';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(0, GROUND_Y - 4);
-        ctx.lineTo(800, GROUND_Y - 4);
-        ctx.stroke();
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 2;
-        for (let x = 20; x < 800; x += 36) {
-            ctx.beginPath();
-            ctx.moveTo(x, GROUND_Y - 10);
-            ctx.lineTo(x + 16, GROUND_Y + 6);
-            ctx.stroke();
-        }
-        ctx.fillStyle = '#86efac';
-        ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-        ctx.textAlign = 'left';
-        /* scene title lives in #essence-hud / sidebar */
-        // 加大支点座
-        ctx.fillStyle = '#4a5564';
-        ctx.fillRect(PIVOT_X - 22, PIVOT_Y - 10, 44, 18);
-        ctx.beginPath();
-        ctx.arc(PIVOT_X, PIVOT_Y, 14, 0, 2 * Math.PI);
-        ctx.fillStyle = '#c0d0e0';
-        ctx.shadowColor = '#00000066';
-        ctx.shadowBlur = 12;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#8a9aaa';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        let effL = L + (confuseOn ? elasticDelta : 0);
-        let drawTheta = theta;
-        let endX = PIVOT_X + effL * Math.sin(drawTheta);
-        let endY = PIVOT_Y + effL * Math.cos(drawTheta);
-        ctx.beginPath();
-        ctx.moveTo(PIVOT_X, PIVOT_Y);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = '#b0c8e0';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        if (state === STATE_READY || state === STATE_SWING) {
-            // 加大锤头
-            ctx.beginPath();
-            ctx.arc(endX, endY, 22, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(endX-5, endY-5, 4, endX, endY, 26);
-            grad.addColorStop(0, '#f8e080');
-            grad.addColorStop(1, '#c08030');
-            ctx.fillStyle = grad;
-            ctx.shadowColor = '#00000066';
-            ctx.shadowBlur = 14;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#8a6020';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = '#fff';
-            ctx.font = 'bold 12px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(mass.toFixed(1)+'kg', endX, endY-2);
-        } else if (state === STATE_FLYING) {
-            ctx.beginPath();
-            ctx.arc(flyX, flyY, 18, 0, 2 * Math.PI);
-            let grad = ctx.createRadialGradient(flyX-3, flyY-3, 3, flyX, flyY, 22);
-            grad.addColorStop(0, '#f8d080');
-            grad.addColorStop(1, '#b07030');
-            ctx.fillStyle = grad;
-            ctx.shadowColor = '#00000066';
-            ctx.shadowBlur = 14;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-        }
-        let left = cartX, right = cartX + cartWidth;
-        ctx.shadowBlur = 0;
-        // 加大接矿车
-        ctx.fillStyle = '#6a5438';
-        ctx.fillRect(left - 4, GROUND_Y - 30, cartWidth + 8, 30);
-        ctx.fillStyle = '#8a6e4b';
-        ctx.fillRect(left, GROUND_Y - 26, cartWidth, 26);
-        ctx.fillStyle = '#a08060';
-        ctx.fillRect(left+4, GROUND_Y - 36, cartWidth-8, 12);
-        ctx.fillStyle = '#3a3a3a';
-        ctx.beginPath();
-        ctx.arc(left+14, GROUND_Y-2, 10, 0, 2*Math.PI);
-        ctx.arc(right-14, GROUND_Y-2, 10, 0, 2*Math.PI);
-        ctx.fill();
-        ctx.fillStyle = '#fde68a';
-        ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('接矿车', (left+right)/2, GROUND_Y-38);
-        if (state === STATE_READY) {
-            ctx.strokeStyle = '#ffcc44';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 6]);
-            ctx.strokeRect(left-2, GROUND_Y-28, cartWidth+4, 30);
-            ctx.setLineDash([]);
-        }
-        if (state === STATE_READY && attemptUsed && !hit) {
-            ctx.fillStyle = '#ff6666';
-            ctx.beginPath();
-            ctx.arc(flyX, GROUND_Y-4, 6, 0, 2*Math.PI);
-            ctx.fill();
-            ctx.fillStyle = '#ffaaaa';
-            ctx.font = '14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText('✖', flyX+12, GROUND_Y-20);
-        } else if (state === STATE_READY && attemptUsed && hit) {
-            ctx.fillStyle = '#66ff66';
-            ctx.beginPath();
-            ctx.arc(flyX, GROUND_Y-4, 8, 0, 2*Math.PI);
-            ctx.fill();
-            ctx.fillStyle = '#aaffaa';
-            ctx.font = '18px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText('✔', flyX+16, GROUND_Y-30);
-        }
-        // 读数贴右下，避开左上双模式条
-        ctx.fillStyle = 'rgba(15,23,42,0.75)';
-        ctx.fillRect(560, 330, 220, 44);
-        ctx.strokeStyle = 'rgba(96,165,250,0.45)';
-        ctx.strokeRect(560, 330, 220, 44);
-        ctx.fillStyle = '#bfdbfe';
-        ctx.font = '12px ui-monospace,Consolas,sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(`L=${L.toFixed(0)}  θ=${(theta0*180/Math.PI).toFixed(0)}°  m=${mass.toFixed(1)}`, 572, 338);
-        ctx.fillText(`关卡 ${currentLevel}`, 572, 356);
-        var outOfTries = playMode === 'challenge'
-          ? challengeAttemptsLeft() <= 0
-          : (!isFreeMode && health === 0);
-        if (outOfTries) {
-            ctx.fillStyle = '#ff4444';
-            ctx.font = 'bold 36px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('挑战失败', 400, 180);
-        } else if (state === STATE_READY && hit && isFreeMode) {
-            ctx.fillStyle = '#66ff66';
-            ctx.font = 'bold 28px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            // 探究：避免「过关」文案触发 legacy WIN_TEXT / craft 结算
-            ctx.fillText('落点进入目标区域', 400, 180);
-        }
+      if (!threeReady) return;
+      const piv = designToWorld(PIVOT_X, PIVOT_Y);
+      let showBob = state === STATE_READY || state === STATE_SWING;
+      let showFly = state === STATE_FLYING;
+      const rodEnd = designToWorld(bobX, bobY);
+      const dx = rodEnd.x - piv.x, dy = rodEnd.y - piv.y;
+      const len = Math.max(0.35, Math.sqrt(dx * dx + dy * dy));
+      const bobScale = 0.85 + 0.08 * Math.min(8, mass);
+      if (pendulumArm) {
+        pendulumArm.position.set(piv.x, piv.y, 0);
+        // 局部 -Y 指向摆端
+        pendulumArm.rotation.z = Math.atan2(dx, -dy);
+      }
+      // 杆伸到球心，末端埋入球体，避免「杆球分离」观感
+      rodMesh.position.set(0, -len / 2, 0);
+      rodMesh.scale.set(1, len, 1);
+      rodMesh.rotation.set(0, 0, 0);
+      bobMesh.visible = showBob;
+      bobMesh.position.set(0, -len, 0);
+      bobMesh.scale.setScalar(bobScale);
+      flyMesh.visible = showFly;
+      if (showFly) {
+        const fly = designToWorld(flyX, flyY);
+        flyMesh.position.set(fly.x, fly.y, 0);
+      }
+
+      const cart = designToWorld(cartX + cartWidth / 2, GROUND_Y - 10);
+      cartMesh.position.set(cart.x, 0.05, 0);
+      cartMesh.scale.x = Math.max(0.7, cartWidth / 80);
+      if (badgeSprite) badgeSprite.position.set(cart.x, 1.35, 0.6);
+      const bed = cartMesh.children[1];
+      if (bed && bed.material) {
+        bed.material.emissiveIntensity = hit ? 0.55 : 0.15;
+        bed.material.color.setHex(hit ? CRAFT3.ok : CRAFT3.accent);
+      }
+      updateSpriteText(badgeSprite, playMode === 'challenge' ? '接矿车' : '接矿车');
+      if (pivotLabel) updateSpriteText(pivotLabel, '摆支点');
+      window.__pendProbe = {
+        piv: piv,
+        bob: rodEnd,
+        armZ: pendulumArm ? pendulumArm.rotation.z : null,
+        bobMesh: bobMesh ? { x: bobMesh.getWorldPosition(new THREE.Vector3()).x, y: bobMesh.getWorldPosition(new THREE.Vector3()).y, visible: bobMesh.visible } : null,
+        state: state
+      };
     }
 
     function gameLoop(timestamp) {
@@ -1436,7 +1530,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (noTriesLeft) {
             releaseBtn.disabled = true;
             if (playMode === 'challenge') statusMsg.textContent = '机会用尽 · 可切回探究后再接急单';
-            else statusMsg.textContent = '💔 已失败，点击重置';
+            else statusMsg.textContent = '已失败，点击重置';
         } else if (state === STATE_READY && !attemptUsed) {
             releaseBtn.disabled = false;
         }
@@ -1468,21 +1562,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         drawScene();
     });
 
-    freeModeBtn.addEventListener('click', function() {
-        isFreeMode = true;
-        health = maxHealth;
-        healthSpan.textContent = health;
-        resetGame();
-        updateUI();
-        drawScene();
+    if (freeModeBtn) freeModeBtn.addEventListener('click', function() {
+        var sel = document.getElementById('modeSelect');
+        if (sel) { sel.value = 'explore'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
     });
-    compModeBtn.addEventListener('click', function() {
-        isFreeMode = false;
-        health = maxHealth;
-        healthSpan.textContent = health;
-        resetGame();
-        updateUI();
-        drawScene();
+    if (compModeBtn) compModeBtn.addEventListener('click', function() {
+        var sel = document.getElementById('modeSelect');
+        if (sel) { sel.value = 'challenge'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
     });
 
     levelBtns.forEach(btn => {
@@ -1493,6 +1579,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             drawScene();
         });
     });
+
+    window.__craftReplay = function() {
+        resetGame();
+        if (playMode === 'challenge') {
+          health = maxHealth;
+          if (healthSpan) healthSpan.textContent = health;
+        }
+        updateUI();
+        drawScene();
+    };
 
     releaseBtn.addEventListener('click', function() {
         if (state !== STATE_READY) return;
@@ -1525,7 +1621,27 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         loadLevel(1);
         updateUI();
         resetGame();
-        resize();
+        if (!initThree()) {
+      if (statusMsg) statusMsg.textContent = '3D engine missing: vendor/three.min.js';
+    } else {
+      (function renderLoop() {
+        const tNow = clock ? clock.getElapsedTime() : 0;
+        if (lampPivot) lampPivot.rotation.z = Math.sin(tNow * 1.05) * 0.05;
+        if (dustPoints) {
+          const arr = dustPoints.geometry.attributes.position.array;
+          for (let i = 0; i < arr.length; i += 3) {
+            arr[i + 1] += 0.0015;
+            if (arr[i + 1] > 7) arr[i + 1] = 0.3;
+          }
+          dustPoints.geometry.attributes.position.needsUpdate = true;
+        }
+        drawScene();
+        if (orbit) orbit.update();
+        if (renderer && scene && camera) renderer.render(scene, camera);
+        requestAnimationFrame(renderLoop);
+      })();
+    }
+    resize();
         lastTime = 0;
         if (animId) cancelAnimationFrame(animId);
         animId = requestAnimationFrame(gameLoop);

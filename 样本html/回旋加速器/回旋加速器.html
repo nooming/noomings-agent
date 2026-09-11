@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>加速舱 · 回旋半径</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -934,7 +936,47 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // ---------- DOM 引用 ----------
     const canvas = document.getElementById('simCanvas');
-    const ctx = canvas.getContext('2d');
+    const CRAFT3 = {
+      bg: 0x0a1218, mid: 0x1a2834, hi: 0x80d8e0, glow: 0x30c8d8,
+      metal: 0x7a8490, accent: 0xffb347, ok: 0x6fae8f
+    };
+    let threeReady = false;
+    let renderer, scene, camera, orbit, clock;
+    let chamberGroup, particleMesh, orbitRing, trailLine, poleN, poleS, badgeSprite, extractRing;
+    let labelN, labelS, labelExtract, labelBeam, labelB;
+    let BArrowGroup;
+    let floorMesh = null;
+    let chamberLbl = null;
+    /** 共轴根：舱体/磁极/提取环/轨道共用同一竖直轴，缩放不得平移环心 */
+    let axisRoot = null;
+    let apparatusRig = null; // 舱体+磁极：随大半径放大
+    let beamRig = null;      // 提取环+轨道：真实米制，始终与舱心共轴
+    /** 表现层：舱体随大半径放大，轨道/提取环仍按真实米制 1:1，不改判定 */
+    const VIS_FIT_SAFE_R = 5.5; // 设计舱内舒适轨道上限（墙半径 7.2）
+    const VIS_BEAM_Y = 1.6;     // 束流平面高度（共轴圆心）
+    const CAM_BASE_DIST = 15;
+    let visFitScale = 1;
+    let lastCamFitScale = 1;
+
+    function syncRendererSize() {
+      const area = document.getElementById('simCanvasArea') || canvas.parentElement;
+      const cssW = Math.max(2, (area && area.clientWidth) || canvas.clientWidth || 640);
+      const cssH = Math.max(2, (area && area.clientHeight) || canvas.clientHeight || 420);
+      if (renderer && camera) {
+        const pr = Math.min(2, window.devicePixelRatio || 1);
+        renderer.setPixelRatio(pr);
+        renderer.setSize(cssW, cssH, false);
+        canvas.style.width = cssW + 'px';
+        canvas.style.height = cssH + 'px';
+        camera.aspect = cssW / Math.max(1, cssH);
+        camera.updateProjectionMatrix();
+      }
+      // keep 2d layout vars used by physics labeling
+      centerX = cssW / 2;
+      centerY = cssH / 2;
+      scale = Math.min(cssW, cssH) / 10;
+    }
+
     const canvasArea = document.getElementById('simCanvasArea');
 
     const sMag = document.getElementById('s-magnetic');
@@ -1095,28 +1137,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
 
     function resizeCanvas() {
-        const area = canvasArea;
-        const dpr = window.devicePixelRatio || 1;
-        const w = area.clientWidth;
-        const h = area.clientHeight;
+        const area = canvasArea || canvas.parentElement;
+        const w = area ? area.clientWidth : 0;
+        const h = area ? area.clientHeight : 0;
         if (w < 2 || h < 2) {
             scheduleCanvasResizeRetry();
             return false;
         }
         _canvasResizeRetry = 0;
-        canvas.width = Math.max(1, Math.floor(w * dpr));
-        canvas.height = Math.max(1, Math.floor(h * dpr));
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        const ctx2 = canvas.getContext('2d');
-        ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
-        // 更新圆心 (画布坐标)
+        syncRendererSize();
+        const maxDim = Math.min(w, h) * 0.38;
+        scale = Math.max(30, maxDim / 4.5);
         centerX = w / 2;
         centerY = h / 2;
-        // 根据画布大小调整scale，使半径可见
-        const maxDim = Math.min(w, h) * 0.38;
-        // 默认最大半径约 4m，scale = maxDim/4
-        scale = Math.max(30, maxDim / 4.5);
         return true;
     }
 
@@ -1132,6 +1165,90 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         }
         // 角速度 ω = qB/m (rad/s)
         angularVel = CHARGE * B / MASS;
+    }
+
+    /** 视觉焦点半径（m）：取目标环、预测 r、实测 r 的较大者 */
+    function computeVisFocusR() {
+        let focus = Math.max(TARGET_R_MAX, 3.5);
+        const B = Math.max(0.001, parseFloat(sMag.value) || 0.001);
+        const v = parseFloat(sVel.value) || 0;
+        const pred = MASS * v / (CHARGE * B);
+        if (pred > 0 && pred < 500) focus = Math.max(focus, pred);
+        if (measuredR != null && measuredR > 0 && measuredR < 500) {
+            focus = Math.max(focus, measuredR);
+        }
+        return focus;
+    }
+
+    function computeVisFitScale() {
+        return Math.max(1, computeVisFocusR() / VIS_FIT_SAFE_R);
+    }
+
+    /** 强制舱心 / 磁极轴 / 提取环 / 轨道共轴（仅允许绕竖直轴，禁止平移错心） */
+    function lockCoaxialCenters() {
+        if (axisRoot) axisRoot.position.set(0, 0, 0);
+        if (apparatusRig) {
+            apparatusRig.position.set(0, 0, 0);
+            apparatusRig.rotation.set(0, 0, 0);
+        }
+        if (beamRig) {
+            beamRig.position.set(0, 0, 0);
+            beamRig.rotation.set(0, 0, 0);
+            beamRig.scale.set(1, 1, 1);
+        }
+        if (chamberGroup) chamberGroup.position.set(0, 0, 0);
+        if (floorMesh) floorMesh.position.set(0, 0, 0);
+        if (poleN) poleN.position.set(0, 3.5, 0);
+        if (poleS) poleS.position.set(0, -0.1, 0);
+        if (BArrowGroup) BArrowGroup.position.set(0, 0, 0);
+        if (extractRing) extractRing.position.set(0, VIS_BEAM_Y, 0);
+        if (orbitRing) orbitRing.position.set(0, VIS_BEAM_Y, 0);
+        if (orbit) orbit.target.set(0, VIS_BEAM_Y, 0);
+    }
+
+    function applyApparatusScale(s) {
+        // 只放大舱体装置；不改 beamRig，避免环心与舱心相对漂移
+        if (apparatusRig) apparatusRig.scale.setScalar(s);
+        lockCoaxialCenters();
+        // 角落说明牌跟着舱体尺度外移（装饰，非圆心）
+        if (badgeSprite) badgeSprite.position.set(-5.2 * s, 4.2 + 0.8 * s, 3 * s);
+        if (labelExtract) {
+            // 标签挂在场景里：z 用真实米制半径，保持相对提取环
+            const midR = (TARGET_R_MIN + TARGET_R_MAX) / 2;
+            labelExtract.position.set(0, 2.35, Math.max(2.2, midR + 0.6));
+        }
+    }
+
+    function applyVisCameraFit(fitScale) {
+        if (!camera) return;
+        if (scene && scene.fog) {
+            scene.fog.near = 12 * fitScale;
+            scene.fog.far = 42 * fitScale;
+        }
+        camera.near = 0.1;
+        camera.far = Math.max(100, 90 * fitScale);
+        camera.updateProjectionMatrix();
+        if (!orbit) return;
+        orbit.target.set(0, VIS_BEAM_Y, 0);
+        const target = orbit.target;
+        const desired = CAM_BASE_DIST * fitScale;
+        const cur = camera.position.distanceTo(target);
+        const scaleJump = Math.abs(fitScale - lastCamFitScale) > 0.03;
+        if (scaleJump || cur < desired * 0.72 || cur > desired * 1.55) {
+            const dir = camera.position.clone().sub(target);
+            if (dir.lengthSq() < 1e-8) dir.set(6, 8, 12);
+            dir.normalize().multiplyScalar(desired);
+            camera.position.copy(target).add(dir);
+            lastCamFitScale = fitScale;
+        }
+        orbit.minDistance = Math.max(4, 4.5 * fitScale);
+        orbit.maxDistance = Math.max(24, 32 * fitScale);
+    }
+
+    function updateVisFit() {
+        visFitScale = computeVisFitScale();
+        applyApparatusScale(visFitScale);
+        applyVisCameraFit(visFitScale);
     }
 
     // ---------- 更新读数 & 滑条同步 ----------
@@ -1187,303 +1304,289 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
 
     // ---------- 绘制 (静态/动态) ----------
-    function drawChamber(w, h) {
-        var SC = { ink:'#0a1216', mid:'#1e343c', hi:'#80d8e0', glow:'#30c8d8', metal:'#6a7880', accent:'#40b8c8', ok:'#6fae8f' };
-        const R = Math.min(w, h) * 0.42;
-
-        // 舱室纵深背景
-        const bg = ctx.createRadialGradient(centerX, centerY, R * 0.2, centerX, centerY, Math.max(w, h) * 0.72);
-        bg.addColorStop(0, '#142830');
-        bg.addColorStop(0.45, SC.ink);
-        bg.addColorStop(1, '#060a0c');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, w, h);
-        var sideGlow = ctx.createLinearGradient(0, 0, w, 0);
-        sideGlow.addColorStop(0, 'rgba(48,200,216,0.06)');
-        sideGlow.addColorStop(0.5, 'rgba(10,18,22,0)');
-        sideGlow.addColorStop(1, 'rgba(48,200,216,0.06)');
-        ctx.fillStyle = sideGlow;
-        ctx.fillRect(0, 0, w, h);
-
-        // 金属底板 + 格栅
-        ctx.fillStyle = '#121a1e';
-        ctx.fillRect(0, h - 52, w, 52);
-        const floorG = ctx.createLinearGradient(0, h - 52, 0, h);
-        floorG.addColorStop(0, SC.mid);
-        floorG.addColorStop(1, SC.ink);
-        ctx.fillStyle = floorG;
-        ctx.fillRect(0, h - 48, w, 48);
-        ctx.strokeStyle = 'rgba(106,120,128,0.35)';
-        ctx.lineWidth = 1;
-        for (var gi = 0; gi < 14; gi++) {
-            ctx.beginPath();
-            ctx.moveTo(gi * (w / 13), h - 48);
-            ctx.lineTo(gi * (w / 13) - 18, h);
-            ctx.stroke();
-        }
-        ctx.strokeStyle = SC.metal;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, h - 48);
-        ctx.lineTo(w, h - 48);
-        ctx.stroke();
-
-        // 上下磁极（铜包钢，圆柱截面）
-        function drawPole(cy, label) {
-            var poleW = R * 1.55, poleH = 28;
-            var pg = ctx.createLinearGradient(centerX - poleW / 2, cy, centerX + poleW / 2, cy);
-            pg.addColorStop(0, '#4a4038');
-            pg.addColorStop(0.25, '#a08058');
-            pg.addColorStop(0.5, '#c8a878');
-            pg.addColorStop(0.75, '#806848');
-            pg.addColorStop(1, '#3a3028');
-            ctx.fillStyle = pg;
-            ctx.beginPath();
-            ctx.ellipse(centerX, cy, poleW / 2, poleH / 2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(128,216,224,0.35)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            ctx.fillStyle = SC.hi;
-            ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(label, centerX, cy + 4);
-            ctx.textAlign = 'left';
-        }
-        drawPole(centerY - R - 22, 'N 极');
-        drawPole(centerY + R + 22, 'S 极 · B⊗');
-
-        // 圆柱真空室外壳（双层玻璃感）
-        ctx.fillStyle = 'rgba(30,52,60,0.55)';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R + 22, 0, Math.PI * 2);
-        ctx.fill();
-        var shellG = ctx.createRadialGradient(centerX - R * 0.3, centerY - R * 0.3, R * 0.1, centerX, centerY, R + 20);
-        shellG.addColorStop(0, 'rgba(128,216,224,0.08)');
-        shellG.addColorStop(0.6, 'rgba(30,52,60,0.35)');
-        shellG.addColorStop(1, 'rgba(64,184,200,0.18)');
-        ctx.fillStyle = shellG;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R + 18, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = SC.metal;
-        ctx.lineWidth = 8;
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(128,216,224,0.25)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R + 10, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // 舱内真空暗区 + 气压雾感（s-chamber-p 纯外观，不改轨道半径）
-        ctx.fillStyle = 'rgba(6,12,16,0.72)';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R - 4, 0, Math.PI * 2);
-        ctx.fill();
-        var pAtm = sPress ? parseFloat(sPress.value) : 1;
-        var pNorm = Math.max(0, Math.min(1, (pAtm - 0.2) / 1.8));
-        if (pNorm > 0.02) {
-            var haze = ctx.createRadialGradient(centerX, centerY, R * 0.15, centerX, centerY, R - 6);
-            haze.addColorStop(0, 'rgba(160,190,200,' + (0.02 + pNorm * 0.10) + ')');
-            haze.addColorStop(0.55, 'rgba(120,160,170,' + (0.04 + pNorm * 0.16) + ')');
-            haze.addColorStop(1, 'rgba(80,120,130,' + (0.06 + pNorm * 0.22) + ')');
-            ctx.fillStyle = haze;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, R - 6, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(200,220,230,' + (0.12 + pNorm * 0.25) + ')';
-            ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('气压 ' + pAtm.toFixed(1) + ' atm', centerX, centerY + R - 18);
-            ctx.textAlign = 'left';
-            for (var bi = 0; bi < Math.floor(3 + pNorm * 10); bi++) {
-                var ba = (bi * 2.4 + pNorm * 3) % (Math.PI * 2);
-                var br = (R - 28) * (0.35 + (bi % 5) * 0.12);
-                ctx.fillStyle = 'rgba(180,210,220,' + (0.08 + pNorm * 0.12) + ')';
-                ctx.beginPath();
-                ctx.arc(centerX + Math.cos(ba) * br, centerY + Math.sin(ba) * br, 1.2 + (bi % 3) * 0.6, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // D 形电极（半圆dee）
-        ctx.fillStyle = 'rgba(64,184,200,0.14)';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R - 8, -Math.PI / 2, Math.PI / 2, false);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R - 8, Math.PI / 2, -Math.PI / 2, false);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(48,200,216,0.10)';
-        ctx.fill();
-        ctx.strokeStyle = SC.accent;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - R + 8);
-        ctx.lineTo(centerX, centerY + R - 8);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(128,216,224,0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, R - 8, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // 弱磁场线（⊗ 符号阵列）
-        ctx.fillStyle = 'rgba(128,216,224,0.22)';
-        ctx.font = '10px ui-monospace,monospace';
-        for (var bi = -2; bi <= 2; bi++) {
-            for (var bj = -2; bj <= 2; bj++) {
-                if (bi * bi + bj * bj > 5) continue;
-                ctx.fillText('⊗', centerX + bi * 38 - 4, centerY + bj * 34 + 4);
-            }
-        }
-
-        // 提取环带（竞赛锁定 / 探究参考）
-        if (playMode === 'challenge' || lockedBand) {
-          const rLo = TARGET_R_MIN * scale;
-          const rHi = TARGET_R_MAX * scale;
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, (rLo + rHi) / 2, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(111,174,143,0.55)';
-          ctx.lineWidth = Math.max(8, rHi - rLo);
-          ctx.stroke();
-          ctx.strokeStyle = SC.ok;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, rHi + 6, -0.35, 0.35);
-          ctx.stroke();
-          ctx.fillStyle = 'rgba(10,18,22,0.82)';
-          ctx.fillRect(12, h - 52, 220, 18);
-          ctx.fillStyle = SC.ok;
-          ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-          ctx.fillText('急单环 ' + TARGET_R_MIN.toFixed(1) + '–' + TARGET_R_MAX.toFixed(1) + ' m', 16, h - 39);
-        } else {
-          ctx.strokeStyle = 'rgba(106,120,128,0.35)';
-          ctx.lineWidth = 2;
-          ctx.setLineDash([5, 6]);
-          ctx.beginPath();
-          ctx.arc(centerX, centerY, 2.75 * scale, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = 'rgba(10,18,22,0.82)';
-          ctx.fillRect(12, h - 52, 168, 18);
-          ctx.fillStyle = SC.hi;
-          ctx.font = '12px "Microsoft YaHei",sans-serif';
-          ctx.fillText('参考环（探究不必命中）', 16, h - 39);
-        }
-        // 场景标题
-        ctx.fillStyle = 'rgba(10,18,22,0.82)';
-        ctx.fillRect(12, h - 32, 168, 18);
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('回旋轨道舱 · 真空室', 16, h - 19);
-        // 控制台指示灯
-        ctx.fillStyle = SC.ok;
-        ctx.beginPath(); ctx.arc(w - 36, h - 22, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = SC.glow;
-        ctx.beginPath(); ctx.arc(w - 20, h - 22, 5, 0, Math.PI * 2); ctx.fill();
+    function makeLabelSprite(text, opts) {
+      opts = opts || {};
+      const c = document.createElement('canvas');
+      c.width = opts.w || 256; c.height = opts.h || 96;
+      const g = c.getContext('2d');
+      g.fillStyle = 'rgba(10,18,24,0.85)';
+      g.fillRect(0, 0, c.width, c.height);
+      g.strokeStyle = 'rgba(128,216,224,0.5)';
+      g.strokeRect(4, 4, c.width - 8, c.height - 8);
+      g.fillStyle = '#80d8e0';
+      g.font = 'bold ' + (opts.fontSize || 26) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      String(text).split('\n').forEach(function(line, i, arr) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 26);
+      });
+      const tex = new THREE.CanvasTexture(c);
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+      spr.scale.set(opts.sx || 2.4, opts.sy || 0.85, 1);
+      spr.userData = { tex: tex, canvas: c, g: g, opts: opts };
+      return spr;
     }
 
-    function drawOrbitTrail() {
-        if (orbitTrail.length < 2) return;
-        ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(orbitTrail[0].x, orbitTrail[0].y);
-        for (var ti = 1; ti < orbitTrail.length; ti++) {
-            ctx.lineTo(orbitTrail[ti].x, orbitTrail[ti].y);
-        }
-        ctx.strokeStyle = 'rgba(48,200,216,0.18)';
-        ctx.lineWidth = 8;
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(128,216,224,0.55)';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-        ctx.restore();
+    function updateSpriteText(spr, text) {
+      if (!spr || !spr.userData || !spr.userData.g) return;
+      const c = spr.userData.canvas, g = spr.userData.g, opts = spr.userData.opts || {};
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(10,18,24,0.85)';
+      g.fillRect(0, 0, c.width, c.height);
+      g.strokeStyle = 'rgba(128,216,224,0.5)';
+      g.strokeRect(4, 4, c.width - 8, c.height - 8);
+      g.fillStyle = '#80d8e0';
+      g.font = 'bold ' + (opts.fontSize || 26) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      String(text).split('\n').forEach(function(line, i, arr) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (arr.length - 1) / 2) * 26);
+      });
+      spr.userData.tex.needsUpdate = true;
     }
 
-    function drawOrbitLabels() {
-        const hudSafeTop = 56;
-        var SC = { hi:'#80d8e0', glow:'#30c8d8', accent:'#40b8c8', ok:'#6fae8f' };
-        if (measuredR != null && measuredR > 0 && measuredR < 100) {
-            const rPx = measuredR * scale;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, rPx, 0, 2 * Math.PI);
-            ctx.strokeStyle = SC.hi;
-            ctx.lineWidth = 2;
-            ctx.setLineDash([6, 6]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = SC.hi;
-            ctx.font = '13px sans-serif';
-            const labelY = Math.max(hudSafeTop + 14, centerY - rPx - 8);
-            ctx.fillText('r = ' + measuredR.toFixed(2) + ' m', centerX + 8, labelY);
-        } else {
-            ctx.fillStyle = 'rgba(10,18,22,0.75)';
-            ctx.fillRect(centerX - 72, hudSafeTop + 4, 144, 18);
-            ctx.fillStyle = 'rgba(128,216,224,0.65)';
-            ctx.font = '12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('轨道半径待测 · 点发射', centerX - 64, hudSafeTop + 17);
-        }
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = SC.glow;
-        ctx.shadowColor = SC.glow;
-        ctx.shadowBlur = 10;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = SC.accent;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = SC.hi;
-        ctx.font = '12px "Microsoft YaHei",sans-serif';
-        ctx.fillText('粒子源', centerX + 10, centerY - 6);
+    function createChamber() {
+      axisRoot = new THREE.Group();
+      axisRoot.name = 'axisRoot';
+      apparatusRig = new THREE.Group();
+      apparatusRig.name = 'apparatusRig';
+      beamRig = new THREE.Group();
+      beamRig.name = 'beamRig';
+      axisRoot.add(apparatusRig);
+      axisRoot.add(beamRig);
+      scene.add(axisRoot);
+
+      floorMesh = new THREE.Mesh(
+        new THREE.CircleGeometry(8, 48),
+        new THREE.MeshStandardMaterial({ color: 0x1a2834, roughness: 0.85, metalness: 0.15 })
+      );
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      apparatusRig.add(floorMesh);
+
+      chamberGroup = new THREE.Group();
+      const wall = new THREE.Mesh(
+        new THREE.CylinderGeometry(7.2, 7.2, 3.2, 48, 1, true),
+        new THREE.MeshStandardMaterial({
+          color: 0x243848, metalness: 0.35, roughness: 0.55,
+          side: THREE.DoubleSide, transparent: true, opacity: 0.35
+        })
+      );
+      wall.position.y = VIS_BEAM_Y;
+      chamberGroup.add(wall);
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(7.2, 0.08, 8, 48),
+        new THREE.MeshStandardMaterial({ color: 0x3a5568, metalness: 0.4, roughness: 0.5, emissive: 0x000000, emissiveIntensity: 0 })
+      );
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 3.2;
+      chamberGroup.add(rim);
+      apparatusRig.add(chamberGroup);
+      chamberLbl = makeLabelSprite('真空腔外壁', { w: 160, h: 44, fontSize: 18, sx: 1.25, sy: 0.34 });
+      chamberLbl.position.set(-5.6, 3.0, 2.5);
+      apparatusRig.add(chamberLbl);
+
+      poleN = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.8, 2.8, 0.35, 32),
+        new THREE.MeshStandardMaterial({ color: 0xe06060, metalness: 0.4, roughness: 0.45, emissive: 0x601010, emissiveIntensity: 0.2 })
+      );
+      poleN.position.set(0, 3.5, 0);
+      apparatusRig.add(poleN);
+      poleS = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.8, 2.8, 0.35, 32),
+        new THREE.MeshStandardMaterial({ color: 0x6080e0, metalness: 0.4, roughness: 0.45, emissive: 0x102060, emissiveIntensity: 0.2 })
+      );
+      poleS.position.set(0, -0.1, 0);
+      apparatusRig.add(poleS);
+      labelN = makeLabelSprite('磁极 N', { w: 120, h: 44, fontSize: 20, sx: 1.0, sy: 0.36 });
+      labelN.position.set(0, 4.05, 0);
+      apparatusRig.add(labelN);
+      labelS = makeLabelSprite('磁极 S', { w: 120, h: 44, fontSize: 20, sx: 1.0, sy: 0.36 });
+      labelS.position.set(0, 0.45, 2.6);
+      apparatusRig.add(labelS);
+
+      BArrowGroup = new THREE.Group();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const arrow = new THREE.Mesh(
+          new THREE.ConeGeometry(0.12, 0.45, 8),
+          new THREE.MeshBasicMaterial({ color: CRAFT3.hi, transparent: true, opacity: 0.7 })
+        );
+        arrow.position.set(Math.cos(a) * 3.2, 1.7, Math.sin(a) * 3.2);
+        arrow.rotation.x = Math.PI;
+        BArrowGroup.add(arrow);
+      }
+      apparatusRig.add(BArrowGroup);
+      labelB = makeLabelSprite('B ↓', { w: 90, h: 44, fontSize: 22, sx: 0.8, sy: 0.34 });
+      labelB.position.set(4.2, 2.4, 0);
+      apparatusRig.add(labelB);
+
+      extractRing = new THREE.Mesh(
+        new THREE.TorusGeometry(2.75, 0.08, 10, 64),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.ok, emissive: CRAFT3.ok, emissiveIntensity: 0.35 })
+      );
+      extractRing.rotation.x = Math.PI / 2;
+      extractRing.position.set(0, VIS_BEAM_Y, 0);
+      beamRig.add(extractRing);
+      labelExtract = makeLabelSprite('提取环（目标半径）', { w: 240, h: 48, fontSize: 18, sx: 1.85, sy: 0.38 });
+      labelExtract.position.set(0, 2.35, 3.4);
+      scene.add(labelExtract); // 屏幕向标签，位置每帧按米制半径更新
+
+      orbitRing = new THREE.Mesh(
+        new THREE.TorusGeometry(2.5, 0.04, 8, 64),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.25 })
+      );
+      orbitRing.rotation.x = Math.PI / 2;
+      orbitRing.position.set(0, VIS_BEAM_Y, 0);
+      orbitRing.visible = false;
+      beamRig.add(orbitRing);
+
+      particleMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 14, 14),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.6 })
+      );
+      particleMesh.position.set(2.5, VIS_BEAM_Y, 0);
+      particleMesh.visible = false;
+      beamRig.add(particleMesh);
+      labelBeam = makeLabelSprite('束流', { w: 100, h: 44, fontSize: 20, sx: 0.85, sy: 0.34 });
+      labelBeam.position.set(2.5, 2.15, 0);
+      labelBeam.visible = false;
+      beamRig.add(labelBeam);
+
+      badgeSprite = makeLabelSprite('绿环=提取目标', { w: 220, h: 48, fontSize: 18, sx: 1.7, sy: 0.38 });
+      badgeSprite.position.set(-5.2, 5.0, 3);
+      scene.add(badgeSprite);
+
+      lockCoaxialCenters();
+    }
+
+    function initThree() {
+      if (typeof THREE === 'undefined') {
+        console.error('Three.js missing');
+        return false;
+      }
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setClearColor(CRAFT3.bg, 1);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(CRAFT3.bg);
+      scene.fog = new THREE.Fog(CRAFT3.bg, 16, 40);
+      camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+      camera.position.set(6, 8, 12);
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        orbit = new THREE.OrbitControls(camera, renderer.domElement);
+        orbit.enableDamping = true;
+        orbit.dampingFactor = 0.06;
+        orbit.target.set(0, 1.6, 0);
+        orbit.minDistance = 6;
+        orbit.maxDistance = 24;
+        orbit.maxPolarAngle = Math.PI * 0.49;
+      }
+      scene.add(new THREE.AmbientLight(0xa8c0d0, 0.4));
+      const dir = new THREE.DirectionalLight(0xe8f4ff, 0.85);
+      dir.position.set(8, 14, 10);
+      dir.castShadow = true;
+      scene.add(dir);
+      createChamber();
+      clock = new THREE.Clock();
+      threeReady = true;
+      syncRendererSize();
+      return true;
+    }
+
+    function clearTrail3d() {
+      if (trailLine) {
+        if (trailLine.parent) trailLine.parent.remove(trailLine);
+        else if (scene) scene.remove(trailLine);
+        trailLine.geometry.dispose();
+        trailLine = null;
+      }
+    }
+
+    function updateTrail3d(points) {
+      clearTrail3d();
+      if (!points || points.length < 2) return;
+      const pts = points.map(function(p) { return new THREE.Vector3(p.x, p.y, p.z); });
+      trailLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: CRAFT3.glow, transparent: true, opacity: 0.7 })
+      );
+      if (beamRig) beamRig.add(trailLine);
+      else scene.add(trailLine);
     }
 
     function drawStatic() {
-        const w = canvas.width / (window.devicePixelRatio || 1);
-        const h = canvas.height / (window.devicePixelRatio || 1);
-        ctx.clearRect(0, 0, w, h);
-        drawChamber(w, h);
-        drawOrbitLabels();
+      draw();
     }
 
     function draw() {
-        const w = canvas.width / (window.devicePixelRatio || 1);
-        const h = canvas.height / (window.devicePixelRatio || 1);
-        ctx.clearRect(0, 0, w, h);
-        drawChamber(w, h);
-        drawOrbitTrail();
-        drawOrbitLabels();
+      if (!threeReady) return;
+      syncRendererSize();
+      updateVisFit();
+      lockCoaxialCenters();
+      const B = parseFloat(sMag.value) || 0;
+      const bN = Math.min(1, B / 2);
+      poleN.material.emissiveIntensity = 0.15 + bN * 0.45;
+      poleS.material.emissiveIntensity = 0.15 + bN * 0.45;
+      BArrowGroup.children.forEach(function(a) {
+        a.material.opacity = 0.25 + bN * 0.7;
+        a.material.transparent = true;
+        a.scale.setScalar(0.7 + bN * 0.6);
+      });
 
-        // 粒子仅在已测半径后沿该轨道运动（发射后过程可见）
-        if (measuredR != null && measuredR > 0 && measuredR < 100) {
-            const rPx = measuredR * scale;
-            const px = centerX + rPx * Math.cos(angle);
-            const py = centerY + rPx * Math.sin(angle);
-            if (simRunning) {
-                trailTick++;
-                if (trailTick % 2 === 0) {
-                    orbitTrail.push({ x: px, y: py });
-                    if (orbitTrail.length > 140) orbitTrail.shift();
-                }
-            }
-            ctx.beginPath();
-            ctx.arc(px, py, 7, 0, 2 * Math.PI);
-            ctx.fillStyle = '#ffb347';
-            ctx.shadowColor = '#30c8d8';
-            ctx.shadowBlur = 16;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = 'rgba(128,216,224,0.6)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
+      const midR = (TARGET_R_MIN + TARGET_R_MAX) / 2;
+      // 提取环 / 轨道：真实米制，圆心锁定在轴上；舱体由 apparatusRig 放大兜住大半径
+      extractRing.position.set(0, VIS_BEAM_Y, 0);
+      extractRing.scale.setScalar(Math.max(0.35, midR / 2.75));
+      extractRing.material.emissiveIntensity = 0.25 + (playMode === 'challenge' ? 0.2 : 0);
+      if (labelExtract) {
+        labelExtract.position.set(0, 2.35, Math.max(2.2, midR + 0.6));
+        updateSpriteText(labelExtract, playMode === 'challenge' ? '提取环（本局目标）' : '提取环（目标半径）');
+      }
+
+      if (measuredR != null && measuredR > 0 && measuredR < 500) {
+        const rWorld = Math.max(0.4, measuredR);
+        orbitRing.visible = true;
+        orbitRing.position.set(0, VIS_BEAM_Y, 0);
+        orbitRing.scale.setScalar(rWorld / 2.5);
+        const px = Math.cos(angle) * rWorld;
+        const pz = Math.sin(angle) * rWorld;
+        particleMesh.visible = true;
+        particleMesh.position.set(px, VIS_BEAM_Y, pz);
+        if (labelBeam) {
+          labelBeam.visible = true;
+          labelBeam.position.set(px, VIS_BEAM_Y + 0.55, pz);
         }
-    }
+        if (simRunning) {
+          trailTick++;
+          if (trailTick % 2 === 0) {
+            if (!window.__orbitTrail3d) window.__orbitTrail3d = [];
+            window.__orbitTrail3d.push({ x: px, y: VIS_BEAM_Y, z: pz });
+            if (window.__orbitTrail3d.length > 120) window.__orbitTrail3d.shift();
+            updateTrail3d(window.__orbitTrail3d);
+          }
+        }
+        const inBand = measuredR >= TARGET_R_MIN && measuredR <= TARGET_R_MAX;
+        orbitRing.material.color.setHex(inBand ? CRAFT3.ok : CRAFT3.accent);
+        orbitRing.material.emissiveIntensity = inBand ? 0.45 : 0.2;
+      } else {
+        orbitRing.visible = false;
+        particleMesh.visible = false;
+        if (labelBeam) labelBeam.visible = false;
+        clearTrail3d();
+        window.__orbitTrail3d = [];
+      }
 
-    // ---------- 更新物理 (dt) ----------
+      let label = '绿环=提取目标';
+      if (measuredR != null) label += '\n束流轨道 r=' + measuredR.toFixed(2) + 'm';
+      else label += '\n点发射看轨道';
+      if (visFitScale > 1.05) {
+        label += '\n舱体已放大（B小→r大）';
+      }
+      updateSpriteText(badgeSprite, label);
+
+      if (orbit) orbit.update();
+      if (renderer && scene && camera) renderer.render(scene, camera);
+    }
     function update(dt) {
         if (!simRunning) return;
         // 角速度更新角度
@@ -1500,6 +1603,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         update(dt);
         draw();
         animId = requestAnimationFrame(loop);
+    }
+
+
+    if (!initThree()) {
+      if (feedbackMsg) feedbackMsg.textContent = '3D engine missing: vendor/three.min.js';
+    } else {
+      resizeCanvas();
+      draw();
     }
 
     function startSim() {
@@ -1654,6 +1765,39 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     // 暴露 emit 给全局 (调试)
     window.__emit = emit;
+    window.__cycloVisDebug = function() {
+      const wallWorldR = 7.2 * (apparatusRig ? apparatusRig.scale.x : 1);
+      const partR = particleMesh && particleMesh.visible
+        ? Math.hypot(particleMesh.position.x, particleMesh.position.z) : null;
+      const er = extractRing ? {
+        x: extractRing.position.x, y: extractRing.position.y, z: extractRing.position.z,
+        scale: extractRing.scale.x
+      } : null;
+      const or = orbitRing ? {
+        x: orbitRing.position.x, y: orbitRing.position.y, z: orbitRing.position.z,
+        scale: orbitRing.scale.x, visible: orbitRing.visible
+      } : null;
+      const pn = poleN ? { x: poleN.position.x, z: poleN.position.z } : null;
+      return {
+        visFitScale: visFitScale,
+        focusR: computeVisFocusR(),
+        measuredR: measuredR,
+        radius: radius,
+        wallWorldR: wallWorldR,
+        particleR: partR,
+        insideChamber: partR == null ? null : partR < wallWorldR * 0.98,
+        coaxial: !!(er && or && pn &&
+          Math.abs(er.x) < 1e-6 && Math.abs(er.z) < 1e-6 &&
+          Math.abs(or.x) < 1e-6 && Math.abs(or.z) < 1e-6 &&
+          Math.abs(pn.x) < 1e-6 && Math.abs(pn.z) < 1e-6 &&
+          beamRig && Math.abs(beamRig.position.x) < 1e-6 && Math.abs(beamRig.position.z) < 1e-6 &&
+          apparatusRig && Math.abs(apparatusRig.position.x) < 1e-6 && Math.abs(apparatusRig.position.z) < 1e-6),
+        extract: er,
+        orbitRing: or,
+        poleN: pn,
+        camDist: (camera && orbit) ? camera.position.distanceTo(orbit.target) : null
+      };
+    };
 
 })();
 </script>

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>夜市 · 转盘工位</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:var(--font-sans); background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -831,33 +833,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </script>
 <script>
 (function() {
-  // ----- 物理常量 & DOM 引用 -----
+  // ----- 物理常量 & DOM 引用（判定逻辑不变；3D 仅表现层） -----
   const MASS = 0.5; // kg (固定)
   const canvas = document.getElementById('simCanvas');
-  const ctx = canvas.getContext('2d');
-  let W = 640, H = 320;
+  const WORLD_SCALE = 2.6;
+  const HUB_Y = 2.35;
   let angle = 0;
   let lastTs = null;
   /** 测试后的舞台反馈：fly=切线飞出，drop=偏慢掉转，ok=安全带内巡航 */
   let rideAnim = null;
-
-  function syncCanvasSize() {
-    var stage = document.getElementById('essence-stage') || canvas.parentElement;
-    var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 640);
-    var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 320);
-    var dpr = Math.min(2.5, window.devicePixelRatio || 1);
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    var bw = Math.round(cssW * dpr);
-    var bh = Math.round(cssH * dpr);
-    if (canvas.width !== bw || canvas.height !== bh) {
-      canvas.width = bw;
-      canvas.height = bh;
-    }
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    W = cssW;
-    H = cssH;
-  }
 
   const sRadius = document.getElementById('s-radius');
   const sOmega = document.getElementById('s-omega');
@@ -890,9 +874,29 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     },
     challenge: {
       hud: '限次把 v、F 调进本局安全带',
-      side: '限次把 v、F 调进本局安全带（过慢/过快都不换阈值）。'
+      side: '限次把 v、F 调进本局安全带（过慢/过快都不换安全带）。'
     }
   };
+
+  const CRAFT3 = {
+    bg: 0x12100c,
+    mid: 0x2e2618,
+    hi: 0xf0c870,
+    glow: 0xff8a30,
+    metal: 0x7a8490,
+    accent: 0xe0a040,
+    ok: 0x7dba8c,
+    ink: 0x12100c
+  };
+
+  let threeReady = false;
+  let renderer, scene, camera, orbit, clock;
+  let turntableGroup, armGroup, cabinMesh, cabinMat, hubMesh;
+  let orbitRing, orbitPlane, radiusRod, armCable;
+  let badgeSprite, statusSprite, lampPivot, dustPoints;
+  let trailLine = null;
+  let sparkMeshes = [];
+  let sugarStall = null;
 
   function refreshGoalUI() {
     const mission = document.getElementById('goalMission');
@@ -907,7 +911,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
   }
 
-  /** FixedChallenge：仅进入竞赛时锁定一次阈值（含上下界，避免拉满稳赢） */
+  /** FixedChallenge：仅进入竞赛时锁定一次安全带（含上下界，避免拉满稳赢） */
   function lockChallengeTargets(reasonHint) {
     const rSol = 0.6 + Math.random() * 1.1;
     const wSol = 1.5 + Math.random() * 2.5;
@@ -963,357 +967,702 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     return { v, F };
   }
 
-  function roundRect(x, y, w, h, rr) {
-    ctx.beginPath();
-    ctx.moveTo(x + rr, y);
-    ctx.arcTo(x + w, y, x + w, y + h, rr);
-    ctx.arcTo(x + w, y + h, x, y + h, rr);
-    ctx.arcTo(x, y + h, x, y, rr);
-    ctx.arcTo(x, y, x + w, y, rr);
-    ctx.closePath();
+  function makeLabelSprite(text, opts) {
+    opts = opts || {};
+    const c = document.createElement('canvas');
+    c.width = opts.w || 256;
+    c.height = opts.h || 96;
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, c.width, c.height);
+    g.fillStyle = 'rgba(20,16,12,0.88)';
+    const rr = 14;
+    g.beginPath();
+    g.moveTo(rr, 0);
+    g.arcTo(c.width, 0, c.width, c.height, rr);
+    g.arcTo(c.width, c.height, 0, c.height, rr);
+    g.arcTo(0, c.height, 0, 0, rr);
+    g.arcTo(0, 0, c.width, 0, rr);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = 'rgba(224,160,64,0.55)';
+    g.lineWidth = 3;
+    g.stroke();
+    g.fillStyle = '#f0c870';
+    g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    const lines = String(text).split('\n');
+    const lineH = (opts.fontSize || 28) + 6;
+    const startY = c.height / 2 - (lines.length - 1) * lineH / 2;
+    lines.forEach(function(line, i) {
+      g.fillText(line, c.width / 2, startY + i * lineH);
+    });
+    const tex = new THREE.CanvasTexture(c);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const spr = new THREE.Sprite(mat);
+    spr.scale.set(opts.sx || 2.2, opts.sy || 0.85, 1);
+    spr.userData.canvas = c;
+    spr.userData.ctx = g;
+    spr.userData.tex = tex;
+    spr.userData.opts = opts;
+    return spr;
+  }
+
+  function updateSpriteText(spr, text) {
+    if (!spr || !spr.userData || !spr.userData.ctx) return;
+    const c = spr.userData.canvas;
+    const g = spr.userData.ctx;
+    const opts = spr.userData.opts || {};
+    g.clearRect(0, 0, c.width, c.height);
+    g.fillStyle = 'rgba(20,16,12,0.88)';
+    const rr = 14;
+    g.beginPath();
+    g.moveTo(rr, 0);
+    g.arcTo(c.width, 0, c.width, c.height, rr);
+    g.arcTo(c.width, c.height, 0, c.height, rr);
+    g.arcTo(0, c.height, 0, 0, rr);
+    g.arcTo(0, 0, c.width, 0, rr);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = 'rgba(224,160,64,0.55)';
+    g.lineWidth = 3;
+    g.stroke();
+    g.fillStyle = '#f0c870';
+    g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    const lines = String(text).split('\n');
+    const lineH = (opts.fontSize || 28) + 6;
+    const startY = c.height / 2 - (lines.length - 1) * lineH / 2;
+    lines.forEach(function(line, i) {
+      g.fillText(line, c.width / 2, startY + i * lineH);
+    });
+    spr.userData.tex.needsUpdate = true;
+  }
+
+  function syncRendererSize() {
+    if (!renderer || !camera) return;
+    const stage = document.getElementById('essence-stage') || canvas.parentElement;
+    const cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 640);
+    const cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 320);
+    const pr = Math.min(2, window.devicePixelRatio || 1);
+    if (canvas.width !== Math.round(cssW * pr) || canvas.height !== Math.round(cssH * pr)) {
+      renderer.setPixelRatio(pr);
+      renderer.setSize(cssW, cssH, false);
+      canvas.style.width = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      camera.aspect = cssW / cssH;
+      camera.updateProjectionMatrix();
+    }
+  }
+
+  function disposeObject(obj) {
+    if (!obj) return;
+    obj.traverse(function(o) {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) {
+        if (Array.isArray(o.material)) o.material.forEach(function(m) { if (m.dispose) m.dispose(); });
+        else if (o.material.dispose) o.material.dispose();
+      }
+    });
+  }
+
+  function makeWoodTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#6a4828';
+    g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 28; i++) {
+      g.strokeStyle = 'rgba(40,28,16,' + (0.18 + (i % 5) * 0.05) + ')';
+      g.lineWidth = 1 + (i % 3);
+      g.beginPath();
+      g.moveTo(0, 8 + i * 9);
+      g.bezierCurveTo(64, 4 + i * 9, 160, 14 + i * 9, 256, 6 + i * 9);
+      g.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+  }
+
+  function makeDeckTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#4a5058';
+    g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 10; i++) {
+      g.strokeStyle = 'rgba(224,160,64,' + (0.08 + (i % 3) * 0.04) + ')';
+      g.beginPath();
+      g.arc(128, 128, 20 + i * 12, 0, Math.PI * 2);
+      g.stroke();
+    }
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      g.strokeStyle = 'rgba(154,162,168,0.35)';
+      g.beginPath();
+      g.moveTo(128, 128);
+      g.lineTo(128 + Math.cos(a) * 120, 128 + Math.sin(a) * 120);
+      g.stroke();
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  function createWorkshop(woodTex) {
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x2a241c, roughness: 0.92, metalness: 0.04 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(70, 50), floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, 0, 0);
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const plankMat = new THREE.MeshStandardMaterial({ color: 0x3a3024, roughness: 0.85, metalness: 0.02 });
+    for (let i = -7; i <= 7; i++) {
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(42, 0.06, 0.9), plankMat);
+      plank.position.set(0, 0.02, i * 1.1);
+      plank.receiveShadow = true;
+      scene.add(plank);
+    }
+
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e1a16, roughness: 0.92 });
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(60, 24, 0.7), wallMat);
+    backWall.position.set(0, 11, -14);
+    scene.add(backWall);
+    const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.7, 24, 36), wallMat);
+    sideWall.position.set(-16, 11, -2);
+    scene.add(sideWall);
+
+    // 糖画摊
+    sugarStall = new THREE.Group();
+    const stallBody = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 1.6, 1.6),
+      new THREE.MeshStandardMaterial({ color: 0x1a1410, map: woodTex, roughness: 0.8 })
+    );
+    stallBody.position.y = 0.8;
+    sugarStall.add(stallBody);
+    const awning = new THREE.Mesh(
+      new THREE.ConeGeometry(1.8, 1.1, 4),
+      new THREE.MeshStandardMaterial({ color: 0xc06020, roughness: 0.7, emissive: 0x401808, emissiveIntensity: 0.15 })
+    );
+    awning.position.y = 2.15;
+    awning.rotation.y = Math.PI / 4;
+    sugarStall.add(awning);
+    const stallLabel = makeLabelSprite('糖画摊', { w: 160, h: 64, fontSize: 28, sx: 1.5, sy: 0.55 });
+    stallLabel.position.set(0, 2.9, 0);
+    sugarStall.add(stallLabel);
+    sugarStall.position.set(-6.2, 0, 4.8);
+    scene.add(sugarStall);
+
+    // 工具板
+    const board = new THREE.Mesh(
+      new THREE.BoxGeometry(0.18, 4.8, 2.8),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.mid, roughness: 0.8 })
+    );
+    board.position.set(11, 4.0, -8);
+    scene.add(board);
+    const pegMat = new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.55, roughness: 0.4 });
+    for (let i = 0; i < 5; i++) {
+      const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.32, 10), pegMat);
+      peg.rotation.z = Math.PI / 2;
+      peg.position.set(10.8, 2.2 + i * 0.75, -8 + ((i % 2) ? 0.6 : -0.6));
+      scene.add(peg);
+    }
+    const toolLabel = makeLabelSprite('巡检板', { w: 160, h: 64, fontSize: 26, sx: 1.3, sy: 0.5 });
+    toolLabel.position.set(10.7, 6.8, -8);
+    scene.add(toolLabel);
+
+    // 挂灯
+    lampPivot = new THREE.Group();
+    lampPivot.position.set(2.2, 9.2, 3.2);
+    scene.add(lampPivot);
+    const cord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.03, 0.03, 2.0, 8),
+      new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.6, roughness: 0.35 })
+    );
+    cord.position.y = -1.0;
+    lampPivot.add(cord);
+    const shade = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.55, 0.45, 16, 1, true),
+      new THREE.MeshStandardMaterial({
+        color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.45, side: THREE.DoubleSide
+      })
+    );
+    shade.position.y = -2.1;
+    lampPivot.add(shade);
+    const bulb = new THREE.PointLight(0xffc080, 0.95, 20, 2);
+    bulb.position.y = -2.2;
+    lampPivot.add(bulb);
+
+    // 暖尘
+    const dustCount = 90;
+    const dustGeo = new THREE.BufferGeometry();
+    const positions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      positions[i * 3] = -10 + Math.random() * 22;
+      positions[i * 3 + 1] = 0.4 + Math.random() * 8;
+      positions[i * 3 + 2] = -8 + Math.random() * 14;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    dustPoints = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+      color: 0xf0c870, size: 0.055, transparent: true, opacity: 0.32, depthWrite: false
+    }));
+    scene.add(dustPoints);
+
+    const bench = new THREE.Mesh(
+      new THREE.BoxGeometry(4.2, 1.05, 2.0),
+      new THREE.MeshStandardMaterial({ color: 0x4a3c2c, roughness: 0.72 })
+    );
+    bench.position.set(8.5, 0.52, 6.5);
+    bench.castShadow = true;
+    scene.add(bench);
+  }
+
+  function buildTurntable() {
+    turntableGroup = new THREE.Group();
+    scene.add(turntableGroup);
+
+    const metalMat = new THREE.MeshStandardMaterial({
+      color: CRAFT3.metal, metalness: 0.55, roughness: 0.38
+    });
+    const accentMat = new THREE.MeshStandardMaterial({
+      color: CRAFT3.accent, metalness: 0.25, roughness: 0.45,
+      emissive: CRAFT3.glow, emissiveIntensity: 0.12
+    });
+
+    // 底座盘
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.7, 0.35, 48), metalMat);
+    base.position.y = 0.18;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    turntableGroup.add(base);
+
+    // 立柱
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, HUB_Y - 0.2, 24), metalMat);
+    col.position.y = (HUB_Y - 0.2) / 2 + 0.2;
+    col.castShadow = true;
+    turntableGroup.add(col);
+
+    // 顶盖 hub
+    hubMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.28, 28), accentMat);
+    hubMesh.position.y = HUB_Y;
+    hubMesh.castShadow = true;
+    turntableGroup.add(hubMesh);
+
+    // hub 装饰灯珠
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const bulb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.07, 10, 10),
+        new THREE.MeshStandardMaterial({
+          color: i % 2 ? CRAFT3.hi : CRAFT3.glow,
+          emissive: i % 2 ? CRAFT3.hi : CRAFT3.glow,
+          emissiveIntensity: 0.65
+        })
+      );
+      bulb.position.set(Math.cos(a) * 0.42, HUB_Y + 0.18, Math.sin(a) * 0.42);
+      turntableGroup.add(bulb);
+    }
+
+    // 轨道平面（半透明圆盘）
+    orbitPlane = new THREE.Mesh(
+      new THREE.CircleGeometry(5.5, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x3a3228, transparent: true, opacity: 0.22,
+        metalness: 0.05, roughness: 0.9, side: THREE.DoubleSide
+      })
+    );
+    orbitPlane.rotation.x = -Math.PI / 2;
+    orbitPlane.position.y = HUB_Y - 0.02;
+    orbitPlane.receiveShadow = true;
+    turntableGroup.add(orbitPlane);
+
+    // 轨道环
+    orbitRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.2, 0.035, 10, 96),
+      new THREE.MeshStandardMaterial({
+        color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.25,
+        metalness: 0.3, roughness: 0.4, transparent: true, opacity: 0.85
+      })
+    );
+    orbitRing.rotation.x = Math.PI / 2;
+    orbitRing.position.y = HUB_Y;
+    turntableGroup.add(orbitRing);
+
+    // 半径参考杆（地面上的刻度臂，随 r 变）
+    radiusRod = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 0.04, 0.08),
+      new THREE.MeshStandardMaterial({
+        color: CRAFT3.hi, emissive: CRAFT3.hi, emissiveIntensity: 0.15, metalness: 0.2, roughness: 0.5
+      })
+    );
+    radiusRod.position.set(1.1, HUB_Y + 0.02, 0);
+    turntableGroup.add(radiusRod);
+
+    // 旋转臂组
+    armGroup = new THREE.Group();
+    armGroup.position.y = HUB_Y;
+    turntableGroup.add(armGroup);
+
+    armCable = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 2.2, 10),
+      new THREE.MeshStandardMaterial({
+        color: CRAFT3.ok, metalness: 0.35, roughness: 0.45,
+        emissive: CRAFT3.ok, emissiveIntensity: 0.08
+      })
+    );
+    armCable.rotation.z = Math.PI / 2;
+    armCable.position.x = 1.1;
+    armGroup.add(armCable);
+
+    cabinMat = new THREE.MeshStandardMaterial({
+      color: CRAFT3.accent, metalness: 0.2, roughness: 0.45,
+      emissive: CRAFT3.glow, emissiveIntensity: 0.18
+    });
+    cabinMesh = new THREE.Group();
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.38, 0.55), cabinMat);
+    seat.castShadow = true;
+    cabinMesh.add(seat);
+    const canopy = new THREE.Mesh(
+      new THREE.BoxGeometry(0.62, 0.12, 0.48),
+      new THREE.MeshStandardMaterial({ color: 0xf0e0c0, roughness: 0.55, transparent: true, opacity: 0.55 })
+    );
+    canopy.position.y = 0.28;
+    cabinMesh.add(canopy);
+    const cabinLabel = makeLabelSprite('座', { w: 96, h: 96, fontSize: 42, sx: 0.55, sy: 0.55 });
+    cabinLabel.position.set(0, 0.55, 0);
+    cabinMesh.add(cabinLabel);
+    cabinMesh.position.set(2.2, 0, 0);
+    armGroup.add(cabinMesh);
+
+    // φ 楔块提示（仅观感）
+    const wedge = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.18, 0.9),
+      new THREE.MeshStandardMaterial({
+        color: CRAFT3.accent, transparent: true, opacity: 0.35,
+        emissive: CRAFT3.glow, emissiveIntensity: 0.1
+      })
+    );
+    wedge.position.set(-1.6, 0.12, 0);
+    wedge.name = 'tiltWedge';
+    turntableGroup.add(wedge);
+  }
+
+  function initThree() {
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js 未加载（请确认 vendor/ 相对路径）');
+      return false;
+    }
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(CRAFT3.bg, 1);
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(CRAFT3.bg);
+    scene.fog = new THREE.Fog(CRAFT3.bg, 18, 48);
+
+    camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+    camera.position.set(8.5, 6.8, 9.5);
+
+    if (typeof THREE.OrbitControls !== 'undefined') {
+      orbit = new THREE.OrbitControls(camera, renderer.domElement);
+      orbit.target.set(0, 1.8, 0);
+      orbit.enableDamping = true;
+      orbit.dampingFactor = 0.06;
+      orbit.minDistance = 5;
+      orbit.maxDistance = 22;
+      orbit.maxPolarAngle = Math.PI * 0.48;
+    } else {
+      console.error('OrbitControls 未加载（请确认 vendor/ 相对路径）');
+    }
+
+    const ambient = new THREE.AmbientLight(0xc8b8a0, 0.42);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffe8c8, 0.9);
+    dir.position.set(6, 14, 8);
+    dir.castShadow = true;
+    dir.shadow.mapSize.set(1024, 1024);
+    dir.shadow.camera.near = 1;
+    dir.shadow.camera.far = 40;
+    dir.shadow.camera.left = -14;
+    dir.shadow.camera.right = 14;
+    dir.shadow.camera.top = 14;
+    dir.shadow.camera.bottom = -14;
+    scene.add(dir);
+    const fill = new THREE.PointLight(0xb8956c, 0.4, 40);
+    fill.position.set(-6, 5, 4);
+    scene.add(fill);
+    const cool = new THREE.PointLight(0x6a7a88, 0.22, 35);
+    cool.position.set(4, 3, -8);
+    scene.add(cool);
+
+    const woodTex = makeWoodTexture();
+    createWorkshop(woodTex);
+    buildTurntable();
+
+    badgeSprite = makeLabelSprite('r = 0.8 m\nω = 2.0 rad/s', { w: 300, h: 128, fontSize: 28, sx: 2.6, sy: 1.15 });
+    badgeSprite.position.set(-2.4, 4.2, 2.8);
+    scene.add(badgeSprite);
+
+    statusSprite = makeLabelSprite(' ', { w: 240, h: 80, fontSize: 28, sx: 2.0, sy: 0.7 });
+    statusSprite.position.set(3.5, 4.2, 2.2);
+    statusSprite.visible = false;
+    scene.add(statusSprite);
+
+    clock = new THREE.Clock();
+    syncRendererSize();
+    threeReady = true;
+    return true;
+  }
+
+  function worldR(r) {
+    return Math.max(0.35, (Number(r) || 0.1) * WORLD_SCALE);
+  }
+
+  function cabinPosFromAngle(rWorld, a) {
+    return {
+      x: Math.cos(a) * rWorld,
+      y: 0,
+      z: Math.sin(a) * rWorld
+    };
+  }
+
+  function clearTrail() {
+    if (trailLine) {
+      scene.remove(trailLine);
+      disposeObject(trailLine);
+      trailLine = null;
+    }
+  }
+
+  function updateTrail(points) {
+    clearTrail();
+    if (!points || points.length < 2) return;
+    const pts = points.map(function(p) {
+      return new THREE.Vector3(p.x, p.y, p.z);
+    });
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    trailLine = new THREE.Line(geo, new THREE.LineBasicMaterial({
+      color: CRAFT3.glow, transparent: true, opacity: 0.8
+    }));
+    scene.add(trailLine);
+  }
+
+  function syncSparks(active, origin) {
+    while (sparkMeshes.length < 6) {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(0.06, 6, 6),
+        new THREE.MeshBasicMaterial({ color: CRAFT3.glow, transparent: true, opacity: 0.85 })
+      );
+      m.visible = false;
+      scene.add(m);
+      sparkMeshes.push(m);
+    }
+    for (let i = 0; i < sparkMeshes.length; i++) {
+      const m = sparkMeshes[i];
+      if (!active || !origin) {
+        m.visible = false;
+        continue;
+      }
+      const sf = ((performance.now() * 0.018 + i * 1.7) % 1);
+      m.visible = true;
+      m.position.set(
+        origin.x - (origin.vx || 0) * sf * 0.08,
+        origin.y + 0.2 - sf * 0.4,
+        origin.z - (origin.vz || 0) * sf * 0.08
+      );
+      m.material.opacity = 0.85 - sf * 0.8;
+      m.scale.setScalar(1.2 - sf);
+    }
   }
 
   function drawScene(r, omega, tiltDeg) {
-    syncCanvasSize();
-    ctx.clearRect(0, 0, W, H);
+    if (!threeReady) return;
+    syncRendererSize();
 
     const { F } = computePhysics(r, omega);
     const fNorm = Math.min(1, Math.max(0, (F - F_TARGET) / Math.max(0.01, F_HI - F_TARGET)));
-    const wNorm = Math.min(1, omega / 12);
     const danger = F > F_HI * 0.88 || omega > 9;
     const tilt = Math.max(0, Math.min(15, Number(tiltDeg) || 0));
     const tiltRad = (tilt * Math.PI) / 180;
 
-    // 暖夜炭黑 + 琥珀投光（转盘工位）
-    const SC = { ink: '#12100c', mid: '#2e2618', hi: '#f0c870', glow: '#ff8a30', metal: '#7a8490', accent: '#e0a040', ok: '#7dba8c' };
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#1a1510');
-    bg.addColorStop(0.35, SC.ink);
-    bg.addColorStop(0.7, '#181410');
-    bg.addColorStop(1, '#0e0c08');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-    const flood = ctx.createRadialGradient(W * 0.22, H * 0.08, 8, W * 0.38, H * 0.55, Math.max(W, H) * 0.72);
-    flood.addColorStop(0, 'rgba(255,138,48,' + (0.14 + wNorm * 0.14) + ')');
-    flood.addColorStop(0.35, 'rgba(224,160,64,0.10)');
-    flood.addColorStop(1, 'rgba(18,16,12,0)');
-    ctx.fillStyle = flood;
-    ctx.fillRect(0, 0, W, H);
-    const flood2 = ctx.createRadialGradient(W * 0.82, H * 0.05, 4, W * 0.72, H * 0.4, W * 0.35);
-    flood2.addColorStop(0, 'rgba(240,200,112,0.08)');
-    flood2.addColorStop(1, 'rgba(18,16,12,0)');
-    ctx.fillStyle = flood2;
-    ctx.fillRect(0, 0, W, H);
-
-    // 暖尘微粒 + 工位挂灯
-    for (var i = 0; i < 22; i++) {
-      ctx.fillStyle = 'rgba(240,200,112,' + (0.08 + (i % 5) * 0.04) + ')';
-      ctx.beginPath();
-      ctx.arc((i * 97) % W, 18 + (i * 37) % 80, 1 + (i % 3) * 0.35, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    for (var L = 0; L < 5; L++) {
-      var lx = 70 + L * (W / 5.2);
-      ctx.strokeStyle = 'rgba(122,132,144,0.55)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(lx, 8);
-      ctx.lineTo(lx, 32);
-      ctx.stroke();
-      ctx.fillStyle = L % 2 ? SC.accent : SC.hi;
-      roundRect(lx - 9, 32, 18, 22, 6);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,138,48,0.35)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      var lg = ctx.createRadialGradient(lx, 48, 1, lx, 52, 14);
-      lg.addColorStop(0, 'rgba(255,138,48,' + (0.15 + wNorm * 0.18) + ')');
-      lg.addColorStop(1, 'rgba(255,138,48,0)');
-      ctx.fillStyle = lg;
-      ctx.beginPath();
-      ctx.arc(lx, 52, 14, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // 糖画摊剪影（叙事锚点）
-    ctx.fillStyle = '#1a1410';
-    ctx.fillRect(18, H - 110, 72, 74);
-    ctx.fillStyle = '#c06020';
-    ctx.beginPath();
-    ctx.moveTo(12, H - 110);
-    ctx.lineTo(54, H - 138);
-    ctx.lineTo(96, H - 110);
-    ctx.fill();
-    ctx.fillStyle = SC.hi;
-    ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.fillText('糖画摊', 30, H - 118);
-
-    // 工位地坪
-    const floor = ctx.createLinearGradient(0, H - 36, 0, H);
-    floor.addColorStop(0, '#3a3228');
-    floor.addColorStop(1, SC.ink);
-    ctx.fillStyle = floor;
-    ctx.fillRect(0, H - 36, W, 36);
-    ctx.fillStyle = SC.metal;
-    ctx.fillRect(0, H - 36, W, 3);
-    ctx.fillStyle = 'rgba(224,160,64,0.18)';
-    for (var g = 0; g < 10; g++) ctx.fillRect(16 + g * 70, H - 20, 28, 3);
-
-    // 飞椅中枢：转盘直径 ≥50% min(W,H)
-    const cx = Math.max(200, Math.min(W * 0.48, W - 180));
-    const cy = Math.max(138, Math.min(H * 0.48, H - 100));
-    const targetDia = Math.min(W, H) * 0.52;
-    const maxR = Math.min(cx - 36, cy - 56, W - cx - 70, H - cy - 48, targetDia * 0.55);
-    const scale = Math.max(maxR / 2.05, Math.min(140, targetDia / 3.6));
-
-    // 加大钢制底座 + 立柱（底座倾角 φ 仅改观感：倾斜椭圆与楔块，不改 v/F 物理）
-    const baseRx = Math.max(110, maxR * 0.55), baseRy = 28;
-    const baseCy = H - 38;
-    ctx.save();
-    ctx.translate(cx, baseCy);
-    ctx.rotate(-tiltRad * 0.55);
-    const baseGrad = ctx.createLinearGradient(-baseRx, -26, baseRx, 20);
-    baseGrad.addColorStop(0, '#4a5058');
-    baseGrad.addColorStop(0.5, SC.metal);
-    baseGrad.addColorStop(1, '#5a626a');
-    ctx.fillStyle = baseGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, baseRx, baseRy * (1 - tilt * 0.012), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(224,160,64,0.4)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    for (var bolt = 0; bolt < 8; bolt++) {
-      var baBolt = (bolt / 8) * Math.PI * 2;
-      ctx.fillStyle = '#5a6268';
-      ctx.beginPath();
-      ctx.arc(Math.cos(baBolt) * (baseRx - 14), Math.sin(baBolt) * (baseRy - 6), 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (tilt > 0.2) {
-      ctx.fillStyle = 'rgba(224,160,64,' + (0.18 + tilt * 0.02) + ')';
-      ctx.beginPath();
-      ctx.moveTo(-baseRx * 0.72, baseRy * 0.35);
-      ctx.lineTo(-baseRx * 0.35, baseRy * 0.9 + tilt * 0.9);
-      ctx.lineTo(baseRx * 0.2, baseRy * 0.55);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = SC.hi;
-      ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-      ctx.fillText('φ ' + tilt.toFixed(0) + '°', -22, baseRy + 14);
-    }
-    ctx.restore();
-    const colGrad = ctx.createLinearGradient(cx - 22, cy, cx + 22, cy);
-    colGrad.addColorStop(0, '#4a5058');
-    colGrad.addColorStop(0.45, '#9aa2a8');
-    colGrad.addColorStop(1, '#4a5058');
-    ctx.fillStyle = colGrad;
-    roundRect(cx - 20, cy - 10, 40, H - 46 - (cy - 10), 5);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(122,132,144,0.65)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    // 转台顶盖
-    ctx.fillStyle = '#3a4048';
-    ctx.beginPath();
-    ctx.arc(cx, cy - 10, 34, Math.PI, 0);
-    ctx.fill();
-    ctx.strokeStyle = SC.accent;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy - 10, 34, Math.PI, 0);
-    ctx.stroke();
-    for (var bulb = 0; bulb < 8; bulb++) {
-      var ba = -Math.PI + (bulb / 7) * Math.PI;
-      var blx = cx + Math.cos(ba) * 28;
-      var bly = cy - 10 + Math.sin(ba) * 14;
-      ctx.fillStyle = bulb % 2 ? SC.hi : SC.glow;
-      ctx.beginPath();
-      ctx.arc(blx, bly, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-      if (bulb % 2 === 0) {
-        var bulbGlow = ctx.createRadialGradient(blx, bly, 0, blx, bly, 12);
-        bulbGlow.addColorStop(0, 'rgba(255,138,48,0.4)');
-        bulbGlow.addColorStop(1, 'rgba(255,138,48,0)');
-        ctx.fillStyle = bulbGlow;
-        ctx.beginPath();
-        ctx.arc(blx, bly, 12, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-
     const drawR = rideAnim ? rideAnim.r0 : r;
     const drawOmega = rideAnim ? rideAnim.omega0 : omega;
-    const radiusPx = Math.max(18, drawR * scale);
+    const rWorld = worldR(drawR);
     const aNow = rideAnim ? rideAnim.angle0 : angle;
 
-    ctx.beginPath();
-    ctx.arc(cx, cy, radiusPx, 0, 2 * Math.PI);
-    ctx.strokeStyle = rideAnim && rideAnim.kind === 'fly'
-      ? 'rgba(255,138,48,0.55)'
-      : 'rgba(224,160,64,0.45)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 6]);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // 底座倾角 φ：仅改台架观感
+    if (turntableGroup) {
+      turntableGroup.rotation.z = -tiltRad * 0.55;
+      const wedge = turntableGroup.getObjectByName('tiltWedge');
+      if (wedge) {
+        wedge.visible = tilt > 0.2;
+        wedge.scale.y = 1 + tilt * 0.04;
+      }
+    }
 
-    let bx, by, armConnected = true;
+    if (orbitRing) {
+      orbitRing.scale.setScalar(rWorld / 2.2);
+      orbitRing.material.color.setHex(
+        rideAnim && rideAnim.kind === 'fly' ? CRAFT3.glow
+          : (rideAnim && rideAnim.kind === 'ok' ? CRAFT3.ok : CRAFT3.accent)
+      );
+      orbitRing.material.emissiveIntensity = rideAnim && rideAnim.kind === 'ok'
+        ? (0.35 + 0.35 * Math.sin((rideAnim.t || 0) * 10))
+        : 0.25;
+    }
+    if (orbitPlane) {
+      orbitPlane.scale.setScalar(Math.max(0.55, rWorld / 5.5));
+    }
+    if (radiusRod) {
+      radiusRod.scale.x = rWorld / 2.2;
+      radiusRod.position.x = rWorld / 2;
+    }
+
+    function setArmLength(len, colorHex, emissiveIntensity, opacity) {
+      if (!armCable) return;
+      const L = Math.max(0.2, len);
+      armCable.visible = true;
+      // Cylinder 默认沿 Y；绕 Z 转 90° 后沿 X；用 scale.y 改长度
+      armCable.rotation.set(0, 0, Math.PI / 2);
+      armCable.position.set(L / 2, 0, 0);
+      armCable.scale.set(1, L / 2.2, 1);
+      armCable.material.color.setHex(colorHex);
+      armCable.material.emissive.setHex(colorHex);
+      armCable.material.emissiveIntensity = emissiveIntensity;
+      armCable.material.transparent = opacity < 0.99;
+      armCable.material.opacity = opacity;
+    }
+
+    function ensureCabinOnArm() {
+      if (cabinMesh && armGroup && cabinMesh.parent !== armGroup) {
+        scene.remove(cabinMesh);
+        armGroup.add(cabinMesh);
+      }
+    }
+
+    let bx, by, bz;
     if (rideAnim && rideAnim.kind === 'fly') {
-      bx = rideAnim.x;
-      by = rideAnim.y;
-      armConnected = false;
-      // 断臂残端：停在脱离瞬间的圆周点
-      const hx = cx + radiusPx * Math.cos(rideAnim.angle0);
-      const hy = cy + radiusPx * Math.sin(rideAnim.angle0);
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(hx, hy);
-      ctx.strokeStyle = 'rgba(122,132,144,0.4)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([3, 5]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      // 飞出轨迹
-      if (rideAnim.trail && rideAnim.trail.length > 1) {
-        ctx.beginPath();
-        ctx.moveTo(rideAnim.trail[0].x, rideAnim.trail[0].y);
-        for (var ti = 1; ti < rideAnim.trail.length; ti++) {
-          ctx.lineTo(rideAnim.trail[ti].x, rideAnim.trail[ti].y);
+      bx = rideAnim.x; by = rideAnim.y; bz = rideAnim.z;
+      if (armGroup) armGroup.rotation.y = -rideAnim.angle0;
+      setArmLength(rWorld, CRAFT3.metal, 0.02, 0.4);
+      if (cabinMesh) {
+        if (cabinMesh.parent !== scene) {
+          armGroup.remove(cabinMesh);
+          scene.add(cabinMesh);
         }
-        ctx.strokeStyle = 'rgba(255,138,48,0.78)';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
+        cabinMesh.position.set(bx, by, bz);
+        cabinMesh.rotation.y = -rideAnim.angle0;
+      }
+      updateTrail(rideAnim.trail);
+      syncSparks(true, rideAnim);
+      if (statusSprite) {
+        statusSprite.visible = true;
+        updateSpriteText(statusSprite, '超速飞出');
+        statusSprite.position.set(bx, by + 1.1, bz);
       }
     } else if (rideAnim && rideAnim.kind === 'drop') {
-      bx = rideAnim.x;
-      by = rideAnim.y;
-      armConnected = rideAnim.t < rideAnim.snapT;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(bx, by);
-      ctx.strokeStyle = armConnected ? '#d08060' : 'rgba(208,128,96,0.28)';
-      ctx.lineWidth = armConnected ? 2.5 : 1.5;
-      if (!armConnected) ctx.setLineDash([2, 4]);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      bx = rideAnim.x; by = rideAnim.y; bz = rideAnim.z;
+      const armConnected = rideAnim.t < rideAnim.snapT;
+      const spin = rideAnim.spin != null ? rideAnim.spin : rideAnim.angle0;
+      const shrinkR = Math.max(0.15, Math.sqrt(bx * bx + bz * bz));
+      ensureCabinOnArm();
+      if (armGroup) armGroup.rotation.y = -spin;
+      setArmLength(shrinkR, 0xd08060, armConnected ? 0.12 : 0.02, armConnected ? 1 : 0.35);
+      if (cabinMesh) {
+        cabinMesh.position.set(shrinkR, by - HUB_Y, 0);
+        cabinMesh.rotation.set(0, 0, 0);
+      }
+      clearTrail();
+      syncSparks(false);
+      if (statusSprite) {
+        statusSprite.visible = true;
+        updateSpriteText(statusSprite, '偏慢掉转');
+        statusSprite.position.set(bx, Math.max(1.2, by + 1.0), bz);
+      }
     } else {
-      bx = cx + radiusPx * Math.cos(aNow);
-      by = cy + radiusPx * Math.sin(aNow);
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(bx, by);
+      const p = cabinPosFromAngle(rWorld, aNow);
+      bx = p.x; by = HUB_Y; bz = p.z;
+      ensureCabinOnArm();
+      if (armGroup) armGroup.rotation.y = -aNow;
       const cableColor = danger
-        ? ('rgba(224,80,60,' + (0.65 + fNorm * 0.35) + ')')
-        : (fNorm > 0.55 ? ('rgba(224,160,64,' + (0.55 + fNorm * 0.35) + ')') : SC.ok);
-      ctx.strokeStyle = rideAnim && rideAnim.kind === 'ok' ? SC.ok : cableColor;
-      ctx.lineWidth = rideAnim && rideAnim.kind === 'ok' ? 2.5 : (2 + fNorm * 1.5);
-      ctx.stroke();
-      if (rideAnim && rideAnim.kind === 'ok') {
-        ctx.beginPath();
-        ctx.arc(cx, cy, radiusPx + 6, 0, 2 * Math.PI);
-        ctx.strokeStyle = 'rgba(125,186,140,' + (0.35 + 0.35 * Math.sin(rideAnim.t * 10)) + ')';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        ? 0xe0503c
+        : (fNorm > 0.55 ? CRAFT3.accent : CRAFT3.ok);
+      const col = rideAnim && rideAnim.kind === 'ok' ? CRAFT3.ok : cableColor;
+      const emi = rideAnim && rideAnim.kind === 'ok' ? 0.35 : (0.08 + fNorm * 0.25);
+      setArmLength(rWorld, col, emi, 1);
+      if (cabinMesh) {
+        cabinMesh.position.set(rWorld, 0, 0);
+        cabinMesh.rotation.set(0, 0, 0);
+      }
+      clearTrail();
+      syncSparks(false);
+      if (statusSprite) statusSprite.visible = false;
+    }
+
+    if (cabinMat) {
+      if (rideAnim && rideAnim.kind === 'fly') {
+        cabinMat.color.setHex(0xe06040);
+        cabinMat.emissive.setHex(0xff8a30);
+        cabinMat.emissiveIntensity = 0.45;
+      } else if (rideAnim && rideAnim.kind === 'drop') {
+        cabinMat.color.setHex(0xc08060);
+        cabinMat.emissive.setHex(0xd08060);
+        cabinMat.emissiveIntensity = 0.2;
+      } else {
+        cabinMat.color.setHex(CRAFT3.accent);
+        cabinMat.emissive.setHex(CRAFT3.glow);
+        cabinMat.emissiveIntensity = 0.18;
       }
     }
 
-    // 座舱（加大可见）
-    ctx.fillStyle = rideAnim && rideAnim.kind === 'fly' ? '#e06040'
-      : (rideAnim && rideAnim.kind === 'drop' ? '#c08060' : SC.accent);
-    roundRect(bx - 20, by - 12, 40, 28, 7);
-    ctx.fill();
-    ctx.strokeStyle = rideAnim && rideAnim.kind === 'fly' ? '#8a3020' : '#a07020';
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,240,200,0.35)';
-    roundRect(bx - 12, by - 6, 14, 10, 3);
-    ctx.fill();
-    ctx.fillStyle = SC.ink;
-    ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('座', bx + 4, by + 8);
-    ctx.textAlign = 'left';
-
-    // 飞出火花 / 掉转尘土
-    if (rideAnim && rideAnim.kind === 'fly') {
-      for (var sp = 0; sp < 6; sp++) {
-        var sf = (rideAnim.t * 18 + sp * 1.7) % 1;
-        ctx.fillStyle = 'rgba(255,138,48,' + (0.85 - sf * 0.8) + ')';
-        ctx.beginPath();
-        ctx.arc(bx - rideAnim.vx * sf * 0.04, by - rideAnim.vy * sf * 0.04, 2.2 - sf, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = 'rgba(255,200,140,0.92)';
-      ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-      ctx.fillText('超速飞出', Math.min(W - 88, Math.max(12, bx + 16)), Math.max(70, by - 14));
-    } else if (rideAnim && rideAnim.kind === 'drop') {
-      ctx.fillStyle = 'rgba(255,200,140,0.9)';
-      ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-      ctx.fillText('偏慢掉转', Math.min(W - 88, Math.max(12, bx + 16)), Math.max(70, by - 14));
+    if (badgeSprite) {
+      updateSpriteText(badgeSprite, 'r = ' + drawR.toFixed(1) + ' m\nω = ' + drawOmega.toFixed(1) + ' rad/s');
     }
-
-    // 轴心 hub
-    ctx.beginPath();
-    ctx.arc(cx, cy, 7, 0, 2 * Math.PI);
-    ctx.fillStyle = '#9aa0a8';
-    ctx.fill();
-    ctx.strokeStyle = SC.accent;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = '#e8e0d0';
-    ctx.fill();
-
-    roundRect(16, H - 78, 168, 52, 10);
-    ctx.fillStyle = 'rgba(18,16,12,0.88)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(224,160,64,0.45)';
-    ctx.stroke();
-    ctx.fillStyle = SC.hi;
-    ctx.font = '12px ui-monospace,Consolas,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
-    ctx.fillText('r = ' + drawR.toFixed(1) + ' m', 28, H - 56);
-    ctx.fillText('ω = ' + drawOmega.toFixed(1) + ' rad/s', 28, H - 36);
   }
 
   function startRideAnim(kind, r, omega, onDone) {
-    const cx = Math.max(200, Math.min(W * 0.48, W - 180));
-    const cy = Math.max(138, Math.min(H * 0.48, H - 100));
-    const targetDia = Math.min(W, H) * 0.52;
-    const maxR = Math.min(cx - 36, cy - 56, W - cx - 70, H - cy - 48, targetDia * 0.55);
-    const scale = Math.max(maxR / 2.05, Math.min(140, targetDia / 3.6));
-    const radiusPx = Math.max(18, r * scale);
+    const rWorld = worldR(r);
     const a0 = angle;
-    const x0 = cx + radiusPx * Math.cos(a0);
-    const y0 = cy + radiusPx * Math.sin(a0);
-    // 切线方向（与 angle += omega*dt 一致：逆时针）
+    const p0 = cabinPosFromAngle(rWorld, a0);
+    const x0 = p0.x;
+    const y0 = HUB_Y;
+    const z0 = p0.z;
+    // 切线方向（与 angle += omega*dt 一致：在 XZ 平面逆时针）
     const tx = -Math.sin(a0);
-    const ty = Math.cos(a0);
-    const speed = Math.max(40, Math.min(420, omega * radiusPx * 1.15));
+    const tz = Math.cos(a0);
+    const speed = Math.max(1.2, Math.min(9.5, omega * rWorld * 0.55));
+    // 确保 cabin 回到臂上
+    if (cabinMesh && cabinMesh.parent !== armGroup && armGroup) {
+      scene.remove(cabinMesh);
+      armGroup.add(cabinMesh);
+    }
+    clearTrail();
     if (kind === 'fly') {
       rideAnim = {
         kind: 'fly', t: 0, dur: 1.35, onDone: onDone || null,
-        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale,
-        x: x0, y: y0,
-        vx: tx * speed * 1.35 + Math.cos(a0) * speed * 0.25,
-        vy: ty * speed * 1.35 + Math.sin(a0) * speed * 0.25,
-        trail: [{ x: x0, y: y0 }]
+        r0: r, omega0: omega, angle0: a0,
+        x: x0, y: y0, z: z0,
+        vx: tx * speed * 1.35 + Math.cos(a0) * speed * 0.18,
+        vy: 1.2,
+        vz: tz * speed * 1.35 + Math.sin(a0) * speed * 0.18,
+        trail: [{ x: x0, y: y0, z: z0 }]
       };
     } else if (kind === 'drop') {
       rideAnim = {
         kind: 'drop', t: 0, dur: 1.45, snapT: 0.55, onDone: onDone || null,
-        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale,
-        x: x0, y: y0, vx: tx * speed * 0.15, vy: 0, spin: a0
+        r0: r, omega0: omega, angle0: a0,
+        x: x0, y: y0, z: z0, vx: tx * speed * 0.12, vy: 0, vz: tz * speed * 0.12,
+        spin: a0
       };
     } else {
-      // 探究模式短 ride（0.55–0.85s），竞赛完整 1.1s
       var okDur = (typeof playMode !== 'undefined' && playMode === 'explore')
         ? (0.55 + Math.min(0.3, Math.abs(omega) * 0.08))
         : 1.1;
       rideAnim = {
         kind: 'ok', t: 0, dur: okDur, onDone: onDone || null,
-        r0: r, omega0: omega, angle0: a0, cx: cx, cy: cy, scale: scale
+        r0: r, omega0: omega, angle0: a0
       };
     }
   }
@@ -1322,36 +1671,41 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     if (!rideAnim) return;
     rideAnim.t += dt;
     if (rideAnim.kind === 'fly') {
-      rideAnim.vy += 520 * dt;
+      rideAnim.vy -= 9.8 * dt * 1.35;
       rideAnim.vx *= (1 - 0.35 * dt);
+      rideAnim.vz *= (1 - 0.35 * dt);
       rideAnim.x += rideAnim.vx * dt;
       rideAnim.y += rideAnim.vy * dt;
-      rideAnim.trail.push({ x: rideAnim.x, y: rideAnim.y });
+      rideAnim.z += rideAnim.vz * dt;
+      rideAnim.trail.push({ x: rideAnim.x, y: rideAnim.y, z: rideAnim.z });
       if (rideAnim.trail.length > 28) rideAnim.trail.shift();
-      if (rideAnim.y > H - 48) {
-        rideAnim.y = H - 48;
+      if (rideAnim.y < 0.35) {
+        rideAnim.y = 0.35;
         rideAnim.vy *= -0.18;
         rideAnim.vx *= 0.7;
+        rideAnim.vz *= 0.7;
       }
     } else if (rideAnim.kind === 'drop') {
-      const radiusPx = Math.max(18, rideAnim.r0 * rideAnim.scale);
+      const rWorld = worldR(rideAnim.r0);
       if (rideAnim.t < rideAnim.snapT) {
-        // 动力不足：向内塌缩并下沉，仍连着臂
         const u = rideAnim.t / rideAnim.snapT;
         const shrink = 1 - 0.55 * u * u;
         rideAnim.spin += rideAnim.omega0 * dt * (1 - 0.7 * u);
-        rideAnim.x = rideAnim.cx + radiusPx * shrink * Math.cos(rideAnim.spin);
-        rideAnim.y = rideAnim.cy + radiusPx * shrink * Math.sin(rideAnim.spin) + 18 * u * u;
+        rideAnim.x = Math.cos(rideAnim.spin) * rWorld * shrink;
+        rideAnim.z = Math.sin(rideAnim.spin) * rWorld * shrink;
+        rideAnim.y = HUB_Y - 0.9 * u * u;
       } else {
-        // 脱臂坠落
-        rideAnim.vy += 780 * dt;
+        rideAnim.vy -= 12.5 * dt;
         rideAnim.vx *= (1 - 0.8 * dt);
+        rideAnim.vz *= (1 - 0.8 * dt);
         rideAnim.x += rideAnim.vx * dt;
         rideAnim.y += rideAnim.vy * dt;
-        if (rideAnim.y > H - 48) {
-          rideAnim.y = H - 48;
+        rideAnim.z += rideAnim.vz * dt;
+        if (rideAnim.y < 0.35) {
+          rideAnim.y = 0.35;
           rideAnim.vy = 0;
           rideAnim.vx *= 0.5;
+          rideAnim.vz *= 0.5;
         }
       }
     } else if (rideAnim.kind === 'ok') {
@@ -1360,6 +1714,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
     if (rideAnim.t >= rideAnim.dur) {
       var done = rideAnim.onDone;
+      // 复位 cabin 到臂上
+      if (cabinMesh && armGroup && cabinMesh.parent !== armGroup) {
+        scene.remove(cabinMesh);
+        armGroup.add(cabinMesh);
+      }
+      clearTrail();
+      syncSparks(false);
+      if (statusSprite) statusSprite.visible = false;
       rideAnim = null;
       if (typeof done === 'function') done();
     }
@@ -1440,7 +1802,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           : '<span class="fail-badge" style="color:#fca5a5;">未过关·偏慢掉转</span>';
         emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
         hintMsg.innerHTML = '<strong>' + msg.trim() + '</strong><br><span style="font-size:0.82em;opacity:.92">舞台：' + (failKind === 'fly' ? '切线飞出' : '向内掉转') + ' · 安全带仍锁</span>';
-        // 先播飞出/掉转，结束后只清读数（FixedChallenge 不重抽阈值，保留刚调的 r/ω）
+        // 先播飞出/掉转，结束后只清读数（FixedChallenge 不重抽安全带，保留刚调的 r/ω）
         startRideAnim(animKind, r, omega, function() {
           measured = false;
           refreshGoalUI();
@@ -1516,16 +1878,35 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     updateObserve(r, omega, false);
     const tiltNow = sTilt ? parseFloat(sTilt.value) : 0;
     drawScene(r, omega, tiltNow);
+
+    const tNow = clock ? clock.getElapsedTime() : 0;
+    if (lampPivot) lampPivot.rotation.z = Math.sin(tNow * 1.1) * 0.05;
+    if (dustPoints) {
+      const arr = dustPoints.geometry.attributes.position.array;
+      for (let i = 0; i < arr.length; i += 3) {
+        arr[i + 1] += 0.002 + ((i / 3) % 5) * 0.00015;
+        if (arr[i + 1] > 9) arr[i + 1] = 0.5;
+      }
+      dustPoints.geometry.attributes.position.needsUpdate = true;
+    }
+    if (orbit) orbit.update();
+    if (renderer && scene && camera) renderer.render(scene, camera);
     requestAnimationFrame(loop);
   }
-  requestAnimationFrame(loop);
 
-  updateSliders();
-  refreshGoalUI();
-  hintMsg.textContent = '读数未达巡检线 · 调 r、ω 后点测试';
-  winMsg.innerHTML = '';
+  if (!initThree()) {
+    hintMsg.textContent = '3D 引擎未加载，请检查 vendor/three.min.js';
+  } else {
+    updateSliders();
+    refreshGoalUI();
+    hintMsg.textContent = '读数未达巡检线 · 调 r、ω 后点测试';
+    winMsg.innerHTML = '';
+    requestAnimationFrame(loop);
+  }
+
   window.__circRedraw = function() {
     updateSliders();
+    syncRendererSize();
   };
 
 })();

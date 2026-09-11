@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>气垫导轨 · 碰撞</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family:var(--font-sans); background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -784,26 +786,39 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 (function() {
     // ----- 物理常量 & DOM 引用 -----
     const canvas = document.getElementById('collisionCanvas');
-    const ctx = canvas.getContext('2d');
     const DESIGN_W = 760, DESIGN_H = 360;
     let W = DESIGN_W, H = DESIGN_H;
 
+    const CRAFT3 = {
+      bg: 0x120c12, mid: 0x2e2430, hi: 0xe8a8c8, glow: 0xe060a0,
+      metal: 0x7a8490, accent: 0x0c8aad, ok: 0x6fae8f, ink: 0x141018
+    };
+    const TRACK_WORLD = 16;
+    let threeReady = false;
+    let renderer, scene, camera, orbit, clock;
+    let railMesh, bayMesh, bayMat, block1, block2;
+    let badgeSprite, lampPivot, dustPoints, sparkGroup, velArrow;
+
     function syncCanvasSize() {
-        var stage = document.getElementById('essence-stage') || canvas.parentElement;
-        var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || DESIGN_W);
-        var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || DESIGN_H);
-        var dpr = Math.min(2.5, window.devicePixelRatio || 1);
+      var stage = document.getElementById('essence-stage') || canvas.parentElement;
+      var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || DESIGN_W);
+      var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || DESIGN_H);
+      W = cssW;
+      H = cssH;
+      if (renderer && camera) {
+        var pr = Math.min(2, window.devicePixelRatio || 1);
+        if (canvas.width !== Math.round(cssW * pr) || canvas.height !== Math.round(cssH * pr)) {
+          renderer.setPixelRatio(pr);
+          renderer.setSize(cssW, cssH, false);
+          canvas.style.width = cssW + 'px';
+          canvas.style.height = cssH + 'px';
+          camera.aspect = cssW / cssH;
+          camera.updateProjectionMatrix();
+        }
+      } else {
         canvas.style.width = cssW + 'px';
         canvas.style.height = cssH + 'px';
-        var bw = Math.round(cssW * dpr);
-        var bh = Math.round(cssH * dpr);
-        if (canvas.width !== bw || canvas.height !== bh) {
-            canvas.width = bw;
-            canvas.height = bh;
-        }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        W = cssW;
-        H = cssH;
+      }
     }
 
     let layoutMom = null;
@@ -1041,277 +1056,388 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         drawScene();
     }
 
-    function roundRect(x, y, w, h, r) {
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.arcTo(x + w, y, x + w, y + h, r);
-        ctx.arcTo(x + w, y + h, x, y + h, r);
-        ctx.arcTo(x, y + h, x, y, r);
-        ctx.arcTo(x, y, x + w, y, r);
-        ctx.closePath();
+    function makeLabelSprite(text, opts) {
+      opts = opts || {};
+      const c = document.createElement('canvas');
+      c.width = opts.w || 256;
+      c.height = opts.h || 96;
+      const g = c.getContext('2d');
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(18,12,18,0.82)';
+      g.strokeStyle = 'rgba(232,168,200,0.55)';
+      g.lineWidth = 3;
+      const rr = 14;
+      g.beginPath();
+      g.moveTo(rr, 4); g.lineTo(c.width - rr, 4); g.quadraticCurveTo(c.width - 4, 4, c.width - 4, rr);
+      g.lineTo(c.width - 4, c.height - rr); g.quadraticCurveTo(c.width - 4, c.height - 4, c.width - rr, c.height - 4);
+      g.lineTo(rr, c.height - 4); g.quadraticCurveTo(4, c.height - 4, 4, c.height - rr);
+      g.lineTo(4, rr); g.quadraticCurveTo(4, 4, rr, 4); g.closePath();
+      g.fill(); g.stroke();
+      g.fillStyle = '#f0d0e0';
+      g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const lines = String(text).split('\n');
+      lines.forEach(function(line, i) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (lines.length - 1) / 2) * (opts.fontSize || 28) * 1.15);
+      });
+      const tex = new THREE.CanvasTexture(c);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+      const spr = new THREE.Sprite(mat);
+      spr.scale.set(opts.sx || 2.2, opts.sy || 0.85, 1);
+      spr.userData.tex = tex;
+      spr.userData.canvas = c;
+      spr.userData.g = g;
+      spr.userData.opts = opts;
+      return spr;
+    }
+
+    function updateSpriteText(spr, text) {
+      if (!spr || !spr.userData || !spr.userData.g) return;
+      const c = spr.userData.canvas;
+      const g = spr.userData.g;
+      const opts = spr.userData.opts || {};
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(18,12,18,0.82)';
+      g.strokeStyle = 'rgba(232,168,200,0.55)';
+      g.lineWidth = 3;
+      const rr = 14;
+      g.beginPath();
+      g.moveTo(rr, 4); g.lineTo(c.width - rr, 4); g.quadraticCurveTo(c.width - 4, 4, c.width - 4, rr);
+      g.lineTo(c.width - 4, c.height - rr); g.quadraticCurveTo(c.width - 4, c.height - 4, c.width - rr, c.height - 4);
+      g.lineTo(rr, c.height - 4); g.quadraticCurveTo(4, c.height - 4, 4, c.height - rr);
+      g.lineTo(4, rr); g.quadraticCurveTo(4, 4, rr, 4); g.closePath();
+      g.fill(); g.stroke();
+      g.fillStyle = '#f0d0e0';
+      g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      const lines = String(text).split('\n');
+      lines.forEach(function(line, i) {
+        g.fillText(line, c.width / 2, c.height / 2 + (i - (lines.length - 1) / 2) * (opts.fontSize || 28) * 1.15);
+      });
+      spr.userData.tex.needsUpdate = true;
+    }
+
+    function pxToWorldX(px) {
+      return ((px / Math.max(1, W)) - 0.5) * TRACK_WORLD;
+    }
+
+    function createWorkshop() {
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(40, 24),
+        new THREE.MeshStandardMaterial({ color: 0x1a141c, roughness: 0.92, metalness: 0.04 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = -0.02;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      const back = new THREE.Mesh(
+        new THREE.BoxGeometry(36, 14, 0.6),
+        new THREE.MeshStandardMaterial({ color: 0x1e1822, roughness: 0.9 })
+      );
+      back.position.set(0, 6.5, -6);
+      scene.add(back);
+
+      const side = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 14, 18),
+        new THREE.MeshStandardMaterial({ color: 0x18141c, roughness: 0.9 })
+      );
+      side.position.set(-14, 6.5, 0);
+      scene.add(side);
+
+      const bench = new THREE.Mesh(
+        new THREE.BoxGeometry(18, 0.55, 3.2),
+        new THREE.MeshStandardMaterial({ color: 0x3a3440, roughness: 0.7, metalness: 0.15 })
+      );
+      bench.position.set(0, 0.9, 0);
+      bench.castShadow = true;
+      bench.receiveShadow = true;
+      scene.add(bench);
+
+      railMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(TRACK_WORLD * 0.92, 0.28, 0.85),
+        new THREE.MeshStandardMaterial({
+          color: CRAFT3.metal, roughness: 0.35, metalness: 0.55,
+          emissive: CRAFT3.hi, emissiveIntensity: 0.05
+        })
+      );
+      railMesh.position.set(0, 1.28, 0);
+      railMesh.castShadow = true;
+      railMesh.receiveShadow = true;
+      scene.add(railMesh);
+
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x5a6268, metalness: 0.4, roughness: 0.5 });
+      [-7.2, 0, 7.2].forEach(function(x) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.05, 0.22), legMat);
+        leg.position.set(x, 0.52, 0.35);
+        scene.add(leg);
+        const leg2 = leg.clone();
+        leg2.position.z = -0.35;
+        scene.add(leg2);
+      });
+
+      const holeMat = new THREE.MeshBasicMaterial({ color: 0xe8a8c8, transparent: true, opacity: 0.35 });
+      for (let i = -18; i <= 18; i++) {
+        const h = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.06, 8), holeMat);
+        h.position.set(i * 0.42, 1.43, 0);
+        scene.add(h);
+      }
+
+      bayMat = new THREE.MeshStandardMaterial({
+        color: CRAFT3.ok, transparent: true, opacity: 0.28,
+        emissive: CRAFT3.ok, emissiveIntensity: 0.25, side: THREE.DoubleSide
+      });
+      bayMesh = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.4, 1.1), bayMat);
+      bayMesh.position.set(4, 2.0, 0);
+      scene.add(bayMesh);
+      const gateL = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 1.5, 1.15),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.5, roughness: 0.4 })
+      );
+      gateL.position.set(-0.9, 0, 0);
+      bayMesh.add(gateL);
+      const gateR = gateL.clone();
+      gateR.position.x = 0.9;
+      bayMesh.add(gateR);
+
+      const pumpMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 1.6, 1.1),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.45, roughness: 0.45 })
+      );
+      pumpMesh.position.set(-9.2, 1.7, 1.6);
+      scene.add(pumpMesh);
+      const hose = new THREE.Mesh(
+        new THREE.TorusGeometry(0.55, 0.07, 8, 20, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0x5a626a, metalness: 0.3, roughness: 0.6 })
+      );
+      hose.rotation.z = Math.PI / 2;
+      hose.position.set(-8.2, 1.55, 0.7);
+      scene.add(hose);
+
+      const cabinetMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 3.2, 1.2),
+        new THREE.MeshStandardMaterial({ color: 0x2a2430, roughness: 0.75 })
+      );
+      cabinetMesh.position.set(9.5, 2.5, -2.2);
+      scene.add(cabinetMesh);
+
+      lampPivot = new THREE.Group();
+      lampPivot.position.set(-2, 8.2, 2);
+      scene.add(lampPivot);
+      const cord = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 2.0, 8),
+        new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.6, roughness: 0.35 })
+      );
+      cord.position.y = -1.0;
+      lampPivot.add(cord);
+      const shade = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.35, 0.55, 0.45, 16, 1, true),
+        new THREE.MeshStandardMaterial({
+          color: CRAFT3.hi, emissive: CRAFT3.glow, emissiveIntensity: 0.45, side: THREE.DoubleSide
+        })
+      );
+      shade.position.y = -2.1;
+      lampPivot.add(shade);
+      const bulb = new THREE.PointLight(0xffc0e0, 0.85, 18, 2);
+      bulb.position.y = -2.0;
+      lampPivot.add(bulb);
+
+      const dustGeo = new THREE.BufferGeometry();
+      const positions = new Float32Array(90);
+      for (let i = 0; i < 30; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 22;
+        positions[i * 3 + 1] = Math.random() * 8;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      }
+      dustGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      dustPoints = new THREE.Points(dustGeo, new THREE.PointsMaterial({
+        color: 0xe8a8c8, size: 0.05, transparent: true, opacity: 0.35
+      }));
+      scene.add(dustPoints);
+
+      function mkBlock(colorHex, label) {
+        const grp = new THREE.Group();
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(0.85, 0.7, 0.7),
+          new THREE.MeshStandardMaterial({
+            color: colorHex, roughness: 0.45, metalness: 0.12,
+            emissive: colorHex, emissiveIntensity: 0.08
+          })
+        );
+        body.castShadow = true;
+        grp.add(body);
+        const spr = makeLabelSprite(label, { w: 128, h: 96, fontSize: 42, sx: 0.7, sy: 0.5 });
+        spr.position.set(0, 0.65, 0.4);
+        grp.add(spr);
+        return grp;
+      }
+      block1 = mkBlock(0x5a7898, '1');
+      block2 = mkBlock(CRAFT3.accent, '2');
+      scene.add(block1);
+      scene.add(block2);
+
+      sparkGroup = new THREE.Group();
+      scene.add(sparkGroup);
+      for (let i = 0; i < 10; i++) {
+        const sp = new THREE.Mesh(
+          new THREE.SphereGeometry(0.05, 6, 6),
+          new THREE.MeshBasicMaterial({ color: 0xffc878, transparent: true, opacity: 0.9 })
+        );
+        sp.visible = false;
+        sparkGroup.add(sp);
+      }
+
+      velArrow = new THREE.Mesh(
+        new THREE.ConeGeometry(0.12, 0.35, 10),
+        new THREE.MeshBasicMaterial({ color: CRAFT3.hi })
+      );
+      velArrow.rotation.z = -Math.PI / 2;
+      velArrow.visible = false;
+      scene.add(velArrow);
+
+      badgeSprite = makeLabelSprite('气垫导轨台', { w: 320, h: 96, fontSize: 30, sx: 2.6, sy: 0.8 });
+      badgeSprite.position.set(-5.5, 3.4, 2.2);
+      scene.add(badgeSprite);
+    }
+
+    function initThree() {
+      if (typeof THREE === 'undefined') {
+        console.error('Three.js 未加载（请确认 vendor/ 相对路径）');
+        return false;
+      }
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.setClearColor(CRAFT3.bg, 1);
+
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(CRAFT3.bg);
+      scene.fog = new THREE.Fog(CRAFT3.bg, 18, 42);
+
+      camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
+      camera.position.set(2.5, 7.5, 14);
+
+      if (typeof THREE.OrbitControls !== 'undefined') {
+        orbit = new THREE.OrbitControls(camera, renderer.domElement);
+        orbit.enableDamping = true;
+        orbit.dampingFactor = 0.06;
+        orbit.target.set(0, 1.6, 0);
+        orbit.minDistance = 6;
+        orbit.maxDistance = 28;
+        orbit.maxPolarAngle = Math.PI * 0.48;
+        orbit.minPolarAngle = 0.2;
+      } else {
+        console.error('OrbitControls 未加载（请确认 vendor/ 相对路径）');
+      }
+
+      scene.add(new THREE.AmbientLight(0xc8b0c0, 0.42));
+      const dir = new THREE.DirectionalLight(0xffe0f0, 0.85);
+      dir.position.set(8, 16, 10);
+      dir.castShadow = true;
+      dir.shadow.mapSize.set(1024, 1024);
+      dir.shadow.camera.near = 1;
+      dir.shadow.camera.far = 40;
+      dir.shadow.camera.left = -14;
+      dir.shadow.camera.right = 14;
+      dir.shadow.camera.top = 12;
+      dir.shadow.camera.bottom = -8;
+      scene.add(dir);
+      const fill = new THREE.PointLight(0xb080a0, 0.4, 40);
+      fill.position.set(-6, 6, 8);
+      scene.add(fill);
+      const cool = new THREE.PointLight(0x6a7a88, 0.22, 35);
+      cool.position.set(8, 4, -6);
+      scene.add(cool);
+
+      createWorkshop();
+      clock = new THREE.Clock();
+      syncCanvasSize();
+      threeReady = true;
+      return true;
+    }
+
+    function placeBay() {
+      if (!bayMesh) return;
+      var L = layoutMom || layoutMetrics();
+      var mid = (L.TARGET_LEFT + L.TARGET_RIGHT) / 2;
+      var widthPx = Math.max(20, L.TARGET_RIGHT - L.TARGET_LEFT);
+      var wx = pxToWorldX(mid);
+      var ww = (widthPx / Math.max(1, W)) * TRACK_WORLD;
+      bayMesh.position.x = wx;
+      bayMesh.scale.x = Math.max(0.45, ww / 1.8);
+      var on = hasFired && winOk && !animating;
+      bayMat.emissiveIntensity = on ? 0.55 : 0.22;
+      bayMat.opacity = on ? 0.42 : 0.26;
+      bayMat.color.setHex(playMode === 'challenge' ? 0xa06080 : CRAFT3.ok);
+      bayMat.emissive.setHex(playMode === 'challenge' ? 0xa06080 : CRAFT3.ok);
+    }
+
+    function placeBlocks() {
+      if (!block1 || !block2) return;
+      var s1 = 0.75 + 0.08 * Math.min(10, m1);
+      var s2 = 0.75 + 0.08 * Math.min(10, m2);
+      block1.scale.setScalar(s1);
+      block2.scale.setScalar(s2);
+      block1.position.set(pxToWorldX(ball1X), 1.55 + 0.35 * s1, 0);
+      block2.position.set(pxToWorldX(ball2X), 1.55 + 0.35 * s2, 0);
+
+      if (railMesh && sRailTemp) {
+        var tRail = parseFloat(sRailTemp.value) || 22;
+        var tN = Math.max(0, Math.min(1, (tRail - 5) / 55));
+        railMesh.material.emissiveIntensity = 0.04 + tN * 0.18;
+        railMesh.material.color.setRGB(0.48 + tN * 0.2, 0.52 - tN * 0.12, 0.55 - tN * 0.25);
+      }
+    }
+
+    function syncSparks() {
+      if (!sparkGroup) return;
+      var r1 = ballRadius(m1), r2 = ballRadius(m2);
+      var close = animating && Math.abs(ball1X - ball2X) < (r1 + r2) * 2.2;
+      var kids = sparkGroup.children;
+      for (var i = 0; i < kids.length; i++) {
+        var sp = kids[i];
+        if (!close) { sp.visible = false; continue; }
+        var sf = ((performance.now() * 0.02 + i * 1.7) % 1);
+        var ang = (i / kids.length) * Math.PI * 2;
+        var cx = (block1.position.x + block2.position.x) / 2;
+        var cy = (block1.position.y + block2.position.y) / 2;
+        sp.visible = true;
+        sp.position.set(cx + Math.cos(ang) * sf * 0.55, cy + Math.sin(ang) * sf * 0.4, Math.sin(ang * 2) * sf * 0.3);
+        sp.material.opacity = 0.9 - sf * 0.85;
+        sp.scale.setScalar(1.2 - sf);
+      }
+    }
+
+    function syncVelArrow() {
+      if (!velArrow) return;
+      if (!hasFired && !animating) {
+        velArrow.visible = true;
+        velArrow.position.set(block1.position.x + 0.7 + v1 * 0.08, block1.position.y + 0.55, 0.2);
+        velArrow.scale.set(1, 0.8 + v1 * 0.08, 1);
+      } else {
+        velArrow.visible = false;
+      }
     }
 
     function drawScene() {
-        syncCanvasSize();
-        var L = layoutMetrics();
-        ctx.clearRect(0, 0, W, H);
-        var GROUND_Y = L.GROUND_Y;
-        var TARGET_LEFT = L.TARGET_LEFT, TARGET_RIGHT = L.TARGET_RIGHT;
-        var TARGET_Y_TOP = L.TARGET_Y_TOP, TARGET_Y_BOT = L.TARGET_Y_BOT;
-
-        var SC = { ink:'#120c12', mid:'#2e2430', hi:'#e8a8c8', glow:'#e060a0', metal:'#7a8490', accent:'#0c8aad', ok:'#6fae8f' };
-
-        // 冷色实验台背景 + 纵深
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#1a1420');
-        bg.addColorStop(0.35, SC.ink);
-        bg.addColorStop(0.72, '#181018');
-        bg.addColorStop(1, '#0e080e');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-        var flood = ctx.createRadialGradient(W * 0.28, H * 0.06, 6, W * 0.42, H * 0.5, Math.max(W, H) * 0.75);
-        flood.addColorStop(0, 'rgba(232,168,200,0.18)');
-        flood.addColorStop(0.4, 'rgba(200,120,160,0.08)');
-        flood.addColorStop(1, 'rgba(18,12,18,0)');
-        ctx.fillStyle = flood;
-        ctx.fillRect(0, 0, W, H);
-
-        // 顶灯带（冷实验室照明）
-        for (var li = 0; li < 5; li++) {
-            var lx = 60 + li * (W / 5.5);
-            ctx.strokeStyle = 'rgba(122,132,144,0.5)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(lx, 6);
-            ctx.lineTo(lx, 28);
-            ctx.stroke();
-            ctx.fillStyle = SC.hi;
-            roundRect(lx - 12, 28, 24, 10, 3);
-            ctx.fill();
-            var lg = ctx.createRadialGradient(lx, 42, 2, lx, 55, 28);
-            lg.addColorStop(0, 'rgba(232,168,200,0.22)');
-            lg.addColorStop(1, 'rgba(232,168,200,0)');
-            ctx.fillStyle = lg;
-            ctx.beginPath();
-            ctx.arc(lx, 55, 28, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // 后墙板 + 设备柜（吃上空）
-        ctx.fillStyle = 'rgba(46,36,48,0.55)';
-        ctx.fillRect(0, 32, W, GROUND_Y - 80);
-        ctx.strokeStyle = 'rgba(122,132,144,0.15)';
-        ctx.lineWidth = 1;
-        for (var pv = 0; pv < 5; pv++) {
-            ctx.beginPath();
-            ctx.moveTo(0, 50 + pv * 42);
-            ctx.lineTo(W, 50 + pv * 42);
-            ctx.stroke();
-        }
-        // 右后设备柜
-        ctx.fillStyle = '#2a2430';
-        roundRect(W - 110, 118, 96, H * 0.38, 4);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(200,120,160,0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
-        ctx.fillText('设备柜', W - 88, 136);
-        for (var shelf = 0; shelf < 4; shelf++) {
-            ctx.fillStyle = '#3a3440';
-            ctx.fillRect(W - 100, 150 + shelf * 42, 76, 6);
-            ctx.fillStyle = shelf % 2 ? SC.metal : '#5a4860';
-            ctx.fillRect(W - 94, 160 + shelf * 42, 28, 22);
-            ctx.fillRect(W - 58, 160 + shelf * 42, 28, 22);
-        }
-
-        // 左侧气泵柜（金属质感）
-        var pumpGrad = ctx.createLinearGradient(8, GROUND_Y - 120, 96, GROUND_Y);
-        pumpGrad.addColorStop(0, '#3a4048');
-        pumpGrad.addColorStop(0.5, SC.metal);
-        pumpGrad.addColorStop(1, '#4a5058');
-        ctx.fillStyle = pumpGrad;
-        roundRect(10, GROUND_Y - 118, 86, 110, 5);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(200,120,160,0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = SC.ink;
-        ctx.fillRect(24, GROUND_Y - 96, 58, 26);
-        ctx.fillStyle = SC.accent;
-        ctx.fillRect(30, GROUND_Y - 88, 22, 12);
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('气泵', 40, GROUND_Y - 124);
-        ctx.strokeStyle = 'rgba(122,132,144,0.65)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(96, GROUND_Y - 48);
-        ctx.quadraticCurveTo(120, GROUND_Y - 58, 140, GROUND_Y - 22);
-        ctx.stroke();
-
-        // 实验台地坪
-        const floor = ctx.createLinearGradient(0, GROUND_Y + 8, 0, H);
-        floor.addColorStop(0, '#3a3840');
-        floor.addColorStop(0.4, SC.mid);
-        floor.addColorStop(1, SC.ink);
-        ctx.fillStyle = floor;
-        ctx.fillRect(0, GROUND_Y + 8, W, H - GROUND_Y - 8);
-        ctx.fillStyle = SC.metal;
-        ctx.fillRect(0, GROUND_Y + 8, W, 3);
-
-        // 加高铝轨 + 喷气孔；导轨温度只改色温雾气（不影响碰撞）
-        var trackL = 36, trackR = W - 36, trackTop = GROUND_Y - 28, trackH = 32;
-        var tRail = sRailTemp ? parseFloat(sRailTemp.value) : 22;
-        var tN = Math.max(0, Math.min(1, (tRail - 5) / 55));
-        var railGrad = ctx.createLinearGradient(0, trackTop, 0, trackTop + trackH);
-        railGrad.addColorStop(0, 'rgb(' + Math.round(154 + tN * 60) + ',' + Math.round(164 - tN * 40) + ',' + Math.round(174 - tN * 70) + ')');
-        railGrad.addColorStop(0.35, 'rgb(' + Math.round(200 + tN * 30) + ',' + Math.round(208 - tN * 50) + ',' + Math.round(216 - tN * 90) + ')');
-        railGrad.addColorStop(0.55, SC.metal);
-        railGrad.addColorStop(1, '#5a626a');
-        ctx.fillStyle = railGrad;
-        roundRect(trackL, trackTop, trackR - trackL, trackH, 3);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(232,168,200,0.25)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(232,168,200,0.45)';
-        for (var p = trackL + 14; p < trackR - 10; p += 16) {
-            ctx.beginPath();
-            ctx.arc(p, GROUND_Y - 6, 1.4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.fillStyle = 'rgba(232,168,200,0.06)';
-        ctx.fillRect(trackL + 4, trackTop - 8, trackR - trackL - 8, 6);
-        if (tN > 0.08) {
-            ctx.fillStyle = 'rgba(255,' + Math.round(200 - tN * 80) + ',' + Math.round(160 - tN * 80) + ',' + (0.04 + tN * 0.12) + ')';
-            ctx.fillRect(trackL + 2, trackTop - 14, trackR - trackL - 4, 12);
-            ctx.fillStyle = 'rgba(240,200,160,' + (0.35 + tN * 0.4) + ')';
-            ctx.font = '10px "Microsoft YaHei",sans-serif';
-            ctx.fillText('导轨 ' + tRail.toFixed(0) + '°C', trackR - 72, trackTop - 16);
-        }
-        ctx.fillStyle = '#5a6268';
-        ctx.fillRect(trackL - 6, GROUND_Y + 2, 14, 28);
-        ctx.fillRect(trackR - 8, GROUND_Y + 2, 14, 28);
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('气垫导轨台', trackL + 8, trackTop - 10);
-
-        // 光电门区（与终点几何对齐）
-        ctx.fillStyle = 'rgba(111,174,143,0.12)';
-        ctx.fillRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
-        ctx.strokeStyle = 'rgba(111,174,143,0.55)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(TARGET_LEFT, TARGET_Y_TOP, TARGET_RIGHT - TARGET_LEFT, TARGET_Y_BOT - TARGET_Y_TOP);
-        ctx.fillStyle = SC.metal;
-        ctx.fillRect(TARGET_LEFT + 2, TARGET_Y_TOP + 6, 5, TARGET_Y_BOT - TARGET_Y_TOP - 12);
-        ctx.fillRect(TARGET_RIGHT - 7, TARGET_Y_TOP + 6, 5, TARGET_Y_BOT - TARGET_Y_TOP - 12);
-        ctx.fillStyle = SC.ok;
-        ctx.fillRect(TARGET_LEFT + 4, TARGET_Y_TOP + 4, TARGET_RIGHT - TARGET_LEFT - 8, 3);
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText(playMode === 'challenge' ? '竞赛光电门' : '光电门', TARGET_LEFT + 10, TARGET_Y_TOP - 6);
-
-        var r1 = ballRadius(m1), r2 = ballRadius(m2);
-        if (!animating && !hasFired) {
-            ball1X = L.BALL1_INIT_X;
-            ball2X = L.BALL2_INIT_X;
-            ball1Y = GROUND_Y - r1;
-            ball2Y = GROUND_Y - r2;
-        }
-
-        function drawBlock(x, y, r, fill, stroke, label) {
-            var rr = r * 1.25;
-            roundRect(x - rr, y - rr * 0.75, rr * 2, rr * 1.55, 5);
-            ctx.fillStyle = fill;
-            ctx.fill();
-            ctx.strokeStyle = stroke;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.fillStyle = 'rgba(255,255,255,0.12)';
-            roundRect(x - rr + 4, y - rr * 0.55, rr * 0.7, rr * 0.45, 3);
-            ctx.fill();
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 13px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(label, x, y + 5);
-            ctx.textAlign = 'left';
-        }
-        drawBlock(ball1X, ball1Y, r1, '#5a7898', SC.hi, '1');
-        drawBlock(ball2X, ball2Y, r2, SC.accent, '#f0b0c8', '2');
-
-        // 初速 / 动量箭头；碰撞火花
-        if (!hasFired) {
-            ctx.strokeStyle = SC.hi;
-            ctx.fillStyle = SC.hi;
-            ctx.lineWidth = 2.5;
-            var ax = ball1X + r1 + 8;
-            var ay = ball1Y - r1 - 14;
-            ctx.beginPath();
-            ctx.moveTo(ax, ay);
-            ctx.lineTo(ax + 36 + v1 * 5, ay);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(ax + 36 + v1 * 5, ay);
-            ctx.lineTo(ax + 26 + v1 * 5, ay - 6);
-            ctx.lineTo(ax + 26 + v1 * 5, ay + 6);
-            ctx.fill();
-            ctx.fillStyle = SC.hi;
-            ctx.font = '12px "Microsoft YaHei",sans-serif';
-            ctx.fillText('p₁→', ax + 6, ay - 8);
-        }
-        if (animating && Math.abs(ball1X - ball2X) < (r1 + r2) * 2.2) {
-            var sx = (ball1X + ball2X) / 2, sy = (ball1Y + ball2Y) / 2;
-            var collSpeed = Math.abs(v1 - v2);
-            var speedNorm = Math.min(1, collSpeed / 8);
-            var sparkN = 4 + Math.floor(speedNorm * 10);
-            var sparkLen = 12 + speedNorm * 22;
-            // 撞击暖闪
-            ctx.fillStyle = 'rgba(255,180,100,' + (0.15 + speedNorm * 0.35) + ')';
-            ctx.beginPath();
-            ctx.arc(sx, sy, 8 + speedNorm * 18, 0, Math.PI * 2);
-            ctx.fill();
-            for (var sp = 0; sp < sparkN; sp++) {
-                var sa = (sp / sparkN) * Math.PI * 2;
-                ctx.strokeStyle = 'rgba(255,200,120,' + (0.55 + speedNorm * 0.4) + ')';
-                ctx.lineWidth = 1.5 + speedNorm * 1.5;
-                ctx.beginPath();
-                ctx.moveTo(sx, sy);
-                ctx.lineTo(sx + Math.cos(sa) * sparkLen, sy + Math.sin(sa) * (sparkLen * 0.75));
-                ctx.stroke();
-            }
-            ctx.fillStyle = 'rgba(255,220,160,' + (0.7 + speedNorm * 0.3) + ')';
-            ctx.beginPath();
-            ctx.arc(sx, sy, 4 + speedNorm * 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        if (hasFired && !animating && v1f !== null) {
-            ctx.strokeStyle = SC.glow;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(ball1X, ball1Y - r1 - 20);
-            ctx.lineTo(ball1X + v1f * 18, ball1Y - r1 - 20);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(ball2X, ball2Y - r2 - 20);
-            ctx.lineTo(ball2X + v2f * 18, ball2Y - r2 - 20);
-            ctx.stroke();
-        }
-
-        if (hasFired && !animating && v1f !== null) {
-            roundRect(16, H - 72, 148, 48, 10);
-            ctx.fillStyle = 'rgba(18,12,18,0.88)';
-            ctx.fill();
-            ctx.strokeStyle = 'rgba(200,120,160,0.45)';
-            ctx.stroke();
-            ctx.fillStyle = SC.hi;
-            ctx.font = '12px ui-monospace,Consolas,sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText(`v₁' = ${v1f.toFixed(2)} m/s`, 28, H - 52);
-            ctx.fillText(`v₂' = ${v2f.toFixed(2)} m/s`, 28, H - 34);
-        }
-        ctx.textAlign = 'left';
+      syncCanvasSize();
+      var L = layoutMetrics();
+      if (!animating && !hasFired) {
+        ball1X = L.BALL1_INIT_X;
+        ball2X = L.BALL2_INIT_X;
+        ball1Y = L.GROUND_Y - ballRadius(m1);
+        ball2Y = L.GROUND_Y - ballRadius(m2);
+      }
+      if (!threeReady) return;
+      placeBay();
+      placeBlocks();
+      syncSparks();
+      syncVelArrow();
+      var bayLabel = playMode === 'challenge' ? '竞赛光电门' : '光电门';
+      updateSpriteText(badgeSprite, '气垫导轨台\n' + bayLabel);
+      badgeSprite.position.set(bayMesh ? bayMesh.position.x : 4, 3.5, 1.8);
     }
 
     function fire() {
@@ -1517,9 +1643,32 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     updateSliderLabels();
     refreshGoalUI();
-    resetSim(true);
-    drawScene();
-    window.__momRedraw = drawScene;
+    window.__momRedraw = function() {
+      syncCanvasSize();
+      if (!animating) drawScene();
+    };
+
+    if (!initThree()) {
+      hintMsg.textContent = '3D engine missing: vendor/three.min.js';
+    } else {
+      resetSim(true);
+      (function renderLoop() {
+        const tNow = clock ? clock.getElapsedTime() : 0;
+        if (lampPivot) lampPivot.rotation.z = Math.sin(tNow * 1.1) * 0.05;
+        if (dustPoints) {
+          const arr = dustPoints.geometry.attributes.position.array;
+          for (let i = 0; i < arr.length; i += 3) {
+            arr[i + 1] += 0.002 + ((i / 3) % 5) * 0.00015;
+            if (arr[i + 1] > 8) arr[i + 1] = 0.4;
+          }
+          dustPoints.geometry.attributes.position.needsUpdate = true;
+        }
+        if (!animating) drawScene();
+        if (orbit) orbit.update();
+        if (renderer && scene && camera) renderer.render(scene, camera);
+        requestAnimationFrame(renderLoop);
+      })();
+    }
 
     sMass1.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });
     sMass2.addEventListener('input', function() { updateSliderLabels(); resetSim(true); });

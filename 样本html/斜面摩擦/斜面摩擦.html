@@ -6,6 +6,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>斜面台 · 摩擦探究</title>
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/OrbitControls.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family:var(--font-sans); background: #f5f7fa; padding: 20px; display: flex; justify-content: center; }
@@ -714,6 +716,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 #modeSelect{min-height:34px;}
 
+
+/* === friction-incline-3d-stage === */
+#essence-stage .canvas-wrap{position:relative;overflow:hidden;}
+#essence-stage #simCanvas{touch-action:none;cursor:grab;}
+#essence-stage #simCanvas:active{cursor:grabbing;}
+#sceneOrbitHint{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  z-index:7;pointer-events:none;
+  padding:5px 12px;border-radius:999px;
+  background:rgba(0,0,0,.45);border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent);
+  color:var(--craft-muted);font-size:11px;letter-spacing:.02em;white-space:nowrap;
+}
+
 </style>
 </head>
 <body>
@@ -757,6 +772,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div id="essence-stage">
     <div class="canvas-wrap">
     <canvas id="simCanvas" width="680" height="280"></canvas>
+    <div id="sceneOrbitHint">拖拽旋转视角 · 滚轮缩放</div>
   </div>
 
   
@@ -860,7 +876,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <script>
     (function() {
       const canvas = document.getElementById('simCanvas');
-      const ctx = canvas.getContext('2d');
       const frictionSlider = document.getElementById('s-friction');
       const angleSlider = document.getElementById('s-angle');
       const massSlider = document.getElementById('s-mass');
@@ -875,6 +890,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       // t=0 坡底，t=1 坡顶；待机靠坡顶，下滑 t 减小
       const T_TOP = 0.82;
       const T_BOTTOM = 0.12;
+      const RAMP_LEN = 10;
+      const CRAFT3 = {
+        bg: 0x14100c,
+        mid: 0x2e2418,
+        hi: 0xe8b888,
+        glow: 0xe07830,
+        metal: 0x7a7060,
+        accent: 0xd08850,
+        ok: 0x6fae8f,
+        ink: 0x14100c
+      };
+
       let animating = false;
       let blockT = T_TOP;
       let testCount = 0;
@@ -885,10 +912,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       let won = false;
       let playMode = 'explore';
       let challengeLockedMu = null;
-      let layout = { W: 680, H: 280, groundY: 225, BASE_X: 80, BASE_Y: 220, LENGTH: 260 };
-      let outcomeFlash = 0; // 成功接货短暂光效
-      let outcomeFlashKind = ''; // land | overshoot | stuck
-      // 探究/竞赛分流：竞赛接货区更短，同参未必两边同结论；本局 Fixed 不换区
+      let outcomeFlash = 0;
+      let outcomeFlashKind = '';
+      let threeReady = false;
+      let renderer, scene, camera, orbit, clock;
+      let rampGroup, crateMesh, crateMat, palletGroup, palletMat, palletLabelSprite;
+      let badgeSprite, angleArc, lampPivot, dustPoints;
+      let woodTex, crateTex;
+      let lastThetaDrawn = null;
+      let lastMassDrawn = null;
+      let lastMuDrawn = null;
+      let lastModeDrawn = null;
+      let slidingVisual = false;
+
       const ZONE_MODE = {
         explore: { landLimit: -0.36, label: '接货区' },
         challenge: { landLimit: -0.16, label: '急单接货' }
@@ -963,30 +999,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         }
       };
 
-      function syncCanvasSize() {
-        var stage = document.getElementById('essence-stage') || canvas.parentElement;
-        var cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 680);
-        var cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 280);
-        var dpr = Math.min(2.5, window.devicePixelRatio || 1);
-        canvas.style.width = cssW + 'px';
-        canvas.style.height = cssH + 'px';
-        var bw = Math.round(cssW * dpr);
-        var bh = Math.round(cssH * dpr);
-        if (canvas.width !== bw || canvas.height !== bh) {
-          canvas.width = bw;
-          canvas.height = bh;
-        }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        layout.W = cssW;
-        layout.H = cssH;
-        layout.groundY = Math.round(cssH * 0.84);
-        // 左侧留给接货区，斜面加长以填满舞台中心
-        var palletReserve = 120;
-        layout.LENGTH = Math.round(Math.min(cssW * 0.58, 0.88 * (layout.groundY - 48)));
-        layout.BASE_X = Math.round(Math.max(palletReserve + 16, Math.min(cssW * 0.28, cssW - layout.LENGTH - 80)));
-        layout.BASE_Y = layout.groundY - 5;
-      }
-
       function params() {
         const mu = parseFloat(frictionSlider.value);
         const thetaDeg = parseFloat(angleSlider.value);
@@ -995,12 +1007,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const tanTheta = Math.tan(thetaRad);
         const excess = tanTheta - mu;
         const willSlide = excess > 0;
-        // 连续停距：超额越大，冲出坡脚越远；中间带落在接货区
-        // stopT：≥0 在斜面上；<0 沿地面向左（接货区方向）
         let stopT = T_TOP;
         let outcome = 'stuck';
         if (willSlide) {
-          // excess≈0.05 刚进区；越大越冲过；landLimit 按模式分流
           stopT = -(0.04 + excess * 0.95);
           if (stopT < -0.72) stopT = -0.72;
           if (stopT > zoneCfg().landLimit) outcome = 'land';
@@ -1016,346 +1025,540 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         if (massDisplay) massDisplay.textContent = p.mass.toFixed(1);
       }
 
-      function roundRect(x, y, w, h, r) {
-        const rr = Math.min(r, w / 2, h / 2);
-        ctx.beginPath();
-        ctx.moveTo(x + rr, y);
-        ctx.arcTo(x + w, y, x + w, y + h, rr);
-        ctx.arcTo(x + w, y + h, x, y + h, rr);
-        ctx.arcTo(x, y + h, x, y, rr);
-        ctx.arcTo(x, y, x + w, y, rr);
-        ctx.closePath();
+      function makeWoodTexture() {
+        const c = document.createElement('canvas');
+        c.width = 256; c.height = 256;
+        const g = c.getContext('2d');
+        g.fillStyle = '#8a5a30';
+        g.fillRect(0, 0, 256, 256);
+        for (let i = 0; i < 28; i++) {
+          g.strokeStyle = 'rgba(58,40,24,' + (0.18 + (i % 5) * 0.05) + ')';
+          g.lineWidth = 1 + (i % 3);
+          g.beginPath();
+          g.moveTo(0, 8 + i * 9);
+          g.bezierCurveTo(64, 4 + i * 9, 160, 14 + i * 9, 256, 6 + i * 9);
+          g.stroke();
+        }
+        for (let i = 0; i < 40; i++) {
+          g.fillStyle = 'rgba(232,184,136,' + (0.04 + (i % 4) * 0.02) + ')';
+          g.fillRect((i * 37) % 256, (i * 53) % 256, 2, 8);
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.anisotropy = 4;
+        return tex;
       }
 
-      function drawScene(thetaRad, mass, t, sliding) {
-        syncCanvasSize();
-        const W = layout.W, H = layout.H;
-        const groundY = layout.groundY;
-        const BASE_X = layout.BASE_X, BASE_Y = layout.BASE_Y, LENGTH = layout.LENGTH;
-        const m = (typeof mass === 'number' && isFinite(mass)) ? mass : 1;
-        const cosA = Math.cos(thetaRad);
-        const sinA = Math.sin(thetaRad);
-        const dx = LENGTH * cosA;
-        const dy = LENGTH * sinA;
-        const topX = BASE_X + dx;
-        const topY = BASE_Y - dy;
+      function makeCrateTexture() {
+        const c = document.createElement('canvas');
+        c.width = 128; c.height = 128;
+        const g = c.getContext('2d');
+        g.fillStyle = '#c89860';
+        g.fillRect(0, 0, 128, 128);
+        g.strokeStyle = '#3a2818';
+        g.lineWidth = 6;
+        g.strokeRect(4, 4, 120, 120);
+        g.lineWidth = 3;
+        g.beginPath();
+        g.moveTo(64, 8); g.lineTo(64, 120);
+        g.moveTo(8, 64); g.lineTo(120, 64);
+        g.stroke();
+        g.fillStyle = 'rgba(58,40,24,0.35)';
+        g.fillRect(10, 28, 108, 6);
+        g.fillRect(10, 94, 108, 6);
+        const tex = new THREE.CanvasTexture(c);
+        return tex;
+      }
 
-        const SC = { ink: '#14100c', mid: '#2e2418', hi: '#e8b888', glow: '#e07830', metal: '#7a7060', accent: '#d08850', ok: '#6fae8f' };
-        ctx.clearRect(0, 0, W, H);
+      function makeLabelSprite(text, opts) {
+        opts = opts || {};
+        const c = document.createElement('canvas');
+        c.width = opts.w || 256;
+        c.height = opts.h || 96;
+        const g = c.getContext('2d');
+        g.clearRect(0, 0, c.width, c.height);
+        g.fillStyle = 'rgba(20,16,12,0.88)';
+        const r = 14;
+        g.beginPath();
+        g.moveTo(r, 0);
+        g.arcTo(c.width, 0, c.width, c.height, r);
+        g.arcTo(c.width, c.height, 0, c.height, r);
+        g.arcTo(0, c.height, 0, 0, r);
+        g.arcTo(0, 0, c.width, 0, r);
+        g.closePath();
+        g.fill();
+        g.strokeStyle = 'rgba(208,136,80,0.55)';
+        g.lineWidth = 3;
+        g.stroke();
+        g.fillStyle = '#e8b888';
+        g.font = 'bold ' + (opts.fontSize || 28) + 'px "Microsoft YaHei",sans-serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        const lines = String(text).split('\n');
+        const lineH = (opts.fontSize || 28) + 6;
+        const startY = c.height / 2 - (lines.length - 1) * lineH / 2;
+        lines.forEach(function(line, i) {
+          g.fillText(line, c.width / 2, startY + i * lineH);
+        });
+        const tex = new THREE.CanvasTexture(c);
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+        const spr = new THREE.Sprite(mat);
+        spr.scale.set(opts.sx || 2.2, opts.sy || 0.85, 1);
+        spr.userData.canvas = c;
+        spr.userData.ctx = g;
+        spr.userData.tex = tex;
+        return spr;
+      }
 
-        // —— 斜面摩擦台：暖色木工坊 ——
-        const wall = ctx.createLinearGradient(0, 0, 0, H);
-        wall.addColorStop(0, '#1e1810');
-        wall.addColorStop(0.35, SC.ink);
-        wall.addColorStop(0.72, '#181410');
-        wall.addColorStop(1, '#100c08');
-        ctx.fillStyle = wall;
-        ctx.fillRect(0, 0, W, H);
+      function updateSpriteText(spr, text) {
+        if (!spr || !spr.userData || !spr.userData.ctx) return;
+        const c = spr.userData.canvas;
+        const g = spr.userData.ctx;
+        g.clearRect(0, 0, c.width, c.height);
+        g.fillStyle = 'rgba(20,16,12,0.88)';
+        const r = 14;
+        g.beginPath();
+        g.moveTo(r, 0);
+        g.arcTo(c.width, 0, c.width, c.height, r);
+        g.arcTo(c.width, c.height, 0, c.height, r);
+        g.arcTo(0, c.height, 0, 0, r);
+        g.arcTo(0, 0, c.width, 0, r);
+        g.closePath();
+        g.fill();
+        g.strokeStyle = 'rgba(208,136,80,0.55)';
+        g.lineWidth = 3;
+        g.stroke();
+        g.fillStyle = '#e8b888';
+        g.font = 'bold 28px "Microsoft YaHei",sans-serif';
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        const lines = String(text).split('\n');
+        const lineH = 34;
+        const startY = c.height / 2 - (lines.length - 1) * lineH / 2;
+        lines.forEach(function(line, i) {
+          g.fillText(line, c.width / 2, startY + i * lineH);
+        });
+        spr.userData.tex.needsUpdate = true;
+      }
 
-        const tNow = performance.now();
-        const lampPulse = 0.92 + 0.08 * Math.sin(tNow * 0.002);
-        const flood = ctx.createRadialGradient(W * 0.42, H * 0.06, 8, W * 0.48, groundY * 0.55, Math.max(W, H) * 0.65);
-        flood.addColorStop(0, `rgba(224,120,48,${0.20 * lampPulse})`);
-        flood.addColorStop(0.4, `rgba(208,136,80,${0.08 * lampPulse})`);
-        flood.addColorStop(1, 'rgba(20,16,12,0)');
-        ctx.fillStyle = flood;
-        ctx.fillRect(0, 0, W, H);
+      function syncRendererSize() {
+        if (!renderer || !camera) return;
+        const stage = document.getElementById('essence-stage') || canvas.parentElement;
+        const cssW = Math.max(2, (stage && stage.clientWidth) || canvas.clientWidth || 680);
+        const cssH = Math.max(2, (stage && stage.clientHeight) || canvas.clientHeight || 280);
+        const pr = Math.min(2, window.devicePixelRatio || 1);
+        if (canvas.width !== Math.round(cssW * pr) || canvas.height !== Math.round(cssH * pr)) {
+          renderer.setPixelRatio(pr);
+          renderer.setSize(cssW, cssH, false);
+          canvas.style.width = cssW + 'px';
+          canvas.style.height = cssH + 'px';
+          camera.aspect = cssW / cssH;
+          camera.updateProjectionMatrix();
+        }
+      }
 
-        // 悬挂工作灯（微摆 + 琥珀光晕）
-        const lampX = Math.min(W - 90, topX + 50);
-        const lampSwing = Math.sin(tNow * 0.0018) * 5;
-        ctx.strokeStyle = SC.metal;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(lampX, 6);
-        ctx.lineTo(lampX + lampSwing, 52);
-        ctx.stroke();
-        ctx.fillStyle = SC.accent;
-        roundRect(lampX + lampSwing - 11, 52, 22, 14, 4);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(224,120,48,0.45)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        const lampGlow = ctx.createRadialGradient(lampX + lampSwing, 72, 2, lampX + lampSwing, 85, 48);
-        lampGlow.addColorStop(0, `rgba(224,120,48,${0.32 * lampPulse})`);
-        lampGlow.addColorStop(1, 'rgba(224,120,48,0)');
-        ctx.fillStyle = lampGlow;
-        ctx.beginPath();
-        ctx.arc(lampX + lampSwing, 85, 48, 0, Math.PI * 2);
-        ctx.fill();
+      function disposeObject(obj) {
+        if (!obj) return;
+        obj.traverse(function(o) {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) {
+            if (Array.isArray(o.material)) o.material.forEach(function(m) { if (m.dispose) m.dispose(); });
+            else if (o.material.dispose) o.material.dispose();
+          }
+        });
+      }
 
-        // 加厚工具挂板 + 侧柜
-        const pegX = W - 100;
-        if (pegX > topX + 40) {
-          ctx.fillStyle = SC.mid;
-          roundRect(pegX, 118, 78, Math.max(50, groundY - 140), 4);
-          ctx.fill();
-          ctx.strokeStyle = 'rgba(122,112,96,0.6)';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          ctx.fillStyle = SC.hi;
-          ctx.font = 'bold 10px "Microsoft YaHei",sans-serif';
-          ctx.fillText('工具板', pegX + 16, 136);
-          for (let pi = 0; pi < 5; pi++) {
-            ctx.fillStyle = pi % 2 ? SC.metal : SC.accent;
-            ctx.fillRect(pegX + 12, 148 + pi * 34, 24, 6);
-            ctx.fillStyle = 'rgba(232,184,136,0.4)';
-            ctx.beginPath();
-            ctx.arc(pegX + 52, 158 + pi * 34, 7, 0, Math.PI * 2);
-            ctx.fill();
+      function buildAngleArc(thetaRad) {
+        if (angleArc) {
+          rampGroup.remove(angleArc);
+          disposeObject(angleArc);
+          angleArc = null;
+        }
+        const pts = [];
+        const r = 1.35;
+        const n = 24;
+        for (let i = 0; i <= n; i++) {
+          const a = (thetaRad * i) / n;
+          pts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0.02));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        const mat = new THREE.LineBasicMaterial({ color: CRAFT3.accent, transparent: true, opacity: 0.85 });
+        angleArc = new THREE.Line(geo, mat);
+        rampGroup.add(angleArc);
+
+        const tickPts = [];
+        tickPts.push(new THREE.Vector3(0, 0, 0.03), new THREE.Vector3(r + 0.35, 0, 0.03));
+        const baseGeo = new THREE.BufferGeometry().setFromPoints(tickPts);
+        const baseLine = new THREE.Line(baseGeo, new THREE.LineBasicMaterial({ color: 0xe8b888, transparent: true, opacity: 0.55 }));
+        angleArc.add(baseLine);
+
+        const mid = thetaRad / 2;
+        const thetaSpr = makeLabelSprite('θ', { w: 96, h: 96, fontSize: 40, sx: 0.55, sy: 0.55 });
+        thetaSpr.position.set(Math.cos(mid) * (r + 0.55), Math.sin(mid) * (r + 0.55), 0.2);
+        angleArc.add(thetaSpr);
+      }
+
+      function rebuildRamp(thetaRad, mu) {
+        while (rampGroup.children.length) {
+          const ch = rampGroup.children[0];
+          rampGroup.remove(ch);
+          disposeObject(ch);
+        }
+        angleArc = null;
+
+        const rough = 0.55 + Math.max(0, Math.min(1, mu)) * 0.35;
+        const rampMat = new THREE.MeshStandardMaterial({
+          color: 0xc88858,
+          map: woodTex,
+          roughness: rough,
+          metalness: 0.05,
+          emissive: 0x3a2818,
+          emissiveIntensity: 0.08
+        });
+        woodTex.repeat.set(2.2, 1);
+
+        const rampGeo = new THREE.BoxGeometry(RAMP_LEN, 0.42, 2.6);
+        rampGeo.translate(RAMP_LEN / 2, -0.21, 0);
+        const ramp = new THREE.Mesh(rampGeo, rampMat);
+        ramp.rotation.z = thetaRad;
+        ramp.castShadow = true;
+        ramp.receiveShadow = true;
+        rampGroup.add(ramp);
+
+        // side wedge bulk under ramp for mass/presence (skip near-flat θ)
+        if (thetaRad > 0.04) {
+          const wx = Math.max(0.4, RAMP_LEN * Math.cos(thetaRad));
+          const wy = Math.max(0.15, RAMP_LEN * Math.sin(thetaRad));
+          const wedgeShape = new THREE.Shape();
+          wedgeShape.moveTo(0, 0);
+          wedgeShape.lineTo(wx, 0);
+          wedgeShape.lineTo(wx, wy);
+          wedgeShape.closePath();
+          const wedgeGeo = new THREE.ExtrudeGeometry(wedgeShape, { depth: 2.2, bevelEnabled: false });
+          wedgeGeo.translate(0, 0, -1.1);
+          const wedgeMat = new THREE.MeshStandardMaterial({
+            color: 0x6a4020, roughness: 0.88, metalness: 0.02, map: woodTex
+          });
+          const wedge = new THREE.Mesh(wedgeGeo, wedgeMat);
+          wedge.position.y = -0.01;
+          wedge.castShadow = true;
+          wedge.receiveShadow = true;
+          rampGroup.add(wedge);
+        }
+
+        // top deck
+        const deckMat = new THREE.MeshStandardMaterial({ color: 0x7a5028, roughness: 0.7, metalness: 0.05 });
+        const deck = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.28, 2.8), deckMat);
+        const topX = RAMP_LEN * Math.cos(thetaRad);
+        const topY = RAMP_LEN * Math.sin(thetaRad);
+        deck.position.set(topX + 0.2, topY + 0.14, 0);
+        deck.castShadow = true;
+        deck.receiveShadow = true;
+        rampGroup.add(deck);
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.9, 0.18), new THREE.MeshStandardMaterial({ color: 0x5a3820 }));
+        post.position.set(topX + 0.9, topY + 0.55, 0.9);
+        rampGroup.add(post);
+        const deckLabel = makeLabelSprite('装车台', { w: 180, h: 72, fontSize: 30, sx: 1.4, sy: 0.55 });
+        deckLabel.position.set(topX + 0.2, topY + 1.15, 0);
+        rampGroup.add(deckLabel);
+
+        // surface rail highlight
+        const railMat = new THREE.MeshStandardMaterial({
+          color: CRAFT3.hi, roughness: 0.35, metalness: 0.15,
+          emissive: CRAFT3.glow, emissiveIntensity: 0.12
+        });
+        const railGeo = new THREE.BoxGeometry(RAMP_LEN, 0.06, 0.12);
+        railGeo.translate(RAMP_LEN / 2, 0.03, 0);
+        [-1.15, 1.15].forEach(function(z) {
+          const rail = new THREE.Mesh(railGeo, railMat);
+          rail.rotation.z = thetaRad;
+          rail.position.z = z;
+          rampGroup.add(rail);
+        });
+
+        buildAngleArc(thetaRad);
+        lastThetaDrawn = thetaRad;
+        lastMuDrawn = mu;
+      }
+
+      function rebuildPallet() {
+        if (palletGroup) {
+          scene.remove(palletGroup);
+          disposeObject(palletGroup);
+          palletGroup = null;
+          palletMat = null;
+          palletLabelSprite = null;
+        }
+        const zc = zoneCfg();
+        const palletW = Math.max(1.2, Math.abs(zc.landLimit) * RAMP_LEN * 0.95);
+        palletGroup = new THREE.Group();
+        const col = playMode === 'challenge' ? 0xa06030 : CRAFT3.accent;
+        palletMat = new THREE.MeshStandardMaterial({
+          color: col,
+          roughness: 0.55,
+          metalness: 0.08,
+          emissive: col,
+          emissiveIntensity: 0.08
+        });
+        const board = new THREE.Mesh(new THREE.BoxGeometry(palletW, 0.18, 2.4), palletMat);
+        board.position.set(-palletW / 2 - 0.35, 0.09, 0);
+        board.castShadow = true;
+        board.receiveShadow = true;
+        palletGroup.add(board);
+        const slatN = Math.max(2, Math.floor(palletW / 0.7));
+        const slatMat = new THREE.MeshStandardMaterial({ color: CRAFT3.hi, roughness: 0.6 });
+        for (let i = 0; i < slatN; i++) {
+          const slat = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.25, palletW / slatN - 0.18), 0.1, 2.0), slatMat);
+          slat.position.set(-0.35 - palletW + 0.25 + i * (palletW / slatN) + palletW / (2 * slatN), 0.22, 0);
+          palletGroup.add(slat);
+        }
+        palletLabelSprite = makeLabelSprite(zc.label, { w: 200, h: 72, fontSize: 28, sx: 1.6, sy: 0.55 });
+        palletLabelSprite.position.set(-palletW / 2 - 0.35, 0.85, 0);
+        palletGroup.add(palletLabelSprite);
+        scene.add(palletGroup);
+        lastModeDrawn = playMode;
+      }
+
+      function crateHalf(mass) {
+        return 0.28 + Math.min(0.28, Math.max(0, (mass - 0.1) / 5) * 0.28);
+      }
+
+      function placeCrate(t, thetaRad, mass, sliding) {
+        if (!crateMesh) return;
+        const half = crateHalf(mass);
+        if (Math.abs((lastMassDrawn || 0) - mass) > 0.001) {
+          crateMesh.scale.setScalar(half / 0.35);
+          lastMassDrawn = mass;
+        }
+        slidingVisual = !!sliding;
+        if (crateMat) {
+          if (sliding) {
+            crateMat.emissive.setHex(CRAFT3.glow);
+            crateMat.emissiveIntensity = 0.35;
+            crateMat.color.setHex(CRAFT3.accent);
+          } else {
+            crateMat.emissive.setHex(0x000000);
+            crateMat.emissiveIntensity = 0;
+            crateMat.color.setHex(0xe8b888);
           }
         }
+        if (t >= 0) {
+          const s = t * RAMP_LEN;
+          const nx = -Math.sin(thetaRad);
+          const ny = Math.cos(thetaRad);
+          crateMesh.position.set(
+            s * Math.cos(thetaRad) + nx * half,
+            s * Math.sin(thetaRad) + ny * half,
+            0
+          );
+          crateMesh.rotation.set(0, 0, thetaRad);
+        } else {
+          crateMesh.position.set(t * RAMP_LEN, half, 0);
+          crateMesh.rotation.set(0, 0, 0);
+        }
+      }
 
-        // 木屑微尘
-        for (let i = 0; i < 14; i++) {
-          const px = (i * 83 + tNow * 0.015) % W;
-          const py = 36 + (i * 41) % Math.max(40, groundY - 80) + Math.sin(tNow * 0.0012 + i) * 4;
-          ctx.fillStyle = `rgba(232,184,136,${0.10 + (i % 3) * 0.04})`;
-          ctx.beginPath();
-          ctx.arc(px, py, 1 + (i % 2) * 0.5, 0, Math.PI * 2);
-          ctx.fill();
+      function createWorkshop() {
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x2a241c, roughness: 0.92, metalness: 0.04 });
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 60), floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(2, -0.02, 0);
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const plankMat = new THREE.MeshStandardMaterial({ color: 0x3a3024, roughness: 0.85, metalness: 0.02 });
+        for (let i = -8; i <= 8; i++) {
+          const plank = new THREE.Mesh(new THREE.BoxGeometry(50, 0.06, 0.95), plankMat);
+          plank.position.set(2, 0.01, i * 1.15);
+          plank.receiveShadow = true;
+          scene.add(plank);
         }
 
-        // 木工地坪
-        const floor = ctx.createLinearGradient(0, groundY, 0, H);
-        floor.addColorStop(0, '#3a3228');
-        floor.addColorStop(0.5, SC.mid);
-        floor.addColorStop(1, SC.ink);
-        ctx.fillStyle = floor;
-        ctx.fillRect(0, groundY, W, H - groundY);
-        ctx.fillStyle = SC.metal;
-        ctx.fillRect(0, groundY, W, 3);
-        ctx.strokeStyle = 'rgba(122,112,96,0.25)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 8; i++) {
-          ctx.beginPath();
-          ctx.moveTo(24 + i * 95, groundY + 6);
-          ctx.lineTo(24 + i * 95, H - 6);
-          ctx.stroke();
-        }
-        ctx.fillStyle = 'rgba(208,136,80,0.15)';
-        for (let g = 0; g < 9; g++) ctx.fillRect(20 + g * 78, groundY + 14, 32, 2);
+        const wallMat = new THREE.MeshStandardMaterial({ color: 0x1e1a16, roughness: 0.92 });
+        const backWall = new THREE.Mesh(new THREE.BoxGeometry(70, 28, 0.8), wallMat);
+        backWall.position.set(4, 13, -14);
+        scene.add(backWall);
+        const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.8, 28, 40), wallMat);
+        sideWall.position.set(-18, 13, -2);
+        scene.add(sideWall);
 
-        // 接货托盘：长度随模式 landLimit，目视可辨探究宽区 vs 竞赛短区
-        const zc = zoneCfg();
-        const palletW = Math.min(BASE_X - 16, Math.max(40, Math.abs(zc.landLimit) * LENGTH * 0.95));
-        const palletX = Math.max(8, BASE_X - palletW - 8);
-        const palletY = groundY - 6;
-        ctx.fillStyle = playMode === 'challenge' ? '#a06030' : SC.accent;
-        roundRect(palletX, palletY, palletW, 12, 2);
-        ctx.fill();
-        ctx.strokeStyle = playMode === 'challenge' ? '#7a5028' : '#6a4020';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = SC.hi;
-        const slatN = Math.max(2, Math.floor(palletW / 24));
-        for (let i = 0; i < slatN; i++) {
-          ctx.fillRect(palletX + 6 + i * (palletW / slatN), palletY - 5, Math.max(10, palletW / slatN - 8), 6);
+        // tool board
+        const boardMat = new THREE.MeshStandardMaterial({ color: CRAFT3.mid, roughness: 0.8 });
+        const board = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5.5, 3.2), boardMat);
+        board.position.set(12.5, 4.2, -8);
+        scene.add(board);
+        const pegMat = new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.55, roughness: 0.4 });
+        for (let i = 0; i < 5; i++) {
+          const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.35, 10), pegMat);
+          peg.rotation.z = Math.PI / 2;
+          peg.position.set(12.25, 2.4 + i * 0.85, -8 + ((i % 2) ? 0.7 : -0.7));
+          scene.add(peg);
         }
-        ctx.fillStyle = 'rgba(15,23,42,0.35)';
-        ctx.fillRect(palletX + 8, groundY + 2, palletW - 16, 3);
-        // 成功接货短暂光晕 / 冲过警示描边
+        const toolLabel = makeLabelSprite('工具板', { w: 160, h: 64, fontSize: 26, sx: 1.3, sy: 0.5 });
+        toolLabel.position.set(12.2, 7.3, -8);
+        scene.add(toolLabel);
+
+        // hanging lamp
+        lampPivot = new THREE.Group();
+        lampPivot.position.set(4.5, 9.5, 2.5);
+        scene.add(lampPivot);
+        const cord = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.03, 0.03, 2.2, 8),
+          new THREE.MeshStandardMaterial({ color: CRAFT3.metal, metalness: 0.6, roughness: 0.35 })
+        );
+        cord.position.y = -1.1;
+        lampPivot.add(cord);
+        const shade = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.35, 0.55, 0.45, 16, 1, true),
+          new THREE.MeshStandardMaterial({ color: CRAFT3.accent, emissive: CRAFT3.glow, emissiveIntensity: 0.45, side: THREE.DoubleSide })
+        );
+        shade.position.y = -2.25;
+        lampPivot.add(shade);
+        const bulb = new THREE.PointLight(0xffc080, 0.9, 18, 2);
+        bulb.position.y = -2.35;
+        lampPivot.add(bulb);
+
+        // dust motes
+        const dustCount = 80;
+        const dustGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(dustCount * 3);
+        for (let i = 0; i < dustCount; i++) {
+          positions[i * 3] = -8 + Math.random() * 22;
+          positions[i * 3 + 1] = 0.4 + Math.random() * 8;
+          positions[i * 3 + 2] = -6 + Math.random() * 12;
+        }
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const dustMat = new THREE.PointsMaterial({
+          color: 0xe8b888, size: 0.06, transparent: true, opacity: 0.35, depthWrite: false
+        });
+        dustPoints = new THREE.Points(dustGeo, dustMat);
+        scene.add(dustPoints);
+
+        // side workbench
+        const bench = new THREE.Mesh(
+          new THREE.BoxGeometry(4.5, 1.1, 2.2),
+          new THREE.MeshStandardMaterial({ color: 0x4a3c2c, roughness: 0.72 })
+        );
+        bench.position.set(-10, 0.55, 6);
+        bench.castShadow = true;
+        scene.add(bench);
+      }
+
+      function initThree() {
+        if (typeof THREE === 'undefined') {
+          console.error('Three.js 未加载（请确认 vendor/ 相对路径）');
+          return false;
+        }
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(CRAFT3.bg, 1);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(CRAFT3.bg);
+        scene.fog = new THREE.Fog(CRAFT3.bg, 22, 55);
+
+        camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+        camera.position.set(6.5, 6.2, 14.5);
+
+        if (typeof THREE.OrbitControls !== 'undefined') {
+          orbit = new THREE.OrbitControls(camera, renderer.domElement);
+          orbit.enableDamping = true;
+          orbit.dampingFactor = 0.06;
+          orbit.target.set(2.5, 2.2, 0);
+          orbit.minDistance = 6;
+          orbit.maxDistance = 28;
+          orbit.maxPolarAngle = Math.PI * 0.49;
+          orbit.minPolarAngle = 0.18;
+        }
+
+        const ambient = new THREE.AmbientLight(0xc8b8a0, 0.42);
+        scene.add(ambient);
+        const dir = new THREE.DirectionalLight(0xffe8c8, 0.85);
+        dir.position.set(10, 18, 10);
+        dir.castShadow = true;
+        dir.shadow.mapSize.set(1024, 1024);
+        dir.shadow.camera.near = 1;
+        dir.shadow.camera.far = 50;
+        dir.shadow.camera.left = -16;
+        dir.shadow.camera.right = 16;
+        dir.shadow.camera.top = 16;
+        dir.shadow.camera.bottom = -16;
+        scene.add(dir);
+        const fill = new THREE.PointLight(0xb8956c, 0.4, 40);
+        fill.position.set(-6, 8, 8);
+        scene.add(fill);
+        const cool = new THREE.PointLight(0x6a7a88, 0.22, 35);
+        cool.position.set(8, 4, -8);
+        scene.add(cool);
+
+        woodTex = makeWoodTexture();
+        crateTex = makeCrateTexture();
+        createWorkshop();
+
+        rampGroup = new THREE.Group();
+        scene.add(rampGroup);
+
+        crateMat = new THREE.MeshStandardMaterial({
+          color: 0xe8b888,
+          map: crateTex,
+          roughness: 0.55,
+          metalness: 0.08
+        });
+        crateMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), crateMat);
+        crateMesh.castShadow = true;
+        crateMesh.receiveShadow = true;
+        scene.add(crateMesh);
+
+        badgeSprite = makeLabelSprite('μ = 0.70\nθ = 30°', { w: 280, h: 128, fontSize: 30, sx: 2.4, sy: 1.1 });
+        badgeSprite.position.set(2.6, 1.6, 2.2);
+        scene.add(badgeSprite);
+
+        clock = new THREE.Clock();
+        syncRendererSize();
+        threeReady = true;
+        return true;
+      }
+
+      function applyOutcomeFlash() {
+        if (!palletMat) return;
         if (outcomeFlash > 0) {
           const fa = Math.min(1, outcomeFlash);
           if (outcomeFlashKind === 'land') {
-            ctx.strokeStyle = `rgba(74,222,128,${0.85 * fa})`;
-            ctx.lineWidth = 3;
-            ctx.strokeRect(palletX - 3, palletY - 8, palletW + 6, 22);
-            ctx.fillStyle = `rgba(74,222,128,${0.18 * fa})`;
-            ctx.fillRect(palletX - 3, palletY - 8, palletW + 6, 22);
+            palletMat.emissive.setHex(CRAFT3.ok);
+            palletMat.emissiveIntensity = 0.15 + 0.65 * fa;
           } else if (outcomeFlashKind === 'overshoot') {
-            ctx.strokeStyle = `rgba(248,113,113,${0.75 * fa})`;
-            ctx.lineWidth = 2.5;
-            ctx.setLineDash([4, 3]);
-            ctx.strokeRect(palletX - 4, palletY - 10, palletW + 8, 26);
-            ctx.setLineDash([]);
+            palletMat.emissive.setHex(0xf87171);
+            palletMat.emissiveIntensity = 0.1 + 0.55 * fa;
+          } else {
+            palletMat.emissive.setHex(CRAFT3.glow);
+            palletMat.emissiveIntensity = 0.08 + 0.25 * fa;
           }
-        }
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText(zc.label, palletX + Math.max(4, palletW / 2 - 22), palletY + 28);
-
-        // —— 木质滑道楔体（加厚） ——
-        const rampTh = 32;
-        ctx.beginPath();
-        ctx.moveTo(BASE_X, BASE_Y);
-        ctx.lineTo(topX, topY);
-        ctx.lineTo(topX + rampTh, topY);
-        ctx.lineTo(topX + rampTh, BASE_Y);
-        ctx.closePath();
-        const rampFill = ctx.createLinearGradient(BASE_X, topY, topX, BASE_Y);
-        rampFill.addColorStop(0, SC.hi);
-        rampFill.addColorStop(0.5, SC.accent);
-        rampFill.addColorStop(1, '#6a4020');
-        ctx.fillStyle = rampFill;
-        ctx.fill();
-        ctx.strokeStyle = '#3a2818';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        // 木板条纹理
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(BASE_X, BASE_Y);
-        ctx.lineTo(topX, topY);
-        ctx.lineTo(topX + rampTh, topY);
-        ctx.lineTo(topX + rampTh, BASE_Y);
-        ctx.closePath();
-        ctx.clip();
-        ctx.strokeStyle = 'rgba(58,40,24,0.45)';
-        ctx.lineWidth = 1.4;
-        for (let i = 0; i < 12; i++) {
-          const u = i / 11;
-          const x0 = BASE_X + dx * u;
-          const y0 = BASE_Y - dy * u;
-          ctx.beginPath();
-          ctx.moveTo(x0, y0);
-          ctx.lineTo(x0 + rampTh * cosA + 2, y0 + rampTh * sinA);
-          ctx.stroke();
-        }
-        ctx.restore();
-
-        // 坡面高光边
-        ctx.beginPath();
-        ctx.moveTo(BASE_X, BASE_Y);
-        ctx.lineTo(topX, topY);
-        ctx.strokeStyle = SC.hi;
-        ctx.lineWidth = 5;
-        ctx.stroke();
-
-        // 坡顶装车台
-        const deckW = 68, deckH = 16;
-        ctx.fillStyle = '#7a5028';
-        roundRect(topX - 6, topY - deckH - 2, deckW, deckH, 2);
-        ctx.fill();
-        ctx.strokeStyle = '#3a2818';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = '#5a3820';
-        ctx.fillRect(topX + deckW - 16, topY - deckH - 16, 6, 16);
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 11px "Microsoft YaHei",sans-serif';
-        ctx.fillText('装车台', topX, topY - deckH - 20);
-
-        // 量角器弧 + 刻度
-        const arcR = 36;
-        ctx.beginPath();
-        ctx.arc(BASE_X, BASE_Y, arcR, -thetaRad, 0);
-        ctx.strokeStyle = `rgba(208,136,80,0.75)`;
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(BASE_X, BASE_Y, arcR - 6, -thetaRad, 0);
-        ctx.strokeStyle = 'rgba(232,184,136,0.35)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        for (let tick = 0; tick <= 6; tick++) {
-          const ta = -thetaRad * (tick / 6);
-          const r0 = arcR - 2, r1 = arcR + (tick % 3 === 0 ? 5 : 3);
-          ctx.beginPath();
-          ctx.moveTo(BASE_X + Math.cos(ta) * r0, BASE_Y + Math.sin(ta) * r0);
-          ctx.lineTo(BASE_X + Math.cos(ta) * r1, BASE_Y + Math.sin(ta) * r1);
-          ctx.strokeStyle = tick % 3 === 0 ? SC.hi : 'rgba(122,112,96,0.6)';
-          ctx.lineWidth = tick % 3 === 0 ? 1.5 : 1;
-          ctx.stroke();
-        }
-        ctx.beginPath();
-        ctx.moveTo(BASE_X, BASE_Y);
-        ctx.lineTo(BASE_X + arcR + 8, BASE_Y);
-        ctx.strokeStyle = 'rgba(232,184,136,0.5)';
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-        const midA = -thetaRad / 2;
-        ctx.fillStyle = SC.hi;
-        ctx.font = 'bold 13px "Microsoft YaHei",sans-serif';
-        ctx.fillText('θ', BASE_X + Math.cos(midA) * (arcR + 14), BASE_Y + Math.sin(midA) * (arcR + 14) + 4);
-
-        // 读数贴坡脚
-        const badgeW = 118, badgeH = 48;
-        const badgeX = BASE_X + 44;
-        const badgeY = Math.max(56, BASE_Y - 78);
-        roundRect(badgeX, badgeY, badgeW, badgeH, 10);
-        ctx.fillStyle = 'rgba(20,16,12,0.88)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(208,136,80,0.55)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.fillStyle = SC.hi;
-        ctx.font = '13px ui-monospace,Consolas,"Microsoft YaHei",sans-serif';
-        ctx.fillText('μ = ' + parseFloat(frictionSlider.value).toFixed(2), badgeX + 12, badgeY + 20);
-        ctx.fillText('θ = ' + (thetaRad * 180 / Math.PI).toFixed(0) + '°', badgeX + 12, badgeY + 38);
-
-        // —— 木箱货件（硬描边、少 blur）；t<0 表示已离坡沿地面向左滑行 ——
-        let objX, objY, onRamp = true;
-        if (t >= 0) {
-          objX = BASE_X + dx * t;
-          objY = BASE_Y - dy * t;
         } else {
-          onRamp = false;
-          objX = BASE_X + t * LENGTH;
-          objY = groundY - 10;
+          const col = playMode === 'challenge' ? 0xa06030 : CRAFT3.accent;
+          palletMat.color.setHex(col);
+          palletMat.emissive.setHex(col);
+          palletMat.emissiveIntensity = 0.08;
         }
-        const size = 16 + Math.min(14, m * 2.4);
-        ctx.save();
-        ctx.translate(objX, objY);
-        ctx.rotate(onRamp ? -thetaRad : 0);
-        ctx.shadowColor = 'rgba(0,0,0,0.35)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetY = 2;
-        const crate = ctx.createLinearGradient(-size / 2, -size / 2, size / 2, size / 2);
-        if (sliding) {
-          crate.addColorStop(0, SC.glow);
-          crate.addColorStop(1, SC.accent);
-        } else {
-          crate.addColorStop(0, SC.hi);
-          crate.addColorStop(1, '#8a5830');
-        }
-        roundRect(-size / 2, -size / 2, size, size, 3);
-        ctx.fillStyle = crate;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = '#3a2818';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(58,40,24,0.55)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(-size / 2 + 4, -size / 6);
-        ctx.lineTo(size / 2 - 4, -size / 6);
-        ctx.moveTo(-size / 2 + 4, size / 6);
-        ctx.lineTo(size / 2 - 4, size / 6);
-        ctx.stroke();
-        ctx.strokeStyle = sliding ? '#c04030' : '#6a4020';
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(0, -size / 2 + 2);
-        ctx.lineTo(0, size / 2 - 2);
-        ctx.moveTo(-size / 2 + 2, 0);
-        ctx.lineTo(size / 2 - 2, 0);
-        ctx.stroke();
-        ctx.restore();
+      }
 
-        // 下滑微尘：落在运动轨迹后方（坡顶一侧，相对向下滑动）
-        if (sliding && onRamp && t < 0.75) {
-          ctx.fillStyle = 'rgba(232,184,136,0.55)';
-          for (let i = 0; i < 5; i++) {
-            const along = 10 + i * 6;
-            const px = objX + Math.cos(thetaRad) * along + (i % 2) * 2;
-            const py = objY - Math.sin(thetaRad) * along + 3;
-            ctx.beginPath();
-            ctx.arc(px, py, 1.4 + (i % 3) * 0.3, 0, Math.PI * 2);
-            ctx.fill();
-          }
+      function drawScene(thetaRad, mass, t, sliding) {
+        if (!threeReady) return;
+        syncRendererSize();
+        const mu = parseFloat(frictionSlider.value);
+        if (lastThetaDrawn == null || Math.abs(lastThetaDrawn - thetaRad) > 1e-4 || Math.abs((lastMuDrawn || 0) - mu) > 1e-4) {
+          rebuildRamp(thetaRad, mu);
         }
-        // 冲过接货区时的地面扬尘
-        if (sliding && !onRamp) {
-          ctx.fillStyle = 'rgba(232,184,136,0.4)';
-          for (let i = 0; i < 4; i++) {
-            ctx.beginPath();
-            ctx.arc(objX + 8 + i * 5, groundY - 2, 1.2 + (i % 2) * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
+        if (lastModeDrawn !== playMode) rebuildPallet();
+        if (!palletGroup) rebuildPallet();
+        placeCrate(t, thetaRad, mass, sliding);
+        updateSpriteText(badgeSprite, 'μ = ' + mu.toFixed(2) + '\nθ = ' + (thetaRad * 180 / Math.PI).toFixed(0) + '°');
+        badgeSprite.position.set(
+          1.8 + Math.cos(thetaRad) * 1.2,
+          1.2 + Math.sin(thetaRad) * 1.5,
+          2.4
+        );
+        applyOutcomeFlash();
       }
 
       function idleDraw() {
@@ -1364,9 +1567,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         updateLabels();
         blockT = T_TOP;
         drawScene(p.thetaRad, p.mass, blockT, false);
-        if (stateDisplay.textContent === '—' || stateDisplay.textContent === '') {
-          /* keep */
-        }
       }
 
       function maybeWin(lastOutcome) {
@@ -1375,7 +1575,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         const controls = window.__snapControls ? window.__snapControls() : {};
         if (playMode === 'challenge') {
           if (lastOutcome !== 'land') {
-            // FixedChallenge：失败只提示，μ 保持
             blockT = T_TOP;
             stateDisplay.textContent = lastOutcome === 'overshoot' ? '冲过接货区' : '卡住';
             hintMsg.textContent = lastOutcome === 'overshoot'
@@ -1394,9 +1593,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           return;
         }
         if (testCount < 3 || !sawSlide || !sawRest) return;
-        // 探究达成：explore_success；不 emit win / 不进 craft 结算
         if (won) return;
-        won = true; // 仅作「已提示过」标记，避免重复刷屏
+        won = true;
         hintMsg.textContent = '已对比卡住与卸下 · 可切换竞赛接急单（摩擦系数本局锁定）';
         emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
         emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controls });
@@ -1408,9 +1606,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         updateLabels();
         testCount += 1;
         if (p.willSlide) sawSlide = true; else sawRest = true;
-        if (lastMu !== null && (Math.abs(lastMu - p.mu) > 0.001 || Math.abs(lastTheta - p.thetaDeg) > 0.001)) {
-          /* param changed across tests — good */
-        }
         lastMu = p.mu;
         lastTheta = p.thetaDeg;
 
@@ -1427,14 +1622,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         function frame(now) {
           const u = Math.min(1, (now - start) / duration);
           if (p.willSlide) {
-            // 先加速下坡，再按连续停距冲入/冲过接货区
             const ease = u * u;
             blockT = T_TOP + (endT - T_TOP) * ease;
             drawScene(p.thetaRad, p.mass, blockT, true);
             stateDisplay.textContent = p.outcome === 'overshoot' ? '冲过中…' : '卸货中…';
             hintMsg.textContent = '观察货箱停在接货区还是冲过';
           } else {
-            // 坡顶微颤后停住
             const shake = (u < 0.7) ? Math.sin(u * 28) * 0.008 * (1 - u) : 0;
             blockT = T_TOP + shake;
             drawScene(p.thetaRad, p.mass, blockT, false);
@@ -1474,7 +1667,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             const hintKey = !p.willSlide ? 'rest' : (p.outcome === 'overshoot' ? 'overshoot' : 'slide');
             emit('snapshot', { controls: controls, winOk: false, hintKey: hintKey });
             maybeWin(p.willSlide ? p.outcome : 'stuck');
-            // 光效衰减（不改玩法）
             (function fadeFlash(t0) {
               function tick(now) {
                 outcomeFlash = Math.max(0, 1 - (now - t0) / 900);
@@ -1531,6 +1723,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
       window.__frictionRedraw = function() {
         if (animating) return;
+        syncRendererSize();
         const p = params();
         drawScene(p.thetaRad, p.mass, blockT, false);
       };
@@ -1540,14 +1733,35 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         return o;
       };
 
-      syncCanvasSize();
+      if (!initThree()) {
+        hintMsg.textContent = '3D 引擎未加载，请检查 vendor/three.min.js';
+        return;
+      }
       refreshGoalUI();
       idleDraw();
-      // 待机氛围动效（灯摆/尘埃），不改玩法
-      (function ambientLoop() {
-        if (!animating) idleDraw();
-        requestAnimationFrame(ambientLoop);
+
+      (function renderLoop() {
+        const tNow = clock ? clock.getElapsedTime() : 0;
+        if (lampPivot) {
+          lampPivot.rotation.z = Math.sin(tNow * 1.1) * 0.05;
+        }
+        if (dustPoints) {
+          const arr = dustPoints.geometry.attributes.position.array;
+          for (let i = 0; i < arr.length; i += 3) {
+            arr[i + 1] += 0.002 + ((i / 3) % 5) * 0.00015;
+            if (arr[i + 1] > 9) arr[i + 1] = 0.5;
+          }
+          dustPoints.geometry.attributes.position.needsUpdate = true;
+        }
+        if (!animating) {
+          const p = params();
+          drawScene(p.thetaRad, p.mass, blockT, slidingVisual && outcomeFlash > 0);
+        }
+        if (orbit) orbit.update();
+        if (renderer && scene && camera) renderer.render(scene, camera);
+        requestAnimationFrame(renderLoop);
       })();
+
       if (window.__dualModeGet) {
         try { window.__frictionApplyMode(window.__dualModeGet().mode); } catch (e) {}
       }
