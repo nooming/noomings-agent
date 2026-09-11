@@ -5,47 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0c8aad">
 <title>进入课堂 · 物理探究教学平台</title>
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="shortcut icon" href="/icons/favicon.ico">
 <link rel="stylesheet" href="/static/ui/platform-shell.css">
 </head>
-<body class="platform-page edu-shell">
+<body class="platform-page edu-shell platform-foyer platform-foyer--auth platform-foyer--student">
 
-<header class="platform-header">
-  <div class="platform-header-inner">
-    <a class="platform-brand" href="/">
-      <span class="platform-brand-mark">PE</span>
-      <span>
-        <span class="platform-brand-text">物理探究教学平台</span>
-        <span class="platform-brand-sub">Physics Inquiry Platform</span>
-      </span>
-    </a>
-  </div>
-</header>
+<div class="foyer-atmosphere" aria-hidden="true"></div>
 
-<main class="platform-main">
-  <section class="platform-hero" style="padding-bottom:20px">
-    <h1 style="font-size:1.4rem">学生进入课堂</h1>
-    <p>请填写课堂码、学号与姓名。签到信息保存在本机浏览器，清除缓存或换设备后需重新进入。</p>
+<main class="foyer-auth">
+  <section class="foyer-auth-brand" aria-label="产品品牌">
+    <a class="foyer-home-link" href="/">返回首页</a>
+    <div class="foyer-brand-mark foyer-brand-mark--auth" aria-hidden="true">
+      <svg class="foyer-mark-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g transform="translate(0.25 0.4)">
+          <rect x="2.1" y="2.1" width="43" height="43" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M7.15 12.55V7.15H12.55M34.55 7.15H39.95V12.55M39.95 34.55V39.95H34.55M12.55 39.95H7.15V34.55" stroke="currentColor" stroke-width="1" stroke-linecap="square" opacity="0.4"/>
+          <path d="M11.05 36.35H22M11.05 36.35V34.5M14.7 36.35V35M18.35 36.35V35M22 36.35V34.5" stroke="currentColor" stroke-width="0.9" stroke-linecap="square" opacity="0.28"/>
+          <path d="M11 33.8C14.5 20 26 12.2 35.2 13.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="16.5" cy="22.5" r="1.2" stroke="currentColor" stroke-width="1.05" opacity="0.62"/>
+          <circle cx="24.3" cy="15.7" r="1.55" stroke="currentColor" stroke-width="1.15" opacity="0.9"/>
+          <circle cx="35.2" cy="13.1" r="2.45" fill="currentColor"/>
+        </g>
+      </svg>
+    </div>
+    <p class="foyer-kicker">学生入口</p>
+    <h1 class="foyer-product-name">物理探究教学平台</h1>
+    <p class="foyer-product-en">Physics Inquiry Platform</p>
+    <p class="foyer-lead">用课堂码签到后进入探究区。信息保存在本机浏览器，清除缓存或换设备后需重新进入。</p>
   </section>
 
-  <form class="edu-panel platform-auth-panel" id="joinForm" autocomplete="on">
-    <div class="form-row">
-      <label for="classCode">课堂码 <span class="platform-req">必填</span></label>
-      <input type="text" id="classCode" name="classCode" placeholder="向教师索取课堂码" required maxlength="64" autocomplete="off" inputmode="text">
-    </div>
-    <div class="form-row">
-      <label for="studentId">学号 <span class="platform-req">必填</span></label>
-      <input type="text" id="studentId" name="studentId" placeholder="例如：20260101" required maxlength="32" autocomplete="username" inputmode="text">
-    </div>
-    <div class="form-row">
-      <label for="studentName">姓名 <span class="platform-req">必填</span></label>
-      <input type="text" id="studentName" name="studentName" placeholder="例如：张三" required maxlength="32" autocomplete="name">
-    </div>
-    <p class="hint" id="joinError" hidden></p>
-    <div class="tool-link-row" style="margin-top:8px">
-      <button type="submit" class="edu-btn edu-btn-primary" id="joinBtn">进入探究区</button>
-      <a class="edu-btn edu-btn-outline" href="/">返回首页</a>
-    </div>
-  </form>
+  <section class="foyer-auth-stage">
+    <form class="edu-panel foyer-auth-panel" id="joinForm" autocomplete="on">
+      <header class="foyer-auth-head">
+        <h2 class="foyer-auth-title">学生进入课堂</h2>
+        <p class="foyer-auth-hint">请填写课堂码、学号与姓名。</p>
+      </header>
+
+      <div class="form-row">
+        <label for="classCode">课堂码 <span class="platform-req">必填</span></label>
+        <input type="text" id="classCode" name="classCode" placeholder="请输入课堂码" required maxlength="64" autocomplete="off" inputmode="text">
+      </div>
+      <div class="form-row">
+        <label for="studentId">学号 <span class="platform-req">必填</span></label>
+        <input type="text" id="studentId" name="studentId" placeholder="例如：20260101" required maxlength="32" autocomplete="username" inputmode="text">
+      </div>
+      <div class="form-row">
+        <label for="studentName">姓名 <span class="platform-req">必填</span></label>
+        <input type="text" id="studentName" name="studentName" placeholder="例如：张三" required maxlength="32" autocomplete="name">
+      </div>
+      <p class="hint" id="joinError" hidden></p>
+      <div class="tool-link-row foyer-auth-actions">
+        <button type="submit" class="edu-btn edu-btn-primary foyer-btn-primary" id="joinBtn">进入探究区</button>
+        <a class="edu-btn edu-btn-outline" href="/">返回首页</a>
+      </div>
+    </form>
+  </section>
 </main>
 
 <script>

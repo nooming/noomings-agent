@@ -1,8 +1,23 @@
 # 数据目录布局
 
-> **现行课堂演示入口**：[docs/demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)（力学 3 + 热学三新关，默认 6 关）。
+> **现行课堂演示入口**：[docs/demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)（力学 3 + 热学三新关，默认 6 关）。  
+> **关卡回归 QA**：[docs/demo/game-qa-checklist.md](./demo/game-qa-checklist.md)。  
+> 仓库结构 / 按角色导航：[structure.md](./structure.md)。
 
 磁盘路径与 HTTP URL 对照。路径解析见 [`packages/shared/data-paths.js`](../packages/shared/data-paths.js)。
+
+## 按角色怎么找（数据侧）
+
+| 角色 / 意图 | 路径 |
+|-------------|------|
+| **教师课堂 · catalog** | `data/runtime/platform/catalog.json`（热数据；勿用 analysis 快照覆盖） |
+| **学生试玩 · traces** | `data/runtime/platform/traces/`（通常 gitignore） |
+| **探究包真相源** | `data/runtime/packages/{id}/`（`game.html`、`chapter.json`、图谱等） |
+| **编辑镜像** | `样本html/`（单向；改完同步 packages；**勿大搬家**） |
+| **Agent A 生成落盘** | 优先 `data/runtime/packages/`；HTML 草稿亦可 `data/games/generated/` |
+| **Agent B fixtures** | `tests/fixtures/judge-fixtures.json` |
+| **论文 / 离线分析** | 报告 `data/runtime/analysis/reports/`；写作材料 `docs/paper/`（非本布局真相源） |
+| **归档** | 根 `_archive/`；演示过程稿 `docs/demo/_archive/` |
 
 ## 三区（`data/runtime/`）
 
@@ -17,6 +32,7 @@
 | 磁盘路径 | 内容 |
 |----------|------|
 | `样本html/` | **单向镜像**（中文夹名；游戏 HTML + `图谱.html`）。改完须同步到 packages；运行时不以此处为真相源 |
+| `apps/web/icons/` | 站点 favicon / PWA / 首页彩蛋图；HTTP 仍为 `/icons/*` |
 | `data/games/legacy/` | 历史样本 HTML（design-samples 引用；HTTP `/static/legacy-samples/`） |
 | `data/games/manual-backups/` | 人工 HTML 原件归档（不挂载 HTTP） |
 | `data/games/generated/` | Agent A API 生成的 HTML（新探究包优先落 packages） |
@@ -31,11 +47,13 @@
 - **仓库根目录禁止长期保留** `traces-全部-*`（只解压到 `data/runtime/analysis/`）。
 - 不要用 analysis 快照覆盖 `platform/traces/` 热数据。
 - 历史路径 `data/runtime/packages/reports/` 已迁至 `data/runtime/analysis/reports/`。
+- **勿动**：`data/runtime/packages/` 布局、课堂 catalog 契约、平台页 URL、`样本html/` 中文夹名。
 
 ## HTTP URL
 
 | URL | 说明 |
 |-----|------|
+| `/icons/*` | favicon / PWA / 彩蛋图 → `apps/web/icons/` |
 | `/static/packages/{id}/game.html` | 探究包可玩 HTML（canonical） |
 | `/packages/{id}/index.html` | 探究包图谱预览页 |
 | `/graph.html?graphId={id}` | 动态图谱预览 API 页 |

@@ -21,6 +21,665 @@ body.edu-shell {
   background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
 }
 
+/* ========== 入口门厅（首页 / 学生签到 / 教师登录） ========== */
+body.platform-foyer {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--edu-bg-deep);
+  /* 网格在上，否则会被不透明洗色盖住 */
+  background-image:
+    linear-gradient(var(--edu-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--edu-grid) 1px, transparent 1px),
+    linear-gradient(var(--edu-grid-cross) 1px, transparent 1px),
+    linear-gradient(90deg, var(--edu-grid-cross) 1px, transparent 1px),
+    radial-gradient(ellipse 90% 70% at 12% 18%, var(--edu-foyer-veil), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 88% 82%, var(--edu-foyer-ink-wash), transparent 52%),
+    linear-gradient(165deg, #f3f6f9 0%, var(--edu-bg-deep) 42%, #e8eef3 100%);
+  background-size:
+    24px 24px, 24px 24px, 96px 96px, 96px 96px,
+    auto, auto, auto;
+  background-position:
+    -1px -1px, -1px -1px, -1px -1px, -1px -1px,
+    0 0, 0 0, 0 0;
+}
+
+.foyer-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0%, transparent calc(50% - 0.5px), color-mix(in srgb, var(--edu-primary) 12%, transparent) calc(50% - 0.5px), color-mix(in srgb, var(--edu-primary) 12%, transparent) calc(50% + 0.5px), transparent calc(50% + 0.5px), transparent 100%),
+    linear-gradient(180deg, transparent 0%, transparent calc(42% - 0.5px), color-mix(in srgb, var(--edu-ink) 6%, transparent) calc(42% - 0.5px), color-mix(in srgb, var(--edu-ink) 6%, transparent) calc(42% + 0.5px), transparent calc(42% + 0.5px), transparent 100%);
+  opacity: 0.55;
+}
+
+.foyer-atmosphere::before,
+.foyer-atmosphere::after {
+  content: '';
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--edu-primary) 22%, transparent);
+  opacity: 0.35;
+}
+
+.foyer-atmosphere::before {
+  top: 18px;
+  left: 18px;
+  width: 28px;
+  height: 28px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.foyer-atmosphere::after {
+  right: 18px;
+  bottom: 18px;
+  width: 28px;
+  height: 28px;
+  border-left: none;
+  border-top: none;
+}
+
+/* 实验器械剪影：压在网格上，不抢品牌 */
+.foyer-apparatus {
+  position: absolute;
+  inset: 8% 4% 12%;
+  width: auto;
+  height: auto;
+  max-width: none;
+  color: var(--edu-primary);
+  opacity: 0.2;
+}
+
+.platform-foyer--home .foyer-atmosphere {
+  opacity: 0.7;
+}
+
+.foyer-gate,
+.foyer-auth {
+  position: relative;
+  z-index: 1;
+}
+
+/* 品牌块：产品名是首屏最强信号 */
+.foyer-brand-block {
+  text-align: center;
+  max-width: 40rem;
+  margin: 0 auto;
+  animation: foyer-brand-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.foyer-brand-mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  color: var(--edu-primary);
+  background: color-mix(in srgb, var(--edu-surface) 88%, var(--edu-primary) 12%);
+  border: 1px solid color-mix(in srgb, var(--edu-primary) 40%, var(--edu-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--edu-primary) 18%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foyer-brand-mark--auth {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.foyer-mark-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.foyer-kicker {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--edu-muted);
+  margin-bottom: 10px;
+}
+
+.foyer-product-name {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  color: var(--edu-ink);
+  margin: 0 0 8px;
+}
+
+.platform-foyer--home .foyer-product-name {
+  position: relative;
+  display: inline-block;
+  padding-right: 0.42em;
+}
+
+.foyer-product-en {
+  font-family: var(--font-label);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--edu-muted);
+  margin: 0 0 18px;
+}
+
+.foyer-lead {
+  font-size: var(--text-base);
+  color: var(--edu-muted);
+  line-height: 1.65;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+/* 首页门厅：单构图竖排 */
+.foyer-gate {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(28px, 5vh, 48px);
+  padding: clamp(28px, 6vh, 56px) 20px 40px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.foyer-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  animation: foyer-panel-in 560ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.foyer-role-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 14px;
+  padding: 26px 20px 24px 22px;
+  min-height: 148px;
+  text-decoration: none;
+  color: inherit;
+  background: color-mix(in srgb, var(--edu-surface) 94%, transparent);
+  border: 1px solid var(--edu-border);
+  border-left: 3px solid var(--edu-teacher);
+  border-radius: var(--radius-md);
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.foyer-role-card--student {
+  border-left-color: var(--edu-student);
+}
+
+.foyer-role-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 10px;
+  height: 10px;
+  border-top: 1.5px solid var(--edu-primary);
+  border-left: 1.5px solid var(--edu-primary);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.foyer-role-card::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-right: 1.5px solid var(--edu-primary);
+  border-bottom: 1.5px solid var(--edu-primary);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.foyer-role-card:hover,
+.foyer-role-card:focus-visible {
+  border-color: var(--edu-border-strong);
+  background: color-mix(in srgb, var(--edu-surface) 86%, var(--edu-primary) 14%);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.foyer-role-card--student:hover,
+.foyer-role-card--student:focus-visible {
+  background: color-mix(in srgb, var(--edu-surface) 86%, var(--edu-student) 14%);
+}
+
+.foyer-role-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--edu-teacher);
+  background: var(--edu-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--edu-primary) 30%, var(--edu-border));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.foyer-role-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.foyer-role-card--student .foyer-role-icon {
+  color: var(--edu-student);
+  background: rgba(11, 138, 128, 0.10);
+  border-color: color-mix(in srgb, var(--edu-student) 32%, var(--edu-border));
+}
+
+.foyer-role-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.foyer-role-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--edu-text);
+}
+
+.foyer-role-desc {
+  font-size: var(--text-sm);
+  color: var(--edu-muted);
+  line-height: 1.55;
+}
+
+.foyer-role-meta,
+.foyer-role-cta {
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--edu-primary);
+  margin-top: 8px;
+}
+
+.foyer-role-card--student .foyer-role-cta {
+  color: var(--edu-student);
+}
+
+.foyer-role-arrow {
+  font-family: var(--font-label);
+  font-size: 0.95rem;
+  color: var(--edu-muted);
+  align-self: center;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.foyer-role-card:hover .foyer-role-arrow,
+.foyer-role-card:focus-visible .foyer-role-arrow {
+  color: var(--edu-primary);
+  transform: translateX(3px);
+}
+
+.foyer-role-card--student:hover .foyer-role-arrow,
+.foyer-role-card--student:focus-visible .foyer-role-arrow {
+  color: var(--edu-student);
+}
+
+/* 品牌大字右上角小怪兽彩蛋：略可见，不压过标题 */
+.foyer-mascot {
+  position: absolute;
+  top: -0.18em;
+  right: -0.08em;
+  z-index: 2;
+  width: 0.72em;
+  height: 0.72em;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  opacity: 0.34;
+  filter: grayscale(0.55) contrast(1.04);
+  transform-origin: 70% 90%;
+  transition: opacity 0.22s ease, filter 0.22s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.foyer-mascot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.foyer-mascot:hover {
+  opacity: 0.72;
+  filter: grayscale(0.15) contrast(1.02);
+  animation: foyer-mascot-wiggle 720ms ease-in-out;
+}
+
+.foyer-mascot.is-bounce {
+  opacity: 0.9;
+  filter: none;
+  animation: foyer-mascot-bounce 680ms cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+
+@keyframes foyer-mascot-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-7deg); }
+  55% { transform: rotate(6deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+@keyframes foyer-mascot-bounce {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-10px) scale(1.08); }
+  60% { transform: translateY(2px) scale(0.96); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* 认证页：左品牌 / 右表单 */
+.foyer-auth {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vh, 48px) 24px;
+}
+
+.foyer-auth-brand {
+  max-width: 28rem;
+  animation: foyer-brand-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.foyer-auth-brand .foyer-lead {
+  margin: 0;
+}
+
+.foyer-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 22px;
+  font-family: var(--font-label);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--edu-muted);
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.foyer-home-link:hover {
+  color: var(--edu-primary);
+  border-bottom-color: color-mix(in srgb, var(--edu-primary) 45%, transparent);
+}
+
+.foyer-auth-stage {
+  width: 100%;
+  max-width: 440px;
+  justify-self: end;
+  animation: foyer-panel-in 560ms cubic-bezier(0.22, 1, 0.36, 1) 90ms both;
+}
+
+.foyer-auth-panel {
+  margin-bottom: 0;
+  padding: 28px 26px;
+  background: color-mix(in srgb, var(--edu-surface) 96%, transparent);
+  border-color: var(--edu-border-strong);
+}
+
+.foyer-auth-head {
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--edu-border);
+}
+
+.foyer-auth-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--edu-text);
+  margin: 0 0 6px;
+}
+
+.foyer-auth-hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--edu-muted);
+  line-height: 1.5;
+}
+
+.foyer-auth-actions {
+  margin-top: 8px;
+}
+
+.foyer-auth-panel .form-row {
+  margin-bottom: 16px;
+}
+
+.foyer-auth-panel .form-row label {
+  margin-bottom: 6px;
+  color: var(--edu-text);
+}
+
+.foyer-auth-panel .form-row input {
+  padding: 12px 12px;
+  font-size: 1rem;
+  line-height: 1.4;
+  background: var(--edu-surface);
+  border-color: var(--edu-border-strong);
+}
+
+.platform-foyer--student .foyer-auth-panel::before,
+.platform-foyer--student .foyer-brand-mark {
+  color: var(--edu-student);
+}
+
+.platform-foyer--student .foyer-auth-panel::before {
+  border-color: var(--edu-student);
+}
+
+.platform-foyer--student .foyer-brand-mark {
+  border-color: color-mix(in srgb, var(--edu-student) 40%, var(--edu-border));
+  background: color-mix(in srgb, var(--edu-surface) 88%, var(--edu-student) 12%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--edu-student) 18%, transparent);
+}
+
+.platform-foyer--student .foyer-btn-primary {
+  background: var(--edu-student);
+  border-color: color-mix(in srgb, var(--edu-student) 72%, #000);
+}
+
+.platform-foyer--student .foyer-btn-primary:hover {
+  background: color-mix(in srgb, var(--edu-student) 86%, #000);
+}
+
+.platform-foyer--student .foyer-auth-panel .form-row input:focus {
+  border-color: var(--edu-student);
+  box-shadow: 0 0 0 2px rgba(11, 138, 128, 0.14);
+}
+
+/* 主按钮克制动效 */
+.foyer-btn-primary {
+  min-height: 42px;
+  padding-inline: 18px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.foyer-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--edu-ink) 12%, transparent);
+}
+
+.foyer-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.foyer-btn-primary:focus-visible {
+  outline: 2px solid var(--edu-primary);
+  outline-offset: 2px;
+}
+
+.platform-foyer--student .foyer-btn-primary:focus-visible {
+  outline-color: var(--edu-student);
+}
+
+@keyframes foyer-brand-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes foyer-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .foyer-brand-block,
+  .foyer-auth-brand,
+  .foyer-roles,
+  .foyer-auth-stage {
+    animation: none;
+  }
+
+  .foyer-role-card,
+  .foyer-btn-primary,
+  .foyer-role-arrow {
+    transition: none;
+  }
+
+  .foyer-mascot,
+  .foyer-mascot:hover,
+  .foyer-mascot.is-bounce {
+    animation: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .foyer-mascot:hover,
+  .foyer-mascot.is-bounce {
+    opacity: 0.48;
+    filter: grayscale(0.35);
+  }
+}
+
+@media (max-width: 860px) {
+  .foyer-auth {
+    grid-template-columns: 1fr;
+    align-content: start;
+    gap: 28px;
+    padding-top: 28px;
+    padding-bottom: 36px;
+  }
+
+  .foyer-auth-brand {
+    max-width: none;
+    text-align: left;
+  }
+
+  .foyer-auth-stage {
+    justify-self: stretch;
+    max-width: none;
+  }
+
+  .foyer-brand-mark--auth {
+    width: 48px;
+    height: 48px;
+  }
+
+  .foyer-auth-brand .foyer-product-name {
+    font-size: clamp(1.55rem, 6vw, 2rem);
+  }
+}
+
+@media (max-width: 640px) {
+  .foyer-gate {
+    justify-content: flex-start;
+    padding-top: 40px;
+    padding-bottom: 56px;
+  }
+
+  .foyer-roles {
+    grid-template-columns: 1fr;
+  }
+
+  .foyer-role-card {
+    padding: 20px 16px 18px 18px;
+    min-height: 0;
+  }
+
+  .foyer-apparatus {
+    opacity: 0.07;
+    inset: 12% 0 18%;
+  }
+
+  .foyer-atmosphere::before,
+  .foyer-atmosphere::after {
+    display: none;
+  }
+
+  .foyer-auth-panel {
+    padding: 22px 18px;
+  }
+
+  .foyer-auth-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .foyer-auth-actions .edu-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .foyer-home-link {
+    margin-bottom: 16px;
+  }
+}
+
 /* 工业标签（mode / meta） */
 .edu-label,
 .platform-role-badge,
@@ -104,17 +763,18 @@ body.edu-shell {
 .platform-brand-mark {
   width: 32px;
   height: 32px;
-  background: var(--edu-ink);
-  border: 1px solid var(--edu-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--edu-primary) 35%, transparent);
+  flex-shrink: 0;
+  background: var(--edu-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f4fbfd;
-  font-family: var(--font-label);
-  font-weight: 700;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
+  color: #fbfcfd;
+}
+
+.platform-brand-mark-svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .platform-brand-text {
@@ -887,6 +1547,29 @@ a.teacher-tab {
   margin-bottom: 12px;
 }
 .catalog-toolbar select { min-width: 120px; }
+.catalog-toolbar-search {
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: 280px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  border: 1px solid var(--edu-border);
+  border-radius: var(--radius-sm);
+  background: var(--edu-surface);
+  color: var(--edu-text, inherit);
+}
+.catalog-toolbar-search:focus {
+  outline: none;
+  border-color: var(--edu-primary);
+  box-shadow: 0 0 0 2px var(--edu-primary-soft);
+}
+@media (max-width: 640px) {
+  .catalog-toolbar-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
 .category-mgmt-panel {
   margin-bottom: 12px;
   padding: 12px;
@@ -2210,6 +2893,8 @@ button.linkish:hover {
   padding: 6px 8px 4px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 .ability-group-main {
@@ -2228,6 +2913,7 @@ button.linkish:hover {
   letter-spacing: 0.04em;
   color: var(--edu-muted);
   margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .ability-group .ability-bars {
@@ -2240,18 +2926,20 @@ button.linkish:hover {
 
 .ability-bar-row {
   display: grid;
-  grid-template-columns: 2.5rem 1fr auto;
+  /* 标签列需容纳四字中文（竞赛结果等）；进度条列可压缩 */
+  grid-template-columns: minmax(4.25em, max-content) minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
   font-size: 0.72rem;
 }
 
 .ability-group-explore .ability-bar-row {
-  grid-template-columns: 2.5rem 1fr minmax(6.5rem, auto);
+  grid-template-columns: minmax(4.25em, max-content) minmax(0, 1fr) minmax(6.5rem, auto);
 }
 
 .ability-bar-label {
   color: var(--edu-muted);
+  white-space: nowrap;
 }
 
 .ability-bar-track {
@@ -2404,8 +3092,9 @@ button.linkish:hover {
   padding: 0;
   display: grid;
   gap: 6px;
-  min-width: 140px;
-  flex: 1 1 140px;
+  min-width: 9.5rem;
+  flex: 1 1 9.5rem;
+  overflow-x: auto;
 }
 
 .student-radar-legend li {
@@ -2423,6 +3112,7 @@ button.linkish:hover {
   font-family: var(--font-label);
   font-weight: 600;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .radar-legend-value {

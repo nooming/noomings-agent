@@ -17,10 +17,10 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 #essence-app{display:flex;height:100vh;min-height:480px}
-#essence-stage{flex:1;position:relative;min-width:0;background:linear-gradient(160deg,#0a1216 0%,#122028 55%,#0e1a22 100%)}
+#essence-stage{flex:1;position:relative;min-width:0;background:#071014;overflow:hidden}
 #essence-stage canvas{display:block;width:100%;height:100%}
 #essence-hud{position:absolute;left:16px;top:14px;z-index:2;pointer-events:none}
-.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em}
+.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.55)}
 .essence-sub,#goalMission{display:none!important}
 #essence-bench{width:min(340px,38vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
 .essence-scroll{padding:14px 14px 10px;overflow:auto;flex:1}
@@ -36,6 +36,8 @@ button{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;font-weight:60
 button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 .observe-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}
 .observe-box .val{font-size:20px;font-weight:700}
+.observe-box.measuring .val{animation:readPulse .35s ease-in-out 2}
+@keyframes readPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.04);color:#9fe7f0}}
 .observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.4}
 .pass-badge{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#0f9f7a;color:#fff;font-size:12px;font-weight:700}
 .attempts{font-size:12px;color:var(--craft-muted);margin-top:8px}
@@ -128,8 +130,15 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var attempts = 6;
   var bandLo = 18, bandHi = 26;
   var particles = [];
+  var flashes = [];
+  var dust = [];
   var wallPulse = 0;
-  // relative scale so default (N=40,T=300,V=1) → P≈24；竞赛带落在可达区间
+  var impulseNeedle = 0;
+  var impulseTarget = 0;
+  var measureT = 0;
+  var testing = false;
+  var animTime = 0;
+  var boxSmooth = 1;
   var k = 0.002;
 
   function pressure() {
@@ -147,85 +156,353 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
+  function spawnDust(w, h) {
+    dust = [];
+    for (var i = 0; i < 28; i++) {
+      dust.push({
+        x: Math.random() * w, y: Math.random() * h * 0.78,
+        r: 0.6 + Math.random() * 1.4, a: 0.08 + Math.random() * 0.18,
+        vx: 4 + Math.random() * 10, ph: Math.random() * 6.28
+      });
+    }
+  }
+
   function spawn() {
     var N = +document.getElementById('s-N').value;
     var T = +document.getElementById('s-T').value;
     var V = +document.getElementById('s-V').value;
-    var speed = 0.6 + Math.sqrt(T / 300) * 1.8;
+    var speed = 0.55 + Math.sqrt(T / 300) * 1.85;
     particles = [];
     for (var i = 0; i < N; i++) {
       particles.push({
         x: Math.random(), y: Math.random(),
         vx: (Math.random() * 2 - 1) * speed,
         vy: (Math.random() * 2 - 1) * speed,
+        r: 1.8 + Math.random() * 1.4
       });
     }
     window.__boxScale = Math.sqrt(V);
   }
 
-  function draw(dt) {
-    var w = canvas.width / (window.devicePixelRatio || 1);
-    var h = canvas.height / (Math.min(2, window.devicePixelRatio || 1));
-    // use CSS pixel size
-    var rect = canvas.getBoundingClientRect();
-    w = rect.width; h = rect.height;
-    var wall = +document.getElementById('s-wall').value;
-    var scale = window.__boxScale || 1;
-    var pad = 28;
-    var bw = Math.min(w - pad * 2, 420) * (0.72 + 0.28 * scale);
-    var bh = Math.min(h - pad * 2, 320) * (0.72 + 0.28 * scale);
-    var bx = (w - bw) / 2, by = (h - bh) / 2;
-    ctx.clearRect(0, 0, w, h);
-    // chamber
-    ctx.fillStyle = 'rgba(8,18,24,0.9)';
-    ctx.strokeStyle = wallPulse > 0 ? 'rgba(120,220,230,0.95)' : 'rgba(80,160,175,0.7)';
-    ctx.lineWidth = 2 + wall * 0.35;
-    ctx.beginPath();
-    roundRect(ctx, bx, by, bw, bh, 10);
-    ctx.fill(); ctx.stroke();
-    // wall texture ticks
-    ctx.strokeStyle = 'rgba(120,180,190,' + (0.15 + wall * 0.08) + ')';
-    ctx.lineWidth = 1;
-    for (var t = 0; t < wall * 4; t++) {
-      var tx = bx + 8 + (t * 17) % (bw - 16);
-      ctx.beginPath();
-      ctx.moveTo(tx, by); ctx.lineTo(tx + 6, by + 8);
-      ctx.stroke();
-    }
-    var T = +document.getElementById('s-T').value;
-    var spdMul = 0.55 + Math.sqrt(T / 300);
-    particles.forEach(function(p) {
-      p.x += p.vx * dt * 0.35 * spdMul / Math.max(0.5, scale);
-      p.y += p.vy * dt * 0.35 * spdMul / Math.max(0.5, scale);
-      if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx); wallPulse = 0.35; }
-      if (p.x > 1) { p.x = 1; p.vx = -Math.abs(p.vx); wallPulse = 0.35; }
-      if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy); wallPulse = 0.35; }
-      if (p.y > 1) { p.y = 1; p.vy = -Math.abs(p.vy); wallPulse = 0.35; }
-      var px = bx + 8 + p.x * (bw - 16);
-      var py = by + 8 + p.y * (bh - 16);
-      ctx.fillStyle = '#7fd4e0';
-      ctx.beginPath(); ctx.arc(px, py, 2.4, 0, Math.PI * 2); ctx.fill();
-    });
-    wallPulse = Math.max(0, wallPulse - dt * 0.8);
-    // pressure gauge
-    var P = pressure();
-    ctx.fillStyle = 'rgba(10,20,26,0.85)';
-    ctx.fillRect(w - 118, 18, 100, 54);
-    ctx.fillStyle = '#9fe7f0';
-    ctx.font = '12px sans-serif';
-    ctx.fillText('P ≈ ' + P.toFixed(1), w - 108, 40);
-    ctx.fillStyle = 'var(--craft-muted)';
-    ctx.fillStyle = '#8a9aa6';
-    ctx.fillText('碰壁示意', w - 108, 58);
-  }
-
-  function roundRect(c, x, y, w, h, r) {
+  function roundRectPath(c, x, y, w, h, r) {
+    c.beginPath();
     c.moveTo(x + r, y);
     c.arcTo(x + w, y, x + w, y + h, r);
     c.arcTo(x + w, y + h, x, y + h, r);
     c.arcTo(x, y + h, x, y, r);
     c.arcTo(x, y, x + w, y, r);
     c.closePath();
+  }
+
+  function drawLab(w, h, t) {
+    var wall = ctx.createLinearGradient(0, 0, 0, h);
+    wall.addColorStop(0, '#152830');
+    wall.addColorStop(0.55, '#0e1a22');
+    wall.addColorStop(1, '#0a1218');
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+
+    // tiled wall seams
+    ctx.strokeStyle = 'rgba(0,0,0,0.22)';
+    ctx.lineWidth = 1;
+    var tile = 72;
+    for (var x = 0; x < w; x += tile) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h * 0.68); ctx.stroke();
+    }
+    for (var y = 40; y < h * 0.68; y += 48) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(10,155,176,0.08)';
+    ctx.beginPath(); ctx.moveTo(0, h * 0.68); ctx.lineTo(w, h * 0.68); ctx.stroke();
+
+    // back shelf silhouette
+    ctx.fillStyle = 'rgba(8,16,22,0.75)';
+    ctx.fillRect(w * 0.06, h * 0.18, w * 0.18, h * 0.28);
+    ctx.fillRect(w * 0.76, h * 0.16, w * 0.18, h * 0.32);
+    ctx.strokeStyle = 'rgba(127,212,224,0.12)';
+    ctx.strokeRect(w * 0.06 + 4, h * 0.18 + 4, w * 0.18 - 8, h * 0.28 - 8);
+    ctx.strokeRect(w * 0.76 + 4, h * 0.16 + 4, w * 0.18 - 8, h * 0.32 - 8);
+    // bottle silhouettes
+    for (var b = 0; b < 3; b++) {
+      var bx = w * 0.09 + b * 28;
+      ctx.fillStyle = 'rgba(40,80,90,0.45)';
+      ctx.fillRect(bx, h * 0.28, 14, 36);
+      ctx.beginPath(); ctx.arc(bx + 7, h * 0.28, 7, Math.PI, 0); ctx.fill();
+    }
+
+    // floor / bench top
+    var floorY = h * 0.68;
+    var floor = ctx.createLinearGradient(0, floorY, 0, h);
+    floor.addColorStop(0, '#243038');
+    floor.addColorStop(0.35, '#1a242c');
+    floor.addColorStop(1, '#0d1418');
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, floorY, w, h - floorY);
+    ctx.strokeStyle = 'rgba(10,155,176,0.1)';
+    for (var i = 1; i < 7; i++) {
+      var fy = floorY + i * i * 2.4;
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(w, fy); ctx.stroke();
+    }
+
+    // bench slab
+    var by = floorY - 8;
+    var benchG = ctx.createLinearGradient(0, by - 28, 0, by + 18);
+    benchG.addColorStop(0, '#3a4a52');
+    benchG.addColorStop(0.45, '#2a363e');
+    benchG.addColorStop(1, '#1a2228');
+    ctx.fillStyle = benchG;
+    ctx.fillRect(w * 0.04, by - 18, w * 0.92, 28);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(w * 0.04, by + 10, w * 0.92, 14);
+    // edge highlight
+    ctx.strokeStyle = 'rgba(180,220,230,0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(w * 0.04, by - 18); ctx.lineTo(w * 0.96, by - 18); ctx.stroke();
+
+    // overhead lamp
+    var lx = w * 0.52, ly = 18;
+    var flick = 0.94 + 0.06 * Math.sin(t * 2.1) * Math.sin(t * 1.3 + 1.2);
+    var glow = ctx.createRadialGradient(lx, ly + 40, 8, lx, ly + 40, Math.max(220, w * 0.55));
+    glow.addColorStop(0, 'rgba(140,220,235,' + (0.22 * flick) + ')');
+    glow.addColorStop(0.35, 'rgba(10,155,176,' + (0.08 * flick) + ')');
+    glow.addColorStop(1, 'rgba(10,155,176,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#1a2830'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(lx, 0); ctx.lineTo(lx, 34); ctx.stroke();
+    ctx.fillStyle = '#243038';
+    ctx.beginPath();
+    ctx.moveTo(lx - 28, 34); ctx.lineTo(lx + 28, 34); ctx.lineTo(lx + 16, 52); ctx.lineTo(lx - 16, 52);
+    ctx.closePath(); ctx.fill();
+    var flame = ctx.createRadialGradient(lx, 56, 1, lx, 56, 16);
+    flame.addColorStop(0, 'rgba(200,245,255,' + (0.85 * flick) + ')');
+    flame.addColorStop(1, 'rgba(10,155,176,0)');
+    ctx.fillStyle = flame;
+    ctx.beginPath(); ctx.arc(lx, 56, 16, 0, Math.PI * 2); ctx.fill();
+
+    // dust motes
+    if (!dust.length) spawnDust(w, h);
+    for (var d = 0; d < dust.length; d++) {
+      var p = dust[d];
+      p.x += p.vx * 0.016;
+      p.y += Math.sin(t * 0.9 + p.ph) * 0.15;
+      if (p.x > w + 8) { p.x = -8; p.y = Math.random() * h * 0.7; }
+      ctx.globalAlpha = p.a * (0.7 + 0.3 * Math.sin(t + p.ph));
+      ctx.fillStyle = '#9fe7f0';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // vignette
+    var vig = ctx.createRadialGradient(w * 0.5, h * 0.42, h * 0.2, w * 0.5, h * 0.45, h * 0.85);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function chamberGeom(w, h, scale) {
+    var pad = Math.max(36, Math.min(w, h) * 0.08);
+    var maxW = Math.min(w - pad * 2, 560);
+    var maxH = Math.min(h * 0.52, 340);
+    var bw = maxW * (0.62 + 0.38 * scale);
+    var bh = maxH * (0.62 + 0.38 * scale);
+    var bx = (w - bw) / 2;
+    var by = h * 0.68 - 36 - bh;
+    return { bx: bx, by: by, bw: bw, bh: bh };
+  }
+
+  function drawChamber(g, wall, t) {
+    var bx = g.bx, by = g.by, bw = g.bw, bh = g.bh;
+    var thick = 14 + wall * 1.2;
+
+    // cast shadow on bench
+    ctx.fillStyle = 'rgba(0,0,0,0.38)';
+    ctx.beginPath();
+    ctx.ellipse(bx + bw / 2, by + bh + 18, bw * 0.48, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // outer metal frame (bevel)
+    var frame = ctx.createLinearGradient(bx - thick, by, bx + bw + thick, by);
+    frame.addColorStop(0, '#1a2a32');
+    frame.addColorStop(0.35, '#3a5560');
+    frame.addColorStop(0.55, '#2a3e48');
+    frame.addColorStop(1, '#152028');
+    ctx.fillStyle = frame;
+    roundRectPath(ctx, bx - thick, by - thick, bw + thick * 2, bh + thick * 2, 14);
+    ctx.fill();
+
+    // bolts
+    ctx.fillStyle = '#8a9aa6';
+    var bolts = [
+      [bx - thick + 10, by - thick + 10],
+      [bx + bw + thick - 10, by - thick + 10],
+      [bx - thick + 10, by + bh + thick - 10],
+      [bx + bw + thick - 10, by + bh + thick - 10]
+    ];
+    for (var i = 0; i < bolts.length; i++) {
+      var bg = ctx.createRadialGradient(bolts[i][0] - 1, bolts[i][1] - 1, 0.5, bolts[i][0], bolts[i][1], 5);
+      bg.addColorStop(0, '#d0dde4'); bg.addColorStop(0.6, '#7a8a94'); bg.addColorStop(1, '#3a4850');
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.arc(bolts[i][0], bolts[i][1], 5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // glass cavity with depth
+    var gas = ctx.createLinearGradient(bx, by, bx, by + bh);
+    var T = +document.getElementById('s-T').value;
+    var warm = Math.min(1, Math.max(0, (T - 150) / 450));
+    gas.addColorStop(0, 'rgba(' + Math.round(20 + warm * 40) + ',' + Math.round(40 + warm * 10) + ',' + Math.round(48 - warm * 10) + ',0.92)');
+    gas.addColorStop(1, 'rgba(6,14,18,0.96)');
+    ctx.fillStyle = gas;
+    roundRectPath(ctx, bx, by, bw, bh, 8);
+    ctx.fill();
+
+    // inner glass rim + pulse
+    var pulseA = wallPulse > 0 ? 0.55 + wallPulse * 0.9 : 0.28;
+    ctx.strokeStyle = 'rgba(127,212,224,' + pulseA + ')';
+    ctx.lineWidth = 2 + wall * 0.25 + wallPulse * 3;
+    roundRectPath(ctx, bx, by, bw, bh, 8);
+    ctx.stroke();
+
+    // wall texture grooves (CV)
+    ctx.strokeStyle = 'rgba(120,180,190,' + (0.12 + wall * 0.07) + ')';
+    ctx.lineWidth = 1;
+    for (var tix = 0; tix < wall * 5; tix++) {
+      var tx = bx + 10 + (tix * 19) % Math.max(20, bw - 20);
+      ctx.beginPath();
+      ctx.moveTo(tx, by + 2); ctx.lineTo(tx + 7, by + 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tx, by + bh - 2); ctx.lineTo(tx + 7, by + bh - 10);
+      ctx.stroke();
+    }
+
+    // glass sheen
+    var sheen = ctx.createLinearGradient(bx, by, bx + bw * 0.45, by + bh);
+    sheen.addColorStop(0, 'rgba(200,240,250,0.14)');
+    sheen.addColorStop(0.35, 'rgba(200,240,250,0.03)');
+    sheen.addColorStop(1, 'rgba(200,240,250,0)');
+    ctx.fillStyle = sheen;
+    roundRectPath(ctx, bx + 4, by + 4, bw * 0.38, bh - 8, 6);
+    ctx.fill();
+
+    // measuring sweep
+    if (measureT > 0) {
+      var sweep = 1 - measureT;
+      ctx.strokeStyle = 'rgba(159,231,240,' + (0.35 + 0.4 * Math.sin(sweep * 12)) + ')';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      roundRectPath(ctx, bx - 4, by - 4, bw + 8, bh + 8, 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(10,155,176,' + (0.06 + 0.08 * Math.sin(animTime * 14)) + ')';
+      roundRectPath(ctx, bx, by, bw, bh, 8);
+      ctx.fill();
+    }
+  }
+
+  function drawGauge(w, h, P) {
+    var gx = w - 118, gy = 22, gw = 98, gh = 86;
+    var plate = ctx.createLinearGradient(gx, gy, gx + gw, gy + gh);
+    plate.addColorStop(0, '#1a2830'); plate.addColorStop(1, '#0e181e');
+    ctx.fillStyle = plate;
+    roundRectPath(ctx, gx, gy, gw, gh, 8);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(10,155,176,0.4)';
+    ctx.lineWidth = 1.5;
+    roundRectPath(ctx, gx + 2, gy + 2, gw - 4, gh - 4, 6);
+    ctx.stroke();
+    ctx.fillStyle = '#8a9aa6';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('压强计', gx + 12, gy + 16);
+    var show = measureT > 0 ? (P * (0.85 + 0.3 * Math.sin(animTime * 18))) : P;
+    ctx.fillStyle = '#9fe7f0';
+    ctx.font = 'bold 16px ui-monospace,Consolas,monospace';
+    ctx.fillText('P≈' + show.toFixed(1), gx + 12, gy + 40);
+
+    // impulse micro-needle
+    impulseTarget = Math.min(1, P / 60);
+    impulseNeedle += (impulseTarget - impulseNeedle) * 0.12;
+    impulseNeedle += (Math.random() - 0.5) * 0.02 * (0.3 + wallPulse);
+    var nx = gx + 14, ny = gy + 58, nw = gw - 28;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    roundRectPath(ctx, nx, ny, nw, 8, 3); ctx.fill();
+    ctx.fillStyle = '#0a9bb0';
+    ctx.fillRect(nx, ny, nw * Math.max(0.05, impulseNeedle), 8);
+    ctx.fillStyle = '#e6eef2';
+    ctx.fillRect(nx + nw * Math.max(0.05, impulseNeedle) - 1.5, ny - 2, 3, 12);
+    ctx.fillStyle = '#8a9aa6';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('冲量示意', gx + 12, gy + 78);
+  }
+
+  function addFlash(x, y, side) {
+    flashes.push({ x: x, y: y, side: side, life: 0.28 + Math.random() * 0.12 });
+  }
+
+  function draw(dt) {
+    var rect = canvas.getBoundingClientRect();
+    var w = rect.width, h = rect.height;
+    animTime += dt;
+    if (measureT > 0) measureT = Math.max(0, measureT - dt);
+    var targetScale = window.__boxScale || 1;
+    boxSmooth += (targetScale - boxSmooth) * Math.min(1, dt * 4);
+
+    drawLab(w, h, animTime);
+    var g = chamberGeom(w, h, boxSmooth);
+    var wall = +document.getElementById('s-wall').value;
+    drawChamber(g, wall, animTime);
+
+    var T = +document.getElementById('s-T').value;
+    var spdMul = 0.55 + Math.sqrt(T / 300);
+    var bx = g.bx, by = g.by, bw = g.bw, bh = g.bh;
+    var hot = Math.min(1, (T - 150) / 450);
+
+    particles.forEach(function(p) {
+      p.x += p.vx * dt * 0.35 * spdMul / Math.max(0.5, boxSmooth);
+      p.y += p.vy * dt * 0.35 * spdMul / Math.max(0.5, boxSmooth);
+      var hit = false, side = 0;
+      if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx); hit = true; side = 0; }
+      if (p.x > 1) { p.x = 1; p.vx = -Math.abs(p.vx); hit = true; side = 1; }
+      if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy); hit = true; side = 2; }
+      if (p.y > 1) { p.y = 1; p.vy = -Math.abs(p.vy); hit = true; side = 3; }
+      var px = bx + 10 + p.x * (bw - 20);
+      var py = by + 10 + p.y * (bh - 20);
+      if (hit) {
+        wallPulse = 0.45;
+        impulseNeedle = Math.min(1, impulseNeedle + 0.08);
+        addFlash(px, py, side);
+      }
+      var col = 'rgba(' + Math.round(100 + hot * 120) + ',' + Math.round(200 - hot * 40) + ',' + Math.round(220 - hot * 80) + ',0.95)';
+      var glow = ctx.createRadialGradient(px - 1, py - 1, 0.2, px, py, p.r * 2.2);
+      glow.addColorStop(0, '#e8fbff');
+      glow.addColorStop(0.45, col);
+      glow.addColorStop(1, 'rgba(10,155,176,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(px, py, p.r * 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(px, py, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+
+    for (var fi = flashes.length - 1; fi >= 0; fi--) {
+      var f = flashes[fi];
+      f.life -= dt;
+      if (f.life <= 0) { flashes.splice(fi, 1); continue; }
+      var a = f.life / 0.35;
+      ctx.strokeStyle = 'rgba(180,245,255,' + a + ')';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (f.side === 0) { ctx.moveTo(bx + 2, f.y - 10); ctx.lineTo(bx + 2, f.y + 10); }
+      else if (f.side === 1) { ctx.moveTo(bx + bw - 2, f.y - 10); ctx.lineTo(bx + bw - 2, f.y + 10); }
+      else if (f.side === 2) { ctx.moveTo(f.x - 10, by + 2); ctx.lineTo(f.x + 10, by + 2); }
+      else { ctx.moveTo(f.x - 10, by + bh - 2); ctx.lineTo(f.x + 10, by + bh - 2); }
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(159,231,240,' + (a * 0.55) + ')';
+      ctx.beginPath(); ctx.arc(f.x, f.y, 6 * a, 0, Math.PI * 2); ctx.fill();
+    }
+    wallPulse = Math.max(0, wallPulse - dt * 1.1);
+
+    drawGauge(w, h, pressure());
   }
 
   var last = 0;
@@ -244,7 +521,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   }
 
   function lockBand() {
-    // 从可达参数抽样中点，保证非必输
     var N = 18 + Math.random() * 70;
     var T = 180 + Math.random() * 320;
     var V = 0.65 + Math.random() * 1.5;
@@ -282,9 +558,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
-  function doTest() {
-    syncLabels();
-    spawn();
+  function settleTest() {
     var P = pressure();
     document.getElementById('pDisplay').textContent = P.toFixed(2);
     var controls = window.__snapControls ? window.__snapControls() : {};
@@ -331,6 +605,24 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
+  function doTest() {
+    if (testing) return;
+    if (mode === 'challenge' && (attempts <= 0 || window.__challengeWon)) return;
+    syncLabels();
+    spawn();
+    testing = true;
+    measureT = 0.55;
+    var box = document.getElementById('observeBox');
+    box.classList.add('measuring');
+    document.getElementById('hintMessage').textContent = '测量中…';
+    document.getElementById('pDisplay').textContent = '···';
+    setTimeout(function() {
+      box.classList.remove('measuring');
+      testing = false;
+      settleTest();
+    }, 520);
+  }
+
   window.__thermoReset = function() {
     document.getElementById('s-N').value = 40;
     document.getElementById('s-T').value = 300;
@@ -339,6 +631,8 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('pDisplay').textContent = '—';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
+    document.getElementById('observeBox').classList.remove('measuring');
+    testing = false; measureT = 0;
     attempts = 6; syncLabels(); spawn(); refreshGoals();
   };
 
@@ -352,7 +646,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   document.getElementById('modeSelect').addEventListener('change', onMode);
   document.getElementById('btn-test').addEventListener('click', doTest);
   document.getElementById('btn-reset').addEventListener('click', function(){ window.__thermoReset(); });
-  window.addEventListener('resize', function(){ resize(); });
+  window.addEventListener('resize', function(){ resize(); dust = []; });
   resize(); syncLabels(); spawn(); lockBand(); refreshGoals();
   requestAnimationFrame(loop);
 })();

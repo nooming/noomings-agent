@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#0c8aad">
 <title>教师工作台 · 物理探究教学平台</title>
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="shortcut icon" href="/icons/favicon.ico">
 <link rel="stylesheet" href="/static/ui/platform-shell.css">
 <link rel="stylesheet" href="/static/ui/agent-shell.css">
 </head>
@@ -99,10 +103,10 @@
   <section class="teacher-panel" id="panel-catalog">
     <details class="edu-panel catalog-panel-details" id="catalogPanelDetails">
       <summary class="catalog-panel-summary">探究任务</summary>
-      <p class="hint">每个任务关联 Agent A 生成的事理图谱（graphId）与学生游玩的 HTML。可上/下架任务；学生端仅展示 craft:gold / craft:pilot（draft 对学生隐藏）。观察包单独分组标注。试玩 HTML 与图谱预览请至「资源管理」Tab。</p>
-      <p class="hint">知情说明：学生每日首次进入列表会弹出；也可让学生打开 <code>/student.html?forceNotice=1</code> 强制重看。下方按钮可写入本机强制标记（便于教师演示）。</p>
+      <p class="hint">每个任务绑定一份图谱和学生玩的 HTML，可随时上架或下架。学生端只显示正式（gold）和试运行（pilot）的任务，草稿（draft）不会给学生看。观察包会单独分组标出。试玩 HTML、预览图谱请到「资源管理」。</p>
+      <p class="hint">探究说明：学生每天第一次打开任务列表时会弹出。也可以让学生打开 <code>/student.html?forceNotice=1</code> 再看一遍。下方按钮会在本机写入强制标记，方便你演示。</p>
       <div class="tool-link-row" style="margin:0 0 12px">
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="forceStudentNoticeBtn">标记：下次学生需重看知情说明</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="forceStudentNoticeBtn">标记：下次打开时再看探究说明</button>
       </div>
       <div class="catalog-toolbar">
         <label>来源
@@ -117,6 +121,7 @@
             <option value="">全部分类</option>
           </select>
         </label>
+        <input type="search" id="catalogFilterQuery" class="catalog-toolbar-search" placeholder="搜索标题或图谱 ID" autocomplete="off" aria-label="搜索标题或图谱 ID">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="toggleCategoryMgmt">管理分类</button>
       </div>
       <div id="categoryMgmtPanel" class="category-mgmt-panel" hidden>
@@ -156,7 +161,7 @@
   <section class="teacher-panel" id="panel-resources">
     <div class="edu-panel resource-mgmt-details" id="resourcePanelDetails">
       <h3>探究包与资源</h3>
-      <p class="hint">按来源查看配对探究包与未配对资源。删除发布任务不会删除磁盘上的图谱或 HTML；样本集资源受保护不可删。</p>
+      <p class="hint">按来源查看已配对的探究包，以及还没配对的图谱和 HTML。删掉发布任务不会删磁盘上的文件；样本集资源受保护，不能删。</p>
       <div class="catalog-toolbar">
         <label>来源
           <select id="resourceFilterSource">
@@ -170,6 +175,7 @@
             <option value="">全部分类</option>
           </select>
         </label>
+        <input type="search" id="resourceFilterQuery" class="catalog-toolbar-search" placeholder="搜索标题或图谱 ID" autocomplete="off" aria-label="搜索标题或图谱 ID">
       </div>
       <h4 class="resource-orphan-heading">探究包</h4>
       <table class="edu-table" id="pairResourceTable">
@@ -261,7 +267,7 @@
       <details id="projectAppendPanel" class="agent-advanced">
         <summary>追加到多关图谱（可选）</summary>
         <div class="agent-advanced-body">
-          <p class="agent-hint">将当前章节追加到已有多关图谱；同名关卡会覆盖。留空关卡名则用「本章标题」或生成结果标题。发布请至「探究任务发布」。</p>
+          <p class="agent-hint">将当前章节追加到已有多关图谱；同名关卡会覆盖。留空关卡名则用「本章标题」或生成结果标题。要发布请到「探究任务发布」。</p>
           <label for="projectSelect">目标多关图谱</label>
           <div class="upload-row">
             <select id="projectSelect"><option value="">— 请选择或新建 —</option></select>
@@ -486,8 +492,10 @@ let catalogItems = [];
 let categoryItems = [];
 let catalogFilterSource = '';
 let catalogFilterCategory = '';
+let catalogFilterQuery = '';
 let resourceFilterSource = 'html-sample';
 let resourceFilterCategory = '';
+let resourceFilterQuery = '';
 let studentItems = [];
 let selectedStudentKey = null;
 let selectedSessionId = null;
@@ -758,10 +766,32 @@ function publishablePairItems() {
   return publishPairItems.filter(p => !isPairPublishedInCatalog(p));
 }
 
+function matchesTextQuery(query, haystack) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return true;
+  const hay = String(haystack || '').toLowerCase();
+  return q.split(/\s+/).every(token => hay.includes(token));
+}
+
+function catalogItemSearchText(item) {
+  const tagLabels = typeof CatalogBadges !== 'undefined'
+    ? CatalogBadges.badgesForItem(item).map(b => b.label).join(' ')
+    : (item.sampleTags || []).join(' ');
+  return [
+    item.title,
+    item.graphId,
+    item.id,
+    item.playUrl,
+    item.topicKey,
+    tagLabels,
+  ].filter(Boolean).join(' ');
+}
+
 function filteredCatalogItems() {
   return catalogItems.filter(item => {
     if (catalogFilterSource && (item.source || 'teacher') !== catalogFilterSource) return false;
     if (catalogFilterCategory && item.categoryId !== catalogFilterCategory) return false;
+    if (!matchesTextQuery(catalogFilterQuery, catalogItemSearchText(item))) return false;
     return true;
   });
 }
@@ -778,10 +808,26 @@ function normalizeCategoryFilterValue(value, { resetEl, allowUnpublished = false
 function syncCatalogFiltersFromDom() {
   const srcEl = document.getElementById('catalogFilterSource');
   const catEl = document.getElementById('catalogFilterCategory');
+  const qEl = document.getElementById('catalogFilterQuery');
   if (srcEl) catalogFilterSource = srcEl.value;
   if (catEl) {
     catalogFilterCategory = normalizeCategoryFilterValue(catEl.value, { resetEl: catEl });
   }
+  if (qEl) catalogFilterQuery = qEl.value;
+}
+
+function syncResourceFiltersFromDom() {
+  const srcEl = document.getElementById('resourceFilterSource');
+  const catEl = document.getElementById('resourceFilterCategory');
+  const qEl = document.getElementById('resourceFilterQuery');
+  if (srcEl) resourceFilterSource = srcEl.value;
+  if (catEl) {
+    resourceFilterCategory = normalizeCategoryFilterValue(catEl.value, {
+      resetEl: catEl,
+      allowUnpublished: true,
+    });
+  }
+  if (qEl) resourceFilterQuery = qEl.value;
 }
 
 function setCatalogBodyMessage(message, { isError = false } = {}) {
@@ -1051,15 +1097,20 @@ function filterResourcePairs() {
     const src = p.source || 'teacher';
     if (resourceFilterSource && src !== resourceFilterSource) return false;
     const catItem = catalogByGraphId(p.graphId);
-    if (resourceFilterCategory === '__unpublished') return !catItem;
-    if (resourceFilterCategory) {
+    if (resourceFilterCategory === '__unpublished') {
+      if (catItem) return false;
+    } else if (resourceFilterCategory) {
       if (catItem?.categoryId !== resourceFilterCategory) return false;
+    }
+    if (!matchesTextQuery(resourceFilterQuery, [p.title, p.graphId, p.playUrl].filter(Boolean).join(' '))) {
+      return false;
     }
     return true;
   });
 }
 
 function pairEmptyMessage() {
+  if (String(resourceFilterQuery || '').trim()) return '无匹配探究包，请调整搜索或筛选';
   if (resourceFilterSource === 'html-sample') return '暂无样本集探究包';
   if (resourceFilterSource === 'teacher') return '暂无自生成探究包';
   return '暂无探究包';
@@ -1070,10 +1121,12 @@ function filterResourceGraphs() {
     const src = g.source || 'teacher';
     if (resourceFilterSource && src !== resourceFilterSource) return false;
     const catItem = catalogByGraphId(g.id);
-    if (resourceFilterCategory === '__unpublished') return !catItem;
-    if (resourceFilterCategory) {
+    if (resourceFilterCategory === '__unpublished') {
+      if (catItem) return false;
+    } else if (resourceFilterCategory) {
       if (catItem?.categoryId !== resourceFilterCategory) return false;
     }
+    if (!matchesTextQuery(resourceFilterQuery, [g.title, g.id].filter(Boolean).join(' '))) return false;
     return true;
   });
 }
@@ -1083,15 +1136,18 @@ function filterResourceHtml() {
     const src = i.source || 'teacher';
     if (resourceFilterSource && src !== resourceFilterSource) return false;
     const catItem = catalogByPlayUrl(i.url);
-    if (resourceFilterCategory === '__unpublished') return !catItem;
-    if (resourceFilterCategory) {
+    if (resourceFilterCategory === '__unpublished') {
+      if (catItem) return false;
+    } else if (resourceFilterCategory) {
       if (catItem?.categoryId !== resourceFilterCategory) return false;
     }
+    if (!matchesTextQuery(resourceFilterQuery, [i.label, i.url].filter(Boolean).join(' '))) return false;
     return true;
   });
 }
 
 function renderResourceLists() {
+  syncResourceFiltersFromDom();
   const allPairedGraphIds = new Set(publishPairItems.map(p => p.graphId));
   const allPairedUrls = new Set(publishPairItems.map(p => p.playUrl));
   const pairs = filterResourcePairs();
@@ -1133,7 +1189,10 @@ function renderResourceLists() {
   const gBody = document.getElementById('orphanGraphResourceBody');
   if (gBody) {
     if (!orphanGraphs.length) {
-      gBody.innerHTML = '<tr><td colspan="5" class="empty-state">暂无未配对图谱</td></tr>';
+      const emptyGraphs = String(resourceFilterQuery || '').trim()
+        ? '无匹配的未配对图谱'
+        : '暂无未配对图谱';
+      gBody.innerHTML = `<tr><td colspan="5" class="empty-state">${esc(emptyGraphs)}</td></tr>`;
     } else {
       gBody.innerHTML = orphanGraphs.map(g => {
         const catItem = catalogByGraphId(g.id);
@@ -1191,23 +1250,22 @@ function renderResourceLists() {
   }
 }
 
-async function loadCatalog() {
+function renderCatalogTable() {
   syncCatalogFiltersFromDom();
   const tbody = document.getElementById('catalogBody');
-  try {
-    const r = await fetch('/api/platform/catalog/all');
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const data = await r.json();
-    catalogItems = data.items || [];
-    if (!tbody) return;
-    const visible = filteredCatalogItems();
-    if (!visible.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">暂无任务，请先发布或调整筛选</td></tr>';
-    } else {
-      tbody.innerHTML = visible.map(item => {
-      const chLabel = graphChapterLabel(item.graphId);
-      const badges = typeof CatalogBadges !== 'undefined' ? CatalogBadges.renderBadges(item) : '';
-      return `<tr>
+  if (!tbody) return;
+  const visible = filteredCatalogItems();
+  if (!visible.length) {
+    const emptyMsg = String(catalogFilterQuery || '').trim()
+      ? '无匹配任务，请调整搜索或筛选'
+      : '暂无任务，请先发布或调整筛选';
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${esc(emptyMsg)}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = visible.map(item => {
+    const chLabel = graphChapterLabel(item.graphId);
+    const badges = typeof CatalogBadges !== 'undefined' ? CatalogBadges.renderBadges(item) : '';
+    return `<tr>
       <td>${esc(item.title)}<div>${badges}</div></td>
       <td><div class="catalog-category-cell"><select class="catalog-category-select" data-cid="${esc(item.id)}" style="max-width:140px;font-size:0.85rem">${categoryOptionsHtml(item.categoryId, true)}</select>${item.topicKey ? `<span class="game-card-topic">${esc(item.topicKey)}</span>` : ''}</div></td>
       <td>${esc(chLabel)}</td>
@@ -1220,31 +1278,40 @@ async function loadCatalog() {
           : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-catalog="${esc(item.id)}">删除</button>`}
       </td>
     </tr>`;
-    }).join('');
-    tbody.querySelectorAll('.catalog-category-select').forEach(sel => {
-      sel.addEventListener('change', () => setCatalogItemCategory(sel.dataset.cid, sel.value || null));
-    });
-    tbody.querySelectorAll('[data-toggle]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const item = catalogItems.find(i => i.id === btn.dataset.toggle);
-        await fetch('/api/platform/set-published', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.id, published: !item.published }),
-        });
-        loadCatalog();
+  }).join('');
+  tbody.querySelectorAll('.catalog-category-select').forEach(sel => {
+    sel.addEventListener('change', () => setCatalogItemCategory(sel.dataset.cid, sel.value || null));
+  });
+  tbody.querySelectorAll('[data-toggle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const item = catalogItems.find(i => i.id === btn.dataset.toggle);
+      await fetch('/api/platform/set-published', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, published: !item.published }),
       });
+      loadCatalog();
     });
-    tbody.querySelectorAll('[data-del-catalog]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const item = catalogItems.find(i => i.id === btn.dataset.delCatalog);
-        if (item) deleteCatalogEntry(item);
-      });
+  });
+  tbody.querySelectorAll('[data-del-catalog]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = catalogItems.find(i => i.id === btn.dataset.delCatalog);
+      if (item) deleteCatalogEntry(item);
     });
-  }
-  await fillFilterGraphOptions();
-  await loadPublishPairOptions();
-  renderResourceLists();
+  });
+}
+
+async function loadCatalog() {
+  syncCatalogFiltersFromDom();
+  try {
+    const r = await fetch('/api/platform/catalog/all');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    catalogItems = data.items || [];
+    renderCatalogTable();
+    await fillFilterGraphOptions();
+    await loadPublishPairOptions();
+    renderResourceLists();
   } catch (err) {
     setCatalogBodyMessage('加载探究任务失败，请刷新页面重试', { isError: true });
     console.error('loadCatalog failed', err);
@@ -3722,7 +3789,7 @@ document.getElementById('btnEditClassCode')?.addEventListener('click', async () 
 document.getElementById('forceStudentNoticeBtn')?.addEventListener('click', () => {
   try {
     localStorage.setItem('platform-inquiry-force-v1', '1');
-    alert('已写入本机强制标记。学生同浏览器打开 /student.html 会再次看到知情说明；或发给学生链接 /student.html?forceNotice=1');
+    alert('已写入本机强制标记。学生用同一浏览器打开 /student.html 会再看到探究说明；也可发给学生链接 /student.html?forceNotice=1');
   } catch (e) {
     alert('无法写入本机存储：' + (e.message || e));
   }
@@ -3804,12 +3871,20 @@ document.getElementById('catalogFilterCategory')?.addEventListener('change', e =
   catalogFilterCategory = e.target.value;
   loadCatalog();
 });
+document.getElementById('catalogFilterQuery')?.addEventListener('input', e => {
+  catalogFilterQuery = e.target.value;
+  renderCatalogTable();
+});
 document.getElementById('resourceFilterSource')?.addEventListener('change', e => {
   resourceFilterSource = e.target.value;
   renderResourceLists();
 });
 document.getElementById('resourceFilterCategory')?.addEventListener('change', e => {
   resourceFilterCategory = e.target.value;
+  renderResourceLists();
+});
+document.getElementById('resourceFilterQuery')?.addEventListener('input', e => {
+  resourceFilterQuery = e.target.value;
   renderResourceLists();
 });
 document.getElementById('toggleCategoryMgmt')?.addEventListener('click', () => {

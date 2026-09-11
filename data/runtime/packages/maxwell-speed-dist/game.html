@@ -17,10 +17,10 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 #essence-app{display:flex;height:100vh;min-height:480px}
-#essence-stage{flex:1;position:relative;min-width:0;background:linear-gradient(160deg,#0a1216 0%,#122028 55%,#0e1a22 100%)}
+#essence-stage{flex:1;position:relative;min-width:0;background:#071014;overflow:hidden}
 #essence-stage canvas{display:block;width:100%;height:100%}
 #essence-hud{position:absolute;left:16px;top:14px;z-index:2;pointer-events:none}
-.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em}
+.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.55)}
 .essence-sub,#goalMission{display:none!important}
 #essence-bench{width:min(340px,38vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
 .essence-scroll{padding:14px 14px 10px;overflow:auto;flex:1}
@@ -36,6 +36,8 @@ button{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;font-weight:60
 button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 .observe-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}
 .observe-box .val{font-size:20px;font-weight:700}
+.observe-box.measuring .val{animation:readPulse .35s ease-in-out 2}
+@keyframes readPulse{0%,100%{opacity:1}50%{opacity:.5;color:#9fe7f0}}
 .observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.4}
 .pass-badge{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#0f9f7a;color:#fff;font-size:12px;font-weight:700}
 .attempts{font-size:12px;color:var(--craft-muted);margin-top:8px}
@@ -107,7 +109,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <button type="button" id="btn-test">测试 · 读特征速</button>
         <button type="button" id="btn-reset" class="secondary">重置</button>
       </div>
-      <div class="observe-box">
+      <div class="observe-box" id="observeBox">
         <div><span class="val" id="vpDisplay">—</span> <span style="font-size:12px;color:var(--craft-muted)">v_p</span></div>
         <div class="hint" id="hintMessage">调参后点测试</div>
         <div id="winIndicator"></div>
@@ -123,28 +125,58 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var mode = 'explore';
   var attempts = 6;
   var bandLo = 1.2, bandHi = 1.6;
-  var palettes = [
-    ['#0a9bb0', '#7fd4e0'],
-    ['#0a9bb0', '#7fd4e0'],
-    ['#0a9bb0', '#7fd4e0'],
-    ['#0a9bb0', '#7fd4e0']
-  ];
   var strokeW = [1, 1.5, 2.2, 3];
+  var molecules = [];
+  var dust = [];
+  var animTime = 0;
+  var sampleT = 0;
+  var histBuild = 1;
+  var testing = false;
+  var scanX = 0;
 
   function stats() {
     var T = +document.getElementById('s-T').value;
     var m = +document.getElementById('s-m').value;
-    // relative units: k=1
-    var vp = Math.sqrt(2 * T / m) / 10; // scale for readable ~1–3
+    var vp = Math.sqrt(2 * T / m) / 10;
     var vavg = Math.sqrt(8 * T / (Math.PI * m)) / 10;
     var vrms = Math.sqrt(3 * T / m) / 10;
     return { T: T, m: m, vp: vp, vavg: vavg, vrms: vrms };
   }
 
   function f(v, T, m) {
-    // Maxwell speed pdf relative
     var a = m / (2 * T);
     return v * v * Math.exp(-a * v * v);
+  }
+
+  function sampleSpeed(T, m) {
+    // approximate Maxwell via rejection on compressed T
+    var Tc = T / 100;
+    var vmax = 8;
+    var a = m / (2 * Tc);
+    var mode = Math.sqrt(1 / a);
+    var fmax = f(mode, Tc, m) * 1.15;
+    for (var i = 0; i < 40; i++) {
+      var v = Math.random() * vmax;
+      if (Math.random() * fmax < f(v, Tc, m)) return v;
+    }
+    return mode;
+  }
+
+  function spawnCloud() {
+    var st = stats();
+    var n = 90;
+    molecules = [];
+    for (var i = 0; i < n; i++) {
+      var spd = sampleSpeed(st.T, st.m);
+      var ang = Math.random() * Math.PI * 2;
+      molecules.push({
+        x: Math.random(), y: Math.random(),
+        vx: Math.cos(ang) * spd * 0.08,
+        vy: Math.sin(ang) * spd * 0.08,
+        spd: spd,
+        r: 1.6 + Math.min(2.2, st.m) * 0.5
+      });
+    }
   }
 
   function resize() {
@@ -155,17 +187,219 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function draw() {
-    var rect = canvas.getBoundingClientRect();
-    var w = rect.width, h = rect.height;
-    var st = stats();
+  function roundRectPath(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function speedColor(spd, vmax) {
+    var t = Math.min(1, Math.max(0, spd / vmax));
+    // cool→hot: teal → amber
+    var r = Math.round(60 + t * 180);
+    var g = Math.round(200 - t * 80);
+    var b = Math.round(220 - t * 160);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+
+  function drawLab(w, h, t) {
+    var wall = ctx.createLinearGradient(0, 0, 0, h);
+    wall.addColorStop(0, '#152028');
+    wall.addColorStop(0.55, '#0e171e');
+    wall.addColorStop(1, '#0a1014');
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    for (var x = 50; x < w; x += 80) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h * 0.7); ctx.stroke();
+    }
+
+    // instrument racks
+    ctx.fillStyle = 'rgba(10,18,24,0.75)';
+    ctx.fillRect(12, h * 0.14, 48, h * 0.4);
+    ctx.strokeStyle = 'rgba(127,212,224,0.1)';
+    ctx.strokeRect(16, h * 0.14 + 4, 40, h * 0.4 - 8);
+
+    var floorY = h * 0.74;
+    var floor = ctx.createLinearGradient(0, floorY, 0, h);
+    floor.addColorStop(0, '#243038');
+    floor.addColorStop(1, '#10161a');
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, floorY, w, h - floorY);
+    ctx.strokeStyle = 'rgba(10,155,176,0.08)';
+    for (var i = 1; i < 6; i++) {
+      var fy = floorY + i * i * 2.4;
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(w, fy); ctx.stroke();
+    }
+
+    var by = floorY - 8;
+    var bg = ctx.createLinearGradient(0, by - 20, 0, by + 14);
+    bg.addColorStop(0, '#3a4850'); bg.addColorStop(1, '#1c262c');
+    ctx.fillStyle = bg;
+    ctx.fillRect(w * 0.03, by - 14, w * 0.94, 22);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(w * 0.03, by + 8, w * 0.94, 14);
+    ctx.strokeStyle = 'rgba(180,220,230,0.16)';
+    ctx.beginPath(); ctx.moveTo(w * 0.03, by - 14); ctx.lineTo(w * 0.97, by - 14); ctx.stroke();
+
+    var lx = w * 0.5;
+    var flick = 0.94 + 0.06 * Math.sin(t * 2);
+    var glow = ctx.createRadialGradient(lx, 40, 8, lx, 60, w * 0.5);
+    glow.addColorStop(0, 'rgba(140,220,235,' + (0.16 * flick) + ')');
+    glow.addColorStop(1, 'rgba(10,155,176,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#243038';
+    ctx.beginPath();
+    ctx.moveTo(lx - 26, 28); ctx.lineTo(lx + 26, 28); ctx.lineTo(lx + 14, 46); ctx.lineTo(lx - 14, 46);
+    ctx.closePath(); ctx.fill();
+
+    if (!dust.length) {
+      for (var d = 0; d < 24; d++) dust.push({ x: Math.random() * w, y: Math.random() * h * 0.7, r: 0.5 + Math.random(), a: 0.06 + Math.random() * 0.12, vx: 3 + Math.random() * 7, ph: Math.random() * 6 });
+    }
+    for (var di = 0; di < dust.length; di++) {
+      var p = dust[di];
+      p.x += p.vx * 0.016; p.y += Math.sin(t + p.ph) * 0.1;
+      if (p.x > w + 4) p.x = -4;
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = '#9fe7f0';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var vig = ctx.createRadialGradient(w * 0.5, h * 0.4, h * 0.15, w * 0.5, h * 0.45, h * 0.9);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.4)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function layout(w, h) {
+    var landscape = w >= h * 1.05;
+    if (landscape) {
+      var gap = 16;
+      var usableW = w - 40 - gap;
+      var leftW = usableW * 0.46;
+      var rightW = usableW * 0.54;
+      var panelH = Math.min(h * 0.58, 360);
+      var top = h * 0.74 - 24 - panelH;
+      return {
+        cloud: { x: 20, y: top, w: leftW, h: panelH },
+        hist: { x: 20 + leftW + gap, y: top, w: rightW, h: panelH }
+      };
+    }
+    var panelW = w - 36;
+    var topH = Math.min(h * 0.32, 200);
+    var botH = Math.min(h * 0.32, 200);
+    var topY = h * 0.1;
+    return {
+      cloud: { x: 18, y: topY, w: panelW, h: topH },
+      hist: { x: 18, y: topY + topH + 14, w: panelW, h: botH }
+    };
+  }
+
+  function drawPanelFrame(box, title) {
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(box.x + box.w / 2, box.y + box.h + 12, box.w * 0.42, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    var frame = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y);
+    frame.addColorStop(0, '#1a2830');
+    frame.addColorStop(0.4, '#3a505c');
+    frame.addColorStop(1, '#152028');
+    ctx.fillStyle = frame;
+    roundRectPath(ctx, box.x - 8, box.y - 8, box.w + 16, box.h + 16, 12);
+    ctx.fill();
+
+    var inner = ctx.createLinearGradient(box.x, box.y, box.x, box.y + box.h);
+    inner.addColorStop(0, 'rgba(12,22,28,0.96)');
+    inner.addColorStop(1, 'rgba(6,12,16,0.98)');
+    ctx.fillStyle = inner;
+    roundRectPath(ctx, box.x, box.y, box.w, box.h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(127,212,224,0.35)';
+    ctx.lineWidth = 1.5;
+    roundRectPath(ctx, box.x, box.y, box.w, box.h, 8);
+    ctx.stroke();
+
+    ctx.fillStyle = '#8a9aa6';
+    ctx.font = '11px sans-serif';
+    ctx.fillText(title, box.x + 10, box.y - 14);
+  }
+
+  function drawCloud(box, st, dt) {
+    drawPanelFrame(box, '分子云 · 速率着色');
+    var vmax = 8;
+    var spdMul = 0.7 + Math.sqrt(st.T / 300);
+
+    // chamber glass sheen
+    var sheen = ctx.createLinearGradient(box.x, box.y, box.x + box.w * 0.4, box.y + box.h);
+    sheen.addColorStop(0, 'rgba(180,230,240,0.08)');
+    sheen.addColorStop(1, 'rgba(180,230,240,0)');
+    ctx.fillStyle = sheen;
+    roundRectPath(ctx, box.x + 2, box.y + 2, box.w * 0.4, box.h - 4, 6);
+    ctx.fill();
+
+    if (!molecules.length) spawnCloud();
+    molecules.forEach(function(p) {
+      p.x += p.vx * dt * spdMul / Math.max(0.5, st.m);
+      p.y += p.vy * dt * spdMul / Math.max(0.5, st.m);
+      if (p.x < 0 || p.x > 1) { p.vx *= -1; p.x = Math.max(0, Math.min(1, p.x)); }
+      if (p.y < 0 || p.y > 1) { p.vy *= -1; p.y = Math.max(0, Math.min(1, p.y)); }
+      var px = box.x + 10 + p.x * (box.w - 20);
+      var py = box.y + 10 + p.y * (box.h - 20);
+      var col = speedColor(p.spd, vmax);
+      var g = ctx.createRadialGradient(px, py, 0.3, px, py, p.r * 2.4);
+      g.addColorStop(0, '#fff8e8');
+      g.addColorStop(0.4, col);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, p.r * 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(px, py, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // color legend
+    var lx = box.x + 12, ly = box.y + box.h - 18;
+    var lg = ctx.createLinearGradient(lx, 0, lx + 70, 0);
+    lg.addColorStop(0, speedColor(0.5, vmax));
+    lg.addColorStop(1, speedColor(7, vmax));
+    ctx.fillStyle = lg;
+    ctx.fillRect(lx, ly, 70, 6);
+    ctx.fillStyle = '#8a9aa6';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('慢', lx, ly - 2);
+    ctx.fillText('快', lx + 58, ly - 2);
+
+    if (sampleT > 0) {
+      scanX = (1 - sampleT) * box.w;
+      ctx.fillStyle = 'rgba(159,231,240,' + (0.08 + 0.1 * Math.sin(animTime * 20)) + ')';
+      ctx.fillRect(box.x, box.y, scanX, box.h);
+      ctx.strokeStyle = 'rgba(159,231,240,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(box.x + scanX, box.y);
+      ctx.lineTo(box.x + scanX, box.y + box.h);
+      ctx.stroke();
+    }
+  }
+
+  function drawHist(box, st) {
+    drawPanelFrame(box, '速率分布');
     var palIdx = +document.getElementById('s-palette').value;
-    var pal = palettes[palIdx] || palettes[0];
     var lw = strokeW[palIdx] || 1.5;
-    ctx.clearRect(0, 0, w, h);
-    var left = 48, right = 24, top = 36, bottom = 40;
-    var gw = w - left - right, gh = h - top - bottom;
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    var left = box.x + 36, right = 14, top = box.y + 28, bottom = 28;
+    var gw = box.w - 36 - right, gh = box.h - 28 - bottom;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
     ctx.strokeRect(left, top, gw, gh);
 
     var vmax = 8;
@@ -174,48 +408,91 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     var ys = [];
     for (var i = 0; i < bins; i++) {
       var v = (i + 0.5) / bins * vmax;
-      var y = f(v, st.T / 100, st.m); // compress T
+      var y = f(v, st.T / 100, st.m);
       ys.push(y); if (y > maxY) maxY = y;
     }
+
+    var reveal = Math.max(0.05, histBuild);
     for (var j = 0; j < bins; j++) {
+      if (j / bins > reveal) break;
       var bh = (ys[j] / maxY) * (gh - 8);
       var bw = gw / bins;
-      ctx.fillStyle = pal[0];
-      ctx.globalAlpha = 0.55;
-      ctx.fillRect(left + j * bw + 1, top + gh - bh, bw - 2, bh);
+      var bx = left + j * bw + 1;
+      var by = top + gh - bh;
+      ctx.fillStyle = 'rgba(10,155,176,0.55)';
+      ctx.fillRect(bx, by, bw - 2, bh);
+      if (lw > 0.5) {
+        ctx.strokeStyle = 'rgba(127,212,224,0.85)';
+        ctx.lineWidth = lw;
+        ctx.strokeRect(bx, by, bw - 2, bh);
+      }
     }
-    ctx.globalAlpha = 1;
-    // curve
+
     ctx.beginPath();
+    var drawn = false;
     for (var k = 0; k <= 80; k++) {
       var vv = k / 80 * vmax;
+      if (vv / vmax > reveal) break;
       var yy = f(vv, st.T / 100, st.m);
       var x = left + (vv / vmax) * gw;
       var y = top + gh - (yy / maxY) * (gh - 8);
-      if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      if (!drawn) { ctx.moveTo(x, y); drawn = true; } else ctx.lineTo(x, y);
     }
-    ctx.strokeStyle = pal[1];
-    ctx.lineWidth = lw;
+    ctx.strokeStyle = '#7fd4e0';
+    ctx.lineWidth = Math.max(1.5, lw);
     ctx.stroke();
 
-    // mark vp
     var vpMark = Math.min(vmax * 0.95, Math.max(0.2, Math.sqrt(2 * (st.T / 100) / st.m)));
     var mx = left + (vpMark / vmax) * gw;
-    ctx.strokeStyle = '#f0c674';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(mx, top); ctx.lineTo(mx, top + gh); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#f0c674';
-    ctx.font = '12px sans-serif';
-    ctx.fillText('v_p', mx + 4, top + 14);
+    if (vpMark / vmax <= reveal) {
+      ctx.strokeStyle = '#f0c674';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(mx, top); ctx.lineTo(mx, top + gh); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#f0c674';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('v_p', mx + 4, top + 14);
+    }
 
     ctx.fillStyle = '#8a9aa6';
-    ctx.font = '11px sans-serif';
-    ctx.fillText('速率 →', left + gw - 48, top + gh + 24);
-    ctx.fillText('v_p≈' + st.vp.toFixed(2) + '  ⟨v⟩≈' + st.vavg.toFixed(2) + '  v_rms≈' + st.vrms.toFixed(2), left, 22);
+    ctx.font = '10px sans-serif';
+    ctx.fillText('速率 →', left + gw - 40, top + gh + 18);
+    ctx.fillText('v_p≈' + st.vp.toFixed(2) + '  ⟨v⟩≈' + st.vavg.toFixed(2) + '  v_rms≈' + st.vrms.toFixed(2), left, box.y + 16);
+
+    if (sampleT > 0) {
+      ctx.fillStyle = 'rgba(10,155,176,0.1)';
+      roundRectPath(ctx, box.x, box.y, box.w, box.h, 8);
+      ctx.fill();
+      ctx.fillStyle = '#9fe7f0';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('采样刷新…', box.x + box.w / 2 - 36, box.y + box.h / 2);
+    }
   }
 
-  function loop() { draw(); requestAnimationFrame(loop); }
+  function draw(dt) {
+    var rect = canvas.getBoundingClientRect();
+    var w = rect.width, h = rect.height;
+    animTime += dt;
+    if (sampleT > 0) {
+      sampleT = Math.max(0, sampleT - dt);
+      histBuild = Math.min(1, histBuild + dt * 2.2);
+    } else if (histBuild < 1) {
+      histBuild = Math.min(1, histBuild + dt * 3);
+    }
+
+    var st = stats();
+    drawLab(w, h, animTime);
+    var lay = layout(w, h);
+    drawCloud(lay.cloud, st, dt);
+    drawHist(lay.hist, st);
+  }
+
+  function loop(ts) {
+    var dt = loop._last ? Math.min(0.05, (ts - loop._last) / 1000) : 0.016;
+    loop._last = ts;
+    draw(dt);
+    requestAnimationFrame(loop);
+  }
 
   function syncLabels() {
     document.getElementById('tVal').textContent = document.getElementById('s-T').value + ' K';
@@ -224,7 +501,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   }
 
   function lockBand() {
-    // 从可达 (T,m) 抽样，保证竞赛可打进
     var T = 160 + Math.random() * 420;
     var m = 0.55 + Math.random() * 1.9;
     var mid = Math.sqrt(2 * T / m) / 10;
@@ -261,8 +537,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
-  function doTest() {
-    syncLabels();
+  function settleTest() {
     var st = stats();
     document.getElementById('vpDisplay').textContent = st.vp.toFixed(2);
     var controls = window.__snapControls ? window.__snapControls() : {};
@@ -308,6 +583,25 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
+  function doTest() {
+    if (testing) return;
+    if (mode === 'challenge' && (attempts <= 0 || window.__challengeWon)) return;
+    syncLabels();
+    testing = true;
+    sampleT = 0.55;
+    histBuild = 0;
+    spawnCloud();
+    var box = document.getElementById('observeBox');
+    box.classList.add('measuring');
+    document.getElementById('hintMessage').textContent = '分布采样…';
+    document.getElementById('vpDisplay').textContent = '···';
+    setTimeout(function() {
+      box.classList.remove('measuring');
+      testing = false;
+      settleTest();
+    }, 520);
+  }
+
   window.__thermoReset = function() {
     document.getElementById('s-T').value = 300;
     document.getElementById('s-m').value = 1;
@@ -315,21 +609,27 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('vpDisplay').textContent = '—';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
-    attempts = 6; syncLabels(); refreshGoals();
+    document.getElementById('observeBox').classList.remove('measuring');
+    testing = false; sampleT = 0; histBuild = 1;
+    attempts = 6; syncLabels(); spawnCloud(); refreshGoals();
   };
 
   window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
   ['s-T','s-m','s-palette'].forEach(function(id){
     document.getElementById(id).addEventListener('input', function(){
       syncLabels();
-      if (id === 's-T' || id === 's-m') window.__exploreAvTouched[id] = 1;
+      if (id === 's-T' || id === 's-m') {
+        window.__exploreAvTouched[id] = 1;
+        spawnCloud();
+        histBuild = 0.35;
+      }
     });
   });
   document.getElementById('modeSelect').addEventListener('change', onMode);
   document.getElementById('btn-test').addEventListener('click', doTest);
   document.getElementById('btn-reset').addEventListener('click', function(){ window.__thermoReset(); });
-  window.addEventListener('resize', resize);
-  resize(); syncLabels(); lockBand(); refreshGoals();
+  window.addEventListener('resize', function(){ resize(); dust = []; });
+  resize(); syncLabels(); lockBand(); refreshGoals(); spawnCloud();
   requestAnimationFrame(loop);
 })();
 </script>

@@ -1,7 +1,7 @@
 # 一人端到端实测清单（录屏给老师）
 
 目标：本地走通 **教师发布 → 学生 join → 试玩 → 学情 → Agent B 评判**。  
-**现行课堂关卡与通行码**以 [classroom-demo-checklist.md](./classroom-demo-checklist.md) 为准（默认 **6 关**：力学 3 + 热学三新关）。
+**现行课堂关卡与通行码**以 [classroom-demo-checklist.md](./classroom-demo-checklist.md) 为准（默认 **6 关**：力学 3 + 热学三新关）。关卡回归见 [game-qa-checklist.md](./game-qa-checklist.md)。
 
 ## 前置
 

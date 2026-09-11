@@ -17,10 +17,10 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
 #essence-app{display:flex;height:100vh;min-height:480px}
-#essence-stage{flex:1;position:relative;min-width:0;background:linear-gradient(160deg,#0a1216 0%,#122028 55%,#0e1a22 100%)}
+#essence-stage{flex:1;position:relative;min-width:0;background:#071014;overflow:hidden}
 #essence-stage canvas{display:block;width:100%;height:100%}
 #essence-hud{position:absolute;left:16px;top:14px;z-index:2;pointer-events:none}
-.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em}
+.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.55)}
 .essence-sub,#goalMission{display:none!important}
 #essence-bench{width:min(340px,38vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
 .essence-scroll{padding:14px 14px 10px;overflow:auto;flex:1}
@@ -36,6 +36,8 @@ button{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;font-weight:60
 button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 .observe-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}
 .observe-box .val{font-size:20px;font-weight:700}
+.observe-box.measuring .val{animation:readPulse .35s ease-in-out 2}
+@keyframes readPulse{0%,100%{opacity:1}50%{opacity:.5;color:#9fe7f0}}
 .observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.4}
 .pass-badge{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#0f9f7a;color:#fff;font-size:12px;font-weight:700}
 .attempts{font-size:12px;color:var(--craft-muted);margin-top:8px}
@@ -48,7 +50,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 .craft-actions{display:flex;gap:8px;margin-top:14px}
 .craft-btn-secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 @media (max-width:820px){#essence-app{flex-direction:column}#essence-bench{width:100%;height:46vh}#essence-stage{height:54vh}}
-
 .process-tog{display:flex;gap:6px;margin:8px 0 4px}
 .process-tog button{flex:1;font-size:12px;padding:6px}
 .process-tog button.active{outline:2px solid var(--craft-accent)}
@@ -115,7 +116,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <button type="button" id="btn-test">测试 · 读状态</button>
         <button type="button" id="btn-reset" class="secondary">重置</button>
       </div>
-      <div class="observe-box">
+      <div class="observe-box" id="observeBox">
         <div><span class="val" id="stateDisplay">—</span></div>
         <div class="hint" id="hintMessage">调参后点测试</div>
         <div id="winIndicator"></div>
@@ -135,14 +136,23 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var showIso = true;
   var followAdi = true;
   var targetV = 0.8, targetP = 1.6, tolV = 0.08, tolP = 0.12;
+  var animTime = 0;
+  var pistonSmooth = 1.2;
+  var processBlend = 1; // 1=adi visual, 0=iso
+  var processTarget = 1;
+  var strokeAnim = 0; // compress/expand pulse on test
+  var strokeDir = 0;
+  var measureT = 0;
+  var testing = false;
+  var dust = [];
+  var pathFlash = 0;
 
   function stateAt(V, T0) {
-    // reference at V0 with P0 from T0 (relative)
     var Pref = P0 * (T0 / 300);
     var Padi = Pref * Math.pow(V0 / V, gamma);
     var Piso = Pref * (V0 / V);
     var Tadi = T0 * Math.pow(V0 / V, gamma - 1);
-    var Tiso = T0; // isothermal
+    var Tiso = T0;
     return { Pref: Pref, Padi: Padi, Piso: Piso, Tadi: Tadi, Tiso: Tiso, V: V };
   }
 
@@ -162,34 +172,300 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  function draw() {
-    var rect = canvas.getBoundingClientRect();
-    var w = rect.width, h = rect.height;
-    var T0 = +document.getElementById('s-T0').value;
-    var tag = +document.getElementById('s-tag').value;
-    ctx.clearRect(0, 0, w, h);
-    var left = 48, right = 24, top = 28, bottom = 36;
-    var gw = w - left - right, gh = h - top - bottom;
-    ctx.strokeStyle = 'rgba(255,255,255,.12)';
-    ctx.strokeRect(left, top, gw, gh);
+  function roundRectPath(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function drawLab(w, h, t) {
+    var wall = ctx.createLinearGradient(0, 0, 0, h);
+    wall.addColorStop(0, '#1a242c');
+    wall.addColorStop(0.5, '#101a20');
+    wall.addColorStop(1, '#0a1216');
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+    ctx.lineWidth = 1;
+    for (var x = 40; x < w; x += 90) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h * 0.7); ctx.stroke();
+    }
+
+    // far equipment rack
+    ctx.fillStyle = 'rgba(12,20,26,0.8)';
+    ctx.fillRect(w * 0.72, h * 0.12, w * 0.22, h * 0.4);
+    ctx.strokeStyle = 'rgba(127,212,224,0.1)';
+    ctx.strokeRect(w * 0.72 + 3, h * 0.12 + 3, w * 0.22 - 6, h * 0.4 - 6);
+    for (var i = 0; i < 4; i++) {
+      ctx.fillStyle = 'rgba(50,70,80,0.5)';
+      ctx.fillRect(w * 0.75 + (i % 2) * 36, h * 0.18 + Math.floor(i / 2) * 50, 22, 34);
+    }
+
+    var floorY = h * 0.72;
+    var floor = ctx.createLinearGradient(0, floorY, 0, h);
+    floor.addColorStop(0, '#2a343c');
+    floor.addColorStop(1, '#12181c');
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, floorY, w, h - floorY);
+    ctx.strokeStyle = 'rgba(10,155,176,0.08)';
+    for (var j = 1; j < 6; j++) {
+      var fy = floorY + j * j * 2.6;
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(w, fy); ctx.stroke();
+    }
+
+    // bench
+    var by = floorY - 6;
+    var bg = ctx.createLinearGradient(0, by - 22, 0, by + 16);
+    bg.addColorStop(0, '#3a4850'); bg.addColorStop(1, '#1e282e');
+    ctx.fillStyle = bg;
+    ctx.fillRect(w * 0.03, by - 16, w * 0.94, 24);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(w * 0.03, by + 8, w * 0.94, 16);
+    ctx.strokeStyle = 'rgba(180,220,230,0.18)';
+    ctx.beginPath(); ctx.moveTo(w * 0.03, by - 16); ctx.lineTo(w * 0.97, by - 16); ctx.stroke();
+
+    // lamp
+    var lx = w * 0.28, ly = 14;
+    var flick = 0.94 + 0.06 * Math.sin(t * 1.8);
+    var glow = ctx.createRadialGradient(lx, ly + 50, 10, lx, ly + 50, w * 0.45);
+    glow.addColorStop(0, 'rgba(140,220,235,' + (0.18 * flick) + ')');
+    glow.addColorStop(1, 'rgba(10,155,176,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#243038';
+    ctx.beginPath();
+    ctx.moveTo(lx - 22, 30); ctx.lineTo(lx + 22, 30); ctx.lineTo(lx + 12, 46); ctx.lineTo(lx - 12, 46);
+    ctx.closePath(); ctx.fill();
+
+    if (!dust.length) {
+      for (var d = 0; d < 22; d++) dust.push({ x: Math.random() * w, y: Math.random() * h * 0.7, r: 0.5 + Math.random(), a: 0.06 + Math.random() * 0.14, vx: 3 + Math.random() * 8, ph: Math.random() * 6 });
+    }
+    for (var di = 0; di < dust.length; di++) {
+      var p = dust[di];
+      p.x += p.vx * 0.016; p.y += Math.sin(t + p.ph) * 0.12;
+      if (p.x > w + 6) p.x = -4;
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = '#9fe7f0';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var vig = ctx.createRadialGradient(w * 0.35, h * 0.4, h * 0.15, w * 0.4, h * 0.45, h * 0.9);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.42)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawCylinder(w, h, cur, tag) {
+    var floorY = h * 0.72;
+    var cylW = Math.min(150, w * 0.22);
+    var cylH = Math.min(280, h * 0.48);
+    var cx = w * 0.28;
+    var baseY = floorY - 28;
+    var topY = baseY - cylH;
+
+    // target visual V with stroke animation overshoot
+    var Vvis = pistonSmooth;
+    if (strokeAnim > 0) {
+      Vvis += strokeDir * Math.sin(strokeAnim * Math.PI) * 0.12;
+    }
+    var Vmin = 0.4, Vmax = 2.2;
+    var fillFrac = Math.max(0.18, Math.min(0.88, (Vvis - Vmin) / (Vmax - Vmin)));
+    var gasH = cylH * fillFrac;
+    var pistonY = baseY - gasH;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(cx, baseY + 14, cylW * 0.7, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // stand
+    ctx.fillStyle = '#1a242c';
+    ctx.fillRect(cx - cylW * 0.55, baseY, cylW * 1.1, 10);
+    var stand = ctx.createLinearGradient(cx - 40, 0, cx + 40, 0);
+    stand.addColorStop(0, '#2a343c'); stand.addColorStop(0.5, '#4a5860'); stand.addColorStop(1, '#2a343c');
+    ctx.fillStyle = stand;
+    ctx.fillRect(cx - 36, baseY + 8, 72, 8);
+
+    // cylinder walls (thick metal)
+    var wallG = ctx.createLinearGradient(cx - cylW / 2, 0, cx + cylW / 2, 0);
+    wallG.addColorStop(0, '#1a2830');
+    wallG.addColorStop(0.2, '#4a606c');
+    wallG.addColorStop(0.5, '#2a3e48');
+    wallG.addColorStop(0.8, '#4a606c');
+    wallG.addColorStop(1, '#152028');
+    ctx.fillStyle = wallG;
+    roundRectPath(ctx, cx - cylW / 2 - 10, topY - 8, cylW + 20, cylH + 24, 10);
+    ctx.fill();
+
+    // insulation hatch marks when adiabatic-leaning
+    if (processBlend > 0.35) {
+      ctx.strokeStyle = 'rgba(240,160,100,' + (0.18 * processBlend) + ')';
+      ctx.lineWidth = 1.5;
+      for (var hi = 0; hi < 10; hi++) {
+        var hy = topY + 10 + hi * (cylH / 10);
+        ctx.beginPath();
+        ctx.moveTo(cx - cylW / 2 - 8, hy);
+        ctx.lineTo(cx - cylW / 2 - 2, hy + 8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + cylW / 2 + 2, hy);
+        ctx.lineTo(cx + cylW / 2 + 8, hy + 8);
+        ctx.stroke();
+      }
+    }
+
+    // gas color by temperature / process
+    var Tnorm = Math.min(1, Math.max(0, (cur.T - 180) / 420));
+    var r = Math.round(20 + Tnorm * 160 * (0.4 + 0.6 * processBlend));
+    var g = Math.round(50 + (1 - Tnorm) * 40);
+    var b = Math.round(70 + (1 - Tnorm) * 80 * (1 - processBlend * 0.5));
+    var gasG = ctx.createLinearGradient(cx, pistonY, cx, baseY);
+    gasG.addColorStop(0, 'rgba(' + r + ',' + g + ',' + b + ',0.85)');
+    gasG.addColorStop(1, 'rgba(' + Math.round(r * 0.4) + ',' + Math.round(g * 0.5) + ',' + Math.round(b * 0.6) + ',0.95)');
+    ctx.fillStyle = gasG;
+    ctx.fillRect(cx - cylW / 2 + 4, pistonY, cylW - 8, gasH);
+
+    // gas shimmer particles
+    ctx.fillStyle = 'rgba(255,230,180,' + (0.15 + Tnorm * 0.25) + ')';
+    for (var gi = 0; gi < 12; gi++) {
+      var gx = cx - cylW / 2 + 12 + (gi * 37 + animTime * 40) % (cylW - 24);
+      var gy = pistonY + 10 + ((gi * 53 + animTime * 30) % Math.max(8, gasH - 16));
+      ctx.globalAlpha = 0.25 + 0.35 * Math.sin(animTime * 3 + gi);
+      ctx.beginPath(); ctx.arc(gx, gy, 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // piston head
+    var pistG = ctx.createLinearGradient(cx - cylW / 2, pistonY - 14, cx + cylW / 2, pistonY + 8);
+    pistG.addColorStop(0, '#5a6a72');
+    pistG.addColorStop(0.45, '#c8d4dc');
+    pistG.addColorStop(1, '#3a4850');
+    ctx.fillStyle = pistG;
+    roundRectPath(ctx, cx - cylW / 2 + 2, pistonY - 14, cylW - 4, 18, 3);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.strokeRect(cx - cylW / 2 + 6, pistonY - 8, cylW - 12, 6);
+
+    // piston rod
+    var rodG = ctx.createLinearGradient(cx - 6, 0, cx + 6, 0);
+    rodG.addColorStop(0, '#3a4850'); rodG.addColorStop(0.5, '#a8b8c0'); rodG.addColorStop(1, '#3a4850');
+    ctx.fillStyle = rodG;
+    ctx.fillRect(cx - 5, topY - 40, 10, pistonY - (topY - 40));
+    // handle crossbar
+    ctx.fillStyle = '#4a5860';
+    ctx.fillRect(cx - 28, topY - 48, 56, 10);
+    ctx.fillStyle = '#8a9aa6';
+    ctx.fillRect(cx - 32, topY - 52, 10, 18);
+    ctx.fillRect(cx + 22, topY - 52, 10, 18);
+
+    // glass sheen on cylinder
+    var sheen = ctx.createLinearGradient(cx - cylW / 2, 0, cx, 0);
+    sheen.addColorStop(0, 'rgba(200,240,255,0.12)');
+    sheen.addColorStop(1, 'rgba(200,240,255,0)');
+    ctx.fillStyle = sheen;
+    ctx.fillRect(cx - cylW / 2 + 4, topY, cylW * 0.28, cylH);
+
+    // nameplate CV
+    var px = cx + cylW / 2 + 18, py = baseY - 70;
+    var plate = ctx.createLinearGradient(px, py, px + 78, py);
+    plate.addColorStop(0, '#2a1e10'); plate.addColorStop(1, '#1a140c');
+    ctx.fillStyle = plate;
+    roundRectPath(ctx, px, py, 78, 36, 4); ctx.fill();
+    ctx.strokeStyle = 'rgba(201,151,63,0.45)';
+    roundRectPath(ctx, px + 2, py + 2, 74, 32, 3); ctx.stroke();
+    ctx.fillStyle = '#a87826';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('铭牌', px + 10, py + 14);
+    ctx.fillStyle = '#f0cf8a';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(tag + ' g', px + 10, py + 28);
+
+    // process badge
+    ctx.fillStyle = processBlend > 0.5 ? 'rgba(240,140,80,0.85)' : 'rgba(120,180,200,0.85)';
+    roundRectPath(ctx, cx - 36, topY - 78, 72, 22, 6); ctx.fill();
+    ctx.fillStyle = '#0a1216';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(processBlend > 0.5 ? '绝热' : '等温', cx, topY - 63);
+    ctx.textAlign = 'left';
+
+    if (measureT > 0) {
+      ctx.strokeStyle = 'rgba(159,231,240,' + (0.4 + 0.4 * Math.sin(animTime * 16)) + ')';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      roundRectPath(ctx, cx - cylW / 2 - 16, topY - 56, cylW + 32, cylH + 80, 12);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawPV(w, h, cur, T0) {
+    // Larger plate; keep clear of cylinder (~w*0.28) and HUD on narrow widths
+    var panelW = Math.min(400, Math.max(260, w * 0.48));
+    var panelH = Math.min(360, Math.max(240, h * 0.58));
+    if (w < 720) {
+      panelW = Math.min(panelW, w * 0.46);
+      panelH = Math.min(panelH, h * 0.52);
+    }
+    var left = w - panelW - 14;
+    var top = Math.max(40, Math.min(h - panelH - 16, h * 0.08));
+    // Margins: title/legend top, axis labels, bottom readout
+    var padL = 40, padR = 16, padT = 36, padB = 36;
+    var gw = panelW - padL - padR, gh = panelH - padT - padB;
+
+    // panel plate
+    var plate = ctx.createLinearGradient(left, top, left, top + panelH);
+    plate.addColorStop(0, 'rgba(18,28,34,0.92)');
+    plate.addColorStop(1, 'rgba(10,16,20,0.94)');
+    ctx.fillStyle = plate;
+    roundRectPath(ctx, left, top, panelW, panelH, 10); ctx.fill();
+    ctx.strokeStyle = 'rgba(10,155,176,0.35)';
+    ctx.lineWidth = 1.5;
+    roundRectPath(ctx, left + 2, top + 2, panelW - 4, panelH - 4, 8); ctx.stroke();
+
     ctx.fillStyle = '#8a9aa6';
     ctx.font = '11px sans-serif';
-    ctx.fillText('V →', left + gw - 28, top + gh + 22);
+    ctx.fillText('p–V 图', left + 12, top + 20);
+    ctx.fillStyle = '#0a9bb0';
+    ctx.fillText('绝热', left + panelW - 88, top + 20);
+    ctx.fillStyle = 'rgba(180,190,200,0.7)';
+    ctx.fillText('等温', left + panelW - 48, top + 20);
+
+    var ox = left + padL, oy = top + padT;
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeRect(ox, oy, gw, gh);
+    ctx.fillStyle = '#6a7a84';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('V →', ox + gw - 24, oy + gh + 18);
     ctx.save();
-    ctx.translate(16, top + gh / 2);
+    ctx.translate(left + 14, oy + gh / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('P', 0, 0);
     ctx.restore();
 
+    // Fit P-axis to current T0 curve peak (+headroom) so adi never spills
+    var vmin = 0.35, vmax = 2.3, pmin = 0.15;
+    var peak = stateAt(0.4, T0).Padi;
+    var pmax = Math.max(peak * 1.12, 3.5);
+
     function map(V, P) {
-      var vmin = 0.35, vmax = 2.3, pmin = 0.2, pmax = 4.2;
+      var x = ox + ((V - vmin) / (vmax - vmin)) * gw;
+      var y = oy + gh - ((P - pmin) / (pmax - pmin)) * gh;
       return {
-        x: left + ((V - vmin) / (vmax - vmin)) * gw,
-        y: top + gh - ((P - pmin) / (pmax - pmin)) * gh
+        x: Math.max(ox, Math.min(ox + gw, x)),
+        y: Math.max(oy, Math.min(oy + gh, y))
       };
     }
 
-    function path(kind) {
+    function path(kind, color, dash, width) {
       ctx.beginPath();
       for (var i = 0; i <= 60; i++) {
         var V = 0.4 + i / 60 * 1.8;
@@ -198,47 +474,75 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         var pt = map(V, P);
         if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
       }
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dash || []);
       ctx.stroke();
-    }
-
-    ctx.strokeStyle = '#0a9bb0';
-    path('adi');
-    if (showIso) {
-      ctx.strokeStyle = 'rgba(180,190,200,0.55)';
-      ctx.setLineDash([5, 4]);
-      path('iso');
       ctx.setLineDash([]);
     }
 
-    // target
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(ox, oy, gw, gh);
+    ctx.clip();
+
+    var adiW = 2 + processBlend * 1.5;
+    var isoW = 1.5 + (1 - processBlend) * 1.5;
+    path('adi', 'rgba(10,155,176,' + (0.55 + processBlend * 0.45) + ')', [], adiW);
+    if (showIso) path('iso', 'rgba(180,190,200,' + (0.35 + (1 - processBlend) * 0.45) + ')', [5, 4], isoW);
+
     if (mode === 'challenge') {
       var tg = map(targetV, targetP);
-      ctx.strokeStyle = 'rgba(240,198,116,0.9)';
+      ctx.strokeStyle = 'rgba(240,198,116,0.95)';
+      ctx.lineWidth = 2;
       ctx.strokeRect(tg.x - 10, tg.y - 10, 20, 20);
       ctx.fillStyle = '#f0c674';
       ctx.font = '11px sans-serif';
       ctx.fillText('目标', tg.x + 12, tg.y - 4);
     }
 
-    var cur = current();
     var pt = map(cur.V, cur.P);
-    ctx.fillStyle = '#7fd4e0';
-    ctx.beginPath(); ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2); ctx.fill();
+    var ring = 6 + (pathFlash > 0 ? pathFlash * 8 : 0);
+    ctx.fillStyle = followAdi ? '#7fd4e0' : '#c8d4dc';
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, ring * 0.55, 0, Math.PI * 2); ctx.fill();
+    if (pathFlash > 0 || measureT > 0) {
+      ctx.strokeStyle = 'rgba(159,231,240,' + Math.max(measureT, pathFlash) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, ring, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+
     ctx.fillStyle = '#e6eef2';
-    ctx.font = '12px sans-serif';
-    ctx.fillText((followAdi ? '绝热' : '等温') + '  P≈' + cur.P.toFixed(2) + '  T≈' + cur.T.toFixed(0) + 'K', left, 18);
-    // decorative tag plate
-    ctx.fillStyle = 'rgba(20,32,40,0.9)';
-    ctx.fillRect(w - 110, h - 52, 90, 28);
-    ctx.strokeStyle = 'rgba(127,212,224,0.35)';
-    ctx.strokeRect(w - 110, h - 52, 90, 28);
-    ctx.fillStyle = '#8a9aa6';
-    ctx.font = '10px sans-serif';
-    ctx.fillText('铭牌 ' + tag + 'g', w - 100, h - 34);
+    ctx.font = '11px sans-serif';
+    ctx.fillText((followAdi ? '绝热' : '等温') + '  P≈' + cur.P.toFixed(2) + '  T≈' + cur.T.toFixed(0) + 'K', left + 12, top + panelH - 10);
   }
 
-  function loop() { draw(); requestAnimationFrame(loop); }
+  function draw(dt) {
+    var rect = canvas.getBoundingClientRect();
+    var w = rect.width, h = rect.height;
+    animTime += dt;
+    if (measureT > 0) measureT = Math.max(0, measureT - dt);
+    if (strokeAnim > 0) strokeAnim = Math.max(0, strokeAnim - dt * 1.8);
+    if (pathFlash > 0) pathFlash = Math.max(0, pathFlash - dt * 1.6);
+    processBlend += (processTarget - processBlend) * Math.min(1, dt * 5);
+    var Vnow = +document.getElementById('s-V').value;
+    pistonSmooth += (Vnow - pistonSmooth) * Math.min(1, dt * 6);
+
+    var cur = current();
+    var T0 = +document.getElementById('s-T0').value;
+    var tag = +document.getElementById('s-tag').value;
+
+    drawLab(w, h, animTime);
+    drawCylinder(w, h, cur, tag);
+    drawPV(w, h, cur, T0);
+  }
+
+  function loop(ts) {
+    var dt = loop._last ? Math.min(0.05, (ts - loop._last) / 1000) : 0.016;
+    loop._last = ts;
+    draw(dt);
+    requestAnimationFrame(loop);
+  }
 
   function syncLabels() {
     document.getElementById('vVal').textContent = (+document.getElementById('s-V').value).toFixed(2);
@@ -264,7 +568,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     } else {
       side.textContent = '竞赛：沿绝热落到 V≈' + targetV.toFixed(2) + '  P≈' + targetP.toFixed(2) + '（本局锁定）';
       att.textContent = '剩余机会 ' + attempts;
-      followAdi = true;
+      followAdi = true; processTarget = 1;
       document.getElementById('btn-adi').classList.add('active');
       document.getElementById('btn-iso').classList.remove('active');
     }
@@ -287,8 +591,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
-  function doTest() {
-    syncLabels();
+  function settleTest() {
     var cur = current();
     document.getElementById('stateDisplay').textContent = 'P ' + cur.P.toFixed(2) + ' · T ' + cur.T.toFixed(0) + 'K';
     var controls = window.__snapControls ? window.__snapControls() : {};
@@ -306,7 +609,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
     if (attempts <= 0 || window.__challengeWon) return;
     attempts -= 1; refreshGoals();
-    // must follow adiabatic for win
     var st = stateAt(cur.V, +document.getElementById('s-T0').value);
     var P = st.Padi;
     var ok = Math.abs(cur.V - targetV) <= tolV && Math.abs(P - targetP) <= tolP;
@@ -337,6 +639,28 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
+  function doTest() {
+    if (testing) return;
+    if (mode === 'challenge' && (attempts <= 0 || window.__challengeWon)) return;
+    syncLabels();
+    testing = true;
+    measureT = 0.55;
+    strokeAnim = 1;
+    strokeDir = (+document.getElementById('s-V').value < pistonSmooth + 0.01) ? -1 : 1;
+    // nudge toward compress if near mid
+    if (Math.abs(strokeDir) < 0.1) strokeDir = -1;
+    pathFlash = 1;
+    var box = document.getElementById('observeBox');
+    box.classList.add('measuring');
+    document.getElementById('hintMessage').textContent = '过程采样…';
+    document.getElementById('stateDisplay').textContent = '···';
+    setTimeout(function() {
+      box.classList.remove('measuring');
+      testing = false;
+      settleTest();
+    }, 520);
+  }
+
   window.__thermoReset = function() {
     document.getElementById('s-V').value = 1.2;
     document.getElementById('s-T0').value = 300;
@@ -344,20 +668,23 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('stateDisplay').textContent = '—';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
-    attempts = 6; followAdi = true; showIso = true;
+    document.getElementById('observeBox').classList.remove('measuring');
+    testing = false; measureT = 0;
+    attempts = 6; followAdi = true; showIso = true; processTarget = 1;
     document.getElementById('btn-adi').classList.add('active');
+    document.getElementById('btn-iso').classList.remove('active');
     syncLabels(); refreshGoals();
   };
 
   document.getElementById('btn-adi').addEventListener('click', function(){
-    followAdi = true; showIso = true;
+    followAdi = true; showIso = true; processTarget = 1; pathFlash = 0.8;
     this.classList.add('active');
     document.getElementById('btn-iso').classList.remove('active');
     window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
     window.__exploreAvTouched.path = 1;
   });
   document.getElementById('btn-iso').addEventListener('click', function(){
-    followAdi = false; showIso = true;
+    followAdi = false; showIso = true; processTarget = 0; pathFlash = 0.8;
     this.classList.add('active');
     document.getElementById('btn-adi').classList.remove('active');
     window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
@@ -374,8 +701,9 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   document.getElementById('modeSelect').addEventListener('change', onMode);
   document.getElementById('btn-test').addEventListener('click', doTest);
   document.getElementById('btn-reset').addEventListener('click', function(){ window.__thermoReset(); });
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', function(){ resize(); dust = []; });
   resize(); syncLabels(); lockTarget(); refreshGoals();
+  pistonSmooth = +document.getElementById('s-V').value;
   requestAnimationFrame(loop);
 })();
 </script>

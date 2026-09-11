@@ -112,7 +112,18 @@
 <header class="platform-header">
   <div class="platform-header-inner">
     <a class="platform-brand" href="/">
-      <span class="platform-brand-mark">PE</span>
+      <span class="platform-brand-mark" aria-hidden="true">
+        <svg class="platform-brand-mark-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(0.25 0.4)">
+            <rect x="2.1" y="2.1" width="43" height="43" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M7.15 12.55V7.15H12.55M34.55 7.15H39.95V12.55M39.95 34.55V39.95H34.55M12.55 39.95H7.15V34.55" stroke="currentColor" stroke-width="1" stroke-linecap="square" opacity="0.4"/>
+            <path d="M11 33.8C14.5 20 26 12.2 35.2 13.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="16.5" cy="22.5" r="1.2" stroke="currentColor" stroke-width="1.05" opacity="0.62"/>
+            <circle cx="24.3" cy="15.7" r="1.55" stroke="currentColor" stroke-width="1.15" opacity="0.9"/>
+            <circle cx="35.2" cy="13.1" r="2.45" fill="currentColor"/>
+          </g>
+        </svg>
+      </span>
       <span>
         <span class="platform-brand-text">物理探究教学平台</span>
         <span class="platform-brand-sub">Physics Inquiry Platform</span>

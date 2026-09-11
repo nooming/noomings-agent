@@ -8,7 +8,7 @@
 
 学生可见收窄为 **6 关**：力学 3 + 热学 3。以下 **不进默认演示串**（catalog `unpublished`，包保留）：`projectile-cannon`、`pendulum-target`、`momentum-collision`、`circular-motion`、`friction-incline`，以及旧热学 **`gas-ideal` / `heat-conduction`**（已替换）。
 
-热学三关计划 / 设计卡：[`thermo-three-plan.md`](./thermo-three-plan.md)、[`thermo-three-design.md`](./thermo-three-design.md)。开测 QA：[`thermo-three-qa.md`](./thermo-three-qa.md)。旧口播已归档：[`_archive/thermo-pilot-note.md`](./_archive/thermo-pilot-note.md)。演示文档索引见 [`README.md`](./README.md)。
+热学设计要点：[`thermo-three.md`](./thermo-three.md)。关卡回归：[`game-qa-checklist.md`](./game-qa-checklist.md)。旧口播 / 过程稿见 [`_archive/`](./_archive/)。演示文档索引见 [`README.md`](./README.md)。
 
 ### 对学生可见的 catalog id（published + craft:gold|pilot）
 

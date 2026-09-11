@@ -38,6 +38,10 @@ const MIME = {
   '.js': 'application/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webmanifest': 'application/manifest+json',
 };
 
 const UI_PAGES = path.join(AGENT_DIR, 'apps/web', 'ui', 'pages');
@@ -132,6 +136,9 @@ function resolveSamplesFile(rel) {
 }
 
 function resolveAssetFile(url) {
+  if (url.startsWith('/icons/')) {
+    return path.join(AGENT_DIR, 'apps/web', 'icons', url.slice('/icons/'.length));
+  }
   if (url.startsWith('/static/ui/')) {
     return path.join(AGENT_DIR, 'apps/web', 'ui', url.slice('/static/ui/'.length));
   }
