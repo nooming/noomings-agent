@@ -629,7 +629,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">初速度 (m/s)</label>
-                    <span id="valSpeed" class="text-sm text-blue-600 font-mono"><input type="number" id="n-speed" min="5" max="35" step="0.1" value="15" aria-label="初速度数值" style="width:56px;background:transparent;border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 6px"></span>
+                    <span id="valSpeed" class="text-sm text-blue-600 font-mono"><input type="number" id="n-speed" min="5" max="35" step="0.1" value="15" aria-label="初速度数值" style="width:4.25rem;min-width:4.25rem;box-sizing:border-box;background:transparent;border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 8px"></span>
                 </div>
                 <input type="range" id="s-speed" min="5" max="35" value="15" step="0.1" class="w-full">
             </div>
@@ -638,7 +638,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">发射高度 (m)</label>
-                    <span id="valHeight" class="text-sm text-blue-600 font-mono"><input type="number" id="n-height" min="0" max="30" step="0.1" value="10" aria-label="高度数值" style="width:56px;background:rgba(0,0,0,0);border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 6px"></span>
+                    <span id="valHeight" class="text-sm text-blue-600 font-mono"><input type="number" id="n-height" min="0" max="30" step="0.1" value="10" aria-label="高度数值" style="width:4.25rem;min-width:4.25rem;box-sizing:border-box;background:rgba(0,0,0,0);border:1px solid rgba(37,99,235,.35);border-radius:999px;color:inherit;text-align:right;padding:1px 8px"></span>
                 </div>
                 <input type="range" id="s-height" min="0" max="30" value="10" step="0.1" class="w-full">
             </div>
@@ -1944,12 +1944,23 @@ function showWin(extra){
   }
   window.__craftShowWin = showWin;
 
-  // Hook common win paths
-  var _emit = window.__emit;
-  window.__emit = function(type, payload){
-    if (typeof _emit === 'function') _emit(type, payload);
-    if (type === 'win') showWin();
-  };
+  // Hook common win paths. Reinstall after DOMContentLoaded: trace-adapter assigns
+  // window.__emit = emit on DCL and would otherwise wipe this showWin wrapper.
+  function installEmitHook(){
+    var cur = window.__emit;
+    if (typeof cur === 'function' && cur.__craftShowWinHook) return;
+    window.__emit = function(type, payload){
+      if (typeof cur === 'function') cur(type, payload);
+      if (type === 'win') showWin();
+    };
+    window.__emit.__craftShowWinHook = true;
+  }
+  installEmitHook();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(installEmitHook, 0); });
+  } else {
+    setTimeout(installEmitHook, 0);
+  }
   // Observe win banners
   var obs = new MutationObserver(function(){
     if (window.__craftWinDismissed || window.__craftWinOpen) return;

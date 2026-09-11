@@ -31,6 +31,7 @@ html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text
 .slider-group{margin:10px 0}
 .slider-group label{display:flex;justify-content:space-between;font-size:12px;color:var(--craft-muted);margin-bottom:4px}
 .slider-group input[type=range]{width:100%}
+.viz-cap{margin:14px 0 2px;font-size:11px;color:var(--craft-muted);letter-spacing:.04em}
 .row-buttons{display:flex;gap:8px;margin:12px 0}
 button{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;font-weight:600;background:var(--craft-accent);color:#041016}
 button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
@@ -101,8 +102,9 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <label for="s-m">分子质量 m <span id="mVal">1.0</span></label>
         <input type="range" id="s-m" min="0.4" max="3.0" step="0.05" value="1.0">
       </div>
+      <div class="viz-cap">图示</div>
       <div class="slider-group">
-        <label for="s-palette">柱描边粗细 <span id="pVal">2</span></label>
+        <label for="s-palette">描边 <span id="pVal">2</span></label>
         <input type="range" id="s-palette" min="0" max="3" step="1" value="1">
       </div>
       <div class="row-buttons">

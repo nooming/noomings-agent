@@ -339,16 +339,17 @@
             color: var(--craft-text);
         }
         .side-header {
-            padding: 20px 22px;
+            padding: 12px 16px;
             border-bottom: 1px solid color-mix(in srgb, var(--craft-accent) 30%, transparent);
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: rgba(0, 0, 0, 0.28);
+            flex-shrink: 0;
         }
         .side-header h1 {
             margin: 0;
-            font-size: 1.15rem;
+            font-size: 1.02rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             color: var(--scene-hi);
@@ -357,8 +358,8 @@
             background: rgba(0, 0, 0, 0.35);
             border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent);
             border-radius: 999px;
-            padding: 6px 14px;
-            font-size: 0.875rem;
+            padding: 4px 12px;
+            font-size: 0.8rem;
             color: var(--craft-text);
             font-weight: 600;
             cursor: pointer;
@@ -368,10 +369,11 @@
         .side-body {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 22px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 10px;
+            min-height: 0;
         }
         .side-body::-webkit-scrollbar { width: 6px; }
         .side-body::-webkit-scrollbar-thumb {
@@ -380,44 +382,44 @@
         }
 
         .section-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             color: var(--craft-accent);
             letter-spacing: 0.08em;
-            margin: 0 0 6px;
+            margin: 0 0 4px;
         }
         #sideGoal {
             margin: 0;
             font-size: 12px;
-            line-height: 1.5;
+            line-height: 1.45;
             color: var(--craft-text);
-            padding: 10px 12px;
-            border-radius: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
             background: rgba(0, 0, 0, 0.28);
             border-left: 3px solid var(--craft-accent);
         }
 
         .param-card {
             background: rgba(0, 0, 0, 0.28);
-            padding: 16px;
-            border-radius: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
             border: 1px solid color-mix(in srgb, var(--craft-accent) 22%, transparent);
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 8px;
         }
         .param-card h3 {
             margin: 0;
-            font-size: 0.95rem;
+            font-size: 0.86rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             color: var(--scene-hi);
         }
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             display: inline-block;
         }
@@ -432,8 +434,8 @@
             background: rgba(0, 0, 0, 0.35);
             border: 1px solid color-mix(in srgb, var(--craft-accent) 35%, transparent);
             border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 0.75rem;
+            padding: 3px 6px;
+            font-size: 0.72rem;
             color: var(--craft-text);
             font-weight: 600;
             cursor: pointer;
@@ -441,10 +443,10 @@
         .slider-row .row-top {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .slider-row label {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 500;
             color: var(--craft-muted);
         }
@@ -454,36 +456,38 @@
             color: var(--craft-text);
         }
         .val-badge {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: var(--scene-hi);
             font-family: var(--font-mono);
             background: rgba(0, 0, 0, 0.45);
-            padding: 2px 8px;
+            padding: 1px 6px;
             border-radius: 4px;
         }
         input[type=range] {
             width: 100%;
             accent-color: var(--craft-accent);
-            height: 6px;
+            height: 5px;
             border-radius: 3px;
             outline: none;
+            margin: 0;
         }
 
         /* cv-card: parallel to AV param-card (no demotion) */
 
         .side-footer {
-            padding: 18px 22px;
+            padding: 10px 14px 12px;
             border-top: 1px solid color-mix(in srgb, var(--craft-accent) 28%, transparent);
             background: rgba(0, 0, 0, 0.28);
             display: grid;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
         #btnLaunch {
             background: linear-gradient(180deg, var(--scene-hi), var(--craft-accent) 60%, color-mix(in srgb, var(--craft-accent) 70%, #000));
             color: #1a1208;
             font-weight: 800;
-            font-size: 1.05rem;
-            padding: 14px;
+            font-size: 0.95rem;
+            padding: 10px;
             border: 1px solid color-mix(in srgb, var(--craft-accent) 50%, #000);
             border-radius: 10px;
             cursor: pointer;
@@ -499,7 +503,7 @@
             background: rgba(0, 0, 0, 0.35);
             color: var(--craft-text);
             font-weight: 600;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid color-mix(in srgb, var(--craft-accent) 30%, transparent);
             border-radius: 10px;
             cursor: pointer;
@@ -563,28 +567,38 @@
 
 /* === classroom-visual-p0 === */
 #sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
-  font-size:14px!important;line-height:1.55!important;
+  font-size:12px!important;line-height:1.45!important;
 }
 .side-goal-wrap,#sideGoalBox{
-  margin:0 0 12px;padding:8px 10px;border-radius:10px;
+  margin:0 0 8px;padding:6px 8px;border-radius:8px;
   background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
 }
 .side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
-  font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:4px;
+  font-size:10px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:2px;
 }
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
 .,.cv-card.{
-  margin-top:4px!important;padding:8px 10px!important;
+  margin-top:2px!important;padding:6px 8px!important;
   border:1px dashed color-mix(in srgb,var(--craft-accent,#0c8aad) 30%,transparent)!important;
-  border-radius:10px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
+  border-radius:8px!important;opacity:.68!important;background:rgba(0,0,0,.2)!important;
 }
 . label{font-size:11px!important;font-weight:500!important;color:var(--craft-muted)!important;}
 .craft-card > button,#craftIntroBtn,#craftWinBtn,#attempts-exhausted .craft-actions > button:first-child,
 #btn-test,#btn-fire,#btnFire,#btnLaunch,#btn-test-ft{
   background:color-mix(in srgb,var(--craft-accent) 50%,#0c8aad)!important;border-radius:10px!important;
 }
-#modeSelect{min-height:34px;}
+#modeSelect{min-height:30px;}
 
+/* 笔记本矮屏：侧栏主控尽量一屏可见（仍允许极矮视口滚动） */
+@media (max-height: 820px) {
+  .side-header { padding: 8px 12px; }
+  .side-header h1 { font-size: 0.95rem; }
+  .side-body { padding: 8px 12px; gap: 8px; }
+  .param-card { padding: 8px 10px; gap: 6px; }
+  .side-footer { padding: 8px 12px 10px; gap: 6px; }
+  #btnLaunch { padding: 8px; font-size: 0.9rem; }
+  #btnReset { padding: 6px; }
+}
 </style>
 </head>
 <body>
@@ -666,7 +680,7 @@
         <div class="side-body">
             <div>
                 <div class="section-label side-goal-cap">当前目标</div>
-                <p id="sideGoal" style="font-size:14px;line-height:1.55">调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。</p>
+                <p id="sideGoal">调入射/靶球与倾角，观察爬升高度；竞赛对准 HUD 目标。</p>
             </div>
 
             <div class="param-card">

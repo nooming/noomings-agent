@@ -678,7 +678,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </div>
 
 <!-- 招牌 / 说明 -->
-<div class="veil show" id="veil-intro">
+<!-- 遗留 veil：默认不挡；craft「开始探究」会自动衔接到 btn-start -->
+<div class="veil" id="veil-intro">
   <div class="card">
     <div class="eyebrow">物 理 工 坊 · 其 四</div>
     <h1>钟表铺<span class="amp">·</span>校时</h1>
@@ -1859,15 +1860,24 @@ syncUI();
     } catch (e) {}
     return false;
   }
+  function actionCount(){
+    var n = sessionEvidence.fireCount | 0;
+    // 兜底：若点击监听未挂上，用关内 measureCount（真实计时次数）
+    try {
+      if (n <= 0 && typeof measureCount === 'number' && measureCount > 0) n = measureCount;
+    } catch (eMc) {}
+    return n;
+  }
   function buildEvidenceSummary(reading){
     var dom = dominantAv();
     var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
     var r = reading || readObservation();
     sessionEvidence.lastReading = r;
+    var ops = actionCount();
     if (modeIsChallenge()) {
-      return '竞赛证据：' + READING_LABEL + ' ' + r + ' · 主调 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+      return '竞赛证据：' + READING_LABEL + ' ' + r + ' · 主调 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + ops + ' 次';
     }
-    return '探究证据：' + READING_LABEL + ' ' + r + ' · 主调节 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + sessionEvidence.fireCount + ' 次';
+    return '探究证据：' + READING_LABEL + ' ' + r + ' · 主调节 ' + mainTxt + ' · ' + ACTION_LABEL + ' ' + ops + ' 次';
   }
   function setCraftSettleOpen(open){
     try {
@@ -1941,7 +1951,8 @@ syncUI();
         else if (t.closest('#c4-v-grid')) noteAvTune('c4-v');
       }, true);
     }
-    var fireSel = '#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
+    // 单摆主操作是 #btn-measure（div），须计入「操作」次数；勿漏记导致证据常为 0
+    var fireSel = '#btn-measure,#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
     document.addEventListener('click', function(ev){
       var t = ev.target;
       if (!t || !t.closest) return;
@@ -1971,7 +1982,19 @@ syncUI();
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
   var bbtn = document.getElementById('craftBackBtn');
-  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  if (btn) btn.addEventListener('click', function(){
+    if (intro) intro.hidden = true;
+    // 一次点击进关：自动衔接到遗留 veil 的开始逻辑（展示工作台 / 埋点 level_start）
+    var startBtn = document.getElementById('btn-start');
+    if (startBtn) {
+      try { startBtn.click(); } catch (eStart) {}
+    } else {
+      var veil = document.getElementById('veil-intro');
+      if (veil) veil.classList.remove('show');
+      var bench = document.getElementById('bench');
+      if (bench) bench.classList.add('show');
+    }
+  });
   function setSettle(open){
     if (typeof window.__eaSetCraftSettleOpen === 'function') window.__eaSetCraftSettleOpen(open);
   }
@@ -2046,11 +2069,21 @@ syncUI();
   }
   window.__craftShowWin = showWin;
 
-  var _emit = window.__emit;
-  window.__emit = function(type, payload){
-    if (typeof _emit === 'function') _emit(type, payload);
-    if (type === 'win') showWin();
-  };
+  function installEmitHook(){
+    var cur = window.__emit;
+    if (typeof cur === 'function' && cur.__craftShowWinHook) return;
+    window.__emit = function(type, payload){
+      if (typeof cur === 'function') cur(type, payload);
+      if (type === 'win') showWin();
+    };
+    window.__emit.__craftShowWinHook = true;
+  }
+  installEmitHook();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(installEmitHook, 0); });
+  } else {
+    setTimeout(installEmitHook, 0);
+  }
   var obs = new MutationObserver(function(){
     if (window.__craftWinDismissed || window.__craftWinOpen) return;
     var el = document.querySelector('.win-banner,#winBanner,[data-win="1"]');
