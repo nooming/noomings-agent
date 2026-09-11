@@ -58,10 +58,10 @@
 | `/packages/{id}/index.html` | 探究包图谱预览页 |
 | `/graph.html?graphId={id}` | 动态图谱预览 API 页 |
 | `/api/graph-preview?graphId=...` | 预览数据 JSON API |
-| `/static/legacy-samples/` | 历史样本 |
-| `/static/html-samples/` | 兼容 alias → packages |
+| `/static/legacy-samples/` | 历史样本（**deprecated URL**；磁盘 `data/games/legacy/`） |
+| `/static/html-samples/` | **deprecated** 兼容 alias → packages |
 | `/static/samples/` | 兼容 alias |
-| `/output/` | 兼容 alias → packages |
+| `/output/` | **deprecated** 兼容 alias → packages |
 | `/static/shared/` | 共用 JS（strategy-mermaid-parse、tab-label） |
 
 `resources/shiguangtongxue/`（拾光物理离线镜像）**默认不存在**、不挂载 HTTP；需要时用 `npm run crawl-shiguang-physics` 重建。
@@ -81,4 +81,4 @@
 - `getJudgeFixturesPath`
 - `getAnalysisRoot` / `getReportsRoot`（PCA、审计、批跑报告输出）
 
-`getPackagesRoot` **不再**回退到 `html-samples`（布局不同，易指错根）。其它旧目录若新路径不存在，仍见 `resolveWithFallback`。
+`getPackagesRoot` **不再**回退到 `html-samples`。已去掉不存在的磁盘回退：`legacy-samples/`、`data/html-samples/`、`data/output/`、根目录 `output/`。HTTP 兼容别名（`/output/`、`/static/html-samples/` 等）仍保留并标 deprecated。

@@ -29,7 +29,8 @@ function getGamesPresetRoot() {
 }
 
 function getGamesLegacyRoot() {
-  return resolveWithFallback('data/games/legacy', 'legacy-samples');
+  // Prefer data/games/legacy; do not fall back to missing repo-root legacy-samples/
+  return resolveWithFallback('data/games/legacy');
 }
 
 function getManualBackupsRoot() {
@@ -41,7 +42,8 @@ function getGamesGeneratedRoot() {
 }
 
 function getDatasetHtmlSamplesRoot() {
-  return resolveWithFallback('data/datasets/html-samples', 'data/html-samples');
+  // Prefer datasets; removed dead fallback data/html-samples/
+  return resolveWithFallback('data/datasets/html-samples');
 }
 
 function getDatasetDesignSamplesRoot() {
@@ -53,7 +55,8 @@ function getDatasetTrainingRoot() {
 }
 
 function getRuntimeOutputRoot() {
-  return resolveWithFallback('data/runtime/output', 'data/output', 'output');
+  // Prefer runtime/output; removed dead fallbacks data/output + repo-root output/
+  return resolveWithFallback('data/runtime/output');
 }
 
 /** Canonical packages root. Do not fall back to html-samples (different layout). */

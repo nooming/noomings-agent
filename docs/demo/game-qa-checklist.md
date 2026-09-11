@@ -46,7 +46,7 @@
 - [ ] 包内或适配器有稳定 `phase_change`（本关观感标杆）
 - [ ] 目标字号可读（≥14px）；质量不抢主滑条叙事
 
-### `ramp-rolling-collision`（斜坡滚球 · pilot）
+### `ramp-rolling-collision`（斜坡滚球 · gold）
 
 - [ ] 双模 + `explore_success` / `win` 齐全（含 Three.js 包）
 - [ ] AV/CV（如轨温）与判定一致；CV 不进 win
@@ -59,7 +59,7 @@
 
 设计卡摘要见 [`thermo-three.md`](./thermo-three.md)。包：`data/runtime/packages/{gas-pressure-micro,maxwell-speed-dist,adiabatic-process}/`。
 
-### `gas-pressure-micro`（气体压强微观）
+### `gas-pressure-micro`（气体压强微观 · gold）
 
 - [ ] 探究：`explore_success` 需 ≥3 次测试且至少动过 **2 个** AV（N/T/V）
 - [ ] 竞赛：实测 P 落入 `lockBand`；`win` 仅竞赛；CV=`s-wall` 不改 P
@@ -67,7 +67,7 @@
 - [ ] 场景：实验室气室、碰壁闪光/壁脉冲；口播 P 为 arb，勿当 SI
 - [ ] 风险留意：`suggestedRange` 占位可能与真实滑条不完全一致（不挡玩）
 
-### `maxwell-speed-dist`（麦克斯韦速率分布）
+### `maxwell-speed-dist`（麦克斯韦速率分布 · gold）
 
 - [ ] 探究：≥3 测且 **T、m 都动过** 才 `explore_success`
 - [ ] 竞赛：\(v_p\) 落入特征区间；CV=`s-palette`（柱描边）不改 \(v_p\)
@@ -75,7 +75,7 @@
 - [ ] 双视口：分子云 + 直方图/曲线；竖屏云区偏矮可接受
 - [ ] 口播以侧栏测试读数为准（画布 \(v_p\) 标记为示意映射）
 
-### `adiabatic-process`（绝热过程）
+### `adiabatic-process`（绝热过程 · gold）
 
 - [ ] 探究：≥3 测且动过 V/T₀ **或** 切换绝热/等温路径
 - [ ] 竞赛：沿绝热落到目标 \((V^*,P^*)\)；CV=`s-tag` 铭牌不改态方程

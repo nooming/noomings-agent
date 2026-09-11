@@ -106,17 +106,16 @@ function resolveOutputPreview(rel) {
 }
 
 function resolveHtmlSamplesFile(rel) {
+  // deprecated URL alias /static/html-samples/* → packages (keep for old links / tests)
   if (rel.startsWith('generated/')) {
     const id = rel.slice('generated/'.length).replace(/\.html$/i, '');
     return firstExistingFile(
       getPackageGamePath(id),
       path.join(HTML_SAMPLES_ROOT, rel),
-      path.join(AGENT_DIR, 'data/html-samples', rel),
     );
   }
   return firstExistingFile(
     path.join(HTML_SAMPLES_ROOT, rel),
-    path.join(AGENT_DIR, 'data/html-samples', rel),
   );
 }
 
@@ -153,13 +152,14 @@ function resolveAssetFile(url) {
     return resolveSamplesFile(url.slice('/static/samples/'.length));
   }
   if (url.startsWith('/static/legacy-samples/')) {
+    // deprecated alias; disk truth is data/games/legacy (LEGACY_ROOT)
     const rel = url.slice('/static/legacy-samples/'.length);
     return firstExistingFile(
       path.join(LEGACY_ROOT, rel),
-      path.join(AGENT_DIR, 'legacy-samples', rel),
     );
   }
   if (url.startsWith('/static/html-samples/')) {
+    // deprecated alias → packages / dataset html-samples
     return resolveHtmlSamplesFile(url.slice('/static/html-samples/'.length));
   }
   if (url.startsWith('/static/viewer/js/')) {
@@ -183,6 +183,7 @@ function resolveAssetFile(url) {
     return resolvePackagesPreview(url.slice('/packages/'.length));
   }
   if (url.startsWith('/output/')) {
+    // deprecated preview alias → packages (kept for graphViewUrl / old bookmarks)
     return resolveOutputPreview(url.slice('/output/'.length));
   }
   if (url.startsWith('/games/') && GAMES_ROOT) {

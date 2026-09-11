@@ -57,9 +57,9 @@ Windows 也可双击 `start-agent.bat`。
 
 ```bash
 npm run check                          # 契约回归（CI 同款）
+npm run sync:packages-samples:check    # packages→样本html 漂移（CI 同款；改包后必跑）
 node tests/scripts/platform-smoke.js   # join→ingest→教师列表（需已启动服务）
 node tests/scripts/ingest-concurrent-smoke.js
-node scripts/sync-packages-to-samples.js --check   # packages→样本 漂移检查
 ```
 
 ## v4 口径速记

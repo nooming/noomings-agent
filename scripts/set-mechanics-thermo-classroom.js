@@ -1,6 +1,6 @@
 /**
  * One-shot: publish only mechanics + thermal packages for classroom demo.
- * - Whitelist → published + craft:gold|pilot (upgrade draft→pilot)
+ * - Whitelist → published + craft:gold (classroom demo publish-ready)
  * - Everything else → unpublished (package files kept)
  * - Ensures class-config.json has a usable code + demo label
  *
@@ -41,9 +41,14 @@ const WHITELIST = [
   'adiabatic-process',
 ];
 
+/** Classroom demo whitelist is publish-ready gold (assertPublishReady ok). */
 const KEEP_GOLD = new Set([
   'projectile-basic',
   'pendulum-clock',
+  'ramp-rolling-collision',
+  'gas-pressure-micro',
+  'maxwell-speed-dist',
+  'adiabatic-process',
 ]);
 
 /** Explicitly not on student catalog (kept as packages for self-study / later) */

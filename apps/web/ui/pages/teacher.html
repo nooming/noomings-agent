@@ -17,17 +17,34 @@
 <div id="platformHeader"></div>
 
 <main class="platform-main">
-  <nav class="teacher-tabs" id="teacherTabs">
-    <button type="button" class="teacher-tab is-active" data-tab="sessions">学情数据中心</button>
-    <button type="button" class="teacher-tab" data-tab="catalog">探究任务发布</button>
-    <button type="button" class="teacher-tab" data-tab="resources">资源管理</button>
-    <button type="button" class="teacher-tab" data-tab="agents">Agent 工具</button>
-  </nav>
+  <div class="teacher-chrome">
+    <nav class="teacher-tabs" id="teacherTabs" aria-label="教师工作台分区">
+      <button type="button" class="teacher-tab is-active" data-tab="sessions">课堂学情</button>
+      <button type="button" class="teacher-tab" data-tab="catalog">任务上架</button>
+      <button type="button" class="teacher-tab teacher-adv" data-tab="resources">资源管理</button>
+      <button type="button" class="teacher-tab teacher-adv" data-tab="agents">图谱工具</button>
+    </nav>
+    <label class="teacher-density-toggle" title="默认课堂演示简洁视图；打开后显示资源管理、图谱工具与工程细节">
+      <input type="checkbox" id="teacherDensityFull">
+      <span>显示高级选项</span>
+    </label>
+  </div>
 
   <section class="teacher-panel is-active" id="panel-sessions">
     <div class="edu-panel">
-      <h3>学生操作轨迹</h3>
-      <p class="hint">学生游玩时自动上报操作事件。左侧选学生，右侧查看会话详情并用 Agent B 评判。</p>
+      <div class="class-code-card" id="classCodeBar">
+        <div class="class-code-card-main">
+          <span class="class-code-label">课堂码</span>
+          <strong class="class-code-value" id="classCodeDisplay">加载中…</strong>
+          <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="btnCopyClassCode" hidden>复制</button>
+          <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="btnEditClassCode" hidden>修改</button>
+        </div>
+        <p class="class-code-hint">发给学生，用于进入课堂。<span id="classCodeSourceHint" class="teacher-adv"></span></p>
+      </div>
+
+      <h3>学生学情</h3>
+      <p class="hint teacher-simple-only">左侧选学生，右侧看本局过程与能力分；需要时可点「过程评判」。</p>
+      <p class="hint teacher-adv">学生游玩时自动上报操作。左侧选学生，右侧查看会话详情并做过程评判。</p>
 
       <div class="sessions-stats" id="sessionsStats">
         <div class="stat-card"><span class="stat-value" id="statStudents">—</span><span class="stat-label">学生</span></div>
@@ -47,8 +64,8 @@
 
       <div class="tool-link-row sessions-toolbar">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshTraces">刷新</button>
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnDownloadTracesZip" title="下载全部会话轨迹（不受当前筛选影响）">下载轨迹包</button>
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnUploadTracesZip" title="上传轨迹包 ZIP（或多选 sess-*.json；同名覆盖）">上传轨迹包</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="btnDownloadTracesZip" title="下载全部会话轨迹（不受当前筛选影响）">下载轨迹包</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="btnUploadTracesZip" title="上传轨迹包 ZIP（或多选 sess-*.json；同名覆盖）">上传轨迹包</button>
         <input type="file" id="inputUploadTracesZip" accept=".zip,.json,application/zip,application/json" multiple hidden>
         <select id="filterGraph" class="sessions-select">
           <option value="">全部探究任务</option>
@@ -58,25 +75,20 @@
           <option value="pending">有待评判</option>
           <option value="judged">全部已评判</option>
         </select>
-        <input type="search" id="filterClassCode" class="sessions-search" placeholder="按课堂码过滤…" maxlength="64" title="仅显示该课堂码上报的学情；留空显示全部">
+        <input type="search" id="filterClassCode" class="sessions-search teacher-adv" placeholder="按课堂码过滤…" maxlength="64" title="仅显示该课堂码上报的学情；留空显示全部">
         <input type="search" id="filterStudent" class="sessions-search" placeholder="搜索学生姓名/组号…">
-        <label class="sessions-hide-playtest" title="默认隐藏 playtest / full-eval / 全量试玩 等评测身份；「全检-*」等课堂验收身份不受影响。需要看评测号时再取消勾选。">
+        <label class="sessions-hide-playtest teacher-adv" title="默认隐藏试玩身份；课堂验收身份不受影响。">
           <input type="checkbox" id="hidePlaytest" checked>
           隐藏试玩
         </label>
       </div>
-      <p class="hint" id="classCodeBar" style="margin-top:8px">
-        当前课堂码：<strong id="classCodeDisplay">加载中…</strong>
-        <button type="button" class="platform-session-link" id="btnCopyClassCode" hidden>复制</button>
-        <button type="button" class="platform-session-link" id="btnEditClassCode" hidden>修改</button>
-        <span id="classCodeSourceHint" class="hint"></span>
-      </p>
 
       <div class="sessions-split">
         <div class="student-list-panel">
           <div class="student-list-header">
             <span>学生</span>
-            <span class="student-list-header-hint" title="综合分/过程/竞赛结果仅计终局会话（通关或机会用尽）。探究达成（explore_success）≠ 竞赛通关（win）。各任务取最近 1–2 局有限能力分均值后再对任务均分；竞赛结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·竞赛结果（仅终局）</span>
+            <span class="student-list-header-hint teacher-simple-only" title="综合分、过程与竞赛结果按终局会话统计。探究达成不等于竞赛通关。">综合分 · 过程 · 竞赛</span>
+            <span class="student-list-header-hint teacher-adv" title="综合分/过程/竞赛结果仅计终局会话（通关或机会用尽）。探究达成（explore_success）≠ 竞赛通关（win）。各任务取最近 1–2 局有限能力分均值后再对任务均分；竞赛结果档：任一达标→达标，否则有机会用尽→未达标，否则未完成。完成度另计未终局占比。">综合分·过程·竞赛结果（仅终局）</span>
           </div>
           <p class="hint student-list-trunc-hint" id="studentListTruncHint" hidden>列表可能已截断，请搜索/筛选以定位更多学生</p>
           <ul class="student-list" id="studentList">
@@ -89,27 +101,30 @@
       </div>
       <div class="edu-panel session-ability-panel" id="sessionAbilityPanel" hidden>
         <h4>本局能力</h4>
-        <p class="hint">当前选中游玩会话的四维能力分与过程依据（任务 / 阶段 / 路径）；随左侧时间轴换局刷新。未终局局不计入下方学情画像综合分与前五维。</p>
+        <p class="hint teacher-simple-only">当前这一局的能力分；换局会跟着刷新。</p>
+        <p class="hint teacher-adv">当前选中游玩会话的四维能力分与过程依据（任务 / 阶段 / 路径）；随左侧时间轴换局刷新。未终局局不计入下方学情画像综合分与前五维。</p>
         <div id="sessionAbilitySummary"></div>
       </div>
       <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
         <h4>学情画像</h4>
-        <p class="hint">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· v4：探究达成 ≠ 竞赛通关。综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
+        <p class="hint teacher-simple-only">六维雷达：探究 / 竞赛结果与过程、效率、完成度。探究达成 ≠ 竞赛通关。</p>
+        <p class="hint teacher-adv">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· v4：探究达成 ≠ 竞赛通关。综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
         <div id="crossGameSummary"></div>
       </div>
     </div>
   </section>
 
   <section class="teacher-panel" id="panel-catalog">
-    <details class="edu-panel catalog-panel-details" id="catalogPanelDetails">
-      <summary class="catalog-panel-summary">探究任务</summary>
-      <p class="hint">每个任务绑定一份图谱和学生玩的 HTML，可随时上架或下架。学生端只显示正式（gold）和试运行（pilot）的任务，草稿（draft）不会给学生看。观察包会单独分组标出。试玩 HTML、预览图谱请到「资源管理」。</p>
-      <p class="hint">探究说明：学生每天第一次打开任务列表时会弹出。也可以让学生打开 <code>/student.html?forceNotice=1</code> 再看一遍。下方按钮会在本机写入强制标记，方便你演示。</p>
+    <details class="edu-panel catalog-panel-details" id="catalogPanelDetails" open>
+      <summary class="catalog-panel-summary">任务上架状态</summary>
+      <p class="hint teacher-simple-only">已上架的任务会出现在学生列表。草稿不会给学生看；观察包会单独标出。</p>
+      <p class="hint teacher-adv">每个任务绑定一份图谱和学生玩的 HTML，可随时上架或下架。学生端只显示正式（gold）和试运行（pilot）的任务，草稿（draft）不会给学生看。观察包会单独分组标出。试玩 HTML、预览图谱请到「资源管理」。</p>
+      <p class="hint teacher-adv">探究说明：学生每天第一次打开任务列表时会弹出。也可以让学生打开 <code>/student.html?forceNotice=1</code> 再看一遍。下方按钮会在本机写入强制标记，方便你演示。</p>
       <div class="tool-link-row" style="margin:0 0 12px">
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="forceStudentNoticeBtn">标记：下次打开时再看探究说明</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="forceStudentNoticeBtn">下次打开再看探究说明</button>
       </div>
       <div class="catalog-toolbar">
-        <label>来源
+        <label class="teacher-adv">来源
           <select id="catalogFilterSource">
             <option value="">全部</option>
             <option value="html-sample">样本集</option>
@@ -121,22 +136,29 @@
             <option value="">全部分类</option>
           </select>
         </label>
-        <input type="search" id="catalogFilterQuery" class="catalog-toolbar-search" placeholder="搜索标题或图谱 ID" autocomplete="off" aria-label="搜索标题或图谱 ID">
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="toggleCategoryMgmt">管理分类</button>
+        <input type="search" id="catalogFilterQuery" class="catalog-toolbar-search" placeholder="搜索任务标题" autocomplete="off" aria-label="搜索任务标题">
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="toggleCategoryMgmt">管理分类</button>
       </div>
-      <div id="categoryMgmtPanel" class="category-mgmt-panel" hidden>
+      <div id="categoryMgmtPanel" class="category-mgmt-panel teacher-adv" hidden>
         <p class="hint" style="margin-bottom:10px">分类为 5 个内置大章，在发布表单或任务列表中指定；细 topic 标签由标题自动推断。</p>
         <ul class="category-mgmt-list" id="categoryMgmtList"></ul>
       </div>
       <table class="edu-table" id="catalogTable">
         <thead>
-          <tr><th>标题</th><th>分类</th><th>章节</th><th>图谱 ID</th><th>状态</th><th>操作</th></tr>
+          <tr>
+            <th>标题</th>
+            <th>分类</th>
+            <th class="teacher-adv-col">章节</th>
+            <th class="teacher-adv-col">图谱 ID</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
         </thead>
         <tbody id="catalogBody"></tbody>
       </table>
     </details>
-    <div class="edu-panel">
-      <h3>发布新任务</h3>
+    <details class="edu-panel teacher-publish-details">
+      <summary class="catalog-panel-summary">发布新任务</summary>
       <div class="form-row">
         <label for="pubTitle">任务标题</label>
         <input type="text" id="pubTitle" placeholder="例如：斜抛射程探究">
@@ -148,20 +170,22 @@
       <div class="form-row">
         <label for="pubPair">探究包（图谱 + 游戏）</label>
         <select id="pubPair"><option value="">— 请选择探究包 —</option></select>
-        <p class="hint" style="margin-top:0.35rem">仅显示已配对且未上架的探究包；请先完成 Agent「一键：图谱 + 游戏 + 发布准备」。已上架的探究包不会出现在列表中，需重新发布请先下架原任务。</p>
+        <p class="hint teacher-simple-only" style="margin-top:0.35rem">只列出还没上架的探究包。已上架的请先下架再重新发布。</p>
+        <p class="hint teacher-adv" style="margin-top:0.35rem">仅显示已配对且未上架的探究包；请先完成「一键：图谱 + 游戏 + 发布准备」。已上架的探究包不会出现在列表中，需重新发布请先下架原任务。</p>
       </div>
       <div class="form-row">
         <label for="pubDesc">简介（可选）</label>
         <textarea id="pubDesc" rows="2"></textarea>
       </div>
       <button type="button" class="edu-btn edu-btn-primary" id="publishBtn">发布到学生端</button>
-    </div>
+    </details>
   </section>
 
   <section class="teacher-panel" id="panel-resources">
     <div class="edu-panel resource-mgmt-details" id="resourcePanelDetails">
       <h3>探究包与资源</h3>
-      <p class="hint">按来源查看已配对的探究包，以及还没配对的图谱和 HTML。删掉发布任务不会删磁盘上的文件；样本集资源受保护，不能删。</p>
+      <p class="hint teacher-simple-only">查看已配对的探究包，以及还没配对的图谱和游戏。删任务不会删文件；样本集受保护。</p>
+      <p class="hint teacher-adv">按来源查看已配对的探究包，以及还没配对的图谱和 HTML。删掉发布任务不会删磁盘上的文件；样本集资源受保护，不能删。</p>
       <div class="catalog-toolbar">
         <label>来源
           <select id="resourceFilterSource">
@@ -175,36 +199,48 @@
             <option value="">全部分类</option>
           </select>
         </label>
-        <input type="search" id="resourceFilterQuery" class="catalog-toolbar-search" placeholder="搜索标题或图谱 ID" autocomplete="off" aria-label="搜索标题或图谱 ID">
+        <input type="search" id="resourceFilterQuery" class="catalog-toolbar-search" placeholder="搜索标题" autocomplete="off" aria-label="搜索标题">
       </div>
       <h4 class="resource-orphan-heading">探究包</h4>
       <table class="edu-table" id="pairResourceTable">
         <thead>
-          <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>游戏 URL</th><th>发布</th><th>操作</th></tr>
+          <tr>
+            <th>标题</th>
+            <th>来源</th>
+            <th>分类</th>
+            <th class="teacher-adv-col">图谱 ID</th>
+            <th class="teacher-adv-col">游戏路径</th>
+            <th>发布</th>
+            <th>操作</th>
+          </tr>
         </thead>
         <tbody id="pairResourceBody"></tbody>
       </table>
-      <h4 class="resource-orphan-heading">仅图谱</h4>
-      <table class="edu-table" id="orphanGraphResourceTable">
-        <thead>
-          <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>操作</th></tr>
-        </thead>
-        <tbody id="orphanGraphResourceBody"></tbody>
-      </table>
-      <h4 class="resource-orphan-heading">仅游戏 HTML</h4>
-      <table class="edu-table" id="orphanHtmlResourceTable">
-        <thead>
-          <tr><th>名称</th><th>来源</th><th>分类</th><th>URL</th><th>操作</th></tr>
-        </thead>
-        <tbody id="orphanHtmlResourceBody"></tbody>
-      </table>
+      <details class="resource-orphan-details teacher-adv" open>
+        <summary class="resource-orphan-summary">未配对资源</summary>
+        <h4 class="resource-orphan-heading">仅图谱</h4>
+        <table class="edu-table" id="orphanGraphResourceTable">
+          <thead>
+            <tr><th>标题</th><th>来源</th><th>分类</th><th>图谱 ID</th><th>操作</th></tr>
+          </thead>
+          <tbody id="orphanGraphResourceBody"></tbody>
+        </table>
+        <h4 class="resource-orphan-heading">仅游戏 HTML</h4>
+        <table class="edu-table" id="orphanHtmlResourceTable">
+          <thead>
+            <tr><th>名称</th><th>来源</th><th>分类</th><th>URL</th><th>操作</th></tr>
+          </thead>
+          <tbody id="orphanHtmlResourceBody"></tbody>
+        </table>
+      </details>
     </div>
   </section>
 
   <section class="teacher-panel" id="panel-agents">
     <div class="edu-panel agent-tool-shell" id="upload-panel">
-      <h3>Agent A · 分析源码</h3>
-      <p class="hint">主路径：同学交付 HTML → 上传或从探究包一键分析 → 三步解析（物理模型 / 变量 / 优先级）→ 生成事理图谱。设计轨为辅，用于口语快速 demo。</p>
+      <h3>分析源码 · 生成图谱</h3>
+      <p class="hint teacher-simple-only">上传或从探究包加载游戏源码，生成事理图谱。口语设计轨也可快速出图。</p>
+      <p class="hint teacher-adv">主路径：同学交付 HTML → 上传或从探究包一键分析 → 三步解析（物理模型 / 变量 / 优先级）→ 生成事理图谱。设计轨为辅，用于口语快速演示。</p>
 
       <div class="agent-mode-radios" hidden aria-hidden="true">
         <input type="radio" name="genMode" id="modeAnalyze" value="analyze" checked>
@@ -252,7 +288,7 @@
       <details class="agent-advanced">
         <summary>补充信息（可选）</summary>
         <div class="agent-advanced-body">
-          <p class="agent-hint" id="advancedHint">留空将由 Agent A 根据知识点自动补全。</p>
+          <p class="agent-hint" id="advancedHint">留空将根据知识点自动补全。</p>
           <label for="title">本章标题（可选）</label>
           <input type="text" id="title" placeholder="留空则从源码命名">
 
@@ -313,9 +349,40 @@ PlatformNav.installTeacherFetchAuth();
 document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('teacher');
 PlatformNav.bindHeaderActions(document);
 
+const TEACHER_DENSITY_KEY = 'teacherDensityMode';
 const tabs = document.querySelectorAll('.teacher-tab');
 const panels = document.querySelectorAll('.teacher-panel');
 let agentTabReadyPromise = null;
+
+function isTeacherDensityFull() {
+  return document.body.classList.contains('teacher-density-full');
+}
+
+function applyTeacherDensity(full, { persist = true } = {}) {
+  document.body.classList.toggle('teacher-density-full', !!full);
+  document.body.classList.toggle('teacher-density-simple', !full);
+  const cb = document.getElementById('teacherDensityFull');
+  if (cb) cb.checked = !!full;
+  if (persist) {
+    try { localStorage.setItem(TEACHER_DENSITY_KEY, full ? 'full' : 'simple'); } catch (_) {}
+  }
+  const active = document.querySelector('.teacher-tab.is-active');
+  if (!full && active && active.classList.contains('teacher-adv')) {
+    activateTab('sessions');
+  }
+}
+
+function initTeacherDensity() {
+  let full = false;
+  try { full = localStorage.getItem(TEACHER_DENSITY_KEY) === 'full'; } catch (_) {}
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab') || (location.hash || '').replace(/^#/, '');
+  if (tab === 'agents' || tab === 'resources') full = true;
+  applyTeacherDensity(full, { persist: false });
+  document.getElementById('teacherDensityFull')?.addEventListener('change', (e) => {
+    applyTeacherDensity(!!e.target.checked);
+  });
+}
 
 function activateTab(tabName) {
   tabs.forEach(t => t.classList.toggle('is-active', t.dataset.tab === tabName));
@@ -444,6 +511,7 @@ function ensureAgentTabReady() {
 }
 
 function goPublishTask({ graphId, title, playUrl, description }) {
+  applyTeacherDensity(true);
   activateTab('catalog');
   const sel = document.getElementById('pubPair');
   if (sel && graphId) {
@@ -479,9 +547,13 @@ function goPublishTask({ graphId, title, playUrl, description }) {
 }
 
 function resolveInitialTab() {
+  initTeacherDensity();
   const params = new URLSearchParams(location.search);
   const tab = params.get('tab') || (location.hash || '').replace(/^#/, '');
   if (tab === 'agents' || tab === 'catalog' || tab === 'sessions' || tab === 'resources') {
+    if ((tab === 'agents' || tab === 'resources') && !isTeacherDensityFull()) {
+      applyTeacherDensity(true);
+    }
     activateTab(tab);
   }
 }
@@ -731,8 +803,8 @@ function pairPublishCell(catItem) {
     return '<span class="hint" style="font-size:0.82rem">未发布</span>';
   }
   return catItem.published
-    ? '<span class="badge badge-ok">已发布</span>'
-    : '<span class="badge badge-pending">草稿</span>';
+    ? '<span class="badge badge-ok">已上架</span>'
+    : '<span class="badge badge-pending">未上架</span>';
 }
 
 function isProtectedHtmlUrl(url, protectedFlag) {
@@ -1166,8 +1238,8 @@ function renderResourceLists() {
         <td>${esc(pair.title || pair.graphId)}</td>
         <td>${esc(CatalogBadges.sourceLabel(pair.source || 'teacher'))}</td>
         <td>${resourceCategoryCell(catItem)}</td>
-        <td><code class="resource-url-code">${esc(pair.graphId)}</code></td>
-        <td><code class="resource-url-code">${esc(pair.playUrl)}</code></td>
+        <td class="teacher-adv-col"><code class="resource-url-code">${esc(pair.graphId)}</code></td>
+        <td class="teacher-adv-col"><code class="resource-url-code">${esc(pair.playUrl)}</code></td>
         <td>${pairPublishCell(catItem)}</td>
         <td class="tool-link-row" style="gap:6px">
           ${resourcePlayBtn(pair.playUrl)}
@@ -1266,16 +1338,16 @@ function renderCatalogTable() {
     const chLabel = graphChapterLabel(item.graphId);
     const badges = typeof CatalogBadges !== 'undefined' ? CatalogBadges.renderBadges(item) : '';
     return `<tr>
-      <td>${esc(item.title)}<div>${badges}</div></td>
+      <td>${esc(item.title)}<div class="catalog-badge-row">${badges}</div></td>
       <td><div class="catalog-category-cell"><select class="catalog-category-select" data-cid="${esc(item.id)}" style="max-width:140px;font-size:0.85rem">${categoryOptionsHtml(item.categoryId, true)}</select>${item.topicKey ? `<span class="game-card-topic">${esc(item.topicKey)}</span>` : ''}</div></td>
-      <td>${esc(chLabel)}</td>
-      <td><code style="font-size:0.78rem">${esc(item.graphId)}</code></td>
-      <td>${item.published ? '<span class="badge badge-ok">已发布</span>' : '<span class="badge badge-pending">草稿</span>'}</td>
+      <td class="teacher-adv-col">${esc(chLabel)}</td>
+      <td class="teacher-adv-col"><code style="font-size:0.78rem">${esc(item.graphId)}</code></td>
+      <td>${item.published ? '<span class="badge badge-ok">已上架</span>' : '<span class="badge badge-pending">未上架</span>'}</td>
       <td class="tool-link-row" style="gap:6px">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-toggle="${esc(item.id)}">${item.published ? '下架' : '上架'}</button>
         ${item.featured
-          ? `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-catalog="${esc(item.id)}" title="预设任务，删除需二次确认">删除</button>`
-          : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm" data-del-catalog="${esc(item.id)}">删除</button>`}
+          ? `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" data-del-catalog="${esc(item.id)}" title="预设任务，删除需二次确认">删除</button>`
+          : `<button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" data-del-catalog="${esc(item.id)}">删除</button>`}
       </td>
     </tr>`;
   }).join('');
@@ -3723,10 +3795,10 @@ async function loadClassConfigBar() {
       editBtn.textContent = data.envOverridesFile ? '查看说明' : '修改';
     }
     if (hint) {
-      const srcLabel = data.source === 'env' ? '（环境变量）'
-        : data.source === 'file' ? '（工作台配置）'
-        : data.source === 'dev-default' ? '（开发默认）' : '';
-      hint.textContent = srcLabel + ' · 请告知学生此码进入课堂';
+      const srcLabel = data.source === 'env' ? '来源：环境变量'
+        : data.source === 'file' ? '来源：工作台配置'
+        : data.source === 'dev-default' ? '来源：开发默认' : '';
+      hint.textContent = srcLabel;
     }
   } catch {
     display.textContent = '加载失败';

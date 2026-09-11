@@ -11,6 +11,17 @@
 
 权威分工：课堂流程 → 课堂清单；关卡回归 → 游戏 QA；数据路径 → [`../DATA_LAYOUT.md`](../DATA_LAYOUT.md)；仓库结构 → [`../structure.md`](../structure.md)。
 
+## 改包后必须 sync
+
+运行时真相源是 `data/runtime/packages/`；`样本html/` 只是编辑镜像。改 `game.html` 后：
+
+```bash
+npm run sync:packages-samples:check
+npm run sync:packages-samples
+```
+
+CI 会跑 drift check。共享壳约定见 [`data/runtime/packages/_shared/README.md`](../../data/runtime/packages/_shared/README.md)。
+
 ## 归档（`_archive/`）
 
 历史快照与过程稿，**勿再按此演示 / 开测**：

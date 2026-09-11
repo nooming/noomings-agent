@@ -44,6 +44,7 @@
 |----|------|
 | `pendulum-clock` | 金标准本体（组员源） |
 | `projectile-basic` | 斜抛旗舰；组员源 `斜抛游戏(1).html` |
+| `ramp-rolling-collision` / 热学三关 | 默认课堂演示串，已升 `craft:gold`（publish-ready） |
 | `pendulum-target` / `projectile-cannon` | P1 对齐工艺结构 |
 | `capacitor-era-ch1` / `ch2` / `ch4` | 电容纪元拆章组员试点（`craft:pilot`） |
 

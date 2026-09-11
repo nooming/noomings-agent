@@ -10,7 +10,7 @@ HTTP 路径（`/static/*`、`/output/*`、`/icons/*`）保持不变；磁盘布�
 |-------------|------|
 | **教师课堂** | [`demo/classroom-demo-checklist.md`](./demo/classroom-demo-checklist.md) → `/teacher-login.html` → `/teacher.html`；catalog：`data/runtime/platform/catalog.json` |
 | **学生入口** | `/` 或 `/student-join.html` → `/student.html` → `/student-play.html` |
-| **探究包（真相源）** | `data/runtime/packages/{id}/`；编辑镜像 `样本html/`（改完须同步 packages） |
+| **探究包（真相源）** | `data/runtime/packages/{id}/`；共享壳 `data/runtime/packages/_shared/`（craft-tokens / craft-telemetry）；编辑镜像 `样本html/`（改完须 `npm run sync:packages-samples`） |
 | **Agent A / B** | `packages/generate/`（生成）· `packages/judge/`（评判）· `packages/contract/`（契约） |
 | **论文** | [`paper/`](./paper/README.md)（勿当运行时真相源）；过程评价口径见 [`advisor/`](./advisor/README.md) |
 | **归档** | 根 [`_archive/`](../_archive/README.md)（脚本/快照，只读）；演示过程稿 [`demo/_archive/`](./demo/_archive/) |
@@ -105,12 +105,12 @@ agent/
 | `/static/shared/*` | `packages/shared/` |
 | `/static/samples/*` | `data/games/preset/` → `data/samples/` |
 | `/static/samples/generated/*` | `data/games/generated/` → `data/samples/generated/` |
-| `/static/legacy-samples/*` | `data/games/legacy/` → `legacy-samples/` |
+| `/static/legacy-samples/*` | `data/games/legacy/`（**deprecated URL**，勿再依赖根目录 `legacy-samples/`） |
 | `/static/packages/*` | `data/runtime/packages/` |
 | `/packages/*` | `data/runtime/packages/{id}/index.html` |
-| `/static/html-samples/*` | alias → `data/runtime/packages/` |
+| `/static/html-samples/*` | **deprecated alias** → packages / `data/datasets/html-samples` |
 | `/static/samples/*` | alias → packages / `data/games/preset/` |
-| `/output/*` | alias → `data/runtime/packages/` |
+| `/output/*` | **deprecated alias** → `data/runtime/packages/`（旧书签 / 图谱预览仍可用） |
 | `/static/viewer/js/*` | `apps/web/viewer/js/`（部分模块回退到 `packages/shared/`） |
 | `/static/ui/*` | `apps/web/ui/` |
 
@@ -120,7 +120,7 @@ agent/
 
 | 变量 | 默认 | 说明 |
 |------|------|------|
-| `AGENT_OUTPUT_ROOT` | `data/runtime/packages`（经 data-paths 回退 output） | 探究包落盘 |
+| `AGENT_OUTPUT_ROOT` | `data/runtime/packages` | 探究包落盘 |
 | `AGENT_VIEWER_ROOT` | `apps/web/viewer` | 预览 viewer |
 
 ## contract 子包

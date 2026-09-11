@@ -665,21 +665,10 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   });
 })();
 </script>
-<script>/* __dualModeInitPhase */
-(function(){
-  function sync(){
-    var s=document.getElementById('modeSelect'); if(!s) return;
-    var p=s.value==='challenge'?'challenge':'explore';
-    try{
-      if(window.__platformTraceSetPhase){ window.__platformTraceSetPhase(p); window.__craftPhaseEmitted=p; return; }
-      if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){ window.PlatformTraceAdapter.setPhase(p); window.__craftPhaseEmitted=p; return; }
-    }catch(e){}
-    if(window.__craftPhaseEmitted===p) return;
-    window.__craftPhaseEmitted=p;
-    try{ if(window.__emit) window.__emit('phase_change',{phase:p}); }catch(e2){}
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(sync,0); });
-  else setTimeout(sync,0);
+<script src="../_shared/craft-telemetry.js"></script>
+<script>/* dual-mode phase via shared helper */
+(function () {
+  if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase();
 })();
 </script>
 <script>

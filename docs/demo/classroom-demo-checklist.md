@@ -10,16 +10,18 @@
 
 热学设计要点：[`thermo-three.md`](./thermo-three.md)。关卡回归：[`game-qa-checklist.md`](./game-qa-checklist.md)。旧口播 / 过程稿见 [`_archive/`](./_archive/)。演示文档索引见 [`README.md`](./README.md)。
 
-### 对学生可见的 catalog id（published + craft:gold|pilot）
+### 对学生可见的 catalog id（published + craft:gold）
 
 | 优先级 | 领域 | catalog id | graphId | craft |
 |--------|------|------------|---------|-------|
 | **必上** | 力学 | `demo-projectile-basic` | projectile-basic | gold |
 | **必上** | 力学 | `demo-pendulum-clock` | pendulum-clock | gold |
-| **必上** | 力学 | `demo-ramp-rolling-collision` | ramp-rolling-collision | pilot |
-| **必上** | 热学 | `demo-gas-pressure-micro` | gas-pressure-micro | pilot |
-| **必上** | 热学 | `demo-maxwell-speed-dist` | maxwell-speed-dist | pilot |
-| **必上** | 热学 | `demo-adiabatic-process` | adiabatic-process | pilot |
+| **必上** | 力学 | `demo-ramp-rolling-collision` | ramp-rolling-collision | gold |
+| **必上** | 热学 | `demo-gas-pressure-micro` | gas-pressure-micro | gold |
+| **必上** | 热学 | `demo-maxwell-speed-dist` | maxwell-speed-dist | gold |
+| **必上** | 热学 | `demo-adiabatic-process` | adiabatic-process | gold |
+
+演示口径：六关均已 `assertPublishReady` 通过（双模 + `explore_success`/`win` 分口径）。斜坡滚球概念较重，口播可标「进阶」但仍是正式上架。
 
 一键重跑（上架白名单、下架其它、写入课堂备注）：
 
@@ -57,10 +59,16 @@ node -e "const {listCatalog}=require('./packages/platform/catalog'); console.log
 ## 2. 教师如何只演示这些关
 
 1. 跑一遍 `node scripts/set-mechanics-thermo-classroom.js`（或确认 catalog 已按上表上架、其余 `published: false`）。
-2. 教师登录 → 打开 **探究任务发布**：学生端只会看到 gold/pilot 且已发布的任务；draft 即使 published 也对隐藏。
+2. 教师登录 → 打开 **任务上架**：学生端只会看到 gold/pilot 且已发布的任务；draft 即使 published 也对隐藏。默认「演示简洁」视图突出课堂码与学情；需要资源管理 / 图谱工具时勾选「显示高级选项」。
 3. 把课堂码发给学生；学生经 `/student-join.html` 签到后进 `/student.html`，列表应只有上表 **6** 个。
 4. 勿在演示前把电容 / 光电 / 折射等重新上架；需要恢复时再改 catalog 或调整脚本白名单后重跑。
 5. **旧热学与 friction 等后置关**仅自学，不进默认演示串。
+6. **改探究包后必须同步样本镜像**（packages → `样本html/`）：
+
+```bash
+npm run sync:packages-samples:check   # 漂移检查，有差则 exit 1
+npm run sync:packages-samples         # 写回镜像
+```
 
 观察包（`demo-capacitor-era-*` 等）当前已下架；若临时上架仅作观察演示，勿按竞赛通关口径解读。
 
