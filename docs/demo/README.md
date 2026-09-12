@@ -4,7 +4,7 @@
 
 | 文档 | 用途 |
 |------|------|
-| **[classroom-demo-checklist.md](./classroom-demo-checklist.md)** | **课堂演示前清单**（码、发布、学生可见 6 关、学情） |
+| **[classroom-demo-checklist.md](./classroom-demo-checklist.md)** | **课堂演示前清单**（码、发布、学生可见 8 关、学情） |
 | **[game-qa-checklist.md](./game-qa-checklist.md)** | **关卡回归 QA**（双模 / 埋点 / 结算 / 分关要点） |
 | [solo-e2e-checklist.md](./solo-e2e-checklist.md) | 一人端到端实测 / 录屏 |
 | [thermo-three.md](./thermo-three.md) | 热学三关设计要点（极短） |

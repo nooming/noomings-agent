@@ -1,6 +1,6 @@
 # 数据目录布局
 
-> **现行课堂演示入口**：[docs/demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)（力学 3 + 热学三新关，默认 6 关）。  
+> **现行课堂演示入口**：[docs/demo/classroom-demo-checklist.md](./demo/classroom-demo-checklist.md)（力学 5 + 热学 3，默认 8 关）。  
 > **关卡回归 QA**：[docs/demo/game-qa-checklist.md](./demo/game-qa-checklist.md)。  
 > 仓库结构 / 按角色导航：[structure.md](./structure.md)。
 

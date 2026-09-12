@@ -389,7 +389,9 @@ async function boot() {
   window.addEventListener('message', (ev) => {
     const data = ev && ev.data;
     if (!data || typeof data !== 'object') return;
-    if (data.type === 'platform-navigate' && data.to === 'student-list') {
+    // craft-back：pilot/热学等包过关面板「返回列表」；与 gold 包的 platform-navigate 等价
+    if (data.type === 'craft-back'
+        || (data.type === 'platform-navigate' && data.to === 'student-list')) {
       requestAutoJudgeOnLeave();
       location.href = '/student.html';
       return;
@@ -432,16 +434,25 @@ async function boot() {
         clearPathChips();
         return;
       }
-      const pkgGuess = (item.graphId || item.playUrl || '').match(/packages\/([^/]+)/)?.[1]
+      const pkgGuess = (item.playUrl || '').match(/packages\/([^/]+)/)?.[1]
         || item.graphId
         || null;
-      const sid = PlatformTraceAdapter.getSessionId?.() || traceSessionId;
       const fetchGen = ++pathChipFetchGen;
-      // Prefer real session events; fall back to synthetic demo only if session score fails
-      fetch('/api/platform/strategy-path-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // 平台会话评分：先 flush 再取摘要；不再回退 demo 也不再标「· 演示」
+      (async () => {
+        let child = null;
+        try { child = frame.contentWindow && frame.contentWindow.PlatformTraceAdapter; } catch (_) { child = null; }
+        try {
+          if (child && typeof child.flushPending === 'function') await child.flushPending(800);
+          if (typeof PlatformTraceAdapter.flushPending === 'function') await PlatformTraceAdapter.flushPending(800);
+        } catch (_) { /* best-effort */ }
+
+        const sid = (child && typeof child.getSessionId === 'function' && child.getSessionId())
+          || PlatformTraceAdapter.getSessionId?.()
+          || traceSessionId;
+        if (!sid || fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
+
+        const body = {
           sessionId: sid,
           graphId: item.graphId,
           packageId: pkgGuess,
@@ -450,47 +461,40 @@ async function boot() {
           phaseScope: currentPhase === 'challenge' ? 'challenge' : undefined,
           showScore: false,
           audience: 'student',
-        }),
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
-          if (data.ok && data.summary?.text) {
-            pathChip.textContent = data.summary.text;
-            pathChipWantVisible = true;
-            if (adviceChip && data.summary.advice) {
-              adviceChip.textContent = '建议：' + data.summary.advice;
-              adviceChipWantVisible = true;
-            } else {
-              adviceChipWantVisible = false;
-            }
-            applyPathChipVisibility();
-            return;
-          }
-          return fetch('/api/demo/strategy-path-summary', {
+        };
+
+        async function fetchPlatformSummary() {
+          const r = await fetch('/api/platform/strategy-path-summary', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              packageId: pkgGuess || 'capacitor-confound-ui',
-              showScore: false,
-              audience: 'student',
-            }),
-          }).then(r => r.json()).then(demo => {
-            if (fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
-            if (demo.ok && demo.summary?.text) {
-              pathChip.textContent = demo.summary.text + ' · 演示';
-              pathChipWantVisible = true;
-              if (adviceChip && demo.summary.advice) {
-                adviceChip.textContent = '建议：' + demo.summary.advice;
-                adviceChipWantVisible = true;
-              } else {
-                adviceChipWantVisible = false;
-              }
-              applyPathChipVisibility();
-            }
+            body: JSON.stringify(body),
           });
-        })
-        .catch(() => {});
+          return r.json();
+        }
+
+        let data = await fetchPlatformSummary().catch(() => null);
+        // 会话尚未落盘时短等再试一次（同平台路由，不用 demo stub）
+        if ((!data || !data.ok || !data.summary?.text) && (data?.error === 'session_not_found' || !data?.ok)) {
+          await new Promise((resolve) => setTimeout(resolve, 350));
+          try {
+            if (child && typeof child.flushPending === 'function') await child.flushPending(800);
+            if (typeof PlatformTraceAdapter.flushPending === 'function') await PlatformTraceAdapter.flushPending(800);
+          } catch (_) { /* ignore */ }
+          data = await fetchPlatformSummary().catch(() => null);
+        }
+        if (fetchGen !== pathChipFetchGen || !showPathType || !pathChip) return;
+        if (data && data.ok && data.summary?.text) {
+          pathChip.textContent = data.summary.text;
+          pathChipWantVisible = true;
+          if (adviceChip && data.summary.advice) {
+            adviceChip.textContent = '建议：' + data.summary.advice;
+            adviceChipWantVisible = true;
+          } else {
+            adviceChipWantVisible = false;
+          }
+          applyPathChipVisibility();
+        }
+      })().catch(() => {});
     }
   }
 

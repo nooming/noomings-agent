@@ -81,7 +81,13 @@
 
 ## 发布门禁
 
-上架时检查：trace hook / 双模包须有 `explore_success`。默认强警告（`publishWarnings`）；设 `PLATFORM_PUBLISH_STRICT=1` 则阻止 published。
+上架时检查：trace hook / 双模包须有 `explore_success`。默认强警告（`publishWarnings`）；设 `PLATFORM_PUBLISH_STRICT=1` 则阻止 published。`hasWinEmit` 识别 `__emit('win'` / `traceEmit('win'` / `legacy-win-bridge`。
+
+## 探究路径类型（局后摘要）
+
+- 课堂学生端 / 教师端只走 **`POST /api/platform/strategy-path-summary`**（真实会话 events + chapter）。
+- **`/api/demo/strategy-path-summary`** 仅给 `strategy-summary-demo.html` 合成轨迹试片；**不得**再作为 student-play 回退（旧回退会在文案后追加 ` · 演示`）。
+- 评分依赖各包 `chapter.json` 的 `inquiryScript` / `traceMap` / `strategy`；力学旗舰三关另有 `图谱.html`，跳船 / 滑轮 / 热学三关为 **chapter 驱动、无图谱页**（pilot 或 gold 均可）。
 
 ## 运行真相源
 
@@ -103,7 +109,7 @@
 ## 给老师演示前（摘要）
 
 1. 配置教师通行码 + 课堂码，并告知学生课堂码
-2. 跑 `node scripts/set-mechanics-thermo-classroom.js`，确认学生可见 **6 关**（力学 `projectile-basic` / `pendulum-clock` / `ramp-rolling-collision` + 热学 `gas-pressure-micro` / `maxwell-speed-dist` / `adiabatic-process`）；详见 `docs/demo/classroom-demo-checklist.md`
+2. 跑 `node scripts/set-mechanics-thermo-classroom.js`，确认学生可见 **8 关**（力学 `projectile-basic` / `pendulum-clock` / `ramp-rolling-collision` / `nezha-boat-jump` / `pulley-rigid` + 热学 `gas-pressure-micro` / `maxwell-speed-dist` / `adiabatic-process`）；详见 `docs/demo/classroom-demo-checklist.md`
 3. 学生入口 `/student-join.html`，教师入口 `/teacher-login.html`
 4. 跑一遍 `npm run smoke:platform`
 5. 注意知情说明弹窗与发布门禁警告

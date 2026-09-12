@@ -1,0 +1,51 @@
+{
+  "id": "pulley-rigid",
+  "title": "滑轮·刚体转动",
+  "craft": "gold",
+  "topic": "刚体滑轮转动惯量与角加速度",
+  "knowledgeText": "α = a/R，a = (m₁−m₂)g / (m₁+m₂+I/R²)，I = kMR²；竞赛主判 |α|；a 为左侧 m₁ 向下加速度",
+  "note": "classroom mechanics set; craft:gold; 刚体转动聚焦 α / I；CV 绳子粗细仅视觉（细绳近似）",
+  "avSummary": [
+    {
+      "controlId": "s-pulley-m",
+      "label": "滑轮质量",
+      "priorityRank": 1,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-shape",
+      "label": "滑轮形状",
+      "priorityRank": 2,
+      "responseShape": "discrete"
+    },
+    {
+      "controlId": "s-m1",
+      "label": "左侧质量",
+      "priorityRank": 3,
+      "responseShape": "nonlinear-monotone"
+    },
+    {
+      "controlId": "s-m2",
+      "label": "右侧质量",
+      "priorityRank": 4,
+      "responseShape": "nonlinear-monotone"
+    }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-rope-thick",
+      "label": "绳子粗细",
+      "effect": "绳线线宽观感（2–4 mm）；细绳近似下固定 R，不进 α / a / win"
+    }
+  ],
+  "validation": {
+    "ok": true,
+    "errors": []
+  },
+  "quality": {
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "score": 90
+  }
+}

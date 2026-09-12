@@ -16,9 +16,9 @@
         "generate",
         "button-action",
         "static-verify",
-        "craft:gold"
+        "craft:pilot"
       ],
-      "featured": true,
+      "featured": false,
       "researchInclude": true
     },
     {
@@ -36,9 +36,9 @@
         "generate",
         "button-action",
         "static-verify",
-        "craft:gold"
+        "craft:pilot"
       ],
-      "featured": true,
+      "featured": false,
       "researchInclude": true
     },
     {
@@ -56,9 +56,9 @@
         "generate",
         "button-action",
         "static-verify",
-        "craft:gold"
+        "craft:pilot"
       ],
-      "featured": true,
+      "featured": false,
       "researchInclude": true
     },
     {
@@ -540,6 +540,48 @@
       "source": "html-sample",
       "categoryId": "macro-mechanics",
       "topicKey": "碰撞与纯滚动",
+      "sampleTags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "button-action",
+        "craft:gold"
+      ],
+      "researchInclude": true
+    },
+    {
+      "id": "demo-nezha-boat-jump",
+      "title": "哪吒跳船 · nezha-boat-jump",
+      "description": "跳船·动量守恒：相对船起跳、反冲与抛物线登船；探究对照落点，竞赛随机间距登甲板。",
+      "graphId": "nezha-boat-jump",
+      "playUrl": "/static/packages/nezha-boat-jump/game.html",
+      "published": true,
+      "featured": true,
+      "publishedAt": "2026-09-12T08:00:00.000Z",
+      "source": "html-sample",
+      "categoryId": "macro-mechanics",
+      "topicKey": "动量守恒",
+      "sampleTags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "button-action",
+        "craft:gold"
+      ],
+      "researchInclude": true
+    },
+    {
+      "id": "demo-pulley-rigid",
+      "title": "滑轮·刚体转动 · pulley-rigid",
+      "description": "阿特伍德机·刚体转动：竞赛主判 |α|；探究对照 α / 盘环 / a=Rα（a：m₁ 向下）。",
+      "graphId": "pulley-rigid",
+      "playUrl": "/static/packages/pulley-rigid/game.html",
+      "published": true,
+      "featured": true,
+      "publishedAt": "2026-09-12T08:00:00.000Z",
+      "source": "html-sample",
+      "categoryId": "macro-mechanics",
+      "topicKey": "刚体转动",
       "sampleTags": [
         "generate",
         "multi-av",

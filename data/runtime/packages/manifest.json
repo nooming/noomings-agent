@@ -722,7 +722,7 @@
       "knowledgeText": "粒子碰壁 · N/T/V→P",
       "tags": [
         "generate",
-        "craft:gold"
+        "craft:pilot"
       ],
       "expected": {
         "formulasContain": [
@@ -757,7 +757,7 @@
       "knowledgeText": "分布台 · v_p=√(2kT/m)",
       "tags": [
         "generate",
-        "craft:gold"
+        "craft:pilot"
       ],
       "expected": {
         "formulasContain": [
@@ -790,7 +790,7 @@
       "knowledgeText": "绝热 PV^γ=const",
       "tags": [
         "generate",
-        "craft:gold"
+        "craft:pilot"
       ],
       "expected": {
         "formulasContain": [
@@ -815,6 +815,79 @@
         "trapTrace": "in_progress",
         "singleVarMain": "in_progress"
       },
+      "htmlOrigin": "agent"
+    },
+    {
+      "id": "nezha-boat-jump",
+      "topic": "哪吒跳船",
+      "knowledgeText": "跳船·动量守恒 · 相对船起跳与反冲登船",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "expected": {
+        "formulasContain": [
+          "m",
+          "M",
+          "v"
+        ],
+        "adjustmentLabelsContain": [
+          "速度",
+          "质量",
+          "角"
+        ],
+        "outputLabelsContain": [
+          "射程",
+          "登船"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 3,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "demoCatalog": false,
+      "htmlOrigin": "teammate"
+    },
+    {
+      "id": "pulley-rigid",
+      "topic": "滑轮刚体",
+      "knowledgeText": "滑轮·刚体转动 · I 进入 a=(m₁−m₂)g/(m₁+m₂+I/R²)",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "craft:gold"
+      ],
+      "expected": {
+        "formulasContain": [
+          "I",
+          "a",
+          "α"
+        ],
+        "adjustmentLabelsContain": [
+          "质量",
+          "形状"
+        ],
+        "outputLabelsContain": [
+          "加速度",
+          "a"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 3,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "demoCatalog": false,
       "htmlOrigin": "agent"
     }
   ]

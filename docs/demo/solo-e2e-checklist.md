@@ -1,7 +1,7 @@
 # 一人端到端实测清单（录屏给老师）
 
 目标：本地走通 **教师发布 → 学生 join → 试玩 → 学情 → Agent B 评判**。  
-**现行课堂关卡与通行码**以 [classroom-demo-checklist.md](./classroom-demo-checklist.md) 为准（默认 **6 关**：力学 3 + 热学三新关）。关卡回归见 [game-qa-checklist.md](./game-qa-checklist.md)。
+**现行课堂关卡与通行码**以 [classroom-demo-checklist.md](./classroom-demo-checklist.md) 为准（默认 **8 关**：力学 5 + 热学 3）。关卡回归见 [game-qa-checklist.md](./game-qa-checklist.md)。
 
 ## 前置
 
@@ -45,19 +45,19 @@ npm start
 
 适合验证轨迹 + 评判，不必等 LLM。
 
-1. **教师**：登录 → 确认/复制课堂码 → 确认发布列表为学生可见 **6** 关（见 checklist）
+1. **教师**：登录 → 确认/复制课堂码 → 确认发布列表为学生可见 **8** 关（见 checklist）
 2. **学生**：`/student-join.html` 填课堂码 + 学号 + 姓名 → 进入 `/student.html`
 3. 在列表中选一关必上关（推荐）：
    - `demo-projectile-basic`（斜抛）
-   - 或 `demo-pendulum-clock` / `demo-ramp-rolling-collision`
-   - 热学：`demo-gas-pressure-micro` / `demo-maxwell-speed-dist` / `demo-adiabatic-process`
+   - 或 `demo-pendulum-clock` / `demo-ramp-rolling-collision` / `demo-nezha-boat-jump` / `demo-pulley-rigid`（力学 gold）
+   - 热学（pilot，仍上架）：`demo-gas-pressure-micro` / `demo-maxwell-speed-dist` / `demo-adiabatic-process`
 4. 调节滑条 / 操作 **2–3 分钟**，尽量触发探究达成或竞赛过关
    - 须从 **学生端列表** 进入（`student-play.html` 壳层），勿直接打开 `game.html`
    - 右下角 ⋯ 菜单应显示 **「轨迹采集中 · 操作已记录 · N 条」**（N > 2）
 5. **教师端** → Tab「学情数据中心」→ 选刚试玩的会话 → **Agent B 评判**
 6. **录屏要点**：join → 学生操作 → 学情出现会话 → 评判结果
 
-> 勿再默认演示 `multi-kp`（机械能）作课堂主路径；该包可作回归/评判埋点参考，不在现行 6 关白名单内。
+> 勿再默认演示 `multi-kp`（机械能）作课堂主路径；该包可作回归/评判埋点参考，不在现行 8 关白名单内。
 
 ## 路径 B：完整 Agent A 生成（约 10–15 分钟，需 API Key）
 
@@ -79,7 +79,7 @@ npm run batch-html-dataset -- --dry-run
 
 | 现象 | 处理 |
 |------|------|
-| 学生列表不是 6 关 | 重跑 `node scripts/set-mechanics-thermo-classroom.js`；见 checklist |
+| 学生列表不是 8 关 | 重跑 `node scripts/set-mechanics-thermo-classroom.js`；见 checklist |
 | 评判 `chapter_not_found` | `npm run seed-platform-demo`；graphId 为 `{packageId}` |
 | join 课堂码错误 | 核对 env / `class-config.json` / 教师工作台当前码 |
 | Agent A 503 | 检查 `.env` 中 `DEEPSEEK_API_KEY` |
@@ -87,7 +87,7 @@ npm run batch-html-dataset -- --dry-run
 
 ## 录屏建议结构（3–5 分钟）
 
-1. 教师登录，展示课堂码与 6 关发布列表
+1. 教师登录，展示课堂码与 8 关发布列表
 2. 学生 join → 试玩 1 款必上关
 3. 教师学情 + Agent B 评判
 4. （可选）`graph-quality-report.md` 数字

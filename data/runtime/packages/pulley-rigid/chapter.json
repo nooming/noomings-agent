@@ -1,0 +1,552 @@
+{
+  "mapping": "| DT | KG |\n| --- | --- |\n| 进入 | P1 |\n| 模式 | C1 |\n| 调参释放 | O1 |\n| 命中 α 带 | C2 |\n| 过关 | R1 |",
+  "kg": {
+    "title": "滑轮·刚体转动",
+    "sub": "刚体转动 · I → α · a = Rα",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究或竞赛"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "选择探究或竞赛 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节参数并释放",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节质量差与滑轮 I（质量/形状）并释放测 α"
+      },
+      {
+        "id": "C2",
+        "label": "命中目标角加速度带",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛判定 |α| 〔物理核心〕",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛模式下 |α| 落入本局锁定带"
+      },
+      {
+        "id": "S1",
+        "label": "转动惯量进入动力学",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "I=kMR²；a=(m₁−m₂)g/(m₁+m₂+I/R²)；α=a/R（a：m₁ 向下）"
+      },
+      {
+        "id": "S2",
+        "label": "无滑条件 a = Rα",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "绳不滑时线加速度与角加速度绑定；盘/环改 I 则 |a| 与 |α| 同变"
+      },
+      {
+        "id": "I1",
+        "label": "绳子粗细",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "混淆控件：绳子粗细仅绳线观感（2–4 mm）；细绳近似下固定 R，不进动力学"
+      }
+    ],
+    "links": [
+      { "s": "P1", "t": "C1", "tp": "premise" },
+      { "s": "C1", "t": "O1", "tp": "premise" },
+      { "s": "O1", "t": "C2", "tp": "premise" },
+      { "s": "C2", "t": "R1", "tp": "core" },
+      { "s": "S1", "t": "O1", "tp": "verify" },
+      { "s": "S2", "t": "O1", "tp": "verify" },
+      { "s": "P1", "t": "O1", "tp": "premise" },
+      { "s": "O1", "t": "C1", "tp": "premise" },
+      { "s": "C1", "t": "R1", "tp": "core" }
+    ]
+  },
+  "dt": {
+    "title": "滑轮·刚体转动",
+    "sub": "刚体转动 · I → α · a = Rα",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "探究或竞赛",
+          "children": [
+            { "_e": "否", "n": "探究模式", "t": "step", "d": "对照 α、盘/环与 a=Rα" },
+            { "_e": "是", "n": "竞赛模式", "t": "step", "d": "限次打 |α| 带" }
+          ]
+        },
+        {
+          "n": "调节参数并释放",
+          "t": "step",
+          "d": "释放后测角加速度",
+          "children": [
+            {
+              "n": "命中目标带?",
+              "t": "decision",
+              "d": "竞赛 |α| 判定",
+              "children": [
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "|α| 落入锁定带"
+                },
+                {
+                  "_e": "否",
+                  "n": "未达标重试",
+                  "t": "retry",
+                  "d": "调 I 或质量差后重试",
+                  "children": [
+                    {
+                      "n": "调节参数并释放",
+                      "t": "step",
+                      "d": "重试",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 你学到了什么",
+    "sub": "滑轮·刚体转动"
+  },
+  "traceMap": {
+    "controls": {
+      "modeSelect": { "kgId": "C1", "role": "operation" },
+      "s-m1": { "kgId": "O1", "role": "operation" },
+      "s-m2": { "kgId": "O1", "role": "operation" },
+      "s-pulley-m": { "kgId": "O1", "role": "operation" },
+      "s-shape": { "kgId": "O1", "role": "operation" },
+      "s-rope-thick": { "kgId": "I1", "role": "irrelevant" }
+    },
+    "legacyTypes": {
+      "tuning": { "canonical": "tuning", "control": "s-m1" },
+      "action": { "canonical": "action", "control": "btn-release" }
+    }
+  },
+  "strategy": {
+    "title": "滑轮·刚体转动",
+    "sub": "刚体转动 · I → α · a = Rα",
+    "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照 α·盘/环]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打 |α| 带]:::stratResult\nExplore --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat\nStrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat\nStrategySelect -->|单变量·左侧质量| M1Strat\nStrategySelect -->|单变量·右侧质量| M2Strat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·绳子粗细| ProbeCV\nPulleyMStrat --> Tune[单变量调参]\nShapeStrat --> Tune\nM1Strat --> Tune\nM2Strat --> Tune\nTrap --> Tune\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nBackFromCV --> StrategySelect\nTune --> Fire[释放测 α]\nFire --> Observe{观察 |α|?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| StrategySelect\n",
+    "routes": [
+      {
+        "id": "main_s-pulley-m",
+        "label": "单变量·滑轮质量（改 I）",
+        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "warn": "每次只改一个参数；改 M 改 I 从而改 |α|",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": ["Start", "ModeSelect", "Explore", "StrategySelect", "PulleyMStrat", "Tune", "Fire", "Observe", "Win"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["ModeSelect", "Explore"],
+          ["Explore", "StrategySelect"],
+          ["StrategySelect", "PulleyMStrat"],
+          ["PulleyMStrat", "Tune"],
+          ["Tune", "Fire"],
+          ["Fire", "Observe"],
+          ["Observe", "Win"]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-shape",
+        "label": "单变量·滑轮形状（盘/环改 I）",
+        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "warn": "每次只改一个参数；盘 k=½ / 环 k=1",
+        "score": 0.95,
+        "weight": 0.95,
+        "priorityRank": 2,
+        "highlightNodes": ["Start", "ModeSelect", "StrategySelect", "ShapeStrat", "Tune", "Fire", "Observe", "Win"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["StrategySelect", "ShapeStrat"],
+          ["ShapeStrat", "Tune"],
+          ["Tune", "Fire"],
+          ["Fire", "Observe"],
+          ["Observe", "Win"]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main",
+        "label": "单变量·左侧质量（质量差）",
+        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "warn": "每次只改一个参数；也影响 |α|，但勿忽略 I",
+        "score": 0.75,
+        "weight": 0.75,
+        "priorityRank": 3,
+        "highlightNodes": ["Start", "ModeSelect", "StrategySelect", "M1Strat", "Tune", "Fire", "Observe", "Win"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["StrategySelect", "M1Strat"],
+          ["M1Strat", "Tune"],
+          ["Tune", "Fire"],
+          ["Fire", "Observe"],
+          ["Observe", "Win"]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-m2",
+        "label": "单变量·右侧质量（质量差）",
+        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "warn": "每次只改一个参数；也影响 |α|，但勿忽略 I",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 4,
+        "highlightNodes": ["Start", "ModeSelect", "StrategySelect", "M2Strat", "Tune", "Fire", "Observe", "Win"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["StrategySelect", "M2Strat"],
+          ["M2Strat", "Tune"],
+          ["Tune", "Fire"],
+          ["Fire", "Observe"],
+          ["Observe", "Win"]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": ["P1", "O1", "C1", "C2"],
+        "warn": "同时拧多个滑条难归因",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightNodes": ["Start", "ModeSelect", "StrategySelect", "Trap", "Tune", "Fire", "Observe"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["StrategySelect", "Trap"],
+          ["Trap", "Tune"],
+          ["Tune", "Fire"],
+          ["Fire", "Observe"]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_CV1",
+        "label": "试探·绳子粗细",
+        "mapsTo": [],
+        "warn": "拧对照量通常无增益，回到单变量主路径",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightNodes": ["Start", "ModeSelect", "StrategySelect", "ProbeCV", "ObserveCV", "BackFromCV"],
+        "highlightEdges": [
+          ["Start", "ModeSelect"],
+          ["StrategySelect", "ProbeCV"],
+          ["ProbeCV", "ObserveCV"],
+          ["ObserveCV", "BackFromCV"],
+          ["BackFromCV", "StrategySelect"]
+        ],
+        "highlightFailureBranches": false
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "滑轮·刚体转动",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "刚体滑轮的转动：I 与 α",
+        "formulas": [
+          "α = a/R",
+          "a = (m₁ − m₂)g / (m₁ + m₂ + I/R²)",
+          "I = k M R²（k=1/2 实心盘，k=1 细圆环）"
+        ],
+        "mapsToKg": ["S1", "S2"]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-m1",
+        "label": "左侧质量",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "notes": "增大质量差通常增大 |α| 与 |a|",
+        "priorityRank": 3,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-m2",
+        "label": "右侧质量",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "notes": "与左侧质量共同决定有效重力差与等效惯量",
+        "priorityRank": 4,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-pulley-m",
+        "label": "滑轮质量",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "notes": "增大 M 增大 I，|α| 与 |a| 减小（刚体转动主参）",
+        "priorityRank": 1,
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-shape",
+        "label": "滑轮形状",
+        "type": "discrete",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "notes": "圆环比实心盘 I 更大，同质量下 |α| 更小（盘/环对照）",
+        "priorityRank": 2,
+        "responseShape": "discrete"
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-rope-thick",
+        "label": "绳子粗细",
+        "reason": "细绳近似成立区间内固定槽半径 R，粗细不进 a / α；仅改绳线观感"
+      }
+    ],
+    "inquiryFlow": ["KP1", "AV3", "AV4", "AV1", "AV2", "CV1", "OV1", "OV2"],
+    "narrative": {
+      "intro": "定滑轮两侧挂物 · 考察刚体转动：I 如何改变 α",
+      "steps": [
+        {
+          "order": 1,
+          "title": "自由探究",
+          "body": "对照角加速度 α、盘 vs 环（I 不同 → |a| 与 |α| 都变），并核对 a = Rα（a：m₁ 向下）。",
+          "mapsToKg": ["O1", "S1", "S2"]
+        },
+        {
+          "order": 2,
+          "title": "竞赛挑战",
+          "body": "切换竞赛，在有限次数内把 |α| 打进本局锁定带；可调滑轮质量与形状改 I。",
+          "mapsToKg": ["C1", "C2"]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "角加速度",
+        "symbol": "α",
+        "unit": "rad/s²",
+        "role": "primary",
+        "source": "formula"
+      },
+      {
+        "id": "OV2",
+        "label": "线加速度（m₁ 向下）",
+        "symbol": "a",
+        "unit": "m/s²",
+        "role": "secondary",
+        "source": "formula"
+      }
+    ],
+    "domain": "mechanics"
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "α = a/R",
+      "a = (m₁ − m₂)g / (m₁ + m₂ + I/R²)",
+      "I = k M R²"
+    ],
+    "independentVariables": ["AV1", "AV2", "AV3", "AV4"],
+    "confoundingVariables": ["CV1"],
+    "dependentVariables": ["OV1", "OV2"],
+    "core": {
+      "formulas": [
+        "α = a/R",
+        "a = (m₁ − m₂)g / (m₁ + m₂ + I/R²)",
+        "I = k M R²"
+      ],
+      "constants": [{ "symbol": "R", "value": 0.12, "unit": "m" }, { "symbol": "g", "value": 9.8, "unit": "m/s²" }],
+      "updateLoopSummary": "requestAnimationFrame 绳长积分 + 滑轮角速度",
+      "winConditionSummary": "竞赛模式下 |α| 落入本局锁定带（次要显示 a，m₁ 向下）",
+      "domain": "mechanics"
+    }
+  },
+  "gameSpec": {
+    "title": "滑轮·刚体转动",
+    "subtitle": "刚体转动 · I → α · a = Rα",
+    "winCondition": "竞赛模式下 |α| 落入本局锁定带",
+    "knowledgeSummary": "刚体滑轮转动惯量与角加速度",
+    "controls": [
+      {
+        "id": "s-m1",
+        "type": "range",
+        "label": "左侧质量",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-m2",
+        "type": "range",
+        "label": "右侧质量",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-rope-thick",
+        "type": "range",
+        "label": "绳子粗细",
+        "mapsToKg": "I1",
+        "role": "confounding"
+      },
+      {
+        "id": "s-pulley-m",
+        "type": "range",
+        "label": "滑轮质量",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-shape",
+        "type": "discrete",
+        "label": "滑轮形状",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      },
+      {
+        "id": "btn-release",
+        "type": "button",
+        "label": "释放",
+        "mapsToKg": "O1",
+        "role": "action"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "s-rope-thick",
+        "label": "绳子粗细",
+        "reason": "绳线观感（2–4 mm）；细绳近似下固定 R，不进 α / a 与 win",
+        "uiStrategy": "teach_only",
+        "domOrderNote": "顺序：m1 → m2 → 绳子粗细(CV) → 滑轮质量 → 形状，CV 不在末位"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      { "kgId": "C1", "label": "模式选择", "desc": "探究或竞赛" },
+      { "kgId": "C2", "label": "命中 |α| 目标带", "desc": "竞赛角加速度带判定" }
+    ],
+    "observeFeedbackLoop": true,
+    "traceMapExpected": {
+      "modeSelect": { "kgId": "C1", "role": "operation" },
+      "s-m1": { "kgId": "O1", "role": "operation" },
+      "s-m2": { "kgId": "O1", "role": "operation" },
+      "s-pulley-m": { "kgId": "O1", "role": "operation" },
+      "s-shape": { "kgId": "O1", "role": "operation" },
+      "s-rope-thick": { "kgId": "I1", "role": "irrelevant" }
+    },
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "requestAnimationFrame",
+      "maxDtMs": 50,
+      "methods": ["integrate", "draw"]
+    },
+    "dataReadouts": [
+      { "label": "角加速度", "symbol": "α", "unit": "rad/s²", "source": "computed" },
+      { "label": "线加速度（m₁ 向下）", "symbol": "a", "unit": "m/s²", "source": "computed" }
+    ],
+    "uiRequirements": [
+      "竞赛测量前不直播持续对答案；测后显示 |α|≈… 与相对目标，a 次要",
+      "探究测后突出 α，并显示 a（m₁ 向下）与 a=Rα / 盘环对照",
+      "释放 + 复位按钮"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML",
+      "过关 emit snapshot 与 win",
+      "探究 emit explore_success"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      { "type": "phase_change", "required": true, "description": "探究/竞赛切换" },
+      { "type": "tuning", "controlId": "s-m1", "kgId": "O1", "required": true },
+      { "type": "tuning", "controlId": "s-m2", "kgId": "O1", "required": true },
+      { "type": "tuning", "controlId": "s-pulley-m", "kgId": "O1", "required": true },
+      { "type": "tuning", "controlId": "s-shape", "kgId": "O1", "required": true },
+      { "type": "tuning", "controlId": "s-rope-thick", "kgId": "I1", "required": false },
+      { "type": "tuning", "controlId": "modeSelect", "kgId": "C1", "required": true },
+      { "type": "action", "canonical": "action", "control": "btn-release", "required": true },
+      { "type": "snapshot", "required": true },
+      { "type": "win", "required": true },
+      { "type": "explore_success", "required": true },
+      { "type": "attempts_exhausted", "required": true }
+    ],
+    "dtCheckpoints": [
+      { "name": "模式选择?", "type": "decision", "desc": "探究或竞赛" },
+      { "name": "命中目标带?", "type": "decision", "desc": "竞赛 |α| 判定" },
+      { "name": "过关", "type": "result", "desc": "|α| 落入锁定带" }
+    ],
+    "paperNotes": "traceMap 上报；绳子粗细 触碰可选。",
+    "adapterNote": "PlatformTraceAdapter"
+  },
+  "meta": {
+    "generationMode": "manual-pulley-rigid"
+  }
+}

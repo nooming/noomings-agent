@@ -17,7 +17,7 @@ Windows 也可双击 `start-agent.bat`。
 | 教师工作台 | `/teacher.html` |
 | 学生探究区 | `/student.html` |
 
-**课堂演示前清单**：[docs/demo/classroom-demo-checklist.md](docs/demo/classroom-demo-checklist.md)（默认 6 关）。关卡回归：[docs/demo/game-qa-checklist.md](docs/demo/game-qa-checklist.md)。学生进课堂请先走 `/student-join.html`。
+**课堂演示前清单**：[docs/demo/classroom-demo-checklist.md](docs/demo/classroom-demo-checklist.md)（默认 8 关）。关卡回归：[docs/demo/game-qa-checklist.md](docs/demo/game-qa-checklist.md)。学生进课堂请先走 `/student-join.html`。
 
 ## 按角色怎么找
 

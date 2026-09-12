@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>滑轮·刚体转动</title>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
+<style>
+:root{
+  --craft-accent:#c88858;
+  --craft-bg:#14100c;
+  --craft-panel:#241c14;
+  --craft-text:#f0e6d8;
+  --craft-muted:#a09078;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+#essence-app{display:flex;height:100vh;min-height:480px}
+#essence-stage{flex:1;position:relative;min-width:0;background:#0c0a08;overflow:hidden}
+#essence-stage canvas{display:block;width:100%;height:100%}
+#essence-hud{position:absolute;left:16px;top:14px;z-index:2;pointer-events:none}
+.essence-title{font-size:15px;font-weight:700;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.55)}
+.essence-sub,#goalMission{display:none!important}
+#stageGauge{
+  position:absolute;right:14px;top:14px;z-index:2;pointer-events:none;
+  padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.55);border:1px solid rgba(200,136,88,.35);
+  font-size:12px;color:var(--craft-muted);min-width:120px;
+}
+#stageGauge .g-val{font-size:18px;font-weight:700;color:#ffe0c2;font-family:ui-monospace,Consolas,monospace;margin-top:4px}
+#essence-bench{width:min(340px,38vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
+.essence-scroll{padding:14px 14px 10px;overflow:auto;flex:1}
+.side-goal-cap{font-size:11px;color:var(--craft-muted);text-transform:uppercase;letter-spacing:.06em}
+#sideGoal{margin:6px 0 12px;font-size:14px;line-height:1.55;color:var(--craft-text)}
+.mode-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+#modeSelect{flex:1;min-height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#1a1410;color:var(--craft-text);padding:6px 8px}
+.slider-group{margin:10px 0}
+.slider-group label{display:flex;justify-content:space-between;font-size:12px;color:var(--craft-muted);margin-bottom:4px}
+.slider-group input[type=range],.slider-group select{width:100%}
+.slider-group select{min-height:32px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#1a1410;color:var(--craft-text);padding:4px 8px}
+.row-buttons{display:flex;gap:8px;margin:12px 0}
+button{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;font-weight:600;background:var(--craft-accent);color:#0b1020}
+button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.observe-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}
+.observe-box .val{font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
+.observe-box.measuring .val{animation:readPulse .35s ease-in-out 2}
+@keyframes readPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.04);color:#ffd4a8}}
+.observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.4}
+.pass-badge{display:inline-block;margin-top:8px;padding:5px 12px;border-radius:999px;background:#3d9a62;color:#fff;font-size:12px;font-weight:700}
+.attempts{font-size:12px;color:var(--craft-muted);margin-top:8px}
+#craft-intro,#craft-win{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(4,8,12,.78);padding:20px}
+#craft-intro[hidden],#craft-win[hidden]{display:none!important}
+.craft-card{width:min(440px,92vw);background:#241c14;border:1px solid rgba(200,136,88,.35);border-radius:14px;padding:22px 22px 18px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.craft-card h2{margin:0 0 8px;font-size:20px;color:var(--craft-accent)}
+.craft-card p{margin:0 0 10px;color:var(--craft-muted);font-size:13px;line-height:1.5}
+.craft-card .formula{font-family:"Cambria Math","Times New Roman",serif;color:#ffe0c2;margin:8px 0 12px;font-size:15px}
+.craft-actions{display:flex;gap:8px;margin-top:14px}
+.craft-btn-secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
+.craft-evidence{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(200,136,88,.32);font-size:.88rem;line-height:1.55;color:var(--craft-text)}
+.craft-evidence strong{color:var(--craft-accent);font-weight:600}
+.craft-evidence-meta{margin:0 0 12px;font-size:.78rem;line-height:1.4;color:var(--craft-muted)}
+.craft-evidence-meta[hidden]{display:none!important}
+.craft-attr{margin:0 0 12px}
+.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted)}
+.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr}}
+.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer}
+.craft-attr input{margin-top:3px;accent-color:var(--craft-accent)}
+.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted)}
+.craft-attr-hint[hidden]{display:none!important}
+.craft-reveal{margin-top:4px}
+.craft-reveal[hidden]{display:none!important}
+.craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed rgba(200,136,88,.35);border-radius:10px;padding:8px 10px;margin:0 0 4px}
+#craftWinBtn:disabled{opacity:.45;cursor:not-allowed}
+@media (max-width:820px){#essence-app{flex-direction:column}#essence-bench{width:100%;height:46vh}#essence-stage{height:54vh}}
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>滑轮·刚体转动</h2>
+    <p>两侧挂物、绳绕定滑轮——重点看<strong>刚体转动</strong>：转动惯量 I（质量与盘/环形状）怎样改变角加速度 α，并核对 a = Rα。</p>
+    <p style="font-size:12px">a 约定为左侧 m₁ 向下（a&gt;0 左侧下降）。探究对照 α 与盘/环；竞赛把 |α| 打进本局锁定带。</p>
+    <button type="button" id="craftIntroBtn">开始</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <p id="craftEvidenceMeta" class="craft-evidence-meta" hidden></p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几次释放的对照来看，角加速度 / 转动快慢变化主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-pulley-m"> 主要是滑轮质量（改 I）</label>
+        <label><input type="radio" name="craftAttr" value="s-shape"> 主要是形状·盘/环（改 I）</label>
+        <label><input type="radio" name="craftAttr" value="s-m1"> 主要是 m₁（质量差）</label>
+        <label><input type="radio" name="craftAttr" value="s-m2"> 主要是 m₂（质量差）</label>
+        <label><input type="radio" name="craftAttr" value="s-rope-thick"> 主要是绳子粗细</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">α = a/R，a = (m₁−m₂)g / (m₁+m₂+I/R²)，I = kMR²（a：m₁ 向下）</div>
+      <p id="craftWinText">竞赛看的是 |α|。滑轮质量与盘/环形状改 I，从而同时改变 |a| 与 |α|；无滑时 a = Rα。</p>
+      <p id="craftCv" class="craft-cv">绳子粗细仅改绳线观感；细绳近似成立区间内固定槽半径 R，粗细不进 α / a 判定。</p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
+    </div>
+  </div>
+</div>
+
+<div id="essence-app">
+  <div id="essence-stage">
+    <canvas id="simCanvas"></canvas>
+    <div id="essence-hud">
+      <div class="essence-title">阿特伍德 · 刚体滑轮</div>
+    </div>
+    <div id="stageGauge">
+      <div>滑轮转速示意</div>
+      <div class="g-val" id="spinHint">静止</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="essence-scroll" id="controlsPanel">
+      <div class="side-goal-cap">当前目标</div>
+      <p id="sideGoal">调参后点释放，观察运动与读数。</p>
+      <div class="mode-row">
+        <label for="modeSelect" style="font-size:12px;color:var(--craft-muted)">模式</label>
+        <select id="modeSelect">
+          <option value="explore">探究</option>
+          <option value="challenge">竞赛</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <label for="s-m1">左侧质量 m₁ <span id="m1Val">3.0 kg</span></label>
+        <input type="range" id="s-m1" min="0.5" max="8" step="0.1" value="3">
+      </div>
+      <div class="slider-group">
+        <label for="s-m2">右侧质量 m₂ <span id="m2Val">2.0 kg</span></label>
+        <input type="range" id="s-m2" min="0.5" max="8" step="0.1" value="2">
+      </div>
+      <div class="slider-group">
+        <label for="s-rope-thick">绳子粗细 <span id="ropeThickVal">3.0 mm</span></label>
+        <input type="range" id="s-rope-thick" min="2" max="4" step="0.1" value="3">
+      </div>
+      <div class="slider-group">
+        <label for="s-pulley-m">滑轮质量 M <span id="pmVal">0.5 kg</span></label>
+        <input type="range" id="s-pulley-m" min="0.1" max="3" step="0.1" value="0.5">
+      </div>
+      <div class="slider-group">
+        <label for="s-shape">滑轮形状</label>
+        <select id="s-shape">
+          <option value="disk">实心盘 (k=½)</option>
+          <option value="hoop">细圆环 (k=1)</option>
+        </select>
+      </div>
+      <div class="row-buttons">
+        <button type="button" id="btn-release">释放 · 测量</button>
+        <button type="button" id="btn-reset" class="secondary">复位</button>
+      </div>
+      <div class="observe-box" id="observeBox">
+        <div><span id="alphaUnit" style="font-size:12px;color:var(--craft-muted)">α =</span> <span class="val" id="alphaDisplay">—</span> <span style="font-size:12px;color:var(--craft-muted)">（rad/s²）</span></div>
+        <div class="hint" id="aLine">a（m₁ 向下）：—</div>
+        <div class="hint" id="signHint">约定：a 为左侧 m₁ 向下；a&gt;0 左侧下降。无滑 a = Rα；竞赛主判 |α|。</div>
+        <div class="hint" id="hintMessage">调参后点释放</div>
+        <div id="winIndicator"></div>
+      </div>
+      <div class="attempts" id="attemptsLine"></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  var G = 9.8;
+  var R = 0.12;
+  var canvas = document.getElementById('simCanvas');
+  var ctx = canvas.getContext('2d');
+  var mode = 'explore';
+  var attempts = 6;
+  var bandLo = 1.2, bandHi = 1.8;
+  var running = false;
+  var sim = { y: 0, v: 0, theta: 0, omega: 0, t: 0 };
+  var lastA = null;
+  var lastAlpha = null;
+  var lastVerdict = null;
+  var measureAnim = 0;
+  var animClock = 0;
+  var trail = [];
+  var dust = [];
+  var settling = false;
+  var settleT = 0;
+  var pendingPhys = null;
+
+  var AV_LABELS = { 's-m1': 'm₁', 's-m2': 'm₂', 's-pulley-m': '滑轮质量', 's-shape': '形状' };
+  var sessionEvidence = {
+    tuneCounts: { 's-m1': 0, 's-m2': 0, 's-pulley-m': 0, 's-shape': 0 },
+    releaseCount: 0,
+    lastMag: null,
+    attribution: null,
+    evidenceSummary: ''
+  };
+  window.__sessionEvidence = sessionEvidence;
+
+  function noteAvTune(controlId) {
+    if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+    sessionEvidence.tuneCounts[controlId] += 1;
+  }
+
+  function dominantAv() {
+    var bestId = null, bestN = 0;
+    Object.keys(sessionEvidence.tuneCounts).forEach(function (id) {
+      var n = sessionEvidence.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+
+  function buildEvidenceSummary(magA, magAlpha) {
+    var dom = dominantAv();
+    var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+    var alphaTxt = Number.isFinite(magAlpha) ? ('|α|=' + magAlpha.toFixed(2) + ' rad/s²') : '入带';
+    var aTxt = Number.isFinite(magA) ? ('|a|=' + magA.toFixed(3) + ' m/s²（m₁ 向下）') : '';
+    if (mode === 'challenge') {
+      return '竞赛证据：主调 ' + mainTxt
+        + ' · ' + alphaTxt
+        + ' · 目标带 ' + bandLo.toFixed(2) + '–' + bandHi.toFixed(2) + ' rad/s²'
+        + (aTxt ? (' · ' + aTxt) : '')
+        + ' · 释放 ' + sessionEvidence.releaseCount + ' 次';
+    }
+    return '探究证据：' + alphaTxt
+      + (aTxt ? (' · ' + aTxt) : '')
+      + ' · 主调节 ' + mainTxt
+      + ' · 释放 ' + sessionEvidence.releaseCount + ' 次';
+  }
+
+  function shapeK() {
+    return document.getElementById('s-shape').value === 'hoop' ? 1 : 0.5;
+  }
+
+  function readMasses() {
+    return {
+      m1: +document.getElementById('s-m1').value,
+      m2: +document.getElementById('s-m2').value,
+      Mp: +document.getElementById('s-pulley-m').value
+    };
+  }
+
+  function computeA() {
+    var m = readMasses();
+    var dm = m.m1 - m.m2;
+    if (Math.abs(dm) < 0.02) return { a: 0, alpha: 0, I: shapeK() * m.Mp * R * R, dir: 0 };
+    var I = shapeK() * m.Mp * R * R;
+    var eff = m.m1 + m.m2 + I / (R * R);
+    var a = (dm * G) / eff;
+    return { a: a, alpha: a / R, I: I, dir: dm > 0 ? 1 : -1 };
+  }
+
+  // 固定实验室配色（轴心不随 CV 变）
+  function labPalette() {
+    return {
+      bgTop: 'rgb(42,38,34)',
+      bgBot: 'rgb(24,22,20)',
+      frame: 'rgb(108,94,78)',
+      hubR: 7.5,
+      hubFill: 'rgb(46,33,22)',
+      grease: 'rgba(190,170,110,0.43)',
+      greaseW: 2.75
+    };
+  }
+
+  // CV：绳子粗细仅改绳线观感；细绳近似下不进 a / α（固定槽半径 R，不耦合 R_eff）
+  function ropeThickMm() {
+    var el = document.getElementById('s-rope-thick');
+    return el ? +el.value : 3;
+  }
+
+  function resize() {
+    var r = canvas.parentElement.getBoundingClientRect();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(320, r.width) * dpr;
+    canvas.height = Math.max(240, r.height) * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function layout(w, h) {
+    var cx = w * 0.5;
+    var pulleyY = Math.max(72, h * 0.2);
+    var railH = Math.min(h * 0.64, h - pulleyY - 48);
+    var pr = Math.min(42, Math.max(28, w * 0.065));
+    // span = 支架半宽（略宽于滑轮）；质量挂在左右切点正下方 = cx ± pr
+    var span = Math.max(pr + 52, Math.min(w * 0.22, 108));
+    return { cx: cx, pulleyY: pulleyY, railH: railH, span: span, pr: pr };
+  }
+
+  function roundRect(c, x, y, rw, rh, r) {
+    var rr = Math.min(r, rw / 2, rh / 2);
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.arcTo(x + rw, y, x + rw, y + rh, rr);
+    c.arcTo(x + rw, y + rh, x, y + rh, rr);
+    c.arcTo(x, y + rh, x, y, rr);
+    c.arcTo(x, y, x + rw, y, rr);
+    c.closePath();
+  }
+
+  function drawLabBg(w, h, col, t) {
+    var wall = ctx.createLinearGradient(0, 0, 0, h);
+    wall.addColorStop(0, '#2a221c');
+    wall.addColorStop(0.45, col.bgTop);
+    wall.addColorStop(1, col.bgBot);
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(240, 220, 190, 0.045)';
+    ctx.lineWidth = 1;
+    var gStep = 28;
+    for (var gx = 0; gx < w; gx += gStep) {
+      ctx.beginPath(); ctx.moveTo(gx + 0.5, 0); ctx.lineTo(gx + 0.5, h * 0.72); ctx.stroke();
+    }
+    for (var gy = 24; gy < h * 0.72; gy += gStep) {
+      ctx.beginPath(); ctx.moveTo(0, gy + 0.5); ctx.lineTo(w, gy + 0.5); ctx.stroke();
+    }
+
+    var cabX = w * 0.78, cabY = h * 0.1, cabW = w * 0.18, cabH = h * 0.38;
+    if (w > 420) {
+      ctx.fillStyle = 'rgba(18,14,10,0.72)';
+      roundRect(ctx, cabX, cabY, cabW, cabH, 6); ctx.fill();
+      ctx.strokeStyle = 'rgba(200,136,88,0.12)';
+      ctx.stroke();
+      for (var si = 0; si < 3; si++) {
+        ctx.fillStyle = 'rgba(60,48,36,0.55)';
+        roundRect(ctx, cabX + 10, cabY + 16 + si * 42, cabW - 20, 28, 4); ctx.fill();
+      }
+    }
+
+    var floorY = h * 0.78;
+    var floor = ctx.createLinearGradient(0, floorY, 0, h);
+    floor.addColorStop(0, '#3a3028');
+    floor.addColorStop(1, '#16120e');
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, floorY, w, h - floorY);
+    ctx.strokeStyle = 'rgba(200,160,110,0.07)';
+    for (var fi = 1; fi < 5; fi++) {
+      var fy = floorY + fi * fi * 3.2;
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(w, fy); ctx.stroke();
+    }
+
+    var by = floorY - 4;
+    var bg = ctx.createLinearGradient(0, by - 18, 0, by + 14);
+    bg.addColorStop(0, '#5a4a38');
+    bg.addColorStop(0.5, '#3a2e22');
+    bg.addColorStop(1, '#241c14');
+    ctx.fillStyle = bg;
+    ctx.fillRect(w * 0.04, by - 14, w * 0.92, 18);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(w * 0.04, by + 4, w * 0.92, 12);
+    ctx.strokeStyle = 'rgba(240,210,170,0.16)';
+    ctx.beginPath(); ctx.moveTo(w * 0.04, by - 14); ctx.lineTo(w * 0.96, by - 14); ctx.stroke();
+
+    var flick = 0.92 + 0.08 * Math.sin(t * 1.6);
+    var glow = ctx.createRadialGradient(w * 0.5, 18, 8, w * 0.5, h * 0.28, w * 0.55);
+    glow.addColorStop(0, 'rgba(255,200,140,' + (0.14 * flick) + ')');
+    glow.addColorStop(1, 'rgba(20,14,8,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+
+    if (!dust.length) {
+      for (var d = 0; d < 8; d++) {
+        dust.push({
+          x: Math.random() * w, y: Math.random() * h * 0.7,
+          r: 0.35 + Math.random() * 0.8, a: 0.03 + Math.random() * 0.06,
+          vx: 1.5 + Math.random() * 3, ph: Math.random() * 6
+        });
+      }
+    }
+    for (var di = 0; di < dust.length; di++) {
+      var p = dust[di];
+      p.x += p.vx * 0.016;
+      p.y += Math.sin(t + p.ph) * 0.08;
+      if (p.x > w + 4) p.x = -3;
+      ctx.globalAlpha = p.a;
+      ctx.fillStyle = '#e8d4b8';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var vig = ctx.createRadialGradient(w * 0.5, h * 0.35, h * 0.18, w * 0.5, h * 0.4, h * 0.9);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.22)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawFrame(L, h, col, sway) {
+    var frameW = L.span * 2 + 88;
+    var topY = L.pulleyY - 28;
+    var legH = L.railH + 52;
+    var leftX = L.cx - frameW / 2;
+    var rightX = L.cx + frameW / 2 - 12;
+    var wood = ctx.createLinearGradient(leftX, 0, leftX + 14, 0);
+    wood.addColorStop(0, '#3a2a1a');
+    wood.addColorStop(0.35, '#8a6a48');
+    wood.addColorStop(0.7, '#5a4230');
+    wood.addColorStop(1, '#2a1c12');
+    var metal = ctx.createLinearGradient(0, topY, 0, topY + 18);
+    metal.addColorStop(0, '#c8b090');
+    metal.addColorStop(0.45, col.frame);
+    metal.addColorStop(1, '#4a3a28');
+
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(leftX + 6, topY + legH + 10, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(rightX + 6, topY + legH + 10, 18, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.save();
+    ctx.translate(sway, 0);
+
+    ctx.fillStyle = wood;
+    roundRect(ctx, leftX, topY, 12, legH, 2); ctx.fill();
+    roundRect(ctx, rightX, topY, 12, legH, 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,230,190,0.12)';
+    ctx.fillRect(leftX + 2, topY + 4, 3, legH - 10);
+    ctx.fillRect(rightX + 2, topY + 4, 3, legH - 10);
+
+    ctx.fillStyle = metal;
+    roundRect(ctx, leftX - 4, topY, frameW + 8, 16, 3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,240,210,0.22)';
+    ctx.fillRect(leftX, topY + 2, frameW, 3);
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(leftX, topY + 12, frameW, 3);
+
+    ctx.fillStyle = '#6a5848';
+    roundRect(ctx, L.cx - 22, topY + 10, 44, 18, 3); ctx.fill();
+    ctx.strokeStyle = 'rgba(240,210,170,0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(L.cx - 20, topY + 12, 40, 14);
+
+    ctx.fillStyle = '#4a3a2a';
+    roundRect(ctx, leftX - 10, topY + legH - 6, 32, 10, 2); ctx.fill();
+    roundRect(ctx, rightX - 10, topY + legH - 6, 32, 10, 2); ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 经典阿特伍德绳：切点竖直段 + 外缘顶弧（无横跨横梁、无松弛贝塞尔）
+  // CV 视觉：绳子粗细只缩放 lineWidth / 轻量绳槽贴合，不改几何切点半径 pr（物理 R 固定）
+  function drawString(L, lx, rx, leftY, rightY, sway) {
+    var pr = L.pr;
+    var cy = L.pulleyY;
+    var cx = L.cx + sway;
+    var leftTanX = cx - pr;
+    var rightTanX = cx + pr;
+    var t = Math.max(0, Math.min(1, (ropeThickMm() - 2) / 2)); // 2–4 mm → 0..1
+    var mainW = 1.9 + t * 0.9;
+    var shadowW = mainW + 2.2;
+    var seatInset = 0.55 + t * 0.45;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function ropePath() {
+      ctx.beginPath();
+      ctx.moveTo(leftTanX, leftY);
+      ctx.lineTo(leftTanX, cy);
+      ctx.arc(cx, cy, pr, Math.PI, 0, false);
+      ctx.lineTo(rightTanX, rightY);
+    }
+
+    ctx.strokeStyle = 'rgba(40,28,16,0.4)';
+    ctx.lineWidth = shadowW;
+    ropePath();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#e8d8bc';
+    ctx.lineWidth = mainW;
+    ropePath();
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255,245,220,0.4)';
+    ctx.lineWidth = Math.max(0.8, mainW * 0.45);
+    ctx.beginPath();
+    ctx.arc(cx, cy, pr - seatInset, Math.PI * 1.02, -0.02, false);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPulley(L, col, theta, sway) {
+    var pr = L.pr;
+    var disk = document.getElementById('s-shape').value === 'disk';
+    ctx.save();
+    ctx.translate(L.cx + (sway || 0), L.pulleyY);
+    ctx.rotate(theta);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath(); ctx.arc(1.5, 2, pr + 2, 0, Math.PI * 2); ctx.fill();
+
+    var rim = ctx.createRadialGradient(-pr * 0.25, -pr * 0.3, 2, 0, 0, pr + 3);
+    rim.addColorStop(0, '#f2e0c8');
+    rim.addColorStop(0.45, '#a88868');
+    rim.addColorStop(1, '#3a2a1c');
+    ctx.fillStyle = rim;
+    ctx.beginPath(); ctx.arc(0, 0, pr + 3, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(20,14,10,0.75)';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath(); ctx.arc(0, 0, pr, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(230,200,160,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(0, 0, pr + 1.5, 0, Math.PI * 2); ctx.stroke();
+
+    // 固定轮槽描线（不随 CV）；粗细只改绳线，不改 R
+    ctx.strokeStyle = 'rgba(28,18,12,0.55)';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.arc(0, 0, pr - 0.8, 0, Math.PI * 2); ctx.stroke();
+
+    if (disk) {
+      var face = ctx.createRadialGradient(-6, -6, 2, 0, 0, pr - 2);
+      face.addColorStop(0, '#e8d0b0');
+      face.addColorStop(0.55, '#9a7858');
+      face.addColorStop(1, '#4a3424');
+      ctx.fillStyle = face;
+      ctx.beginPath(); ctx.arc(0, 0, pr - 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(60,40,24,0.22)';
+      ctx.lineWidth = 1;
+      for (var i = 0; i < 6; i++) {
+        var a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 6, Math.sin(a) * 6);
+        ctx.lineTo(Math.cos(a) * (pr - 6), Math.sin(a) * (pr - 6));
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = 'rgba(24,18,12,0.55)';
+      ctx.beginPath(); ctx.arc(0, 0, pr - 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f0d8b8';
+      ctx.lineWidth = 5.5;
+      ctx.beginPath(); ctx.arc(0, 0, pr - 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,230,190,0.55)';
+      ctx.lineWidth = 1.5;
+      for (var s = 0; s < 8; s++) {
+        var sa = (s / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(sa) * (col.hubR + 3), Math.sin(sa) * (col.hubR + 3));
+        ctx.lineTo(Math.cos(sa) * (pr - 8), Math.sin(sa) * (pr - 8));
+        ctx.stroke();
+      }
+    }
+
+    var hubG = ctx.createRadialGradient(-2, -2, 1, 0, 0, col.hubR + 3);
+    hubG.addColorStop(0, '#d8c8b0');
+    hubG.addColorStop(0.5, col.hubFill);
+    hubG.addColorStop(1, '#1a1410');
+    ctx.fillStyle = hubG;
+    ctx.beginPath(); ctx.arc(0, 0, col.hubR + 1, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = col.grease;
+    ctx.lineWidth = col.greaseW;
+    ctx.beginPath(); ctx.arc(0, 0, col.hubR + 2.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,240,210,0.35)';
+    ctx.beginPath(); ctx.arc(-col.hubR * 0.25, -col.hubR * 0.25, Math.max(1.5, col.hubR * 0.28), 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,220,170,0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(pr * 0.72, 0);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawMass(x, y, mass, label, trailAlpha) {
+    var side = 26 + mass * 3.2;
+    var depth = 7;
+    if (trailAlpha > 0.02) {
+      ctx.globalAlpha = trailAlpha * 0.35;
+      ctx.fillStyle = '#c88858';
+      roundRect(ctx, x - side / 2, y - 2, side, side, 4); ctx.fill();
+      ctx.globalAlpha = 1;
+      return;
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(x + 2, y + side + 6, side * 0.42, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#5a4030';
+    ctx.beginPath();
+    ctx.moveTo(x + side / 2, y);
+    ctx.lineTo(x + side / 2 + depth, y - depth * 0.55);
+    ctx.lineTo(x + side / 2 + depth, y + side - depth * 0.55);
+    ctx.lineTo(x + side / 2, y + side);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#d4a878';
+    ctx.beginPath();
+    ctx.moveTo(x - side / 2, y);
+    ctx.lineTo(x - side / 2 + depth, y - depth * 0.55);
+    ctx.lineTo(x + side / 2 + depth, y - depth * 0.55);
+    ctx.lineTo(x + side / 2, y);
+    ctx.closePath();
+    ctx.fill();
+    var mg = ctx.createLinearGradient(x - side / 2, y, x + side / 2, y + side);
+    mg.addColorStop(0, '#c88858');
+    mg.addColorStop(0.55, '#8a6040');
+    mg.addColorStop(1, '#4a3220');
+    ctx.fillStyle = mg;
+    roundRect(ctx, x - side / 2, y, side, side, 3); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,230,200,0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f8efe4';
+    ctx.font = 'bold 12px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y + side / 2);
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = 'rgba(240,230,216,0.85)';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(mass.toFixed(1) + ' kg', x, y - depth - 6);
+  }
+
+  function drawScene(w, h, dt) {
+    var L = layout(w, h);
+    var col = labPalette();
+    var idleSway = (!running && !settling) ? Math.sin(animClock * 1.1) * 0.35 : 0;
+    var thetaDraw = sim.theta + ((!running && !settling) ? Math.sin(animClock * 0.9) * 0.006 : 0);
+
+    drawLabBg(w, h, col, animClock);
+    drawFrame(L, h, col, idleSway);
+
+    var m = readMasses();
+    // sim.y 沿 m₁ 向下为正（与 a=(m1−m2)g/... 同号）；勿再用 dir 二次翻转
+    var yOff = sim.y * 42;
+    var baseY = L.pulleyY + L.railH * 0.34;
+    var leftY = baseY + yOff;
+    var rightY = baseY - yOff;
+    // 质量挂在滑轮左右切点正下方（非支架跨度）
+    var lx = L.cx - L.pr + idleSway;
+    var rx = L.cx + L.pr + idleSway;
+
+    if (running && Math.abs(sim.v) > 0.05) {
+      trail.push({ lx: lx, ly: leftY, rx: rx, ry: rightY, life: 1 });
+      if (trail.length > 5) trail.shift();
+    } else if (trail.length) {
+      for (var ti = trail.length - 1; ti >= 0; ti--) {
+        trail[ti].life -= dt * 2.5;
+        if (trail[ti].life <= 0) trail.splice(ti, 1);
+      }
+    }
+    for (var tj = 0; tj < trail.length; tj++) {
+      var tr = trail[tj];
+      drawMass(tr.lx, tr.ly, m.m1, '', tr.life * 0.7);
+      drawMass(tr.rx, tr.ry, m.m2, '', tr.life * 0.7);
+    }
+
+    // 先轮后绳：顶缘弧压在轮槽上可见，避免“绳接到轴心”
+    drawPulley(L, col, thetaDraw, idleSway);
+    drawString(L, lx, rx, leftY, rightY, idleSway);
+    drawMass(lx, leftY, m.m1, 'm₁', 0);
+    drawMass(rx, rightY, m.m2, 'm₂', 0);
+
+    if (measureAnim > 0) {
+      measureAnim = Math.max(0, measureAnim - dt);
+      var pulse = 0.35 + 0.35 * Math.sin(animClock * 14);
+      ctx.strokeStyle = 'rgba(200,136,88,' + pulse.toFixed(2) + ')';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      roundRect(ctx, 10, 10, w - 20, h - 20, 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function updateSpinGauge() {
+    var el = document.getElementById('spinHint');
+    if (!el) return;
+    if (running) {
+      el.textContent = sim.omega !== 0 ? (sim.omega > 0 ? '↻ 加速' : '↺ 加速') : '…';
+    } else if (settling) {
+      el.textContent = '减速…';
+    } else if (lastAlpha != null && Math.abs(lastAlpha) > 0.05) {
+      el.textContent = '|α|≈' + Math.abs(lastAlpha).toFixed(1);
+    } else {
+      el.textContent = '静止';
+    }
+  }
+
+  function updateChallengeGauge() {
+    /* 竞赛不在舞台直播 a 数值 */
+  }
+
+  var lastTs = 0;
+  function loop(ts) {
+    var dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
+    lastTs = ts;
+    animClock += dt;
+    if (running) {
+      var phys = computeA();
+      sim.v += phys.a * dt;
+      sim.y += sim.v * dt;
+      // Canvas +θ=顺时针；m1↓ 左缘下 → 逆时针 → ω/θ 与线量反号（不改 a 物理）
+      sim.omega = -sim.v / R;
+      sim.theta += sim.omega * dt;
+      sim.t += dt;
+      if (Math.abs(sim.y) >= 0.55 || sim.t >= 1.35) {
+        running = false;
+        settling = true;
+        settleT = 0.28;
+        pendingPhys = phys;
+      }
+    } else if (settling) {
+      settleT -= dt;
+      sim.omega *= Math.max(0, 1 - dt * 8);
+      sim.theta += sim.omega * dt;
+      sim.v = -sim.omega * R;
+      if (settleT <= 0) {
+        settling = false;
+        sim.omega = 0;
+        sim.v = 0;
+        var done = pendingPhys;
+        pendingPhys = null;
+        if (done) finishRun(done);
+      }
+    }
+    var rect = canvas.getBoundingClientRect();
+    drawScene(rect.width, rect.height, dt);
+    updateSpinGauge();
+    requestAnimationFrame(loop);
+  }
+
+  function syncLabels() {
+    document.getElementById('m1Val').textContent = (+document.getElementById('s-m1').value).toFixed(1) + ' kg';
+    document.getElementById('m2Val').textContent = (+document.getElementById('s-m2').value).toFixed(1) + ' kg';
+    document.getElementById('pmVal').textContent = (+document.getElementById('s-pulley-m').value).toFixed(1) + ' kg';
+    document.getElementById('ropeThickVal').textContent = ropeThickMm().toFixed(1) + ' mm';
+  }
+
+  function lockBand() {
+    // 在可达 |a| 抽样后换算为 |α|=|a|/R，保证竞赛可通关
+    var midA = 0.45 + Math.random() * 3.2;
+    var halfA = Math.max(0.14, midA * 0.11);
+    bandLo = (midA - halfA) / R;
+    bandHi = (midA + halfA) / R;
+  }
+
+  function refreshGoals() {
+    var side = document.getElementById('sideGoal');
+    var att = document.getElementById('attemptsLine');
+    if (mode === 'explore') {
+      side.textContent = '探究：对照角加速度 α、盘 vs 环（I 不同 → |a| 与 |α| 都变），并核对 a = Rα（a：m₁ 向下）。';
+      att.textContent = '';
+    } else {
+      side.textContent = '竞赛：把 |α| 打进 ' + bandLo.toFixed(2) + ' – ' + bandHi.toFixed(2) + ' rad/s²（本局锁定）；可调滑轮质量/形状改 I。';
+      att.textContent = '剩余机会 ' + attempts;
+    }
+  }
+
+  function onMode() {
+    var s = document.getElementById('modeSelect');
+    var next = s.value === 'challenge' ? 'challenge' : 'explore';
+    if (next !== mode) {
+      mode = next;
+      try {
+        if (window.__craftPhaseEmitted !== mode) {
+          window.__craftPhaseEmitted = mode;
+          if (window.__emit) window.__emit('phase_change', { phase: mode });
+        }
+      } catch (e) {}
+      document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: mode } }));
+      if (mode === 'challenge') {
+        attempts = 6;
+        lockBand();
+        window.__legacyWinEmitted = false;
+        window.__challengeWon = false;
+        lastA = null;
+        lastAlpha = null;
+        lastVerdict = null;
+        document.getElementById('alphaUnit').textContent = '|α| =';
+        document.getElementById('alphaDisplay').textContent = '待测';
+        document.getElementById('aLine').textContent = 'a（m₁ 向下）：待测';
+        document.getElementById('hintMessage').textContent = '调参后点释放';
+        document.getElementById('winIndicator').innerHTML = '';
+      } else {
+        document.getElementById('alphaUnit').textContent = 'α =';
+      }
+      refreshGoals();
+      resetSim(false);
+    }
+  }
+
+  function resetSim(clearReadings) {
+    running = false;
+    settling = false;
+    settleT = 0;
+    pendingPhys = null;
+    trail = [];
+    sim = { y: 0, v: 0, theta: 0, omega: 0, t: 0 };
+    if (clearReadings) {
+      lastA = null;
+      lastAlpha = null;
+      lastVerdict = null;
+      document.getElementById('alphaUnit').textContent = mode === 'challenge' ? '|α| =' : 'α =';
+      document.getElementById('alphaDisplay').textContent = mode === 'challenge' ? '待测' : '—';
+      document.getElementById('aLine').textContent = mode === 'challenge' ? 'a（m₁ 向下）：待测' : 'a（m₁ 向下）：—';
+      document.getElementById('hintMessage').textContent = '调参后点释放';
+      document.getElementById('winIndicator').innerHTML = '';
+    }
+    document.getElementById('btn-release').disabled = false;
+  }
+
+  function settleAfterMeasure(phys) {
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    var hint = document.getElementById('hintMessage');
+    var winInd = document.getElementById('winIndicator');
+    winInd.innerHTML = '';
+    var a = phys.a;
+    var alpha = phys.alpha;
+    var magA = Math.abs(a);
+    var magAlpha = Math.abs(alpha);
+
+    if (Math.abs(readMasses().m1 - readMasses().m2) < 0.02) {
+      lastA = 0;
+      lastAlpha = 0;
+      document.getElementById('alphaUnit').textContent = 'α =';
+      document.getElementById('alphaDisplay').textContent = '≈0';
+      document.getElementById('aLine').textContent = 'a（m₁ 向下）≈0 · 平衡';
+      hint.textContent = '两侧质量几乎相等 · 换一组质量差再试（或改滑轮 I 对照）';
+      if (mode === 'explore' && window.__emit) {
+        window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_equilibrium' });
+      }
+      return;
+    }
+
+    if (mode === 'explore') {
+      lastA = a;
+      lastAlpha = alpha;
+      var sideDown = a > 0 ? '左侧 m₁ 下降' : '右侧下降 / 左侧上升';
+      var shape = document.getElementById('s-shape').value === 'hoop' ? '环 k=1' : '盘 k=½';
+      document.getElementById('alphaUnit').textContent = 'α =';
+      document.getElementById('alphaDisplay').textContent = alpha.toFixed(2);
+      document.getElementById('aLine').textContent = 'a = ' + a.toFixed(3) + ' m/s²（m₁ 向下）· a = Rα · ' + shape;
+      hint.textContent = 'α = ' + alpha.toFixed(2) + ' rad/s² · ' + sideDown + ' · 再改一项（建议对照盘/环或滑轮质量）';
+      if (window.__emit) {
+        window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe', a: a, alpha: alpha });
+        if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit, controls);
+      }
+      return;
+    }
+
+    if (attempts <= 0 || window.__challengeWon) return;
+    attempts -= 1;
+    refreshGoals();
+    var ok = magAlpha >= bandLo && magAlpha <= bandHi;
+    lastA = a;
+    lastAlpha = alpha;
+    lastVerdict = ok ? 'ok' : (magAlpha < bandLo ? 'low' : 'high');
+    sessionEvidence.lastMag = magAlpha;
+    var bandTxt = bandLo.toFixed(2) + '–' + bandHi.toFixed(2);
+    var relShort = ok ? '已落入' : (lastVerdict === 'low' ? '偏低' : '偏高');
+    document.getElementById('alphaUnit').textContent = '|α| ≈';
+    document.getElementById('alphaDisplay').textContent = magAlpha.toFixed(2);
+    document.getElementById('aLine').textContent =
+      'a≈' + a.toFixed(3) + ' m/s²（m₁ 向下）· |α| ' + relShort + ' · 目标 ' + bandTxt;
+    if (window.__emit) {
+      window.__emit('snapshot', { controls: controls, winOk: ok, hintKey: ok ? 'win' : 'miss', alphaMag: magAlpha, aMag: magA, a: a });
+    }
+    if (ok) {
+      hint.textContent = '已落入 · |α|≈' + magAlpha.toFixed(2) + ' rad/s²（目标 ' + bandTxt
+        + '）· a≈' + a.toFixed(3) + '（m₁ 向下）';
+      window.__challengeWon = true;
+      setTimeout(function() {
+        if (mode !== 'challenge' || !window.__challengeWon) return;
+        try { window.__legacyWinEmitted = true; } catch (e) {}
+        if (window.__emit) window.__emit('win', { winOk: true });
+        winInd.innerHTML = '<span class="pass-badge">过关 · |α| 入带</span>';
+        if (typeof window.__craftShowWin === 'function') {
+          window.__craftShowWin({
+            evidenceSummary: buildEvidenceSummary(magA, magAlpha),
+            physicsMeta: '|α|=' + magAlpha.toFixed(2) + ' · a=' + a.toFixed(3) + '（m₁ 向下）· a = Rα'
+          });
+        }
+      }, 900);
+    } else {
+      var side = lastVerdict === 'low' ? '偏低' : '偏高';
+      hint.textContent = side + ' · |α|≈' + magAlpha.toFixed(2) + ' rad/s²（目标 ' + bandTxt
+        + '）· a≈' + a.toFixed(3) + '（m₁ 向下）· 可调滑轮质量/形状改 I';
+      if (attempts <= 0 && !window.__challengeWon) {
+        try {
+          if (window.__emit) {
+            window.__emit('attempts_exhausted', { attempts: 0, mode: 'challenge' });
+            window.__emit('snapshot', { controls: controls, winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' });
+          }
+        } catch (eEx) {}
+        hint.textContent = '机会用尽 · 末次 |α|≈' + magAlpha.toFixed(2) + ' · 可切探究后再开竞赛';
+      }
+    }
+  }
+
+  function finishRun(phys) {
+    document.getElementById('observeBox').classList.remove('measuring');
+    document.getElementById('btn-release').disabled = false;
+    settleAfterMeasure(phys);
+  }
+
+  function doRelease() {
+    if (running || settling) return;
+    if (mode === 'challenge' && (attempts <= 0 || window.__challengeWon)) return;
+    syncLabels();
+    resetSim(false);
+    running = true;
+    sessionEvidence.releaseCount += 1;
+    measureAnim = 0.45;
+    var box = document.getElementById('observeBox');
+    box.classList.add('measuring');
+    document.getElementById('hintMessage').textContent = '测量中…';
+    document.getElementById('alphaUnit').textContent = mode === 'challenge' ? '|α| =' : 'α =';
+    document.getElementById('alphaDisplay').textContent = '···';
+    document.getElementById('aLine').textContent = 'a（m₁ 向下）：…';
+    document.getElementById('btn-release').disabled = true;
+  }
+
+  window.__pulleyReset = function() {
+    document.getElementById('s-m1').value = 3;
+    document.getElementById('s-m2').value = 2;
+    document.getElementById('s-pulley-m').value = 0.5;
+    document.getElementById('s-shape').value = 'disk';
+    var thickEl = document.getElementById('s-rope-thick');
+    if (thickEl) thickEl.value = 3;
+    syncLabels();
+    resetSim(true);
+    attempts = 6;
+    refreshGoals();
+  };
+
+  window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
+  ['s-m1', 's-m2', 's-pulley-m', 's-shape'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('input', function() {
+      syncLabels();
+      if (mode === 'challenge' && !window.__challengeWon && !running && !settling) {
+        lastA = null; lastAlpha = null; lastVerdict = null;
+        document.getElementById('alphaUnit').textContent = '|α| =';
+        document.getElementById('alphaDisplay').textContent = '待测';
+        document.getElementById('aLine').textContent = 'a（m₁ 向下）：待测';
+      }
+      if (id !== 's-shape' || el.tagName === 'SELECT') window.__exploreAvTouched[id] = 1;
+    });
+    el.addEventListener('change', function() {
+      syncLabels();
+      window.__exploreAvTouched[id] = 1;
+      noteAvTune(id);
+    });
+  });
+  var thickInput = document.getElementById('s-rope-thick');
+  if (thickInput) {
+    thickInput.addEventListener('input', function() {
+      syncLabels();
+      if (window.__emit) {
+        window.__emit('irrelevant_touch', { controlId: 's-rope-thick', value: thickInput.value });
+      }
+    });
+  }
+  document.getElementById('modeSelect').addEventListener('change', onMode);
+  document.getElementById('btn-release').addEventListener('click', doRelease);
+  document.getElementById('btn-reset').addEventListener('click', function() { window.__pulleyReset(); });
+
+  window.addEventListener('resize', resize);
+  resize();
+  syncLabels();
+  lockBand();
+  refreshGoals();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+<script>
+(function(){
+  function emit(type, payload) {
+    try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload || {}); return; } } catch (e) {}
+    try { if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload || {}); } } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"],input[type="number"],select').forEach(function(el){
+      var id = el.id || el.name;
+      if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  window.__emit = emit;
+  window.__snapControls = snapControls;
+  var tuningBound = false;
+  document.addEventListener('DOMContentLoaded', function(){
+    emit('puzzle_open', {});
+    if (tuningBound) return;
+    tuningBound = true;
+    document.querySelectorAll('input[type="range"],input[type="number"],select').forEach(function(el){
+      el.addEventListener('change', function(){
+        emit('tuning', { control: el.id || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button,[role="button"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        emit('action', { control: el.id || (el.textContent || '').trim().slice(0, 24) || 'button' });
+      });
+    });
+  });
+})();
+</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script>
+(function () {
+  if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase();
+})();
+</script>
+<script>
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      var touched = window.__exploreAvTouched || {};
+      var avN = ['s-m1', 's-m2', 's-pulley-m', 's-shape'].filter(function(id){ return !!touched[id]; }).length;
+      var rotTouched = !!(touched['s-pulley-m'] || touched['s-shape']);
+      if (g.done || g.n < 3 || avN < 2 || !rotTouched) return;
+      g.done = true;
+      var emit = emitFn || window.__emit;
+      if (typeof emit === 'function') emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+        window.__exploreAvTouched = Object.create(null);
+      }
+    } catch (e) {}
+  });
+})();
+</script>
+<script>
+(function(){
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  var back = document.getElementById('craftBackBtn');
+  var AV_LABELS = { 's-m1': 'm₁', 's-m2': 'm₂', 's-pulley-m': '滑轮质量', 's-shape': '形状' };
+
+  function setCraftSettleOpen(open) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function dominantAv() {
+    var se = window.__sessionEvidence;
+    if (!se || !se.tuneCounts) return null;
+    var bestId = null, bestN = 0;
+    Object.keys(se.tuneCounts).forEach(function (id) {
+      var n = se.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+
+  function updateAttrHint(selected) {
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = dominantAv();
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true;
+      hintEl.textContent = '';
+      return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+
+  function setCraftRevealVisible(visible) {
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+
+  function resetWinAttributionUi() {
+    var se = window.__sessionEvidence;
+    if (se) se.attribution = null;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) { el.checked = false; });
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+  }
+
+  function emitAttributionSnapshot() {
+    var se = window.__sessionEvidence;
+    if (!window.__emit || !se || !se.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c,
+      winOk: true,
+      attribution: se.attribution,
+      evidenceSummary: se.evidenceSummary
+    });
+  }
+
+  if (btn) btn.addEventListener('click', function(){ if (intro) intro.hidden = true; });
+  window.__craftShowWin = function(payload){
+    var se = window.__sessionEvidence || {};
+    var summary = (payload && typeof payload === 'object' && payload.evidenceSummary)
+      || (typeof payload === 'string' ? payload : '')
+      || se.evidenceSummary
+      || '本局已命中目标带。';
+    se.evidenceSummary = summary;
+    var line = document.getElementById('craftEvidenceLine');
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + summary;
+    var meta = document.getElementById('craftEvidenceMeta');
+    if (meta) {
+      var metaTxt = payload && typeof payload === 'object' ? (payload.physicsMeta || '') : '';
+      if (metaTxt) { meta.hidden = false; meta.textContent = metaTxt; }
+      else { meta.hidden = true; meta.textContent = ''; }
+    }
+    resetWinAttributionUi();
+    if (win) win.hidden = false;
+    window.__craftWinOpen = true;
+    setCraftSettleOpen(true);
+  };
+  if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
+    if (win) win.hidden = true;
+    window.__craftWinOpen = false;
+    setCraftSettleOpen(false);
+    window.__legacyWinEmitted = false;
+    window.__challengeWon = false;
+    var ms = document.getElementById('modeSelect');
+    if (ms) { ms.value = 'explore'; ms.dispatchEvent(new Event('change')); }
+    if (typeof window.__pulleyReset === 'function') window.__pulleyReset();
+    try {
+      if (window.parent && window.parent !== window && window.parent.__platformTraceNewRound) {
+        window.parent.__platformTraceNewRound({ reason: 'craft_win_replay' });
+      } else if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: 'craft_win_replay' }, '*');
+      }
+    } catch (e) {}
+  });
+  if (back) back.addEventListener('click', function(){
+    try {
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({ type: 'craft-back' }, '*'); } catch (e0) {}
+        try { window.parent.location.href = '/student.html'; return; } catch (e1) {}
+        return;
+      }
+    } catch (e2) {}
+    try { window.location.href = '../index.html'; } catch (e3) {}
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (!el.checked) return;
+      var se = window.__sessionEvidence || (window.__sessionEvidence = {});
+      se.attribution = el.value;
+      setCraftRevealVisible(true);
+      updateAttrHint(el.value);
+      if (wbtn) wbtn.disabled = false;
+      emitAttributionSnapshot();
+    });
+  });
+})();
+</script>
+</body>
+</html>

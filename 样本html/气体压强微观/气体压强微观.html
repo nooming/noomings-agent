@@ -49,6 +49,22 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 .craft-card .formula{font-family:ui-monospace,Consolas,monospace;color:#9fe7f0;margin:8px 0 12px}
 .craft-actions{display:flex;gap:8px;margin-top:14px}
 .craft-btn-secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
+.craft-evidence{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(10,155,176,.32);font-size:.88rem;line-height:1.55;color:var(--craft-text)}
+.craft-evidence strong{color:var(--craft-accent);font-weight:600}
+.craft-evidence-meta{margin:0 0 12px;font-size:.78rem;line-height:1.4;color:var(--craft-muted)}
+.craft-evidence-meta[hidden]{display:none!important}
+.craft-attr{margin:0 0 12px}
+.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted)}
+.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr}}
+.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer}
+.craft-attr input{margin-top:3px;accent-color:var(--craft-accent)}
+.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted)}
+.craft-attr-hint[hidden]{display:none!important}
+.craft-reveal{margin-top:4px}
+.craft-reveal[hidden]{display:none!important}
+.craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed rgba(10,155,176,.35);border-radius:10px;padding:8px 10px;margin:0 0 4px}
+#craftWinBtn:disabled{opacity:.45;cursor:not-allowed}
 @media (max-width:820px){#essence-app{flex-direction:column}#essence-bench{width:100%;height:46vh}#essence-stage{height:54vh}}
 </style>
 </head>
@@ -66,10 +82,25 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   <div class="craft-card">
     <h2>过关 · 本局对照</h2>
     <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
-    <div class="formula" id="craftWinFormula">P = NkT / V</div>
-    <p id="craftWinText">压强由粒子数、温度与体积共同决定（P ∝ N·T / V）。</p>
+    <p id="craftEvidenceMeta" class="craft-evidence-meta" hidden></p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几次测试的对照来看，压强变化主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-N"> 主要是粒子数 N</label>
+        <label><input type="radio" name="craftAttr" value="s-T"> 主要是温度 T</label>
+        <label><input type="radio" name="craftAttr" value="s-V"> 主要是体积 V</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">P = NkT / V</div>
+      <p id="craftWinText">压强由粒子数、温度与体积共同决定（P ∝ N·T / V）。</p>
+      <p id="craftCv" class="craft-cv">容器质量只改外观，不进压强公式。</p>
+    </div>
     <div class="craft-actions">
-      <button type="button" id="craftWinBtn">再玩一次</button>
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
       <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
     </div>
   </div>
@@ -114,7 +145,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <button type="button" id="btn-reset" class="secondary">重置</button>
       </div>
       <div class="observe-box" id="observeBox">
-        <div><span class="val" id="pDisplay">—</span> <span style="font-size:12px;color:var(--craft-muted)">arb</span></div>
+        <div><span class="val" id="pDisplay">—</span> <span id="pUnit" style="font-size:12px;color:var(--craft-muted)">读数</span></div>
         <div class="hint" id="hintMessage">调参后点测试</div>
         <div id="winIndicator"></div>
       </div>
@@ -133,13 +164,54 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var flashes = [];
   var dust = [];
   var wallPulse = 0;
-  var impulseNeedle = 0;
-  var impulseTarget = 0;
+  var impulseNeedle = 0.12;
   var measureT = 0;
   var testing = false;
   var animTime = 0;
   var boxSmooth = 1;
   var k = 0.002;
+  // 测后读数/判定；不每帧直播 P，避免对答案
+  var lastMeasuredP = null;
+  var lastVerdict = null; // 'ok' | 'low' | 'high' | null
+
+  var AV_LABELS = { 's-N': '粒子数 N', 's-T': '温度 T', 's-V': '体积 V' };
+  var sessionEvidence = {
+    tuneCounts: { 's-N': 0, 's-T': 0, 's-V': 0 },
+    testCount: 0,
+    lastP: null,
+    attribution: null,
+    evidenceSummary: ''
+  };
+  window.__sessionEvidence = sessionEvidence;
+
+  function noteAvTune(controlId) {
+    if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+    sessionEvidence.tuneCounts[controlId] += 1;
+  }
+
+  function dominantAv() {
+    var bestId = null, bestN = 0;
+    Object.keys(sessionEvidence.tuneCounts).forEach(function (id) {
+      var n = sessionEvidence.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+
+  function buildEvidenceSummary(P) {
+    var dom = dominantAv();
+    var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+    var pTxt = Number.isFinite(P) ? ('P≈' + P.toFixed(2)) : '入带';
+    if (mode === 'challenge') {
+      return '竞赛证据：主调 ' + mainTxt
+        + ' · ' + pTxt
+        + ' · 目标带 ' + bandLo.toFixed(1) + '–' + bandHi.toFixed(1)
+        + ' · 测试 ' + sessionEvidence.testCount + ' 次';
+    }
+    return '探究证据：' + pTxt
+      + ' · 主调节 ' + mainTxt
+      + ' · 测试 ' + sessionEvidence.testCount + ' 次';
+  }
 
   function pressure() {
     var N = +document.getElementById('s-N').value;
@@ -403,7 +475,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
   }
 
-  function drawGauge(w, h, P) {
+  function drawGauge(w, h) {
     var gx = w - 118, gy = 22, gw = 98, gh = 86;
     var plate = ctx.createLinearGradient(gx, gy, gx + gw, gy + gh);
     plate.addColorStop(0, '#1a2830'); plate.addColorStop(1, '#0e181e');
@@ -417,22 +489,29 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.fillStyle = '#8a9aa6';
     ctx.font = '10px sans-serif';
     ctx.fillText('压强计', gx + 12, gy + 16);
-    var show = measureT > 0 ? (P * (0.85 + 0.3 * Math.sin(animTime * 18))) : P;
+
+    // 测前待测；测后单次 P 读数（不每帧直播，避免拖滑条对答案）
+    var label = '待测';
+    if (measureT > 0) {
+      label = '···';
+    } else if (lastMeasuredP != null) {
+      label = 'P≈' + lastMeasuredP.toFixed(1);
+    }
     ctx.fillStyle = '#9fe7f0';
     ctx.font = 'bold 16px ui-monospace,Consolas,monospace';
-    ctx.fillText('P≈' + show.toFixed(1), gx + 12, gy + 40);
+    ctx.fillText(label, gx + 12, gy + 40);
 
-    // impulse micro-needle
-    impulseTarget = Math.min(1, P / 60);
-    impulseNeedle += (impulseTarget - impulseNeedle) * 0.12;
-    impulseNeedle += (Math.random() - 0.5) * 0.02 * (0.3 + wallPulse);
+    // 冲量条：靠碰撞脉冲抖动，不按绝对 P 连续追针（避免对答案）
+    impulseNeedle += (0.12 - impulseNeedle) * 0.08;
+    impulseNeedle += (Math.random() - 0.5) * 0.015 * (0.25 + wallPulse);
+    impulseNeedle = Math.max(0.05, Math.min(1, impulseNeedle));
     var nx = gx + 14, ny = gy + 58, nw = gw - 28;
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     roundRectPath(ctx, nx, ny, nw, 8, 3); ctx.fill();
     ctx.fillStyle = '#0a9bb0';
-    ctx.fillRect(nx, ny, nw * Math.max(0.05, impulseNeedle), 8);
+    ctx.fillRect(nx, ny, nw * impulseNeedle, 8);
     ctx.fillStyle = '#e6eef2';
-    ctx.fillRect(nx + nw * Math.max(0.05, impulseNeedle) - 1.5, ny - 2, 3, 12);
+    ctx.fillRect(nx + nw * impulseNeedle - 1.5, ny - 2, 3, 12);
     ctx.fillStyle = '#8a9aa6';
     ctx.font = '9px sans-serif';
     ctx.fillText('冲量示意', gx + 12, gy + 78);
@@ -504,7 +583,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
     wallPulse = Math.max(0, wallPulse - dt * 1.1);
 
-    drawGauge(w, h, pressure());
+    drawGauge(w, h);
   }
 
   var last = 0;
@@ -555,19 +634,31 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         }
       } catch (e) {}
       document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: mode } }));
-      if (mode === 'challenge') { attempts = 6; lockBand(); window.__legacyWinEmitted = false; window.__challengeWon = false; }
+      if (mode === 'challenge') {
+        attempts = 6; lockBand(); window.__legacyWinEmitted = false; window.__challengeWon = false;
+        lastMeasuredP = null; lastVerdict = null;
+        document.getElementById('pDisplay').textContent = '待测';
+        var unit = document.getElementById('pUnit');
+        if (unit) unit.textContent = '读数';
+        document.getElementById('hintMessage').textContent = '调参后点测试';
+        document.getElementById('winIndicator').innerHTML = '';
+      }
       refreshGoals();
     }
   }
 
   function settleTest() {
     var P = pressure();
-    document.getElementById('pDisplay').textContent = P.toFixed(2);
     var controls = window.__snapControls ? window.__snapControls() : {};
     var hint = document.getElementById('hintMessage');
     var winInd = document.getElementById('winIndicator');
+    var unit = document.getElementById('pUnit');
     winInd.innerHTML = '';
     if (mode === 'explore') {
+      lastMeasuredP = P;
+      lastVerdict = null;
+      document.getElementById('pDisplay').textContent = P.toFixed(2);
+      if (unit) unit.textContent = 'arb';
       hint.textContent = 'P ≈ ' + P.toFixed(2) + ' · 再改一个量对照';
       if (window.__emit) {
         window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
@@ -579,9 +670,16 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     attempts -= 1;
     refreshGoals();
     var ok = P >= bandLo && P <= bandHi;
+    // 测后给出实测 P + 相对提示（测前「待测」，不直播拖动中的 P）
+    lastMeasuredP = P;
+    lastVerdict = ok ? 'ok' : (P < bandLo ? 'low' : 'high');
+    sessionEvidence.lastP = P;
+    document.getElementById('pDisplay').textContent = 'P≈' + P.toFixed(2);
+    if (unit) unit.textContent = 'arb';
+    var bandTxt = bandLo.toFixed(1) + '–' + bandHi.toFixed(1);
     if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: ok, hintKey: ok ? 'win' : 'miss' });
     if (ok) {
-      hint.textContent = '落入标定带';
+      hint.textContent = '已落入 · P≈' + P.toFixed(2) + '（目标 ' + bandTxt + '）';
       window.__challengeWon = true;
       setTimeout(function() {
         if (mode !== 'challenge' || !window.__challengeWon) return;
@@ -589,12 +687,15 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         if (window.__emit) window.__emit('win', { winOk: true });
         winInd.innerHTML = '<span class="pass-badge">过关 · 压强落入锁定带</span>';
         if (typeof window.__craftShowWin === 'function') {
-          window.__craftShowWin('本局 P≈' + P.toFixed(2) + '，带 ' + bandLo.toFixed(1) + '–' + bandHi.toFixed(1) + '。');
+          window.__craftShowWin({
+            evidenceSummary: buildEvidenceSummary(P),
+            physicsMeta: 'P = NkT / V · 本局已入锁定带'
+          });
         }
       }, 950);
     } else {
-      var side = P < bandLo ? '偏低' : '偏高';
-      hint.innerHTML = '<strong>' + side + '</strong><br><span style="font-size:0.9em">本次 ' + P.toFixed(2) + ' · 带 ' + bandLo.toFixed(1) + '–' + bandHi.toFixed(1) + '</span>';
+      var side = lastVerdict === 'low' ? '偏低' : '偏高';
+      hint.textContent = side + ' · P≈' + P.toFixed(2) + '（目标 ' + bandTxt + '）· 调参后再测';
       if (attempts <= 0 && !window.__challengeWon) {
         try {
           if (window.__emit) {
@@ -602,7 +703,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
             window.__emit('snapshot', { controls: controls, winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' });
           }
         } catch (eEx) {}
-        hint.innerHTML = '<strong>机会用尽</strong><br><span style="font-size:0.9em">可切换探究对照后再开竞赛</span>';
+        hint.textContent = '机会用尽 · 可切探究后再开竞赛';
       }
     }
   }
@@ -613,6 +714,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     syncLabels();
     spawn();
     testing = true;
+    sessionEvidence.testCount += 1;
     measureT = 0.55;
     var box = document.getElementById('observeBox');
     box.classList.add('measuring');
@@ -630,7 +732,10 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('s-T').value = 300;
     document.getElementById('s-V').value = 1;
     document.getElementById('s-box-mass').value = 2;
-    document.getElementById('pDisplay').textContent = '—';
+    lastMeasuredP = null; lastVerdict = null;
+    document.getElementById('pDisplay').textContent = mode === 'challenge' ? '待测' : '—';
+    var unit = document.getElementById('pUnit');
+    if (unit) unit.textContent = '读数';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
     document.getElementById('observeBox').classList.remove('measuring');
@@ -640,10 +745,20 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
   window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
   ['s-N','s-box-mass','s-T','s-V'].forEach(function(id){
-    document.getElementById(id).addEventListener('input', function(){
+    var el = document.getElementById(id);
+    el.addEventListener('input', function(){
       syncLabels(); spawn();
+      if (mode === 'challenge' && !window.__challengeWon) {
+        lastMeasuredP = null; lastVerdict = null;
+        document.getElementById('pDisplay').textContent = '待测';
+        var u = document.getElementById('pUnit');
+        if (u) u.textContent = '读数';
+      }
       if (id === 's-N' || id === 's-T' || id === 's-V') window.__exploreAvTouched[id] = 1;
     });
+    if (id === 's-N' || id === 's-T' || id === 's-V') {
+      el.addEventListener('change', function(){ noteAvTune(id); });
+    }
   });
   document.getElementById('modeSelect').addEventListener('change', onMode);
   document.getElementById('btn-test').addEventListener('click', doTest);
@@ -725,16 +840,89 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
   var back = document.getElementById('craftBackBtn');
+  var AV_LABELS = { 's-N': '粒子数 N', 's-T': '温度 T', 's-V': '体积 V' };
+
+  function setCraftSettleOpen(open) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function dominantAv() {
+    var se = window.__sessionEvidence;
+    if (!se || !se.tuneCounts) return null;
+    var bestId = null, bestN = 0;
+    Object.keys(se.tuneCounts).forEach(function (id) {
+      var n = se.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+
+  function updateAttrHint(selected) {
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = dominantAv();
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true; hintEl.textContent = ''; return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+
+  function setCraftRevealVisible(visible) {
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+
+  function resetWinAttributionUi() {
+    var se = window.__sessionEvidence;
+    if (se) se.attribution = null;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) { el.checked = false; });
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+  }
+
+  function emitAttributionSnapshot() {
+    var se = window.__sessionEvidence;
+    if (!window.__emit || !se || !se.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c, winOk: true,
+      attribution: se.attribution,
+      evidenceSummary: se.evidenceSummary
+    });
+  }
+
   if (btn) btn.addEventListener('click', function(){ if (intro) intro.hidden = true; });
-  window.__craftShowWin = function(evidence){
+  window.__craftShowWin = function(payload){
+    var se = window.__sessionEvidence || {};
+    var summary = (payload && typeof payload === 'object' && payload.evidenceSummary)
+      || (typeof payload === 'string' ? payload : '')
+      || se.evidenceSummary
+      || '本局已命中目标带。';
+    se.evidenceSummary = summary;
     var line = document.getElementById('craftEvidenceLine');
-    if (line) line.textContent = evidence || '本局已命中目标带。';
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + summary;
+    var meta = document.getElementById('craftEvidenceMeta');
+    if (meta) {
+      var metaTxt = payload && typeof payload === 'object' ? (payload.physicsMeta || '') : '';
+      if (metaTxt) { meta.hidden = false; meta.textContent = metaTxt; }
+      else { meta.hidden = true; meta.textContent = ''; }
+    }
+    resetWinAttributionUi();
     if (win) win.hidden = false;
     window.__craftWinOpen = true;
+    setCraftSettleOpen(true);
   };
   if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
     if (win) win.hidden = true;
     window.__craftWinOpen = false;
+    setCraftSettleOpen(false);
     window.__legacyWinEmitted = false;
     window.__challengeWon = false;
     var ms = document.getElementById('modeSelect');
@@ -743,6 +931,17 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   });
   if (back) back.addEventListener('click', function(){
     try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'craft-back' }, '*'); } catch (e) {}
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (!el.checked) return;
+      var se = window.__sessionEvidence || (window.__sessionEvidence = {});
+      se.attribution = el.value;
+      setCraftRevealVisible(true);
+      updateAttrHint(el.value);
+      if (wbtn) wbtn.disabled = false;
+      emitAttributionSnapshot();
+    });
   });
 })();
 </script>

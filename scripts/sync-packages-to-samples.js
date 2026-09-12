@@ -38,6 +38,8 @@ const MAP = {
   'efield-charge': '电场',
   'friction-incline': '斜面摩擦',
   'momentum-collision': '动量碰撞',
+  'nezha-boat-jump': '哪吒跳船',
+  'pulley-rigid': '滑轮刚体',
   'multi-kp': '机械能',
   'pendulum-target': '单摆投靶',
 };

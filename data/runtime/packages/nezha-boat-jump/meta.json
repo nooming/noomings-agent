@@ -1,0 +1,29 @@
+{
+  "id": "nezha-boat-jump",
+  "title": "哪吒跳船 · 动量守恒",
+  "craft": "gold",
+  "topic": "动量守恒",
+  "knowledgeText": "m v对地 + M v′船 = 0；v对地 = v相对·M/(m+M)·cos θ",
+  "note": "classroom mechanics set; craft:gold; 3D boat jump from 哪吒系列/哪吒跳船.html; local three.js",
+  "avSummary": [
+    { "controlId": "s-v-rel", "label": "相对起跳船速度 v_相对", "priorityRank": 1 },
+    { "controlId": "s-angle", "label": "起跳角", "priorityRank": 2 },
+    { "controlId": "s-mass-n", "label": "人物质量 m", "priorityRank": 3 },
+    { "controlId": "s-mass-b", "label": "起跳船质量 M", "priorityRank": 4 },
+    { "controlId": "s-dist", "label": "目标船净空", "priorityRank": 5 }
+  ],
+  "cvSummary": [
+    {
+      "controlId": "s-deck-mu",
+      "label": "甲板摩擦系数 μ",
+      "effect": "仅改甲板色泽与轻微摇曳振幅；DOM 插在 m 与起跳船 M 之间；不进动量公式"
+    },
+    {
+      "controlId": "s-mass-target",
+      "label": "目标船质量",
+      "effect": "仅缩放目标船 B 网格；DOM 插在起跳船 M 与净空之间；不进动量、飞行与登船半宽"
+    }
+  ],
+  "validation": { "ok": true, "errors": [] },
+  "quality": { "ok": true, "errors": [], "warnings": [], "score": 88 }
+}

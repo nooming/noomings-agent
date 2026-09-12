@@ -1,6 +1,6 @@
 /**
  * One-shot: publish only mechanics + thermal packages for classroom demo.
- * - Whitelist → published + craft:gold (classroom demo publish-ready)
+ * - Whitelist → published; KEEP_GOLD → craft:gold + featured; others → craft:pilot
  * - Everything else → unpublished (package files kept)
  * - Ensures class-config.json has a usable code + demo label
  *
@@ -26,29 +26,32 @@ const { getPackagesRoot } = require('../packages/shared/data-paths');
 const DRY = process.argv.includes('--dry-run');
 
 /**
- * Default classroom demo: 3 mechanics + 3 thermo (6 total).
- * Thermo replaced: gas-pressure-micro / maxwell-speed-dist / adiabatic-process
+ * Default classroom demo: 5 mechanics + 3 thermo (8 total).
+ * Thermo: gas-pressure-micro / maxwell-speed-dist / adiabatic-process
  *   (gas-ideal & heat-conduction unpublished; packages kept).
- * Unpublished / deferred: cannon, pendulum-target, momentum, circular, friction, non mech/thermo.
+ * Mechanics five = craft:gold; thermo three = craft:pilot (still published).
+ * Unpublished / deferred: cannon, pendulum-target, momentum, circular, friction,
+ *   non mech/thermo.
  * ramp-rolling-collision replaces friction-incline (same incline line; avoid friction+rolling overlap).
  */
 const WHITELIST = [
   'projectile-basic',
   'pendulum-clock',
   'ramp-rolling-collision',
+  'nezha-boat-jump',
+  'pulley-rigid',
   'gas-pressure-micro',
   'maxwell-speed-dist',
   'adiabatic-process',
 ];
 
-/** Classroom demo whitelist is publish-ready gold (assertPublishReady ok). */
+/** Classroom mechanics set = craft:gold; thermo three stay craft:pilot. */
 const KEEP_GOLD = new Set([
   'projectile-basic',
   'pendulum-clock',
   'ramp-rolling-collision',
-  'gas-pressure-micro',
-  'maxwell-speed-dist',
-  'adiabatic-process',
+  'nezha-boat-jump',
+  'pulley-rigid',
 ]);
 
 /** Explicitly not on student catalog (kept as packages for self-study / later) */
@@ -95,7 +98,7 @@ function ensureClassConfig() {
     classCode: code,
     label: CLASSROOM_LABEL,
     name: CLASSROOM_LABEL,
-    note: '默认上架 6 关（力学 basic/clock/ramp + 热学 micro/maxwell/adiabatic）；gas-ideal/heat 与 cannon/target/momentum/circular/friction 后置 unpublished',
+    note: '默认上架 8 关（力学 basic/clock/ramp/nezha-boat-jump/pulley-rigid + 热学 micro/maxwell/adiabatic）；gas-ideal/heat 与 cannon/target/momentum/circular/friction 后置 unpublished；力学五关 craft:gold，热学三关 craft:pilot（仍上架演示）',
     updatedAt: new Date().toISOString(),
   };
 
@@ -138,7 +141,7 @@ function main() {
 
     item.sampleTags = tags;
     item.published = true;
-    if (wantCraft === 'craft:gold') item.featured = true;
+    item.featured = wantCraft === 'craft:gold';
     item.publishedAt = item.publishedAt || new Date().toISOString();
 
     const gate = assertPublishReady({

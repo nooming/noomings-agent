@@ -10,6 +10,8 @@ module.exports = [
   { id: 'multi-kp', dir: '机械能', game: '机械能.html', topic: '机械能' },
   { id: 'circular-motion', dir: '圆周运动', game: '圆周运动.html', topic: '圆周运动' },
   { id: 'momentum-collision', dir: '动量碰撞', game: '动量碰撞.html', topic: '动量' },
+  { id: 'nezha-boat-jump', dir: '哪吒跳船', game: '哪吒跳船.html', topic: '哪吒跳船' },
+  { id: 'pulley-rigid', dir: '滑轮刚体', game: '滑轮刚体.html', topic: '滑轮刚体' },
   { id: 'pendulum-clock', dir: '钟表铺校时', game: '钟表铺校时.html', topic: '单摆秒摆' },
   { id: 'pendulum-target', dir: '单摆投靶', game: '单摆投靶.html', topic: '单摆投靶' },
   { id: 'efield-charge', dir: '电场', game: '电场.html', topic: '电场' },

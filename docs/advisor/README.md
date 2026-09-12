@@ -2,7 +2,7 @@
 
 本目录存放与项目方向相关的微信截图与说明，供写论文与迭代 Agent 时对照。
 
-> **现行课堂演示（6 关：力学 3 + 热学三新关）**：[docs/demo/classroom-demo-checklist.md](../demo/classroom-demo-checklist.md)
+> **现行课堂演示（8 关：力学 5 + 热学 3）**：[docs/demo/classroom-demo-checklist.md](../demo/classroom-demo-checklist.md)
 
 ## 截图索引
 

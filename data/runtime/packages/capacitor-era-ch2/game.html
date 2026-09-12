@@ -142,8 +142,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:18px; h
 #v-btn:hover { background:rgba(0,200,255,0.09); }
 .srow-irrelevant { margin:4px 0; }
 .srow-irrelevant .slabel { width:108px; }
-.srow-irrelevant .slabel small { color:rgba(140,150,170,0.75); }
-.srow-irrelevant .sval { color:rgba(140,150,170,0.85); }
 
 body.victory-nav-ready #top-chrome { z-index: 110; }
 body.victory-nav-ready #v-title,
@@ -1046,10 +1044,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   transform:none!important;
 }
 
-/* De-emphasize confound / irrelevant zones */
+/* De-emphasize confound / irrelevant zones (notes only; keep CV slider rows visually equal) */
 .confound-note,
 .irrelevant-area,
-.srow-irrelevant,
 .irrelevant-touch,
 #essence-bench .confound-note,
 #bench .confound-note,

@@ -438,7 +438,9 @@ async function handleDemoStrategyPathSummary(req, res) {
       score: scoreResult.score,
       summary,
       nearTies,
-      note: '演示用合成轨迹；默认文案不剧透最优路径',
+      // 仅供 strategy-summary-demo.html 等离线试片；课堂 student-play / teacher 走 /api/platform/strategy-path-summary
+      note: 'synthetic_trace_for_local_preview',
+      source: 'synthetic-demo',
     }));
   } catch (e) {
     res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });

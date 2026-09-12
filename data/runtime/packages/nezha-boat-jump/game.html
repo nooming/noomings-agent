@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哪吒跳船 · 动量守恒</title>
+    <link rel="stylesheet" href="../_shared/craft-tokens.css">
+    <script src="vendor/three.min.js"></script>
+    <script src="vendor/OrbitControls.js"></script>
+    <style>
+        :root { --craft-accent:#e11d8f; --craft-bg:#120c12; --craft-panel:#221820; --craft-text:#f0e4ec; --craft-muted:#a08898; }
+        html,body{margin:0;height:100%;overflow:hidden;background:var(--craft-bg);color:var(--craft-text);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+        #essence-app{display:flex;height:100vh;min-height:480px}
+        #essence-stage{flex:1;position:relative;min-width:0;overflow:hidden}
+        #gameCanvas{display:block;width:100%;height:100%}
+        #dual-mode-hud{position:absolute;top:10px;left:10px;right:10px;z-index:8;display:flex;justify-content:space-between;pointer-events:none;gap:8px}
+        .dual-chip,.hud-chip{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(225,29,143,.45);font-size:13px;color:#f8fafc}
+        #modeLabel{font-weight:700;color:var(--craft-accent)}
+        #timerDisplay{font-family:ui-monospace,Consolas,monospace;font-weight:600;color:#fbcfe8}
+        #challengeStats{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(248,113,113,.45);pointer-events:auto;font-size:13px}
+        #challengeStats.is-visible{display:inline-flex}
+        #attemptsDisplay{font-weight:800;color:#fda4af}
+        #messageBox{position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);padding:22px 28px;border-radius:14px;text-align:center;z-index:50;background:var(--craft-panel);border:1px solid rgba(225,29,143,.45);max-width:min(420px,90vw);display:none}
+        #messageBox.is-open{display:block}
+        #msgTitle{margin:0 0 8px;font-size:1.25rem;color:var(--craft-accent)}
+        #msgDesc{margin:0 0 14px;color:var(--craft-muted);line-height:1.55;font-size:.95rem}
+        #msgBtn{padding:10px 22px;border:none;border-radius:999px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer}
+        .orbit-hint{position:absolute;bottom:10px;left:10px;z-index:5;padding:7px 12px;border-radius:999px;background:rgba(8,12,22,.82);border:1px solid rgba(255,255,255,.22);font-size:12px;font-weight:600;color:#f8fafc;letter-spacing:.02em;pointer-events:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+        #essence-bench{width:min(340px,36vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;min-height:0}
+        .bench-hd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+        .bench-hd h1{margin:0;font-size:15px;color:var(--craft-accent)}
+        #modeSelect{border:1px solid rgba(225,29,143,.45);border-radius:8px;padding:5px 8px;font-size:12px;background:#1a1018;color:var(--craft-text)}
+        .essence-scroll{flex:1;overflow:auto;padding:12px 14px}
+        .side-goal-cap{font-size:11px;color:var(--craft-muted);letter-spacing:.06em;text-transform:uppercase}
+        #sideGoal{margin:6px 0 12px;font-size:13px;line-height:1.55}
+        .slider-group{margin:10px 0}
+        .slider-group label{display:flex;justify-content:space-between;font-size:12px;color:var(--craft-muted);margin-bottom:4px}
+        .slider-group .value{font-family:ui-monospace,Consolas,monospace;color:var(--craft-accent);font-weight:600}
+        .slider-group .slider-note{font-size:11px;color:var(--craft-muted);opacity:.9;margin:-2px 0 6px;line-height:1.4}
+        .slider-group input{width:100%;accent-color:var(--craft-accent)}
+        .essence-ft{padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:8px}
+        .btn-row{display:flex;gap:8px}
+        button.btn{flex:1;padding:10px 12px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:var(--craft-accent);color:#0b1020}
+        button.btn.secondary{background:rgba(255,255,255,.08);color:var(--craft-text);font-weight:600}
+        button.btn:disabled{opacity:.45;cursor:not-allowed}
+        .observe-box{margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--craft-muted)}
+        .observe-box .val{font-size:18px;font-weight:700}
+        .observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.45}
+        .observe-box.pending{border-left-color:var(--craft-muted)}
+        .observe-box.measured{border-left-color:var(--craft-accent)}
+        .observe-box.ok{border-left-color:#34d399;background:rgba(34,197,94,.12)}
+        .observe-box.fail{border-left-color:#f87171;background:rgba(248,113,113,.12)}
+        .html-label{position:absolute;font-size:11px;background:rgba(15,23,42,.9);padding:4px 8px;border-radius:6px;color:#fbcfe8;font-weight:700;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;border:1px solid rgba(225,29,143,.35)}
+        #craft-intro,#craft-win{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:20px}
+        #craft-intro[hidden],#craft-win[hidden]{display:none!important}
+        .craft-card{width:min(440px,92vw);background:var(--craft-panel);border:1px solid rgba(225,29,143,.45);border-radius:16px;padding:22px}
+        .craft-card h2{margin:0 0 10px;color:var(--craft-accent)}
+        .craft-card p{margin:0 0 10px;color:var(--craft-muted);line-height:1.55;font-size:.95rem}
+        .craft-card .formula{font-family:"Cambria Math",serif;padding:10px 12px;border-left:3px solid var(--craft-accent);background:rgba(0,0,0,.25);margin:10px 0}
+        .craft-evidence{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(225,29,143,.32);font-size:.88rem;line-height:1.55;color:var(--craft-text)}
+        .craft-evidence strong{color:var(--craft-accent);font-weight:600}
+        .craft-evidence-meta{margin:0 0 12px;font-size:.78rem;line-height:1.4;color:var(--craft-muted)}
+        .craft-evidence-meta[hidden]{display:none!important}
+        .craft-attr{margin:0 0 12px}
+        .craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted)}
+        .craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+        @media(max-width:420px){.craft-attr-options{grid-template-columns:1fr}}
+        .craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer}
+        .craft-attr input{margin-top:3px;accent-color:var(--craft-accent)}
+        .craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted)}
+        .craft-attr-hint[hidden]{display:none!important}
+        .craft-reveal{margin-top:4px}
+        .craft-reveal[hidden]{display:none!important}
+        .craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed rgba(225,29,143,.35);border-radius:10px;padding:8px 10px;margin:0 0 4px}
+        .craft-actions{display:flex;gap:8px;margin-top:14px}
+        .craft-btn-secondary{background:rgba(255,255,255,.08)!important;color:var(--craft-text)!important}
+        #craftWinBtn:disabled{opacity:.45;cursor:not-allowed}
+        @media(max-width:820px){#essence-app{flex-direction:column}#essence-bench{width:100%;max-height:42vh}#essence-stage{min-height:48vh}}
+    </style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>哪吒跳船 · 动量守恒</h2>
+    <p>两船相连时，哪吒相对<strong>起跳船 A</strong>起跳——系统水平动量如何分配？调侧栏、点起跳，对照落点与 A 船反冲。</p>
+    <p style="font-size:12px">探究与竞赛目标不同；竞赛间距本局锁定，调参后点起跳，落点判定以侧栏读数为准。v<sub>相对</sub>是对起跳船 A 的相对速度，不是对地速度；M 是起跳船 A 质量。</p>
+    <div class="formula">m v<sub>对地</sub> + M v′<sub>船</sub> = 0（水平、忽略外力短过程）</div>
+    <button type="button" class="btn" id="craftIntroBtn">开始</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <p id="craftEvidenceMeta" class="craft-evidence-meta" hidden></p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就你这几次起跳的对照来看，落点变化主要跟着哪一项变？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-v-rel"> 主要是相对起跳船速度</label>
+        <label><input type="radio" name="craftAttr" value="s-angle"> 主要是起跳角</label>
+        <label><input type="radio" name="craftAttr" value="s-mass-n"> 主要是人物质量</label>
+        <label><input type="radio" name="craftAttr" value="s-mass-b"> 主要是起跳船质量</label>
+        <label><input type="radio" name="craftAttr" value="s-dist"> 主要是目标间距</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula">v<sub>对地</sub> = v<sub>相对</sub>·M/(m+M) · cos θ</div>
+      <p id="craftWinText">相对起跳船速度在水平方向按起跳船质量比分配；反冲使 A 船后退，落点由对地速度与抛射角共同决定。</p>
+      <p id="craftCv" class="craft-cv">甲板摩擦系数与目标船质量只改观感，不进动量与登船判定。</p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" class="btn" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" class="btn secondary craft-btn-secondary" id="craftBackBtn">返回列表</button>
+    </div>
+  </div>
+</div>
+
+<div id="essence-app">
+  <div id="essence-stage">
+    <div id="canvasContainer" style="position:absolute;inset:0">
+      <canvas id="gameCanvas"></canvas>
+      <div id="dual-mode-hud">
+        <div class="dual-chip">
+          <span id="modeLabel">探究</span>
+          <span id="timerDisplay" style="display:none">—</span>
+        </div>
+        <div id="challengeStats">
+          <span>剩余机会</span>
+          <span id="attemptsDisplay">5</span>
+        </div>
+      </div>
+      <div id="messageBox">
+        <h2 id="msgTitle"></h2>
+        <p id="msgDesc"></p>
+        <button type="button" id="msgBtn">继续</button>
+      </div>
+      <div class="orbit-hint">拖拽旋转视角 · 滚轮缩放</div>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="bench-hd">
+      <h1>跳船控制台</h1>
+      <select id="modeSelect">
+        <option value="explore">探究</option>
+        <option value="challenge">竞赛</option>
+      </select>
+    </div>
+    <div class="essence-scroll" id="controlsPanel">
+      <div class="side-goal-cap">当前目标</div>
+      <p id="sideGoal">每次只改一项条件，多次起跳，对照落点与起跳船 A 的后退。</p>
+      <div class="slider-group">
+        <label for="s-angle">起跳角 θ <span class="value" id="val-angle">45°</span></label>
+        <input type="range" id="s-angle" min="10" max="80" value="45">
+      </div>
+      <div class="slider-group">
+        <label for="s-v-rel">相对起跳船速度 v<sub>相对</sub> <span class="value" id="val-v-rel">10 m/s</span></label>
+        <div class="slider-note">相对起跳船 A；不是对地速度</div>
+        <input type="range" id="s-v-rel" min="5" max="25" value="10" step="1">
+      </div>
+      <div class="slider-group">
+        <label for="s-mass-n">人物质量 m <span class="value" id="val-mass-n">30 kg</span></label>
+        <input type="range" id="s-mass-n" min="10" max="100" value="30" step="5">
+      </div>
+      <div class="slider-group cv">
+        <label for="s-deck-mu">甲板摩擦系数 μ <span class="value" id="val-deck-mu">0.50</span></label>
+        <input type="range" id="s-deck-mu" min="0" max="100" value="50" step="1">
+      </div>
+      <div class="slider-group">
+        <label for="s-mass-b">起跳船质量 M <span class="value" id="val-mass-b">120 kg</span></label>
+        <div class="slider-note">起跳船 A；不是目标船 B</div>
+        <input type="range" id="s-mass-b" min="30" max="300" value="120" step="10">
+      </div>
+      <div class="slider-group cv">
+        <label for="s-mass-target">目标船质量 <span class="value" id="val-mass-target">120 kg</span></label>
+        <div class="slider-note">仅缩放目标船外观；不进动量</div>
+        <input type="range" id="s-mass-target" min="40" max="200" value="120" step="10">
+      </div>
+      <div class="slider-group" id="distControl">
+        <label for="s-dist">目标船净空 <span class="value" id="val-dist">12 m</span></label>
+        <input type="range" id="s-dist" min="8" max="25" value="12" step="1">
+      </div>
+      <div class="observe-box pending" id="observeBox">
+        <div><span class="val" id="observeVal">待测</span></div>
+        <div class="hint" id="observeHint">起跳前：侧栏读数为待测；飞行结束后更新判定。</div>
+      </div>
+    </div>
+    <div class="essence-ft">
+      <button type="button" class="btn" id="btnLaunch">起跳</button>
+      <div class="btn-row">
+        <button type="button" class="btn secondary" id="btnReset">复位 A 船</button>
+        <button type="button" class="btn secondary" id="btnClear">清空轨迹</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+    <script>
+        // 等待 THREE 加载完成的安全机制
+        let initAttempts = 0;
+        function checkDependencies() {
+            if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
+                initApp();
+            } else {
+                initAttempts++;
+                if (initAttempts > 50) {
+                    alert("3D引擎加载失败，请检查网络并刷新重试。");
+                    return;
+                }
+                setTimeout(checkDependencies, 100);
+            }
+        }
+
+        // 全局变量
+        let scene, camera, renderer, controls;
+        let boatA, boatB, nezhaGroup;
+        let envElements = { clouds: [], birds: [], fishes: [], particles: [] };
+        
+        const state = {
+            mode: 'explore',
+            angle: 45, v_rel: 10, massN: 30, massB: 120, massTarget: 120, targetDistM: 12, deckMu: 50, deckLeanAmp: 0.04,
+            PPM: 5, g: 9.8,
+            boatA_X0: 0, boatA_v: 0,
+            attempts: 5,
+            currentBall: null, trajectories: [], htmlLabels: [],
+            exploreSeenHit: false, exploreSeenMiss: false
+        };
+
+        const ui = {
+            modeSelect: document.getElementById('modeSelect'),
+            sliderAngle: document.getElementById('s-angle'),
+            sliderSpeed: document.getElementById('s-v-rel'),
+            sliderMassN: document.getElementById('s-mass-n'),
+            sliderMassB: document.getElementById('s-mass-b'),
+            sliderMassTarget: document.getElementById('s-mass-target'),
+            sliderDeckMu: document.getElementById('s-deck-mu'),
+            valAngle: document.getElementById('val-angle'),
+            valSpeed: document.getElementById('val-v-rel'),
+            valMassN: document.getElementById('val-mass-n'),
+            valMassB: document.getElementById('val-mass-b'),
+            valMassTarget: document.getElementById('val-mass-target'),
+            valDeckMu: document.getElementById('val-deck-mu'),
+            sliderDist: document.getElementById('s-dist'),
+            valDist: document.getElementById('val-dist'),
+            distControl: document.getElementById('distControl'),
+            sideGoal: document.getElementById('sideGoal'),
+            observeBox: document.getElementById('observeBox'),
+            observeVal: document.getElementById('observeVal'),
+            observeHint: document.getElementById('observeHint'),
+            btnLaunch: document.getElementById('btnLaunch'), btnClear: document.getElementById('btnClear'),
+            btnReset: document.getElementById('btnReset'), modeLabel: document.getElementById('modeLabel'),
+            timerDisplay: document.getElementById('timerDisplay'), challengeStats: document.getElementById('challengeStats'),
+            attemptsDisplay: document.getElementById('attemptsDisplay'), msgBox: document.getElementById('messageBox'),
+            msgTitle: document.getElementById('msgTitle'), msgDesc: document.getElementById('msgDesc'), msgBtn: document.getElementById('msgBtn'),
+            container: document.getElementById('canvasContainer')
+        };
+
+        window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
+        const AV_IDS = ['s-angle', 's-v-rel', 's-mass-n', 's-mass-b'];
+        const AV_LABELS = {
+            's-v-rel': '相对起跳船速度',
+            's-angle': '起跳角',
+            's-mass-n': '人物质量',
+            's-mass-b': '起跳船质量',
+            's-dist': '目标间距'
+        };
+        const sessionEvidence = {
+            tuneCounts: { 's-v-rel': 0, 's-angle': 0, 's-mass-n': 0, 's-mass-b': 0, 's-dist': 0 },
+            jumpCount: 0,
+            lastLanding: null,
+            attribution: null,
+            evidenceSummary: ''
+        };
+        window.__sessionEvidence = sessionEvidence;
+
+        function noteAvTune(controlId) {
+            if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+            sessionEvidence.tuneCounts[controlId] += 1;
+        }
+
+        function dominantAv() {
+            let bestId = null;
+            let bestN = 0;
+            Object.keys(sessionEvidence.tuneCounts).forEach(function (id) {
+                const n = sessionEvidence.tuneCounts[id];
+                if (n > bestN) { bestN = n; bestId = id; }
+            });
+            return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+        }
+
+        function buildEvidenceSummary(landingTxt) {
+            const dom = dominantAv();
+            const mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+            const land = landingTxt || sessionEvidence.lastLanding || '登船';
+            if (state.mode === 'challenge') {
+                return '竞赛证据：主调 ' + mainTxt
+                    + ' · 结果 ' + land
+                    + ' · 起跳 ' + sessionEvidence.jumpCount + ' 次'
+                    + ' · 剩余机会 ' + Math.max(0, state.attempts);
+            }
+            return '探究证据：结果 ' + land
+                + ' · 主调节 ' + mainTxt
+                + ' · 起跳 ' + sessionEvidence.jumpCount + ' 次';
+        }
+
+        function snapControls() {
+            const o = {};
+            document.querySelectorAll('input[type="range"],select').forEach(el => {
+                if (el.id) o[el.id] = el.value;
+            });
+            return o;
+        }
+
+        function traceEmit(type, payload) {
+            try {
+                if (typeof window.__emit === 'function') window.__emit(type, payload || {});
+            } catch (e) {}
+        }
+
+        function setObserve(stateName, valText, hintText) {
+            if (!ui.observeBox) return;
+            ui.observeBox.className = 'observe-box ' + (stateName || 'pending');
+            if (ui.observeVal) ui.observeVal.textContent = valText || '待测';
+            if (ui.observeHint) ui.observeHint.textContent = hintText || '';
+        }
+
+        function refreshSideGoal() {
+            if (!ui.sideGoal) return;
+            if (state.mode === 'explore') {
+                ui.sideGoal.textContent = '每次只改一项条件，多次起跳，对照落点与起跳船 A 的后退。';
+            } else {
+                ui.sideGoal.textContent = '竞赛：目标船间距本局锁定，用有限次起跳尝试登船。';
+            }
+        }
+
+        function formatDeckMu(v) {
+            return (v / 100).toFixed(2);
+        }
+
+        // CV：甲板 μ 仅改甲板色泽与轻微摇曳振幅，不进动量/登船判定
+        function applyDeckMuVisual() {
+            const t = state.deckMu / 100;
+            state.deckLeanAmp = 0.028 + t * 0.035;
+            const deckHex = new THREE.Color().setHSL(0.075, 0.42 + t * 0.2, 0.48 - t * 0.22);
+            [boatA, boatB].forEach(b => {
+                if (b && b.userData && b.userData.deckMat) b.userData.deckMat.color.copy(deckHex);
+            });
+            if (envElements.water && envElements.water.material) {
+                // 轻微浪花高光随 μ 变化（观感），不改重力/动量
+                envElements.water.material.specular.setHSL(0.08, 0.55 + t * 0.2, 0.4 + t * 0.2);
+            }
+        }
+
+        // CV：目标船质量仅缩放 B 船网格；不进动量、飞行与甲板命中半宽
+        function applyTargetMassVisual() {
+            if (!boatB) return;
+            const ref = 120;
+            const m = Math.max(40, Math.min(200, state.massTarget || ref));
+            const s = Math.pow(m / ref, 1 / 3);
+            const clamped = Math.max(0.7, Math.min(1.2, s));
+            boatB.scale.set(clamped, clamped, clamped);
+        }
+
+        function noteExploreAfterLanding(onDeck, distM) {
+            if (state.mode !== 'explore') return;
+            if (onDeck) state.exploreSeenHit = true;
+            else state.exploreSeenMiss = true;
+            const controls = snapControls();
+            traceEmit('snapshot', { controls, winOk: false, hintKey: onDeck ? 'explore_hit' : 'explore_miss', distM });
+            if (state.exploreSeenHit && state.exploreSeenMiss && !window.__exploreSuccessDone) {
+                window.__exploreSuccessDone = true;
+                traceEmit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls });
+            } else if (window.__noteExploreSuccess) {
+                window.__noteExploreSuccess(window.__emit, controls);
+            }
+        }
+
+        function initApp() {
+            initThreeJS();
+            applyDeckMuVisual();
+            applyTargetMassVisual();
+            bindEvents();
+            refreshSideGoal();
+            setObserve('pending', '待测', '调参后点起跳；飞行结束后更新读数。');
+            animate();
+        }
+
+        function initThreeJS() {
+            const canvas = document.getElementById('gameCanvas');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setSize(ui.container.clientWidth, ui.container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            scene = new THREE.Scene();
+            
+            scene.background = new THREE.Color('#fbcfe8');
+
+            // 【关键修复1】加大相机的极限可视距离(Far Clip)到 10000，为了容纳推向无限远的太阳
+            camera = new THREE.PerspectiveCamera(45, ui.container.clientWidth / ui.container.clientHeight, 1, 10000);
+            camera.position.set(0, 25, 220); // 完美的平视初始视角
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.01; 
+            controls.target.set(0, 5, 0);
+
+            scene.add(new THREE.AmbientLight(0xffedd5, 0.6)); 
+            
+            // 【关键修复2】废弃平行光，改用点光源(PointLight)。
+            // intensity: 1.8, distance: 0 (无限照亮不衰减)
+            // 将点光源精准放置在太阳模型的绝对中心 Z=-3000，确保高光波纹永远绝对指向太阳本体！
+            const sunLight = new THREE.PointLight(0xffaa00, 1.8, 0); 
+            sunLight.position.set(0, 5, -3000); 
+            scene.add(sunLight);
+            
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            fillLight.position.set(-100, 50, 100); 
+            scene.add(fillLight);
+
+            createEnvironment();
+            
+            boatA = createBoat(false);
+            boatB = createBoat(true);
+            boatB.rotation.y = Math.PI; 
+            scene.add(boatA);
+            scene.add(boatB);
+
+            nezhaGroup = createNezha();
+            scene.add(nezhaGroup);
+
+            centerBoats();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = ui.container.clientWidth / ui.container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(ui.container.clientWidth, ui.container.clientHeight);
+            });
+        }
+
+        function createNezha() {
+            const group = new THREE.Group();
+
+            // 增加局部专属补光，确保哪吒精细的 StandardMaterial 材质不受场景背光影响，时刻保持明亮
+            const nLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            nLight.position.set(10, 15, 10);
+            group.add(nLight);
+            const nLight2 = new THREE.DirectionalLight(0xffedd5, 0.6);
+            nLight2.position.set(-10, -5, -10);
+            group.add(nLight2);
+
+            const modelGroup = new THREE.Group();
+            // 精确修正物理中心点：使风火轮底部匹配原有 Y=1.05 的甲板物理碰撞高度
+            modelGroup.position.y = 1.04;
+            // 放大匹配场景的物理跨度
+            modelGroup.scale.set(4.5, 4.5, 4.5);
+            group.add(modelGroup);
+
+            // 光晕生成器
+            function glowTexture(inner, outer) {
+                const c = document.createElement('canvas'); c.width = c.height = 128;
+                const g = c.getContext('2d');
+                const grad = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+                grad.addColorStop(0, inner); grad.addColorStop(0.4, outer); grad.addColorStop(1, 'rgba(0,0,0,0)');
+                g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+                return new THREE.CanvasTexture(c);
+            }
+            const fireGlowTex = glowTexture('rgba(255,240,180,1)', 'rgba(255,120,20,0.55)');
+
+            // 精美材质库
+            const M = {
+                skin:   new THREE.MeshStandardMaterial({ color: 0xf6c79b, roughness: 0.65 }),
+                hair:   new THREE.MeshStandardMaterial({ color: 0x14100e, roughness: 0.5 }),
+                vest:   new THREE.MeshStandardMaterial({ color: 0xd94a6b, roughness: 0.7, side: THREE.DoubleSide }),
+                vestTrim: new THREE.MeshStandardMaterial({ color: 0xf2c14e, roughness: 0.4, metalness: 0.4 }),
+                pants:  new THREE.MeshStandardMaterial({ color: 0x9e1f1f, roughness: 0.75 }),
+                pantsDark: new THREE.MeshStandardMaterial({ color: 0x2a1414, roughness: 0.8 }),
+                gold:   new THREE.MeshStandardMaterial({ color: 0xf2b53a, roughness: 0.3, metalness: 0.7 }),
+                redTie: new THREE.MeshStandardMaterial({ color: 0xd21f2c, roughness: 0.5 }),
+                eyeW:   new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }),
+                eyeB:   new THREE.MeshStandardMaterial({ color: 0x1a0f08, roughness: 0.3 }),
+                flame:  new THREE.MeshBasicMaterial({ color: 0xff8c1a }),
+                flameCore: new THREE.MeshBasicMaterial({ color: 0xffe27a }),
+            };
+
+            function mesh(geo, mat, x = 0, y = 0, z = 0) {
+                const m = new THREE.Mesh(geo, mat);
+                m.position.set(x, y, z);
+                return m;
+            }
+            const SPH = new THREE.SphereGeometry(1, 24, 18);
+
+            /* ---- 头部 ---- */
+            const headG = new THREE.Group();
+            headG.position.set(0, 5.55, 0.15);
+            modelGroup.add(headG);
+
+            const face = mesh(SPH, M.skin, 0, 0, 0); face.scale.set(1.15, 1.08, 1.05); headG.add(face);
+            const hairBack = mesh(SPH, M.hair, 0, 0.12, -0.18); hairBack.scale.set(1.2, 1.12, 1.1); headG.add(hairBack);
+            const bangs = mesh(SPH, M.hair, 0, 0.42, 0.72); bangs.scale.set(1.05, 0.5, 0.62); headG.add(bangs);
+            const sideL = mesh(SPH, M.hair, -1.02, 0.1, 0.25); sideL.scale.set(0.28, 0.75, 0.6); headG.add(sideL);
+            const sideR = mesh(SPH, M.hair, 1.02, 0.1, 0.25); sideR.scale.set(0.28, 0.75, 0.6); headG.add(sideR);
+
+            [[-0.95, 1.15, -0.05], [0.95, 1.15, -0.05]].forEach(([x, y, z]) => {
+                const bun = new THREE.Group(); bun.position.set(x, y, z);
+                const b = mesh(SPH, M.hair); b.scale.setScalar(0.5); bun.add(b);
+                const tie = mesh(new THREE.TorusGeometry(0.42, 0.09, 10, 24), M.redTie, 0, -0.28, 0);
+                tie.rotation.x = Math.PI / 2; bun.add(tie);
+                headG.add(bun);
+            });
+
+            [-0.45, 0.45].forEach(x => {
+                const w = mesh(SPH, M.eyeW, x, -0.05, 0.92); w.scale.set(0.24, 0.28, 0.16); headG.add(w);
+                const b = mesh(SPH, M.eyeB, x, -0.05, 1.04); b.scale.set(0.12, 0.15, 0.08); headG.add(b);
+                const brow = mesh(new THREE.BoxGeometry(0.42, 0.09, 0.08), M.hair, x, 0.32, 0.95);
+                brow.rotation.z = x < 0 ? -0.5 : 0.5; headG.add(brow);
+            });
+            const nose = mesh(SPH, M.skin, 0, -0.28, 1.05); nose.scale.setScalar(0.12); headG.add(nose);
+            const mouth = mesh(new THREE.BoxGeometry(0.34, 0.06, 0.06), new THREE.MeshStandardMaterial({ color: 0x8a3a2a }), 0, -0.52, 0.98);
+            headG.add(mouth);
+            const mark = mesh(SPH, new THREE.MeshBasicMaterial({ color: 0xe5332a }), 0, 0.42, 0.92);
+            mark.scale.set(0.09, 0.16, 0.05); headG.add(mark);
+
+            /* ---- 躯干 ---- */
+            const torso = mesh(new THREE.CylinderGeometry(0.85, 1.0, 1.9, 20), M.skin, 0, 3.9, 0);
+            modelGroup.add(torso);
+            const neck = mesh(new THREE.CylinderGeometry(0.34, 0.4, 0.5, 12), M.skin, 0, 4.95, 0.05); modelGroup.add(neck);
+            
+            const vestF = mesh(new THREE.CylinderGeometry(0.98, 1.12, 1.8, 20, 1, true, -Math.PI * 0.36, Math.PI * 0.5), M.vest, 0, 3.9, 0.06);
+            modelGroup.add(vestF);
+            const vestB = mesh(new THREE.CylinderGeometry(0.98, 1.12, 1.8, 20, 1, true, Math.PI * 0.64, Math.PI * 0.5), M.vest, 0, 3.9, -0.06);
+            modelGroup.add(vestB);
+            
+            [-0.62, 0.62].forEach(x => {
+                const strap = mesh(new THREE.BoxGeometry(0.34, 0.5, 1.5), M.vest, x, 4.85, 0);
+                strap.rotation.x = 0.06; modelGroup.add(strap);
+            });
+            const trimTop = mesh(new THREE.TorusGeometry(0.93, 0.07, 10, 32), M.vestTrim, 0, 4.72, 0);
+            trimTop.rotation.x = Math.PI / 2; modelGroup.add(trimTop);
+
+            /* ---- 腰带 + 金色蝴蝶结 ---- */
+            const waist = mesh(new THREE.CylinderGeometry(1.06, 1.0, 0.55, 20), M.pantsDark, 0, 2.95, 0); modelGroup.add(waist);
+            const sash = mesh(new THREE.TorusGeometry(1.05, 0.14, 12, 32), M.gold, 0, 2.95, 0);
+            sash.rotation.x = Math.PI / 2; modelGroup.add(sash);
+            const bowL = mesh(new THREE.ConeGeometry(0.35, 0.7, 4), M.gold, -0.42, 2.9, 1.0);
+            bowL.rotation.set(Math.PI / 2, 0, 1.1); bowL.scale.set(1, 1, 0.45); modelGroup.add(bowL);
+            const bowR = mesh(new THREE.ConeGeometry(0.35, 0.7, 4), M.gold, 0.42, 2.9, 1.0);
+            bowR.rotation.set(Math.PI / 2, 0, -1.1); bowR.scale.set(1, 1, 0.45); modelGroup.add(bowR);
+
+            /* ---- 乾坤圈 ---- */
+            const qiankun = new THREE.Group();
+            const ringInner = new THREE.Group();
+            const qRing = mesh(new THREE.TorusGeometry(1.62, 0.17, 14, 48),
+                new THREE.MeshStandardMaterial({ color: 0xf5c34a, roughness: 0.25, metalness: 0.85, emissive: 0x2a1c05 }));
+            ringInner.add(qRing);
+            for (let i = 0; i < 6; i++) {
+                const a = i / 6 * Math.PI * 2;
+                const bead = mesh(SPH, M.vestTrim, Math.cos(a) * 1.62, Math.sin(a) * 1.62, 0);
+                bead.scale.setScalar(0.14); ringInner.add(bead);
+            }
+            ringInner.rotation.y = 1.12; 
+            qiankun.add(ringInner);
+            qiankun.position.set(0, 4.0, 0);
+            qiankun.rotation.set(0.12, 0, 0.55); 
+            modelGroup.add(qiankun);
+
+            /* ---- 灯笼裤与风火轮 ---- */
+            const hip = mesh(SPH, M.pants, 0, 2.1, 0); hip.scale.set(1.05, 0.9, 0.95); modelGroup.add(hip);
+
+            function makeLeg(side) {
+                const leg = new THREE.Group();
+                leg.position.set(0.55 * side, 2.1, 0);
+                const thigh = mesh(SPH, M.pants, 0, -0.55, 0); thigh.scale.set(0.62, 0.85, 0.62); leg.add(thigh);
+                
+                const shinG = new THREE.Group(); shinG.position.set(0, -1.15, 0); leg.add(shinG);
+                const shin = mesh(SPH, M.pants, 0, -0.5, 0); shin.scale.set(0.5, 0.8, 0.5); shinG.add(shin);
+                
+                const cuff = mesh(new THREE.TorusGeometry(0.42, 0.1, 10, 20), M.pantsDark, 0, -1.05, 0);
+                cuff.rotation.x = Math.PI / 2; shinG.add(cuff);
+                const foot = mesh(SPH, M.skin, 0, -1.35, 0.12); foot.scale.set(0.34, 0.26, 0.55); shinG.add(foot);
+                
+                const wheel = new THREE.Group(); wheel.position.set(0, -1.62, 0.1);
+                const ring = mesh(new THREE.TorusGeometry(0.55, 0.09, 12, 32), new THREE.MeshBasicMaterial({ color: 0xffb02a })); 
+                ring.rotation.x = Math.PI / 2; wheel.add(ring);
+                const fl1 = mesh(new THREE.ConeGeometry(0.3, 0.9, 10), M.flame, 0, -0.5, 0); fl1.rotation.x = Math.PI; wheel.add(fl1);
+                const fl2 = mesh(new THREE.ConeGeometry(0.18, 0.6, 10), M.flameCore, 0, -0.42, 0); fl2.rotation.x = Math.PI; wheel.add(fl2);
+                
+                const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: fireGlowTex, color: 0xffa040, transparent: true, opacity: 0.85, depthWrite: false }));
+                glow.scale.setScalar(2.4); wheel.add(glow);
+                
+                shinG.add(wheel);
+                leg.userData = { shinG, wheel, fl1, fl2 };
+                modelGroup.add(leg);
+                return leg;
+            }
+            
+            const legL = makeLeg(-1);
+            legL.rotation.x = -1.35; legL.userData.shinG.rotation.x = 1.5; // 经典的左腿微抬闲置姿势
+            
+            const legR = makeLeg(1);
+            legR.rotation.x = 0.25; legR.userData.shinG.rotation.x = 0.35;
+
+            /* ---- 手臂 (使用圆柱体替换低版本不支持的胶囊体) ---- */
+            function makeCylinder(radius, length) {
+                // 圆柱体总高度 = 原胶囊长度 + 两端半球半径补偿
+                return new THREE.CylinderGeometry(radius, radius, length + radius * 2, 12);
+            }
+            function makeArm(side) {
+                const arm = new THREE.Group();
+                arm.position.set(0.95 * side, 4.6, 0.1);
+                
+                const shoulder = mesh(SPH, M.skin, 0, 0, 0); shoulder.scale.setScalar(0.36); arm.add(shoulder);
+                const upper = mesh(makeCylinder(0.25, 0.8), M.skin, 0, -0.6, 0); arm.add(upper);
+                
+                const foreG = new THREE.Group(); foreG.position.set(0, -1.2, 0); arm.add(foreG);
+                const elbow = mesh(SPH, M.skin, 0, 0, 0); elbow.scale.setScalar(0.27); foreG.add(elbow);
+                const fore = mesh(makeCylinder(0.21, 0.75), M.skin, 0, -0.55, 0); foreG.add(fore);
+                
+                const bracelet = mesh(new THREE.TorusGeometry(0.26, 0.07, 10, 20), M.gold, 0, -0.95, 0);
+                bracelet.rotation.x = Math.PI / 2; foreG.add(bracelet);
+                
+                const hand = mesh(SPH, M.skin, 0, -1.2, 0.05); hand.scale.set(0.3, 0.36, 0.3); foreG.add(hand);
+                const fingerGeo = makeCylinder(0.052, 0.2);
+                for (let f = 0; f < 4; f++) {
+                    const fx = (f - 1.5) * 0.13;
+                    const finger = mesh(fingerGeo, M.skin, fx, -1.52, 0.06);
+                    finger.rotation.z = (f - 1.5) * 0.12; finger.rotation.x = -0.15;
+                    foreG.add(finger);
+                }
+                const thumb = mesh(makeCylinder(0.055, 0.16), M.skin, 0.24 * -side, -1.28, 0.16);
+                thumb.rotation.z = 0.9 * side; thumb.rotation.x = -0.5;
+                foreG.add(thumb);
+                
+                arm.userData = { foreG };
+                modelGroup.add(arm);
+                return arm;
+            }
+            
+            const armL = makeArm(-1);
+            armL.rotation.set(-0.2, 0, -0.65); armL.userData.foreG.rotation.set(-0.85, 0, 0.2); // 帅气的微曲闲置姿势
+            const armR = makeArm(1);
+            armR.rotation.set(-0.2, 0, 0.65); armR.userData.foreG.rotation.set(-0.85, 0, -0.2);
+
+            // 面向右侧跳跃目标
+            group.rotation.y = Math.PI / 2;
+            
+            // 缓存所有动态关节，移交给物理引擎动画循环接管
+            group.userData = { 
+                head: headG,
+                armL: armL, armR: armR, 
+                wheelL: legL.userData.wheel, wheelR: legR.userData.wheel,
+                fl1L: legL.userData.fl1, fl2L: legL.userData.fl2,
+                fl1R: legR.userData.fl1, fl2R: legR.userData.fl2
+            };
+            
+            return group;
+        }
+
+        function createBoat(isTarget = false) {
+            const boatGroup = new THREE.Group();
+            const woodMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // 深木色
+            const deckMat = new THREE.MeshLambertMaterial({ color: 0xa0522d }); // 稍浅的木色
+            const redMat = new THREE.MeshLambertMaterial({ color: 0xef4444 });
+            boatGroup.userData.deckMat = deckMat;
+
+            // 1. 两头尖的渔船船体 (利用半球体进行三个方向的缩放)
+            // 采用半径40的半球，翻转后压扁，形成两头尖、底平的完美渔船流线型
+            const hullGeo = new THREE.SphereGeometry(40, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const hull = new THREE.Mesh(hullGeo, woodMat);
+            hull.rotation.x = Math.PI; // 翻转让平面朝上，弧面朝下入水
+            hull.scale.set(1, 0.4, 0.35); // X轴原长(80), Y轴压扁(16), Z轴压窄(28)
+            hull.position.y = 0;
+            boatGroup.add(hull);
+
+            // 2. 渔船甲板 (扁平的椭圆柱体)
+            // 在XZ平面上缩放成与船体完美贴合的流线型椭圆形
+            const deckGeo = new THREE.CylinderGeometry(40, 40, 0.5, 32);
+            const deck = new THREE.Mesh(deckGeo, deckMat);
+            deck.scale.set(1, 1, 0.35);
+            deck.position.y = 0; // 上表面高度为 0.25，继续完美匹配哪吒 1.05 的起跳/落地物理高度！
+            boatGroup.add(deck);
+
+            // 3. 渔船特征装饰：船尾摇橹 (替代乌篷，增加渔船细节，避免画面空旷)
+            const scullBase = new THREE.Mesh(new THREE.BoxGeometry(3, 2, 8), woodMat);
+            scullBase.position.set(-35, 1, 0); // 放在船尾 (-X方向)
+            boatGroup.add(scullBase);
+            
+            const scullPole = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 25), new THREE.MeshLambertMaterial({color: 0xd4d4d8}));
+            scullPole.rotation.x = Math.PI / 3;
+            scullPole.position.set(-35, 8, 8);
+            boatGroup.add(scullPole);
+            
+            // 已移除挑战模式的目标红旗，保持两船风貌纯净统一
+            
+            return boatGroup;
+        }
+
+        function createEnvironment() {
+            // 【关键修复3】将水面极度放大 (10000x10000)，确保在没有雾气遮挡的情况下，水面能直接延伸到视平线尽头
+            // 提升网格密度到 200x200，以支持更平滑、真实的大海浪
+            const waterGeo = new THREE.PlaneGeometry(10000, 10000, 200, 200);
+            waterGeo.rotateX(-Math.PI / 2); 
+            
+            const waterMat = new THREE.MeshPhongMaterial({ 
+                color: 0x0ea5e9, 
+                specular: 0xffaa00, // 完美的金橙色波光
+                shininess: 60,      
+                transparent: true, 
+                opacity: 0.85,      
+                flatShading: true 
+            });
+            const water = new THREE.Mesh(waterGeo, waterMat);
+            water.position.y = -2; 
+            scene.add(water);
+            envElements.water = water; 
+
+            const sand = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), new THREE.MeshLambertMaterial({ color: 0xd2b48c }));
+            sand.rotation.x = -Math.PI / 2;
+            sand.position.y = -30;
+            scene.add(sand);
+
+            // 【关键修复4】全套天体推向远景：将尺寸放大 12 倍，距离推远 12 倍 (Z = -3000)
+            // 这彻底消除了拖拽视角时的错位和太阳被拉伸成椭圆的问题，实现真实的天体视差
+
+            // 0. 动态朝阳发光射线 (放大 12 倍，半径 2640)
+            const rayGeo = new THREE.CircleGeometry(2640, 64, 0, Math.PI);
+            const canvasRays = document.createElement('canvas');
+            canvasRays.width = 512; canvasRays.height = 512;
+            const ctxRays = canvasRays.getContext('2d');
+            ctxRays.translate(256, 256);
+            const numRays = 16;
+            for (let i = 0; i < numRays; i++) {
+                ctxRays.beginPath(); ctxRays.moveTo(0, 0);
+                const angle1 = (i * Math.PI * 2) / numRays;
+                const angle2 = angle1 + 0.12;
+                ctxRays.arc(0, 0, 256, angle1, angle2);
+                ctxRays.closePath();
+                ctxRays.fillStyle = 'rgba(255, 100, 50, 0.22)'; ctxRays.fill();
+            }
+            const maskGrad = ctxRays.createRadialGradient(0, 0, 0, 0, 0, 256);
+            maskGrad.addColorStop(0, 'rgba(255, 120, 80, 0.4)');
+            maskGrad.addColorStop(0.6, 'rgba(255, 60, 30, 0.15)');
+            maskGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            ctxRays.globalCompositeOperation = 'destination-in';
+            ctxRays.beginPath(); ctxRays.arc(0, 0, 256, 0, Math.PI * 2); ctxRays.fillStyle = maskGrad; ctxRays.fill();
+
+            const rayMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvasRays), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+            const sunRays = new THREE.Mesh(rayGeo, rayMat);
+            sunRays.position.set(0, -2, -3002); // 绝对海平面绑定
+            scene.add(sunRays);
+            envElements.sunRays = sunRays; 
+
+            // 1. 半穹顶式柔和霞光 (放大 12 倍，半径 1800)
+            const haloGeo = new THREE.CircleGeometry(1800, 64, 0, Math.PI); 
+            const canvasHalo = document.createElement('canvas');
+            canvasHalo.width = 512; canvasHalo.height = 512; 
+            const ctxHalo = canvasHalo.getContext('2d');
+            const haloGrad = ctxHalo.createRadialGradient(256, 256, 0, 256, 256, 256);
+            haloGrad.addColorStop(0, 'rgba(244, 63, 94, 1)');      
+            haloGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.4)');  
+            haloGrad.addColorStop(1, 'rgba(244, 63, 94, 0)');        
+            ctxHalo.fillStyle = haloGrad; ctxHalo.fillRect(0, 0, 512, 512);
+            
+            const haloMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvasHalo), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+            const halo = new THREE.Mesh(haloGeo, haloMat);
+            halo.scale.set(3, 1, 1); 
+            halo.position.set(0, -2, -3001); 
+            scene.add(halo);
+
+            // 1.5 正圆形的太阳内核 (放大 12 倍，半径 420)
+            const sunGeo = new THREE.CircleGeometry(420, 64, 0, Math.PI);
+            const canvasSun = document.createElement('canvas');
+            canvasSun.width = 256; canvasSun.height = 256; 
+            const ctxSun = canvasSun.getContext('2d');
+            const sunGrad = ctxSun.createRadialGradient(128, 128, 0, 128, 128, 128);
+            sunGrad.addColorStop(0, 'rgba(255, 240, 240, 1)'); 
+            sunGrad.addColorStop(0.15, 'rgba(255, 0, 0, 1)');   
+            sunGrad.addColorStop(0.9, 'rgba(220, 0, 0, 1)');  
+            sunGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');     
+            ctxSun.fillStyle = sunGrad; ctxSun.fillRect(0, 0, 256, 256);
+            
+            const sunMat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvasSun), transparent: true, depthWrite: false });
+            const sun = new THREE.Mesh(sunGeo, sunMat);
+            sun.position.set(0, -2, -3000); 
+            scene.add(sun);
+
+            // 2. 云朵
+            const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 });
+            envElements.clouds = [];
+            for(let i=0; i<8; i++) {
+                const cloud = new THREE.Group();
+                const centerNode = new THREE.Mesh(new THREE.SphereGeometry(15,16,16), cloudMat);
+                const leftNode = new THREE.Mesh(new THREE.SphereGeometry(10,16,16), cloudMat); leftNode.position.set(-12, -3, 0);
+                const rightNode = new THREE.Mesh(new THREE.SphereGeometry(12,16,16), cloudMat); rightNode.position.set(12, -5, 0);
+                const topNode = new THREE.Mesh(new THREE.SphereGeometry(10,16,16), cloudMat); topNode.position.set(2, 8, 2);
+                cloud.add(centerNode, leftNode, rightNode, topNode);
+                cloud.scale.y = 0.6; 
+                cloud.position.set((Math.random()-0.5)*800, 70 + Math.random()*30, -50 - Math.random()*150);
+                scene.add(cloud);
+                envElements.clouds.push({ mesh: cloud, speed: 0.1 + Math.random()*0.15 });
+            }
+
+            // 3. 3D 海鸥飞鸟 (重构更真实的飞鸟建模)
+            envElements.birds = [];
+            const birdBodyMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // 白身
+            const birdWingMat = new THREE.MeshLambertMaterial({ color: 0xf1f5f9 }); // 浅白灰翅膀
+            const birdBeakMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b }); // 黄嘴
+            const birdEyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });    // 黑眼
+            
+            for(let i=0; i<7; i++) { // 稍微增加海鸥数量，让天空更生动
+                const bird = new THREE.Group();
+                
+                // 身体 (拉长的流线型球体)
+                const body = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), birdBodyMat);
+                body.scale.set(2, 1, 1);
+                bird.add(body);
+                
+                // 头部
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), birdBodyMat);
+                head.position.set(2.2, 0.5, 0);
+                bird.add(head);
+                
+                // 眼睛
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), birdEyeMat);
+                eyeL.position.set(2.5, 0.7, 0.65); bird.add(eyeL);
+                const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), birdEyeMat);
+                eyeR.position.set(2.5, 0.7, -0.65); bird.add(eyeR);
+
+                // 鸟喙
+                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.25, 1.2, 8), birdBeakMat);
+                beak.rotation.z = -Math.PI / 2;
+                beak.position.set(3.4, 0.5, 0);
+                bird.add(beak);
+                
+                // 尾巴 (扁平扇形尾羽)
+                const tail = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 1.5), birdWingMat);
+                tail.position.set(-3, 0.2, 0);
+                bird.add(tail);
+
+                // 左翅膀 (设置几何体中心偏移，使旋转轴落在根部)
+                const wingGeoL = new THREE.BoxGeometry(2.5, 0.1, 6);
+                wingGeoL.translate(0, 0, 3); // 偏移使根部成为旋转中心
+                const wingL = new THREE.Mesh(wingGeoL, birdWingMat);
+                wingL.position.set(0.5, 0.6, 1); // 安装在身体偏上位置
+                wingL.rotation.y = -Math.PI / 12; // 翅膀微微向后掠，显现速度感
+                bird.add(wingL);
+                
+                // 右翅膀
+                const wingGeoR = new THREE.BoxGeometry(2.5, 0.1, 6);
+                wingGeoR.translate(0, 0, -3);
+                const wingR = new THREE.Mesh(wingGeoR, birdWingMat);
+                wingR.position.set(0.5, 0.6, -1);
+                wingR.rotation.y = Math.PI / 12;
+                bird.add(wingR);
+
+                // 整体稍微向上倾斜，表现出滑翔时的昂首姿态
+                bird.rotation.z = Math.PI / 24;
+
+                bird.position.set((Math.random()-0.5)*800, 40 + Math.random()*50, -50 - Math.random()*150);
+                scene.add(bird);
+                envElements.birds.push({ group: bird, wingL: wingL, wingR: wingR, speed: 0.8 + Math.random()*1.2, offset: Math.random()*100 });
+            }
+
+            // 4. 生动游动的 3D 小鱼 (升级为自发光霓虹色，并上浮到水面附近)
+            envElements.fishes = [];
+            const fishColors = [0xff2a55, 0xffd700, 0x00e5ff, 0x39ff14, 0xff00ff]; // 极度鲜艳的霓虹锦鲤色
+            for(let i=0; i<12; i++) {
+                const fish = new THREE.Group();
+                const colorHex = fishColors[Math.floor(Math.random()*fishColors.length)];
+                
+                // 采用 Phong 材质并开启自发光(emissive)，确保在水下阴影里依然明亮夺目
+                const mat = new THREE.MeshPhongMaterial({ 
+                    color: colorHex,
+                    emissive: colorHex,
+                    emissiveIntensity: 0.7, // 强烈的自发光高光，抵消海水的遮挡
+                    shininess: 100
+                });
+                
+                // 鱼身 (压扁拉长的球体)
+                const body = new THREE.Mesh(new THREE.SphereGeometry(2.5, 16, 16), mat);
+                body.scale.set(2, 1, 0.5);
+                fish.add(body);
+                // 鱼尾
+                const tail = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2.5, 4), mat);
+                tail.position.x = -4.5; tail.rotation.z = -Math.PI / 2;
+                fish.add(tail);
+                // 眼睛
+                const eyeMat = new THREE.MeshBasicMaterial({color: 0x111827});
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), eyeMat); eyeL.position.set(3, 0.5, 1); fish.add(eyeL);
+                const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), eyeMat); eyeR.position.set(3, 0.5, -1); fish.add(eyeR);
+
+                // 核心修复：上浮位置。水面在 -2，鱼群紧贴水面放置在 -2.5 到 -4.5 之间
+                fish.position.set((Math.random()-0.5)*400, -2.5 - Math.random()*2, (Math.random()-0.5)*200);
+                scene.add(fish);
+                envElements.fishes.push({ group: fish, tail: tail, speed: 0.3 + Math.random()*0.5, offset: Math.random()*100 });
+            }
+        }
+
+        function spawnParticles(x, y, z, colorHex) {
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+            for(let i=0; i<20; i++) {
+                const p = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), mat);
+                p.position.set(x, y, z);
+                scene.add(p);
+                envElements.particles.push({
+                    mesh: p,
+                    vx: (Math.random()-0.5)*6, vy: Math.random()*8, vz: (Math.random()-0.5)*6,
+                    life: 1.0,
+                    decay: 1.5
+                });
+            }
+        }
+
+        function spawnFireworks(x, y, z) {
+            const colors = [0xef4444, 0xfacc15, 0x3b82f6, 0x10b981, 0xd946ef, 0xf97316]; // 多彩礼花
+            for(let burst=0; burst<3; burst++) {
+                setTimeout(() => {
+                    // 在头顶上方随机位置绽放
+                    const burstX = x + (Math.random()-0.5)*30;
+                    const burstY = y + 15 + Math.random()*20;
+                    const burstZ = z + (Math.random()-0.5)*20;
+                    
+                    for(let i=0; i<80; i++) {
+                        const mat = new THREE.MeshBasicMaterial({ color: colors[Math.floor(Math.random()*colors.length)] });
+                        const p = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 8), mat);
+                        p.position.set(burstX, burstY, burstZ);
+                        scene.add(p);
+                        
+                        // 物理级球面爆发分布
+                        const theta = Math.random() * 2 * Math.PI;
+                        const phi = Math.acos(Math.random() * 2 - 1);
+                        const speed = 4 + Math.random() * 6;
+                        
+                        envElements.particles.push({
+                            mesh: p,
+                            vx: speed * Math.sin(phi) * Math.cos(theta),
+                            vy: speed * Math.sin(phi) * Math.sin(theta) + 3, // 稍微向上的初速度喷发
+                            vz: speed * Math.cos(phi),
+                            life: 2.0, // 初始生命值更高，存活更久
+                            decay: 0.5 + Math.random() * 0.8 // 衰减变慢，模拟飘落
+                        });
+                    }
+                }, burst * 500); // 连放三簇，间隔 500ms
+            }
+        }
+
+        function centerBoats() {
+            // 让距离滑块代表“两艘船跳跃点（前甲板）之间的净空飞行距离”
+            const jumpDistPx = state.targetDistM * state.PPM;
+            // 两船中心的距离 = 跳跃距离 + A船中心到船头的距离(30) + B船中心到船头的距离(30)
+            const centerDistPx = jumpDistPx + 60;
+            
+            state.boatA_X0 = -centerDistPx / 2;
+            if (!state.currentBall) {
+                state.boatA_X = state.boatA_X0;
+                boatA.position.x = state.boatA_X;
+                // 哪吒站在A船前甲板准备起跳，高度1.05达成“风火轮底部贴合甲板”的绝对精确对齐
+                nezhaGroup.position.set(state.boatA_X + 30, 1.05, 0); 
+            }
+            boatB.position.x = centerDistPx / 2;
+        }
+
+        function spawnTarget() {
+            const minM = 8;
+            const maxM = 30;
+            state.targetDistM = minM + Math.random() * (maxM - minM);
+            centerBoats();
+        }
+
+        function renderAttempts() {
+            if (ui.attemptsDisplay) ui.attemptsDisplay.textContent = String(Math.max(0, state.attempts));
+        }
+
+        function createHtmlLabel(text, x, y, z) {
+            const label = document.createElement('div');
+            label.className = 'html-label';
+            label.textContent = text;
+            ui.container.appendChild(label);
+            state.htmlLabels.push({ element: label, pos: new THREE.Vector3(x, y, z) });
+        }
+
+        function updateLabels() {
+            state.htmlLabels.forEach(lbl => {
+                const vec = lbl.pos.clone();
+                vec.project(camera);
+                if (vec.z > 1) { lbl.element.style.opacity = 0; } // 背后隐藏
+                else {
+                    lbl.element.style.opacity = 1;
+                    const x = (vec.x * .5 + .5) * ui.container.clientWidth;
+                    const y = (vec.y * -.5 + .5) * ui.container.clientHeight;
+                    lbl.element.style.left = `${x}px`;
+                    lbl.element.style.top = `${y}px`;
+                }
+            });
+        }
+
+        function bindEvents() {
+            const bindSlider = (slider, valEl, key, fmt, avId) => {
+                if (!slider) return;
+                slider.addEventListener('input', e => {
+                    state[key] = parseFloat(e.target.value);
+                    if (valEl) valEl.textContent = fmt ? fmt(state[key]) : String(state[key]);
+                    if (AV_IDS.indexOf(slider.id) >= 0) window.__exploreAvTouched[slider.id] = 1;
+                    traceEmit('tuning', { controlId: slider.id, value: e.target.value });
+                });
+                if (avId) {
+                    slider.addEventListener('change', () => noteAvTune(avId));
+                }
+            };
+            bindSlider(ui.sliderAngle, ui.valAngle, 'angle', v => v + '°', 's-angle');
+            bindSlider(ui.sliderSpeed, ui.valSpeed, 'v_rel', v => v + ' m/s', 's-v-rel');
+            bindSlider(ui.sliderMassN, ui.valMassN, 'massN', v => v + ' kg', 's-mass-n');
+            bindSlider(ui.sliderMassB, ui.valMassB, 'massB', v => v + ' kg', 's-mass-b');
+            if (ui.sliderDeckMu) {
+                ui.sliderDeckMu.addEventListener('input', e => {
+                    state.deckMu = parseFloat(e.target.value);
+                    if (ui.valDeckMu) ui.valDeckMu.textContent = formatDeckMu(state.deckMu);
+                    applyDeckMuVisual();
+                    traceEmit('irrelevant_touch', { controlId: 's-deck-mu', value: e.target.value });
+                });
+            }
+            if (ui.sliderMassTarget) {
+                ui.sliderMassTarget.addEventListener('input', e => {
+                    state.massTarget = parseFloat(e.target.value);
+                    if (ui.valMassTarget) ui.valMassTarget.textContent = state.massTarget + ' kg';
+                    applyTargetMassVisual();
+                    traceEmit('irrelevant_touch', { controlId: 's-mass-target', value: e.target.value });
+                });
+            }
+
+            ui.sliderDist.addEventListener('input', e => {
+                state.targetDistM = parseFloat(e.target.value);
+                ui.valDist.textContent = state.targetDistM + ' m';
+                centerBoats();
+                window.__exploreAvTouched['s-dist'] = 1;
+                traceEmit('tuning', { controlId: 's-dist', value: e.target.value });
+            });
+            ui.sliderDist.addEventListener('change', () => noteAvTune('s-dist'));
+
+            ui.modeSelect.addEventListener('change', e => {
+                state.mode = e.target.value;
+                ui.modeLabel.textContent = state.mode === 'explore' ? '探究' : '竞赛';
+                document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode } }));
+                traceEmit('phase_change', { phase: state.mode });
+                if (state.mode === 'challenge') {
+                    ui.challengeStats.classList.add('is-visible');
+                    ui.distControl.style.display = 'none';
+                    state.attempts = 5; renderAttempts();
+                    spawnTarget();
+                    window.__challengeWon = false;
+                    setObserve('pending', '待测', '竞赛：起跳后根据落点给出登船或落水判定。');
+                } else {
+                    ui.challengeStats.classList.remove('is-visible');
+                    ui.distControl.style.display = '';
+                    state.targetDistM = parseFloat(ui.sliderDist.value);
+                    centerBoats();
+                    setObserve('pending', '待测', '探究：落点距离会在场景标注；对照多次起跳结果。');
+                }
+                refreshSideGoal();
+                clearScene();
+            });
+
+            ui.btnLaunch.addEventListener('click', () => {
+                if (state.currentBall || (state.mode === 'challenge' && state.attempts <= 0)) return;
+                if (state.mode === 'challenge' && window.__challengeWon) return;
+
+                const rad = state.angle * Math.PI / 180;
+                const m = state.massN, M = state.massB;
+                const v_ground = state.v_rel * (M / (m + M));
+                state.boatA_v = -state.v_rel * (m / (m + M));
+
+                const startX = boatA.position.x + 30;
+                const startY = 1.05;
+                const speedPx = v_ground * state.PPM;
+
+                state.currentBall = {
+                    x0: startX, y0: startY,
+                    x: startX, y: startY, z: 0,
+                    v0x: speedPx * Math.cos(rad),
+                    v0y: speedPx * Math.sin(rad),
+                    t: 0, pathCoords: []
+                };
+
+                ui.btnLaunch.disabled = true;
+                setObserve('pending', '飞行中…', 'v_相对相对起跳船 A；此后为抛体飞行，落地后更新判定。');
+                sessionEvidence.jumpCount += 1;
+                traceEmit('snapshot', { controls: snapControls(), winOk: false, hintKey: 'launch' });
+
+                if (state.mode === 'challenge') {
+                    state.attempts--;
+                    renderAttempts();
+                }
+            });
+
+            ui.btnClear.addEventListener('click', clearScene);
+            ui.btnReset.addEventListener('click', () => {
+                if (!state.currentBall) {
+                    state.boatA_X = state.boatA_X0;
+                    boatA.position.x = state.boatA_X;
+                    nezhaGroup.position.set(state.boatA_X + 30, 1.05, 0); // 复位时回到船头并完美贴合
+                    state.boatA_v = 0;
+                }
+            });
+        }
+
+        function clearScene() {
+            state.trajectories.forEach(t => scene.remove(t));
+            state.trajectories = [];
+            state.htmlLabels.forEach(lbl => lbl.element.remove());
+            state.htmlLabels = [];
+        }
+
+        let lastTime = 0;
+        function animate(timestamp = 0) {
+            requestAnimationFrame(animate);
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+            lastTime = timestamp;
+
+            controls.update();
+
+            const time = timestamp * 0.001; // 获取以秒为单位的精确动画时间
+
+            // 太阳光束缓缓旋转流转
+            if (envElements.sunRays) {
+                envElements.sunRays.rotation.z = Math.sin(time * 0.2) * 0.05;
+            }
+
+            // 动态海浪物理动画 (重构为多层复合平滑大波浪)
+            if (envElements.water) {
+                const positions = envElements.water.geometry.attributes.position;
+                for (let i = 0; i < positions.count; i++) {
+                    const x = positions.getX(i);
+                    const z = positions.getZ(i);
+                    
+                    // 叠加三层不同频率的正弦波，模拟深海“大涌浪+交错波+碎浪”
+                    const wave1 = Math.sin(x * 0.006 + time * 1.2) * 2.5;   
+                    const wave2 = Math.cos(z * 0.007 + time * 0.9) * 2.0;   
+                    const wave3 = Math.sin((x * 0.03 - z * 0.03) + time * 2.0) * 0.6; 
+                    
+                    // 性能优化：用平方和代替开方，做距离阻尼。让远处的浪大，近处的浪小，避免淹没小船
+                    const distSq = x * x + z * z;
+                    const damp = Math.min(1.0, distSq / 200000 + 0.15); // 船只中心(0,0)附近振幅压缩至15%
+                    
+                    positions.setY(i, (wave1 + wave2 + wave3) * damp);
+                }
+                positions.needsUpdate = true;
+                envElements.water.geometry.computeVertexNormals(); // 重新计算法线，让大浪产生美丽的折射光影
+            }
+
+            // 让两艘小船跟随海浪轻轻摇曳；振幅可随甲板 μ（CV）略变，不改动量公式
+            const lean = state.deckLeanAmp || 0.04;
+            if (boatA) {
+                boatA.rotation.z = Math.sin(time * 1.5) * lean;
+                boatA.rotation.x = Math.cos(time * 1.2) * lean * 0.5;
+            }
+            if (boatB) {
+                boatB.rotation.z = Math.cos(time * 1.3) * lean;
+                boatB.rotation.x = Math.sin(time * 1.1) * lean * 0.5;
+            }
+
+            // 背景动画
+            envElements.clouds.forEach(c => {
+                c.mesh.position.x += c.speed;
+                if(c.mesh.position.x > 500) c.mesh.position.x = -500;
+            });
+
+            envElements.birds.forEach(b => {
+                b.group.position.x += b.speed;
+                b.group.position.y += Math.sin(time * 2 + b.offset) * 0.05; // 身体平滑上下起伏
+                // 翅膀生动地上下扑腾
+                const flap = Math.sin(time * 15 + b.offset) * 0.5;
+                b.wingL.rotation.x = flap;
+                b.wingR.rotation.x = -flap;
+                if(b.group.position.x > 500) {
+                    b.group.position.x = -500;
+                    b.group.position.y = 40 + Math.random()*50;
+                }
+            });
+
+            envElements.fishes.forEach(f => {
+                f.group.position.x += f.speed;
+                // 鱼尾左右摇摆游动
+                f.tail.rotation.y = Math.sin(time * 10 + f.offset) * 0.4;
+                if(f.group.position.x > 500) {
+                    f.group.position.x = -500;
+                    f.group.position.z = (Math.random()-0.5)*200;
+                }
+            });
+
+            // 粒子动画
+            for(let i=envElements.particles.length-1; i>=0; i--) {
+                let p = envElements.particles[i];
+                p.mesh.position.x += p.vx * dt * 10;
+                p.mesh.position.y += p.vy * dt * 10;
+                p.mesh.position.z += p.vz * dt * 10;
+                p.vy -= 0.5; // 重力
+                p.life -= dt * (p.decay || 1.5); // 支持礼花自定义衰减速度
+                p.mesh.scale.setScalar(Math.max(p.life, 0.01));
+                if(p.life <= 0) {
+                    scene.remove(p.mesh);
+                    envElements.particles.splice(i, 1);
+                }
+            }
+
+            // A船反冲滑动
+            if (Math.abs(state.boatA_v) > 0.01) {
+                boatA.position.x += state.boatA_v * state.PPM * dt;
+                state.boatA_v *= 0.98; // 水阻尼
+            }
+
+            // 哪吒风火轮与呼吸细节动画
+            if(nezhaGroup) {
+                const headNode = nezhaGroup.userData.head;
+                if (headNode) headNode.rotation.x = Math.sin(time * 1.2) * 0.05; // 逼真的呼吸微动
+                
+                nezhaGroup.userData.wheelL.rotation.y += 0.2;
+                nezhaGroup.userData.wheelR.rotation.y -= 0.2;
+                
+                // 风火轮火焰物理灼烧动态缩放
+                const fl1L = nezhaGroup.userData.fl1L, fl2L = nezhaGroup.userData.fl2L;
+                const fl1R = nezhaGroup.userData.fl1R, fl2R = nezhaGroup.userData.fl2R;
+                if (fl1L && fl2L && fl1R && fl2R) {
+                    const sL = 1 + Math.sin(time * 12) * 0.22;
+                    fl1L.scale.set(sL, 1 + Math.sin(time * 15) * 0.3, sL);
+                    fl2L.scale.set(sL * 0.9, 1 + Math.cos(time * 13) * 0.3, sL * 0.9);
+                    
+                    const sR = 1 + Math.sin(time * 12 + 2) * 0.22;
+                    fl1R.scale.set(sR, 1 + Math.sin(time * 15 + 1) * 0.3, sR);
+                    fl2R.scale.set(sR * 0.9, 1 + Math.cos(time * 13 + 1) * 0.3, sR * 0.9);
+                }
+            }
+
+            // 飞行物理计算
+            if (state.currentBall) {
+                const b = state.currentBall;
+                b.t += dt;
+
+                b.x = b.x0 + b.v0x * b.t;
+                b.y = b.y0 + b.v0y * b.t - 0.5 * (state.g * state.PPM) * b.t * b.t;
+                
+                nezhaGroup.position.set(b.x, b.y, b.z);
+                b.pathCoords.push(new THREE.Vector3(b.x, b.y + 10, b.z)); // 记录轨迹点（腰部）
+                
+                // 飞行姿势 (接管骨骼，摆出超人平举姿势)
+                nezhaGroup.userData.armL.rotation.set(-Math.PI / 2, 0, -Math.PI / 6);
+                nezhaGroup.userData.armR.rotation.set(-Math.PI / 2, 0, Math.PI / 6);
+
+                // 落地检测，基准高度设为 1.05 (甲板厚度0.25 + 风火轮底部延伸0.8)
+                if (b.y <= 1.05) {
+                    b.y = 1.05;
+                    nezhaGroup.position.y = 1.05;
+                    
+                    // 恢复极其帅气的微曲手腕闲置姿势
+                    nezhaGroup.userData.armL.rotation.set(-0.2, 0, -0.65);
+                    nezhaGroup.userData.armR.rotation.set(-0.2, 0, 0.65);
+
+                    // 绘制轨迹实体线
+                    const lineGeo = new THREE.BufferGeometry().setFromPoints(b.pathCoords);
+                    const lineMat = new THREE.LineBasicMaterial({ color: 0xec4899, transparent: true, opacity: 0.6 });
+                    const trajLine = new THREE.Line(lineGeo, lineMat);
+                    scene.add(trajLine);
+                    state.trajectories.push(trajLine);
+
+                    // 目标落点修正为整艘B船的甲板范围。船体中心在 boatB.position.x
+                    const boatBCenterX = boatB.position.x; 
+                    
+                    const deckHalf = 36;
+                    const onDeck = Math.abs(b.x - boatBCenterX) <= deckHalf;
+                    const distM = ((b.x - (state.boatA_X0 + 30)) / state.PPM).toFixed(2);
+
+                    if (state.mode === 'challenge') {
+                        checkHit(b.x, boatBCenterX, onDeck, distM);
+                    } else {
+                        createHtmlLabel(`${distM} m`, b.x, 42, 0);
+                        if (onDeck) {
+                            spawnParticles(b.x, 0, 0, 0xfacc15);
+                            setObserve('ok', '登船', `水平射程约 ${distM} m；A 船已反冲后退。`);
+                        } else {
+                            spawnParticles(b.x, 0, 0, 0xffffff);
+                            setObserve('measured', '落水', `水平射程约 ${distM} m；可微调条件再试。`);
+                        }
+                        noteExploreAfterLanding(onDeck, distM);
+                    }
+
+                    state.currentBall = null;
+                    ui.btnLaunch.disabled = false;
+                }
+            }
+
+            updateLabels();
+            renderer.render(scene, camera);
+        }
+
+        function checkHit(landX, boatBCenterX, onDeck, distM) {
+            const deckHalfLength = 36;
+            const controls = snapControls();
+            if (onDeck) {
+                spawnFireworks(landX, 0, 0);
+                setObserve('ok', '登船', '水平射程约 ' + distM + ' m；命中目标船甲板。');
+                if (state.mode === 'challenge') {
+                    // QA：先锁 __challengeWon 防连点；约 0.95s 后再 emit win + craft-win
+                    window.__challengeWon = true;
+                    traceEmit('snapshot', { controls, winOk: true, hintKey: 'win' });
+                    setTimeout(function () {
+                        if (state.mode !== 'challenge' || !window.__challengeWon) return;
+                        traceEmit('win', { winOk: true, mode: 'challenge' });
+                        if (typeof window.__craftShowWin === 'function') {
+                            sessionEvidence.lastLanding = '登船 · 水平约 ' + distM + ' m';
+                            window.__craftShowWin({
+                                evidenceSummary: buildEvidenceSummary(sessionEvidence.lastLanding),
+                                physicsMeta: '相对速度 ' + state.v_rel + ' m/s · θ ' + state.angle + '° · m ' + state.massN + ' kg · M ' + state.massB + ' kg'
+                            });
+                        }
+                    }, 950);
+                } else {
+                    traceEmit('snapshot', { controls, winOk: false, hintKey: 'explore_hit' });
+                }
+            } else {
+                spawnParticles(landX, 0, 0, 0xffffff);
+                let diffM = 0;
+                let dir = '';
+                if (landX < boatBCenterX - deckHalfLength) {
+                    diffM = ((boatBCenterX - deckHalfLength - landX) / state.PPM).toFixed(1);
+                    dir = '偏近';
+                } else {
+                    diffM = ((landX - (boatBCenterX + deckHalfLength)) / state.PPM).toFixed(1);
+                    dir = '偏远';
+                }
+                setObserve('fail', '落水', `${dir}约 ${diffM} m（相对甲板边缘）；剩余 ${state.attempts} 次。`);
+                traceEmit('snapshot', { controls, winOk: false, hintKey: 'miss', dir, diffM });
+                if (state.attempts <= 0) {
+                    traceEmit('attempts_exhausted', { attempts: 0, mode: 'challenge' });
+                    traceEmit('snapshot', { controls, winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' });
+                    showMessage('机会用尽', '可切回探究对照后再开竞赛。', true, () => {});
+                }
+            }
+        }
+
+        function showMessage(title, desc, showBtn, callback) {
+            ui.msgTitle.textContent = title; ui.msgDesc.textContent = desc;
+            ui.msgBox.classList.add('is-open');
+            if (showBtn) {
+                ui.msgBtn.style.display = '';
+                ui.msgBtn.onclick = () => { ui.msgBox.classList.remove('is-open'); if (callback) callback(); };
+            }
+        }
+
+        window.addEventListener('load', checkDependencies);
+
+    </script>
+<script>
+(function(){
+  function emit(type, payload) {
+    try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload || {}); return; } } catch (e) {}
+    try { if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload || {}); } } catch (e) {}
+  }
+  window.__emit = emit;
+  window.__snapControls = snapControls;
+  document.addEventListener('DOMContentLoaded', function(){ emit('puzzle_open', {}); });
+})();
+</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script>(function(){ if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase(); })();</script>
+<script>
+(function(){
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, done: false });
+      g.n += 1;
+      var touched = window.__exploreAvTouched || {};
+      var avN = ['s-angle','s-v-rel','s-mass-n','s-mass-b'].filter(function(id){ return !!touched[id]; }).length;
+      if (g.done || g.n < 3 || avN < 2) return;
+      g.done = true;
+      var emit = emitFn || window.__emit;
+      if (typeof emit === 'function') emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: controls || {} });
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    if (ev && ev.detail && ev.detail.mode === 'explore') {
+      window.__exploreSuccessGate = { n: 0, done: false };
+      window.__exploreAvTouched = Object.create(null);
+      window.__exploreSuccessDone = false;
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  var back = document.getElementById('craftBackBtn');
+  var AV_LABELS = {
+    's-v-rel': '相对起跳船速度',
+    's-angle': '起跳角',
+    's-mass-n': '人物质量',
+    's-mass-b': '起跳船质量',
+    's-dist': '目标间距'
+  };
+
+  function setCraftSettleOpen(open) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function dominantAv() {
+    var se = window.__sessionEvidence;
+    if (!se || !se.tuneCounts) return null;
+    var bestId = null, bestN = 0;
+    Object.keys(se.tuneCounts).forEach(function (id) {
+      var n = se.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+
+  function updateAttrHint(selected) {
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = dominantAv();
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true;
+      hintEl.textContent = '';
+      return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+
+  function setCraftRevealVisible(visible) {
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+
+  function resetWinAttributionUi() {
+    var se = window.__sessionEvidence;
+    if (se) se.attribution = null;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+      el.checked = false;
+    });
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+  }
+
+  function emitAttributionSnapshot() {
+    var se = window.__sessionEvidence;
+    if (!window.__emit || !se || !se.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c,
+      winOk: true,
+      attribution: se.attribution,
+      evidenceSummary: se.evidenceSummary
+    });
+  }
+
+  if (btn) btn.addEventListener('click', function(){ if (intro) intro.hidden = true; });
+  window.__craftShowWin = function(payload){
+    var se = window.__sessionEvidence || {};
+    var summary = (payload && typeof payload === 'object' && payload.evidenceSummary)
+      || (typeof payload === 'string' ? payload : '')
+      || se.evidenceSummary
+      || '竞赛登船成功。';
+    se.evidenceSummary = summary;
+    var line = document.getElementById('craftEvidenceLine');
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + summary;
+    var meta = document.getElementById('craftEvidenceMeta');
+    if (meta) {
+      var metaTxt = payload && typeof payload === 'object' ? (payload.physicsMeta || '') : '';
+      if (metaTxt) {
+        meta.hidden = false;
+        meta.textContent = metaTxt;
+      } else {
+        meta.hidden = true;
+        meta.textContent = '';
+      }
+    }
+    resetWinAttributionUi();
+    if (win) win.hidden = false;
+    window.__craftWinOpen = true;
+    setCraftSettleOpen(true);
+  };
+  if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
+    if (win) win.hidden = true;
+    window.__craftWinOpen = false;
+    setCraftSettleOpen(false);
+    window.__challengeWon = false;
+    var ms = document.getElementById('modeSelect');
+    if (ms) { ms.value = 'explore'; ms.dispatchEvent(new Event('change')); }
+    try {
+      if (window.parent && window.parent !== window && window.parent.__platformTraceNewRound) {
+        window.parent.__platformTraceNewRound({ reason: 'craft_win_replay' });
+      } else if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'platform-trace-new-round', reason: 'craft_win_replay' }, '*');
+      }
+    } catch (e) {}
+  });
+  if (back) back.addEventListener('click', function(){
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'craft-back' }, '*'); } catch (e) {}
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (!el.checked) return;
+      var se = window.__sessionEvidence || (window.__sessionEvidence = {});
+      se.attribution = el.value;
+      setCraftRevealVisible(true);
+      updateAttrHint(el.value);
+      if (wbtn) wbtn.disabled = false;
+      emitAttributionSnapshot();
+    });
+  });
+})();
+</script>
+</body>
+</html>put[name="craftAttr"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (!el.checked) return;
+      var se = window.__sessionEvidence || (window.__sessionEvidence = {});
+      se.attribution = el.value;
+      setCraftRevealVisible(true);
+      updateAttrHint(el.value);
+      if (wbtn) wbtn.disabled = false;
+      emitAttributionSnapshot();
+    });
+  });
+})();
+</script>
+</body>
+</html>

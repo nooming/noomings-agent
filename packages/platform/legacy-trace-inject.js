@@ -145,7 +145,8 @@ function hasTraceHook(html) {
 }
 
 function hasWinEmit(html) {
-  return /(?:emit|emitFn|__emit|__traceHookEmit)\s*\(\s*['"]win['"]|PlatformTraceAdapter\.record\s*\(\s*['"]win['"]/.test(html)
+  // Include traceEmit / __traceEmit aliases used by craft pilots (e.g. nezha-boat-jump).
+  return /(?:\b(?:emit|emitFn|__emit|__traceEmit|__traceHookEmit|traceEmit)\s*\(\s*['"]win['"]|PlatformTraceAdapter\.record\s*\(\s*['"]win['"])/.test(html)
     || /legacy-win-bridge/.test(html);
 }
 

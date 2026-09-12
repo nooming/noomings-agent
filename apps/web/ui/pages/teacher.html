@@ -3322,6 +3322,7 @@ async function fetchTeacherPathSummaryOnce(session, phaseScope) {
   const body = {
     sessionId: session.sessionId,
     graphId: session.graphId,
+    packageId: session.packageId || session.catalogId || undefined,
     audience: 'teacher',
   };
   if (phaseScope) body.phaseScope = phaseScope;
