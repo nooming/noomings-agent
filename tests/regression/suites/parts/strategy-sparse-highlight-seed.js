@@ -119,6 +119,75 @@ function run() {
   assert(dualExp.edgeKeys.has('ModeSelect->ChallengeMode'), 'dual ModeSelect→ChallengeMode');
   assert(!dualExp.highlightNodes.includes('Trap'), 'dual does not light Trap sibling');
 
+  // ProbeCV sparse: ModeSelect + StrategySelect lit, but Explore/Challenge omitted
+  // (maxwell / gas / adiabatic confoundProbe gap — hub must not be an island)
+  const PROBE_MERMAID = [
+    'graph TD',
+    'Start --> ModeSelect{选择模式?}',
+    'ModeSelect -->|探究| Explore[探究对照 v_p 随 T·m]',
+    'ModeSelect -->|竞赛| Challenge[限次打特征区间]',
+    'Explore --> StrategySelect',
+    'Challenge --> StrategySelect{选择调参策略?}',
+    'StrategySelect -.->|试探·容器容积| ProbeCV',
+    'StrategySelect -->|单变量·温度| TStrat',
+    'ProbeCV --> ObserveCV{有无增益?}',
+    'ObserveCV -->|无增益| BackFromCV[回到主策略]',
+    'BackFromCV --> StrategySelect',
+    'TStrat --> Tune --> Fire --> Observe',
+  ].join('\n');
+  const probeSparse = {
+    id: 'confound_s_vol',
+    label: '试探·容器容积',
+    kind: 'confoundProbe',
+    highlightNodes: ['Start', 'ModeSelect', 'StrategySelect', 'ProbeCV', 'ObserveCV', 'BackFromCV'],
+    highlightEdges: [
+      ['Start', 'ModeSelect'],
+      ['StrategySelect', 'ProbeCV'],
+      ['ProbeCV', 'ObserveCV'],
+      ['ObserveCV', 'BackFromCV'],
+      ['BackFromCV', 'StrategySelect'],
+    ],
+  };
+  const probeExp = expandRouteHighlight(probeSparse, PROBE_MERMAID, {});
+  assert(probeExp.highlightNodes.includes('Explore'), 'probe sparse lights Explore');
+  assert(probeExp.highlightNodes.includes('Challenge'), 'probe sparse lights Challenge');
+  assert(probeExp.edgeKeys.has('Start->ModeSelect'), 'probe sparse Start→ModeSelect');
+  assert(probeExp.edgeKeys.has('ModeSelect->Explore'), 'probe sparse ModeSelect→Explore');
+  assert(probeExp.edgeKeys.has('ModeSelect->Challenge'), 'probe sparse ModeSelect→Challenge');
+  assert(probeExp.edgeKeys.has('Explore->StrategySelect'), 'probe sparse Explore→StrategySelect');
+  assert(probeExp.edgeKeys.has('Challenge->StrategySelect'), 'probe sparse Challenge→StrategySelect');
+  assert(!probeExp.highlightNodes.includes('TStrat'), 'probe sparse no TStrat bleed');
+
+  // Bare Mode{模式?} hub (nezha / projectile) also dual-lights both fans
+  const MODE_HUB_MERMAID = [
+    'graph TD',
+    'Start --> Mode{模式?}',
+    'Mode -->|探究| Explore',
+    'Mode -->|竞赛| Challenge',
+    'Explore --> StrategySelect',
+    'Challenge --> StrategySelect{选择调参策略?}',
+    'StrategySelect -.->|试探·摩擦| ProbeCV',
+    'ProbeCV --> ObserveCV --> BackFromCV --> StrategySelect',
+  ].join('\n');
+  const modeHubProbe = {
+    id: 'confound_CV1',
+    label: '试探·甲板摩擦系数',
+    kind: 'confoundProbe',
+    highlightNodes: ['Start', 'Mode', 'StrategySelect', 'ProbeCV', 'ObserveCV', 'BackFromCV'],
+    highlightEdges: [
+      ['Start', 'Mode'],
+      ['StrategySelect', 'ProbeCV'],
+      ['ProbeCV', 'ObserveCV'],
+      ['ObserveCV', 'BackFromCV'],
+      ['BackFromCV', 'StrategySelect'],
+    ],
+  };
+  const modeHubExp = expandRouteHighlight(modeHubProbe, MODE_HUB_MERMAID, {});
+  assert(modeHubExp.highlightNodes.includes('Explore'), 'Mode hub lights Explore');
+  assert(modeHubExp.highlightNodes.includes('Challenge'), 'Mode hub lights Challenge');
+  assert(modeHubExp.edgeKeys.has('Mode->Explore'), 'Mode→Explore');
+  assert(modeHubExp.edgeKeys.has('Mode->Challenge'), 'Mode→Challenge');
+
   const envOnly = {
     id: 'env_explore',
     label: '探究模式',
@@ -129,6 +198,52 @@ function run() {
   const envExp = expandRouteHighlight(envOnly, DUAL_MODE_MERMAID, {});
   assert(envExp.highlightNodes.includes('ExploreMode'), 'env-only keeps ExploreMode');
   assert(!envExp.highlightNodes.includes('ChallengeMode'), 'env-only does not force ChallengeMode');
+
+  // Route labels with parenthetical notes must still match StrategySelect |edge| text
+  // (regression: 「滑轮质量（改 I）」 vs 「滑轮质量·改I」 previously fell through to BFS
+  // that walked Observe→StrategySelect and wrongly hit M1Strat).
+  const PAREN_MERMAID = `
+graph TD
+Start --> ModeSelect
+ModeSelect --> StrategySelect{选择?}
+StrategySelect -->|单变量·左侧质量| M1Strat
+StrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat
+StrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat
+StrategySelect -->|多参盲调| Trap
+M1Strat --> Tune
+PulleyMStrat --> Tune
+ShapeStrat --> Tune
+Trap --> Tune
+Tune --> Fire
+Fire --> Observe
+Observe -->|未达标| StrategySelect
+Observe -->|达标| Win
+`;
+  const pulleyRoute = {
+    id: 'main_s-pulley-m',
+    label: '单变量·滑轮质量（改 I）',
+    highlightNodes: ['Start', 'ModeSelect', 'StrategySelect', 'PulleyMStrat', 'Tune', 'Fire', 'Observe', 'Win'],
+    highlightEdges: [
+      ['StrategySelect', 'PulleyMStrat'],
+      ['PulleyMStrat', 'Tune'],
+      ['Tune', 'Fire'],
+      ['Fire', 'Observe'],
+    ],
+  };
+  const pulleyExp = expandRouteHighlight(pulleyRoute, PAREN_MERMAID, {});
+  assert(pulleyExp.highlightNodes.includes('PulleyMStrat'), 'paren label keeps PulleyMStrat');
+  assert(!pulleyExp.highlightNodes.includes('M1Strat'), 'paren label does not bleed to M1Strat');
+  assert(pulleyExp.edgeKeys.has('StrategySelect->PulleyMStrat'), 'paren label select edge');
+
+  const shapeRoute = {
+    id: 'main_s-shape',
+    label: '单变量·滑轮形状（盘/环改 I）',
+    highlightNodes: ['Start', 'StrategySelect', 'ShapeStrat', 'Tune', 'Fire', 'Observe', 'Win'],
+    highlightEdges: [['StrategySelect', 'ShapeStrat'], ['ShapeStrat', 'Tune'], ['Tune', 'Fire']],
+  };
+  const shapeExp = expandRouteHighlight(shapeRoute, PAREN_MERMAID, {});
+  assert(shapeExp.highlightNodes.includes('ShapeStrat'), 'shape paren keeps ShapeStrat');
+  assert(!shapeExp.highlightNodes.includes('M1Strat'), 'shape paren no M1Strat bleed');
 
   console.log('strategy-sparse-highlight-seed-check: ok');
 }

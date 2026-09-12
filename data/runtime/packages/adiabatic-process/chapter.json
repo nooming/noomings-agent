@@ -257,7 +257,7 @@
   "strategy": {
     "title": "过程台 · 绝热与等温",
     "sub": "绝热过程做出特定功",
-    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察功 W?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打功带 W*]:::stratResult\nModeSelect -->|探究| Explore[探究对照绝热/等温]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·活塞配重| ProbeCV\nStrategySelect -->|单变量·初温| T0Strat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 W]\nTrap[多参盲调]\nT0Strat --> Tune[单变量调参]\nTrap --> Tune\nVStrat --> Tune[单变量调参]",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察功 W?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打功带 W*]:::stratResult\nModeSelect -->|探究| Explore[探究对照绝热/等温]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·活塞配重| ProbeCV\nStrategySelect -->|单变量·初温| T0Strat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 W]\nTrap[多参盲调]\nT0Strat --> Tune[单变量调参]\nTrap --> Tune\nVStrat --> Tune[单变量调参]\n",
     "routes": [
       {
         "id": "main",
@@ -427,7 +427,9 @@
           "Trap",
           "Tune",
           "Fire",
-          "Observe"
+          "Observe",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -453,6 +455,22 @@
           [
             "Observe",
             "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -472,7 +490,9 @@
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -493,6 +513,22 @@
           ],
           [
             "BackFromCV",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
             "StrategySelect"
           ]
         ],

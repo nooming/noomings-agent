@@ -269,7 +269,7 @@
   "strategy": {
     "title": "哪吒跳船",
     "sub": "动量守恒",
-    "mermaid": "graph TD\nStart --> Mode{模式?}:::stratCond\nMode -->|探究| Explore\nMode -->|竞赛| Challenge\nExplore --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|单变量·相对起跳船速度| VRelStrat\nStrategySelect -->|单变量·起跳角| AngleStrat\nStrategySelect -->|单变量·人物质量| MassNStrat\nStrategySelect -->|单变量·起跳船质量| MassBStrat\nStrategySelect -->|单变量·目标净空| DistStrat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·甲板摩擦系数| ProbeCV\nStrategySelect -.->|试探·目标船质量| ProbeCV2\nVRelStrat --> Tune --> Launch --> Observe{观察落点?}:::stratCond\nAngleStrat --> Tune\nMassNStrat --> Tune\nMassBStrat --> Tune\nDistStrat --> Tune\nTrap --> Tune\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nBackFromCV --> StrategySelect\nProbeCV2 --> ObserveCV2{有无增益?}:::stratCond\nObserveCV2 -->|无增益| BackFromCV2[回到主策略]:::stratCore\nBackFromCV2 --> StrategySelect\nObserve -->|登船/对照| Win[过关]:::stratResult\nObserve -->|未达标| StrategySelect\n",
+    "mermaid": "graph TD\nStart --> Mode{模式?}:::stratCond\nMode -->|探究| Explore\nMode -->|竞赛| Challenge\nExplore --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|单变量·相对起跳船速度| VRelStrat\nStrategySelect -->|单变量·起跳角| AngleStrat\nStrategySelect -->|单变量·人物质量| MassNStrat\nStrategySelect -->|单变量·起跳船质量| MassBStrat\nStrategySelect -->|单变量·目标净空| DistStrat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·甲板摩擦系数| ProbeCV\nStrategySelect -.->|试探·目标船质量| ProbeCV2\nVRelStrat --> Tune --> Launch --> Observe{观察落点?}:::stratCond\nAngleStrat --> Tune\nMassNStrat --> Tune\nMassBStrat --> Tune\nDistStrat --> Tune\nTrap --> Tune\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nBackFromCV --> StrategySelect\nProbeCV2 --> ObserveCV2{有无增益?}:::stratCond\nObserveCV2 -->|无增益| BackFromCV2[回到主策略]:::stratCore\nBackFromCV2 --> StrategySelect\nObserve -->|登船/对照| Win[过关]:::stratResult\nObserve -->|未达标| StrategySelect\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main",
@@ -329,6 +329,18 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -355,7 +367,9 @@
           "Tune",
           "Launch",
           "Observe",
-          "Win"
+          "Win",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -381,6 +395,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -407,7 +441,9 @@
           "Tune",
           "Launch",
           "Observe",
-          "Win"
+          "Win",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -433,6 +469,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -459,7 +515,9 @@
           "Tune",
           "Launch",
           "Observe",
-          "Win"
+          "Win",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -485,6 +543,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -512,7 +590,8 @@
           "Tune",
           "Launch",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -546,6 +625,18 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -569,7 +660,9 @@
           "Trap",
           "Tune",
           "Launch",
-          "Observe"
+          "Observe",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -591,6 +684,26 @@
           [
             "Launch",
             "Observe"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -610,7 +723,9 @@
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -632,6 +747,22 @@
           [
             "BackFromCV",
             "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": false
@@ -651,7 +782,9 @@
           "StrategySelect",
           "ProbeCV2",
           "ObserveCV2",
-          "BackFromCV2"
+          "BackFromCV2",
+          "Explore",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -672,6 +805,22 @@
           ],
           [
             "BackFromCV2",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "Mode",
+            "Challenge"
+          ],
+          [
+            "Challenge",
             "StrategySelect"
           ]
         ],

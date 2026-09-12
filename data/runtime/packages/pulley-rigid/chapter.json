@@ -236,7 +236,7 @@
   "strategy": {
     "title": "滑轮·刚体转动",
     "sub": "刚体转动 · I → α · a = Rα",
-    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察角加速度?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打角加速度带]:::stratResult\nModeSelect -->|探究| Explore[探究对照 α·盘/环]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·左侧质量| M1Strat\nStrategySelect -->|单变量·右侧质量| M2Strat\nStrategySelect -.->|试探·绳子粗细| ProbeCV\nStrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat\nStrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat\nStrategySelect -->|多参盲调| Trap\nTune --> Fire[释放测 α]\nM1Strat --> Tune\nM2Strat --> Tune\nPulleyMStrat --> Tune[单变量调参]\nShapeStrat --> Tune\nTrap --> Tune",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察角加速度?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打角加速度带]:::stratResult\nModeSelect -->|探究| Explore[探究对照 α·盘/环]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·左侧质量| M1Strat\nStrategySelect -->|单变量·右侧质量| M2Strat\nStrategySelect -.->|试探·绳子粗细| ProbeCV\nStrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat\nStrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat\nStrategySelect -->|多参盲调| Trap\nTune --> Fire[释放测 α]\nM1Strat --> Tune\nM2Strat --> Tune\nPulleyMStrat --> Tune[单变量调参]\nShapeStrat --> Tune\nTrap --> Tune\nTrap[多参盲调]\n",
     "routes": [
       {
         "id": "main_s-pulley-m",
@@ -261,7 +261,8 @@
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -295,6 +296,18 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -321,7 +334,9 @@
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -347,6 +362,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -373,7 +408,9 @@
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -399,6 +436,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -425,7 +482,9 @@
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -451,6 +510,26 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -474,7 +553,9 @@
           "Trap",
           "Tune",
           "Fire",
-          "Observe"
+          "Observe",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -496,6 +577,26 @@
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -515,7 +616,9 @@
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "Challenge",
+          "Explore"
         ],
         "highlightEdges": [
           [
@@ -536,6 +639,22 @@
           ],
           [
             "BackFromCV",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
             "StrategySelect"
           ]
         ],

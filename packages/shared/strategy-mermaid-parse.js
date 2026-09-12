@@ -344,7 +344,8 @@ function isSuccessBranchEdge(edge, resultIds) {
   }
 
   function isModeChoiceHub(id) {
-    return /ModeSelect|^Env$/i.test(String(id || ''));
+    // ModeSelect / Env / bare Mode{模式?} (nezha / projectile) — not ModeExplore*
+    return /^(ModeSelect|Mode|Env)$/i.test(String(id || ''));
   }
 
   /** Explore / Challenge (or 探究/竞赛 labels) — dual entry into shared StrategySelect. */
@@ -379,6 +380,9 @@ function isSuccessBranchEdge(edge, resultIds) {
   /**
    * Post-merge shared strategies: keep both ModeSelect→Explore* and ModeSelect→Challenge*
    * nodes/edges lit when the route already touches the mode hub / StrategySelect.
+   *
+   * Sparse ProbeCV / trap spines often list ModeSelect + StrategySelect but omit
+   * Explore/Challenge — still light both mode fans so the hub is not an island.
    */
   function ensureSharedModeDualEntry(nodeSet, keySet, edges, mermaidBody, route) {
     if (routeIsExclusiveModeEnvRoute(route)) return;
@@ -394,10 +398,18 @@ function isSuccessBranchEdge(edge, resultIds) {
       if (!isModeChoiceHub(from)) return;
       const modeOuts = outs.filter(e => isModeEntryNodeId(e.to, labels.get(e.to) || ''));
       if (modeOuts.length < 2) return;
+      const hubLit = nodeSet.has(from);
       const anyModeLit = modeOuts.some(e => nodeSet.has(e.to));
-      if (!anyModeLit && !nodeSet.has(from)) return;
-      if (!anyModeLit) return;
+      // Hub lit (with StrategySelect) OR any mode entry lit → light both fans.
+      // Do NOT require Explore/Challenge already in highlightNodes (ProbeCV gap).
+      if (!hubLit && !anyModeLit) return;
       nodeSet.add(from);
+      // Keep Start→hub on the spine when Start is already highlighted
+      edges.forEach(e => {
+        if (e.to === from && nodeSet.has(e.from) && /^Start$/i.test(e.from)) {
+          keySet.add(e.key);
+        }
+      });
       modeOuts.forEach(e => {
         nodeSet.add(e.to);
         keySet.add(e.key);
@@ -862,7 +874,10 @@ function isSuccessBranchEdge(edge, resultIds) {
       .replace(/\s*·\s*优先\d+(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*陷阱(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*旁路(?:\s*·\s*[\d.]+)?$/u, '')
-      .replace(/\s+/g, '')
+      // 「滑轮质量（改 I）」≈「滑轮质量·改I」；去掉分隔符后再比
+      .replace(/[（(]([^）)]*)[）)]/g, '·$1')
+      .replace(/[\/／]/g, '')
+      .replace(/[·•．.、，,\s]/g, '')
       .trim();
   }
 
@@ -885,14 +900,17 @@ function isSuccessBranchEdge(edge, resultIds) {
     if (want) {
       let hit = selectEdges.find(e => normalizeRouteLabelKey(e.label) === want);
       if (hit) return hit;
-      hit = selectEdges.find(e => {
-        const k = normalizeRouteLabelKey(e.label);
-        return k && want && (k.includes(want) || want.includes(k));
-      });
-      if (hit) return hit;
+      // Prefer longest fuzzy hit so short labels (e.g. 左侧质量) don't beat 滑轮质量·改I
+      const fuzzy = selectEdges
+        .map(e => ({ e, k: normalizeRouteLabelKey(e.label) }))
+        .filter(x => x.k && want && (x.k.includes(want) || want.includes(x.k)))
+        .sort((a, b) => b.k.length - a.k.length || a.e.label.length - b.e.label.length);
+      if (fuzzy.length) return fuzzy[0].e;
     }
     if (/trap|盲调|多参|多滑/i.test(String((route && route.id) || '') + String((route && route.label) || ''))) {
-      return selectEdges.find(e => /盲调|多参|trap|多滑/i.test(e.label || '')) || null;
+      return selectEdges.find(e => /盲调|多参|trap|多滑/i.test(e.label || '') && /^(Trap|TrapC|Trap2|TrapRoute)$/i.test(e.to))
+        || selectEdges.find(e => /盲调|多参|trap|多滑/i.test(e.label || ''))
+        || null;
     }
     const idm = String((route && route.id) || '').match(/^main[_-](.+)$/i);
     if (idm) {
@@ -911,6 +929,9 @@ function isSuccessBranchEdge(edge, resultIds) {
             }
             for (const nx of edges) {
               if (nx.from !== cur || seen.has(nx.to)) continue;
+              // Never walk back into StrategySelect — shared Observe→Select loops
+              // would otherwise invent sibling hits (PulleyMStrat via M1Strat→…→Select).
+              if (/StrategySelect/i.test(nx.to)) continue;
               if (preferSpineNodeScore(nx.to) < 0) continue;
               seen.add(nx.to);
               q.push(nx.to);

@@ -532,7 +532,9 @@
           "Win",
           "AdjustAngle",
           "Retry",
-          "AngleRoute"
+          "AngleRoute",
+          "AutoChallenge",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -590,6 +592,22 @@
           [
             "Retry",
             "Fire"
+          ],
+          [
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -619,7 +637,9 @@
           "AdjustLen",
           "Retry",
           "Win",
-          "LenRoute"
+          "LenRoute",
+          "AutoChallenge",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -665,6 +685,22 @@
           [
             "StrategySelect",
             "LenRoute"
+          ],
+          [
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -687,7 +723,9 @@
           "Observe",
           "AdjustLen",
           "Retry",
-          "TrapRoute"
+          "TrapRoute",
+          "AutoChallenge",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -729,6 +767,22 @@
           [
             "TrapRoute",
             "Fire"
+          ],
+          [
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
@@ -750,7 +804,9 @@
           "BackFromCV",
           "Start",
           "ModeSelect",
-          "Explore"
+          "Explore",
+          "AutoChallenge",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -779,6 +835,22 @@
           ],
           [
             "BackFromCV",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
             "StrategySelect"
           ]
         ],

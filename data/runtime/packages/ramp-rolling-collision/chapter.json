@@ -343,7 +343,7 @@
   "strategy": {
     "title": "工坊斜轨 · 碰撞与纯滚动",
     "sub": "斜坡滚球 · 高度探究",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustC[竞赛微调] --> FireC\nAdjustMass1 --> Fire\nAdjustMass2 --> Fire\nAdjustShape --> Fire\nAdjustSpeed --> Fire[发射]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：限次定高]:::stratResult\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nFireC[竞赛发射] --> ObserveC{竞赛观察?}:::stratCond\nModeChallenge --> FireC\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏高/冲出| Adjust[按观察单变量微调]\nObserve -->|偏低/不足| Adjust\nObserve -->|冲出| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|命中目标高度| Win\nObserveC -->|未命中| AdjustC\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|命中| WinC[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·初速度| AngleRoute[单变量·倾角]\nStrategySelect -->|单变量·入射质量| Mass1Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·靶球质量| Mass2Route[控制变量：每次只改一项]\nStrategySelect -.->|单变量·斜坡倾角| ProbeCV[试探·轨温]:::stratInvalid\nStrategySelect -->|单变量·靶球形状| ShapeRoute[离散·形状]\nStrategySelect -->|多参盲调| SpeedRoute[控制变量：每次只改一项]\nStrategySelect -->|多参盲调| Trap[多参盲调]\nTrap --> Fire\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整倾角]\nMass1Route --> AdjustMass1[调整入射质量]\nMass2Route --> AdjustMass2[调整靶球质量]\nRetry --> Adjust\nShapeRoute --> AdjustShape[切换形状]\nSpeedRoute --> AdjustSpeed[调整初速度]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustC[竞赛微调] --> FireC\nAdjustMass1 --> Fire\nAdjustMass2 --> Fire\nAdjustShape --> Fire\nAdjustSpeed --> Fire[发射]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：限次定高]:::stratResult\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nFireC[竞赛发射] --> ObserveC{竞赛观察?}:::stratCond\nModeChallenge --> FireC\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏高/冲出| Adjust[按观察单变量微调]\nObserve -->|偏低/不足| Adjust\nObserve -->|冲出| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|命中目标高度| Win\nObserveC -->|未命中| AdjustC\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|命中| WinC[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·初速度| SpeedRoute[单变量·初速度]\nStrategySelect -->|单变量·入射质量| Mass1Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·靶球质量| Mass2Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·斜坡倾角| AngleRoute[单变量·倾角]\nStrategySelect -->|单变量·靶球形状| ShapeRoute[离散·形状]\nStrategySelect -->|多参盲调| Trap[多参盲调]\nStrategySelect -.->|试探·轨温| ProbeCV[试探·轨温]:::stratInvalid\nTrap --> Fire\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整倾角]\nMass1Route --> AdjustMass1[调整入射质量]\nMass2Route --> AdjustMass2[调整靶球质量]\nRetry --> Adjust\nShapeRoute --> AdjustShape[切换形状]\nSpeedRoute --> AdjustSpeed[调整初速度]\n",
     "routes": [
       {
         "id": "main",
@@ -363,20 +363,16 @@
           "Start",
           "StrategySelect",
           "Env",
-          "ModeExplore",
+          "ModeChallenge",
+          "SpeedRoute",
           "AdjustSpeed",
           "Fire",
           "Observe",
-          "Retry",
+          "Win",
           "Adjust",
-          "AdjustMass1",
-          "AdjustMass2",
-          "AngleRoute",
-          "AdjustAngle",
-          "AdjustShape",
-          "Mass1Route",
-          "Mass2Route",
-          "ProbeCV"
+          "Retry",
+          "ModeExplore",
+          "WinC"
         ],
         "highlightEdges": [
           [
@@ -385,11 +381,19 @@
           ],
           [
             "Env",
-            "ModeExplore"
+            "ModeChallenge"
           ],
           [
-            "ModeExplore",
+            "ModeChallenge",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "SpeedRoute"
+          ],
+          [
+            "SpeedRoute",
+            "AdjustSpeed"
           ],
           [
             "AdjustSpeed",
@@ -398,6 +402,10 @@
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
           ],
           [
             "Observe",
@@ -412,54 +420,15 @@
             "Retry"
           ],
           [
-            "Retry",
-            "Adjust"
+            "Env",
+            "ModeExplore"
           ],
           [
-            "AdjustMass1",
-            "Fire"
-          ],
-          [
-            "AdjustMass2",
-            "Fire"
-          ],
-          [
-            "StrategySelect",
-            "AngleRoute"
-          ],
-          [
-            "AngleRoute",
-            "AdjustAngle"
-          ],
-          [
-            "AdjustAngle",
-            "Fire"
-          ],
-          [
-            "AdjustShape",
-            "Fire"
-          ],
-          [
-            "ModeChallenge",
+            "ModeExplore",
             "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "Mass1Route"
-          ],
-          [
-            "Mass1Route",
-            "AdjustMass1"
-          ],
-          [
-            "StrategySelect",
-            "Mass2Route"
-          ],
-          [
-            "StrategySelect",
-            "ProbeCV"
           ]
-        ]
+        ],
+        "highlightFailureBranches": true
       },
       {
         "id": "main_s-mass1",
@@ -646,6 +615,7 @@
           "StrategySelect",
           "Env",
           "ModeChallenge",
+          "AngleRoute",
           "AdjustAngle",
           "Fire",
           "Observe",
@@ -667,6 +637,14 @@
           [
             "ModeChallenge",
             "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "AngleRoute"
+          ],
+          [
+            "AngleRoute",
+            "AdjustAngle"
           ],
           [
             "AdjustAngle",
@@ -699,10 +677,6 @@
           [
             "ModeExplore",
             "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "ProbeCV"
           ]
         ],
         "highlightFailureBranches": true
@@ -725,7 +699,16 @@
           "Start",
           "StrategySelect",
           "Env",
-          "ProbeCV"
+          "ModeChallenge",
+          "ShapeRoute",
+          "AdjustShape",
+          "Fire",
+          "Observe",
+          "Win",
+          "Adjust",
+          "Retry",
+          "ModeExplore",
+          "WinC"
         ],
         "highlightEdges": [
           [
@@ -733,8 +716,52 @@
             "Env"
           ],
           [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
+          ],
+          [
             "StrategySelect",
-            "ProbeCV"
+            "ShapeRoute"
+          ],
+          [
+            "ShapeRoute",
+            "AdjustShape"
+          ],
+          [
+            "AdjustShape",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Env",
+            "ModeExplore"
+          ],
+          [
+            "ModeExplore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -753,14 +780,15 @@
         "weight": 0.2,
         "highlightNodes": [
           "Start",
-          "Env",
-          "ModeExplore",
           "StrategySelect",
+          "Env",
+          "Trap",
           "Fire",
           "Observe",
           "Adjust",
           "Retry",
-          "SpeedRoute"
+          "ModeChallenge",
+          "ModeExplore"
         ],
         "highlightEdges": [
           [
@@ -768,12 +796,12 @@
             "Env"
           ],
           [
-            "Env",
-            "ModeExplore"
+            "StrategySelect",
+            "Trap"
           ],
           [
-            "ModeExplore",
-            "StrategySelect"
+            "Trap",
+            "Fire"
           ],
           [
             "Fire",
@@ -792,16 +820,20 @@
             "Retry"
           ],
           [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
             "ModeChallenge",
             "StrategySelect"
           ],
           [
-            "StrategySelect",
-            "SpeedRoute"
+            "Env",
+            "ModeExplore"
           ],
           [
-            "Env",
-            "ModeChallenge"
+            "ModeExplore",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -821,7 +853,8 @@
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV"
+          "BackFromCV",
+          "ModeChallenge"
         ],
         "highlightEdges": [
           [
@@ -851,10 +884,17 @@
           [
             "BackFromCV",
             "StrategySelect"
+          ],
+          [
+            "Env",
+            "ModeChallenge"
+          ],
+          [
+            "ModeChallenge",
+            "StrategySelect"
           ]
         ],
-        "highlightFailureBranches": true,
-        "priorityRank": 6
+        "highlightFailureBranches": false
       }
     ]
   },

@@ -246,8 +246,31 @@ function repairStrategyRouteHighlights(chapter) {
     if (routeIsTrueMisconceptionRoute(route, mermaidBody)) return route;
 
     const isConfound = route.kind === 'confoundProbe' || /试探(?:混淆)?[·•.]/.test(route.label || '');
-    // Still repair sparse confound loops; skip only when already complete
-    if (isConfound && !routeNeedsSpineSeed(route)) return route;
+    // Still repair sparse confound loops; for already-complete confound, only
+    // merge mode-gateway dual entry (Explore/Challenge) so hubs are not islands.
+    if (isConfound && !routeNeedsSpineSeed(route)) {
+      const expanded = expandRouteHighlight(route, mermaidBody, { resultKgIds });
+      const modeNodeRe = /^(ModeSelect|Mode|Env|Explore\w*|Challenge\w*|ModeExplore|ModeChallenge|AutoChallenge)$/i;
+      const modeNodes = (expanded.highlightNodes || []).filter(id => modeNodeRe.test(id));
+      const modeEdgePairs = [...(expanded.edgeKeys || [])]
+        .map(k => {
+          const j = k.indexOf('->');
+          return j > 0 ? [k.slice(0, j), k.slice(j + 2)] : null;
+        })
+        .filter(p => p && (modeNodeRe.test(p[0]) || modeNodeRe.test(p[1]) || /^Start$/i.test(p[0])));
+      if (!modeNodes.length && !modeEdgePairs.length) return route;
+      const highlightNodes = [...new Set([...(route.highlightNodes || []), ...modeNodes])];
+      const highlightEdges = mergeHighlightEdges(route.highlightEdges, modeEdgePairs);
+      const changed = highlightNodes.length !== (route.highlightNodes || []).length
+        || highlightEdges.length !== (route.highlightEdges || []).length;
+      if (!changed) return route;
+      return {
+        ...route,
+        highlightFailureBranches: false,
+        highlightNodes,
+        highlightEdges,
+      };
+    }
 
     const expanded = expandRouteHighlight(route, mermaidBody, { resultKgIds });
     // Never persist ProbeCV bleed onto AV / trap routes
@@ -281,6 +304,8 @@ function repairStrategyRouteHighlights(chapter) {
           if (/^Continue\d*$/i.test(id)) return true;
           if (/^Retry[A-Za-z]*\d*$/i.test(id)) return true;
           if (/^(Fire|Launch|Tune|Observe|Check|Single|Route)/i.test(id)) return true;
+          // Persist mode gateway (Explore/Challenge) filled by ensureSharedModeDualEntry
+          if (/^(ModeSelect|Mode|Env)$/i.test(id) || /Explore|Challenge/i.test(id)) return true;
           if (selectEdge && (id === selectEdge.to || id === selectEdge.from)) return true;
           return origSet.has(id);
         }),

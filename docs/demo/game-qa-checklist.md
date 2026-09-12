@@ -121,11 +121,20 @@
 - [ ] **探究文案**不点名有效旋钮（勿写「拧 V、T₀」这类）
 - [ ] **竞赛反剧透**：测前「待测」、拖动中不直播胜负量；**测后必须给实测值**（P≈ / W≈ / v_p≈ / |α|≈…）+ 短相对提示（偏低/偏高/已落入），禁止以「未入 / 入带」作为主结果
 
+### 图谱高亮（策略全景）
+
+历史同类问题多次出现（稀疏种子、假相同高亮、CV 旁路错挂、route 标签与 Mermaid 边不一致）。可复跑：`node tests/scripts/audit-strategy-highlight-cv.js`（报告写到 `data/runtime/analysis/reports/`）。点选每条「单变量· / 多参 / 试探」后核对：
+
+- [ ] **入口唯一**：高亮只含本路由的 StrategySelect 扇出目标（`*Strat` / `*Route` / `Trap` / `ProbeCV*`），不串到兄弟支路
+- [ ] **主链完整**：单变量路径能亮到 Tune/Adjust → Fire/Launch → Observe（勿只剩 Start/Select/Win）
+- [ ] **CV 旁路**：`试探·*` 走虚线 ProbeCV，**不要**把 AV 边（如倾角）错接到 ProbeCV；confound 路由勿占 `priorityRank` 主序列
+- [ ] **标签对齐**：`routes[].label` 与 Mermaid `|边标签|` 可匹配（括号注记如「（改 I）」须能对上「·改I」）；改 chapter 后须 `writePriorityGraphFiles` 重导 `图谱.html` 并 `sync:packages-samples`
+
 ### 分关补丁核对
 
 - [ ] **绝热竞赛**：判定用特定功 **W\***（非仅对 \((V,P)\) 点）
 - [ ] **气压 CV**：为**容器质量**，非器壁纹理
-- [ ] **斜坡**：轨温（CV）**不打断** m₁/m₂ 靶球卡合理顺序
+- [ ] **斜坡**：轨温（CV）**不打断** m₁/m₂ 靶球卡合理顺序；策略图「初速度 / 倾角 / 形状 / 试探·轨温」扇出勿错挂
 - [ ] （可选）**斜抛**：质量→半径落地微泄漏已修或可接受
 
 ### 学情 / 平台（短列；详查见课堂清单）
