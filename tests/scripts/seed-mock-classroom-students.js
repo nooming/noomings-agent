@@ -8,7 +8,11 @@
 const fs = require('fs');
 const path = require('path');
 const { getTracesRoot } = require('../../packages/platform/paths');
-const { listTraceStudents } = require('../../packages/platform/trace-store');
+const {
+  listTraceStudents,
+  rebuildTracesIndex,
+  DEFAULT_CLASS_DIR,
+} = require('../../packages/platform/trace-store');
 
 const STUDENT_COUNT = 30;
 const CATALOGS = [
@@ -21,18 +25,35 @@ const CATALOGS = [
 ];
 
 const OUTCOMES = ['pass', 'exhausted_fail', 'incomplete'];
+const MOCK_FILE_RE = /^sess-mock-ui-\d+-\d+\.json$/;
 
 function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
 function mockFiles(root) {
-  return fs.readdirSync(root).filter(f => /^sess-mock-ui-\d+-\d+\.json$/.test(f));
+  const out = [];
+  function walk(dir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      if (!ent.name || ent.name.startsWith('.')) continue;
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(full);
+      else if (ent.isFile() && MOCK_FILE_RE.test(ent.name)) out.push(full);
+    }
+  }
+  walk(root);
+  return out;
 }
 
 function cleanMock(root) {
   const files = mockFiles(root);
-  for (const f of files) fs.unlinkSync(path.join(root, f));
+  for (const f of files) fs.unlinkSync(f);
   return files.length;
 }
 
@@ -244,6 +265,7 @@ function main() {
 
   if (process.argv.includes('--clean')) {
     const n = cleanMock(root);
+    rebuildTracesIndex();
     console.log(`cleaned ${n} mock files under ${root}`);
     return;
   }
@@ -256,6 +278,8 @@ function main() {
   let written = 0;
   const byOutcome = { pass: 0, exhausted_fail: 0, incomplete: 0 };
   let judged = 0;
+  const classDir = path.join(root, DEFAULT_CLASS_DIR);
+  fs.mkdirSync(classDir, { recursive: true });
 
   for (let i = 1; i <= STUDENT_COUNT; i++) {
     const rounds = 2 + ((i * 3) % 4); // 2..5
@@ -263,11 +287,13 @@ function main() {
       const row = buildSession({ studentIndex: i, round: r, totalRounds: rounds, nowBase });
       byOutcome[row.terminalOutcome] = (byOutcome[row.terminalOutcome] || 0) + 1;
       if (row.judgeResult) judged += 1;
-      const file = path.join(root, `${row.sessionId}.json`);
+      const file = path.join(classDir, `${row.sessionId}.json`);
       fs.writeFileSync(file, JSON.stringify(row, null, 2), 'utf8');
       written += 1;
     }
   }
+
+  rebuildTracesIndex();
 
   const students = listTraceStudents({ limit: 100 });
   const mockStudents = students.filter(s => /^模拟\d+$/.test(s.studentLabel || s.studentKey));

@@ -584,6 +584,11 @@ let playUrlIndexItems = [];
 let publishPairItems = [];
 let detailRequestSeq = 0;
 let judgingSessionId = null;
+/** 学情列表 15s 轮询；离开/隐藏页时清掉，避免拖慢回首页 */
+let sessionsPollTimer = null;
+const SESSIONS_POLL_MS = 15000;
+/** 学情 stats/students 进行中请求；离开时 abort，避免与导航抢带宽 */
+let sessionsDataAbort = null;
 let filterGraphInitialized = false;
 /** 上次成功渲染详情的学生；同学生切换会话时用于恢复 #sessionDetail 滚动位置 */
 let lastDetailRenderedStudentKey = null;
@@ -1799,15 +1804,16 @@ function applyStatsFromStudents(items, lastActivityAt) {
   document.getElementById('statsSub').textContent = sub.join('');
 }
 
-async function loadStats() {
+async function loadStats(signal) {
   const params = filterParams();
   params.delete('status');
   params.delete('q');
-  const r = await fetch('/api/platform/traces/stats?' + params.toString());
+  const fetchOpts = signal ? { signal } : undefined;
+  const r = await fetch('/api/platform/traces/stats?' + params.toString(), fetchOpts);
   const data = await r.json();
   const s = data.stats || {};
   if (hidePlaytestEnabled()) {
-    const sr = await fetch('/api/platform/traces/students?' + studentsQueryParams(params).toString());
+    const sr = await fetch('/api/platform/traces/students?' + studentsQueryParams(params).toString(), fetchOpts);
     const sd = await sr.json();
     const items = filterOutPlaytestStudents(sd.items || []);
     applyStatsFromStudents(items, s.lastActivityAt);
@@ -2496,7 +2502,8 @@ function renderStudentList() {
 }
 
 async function loadStudents(options = {}) {
-  const r = await fetch('/api/platform/traces/students?' + studentsQueryParams().toString());
+  const fetchOpts = options.signal ? { signal: options.signal } : undefined;
+  const r = await fetch('/api/platform/traces/students?' + studentsQueryParams().toString(), fetchOpts);
   const data = await r.json();
   const rawItems = data.items || [];
   const limitUsed = Number(data.limit) || STUDENTS_LIST_LIMIT;
@@ -3558,9 +3565,57 @@ async function loadSessionDetail(sessionId) {
   }).catch(() => {});
 }
 
+function abortSessionsDataFetches() {
+  if (sessionsDataAbort) {
+    sessionsDataAbort.abort();
+    sessionsDataAbort = null;
+  }
+}
+
+function stopSessionsPolling() {
+  if (sessionsPollTimer != null) {
+    clearInterval(sessionsPollTimer);
+    sessionsPollTimer = null;
+  }
+}
+
+function startSessionsPolling() {
+  stopSessionsPolling();
+  if (document.hidden) return;
+  sessionsPollTimer = setInterval(() => {
+    if (!judgingSessionId) loadSessionsData({ skipDetail: !!selectedSessionId });
+  }, SESSIONS_POLL_MS);
+}
+
+/** 离开教师页 / 点回首页前：停轮询并中止进行中的学情请求 */
+function pauseTeacherPageActivity() {
+  stopSessionsPolling();
+  abortSessionsDataFetches();
+}
+
+function isHomeNavAnchor(el) {
+  const a = el?.closest?.('a');
+  if (!a || !a.getAttribute('href')) return false;
+  if (a.classList.contains('platform-brand')) return true;
+  try {
+    const url = new URL(a.href, location.href);
+    return url.origin === location.origin && (url.pathname === '/' || url.pathname === '');
+  } catch {
+    return false;
+  }
+}
+
 async function loadSessionsData(options = {}) {
-  await loadStats();
-  await loadStudents(options);
+  abortSessionsDataFetches();
+  sessionsDataAbort = new AbortController();
+  const signal = sessionsDataAbort.signal;
+  try {
+    await loadStats(signal);
+    await loadStudents({ ...options, signal });
+  } catch (e) {
+    if (e?.name === 'AbortError') return;
+    throw e;
+  }
 }
 
 async function judgeSession(sessionId, mode = 'rules') {
@@ -3963,9 +4018,21 @@ document.getElementById('toggleCategoryMgmt')?.addEventListener('click', () => {
   const panel = document.getElementById('categoryMgmtPanel');
   if (panel) panel.hidden = !panel.hidden;
 });
-setInterval(() => {
-  if (!judgingSessionId) loadSessionsData({ skipDetail: !!selectedSessionId });
-}, 15000);
+document.addEventListener('click', (e) => {
+  if (isHomeNavAnchor(e.target)) pauseTeacherPageActivity();
+}, true);
+document.addEventListener('pagehide', pauseTeacherPageActivity);
+document.addEventListener('beforeunload', pauseTeacherPageActivity);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopSessionsPolling();
+    abortSessionsDataFetches();
+  } else {
+    startSessionsPolling();
+    if (!judgingSessionId) loadSessionsData({ skipDetail: !!selectedSessionId });
+  }
+});
+startSessionsPolling();
 </script>
 </body>
 </html>

@@ -14,7 +14,7 @@ function traceDeleteCheck() {
   try {
     const r1 = deleteTraceSessions([sessionId]);
     assert(r1.ok && r1.count === 1, 'delete one session');
-    assert(!fs.existsSync(file), 'session file removed');
+    assert(!fs.existsSync(file), 'legacy flat path gone (migrated or deleted)');
     assert(!getTraceSession(sessionId), 'getTraceSession returns null');
 
     const r2 = deleteTraceSessions([sessionId, '../evil', 'bad-id']);

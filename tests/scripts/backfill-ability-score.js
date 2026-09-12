@@ -554,10 +554,25 @@ function findAlternateTraceRoots(primary) {
 
 function listSessionFiles(tracesRoot) {
   if (!fs.existsSync(tracesRoot)) return [];
-  return fs.readdirSync(tracesRoot)
-    .filter((f) => f.endsWith('.json') && f.startsWith('sess-'))
-    .map((f) => path.join(tracesRoot, f))
-    .sort();
+  const files = [];
+  function walk(dir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      if (!ent.name || ent.name.startsWith('.')) continue;
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(full);
+      else if (ent.isFile() && /^sess-[a-zA-Z0-9-]+\.json$/.test(ent.name)) {
+        files.push(full);
+      }
+    }
+  }
+  walk(tracesRoot);
+  return files.sort();
 }
 
 function main() {

@@ -8,8 +8,7 @@ const {
   cloneTraceEvents,
   listPresentWinProgressKeys,
 } = require('../../../../packages/platform/trace-win-fields');
-const { ingestTrace, getTraceSession } = require('../../../../packages/platform/trace-store');
-const { getTracesRoot } = require('../../../../packages/platform/paths');
+const { ingestTrace, getTraceSession, deleteTraceSessions } = require('../../../../packages/platform/trace-store');
 
 function run() {
   const winPayload = {
@@ -73,8 +72,7 @@ function run() {
   assert(/interim:\s*interim/.test(cannonHtml) || /interim:\s*interim,/.test(cannonHtml), 'cannon emits interim');
 
   try {
-    const file = path.join(getTracesRoot(), `${sessionId}.json`);
-    if (fs.existsSync(file)) fs.unlinkSync(file);
+    deleteTraceSessions([sessionId]);
   } catch (_) { /* ignore */ }
 
   console.log('trace-win-progress-persist: OK', { persisted: present });

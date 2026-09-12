@@ -16,6 +16,17 @@ const { validateStudentId } = require('./student-identity');
 /** Per-sessionId serial queue — avoids concurrent RMW clobbering the same JSON. */
 const sessionWriteQueues = new Map();
 
+/** sess-*.json basename (same charset as deleteTraceSessions). */
+const SESS_TRACE_FILE_RE = /^sess-[a-zA-Z0-9-]+\.json$/;
+const SESSION_ID_RE = /^sess-[a-zA-Z0-9-]+$/;
+const INDEX_FILENAME = '.traces-index.json';
+const DEFAULT_CLASS_DIR = '_default';
+const INDEX_VERSION = 1;
+
+/** Process-local index cache (Zeabur typically single instance). */
+let indexCache = null;
+let tracesBootstrapped = false;
+
 function enqueueSessionWrite(sessionId, fn) {
   const key = String(sessionId || '');
   const prev = sessionWriteQueues.get(key) || Promise.resolve();
@@ -34,8 +45,257 @@ function enqueueSessionWrite(sessionId, fn) {
   return run;
 }
 
+/**
+ * Sanitize classCode for use as a directory name under traces/.
+ * Empty / missing → `_default`.
+ */
+function sanitizeClassDir(classCode) {
+  const raw = String(classCode || '').trim();
+  if (!raw) return DEFAULT_CLASS_DIR;
+  const safe = raw
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return safe || DEFAULT_CLASS_DIR;
+}
+
+function indexFilePath() {
+  return path.join(getTracesRoot(), INDEX_FILENAME);
+}
+
+function relPathForSession(sessionId, classCode) {
+  const dir = sanitizeClassDir(classCode);
+  return `${dir}/${sessionId}.json`.replace(/\\/g, '/');
+}
+
+function collectSessionFiles(root) {
+  const out = [];
+  function walk(dir, relBase) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      if (!ent.name || ent.name.startsWith('.')) continue;
+      const full = path.join(dir, ent.name);
+      const rel = relBase ? `${relBase}/${ent.name}` : ent.name;
+      if (ent.isDirectory()) {
+        walk(full, rel.replace(/\\/g, '/'));
+      } else if (ent.isFile() && SESS_TRACE_FILE_RE.test(ent.name)) {
+        out.push({ full, rel: rel.replace(/\\/g, '/') });
+      }
+    }
+  }
+  walk(root, '');
+  return out;
+}
+
+/**
+ * One-time: move legacy flat `traces/sess-*.json` into `traces/{classCode}/`.
+ * @returns {boolean} whether any file was moved/removed
+ */
+function migrateLegacyFlatSessions() {
+  const root = getTracesRoot();
+  let names;
+  try {
+    names = fs.readdirSync(root);
+  } catch {
+    return false;
+  }
+  let changed = false;
+  for (const name of names) {
+    if (!SESS_TRACE_FILE_RE.test(name)) continue;
+    const full = path.join(root, name);
+    let st;
+    try {
+      st = fs.statSync(full);
+    } catch {
+      continue;
+    }
+    if (!st.isFile()) continue;
+    let record;
+    try {
+      record = JSON.parse(fs.readFileSync(full, 'utf8'));
+    } catch {
+      continue;
+    }
+    const rel = relPathForSession(
+      record.sessionId || name.replace(/\.json$/i, ''),
+      record.classCode,
+    );
+    const dest = path.join(root, ...rel.split('/'));
+    if (path.resolve(dest) === path.resolve(full)) continue;
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    if (fs.existsSync(dest)) {
+      try {
+        fs.unlinkSync(full);
+        changed = true;
+      } catch { /* ignore */ }
+      continue;
+    }
+    try {
+      fs.renameSync(full, dest);
+      changed = true;
+    } catch {
+      try {
+        fs.copyFileSync(full, dest);
+        fs.unlinkSync(full);
+        changed = true;
+      } catch { /* skip */ }
+    }
+  }
+  return changed;
+}
+
+function buildIndexEntry(record, relPath) {
+  const terminalOutcome = record.terminalOutcome
+    || deriveTerminalOutcome(record)
+    || null;
+  return {
+    sessionId: record.sessionId,
+    relPath: String(relPath || '').replace(/\\/g, '/'),
+    catalogId: record.catalogId || null,
+    graphId: record.graphId || null,
+    studentLabel: record.studentLabel || '匿名学生',
+    studentId: record.studentId || null,
+    taskCode: record.taskCode || record.catalogId || null,
+    classCode: record.classCode || null,
+    ch: record.ch,
+    startedAt: record.startedAt || null,
+    createdAt: record.createdAt || record.startedAt || null,
+    updatedAt: record.updatedAt || null,
+    eventCount: record.eventCount || record.events?.length || 0,
+    judged: !!record.judgeResult,
+    judgeResult: record.judgeResult || null,
+    variableAdjustCounts: record.variableAdjustCounts || null,
+    strategyPathSummary: record.strategyPathSummary || null,
+    strategyPathSummaryExplore: record.strategyPathSummaryExplore || null,
+    strategyPathByPhase: record.strategyPathByPhase || null,
+    scoredPhase: record.strategyPathSummary?.scoredPhase || null,
+    currentPhase: record.currentPhase || null,
+    abilityScore: record.abilityScore || null,
+    attemptsExhausted: record.attemptsExhausted === true,
+    terminalOutcome,
+  };
+}
+
+function writeIndexToDisk(index) {
+  const root = getTracesRoot();
+  fs.mkdirSync(root, { recursive: true });
+  const finalPath = indexFilePath();
+  const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
+  const payload = {
+    version: INDEX_VERSION,
+    updatedAt: new Date().toISOString(),
+    sessions: index.sessions || {},
+  };
+  const json = JSON.stringify(payload, null, 2);
+  fs.writeFileSync(tmpPath, json, 'utf8');
+  try {
+    fs.renameSync(tmpPath, finalPath);
+  } catch {
+    try {
+      fs.writeFileSync(finalPath, json, 'utf8');
+    } finally {
+      try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+    }
+  }
+  indexCache = payload;
+  return indexCache;
+}
+
+function rebuildTracesIndex() {
+  const root = getTracesRoot();
+  fs.mkdirSync(root, { recursive: true });
+  const files = collectSessionFiles(root);
+  const sessions = {};
+  for (const { full, rel } of files) {
+    try {
+      const record = JSON.parse(fs.readFileSync(full, 'utf8'));
+      if (!record || !record.sessionId) continue;
+      sessions[record.sessionId] = buildIndexEntry(record, rel);
+    } catch { /* skip corrupt */ }
+  }
+  return writeIndexToDisk({ sessions });
+}
+
+function loadIndexFromDisk() {
+  const p = indexFilePath();
+  if (!fs.existsSync(p)) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (!data || typeof data !== 'object' || typeof data.sessions !== 'object') return null;
+    indexCache = {
+      version: data.version || INDEX_VERSION,
+      updatedAt: data.updatedAt || null,
+      sessions: data.sessions || {},
+    };
+    return indexCache;
+  } catch {
+    return null;
+  }
+}
+
+function getIndex() {
+  ensureTracesRoot();
+  if (indexCache) return indexCache;
+  const loaded = loadIndexFromDisk();
+  if (loaded) return loaded;
+  return rebuildTracesIndex();
+}
+
+function upsertIndexEntry(record, relPath) {
+  const index = getIndex();
+  if (!record?.sessionId) return;
+  index.sessions[record.sessionId] = buildIndexEntry(record, relPath);
+  writeIndexToDisk(index);
+}
+
+function removeIndexEntry(sessionId) {
+  const index = getIndex();
+  const id = String(sessionId || '');
+  if (!id || !index.sessions[id]) return;
+  delete index.sessions[id];
+  writeIndexToDisk(index);
+}
+
+/**
+ * Resolve absolute path of an existing session file (index → legacy flat → scan).
+ */
+function resolveSessionFile(sessionId) {
+  ensureTracesRoot();
+  const id = String(sessionId || '');
+  if (!id) return null;
+  const index = getIndex();
+  const entry = index.sessions?.[id];
+  if (entry?.relPath) {
+    const full = path.join(getTracesRoot(), ...entry.relPath.split('/'));
+    if (fs.existsSync(full)) return full;
+  }
+  const flat = path.join(getTracesRoot(), `${id}.json`);
+  if (fs.existsSync(flat)) return flat;
+  const files = collectSessionFiles(getTracesRoot());
+  const hit = files.find(f => path.basename(f.full) === `${id}.json`);
+  return hit ? hit.full : null;
+}
+
+function sessionPath(sessionId, classCode) {
+  const existing = resolveSessionFile(sessionId);
+  if (existing) return existing;
+  return path.join(getTracesRoot(), ...relPathForSession(sessionId, classCode).split('/'));
+}
+
 function writeSessionAtomic(sessionId, record) {
-  const finalPath = sessionPath(sessionId);
+  ensureTracesRoot();
+  const id = String(sessionId || record?.sessionId || '');
+  const relPath = relPathForSession(id, record?.classCode);
+  const finalPath = path.join(getTracesRoot(), ...relPath.split('/'));
+  fs.mkdirSync(path.dirname(finalPath), { recursive: true });
+
+  const prevRel = getIndex().sessions?.[id]?.relPath || null;
   const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   const json = JSON.stringify(record, null, 2);
   fs.writeFileSync(tmpPath, json, 'utf8');
@@ -49,18 +309,39 @@ function writeSessionAtomic(sessionId, record) {
       try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
     }
   }
+
+  if (prevRel && prevRel !== relPath) {
+    const oldFull = path.join(getTracesRoot(), ...prevRel.split('/'));
+    if (path.resolve(oldFull) !== path.resolve(finalPath) && fs.existsSync(oldFull)) {
+      try { fs.unlinkSync(oldFull); } catch { /* ignore */ }
+    }
+  }
+  upsertIndexEntry(record, relPath);
 }
 
 function ensureTracesRoot() {
-  fs.mkdirSync(getTracesRoot(), { recursive: true });
+  const root = getTracesRoot();
+  fs.mkdirSync(root, { recursive: true });
+  // Always scan top-level for legacy flat sess-*.json (cheap; covers post-boot writes).
+  const migrated = migrateLegacyFlatSessions();
+  if (!tracesBootstrapped) {
+    tracesBootstrapped = true;
+    if (migrated) {
+      rebuildTracesIndex();
+    } else if (!loadIndexFromDisk()) {
+      rebuildTracesIndex();
+    }
+    return;
+  }
+  if (migrated) {
+    rebuildTracesIndex();
+  } else if (!indexCache && !loadIndexFromDisk()) {
+    rebuildTracesIndex();
+  }
 }
 
 function makeSessionId() {
   return `sess-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function sessionPath(sessionId) {
-  return path.join(getTracesRoot(), `${sessionId}.json`);
 }
 
 function resolveControlMeta(chapter, controlId) {
@@ -213,8 +494,9 @@ function ingestTrace(body) {
 
   let record;
   const existingId = body.sessionId ? String(body.sessionId) : null;
-  if (existingId && fs.existsSync(sessionPath(existingId))) {
-    record = JSON.parse(fs.readFileSync(sessionPath(existingId), 'utf8'));
+  const existingFile = existingId ? resolveSessionFile(existingId) : null;
+  if (existingFile) {
+    record = JSON.parse(fs.readFileSync(existingFile, 'utf8'));
     // Tip-only / append on existing session: allow missing studentId if already stored
     if (!record.studentId && !studentId) {
       return { ok: false, error: 'student_id_required', message: idCheck.message || 'student_id_required' };
@@ -289,43 +571,42 @@ function ingestTraceQueued(body) {
 }
 
 function readFilteredTraceRows({ graphId, catalogId, classCode } = {}) {
-  ensureTracesRoot();
-  const files = fs.readdirSync(getTracesRoot()).filter(f => f.endsWith('.json'));
+  const index = getIndex();
   const rows = [];
-  for (const file of files) {
-    try {
-      const row = JSON.parse(fs.readFileSync(path.join(getTracesRoot(), file), 'utf8'));
-      if (graphId && row.graphId !== graphId) continue;
-      if (catalogId && row.catalogId !== catalogId) continue;
-      if (classCode && String(row.classCode || '') !== String(classCode)) continue;
-      const terminalOutcome = row.terminalOutcome
-        || deriveTerminalOutcome(row)
-        || null;
-      rows.push({
-        sessionId: row.sessionId,
-        catalogId: row.catalogId,
-        graphId: row.graphId,
-        studentLabel: row.studentLabel || '匿名学生',
-        studentId: row.studentId || null,
-        taskCode: row.taskCode || row.catalogId || null,
-        classCode: row.classCode || null,
-        ch: row.ch,
-        startedAt: row.startedAt,
-        updatedAt: row.updatedAt,
-        eventCount: row.eventCount || row.events?.length || 0,
-        judged: !!row.judgeResult,
-        judgeResult: row.judgeResult || null,
-        variableAdjustCounts: row.variableAdjustCounts || null,
-        strategyPathSummary: row.strategyPathSummary || null,
-        strategyPathSummaryExplore: row.strategyPathSummaryExplore || null,
-        strategyPathByPhase: row.strategyPathByPhase || null,
-        scoredPhase: row.strategyPathSummary?.scoredPhase || null,
-        currentPhase: row.currentPhase || null,
-        // 列表必须带 abilityScore，否则 loadStudents 重载会把内存中的有限总分冲成「—」
-        abilityScore: row.abilityScore || null,
-        terminalOutcome,
-      });
-    } catch { /* skip corrupt */ }
+  for (const entry of Object.values(index.sessions || {})) {
+    if (!entry || !entry.sessionId) continue;
+    if (graphId && entry.graphId !== graphId) continue;
+    if (catalogId && entry.catalogId !== catalogId) continue;
+    if (classCode && String(entry.classCode || '') !== String(classCode)) continue;
+    const terminalOutcome = entry.terminalOutcome
+      || deriveTerminalOutcome(entry)
+      || null;
+    rows.push({
+      sessionId: entry.sessionId,
+      catalogId: entry.catalogId,
+      graphId: entry.graphId,
+      studentLabel: entry.studentLabel || '匿名学生',
+      studentId: entry.studentId || null,
+      taskCode: entry.taskCode || entry.catalogId || null,
+      classCode: entry.classCode || null,
+      ch: entry.ch,
+      startedAt: entry.startedAt,
+      createdAt: entry.createdAt || entry.startedAt || null,
+      updatedAt: entry.updatedAt,
+      eventCount: entry.eventCount || 0,
+      judged: !!entry.judged || !!entry.judgeResult,
+      judgeResult: entry.judgeResult || null,
+      variableAdjustCounts: entry.variableAdjustCounts || null,
+      strategyPathSummary: entry.strategyPathSummary || null,
+      strategyPathSummaryExplore: entry.strategyPathSummaryExplore || null,
+      strategyPathByPhase: entry.strategyPathByPhase || null,
+      scoredPhase: entry.scoredPhase || entry.strategyPathSummary?.scoredPhase || null,
+      currentPhase: entry.currentPhase || null,
+      // 列表必须带 abilityScore，否则 loadStudents 重载会把内存中的有限总分冲成「—」
+      abilityScore: entry.abilityScore || null,
+      attemptsExhausted: entry.attemptsExhausted === true,
+      terminalOutcome,
+    });
   }
   return rows;
 }
@@ -628,8 +909,8 @@ function getStudentTraceSummary(studentLabel) {
 }
 
 function getTraceSession(sessionId) {
-  const file = sessionPath(sessionId);
-  if (!fs.existsSync(file)) return null;
+  const file = resolveSessionFile(sessionId);
+  if (!file || !fs.existsSync(file)) return null;
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
@@ -668,8 +949,6 @@ function saveJudgeResult(sessionId, judgeResult, extras = {}) {
   return { ok: true, sessionId, terminalOutcome: record.terminalOutcome || null };
 }
 
-const SESSION_ID_RE = /^sess-[a-zA-Z0-9-]+$/;
-
 function deleteTraceSessions(sessionIds) {
   ensureTracesRoot();
   const ids = [...new Set((sessionIds || []).map(id => String(id).trim()).filter(Boolean))];
@@ -681,9 +960,10 @@ function deleteTraceSessions(sessionIds) {
       invalid.push(id);
       continue;
     }
-    const file = sessionPath(id);
-    if (fs.existsSync(file)) {
+    const file = resolveSessionFile(id);
+    if (file && fs.existsSync(file)) {
       fs.unlinkSync(file);
+      removeIndexEntry(id);
       deleted.push(id);
     } else {
       notFound.push(id);
@@ -696,8 +976,7 @@ function deleteTraceSessions(sessionIds) {
  * Classroom one-pager: sessions × games with inquiry-style aggregates.
  */
 function getClassroomBoard({ graphId, catalogId, taskCode, classCode } = {}) {
-  ensureTracesRoot();
-  const files = fs.readdirSync(getTracesRoot()).filter(f => f.endsWith('.json'));
+  const rows = readFilteredTraceRows({ graphId, catalogId, classCode });
   const sessions = [];
   const pathTypeDist = {};
   let cvProbeSessions = 0;
@@ -706,17 +985,8 @@ function getClassroomBoard({ graphId, catalogId, taskCode, classCode } = {}) {
   let scored = 0;
   let scoreSum = 0;
 
-  for (const file of files) {
-    let row;
-    try {
-      row = JSON.parse(fs.readFileSync(path.join(getTracesRoot(), file), 'utf8'));
-    } catch {
-      continue;
-    }
-    if (graphId && row.graphId !== graphId) continue;
-    if (catalogId && row.catalogId !== catalogId) continue;
+  for (const row of rows) {
     if (taskCode && String(row.taskCode || row.catalogId || '') !== String(taskCode)) continue;
-    if (classCode && String(row.classCode || '') !== String(classCode)) continue;
 
     const vars = row.variableAdjustCounts || [];
     let avN = 0;
@@ -746,17 +1016,17 @@ function getClassroomBoard({ graphId, catalogId, taskCode, classCode } = {}) {
       classCode: row.classCode || null,
       graphId: row.graphId,
       catalogId: row.catalogId,
-      eventCount: row.eventCount || row.events?.length || 0,
+      eventCount: row.eventCount || 0,
       avAdjustCount: avN,
       cvAdjustCount: cvN,
       cvTendency: Math.round(cvTendency * 1000) / 1000,
       pathType,
       pathScore: score != null ? Number(score) : null,
-      scoredPhase: row.strategyPathSummary?.scoredPhase || null,
+      scoredPhase: row.strategyPathSummary?.scoredPhase || row.scoredPhase || null,
       pathText: row.strategyPathSummary?.text || null,
       advice: row.strategyPathSummary?.advice || null,
       updatedAt: row.updatedAt,
-      judged: !!row.judgeResult,
+      judged: !!row.judged || !!row.judgeResult,
       verdict: row.judgeResult?.verdict || null,
     });
   }
@@ -907,20 +1177,23 @@ function tracesExportZipFilename(date = new Date()) {
 /**
  * Pack all session JSON files under getTracesRoot() into a store ZIP.
  * Unfiltered by task/status — full classroom dump for teachers.
+ * ZIP entry names are flat `sess-*.json` (sessionId is unique).
+ * Excludes `.traces-index.json` and other dotfiles (only packs sess-*.json).
  * @returns {{ ok: true, buffer: Buffer, count: number, filename: string } | { ok: false, error: string, count: number }}
  */
 function exportAllTracesZip() {
   ensureTracesRoot();
   const root = getTracesRoot();
-  const names = fs.readdirSync(root)
-    .filter(f => f.endsWith('.json') && !f.startsWith('.'))
-    .sort();
-  if (!names.length) {
+  const found = collectSessionFiles(root).sort((a, b) => a.rel.localeCompare(b.rel));
+  if (!found.length) {
     return { ok: false, error: '暂无轨迹', count: 0 };
   }
   const files = [];
-  for (const name of names) {
-    const full = path.join(root, name);
+  const seen = new Set();
+  for (const { full, rel } of found) {
+    const name = path.basename(full);
+    if (seen.has(name)) continue;
+    seen.add(name);
     try {
       const st = fs.statSync(full);
       if (!st.isFile()) continue;
@@ -940,22 +1213,42 @@ function exportAllTracesZip() {
   };
 }
 
-/** Basename must be sess-*.json (same id charset as deleteTraceSessions). */
-const SESS_TRACE_FILE_RE = /^sess-[a-zA-Z0-9-]+\.json$/;
-
 /**
- * Accept only safe sess-*.json basenames; reject path traversal / nested paths.
+ * Accept only safe sess-*.json basenames; allow one classCode parent segment.
+ * Reject path traversal / deeper nesting.
  * @param {string} rawName
- * @returns {string|null}
+ * @returns {string|null} basename
  */
 function safeSessTraceBasename(rawName) {
   const normalized = String(rawName || '').replace(/\\/g, '/');
   if (!normalized || normalized.includes('\0')) return null;
   const parts = normalized.split('/').filter(p => p && p !== '.');
   if (!parts.length || parts.some(p => p === '..')) return null;
+  if (parts.length > 2) return null;
   const base = parts[parts.length - 1];
   if (!SESS_TRACE_FILE_RE.test(base)) return null;
+  if (parts.length === 2) {
+    const parent = parts[0];
+    if (parent.startsWith('.')) return null;
+    // parent must be a safe class dir token (or we still accept basename for import)
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(parent)) return null;
+  }
   return base;
+}
+
+/**
+ * Optional classCode hint from ZIP entry path `classCode/sess-*.json`.
+ * @param {string} rawName
+ * @returns {string|null}
+ */
+function classHintFromZipName(rawName) {
+  const normalized = String(rawName || '').replace(/\\/g, '/');
+  const parts = normalized.split('/').filter(p => p && p !== '.');
+  if (parts.length !== 2) return null;
+  const parent = parts[0];
+  if (!parent || parent === DEFAULT_CLASS_DIR || parent.startsWith('.')) return null;
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(parent)) return null;
+  return parent;
 }
 
 /**
@@ -1024,7 +1317,9 @@ function parseZipEntries(buf) {
 }
 
 /**
- * Write sess-*.json files into traces root (overwrite same names).
+ * Write sess-*.json files into traces/{classCode}/ (overwrite same sessionId).
+ * Accepts flat or nested zip names; class dir from JSON classCode, else zip parent.
+ * Rebuilds `.traces-index.json` after import.
  * @param {{ name: string, data: Buffer|string }[]} files
  * @returns {{ ok: true, imported: number, skipped: number, errors?: { name: string, error: string }[] }}
  */
@@ -1035,32 +1330,56 @@ function importTraceSessionFiles(files) {
   let skipped = 0;
   const errors = [];
   for (const file of files || []) {
-    const safe = safeSessTraceBasename(file && file.name);
+    const rawName = String(file && file.name || '');
+    const safe = safeSessTraceBasename(rawName);
     if (!safe) {
       skipped += 1;
       continue;
     }
-    const dest = path.resolve(root, safe);
-    if (path.dirname(dest) !== root) {
-      errors.push({ name: String(file.name || ''), error: 'path_traversal' });
-      continue;
-    }
     try {
       const data = Buffer.isBuffer(file.data) ? file.data : Buffer.from(file.data || '');
-      JSON.parse(data.toString('utf8'));
-      fs.writeFileSync(dest, data);
+      const record = JSON.parse(data.toString('utf8'));
+      if (!record || typeof record !== 'object') {
+        errors.push({ name: safe, error: 'invalid_json_object' });
+        continue;
+      }
+      const sessionId = String(record.sessionId || safe.replace(/\.json$/i, '')).trim();
+      if (!SESSION_ID_RE.test(sessionId)) {
+        errors.push({ name: safe, error: 'invalid_session_id' });
+        continue;
+      }
+      record.sessionId = sessionId;
+      if (!record.classCode) {
+        const hint = classHintFromZipName(rawName);
+        if (hint) record.classCode = hint;
+      }
+      const rel = relPathForSession(sessionId, record.classCode);
+      const dest = path.resolve(root, ...rel.split('/'));
+      const relToRoot = path.relative(root, dest);
+      if (!relToRoot || relToRoot.startsWith('..') || path.isAbsolute(relToRoot)) {
+        errors.push({ name: rawName || safe, error: 'path_traversal' });
+        continue;
+      }
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      const prev = resolveSessionFile(sessionId);
+      fs.writeFileSync(dest, JSON.stringify(record, null, 2), 'utf8');
+      if (prev && path.resolve(prev) !== dest && fs.existsSync(prev)) {
+        try { fs.unlinkSync(prev); } catch { /* ignore */ }
+      }
       imported += 1;
     } catch (e) {
       errors.push({ name: safe, error: e.message || 'write_failed' });
     }
   }
+  rebuildTracesIndex();
   const out = { ok: true, imported, skipped };
   if (errors.length) out.errors = errors;
   return out;
 }
 
 /**
- * Import sess-*.json entries from a ZIP into traces root (overwrite).
+ * Import sess-*.json entries from a ZIP into traces/{classCode}/ (overwrite).
+ * Accepts flat `sess-*.json` and nested `classCode/sess-*.json`.
  * Non-matching / unsafe paths are skipped; invalid ZIP → ok:false.
  * @param {Buffer} zipBuffer
  * @returns {{ ok: boolean, imported: number, skipped: number, errors?: any[], error?: string }}
@@ -1085,12 +1404,18 @@ function importAllTracesZip(zipBuffer) {
       skipped += 1;
       continue;
     }
+    const base = path.basename(String(entry.name || '').replace(/\\/g, '/'));
+    if (base === INDEX_FILENAME || base.startsWith('.')) {
+      skipped += 1;
+      continue;
+    }
     const safe = safeSessTraceBasename(entry.name);
     if (!safe) {
       skipped += 1;
       continue;
     }
-    files.push({ name: safe, data: entry.data });
+    // Keep original name so nested classCode hint survives
+    files.push({ name: entry.name, data: entry.data });
   }
   const result = importTraceSessionFiles(files);
   result.skipped += skipped;
@@ -1122,4 +1447,8 @@ module.exports = {
   importAllTracesZip,
   importTraceSessionFiles,
   safeSessTraceBasename,
+  sanitizeClassDir,
+  rebuildTracesIndex,
+  resolveSessionFile,
+  DEFAULT_CLASS_DIR,
 };

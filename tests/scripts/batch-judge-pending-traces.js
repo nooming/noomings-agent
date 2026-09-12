@@ -42,10 +42,26 @@ function isPending(row) {
 function listTraceFiles() {
   const root = getTracesRoot();
   if (!fs.existsSync(root)) return { root, files: [] };
-  return {
-    root,
-    files: fs.readdirSync(root).filter((f) => f.endsWith('.json')),
-  };
+  const files = [];
+  function walk(dir) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const ent of entries) {
+      if (!ent.name || ent.name.startsWith('.')) continue;
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) walk(full);
+      else if (ent.isFile() && /^sess-[a-zA-Z0-9-]+\.json$/.test(ent.name)) {
+        files.push(path.relative(root, full).replace(/\\/g, '/'));
+      }
+    }
+  }
+  walk(root);
+  files.sort();
+  return { root, files };
 }
 
 function loadSessionMeta(filePath) {

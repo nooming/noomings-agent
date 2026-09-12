@@ -3,7 +3,8 @@
 | 路径 | 说明 |
 |------|------|
 | `catalog.json` | 教师发布的探究任务（graphId + playUrl + 发布状态 + sampleTags / researchInclude） |
-| `traces/` | 学生游玩会话（本地 JSON，不提交 git） |
+| `traces/` | 学生游玩会话（本地 JSON，不提交 git）；按课堂码分子目录 `traces/{classCode}/sess-*.json`，缺省课堂码为 `_default` |
+| `traces/.traces-index.json` | 轻量学情索引（无 events；列表/统计读索引；点文件，导出 ZIP 会跳过） |
 | `class-config.json` | 可选：工作台写入的课堂码（不提交 git；生产优先用环境变量） |
 
 ## 页面入口
@@ -38,8 +39,8 @@
 | GET | `/api/platform/traces/:sessionId` | 会话详情（需教师鉴权） |
 | GET | `/api/platform/traces` | 会话列表（需教师鉴权；支持 `classCode`） |
 | POST | `/api/platform/traces/delete` | 批量删除学情会话（body: `{ sessionIds: [] }`） |
-| GET | `/api/platform/traces/export-zip` | 教师下载全部轨迹 ZIP（需鉴权） |
-| POST | `/api/platform/traces/import-zip` | 教师上传轨迹 ZIP / `sess-*.json`（需鉴权；同名覆盖） |
+| GET | `/api/platform/traces/export-zip` | 教师下载全部轨迹 ZIP（需鉴权；仅打包 `sess-*.json`，扁平文件名；不含索引） |
+| POST | `/api/platform/traces/import-zip` | 教师上传轨迹 ZIP / `sess-*.json`（需鉴权；支持扁平或 `classCode/sess-*.json`；写入课堂码目录并重建索引） |
 | POST | `/api/platform/judge-session` | 学情一键 Agent B 评判 |
 | POST | `/api/platform/teacher-login` | 教师通行码登录（token 含 TTL；失败限次） |
 
@@ -55,6 +56,14 @@
 | 开发默认 | 非生产且未配置时使用 `wuli2609` |
 
 学生必须经 `POST /api/platform/student-join` 校验课堂码后才能进探究区；轨迹字段 `classCode` 与任务 `taskCode` 分离。教师学情工具栏可按课堂码过滤。
+
+### 轨迹存储布局
+
+- 会话文件：`traces/{classCode}/sess-*.json`（`classCode` 会清洗为安全目录名；空 → `_default`）
+- 索引：`traces/.traces-index.json`（进程内缓存；ingest / 评判写回 / 删除 / 导入时更新）
+- 兼容：首次访问若仍有旧版扁平 `traces/sess-*.json`，会一次性迁入对应课堂码目录并重建索引
+- 列表 / stats / students / classroom 读索引；会话详情仍按需加载单个 JSON（含 events）
+- 导出 ZIP：扁平 `sess-*.json` 全量会话；不含 `.traces-index.json`
 
 账号 MVP：学生「退出课堂」、教师「退出登录」清本机会话；join 返回短期 `studentSession`，ingest 若携带则校验学号+课堂码一致性。换设备需重填。
 
