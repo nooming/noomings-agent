@@ -60,8 +60,8 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 <div id="craft-intro">
   <div class="craft-card">
     <h2>过程台 · 绝热与等温</h2>
-    <p>同一初态，绝热与等温压缩路径不同。拧体积与初温，对照两条曲线，竞赛落到目标态。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛目标本局锁定，未命中只扣次数。</p>
+    <p>同一初态，绝热与等温压缩路径不同。调节侧栏参数，对照两条路径上的态点；竞赛做出特定的功。</p>
+    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛功量本局锁定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -69,8 +69,8 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   <div class="craft-card">
     <h2>过关 · 本局对照</h2>
     <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
-    <div class="formula" id="craftWinFormula">绝热 PV^γ=const；等温 PV=const</div>
-    <p id="craftWinText">绝热比等温压强升得更快（γ>1）；同一初态，压缩路径不同。</p>
+    <div class="formula" id="craftWinFormula">绝热：W=ΔU=nC<sub>v</sub>ΔT（γ=1.4）；等温 PV=const</div>
+    <p id="craftWinText">绝热过程 Q=0，对外做功与内能变化对应；竞赛按特定功 W* 判据过关。</p>
     <div class="craft-actions">
       <button type="button" id="craftWinBtn">再玩一次</button>
       <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
@@ -105,12 +105,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <input type="range" id="s-V" min="0.4" max="2.2" step="0.02" value="1.2">
       </div>
       <div class="slider-group">
-        <label for="s-T0">初温 T₀ <span id="tVal">300 K</span></label>
-        <input type="range" id="s-T0" min="200" max="500" step="5" value="300">
+        <label for="s-tag">活塞配重 <span id="gVal">120 g</span></label>
+        <input type="range" id="s-tag" min="50" max="400" step="10" value="120">
       </div>
       <div class="slider-group">
-        <label for="s-tag">铭牌质量 <span id="gVal">120 g</span></label>
-        <input type="range" id="s-tag" min="50" max="400" step="10" value="120">
+        <label for="s-T0">初温 T₀ <span id="tVal">300 K</span></label>
+        <input type="range" id="s-T0" min="200" max="500" step="5" value="300">
       </div>
       <div class="row-buttons">
         <button type="button" id="btn-test">测试 · 读状态</button>
@@ -132,10 +132,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var mode = 'explore';
   var attempts = 6;
   var gamma = 1.4;
+  var nGas = 1;
+  var Cv = 1 / (gamma - 1); // R=1 arb → Cv=2.5；W=ΔU=nCvΔT
   var V0 = 1.6, P0 = 1.0;
   var showIso = true;
   var followAdi = true;
-  var targetV = 0.8, targetP = 1.6, tolV = 0.08, tolP = 0.12;
+  var targetV = 0.8, targetP = 1.6, targetW = 0, tolW = 0.15;
   var animTime = 0;
   var pistonSmooth = 1.2;
   var processBlend = 1; // 1=adi visual, 0=iso
@@ -162,6 +164,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     var st = stateAt(V, T0);
     if (followAdi) return { V: V, P: st.Padi, T: st.Tadi, kind: 'adi', ref: st };
     return { V: V, P: st.Piso, T: st.Tiso, kind: 'iso', ref: st };
+  }
+
+  /** 绝热功：W = ΔU = n Cv ΔT（相对参考态 V₀） */
+  function workAdiabatic(V, T0) {
+    var st = stateAt(V, T0);
+    return nGas * Cv * (st.Tadi - T0);
   }
 
   function resize() {
@@ -373,20 +381,21 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.fillStyle = sheen;
     ctx.fillRect(cx - cylW / 2 + 4, topY, cylW * 0.28, cylH);
 
-    // nameplate CV
-    var px = cx + cylW / 2 + 18, py = baseY - 70;
-    var plate = ctx.createLinearGradient(px, py, px + 78, py);
-    plate.addColorStop(0, '#2a1e10'); plate.addColorStop(1, '#1a140c');
-    ctx.fillStyle = plate;
-    roundRectPath(ctx, px, py, 78, 36, 4); ctx.fill();
-    ctx.strokeStyle = 'rgba(201,151,63,0.45)';
-    roundRectPath(ctx, px + 2, py + 2, 74, 32, 3); ctx.stroke();
-    ctx.fillStyle = '#a87826';
+    // piston counterweight CV (visual only)
+    var bobR = 8 + tag / 40;
+    var px = cx + cylW / 2 + 28, py = baseY - 58;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath(); ctx.ellipse(px + 6, py + bobR + 10, bobR * 0.9, 4, 0, 0, Math.PI * 2); ctx.fill();
+    var bobG = ctx.createRadialGradient(px - 2, py - 2, 1, px, py, bobR + 2);
+    bobG.addColorStop(0, '#d8c49a'); bobG.addColorStop(0.55, '#8a7040'); bobG.addColorStop(1, '#3a2a14');
+    ctx.fillStyle = bobG;
+    ctx.beginPath(); ctx.arc(px, py, bobR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(240,207,138,0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx + 8, topY - 44); ctx.lineTo(px, py - bobR); ctx.stroke();
+    ctx.fillStyle = '#c9a05a';
     ctx.font = '10px sans-serif';
-    ctx.fillText('铭牌', px + 10, py + 14);
-    ctx.fillStyle = '#f0cf8a';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(tag + ' g', px + 10, py + 28);
+    ctx.fillText('配重 ' + tag + ' g', px - 18, py + bobR + 18);
 
     // process badge
     ctx.fillStyle = processBlend > 0.5 ? 'rgba(240,140,80,0.85)' : 'rgba(120,180,200,0.85)';
@@ -491,16 +500,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     path('adi', 'rgba(10,155,176,' + (0.55 + processBlend * 0.45) + ')', [], adiW);
     if (showIso) path('iso', 'rgba(180,190,200,' + (0.35 + (1 - processBlend) * 0.45) + ')', [5, 4], isoW);
 
-    if (mode === 'challenge') {
-      var tg = map(targetV, targetP);
-      ctx.strokeStyle = 'rgba(240,198,116,0.95)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(tg.x - 10, tg.y - 10, 20, 20);
-      ctx.fillStyle = '#f0c674';
-      ctx.font = '11px sans-serif';
-      ctx.fillText('目标', tg.x + 12, tg.y - 4);
-    }
-
     var pt = map(cur.V, cur.P);
     var ring = 6 + (pathFlash > 0 ? pathFlash * 8 : 0);
     ctx.fillStyle = followAdi ? '#7fd4e0' : '#c8d4dc';
@@ -514,7 +513,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
     ctx.fillStyle = '#e6eef2';
     ctx.font = '11px sans-serif';
-    ctx.fillText((followAdi ? '绝热' : '等温') + '  P≈' + cur.P.toFixed(2) + '  T≈' + cur.T.toFixed(0) + 'K', left + 12, top + panelH - 10);
+    if (mode === 'challenge') {
+      var Wc = workAdiabatic(cur.V, T0);
+      ctx.fillText('绝热  W≈' + Wc.toFixed(2) + '  T≈' + cur.T.toFixed(0) + 'K', left + 12, top + panelH - 10);
+    } else {
+      ctx.fillText((followAdi ? '绝热' : '等温') + '  P≈' + cur.P.toFixed(2) + '  T≈' + cur.T.toFixed(0) + 'K', left + 12, top + panelH - 10);
+    }
   }
 
   function draw(dt) {
@@ -553,20 +557,26 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   function lockTarget() {
     var T0 = 280 + Math.random() * 80;
     document.getElementById('s-T0').value = Math.round(T0 / 5) * 5;
+    T0 = +document.getElementById('s-T0').value;
+    // 内部锁定一绝热末态以定义 W*；学生侧以功带过关
     targetV = 0.55 + Math.random() * 0.55;
-    var st = stateAt(targetV, +document.getElementById('s-T0').value);
+    var st = stateAt(targetV, T0);
     targetP = st.Padi;
-    tolV = 0.07; tolP = 0.10 + Math.random() * 0.05;
+    targetW = workAdiabatic(targetV, T0);
+    tolW = Math.max(0.12, Math.abs(targetW) * 0.10 + 0.08);
   }
 
   function refreshGoals() {
     var side = document.getElementById('sideGoal');
     var att = document.getElementById('attemptsLine');
+    var mission = document.getElementById('goalMission');
     if (mode === 'explore') {
-      side.textContent = '探究：拧 V、T₀，对照绝热与等温路径上的态点。';
+      side.textContent = '探究：调节侧栏参数，对照绝热与等温路径上的态点。';
+      if (mission) mission.textContent = '探究：绝热 vs 等温对照';
       att.textContent = '';
     } else {
-      side.textContent = '竞赛：沿绝热落到 V≈' + targetV.toFixed(2) + '  P≈' + targetP.toFixed(2) + '（本局锁定）';
+      side.textContent = '竞赛：沿绝热做出特定功 W≈' + targetW.toFixed(2) + '（容差 ±' + tolW.toFixed(2) + '，本局锁定）';
+      if (mission) mission.textContent = '竞赛：特定功 W≈' + targetW.toFixed(2);
       att.textContent = '剩余机会 ' + attempts;
       followAdi = true; processTarget = 1;
       document.getElementById('btn-adi').classList.add('active');
@@ -593,7 +603,11 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
   function settleTest() {
     var cur = current();
-    document.getElementById('stateDisplay').textContent = 'P ' + cur.P.toFixed(2) + ' · T ' + cur.T.toFixed(0) + 'K';
+    var T0now = +document.getElementById('s-T0').value;
+    var Wnow = workAdiabatic(cur.V, T0now);
+    document.getElementById('stateDisplay').textContent = mode === 'challenge'
+      ? ('W ' + Wnow.toFixed(2) + ' · T ' + cur.T.toFixed(0) + 'K')
+      : ('P ' + cur.P.toFixed(2) + ' · T ' + cur.T.toFixed(0) + 'K');
     var controls = window.__snapControls ? window.__snapControls() : {};
     var hint = document.getElementById('hintMessage');
     var winInd = document.getElementById('winIndicator');
@@ -609,24 +623,22 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     }
     if (attempts <= 0 || window.__challengeWon) return;
     attempts -= 1; refreshGoals();
-    var st = stateAt(cur.V, +document.getElementById('s-T0').value);
-    var P = st.Padi;
-    var ok = Math.abs(cur.V - targetV) <= tolV && Math.abs(P - targetP) <= tolP;
+    var ok = followAdi && Math.abs(Wnow - targetW) <= tolW;
     if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: ok, hintKey: ok ? 'win' : 'miss' });
     if (ok) {
-      hint.textContent = '落到目标邻域';
+      hint.textContent = '功量落入目标带';
       window.__challengeWon = true;
       setTimeout(function() {
         if (mode !== 'challenge' || !window.__challengeWon) return;
         try { window.__legacyWinEmitted = true; } catch (e) {}
         if (window.__emit) window.__emit('win', { winOk: true });
-        winInd.innerHTML = '<span class="pass-badge">过关 · 沿绝热到达目标态</span>';
+        winInd.innerHTML = '<span class="pass-badge">过关 · 做出特定功</span>';
         if (typeof window.__craftShowWin === 'function') {
-          window.__craftShowWin('本局 (V,P)≈(' + cur.V.toFixed(2) + ',' + P.toFixed(2) + ')，目标 (' + targetV.toFixed(2) + ',' + targetP.toFixed(2) + ')。');
+          window.__craftShowWin('本局 W≈' + Wnow.toFixed(2) + '，目标 W*≈' + targetW.toFixed(2) + '（±' + tolW.toFixed(2) + '）。绝热 W=ΔU=nCvΔT。');
         }
       }, 1100);
     } else {
-      hint.innerHTML = '未入邻域<br>当前 V ' + cur.V.toFixed(2) + ' P ' + P.toFixed(2) + ' · 目标 V ' + targetV.toFixed(2) + ' P ' + targetP.toFixed(2);
+      hint.innerHTML = '功未入带<br>当前 W ' + Wnow.toFixed(2) + ' · 目标 W≈' + targetW.toFixed(2) + ' ±' + tolW.toFixed(2);
       if (attempts <= 0 && !window.__challengeWon) {
         try {
           if (window.__emit) {

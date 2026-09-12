@@ -57,7 +57,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 <div id="craft-intro">
   <div class="craft-card">
     <h2>气室 · 压强微观模型</h2>
-    <p>粒子在气室里乱撞——更多、更热、更挤，压强怎么变？拧 N、T、V，对照压强读数。</p>
+    <p>粒子在气室里乱撞——更多、更热、更挤，压强怎么变？调节侧栏参数，对照压强读数。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛目标本局锁定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -79,7 +79,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     <canvas id="simCanvas"></canvas>
     <div id="essence-hud">
       <div class="essence-title">压强微观台</div>
-      <div class="essence-sub" id="goalMission">探究：对照 N / T / V 与压强</div>
+      <div class="essence-sub" id="goalMission">探究：对照侧栏参数与压强读数</div>
     </div>
   </div>
   <aside id="essence-bench">
@@ -98,16 +98,16 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <input type="range" id="s-N" min="10" max="120" step="1" value="40">
       </div>
       <div class="slider-group">
+        <label for="s-box-mass">容器质量 <span id="mVal">2.0 kg</span></label>
+        <input type="range" id="s-box-mass" min="0.5" max="8" step="0.5" value="2">
+      </div>
+      <div class="slider-group">
         <label for="s-T">温度 T <span id="tVal">300 K</span></label>
         <input type="range" id="s-T" min="150" max="600" step="5" value="300">
       </div>
       <div class="slider-group">
         <label for="s-V">体积 V <span id="vVal">1.00</span></label>
         <input type="range" id="s-V" min="0.5" max="2.5" step="0.05" value="1.0">
-      </div>
-      <div class="slider-group">
-        <label for="s-wall">器壁纹理 <span id="wVal">2</span></label>
-        <input type="range" id="s-wall" min="0" max="5" step="1" value="2">
       </div>
       <div class="row-buttons">
         <button type="button" id="btn-test">测试 · 读压强</button>
@@ -312,9 +312,9 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     return { bx: bx, by: by, bw: bw, bh: bh };
   }
 
-  function drawChamber(g, wall, t) {
+  function drawChamber(g, boxMass, t) {
     var bx = g.bx, by = g.by, bw = g.bw, bh = g.bh;
-    var thick = 14 + wall * 1.2;
+    var thick = 12 + boxMass * 1.1;
 
     // cast shadow on bench
     ctx.fillStyle = 'rgba(0,0,0,0.38)';
@@ -322,7 +322,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     ctx.ellipse(bx + bw / 2, by + bh + 18, bw * 0.48, 10, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // outer metal frame (bevel)
+    // outer metal frame (bevel) — thicker with container mass (visual only)
     var frame = ctx.createLinearGradient(bx - thick, by, bx + bw + thick, by);
     frame.addColorStop(0, '#1a2a32');
     frame.addColorStop(0.35, '#3a5560');
@@ -360,22 +360,24 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     // inner glass rim + pulse
     var pulseA = wallPulse > 0 ? 0.55 + wallPulse * 0.9 : 0.28;
     ctx.strokeStyle = 'rgba(127,212,224,' + pulseA + ')';
-    ctx.lineWidth = 2 + wall * 0.25 + wallPulse * 3;
+    ctx.lineWidth = 2 + wallPulse * 3;
     roundRectPath(ctx, bx, by, bw, bh, 8);
     ctx.stroke();
 
-    // wall texture grooves (CV)
-    ctx.strokeStyle = 'rgba(120,180,190,' + (0.12 + wall * 0.07) + ')';
-    ctx.lineWidth = 1;
-    for (var tix = 0; tix < wall * 5; tix++) {
-      var tx = bx + 10 + (tix * 19) % Math.max(20, bw - 20);
-      ctx.beginPath();
-      ctx.moveTo(tx, by + 2); ctx.lineTo(tx + 7, by + 10);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(tx, by + bh - 2); ctx.lineTo(tx + 7, by + bh - 10);
-      ctx.stroke();
-    }
+    // container mass bob + label (CV visual only; not in P)
+    var bobR = 6 + boxMass * 1.15;
+    var mx = bx + bw + thick + 22;
+    var my = by + bh * 0.42;
+    ctx.strokeStyle = 'rgba(160,190,200,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx + bw + thick - 2, my); ctx.lineTo(mx - bobR, my); ctx.stroke();
+    var bobG = ctx.createRadialGradient(mx - 2, my - 2, 1, mx, my, bobR + 1);
+    bobG.addColorStop(0, '#c8d8e0'); bobG.addColorStop(0.5, '#6a8490'); bobG.addColorStop(1, '#2a3840');
+    ctx.fillStyle = bobG;
+    ctx.beginPath(); ctx.arc(mx, my, bobR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9ab0bc';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('M ' + boxMass.toFixed(1) + ' kg', mx - 16, my + bobR + 14);
 
     // glass sheen
     var sheen = ctx.createLinearGradient(bx, by, bx + bw * 0.45, by + bh);
@@ -450,8 +452,8 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
     drawLab(w, h, animTime);
     var g = chamberGeom(w, h, boxSmooth);
-    var wall = +document.getElementById('s-wall').value;
-    drawChamber(g, wall, animTime);
+    var boxMass = +document.getElementById('s-box-mass').value;
+    drawChamber(g, boxMass, animTime);
 
     var T = +document.getElementById('s-T').value;
     var spdMul = 0.55 + Math.sqrt(T / 300);
@@ -517,7 +519,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('nVal').textContent = document.getElementById('s-N').value;
     document.getElementById('tVal').textContent = document.getElementById('s-T').value + ' K';
     document.getElementById('vVal').textContent = (+document.getElementById('s-V').value).toFixed(2);
-    document.getElementById('wVal').textContent = document.getElementById('s-wall').value;
+    document.getElementById('mVal').textContent = (+document.getElementById('s-box-mass').value).toFixed(1) + ' kg';
   }
 
   function lockBand() {
@@ -533,7 +535,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     var side = document.getElementById('sideGoal');
     var att = document.getElementById('attemptsLine');
     if (mode === 'explore') {
-      side.textContent = '探究：每次只改 N / T / V 之一，点测试对照压强。';
+      side.textContent = '探究：每次先改一个量再测试，对照压强读数。';
       att.textContent = '';
     } else {
       side.textContent = '竞赛：把 P 打进 ' + bandLo.toFixed(1) + ' – ' + bandHi.toFixed(1) + '（本局锁定）';
@@ -627,7 +629,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     document.getElementById('s-N').value = 40;
     document.getElementById('s-T').value = 300;
     document.getElementById('s-V').value = 1;
-    document.getElementById('s-wall').value = 2;
+    document.getElementById('s-box-mass').value = 2;
     document.getElementById('pDisplay').textContent = '—';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
@@ -637,7 +639,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   };
 
   window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
-  ['s-N','s-T','s-V','s-wall'].forEach(function(id){
+  ['s-N','s-box-mass','s-T','s-V'].forEach(function(id){
     document.getElementById(id).addEventListener('input', function(){
       syncLabels(); spawn();
       if (id === 's-N' || id === 's-T' || id === 's-V') window.__exploreAvTouched[id] = 1;

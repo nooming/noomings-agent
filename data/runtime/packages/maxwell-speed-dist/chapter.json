@@ -195,7 +195,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-palette": {
+      "s-vol": {
         "kgId": "I1",
         "role": "irrelevant"
       }
@@ -304,7 +304,7 @@
       },
       {
         "id": "confound_CV1",
-        "label": "试探·图示描边",
+        "label": "试探·容器容积",
         "mapsTo": [],
         "warn": "拧对照量通常无增益，回到单变量主路径",
         "score": 0.15,
@@ -370,9 +370,9 @@
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": "s-palette",
-        "label": "图示描边",
-        "reason": "图示外观"
+        "controlId": "s-vol",
+        "label": "容器容积",
+        "reason": "容器容积仅改分子云视觉密度；不进 v_p=√(2kT/m)"
       }
     ],
     "inquiryFlow": [
@@ -493,10 +493,11 @@
     ],
     "confoundingUi": [
       {
-        "controlId": "s-palette",
-        "label": "图示描边",
-        "reason": "图示外观",
-        "uiStrategy": "teach_only"
+        "controlId": "s-vol",
+        "label": "容器容积",
+        "reason": "容器容积仅改分子云视觉密度；不进 v_p=√(2kT/m)",
+        "uiStrategy": "teach_only",
+        "domOrderNote": "滑条顺序 T → 容器容积(CV) → m，CV 不在末位"
       }
     ],
     "confoundingMustNotBePrimarySlider": true,
@@ -526,7 +527,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-palette": {
+      "s-vol": {
         "kgId": "I1",
         "role": "irrelevant"
       }
@@ -584,10 +585,10 @@
       },
       {
         "type": "tuning",
-        "controlId": "s-palette",
+        "controlId": "s-vol",
         "kgId": "I1",
         "required": false,
-        "description": "对照 s-palette"
+        "description": "对照 s-vol（视觉）"
       },
       {
         "type": "tuning",

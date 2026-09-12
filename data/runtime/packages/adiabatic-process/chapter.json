@@ -2,7 +2,7 @@
   "mapping": "| DT | KG |\n| --- | --- |\n| 进入 | P1 |\n| 模式 | C1 |\n| 调参测试 | O1 |\n| 命中 | C2 |\n| 过关 | R1 |",
   "kg": {
     "title": "过程台 · 绝热与等温",
-    "sub": "绝热约束落到目标态",
+    "sub": "绝热过程做出特定功",
     "nodes": [
       {
         "id": "P1",
@@ -49,7 +49,7 @@
         "layer": "play",
         "level": 4,
         "r": 22,
-        "desc": "竞赛模式下沿绝热落到目标 (V,P) 邻域"
+        "desc": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）"
       },
       {
         "id": "S1",
@@ -58,7 +58,8 @@
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "PV^γ = const（γ=1.4）"
+        "desc": "PV^γ = const（γ=1.4）",
+        "W = ΔU = nCv ΔT（绝热，Cv=R/(γ-1)）"
       },
       {
         "id": "I1",
@@ -115,7 +116,7 @@
   },
   "dt": {
     "title": "过程台 · 绝热与等温",
-    "sub": "绝热约束落到目标态",
+    "sub": "绝热过程做出特定功",
     "tree": {
       "n": "进入关卡",
       "t": "root",
@@ -154,7 +155,7 @@
                   "_e": "是",
                   "n": "过关",
                   "t": "result",
-                  "d": "竞赛模式下沿绝热落到目标 (V,P) 邻域"
+                  "d": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）"
                 },
                 {
                   "_e": "否",
@@ -213,7 +214,7 @@
   },
   "strategy": {
     "title": "过程台 · 绝热与等温",
-    "sub": "绝热约束落到目标态",
+    "sub": "绝热过程做出特定功",
     "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打带]:::stratResult\nExplore --> Tune[单变量调参]\nChallenge --> Tune\nTune --> Fire[点击测试]\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| Tune\n",
     "routes": [
       {
@@ -304,7 +305,7 @@
       },
       {
         "id": "confound_CV1",
-        "label": "试探·铭牌质量",
+        "label": "试探·活塞配重",
         "mapsTo": [],
         "warn": "拧对照量通常无增益，回到单变量主路径",
         "score": 0.15,
@@ -371,8 +372,8 @@
       {
         "id": "CV1",
         "controlId": "s-tag",
-        "label": "铭牌质量",
-        "reason": "外观对照量"
+        "label": "活塞配重",
+        "reason": "活塞缸体配重外观；不进功判据"
       }
     ],
     "inquiryFlow": [
@@ -381,7 +382,7 @@
       "OV1"
     ],
     "narrative": {
-      "intro": "绝热约束落到目标态",
+      "intro": "绝热过程做出特定功",
       "steps": [
         {
           "order": 1,
@@ -436,14 +437,14 @@
       ],
       "constants": [],
       "updateLoopSummary": "requestAnimationFrame 舞台动画 + 测试读数",
-      "winConditionSummary": "竞赛模式下沿绝热落到目标 (V,P) 邻域",
+      "winConditionSummary": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）",
       "domain": "thermo"
     }
   },
   "gameSpec": {
     "title": "过程台 · 绝热与等温",
-    "subtitle": "绝热约束落到目标态",
-    "winCondition": "竞赛模式下沿绝热落到目标 (V,P) 邻域",
+    "subtitle": "绝热过程做出特定功",
+    "winCondition": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）",
     "knowledgeSummary": "过程台 · 绝热与等温",
     "controls": [
       {
@@ -494,9 +495,10 @@
     "confoundingUi": [
       {
         "controlId": "s-tag",
-        "label": "铭牌质量",
-        "reason": "外观对照量",
-        "uiStrategy": "teach_only"
+        "label": "活塞配重",
+        "reason": "活塞缸体配重外观；不进功判据",
+        "uiStrategy": "teach_only",
+        "domOrderNote": "滑条顺序 V → 活塞配重(CV) → T₀，CV 不在末位"
       }
     ],
     "confoundingMustNotBePrimarySlider": true,
@@ -509,7 +511,7 @@
       {
         "kgId": "C2",
         "label": "命中目标带",
-        "desc": "竞赛模式下沿绝热落到目标 (V,P) 邻域"
+        "desc": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）"
       }
     ],
     "observeFeedbackLoop": true,
@@ -617,7 +619,7 @@
       {
         "name": "过关",
         "type": "result",
-        "desc": "竞赛模式下沿绝热落到目标 (V,P) 邻域"
+        "desc": "竞赛模式下沿绝热做出特定功 W*（W=ΔU=nCvΔT，落入容差带）"
       }
     ],
     "paperNotes": "traceMap 上报；混淆触碰可选记录。",

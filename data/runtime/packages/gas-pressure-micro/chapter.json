@@ -199,7 +199,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-wall": {
+      "s-box-mass": {
         "kgId": "I1",
         "role": "irrelevant"
       }
@@ -308,7 +308,7 @@
       },
       {
         "id": "confound_CV1",
-        "label": "试探·器壁纹理",
+        "label": "试探·容器质量",
         "mapsTo": [],
         "warn": "拧对照量通常无增益，回到单变量主路径",
         "score": 0.15,
@@ -387,9 +387,9 @@
     "confoundingVariables": [
       {
         "id": "CV1",
-        "controlId": "s-wall",
-        "label": "器壁纹理",
-        "reason": "外观对照量"
+        "controlId": "s-box-mass",
+        "label": "容器质量",
+        "reason": "容器外观/质量示意；不进 P=NkT/V"
       }
     ],
     "inquiryFlow": [
@@ -526,10 +526,11 @@
     ],
     "confoundingUi": [
       {
-        "controlId": "s-wall",
-        "label": "器壁纹理",
-        "reason": "外观对照量",
-        "uiStrategy": "teach_only"
+        "controlId": "s-box-mass",
+        "label": "容器质量",
+        "reason": "容器外观/质量示意；不进 P=NkT/V",
+        "uiStrategy": "teach_only",
+        "domOrderNote": "滑条顺序 N → 容器质量(CV) → T → V，CV 不在末位"
       }
     ],
     "confoundingMustNotBePrimarySlider": true,
@@ -563,7 +564,7 @@
         "kgId": "O1",
         "role": "operation"
       },
-      "s-wall": {
+      "s-box-mass": {
         "kgId": "I1",
         "role": "irrelevant"
       }
@@ -628,10 +629,10 @@
       },
       {
         "type": "tuning",
-        "controlId": "s-wall",
+        "controlId": "s-box-mass",
         "kgId": "I1",
         "required": false,
-        "description": "对照 s-wall"
+        "description": "对照 s-box-mass"
       },
       {
         "type": "tuning",

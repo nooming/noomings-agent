@@ -1148,7 +1148,8 @@
         "controlId": "s-rail-temp",
         "label": "轨温",
         "reason": "教师注：观感项；win 公式不含轨温（学生侧后置揭示）",
-        "uiStrategy": "neutral_slider"
+        "uiStrategy": "neutral_slider",
+        "domOrderNote": "滑条顺序 m₁ → v₀ → 形状 → m₂ → 轨温(CV) → θ；CV 不在末位"
       }
     ],
     "confoundingMustNotBePrimarySlider": true

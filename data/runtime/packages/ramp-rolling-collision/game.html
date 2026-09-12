@@ -680,7 +680,7 @@
         <div class="side-body">
             <div>
                 <div class="section-label side-goal-cap">当前目标</div>
-                <p id="sideGoal">调入射/靶球与倾角，观察爬升高度；竞赛对准 HUD 目标。</p>
+                <p id="sideGoal">调节侧栏参数，观察爬升高度；竞赛对准 HUD 目标。</p>
             </div>
 
             <div class="param-card">
@@ -721,21 +721,17 @@
             <div class="param-card">
                 <div class="slider-row">
                     <div class="row-top">
-                        <label for="s-angle">斜坡倾角 <em>θ</em> (°)</label>
-                        <span id="valAngle" class="val-badge">30</span>
-                    </div>
-                    <input type="range" id="s-angle" min="15" max="60" value="30" step="5">
-                </div>
-            </div>
-
-            <div class="param-card">
-<h3>轨温</h3>
-                <div class="slider-row">
-                    <div class="row-top">
                         <label for="s-rail-temp">轨温 <em>T</em> (°C)</label>
                         <span id="valRailTemp" class="val-badge">22</span>
                     </div>
                     <input type="range" id="s-rail-temp" min="5" max="40" value="22" step="1">
+                </div>
+                <div class="slider-row">
+                    <div class="row-top">
+                        <label for="s-angle">斜坡倾角 <em>θ</em> (°)</label>
+                        <span id="valAngle" class="val-badge">30</span>
+                    </div>
+                    <input type="range" id="s-angle" min="15" max="60" value="30" step="5">
                 </div>
             </div>
         </div>
@@ -1354,7 +1350,7 @@
                     generateChallenge();
                 } else {
                     ui.challengeStats.classList.remove('is-visible');
-                    ui.sideGoal.textContent = '调入射球与靶球参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。';
+                    ui.sideGoal.textContent = '调节侧栏参数，观察碰撞后靶球沿斜轨爬升的高度；竞赛时对准 HUD 目标高度。';
                     state.targetH = 0;
                     ui.hudTargetH.textContent = '--';
                     updateRampGeometry();

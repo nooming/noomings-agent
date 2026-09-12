@@ -3,8 +3,8 @@
   "title": "过程台 · 绝热与等温",
   "craft": "gold",
   "topic": "绝热过程",
-  "knowledgeText": "PV^γ = const（γ=1.4）",
-  "note": "thermo-three replacement; craft:gold",
+  "knowledgeText": "PV^γ = const（γ=1.4）；绝热 W=ΔU=nCvΔT",
+  "note": "thermo-three replacement; craft:gold; challenge = specific work W*",
   "avSummary": [
     {
       "controlId": "s-V",
@@ -20,8 +20,8 @@
   "cvSummary": [
     {
       "controlId": "s-tag",
-      "label": "铭牌质量",
-      "effect": "装饰；不进 win"
+      "label": "活塞配重",
+      "effect": "装饰；不进 win；DOM 插在 V 与 T₀ 之间"
     }
   ],
   "validation": {

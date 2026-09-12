@@ -571,7 +571,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="craft-intro">
   <div class="craft-card">
     <h2>钟表铺·校时</h2>
-    <p>这座钟走得偏慢——摆长一动，周期跟着变。调摆长与摆角，对照计时看周期怎么变。</p>
+    <p>这座钟走得偏慢。调节侧栏参数，对照计时看周期怎么变。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛目标进入后固定，校不准只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -639,7 +639,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="bench-scroll">
       <div class="side-goal-wrap">
         <div class="side-goal-cap">当前目标</div>
-        <p id="sideGoal" style="margin:0;color:rgba(240,207,138,.92)">调摆长与摆角，看周期怎么变。</p>
+        <p id="sideGoal" style="margin:0;color:rgba(240,207,138,.92)">调节侧栏参数，对照计时看周期怎么变。</p>
       </div>
       <div class="tband-wrap">
         <div class="tband-cap" id="tbandCap">周期尺 · <em>绿区 = 探究带</em></div>
@@ -658,20 +658,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         </div>
       </div>
       <div class="srow">
+        <div class="slabel"><span>摆锤质量 m</span><span class="sval" id="v-mass">1.5 kg</span><small>黄铜配重</small></div>
+        <div class="srow-track">
+          <input type="range" id="s-mass" min="0.5" max="3" value="1.5" step="0.1">
+        </div>
+      </div>
+      <div class="srow">
         <div class="slabel"><span>摆角 θ₀</span><span class="sval" id="v-angle">20°</span><small>释放摆幅</small></div>
         <div class="srow-track">
           <input type="range" id="s-angle" min="5" max="45" value="20" step="1">
         </div>
       </div>
-      <div class="srow">
-<div class="slabel"><span>摆锤质量 m</span><span class="sval" id="v-mass">1.5 kg</span><small>黄铜配重</small></div>
-        <div class="srow-track">
-          <input type="range" id="s-mass" min="0.5" max="3" value="1.5" step="0.1">
-        </div>
-      </div>
     </div>
     <div class="bench-ft">
-      <div id="hint">走时偏慢 · 调摆长后对照光电计时</div>
+      <div id="hint">走时偏慢 · 调参后对照光电计时</div>
       <div class="btn-measure" id="btn-measure">⏱ 启动计时 · 测一个周期</div>
     </div>
   </aside>
@@ -688,7 +688,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       它一天要<em>慢上三个多小时</em>，老师傅临走前只留下一句：<br>
       <b>"毛病出在摆上。摆的周期对了，钟就准了。"</b>
     </div>
-    <div class="task">先自由调摆，摸清周期与摆长；再切竞赛接急单目标带（本局锁定，校偏不换题）。<br>
+    <div class="task">先自由调参，摸清周期变化；再切竞赛接急单目标带（本局锁定，校偏不换题）。<br>
 · 摆杆是刻孔式的，摆长每 2 cm 一档<br>
 · 工作台上有一台光电计时仪——每次实测一个周期<br>
 · 摆幅低于 15° 时，擒纵机构将无法维持摆动</div>
@@ -753,7 +753,7 @@ function refreshClockGoals() {
     if (sub) sub.textContent = '竞赛：T ≈ ' + T_TARGET.toFixed(3) + ' s · 严公差 · 本局固定';
     if (cap) cap.innerHTML = '周期尺 · <em>绿区 = 急单 ±' + Math.round(T_HALF * 1000) + ' ms</em>';
   } else {
-    if (side) side.textContent = '调摆长与摆角，看周期怎么变。';
+    if (side) side.textContent = '调节侧栏参数，对照计时看周期怎么变。';
     if (sub) sub.textContent = '自由校时：对照计时看周期变化';
     if (cap) cap.innerHTML = '周期尺 · <em>绿区 = 探究带</em>';
   }
@@ -1307,7 +1307,7 @@ function syncUI() {
   hint.className = '';
   if (won) { hint.textContent = '\u2713 周期 ' + T_TARGET.toFixed(3) + ' s \u2014\u2014 擒纵接管，钟声归位'; hint.className = 'ok'; }
   else if (measuring) hint.textContent = '光电门计时中\u2026\u2026';
-  else if (lastMeasT === null) hint.textContent = '计时未启动 · 先点启动，再调摆长对照读数';
+  else if (lastMeasT === null) hint.textContent = '计时未启动 · 先点启动，再调参对照读数';
   else if (measStale) hint.textContent = '参数已改动\u2014\u2014读数过期，需重新计时确认';
   else if (inTBand(lastMeasT) && !thetaOk()) hint.textContent = `周期已达标，但摆幅 ${thetaDeg}\u00b0 不足以驱动擒纵机构（需 \u2265 ${TH_MIN}\u00b0）`;
   else if (lastMeasT > T_TARGET + T_HALF) hint.textContent = '实测偏慢 ' + Math.round((lastMeasT - T_TARGET) * 1000) + ' ms \u2014\u2014 想想什么决定周期';

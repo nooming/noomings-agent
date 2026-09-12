@@ -938,7 +938,8 @@
         "controlId": "s-mass",
         "label": "质量",
         "reason": "混淆/装饰控件：不参与核心过关归因",
-        "uiStrategy": "teach_only"
+        "uiStrategy": "teach_only",
+        "domOrderNote": "滑条顺序 初速 → 高度 → 质量(CV) → 角度（AV 按 priorityRank；CV 不在末位）"
       }
     ],
     "confoundingMustNotBePrimarySlider": true,

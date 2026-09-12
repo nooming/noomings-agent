@@ -58,7 +58,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 <div id="craft-intro">
   <div class="craft-card">
     <h2>分布台 · 麦克斯韦速率</h2>
-    <p>升温或改质量，速率分布曲线怎么挪？读出最概然速率 v_p，再去竞赛打特征区间。</p>
+    <p>调节侧栏参数，看速率分布曲线怎么挪？读出最概然速率 v_p，再去竞赛打特征区间。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛目标本局锁定，未命中只扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -80,13 +80,13 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     <canvas id="simCanvas"></canvas>
     <div id="essence-hud">
       <div class="essence-title">麦克斯韦分布</div>
-      <div class="essence-sub" id="goalMission">探究：看曲线随 T、m 移动</div>
+      <div class="essence-sub" id="goalMission">探究：对照曲线形状与 v_p 读数</div>
     </div>
   </div>
   <aside id="essence-bench">
     <div class="essence-scroll" id="controlsPanel">
       <div class="side-goal-cap">当前目标</div>
-      <p id="sideGoal">调 T 或 m，点测试读 v_p。</p>
+      <p id="sideGoal">调节侧栏参数，点测试读 v_p。</p>
       <div class="mode-row">
         <label for="modeSelect" style="font-size:12px;color:var(--craft-muted)">模式</label>
         <select id="modeSelect">
@@ -99,21 +99,20 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         <input type="range" id="s-T" min="120" max="700" step="5" value="300">
       </div>
       <div class="slider-group">
+        <label for="s-vol">容器容积 V<sub>箱</sub> <span id="volVal">1.5 L</span></label>
+        <input type="range" id="s-vol" min="0.5" max="3.0" step="0.1" value="1.5">
+      </div>
+      <div class="slider-group">
         <label for="s-m">分子质量 m <span id="mVal">1.0</span></label>
         <input type="range" id="s-m" min="0.4" max="3.0" step="0.05" value="1.0">
       </div>
-      <div class="viz-cap">图示</div>
-      <div class="slider-group">
-        <label for="s-palette">描边 <span id="pVal">2</span></label>
-        <input type="range" id="s-palette" min="0" max="3" step="1" value="1">
-      </div>
       <div class="row-buttons">
-        <button type="button" id="btn-test">测试 · 读特征速</button>
+        <button type="button" id="btn-test">测试 · 采样分布</button>
         <button type="button" id="btn-reset" class="secondary">重置</button>
       </div>
       <div class="observe-box" id="observeBox">
-        <div><span class="val" id="vpDisplay">—</span> <span style="font-size:12px;color:var(--craft-muted)">v_p</span></div>
-        <div class="hint" id="hintMessage">调参后点测试</div>
+        <div><span class="val" id="vpDisplay">—</span> <span id="vpUnit" style="font-size:12px;color:var(--craft-muted)">读数</span></div>
+        <div class="hint" id="hintMessage">调参后点测试；靠曲线形状对照</div>
         <div id="winIndicator"></div>
       </div>
       <div class="attempts" id="attemptsLine"></div>
@@ -127,7 +126,6 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   var mode = 'explore';
   var attempts = 6;
   var bandLo = 1.2, bandHi = 1.6;
-  var strokeW = [1, 1.5, 2.2, 3];
   var molecules = [];
   var dust = [];
   var animTime = 0;
@@ -166,7 +164,9 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
   function spawnCloud() {
     var st = stats();
-    var n = 90;
+    var vol = +document.getElementById('s-vol').value;
+    // 容器容积只改视觉粒子数，不进 v_p 公式
+    var n = Math.max(36, Math.round(36 + vol * 42));
     molecules = [];
     for (var i = 0; i < n; i++) {
       var spd = sampleSpeed(st.T, st.m);
@@ -396,8 +396,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
 
   function drawHist(box, st) {
     drawPanelFrame(box, '速率分布');
-    var palIdx = +document.getElementById('s-palette').value;
-    var lw = strokeW[palIdx] || 1.5;
+    var lw = 1.6;
     var left = box.x + 36, right = 14, top = box.y + 28, bottom = 28;
     var gw = box.w - 36 - right, gh = box.h - 28 - bottom;
 
@@ -423,11 +422,9 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
       var by = top + gh - bh;
       ctx.fillStyle = 'rgba(10,155,176,0.55)';
       ctx.fillRect(bx, by, bw - 2, bh);
-      if (lw > 0.5) {
-        ctx.strokeStyle = 'rgba(127,212,224,0.85)';
-        ctx.lineWidth = lw;
-        ctx.strokeRect(bx, by, bw - 2, bh);
-      }
+      ctx.strokeStyle = 'rgba(127,212,224,0.85)';
+      ctx.lineWidth = lw;
+      ctx.strokeRect(bx, by, bw - 2, bh);
     }
 
     ctx.beginPath();
@@ -441,9 +438,10 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
       if (!drawn) { ctx.moveTo(x, y); drawn = true; } else ctx.lineTo(x, y);
     }
     ctx.strokeStyle = '#7fd4e0';
-    ctx.lineWidth = Math.max(1.5, lw);
+    ctx.lineWidth = lw;
     ctx.stroke();
 
+    // 峰值位置示意（形状探究）；不写 vp/⟨v⟩/vrms 数值
     var vpMark = Math.min(vmax * 0.95, Math.max(0.2, Math.sqrt(2 * (st.T / 100) / st.m)));
     var mx = left + (vpMark / vmax) * gw;
     if (vpMark / vmax <= reveal) {
@@ -453,13 +451,13 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
       ctx.setLineDash([]);
       ctx.fillStyle = '#f0c674';
       ctx.font = '12px sans-serif';
-      ctx.fillText('v_p', mx + 4, top + 14);
+      ctx.fillText('峰', mx + 4, top + 14);
     }
 
     ctx.fillStyle = '#8a9aa6';
     ctx.font = '10px sans-serif';
     ctx.fillText('速率 →', left + gw - 40, top + gh + 18);
-    ctx.fillText('v_p≈' + st.vp.toFixed(2) + '  ⟨v⟩≈' + st.vavg.toFixed(2) + '  v_rms≈' + st.vrms.toFixed(2), left, box.y + 16);
+    ctx.fillText('靠曲线形状对照', left, box.y + 16);
 
     if (sampleT > 0) {
       ctx.fillStyle = 'rgba(10,155,176,0.1)';
@@ -499,7 +497,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   function syncLabels() {
     document.getElementById('tVal').textContent = document.getElementById('s-T').value + ' K';
     document.getElementById('mVal').textContent = (+document.getElementById('s-m').value).toFixed(2);
-    document.getElementById('pVal').textContent = String(strokeW[+document.getElementById('s-palette').value] || 1.5);
+    document.getElementById('volVal').textContent = (+document.getElementById('s-vol').value).toFixed(1) + ' L';
   }
 
   function lockBand() {
@@ -514,7 +512,7 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     var side = document.getElementById('sideGoal');
     var att = document.getElementById('attemptsLine');
     if (mode === 'explore') {
-      side.textContent = '探究：对照升温 / 改质量，点测试读最概然速率 v_p。';
+      side.textContent = '探究：调节侧栏参数，点测试读最概然速率 v_p。';
       att.textContent = '';
     } else {
       side.textContent = '竞赛：把 v_p 打进 ' + bandLo.toFixed(2) + ' – ' + bandHi.toFixed(2) + '（本局锁定）';
@@ -534,20 +532,28 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         }
       } catch (e) {}
       document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: mode } }));
-      if (mode === 'challenge') { attempts = 6; lockBand(); window.__legacyWinEmitted = false; window.__challengeWon = false; }
+      if (mode === 'challenge') {
+        attempts = 6; lockBand(); window.__legacyWinEmitted = false; window.__challengeWon = false;
+        document.getElementById('vpDisplay').textContent = '—';
+        var unit = document.getElementById('vpUnit');
+        if (unit) unit.textContent = '读数';
+      }
       refreshGoals();
     }
   }
 
   function settleTest() {
     var st = stats();
-    document.getElementById('vpDisplay').textContent = st.vp.toFixed(2);
     var controls = window.__snapControls ? window.__snapControls() : {};
     var hint = document.getElementById('hintMessage');
     var winInd = document.getElementById('winIndicator');
+    var unit = document.getElementById('vpUnit');
     winInd.innerHTML = '';
     if (mode === 'explore') {
-      hint.textContent = 'v_p≈' + st.vp.toFixed(2) + ' · ⟨v⟩≈' + st.vavg.toFixed(2);
+      // 探究：测后只给主读数 v_p，不齐出 ⟨v⟩ / v_rms
+      document.getElementById('vpDisplay').textContent = st.vp.toFixed(2);
+      if (unit) unit.textContent = 'v_p';
+      hint.textContent = '已测最概然速率；对照曲线峰值如何移动。';
       if (window.__emit) {
         window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe' });
         if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit, controls);
@@ -557,9 +563,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
     if (attempts <= 0 || window.__challengeWon) return;
     attempts -= 1; refreshGoals();
     var ok = st.vp >= bandLo && st.vp <= bandHi;
+    // 竞赛：不展示当前 vp/⟨v⟩/vrms 数值，避免对答案
+    document.getElementById('vpDisplay').textContent = ok ? '入带' : '未入';
+    if (unit) unit.textContent = '判定';
     if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: ok, hintKey: ok ? 'win' : 'miss' });
     if (ok) {
-      hint.textContent = '落入特征区间';
+      hint.textContent = '落入目标带';
       window.__challengeWon = true;
       setTimeout(function() {
         if (mode !== 'challenge' || !window.__challengeWon) return;
@@ -567,12 +576,12 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
         if (window.__emit) window.__emit('win', { winOk: true });
         winInd.innerHTML = '<span class="pass-badge">过关 · v_p 落入特征区间</span>';
         if (typeof window.__craftShowWin === 'function') {
-          window.__craftShowWin('本局 v_p≈' + st.vp.toFixed(2) + '，带 ' + bandLo.toFixed(2) + '–' + bandHi.toFixed(2) + '。');
+          window.__craftShowWin('本局最概然速率落入目标带 ' + bandLo.toFixed(2) + '–' + bandHi.toFixed(2) + '（v_p=√(2kT/m)）。');
         }
       }, 1000);
     } else {
       var side = st.vp < bandLo ? '偏低' : '偏高';
-      hint.innerHTML = '<strong>' + side + '</strong><br>本次 ' + st.vp.toFixed(2) + ' · 带 ' + bandLo.toFixed(2) + '–' + bandHi.toFixed(2);
+      hint.innerHTML = '<strong>' + side + '</strong><br>未落入目标带 · 调参后再测';
       if (attempts <= 0 && !window.__challengeWon) {
         try {
           if (window.__emit) {
@@ -607,8 +616,10 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   window.__thermoReset = function() {
     document.getElementById('s-T').value = 300;
     document.getElementById('s-m').value = 1;
-    document.getElementById('s-palette').value = 1;
+    document.getElementById('s-vol').value = 1.5;
     document.getElementById('vpDisplay').textContent = '—';
+    var unit = document.getElementById('vpUnit');
+    if (unit) unit.textContent = '读数';
     document.getElementById('hintMessage').textContent = '调参后点测试';
     document.getElementById('winIndicator').innerHTML = '';
     document.getElementById('observeBox').classList.remove('measuring');
@@ -617,13 +628,15 @@ button.secondary{background:rgba(255,255,255,.08);color:var(--craft-text)}
   };
 
   window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
-  ['s-T','s-m','s-palette'].forEach(function(id){
+  ['s-T','s-vol','s-m'].forEach(function(id){
     document.getElementById(id).addEventListener('input', function(){
       syncLabels();
       if (id === 's-T' || id === 's-m') {
         window.__exploreAvTouched[id] = 1;
         spawnCloud();
         histBuild = 0.35;
+      } else if (id === 's-vol') {
+        spawnCloud(); // 仅视觉密度
       }
     });
   });

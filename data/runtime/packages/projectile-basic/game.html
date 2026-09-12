@@ -532,7 +532,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="craft-intro">
   <div class="craft-card">
     <h2>靶场 · 斜抛</h2>
-    <p>靶场落点飘忽——角度、初速、高度各管哪一段？调发射角、初速与高度，读落点怎么变。</p>
+    <p>靶场落点飘忽——侧栏各量各管哪一段？调节参数后发射，读落点怎么变。</p>
     <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；侧栏与顶部会写明当前要做什么。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -582,7 +582,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                         <span id="attemptsDisplay" class="font-bold text-red-500 text-lg">6</span>
                     </div>
                 </div>
-                <div id="goalMission" class="text-xs text-gray-700 leading-snug mt-1 max-w-[360px]">试射：读落点，对比角/速/高</div>
+                <div id="goalMission" class="text-xs text-gray-700 leading-snug mt-1 max-w-[360px]">试射：读落点，对照侧栏参数</div>
             </div>
         </div>
 
@@ -611,21 +611,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         <div id="sideGoalBox" class="px-4 pt-3 pb-1 shrink-0">
             <div class="rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2">
                 <div class="side-goal-cap text-blue-700 tracking-wide">当前目标</div>
-                <p id="sideGoal" class="mt-0.5 leading-relaxed" style="color:var(--craft-text)">调角度、初速与高度，看落点怎么变。</p>
+                <p id="sideGoal" class="mt-0.5 leading-relaxed" style="color:var(--craft-text)">调节侧栏参数，发射后对照落点。</p>
             </div>
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 space-y-5 min-h-0">
-            <!-- 角度控制 -->
-            <div>
-                <div class="flex justify-between mb-1">
-                    <label class="text-sm font-semibold text-gray-700">发射角度 (度)</label>
-                    <span id="valAngle" class="text-sm text-blue-600 font-mono">45°</span>
-                </div>
-                <input type="range" id="s-angle" min="0" max="90" value="45" class="w-full">
-            </div>
-
-            <!-- 速度控制 -->
+            <!-- 速度控制 priorityRank=1 -->
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">初速度 (m/s)</label>
@@ -634,7 +625,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 <input type="range" id="s-speed" min="5" max="35" value="15" step="0.1" class="w-full">
             </div>
 
-            <!-- 高度控制 -->
+            <!-- 高度控制 priorityRank=2 -->
             <div>
                 <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">发射高度 (m)</label>
@@ -643,14 +634,23 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 <input type="range" id="s-height" min="0" max="30" value="10" step="0.1" class="w-full">
             </div>
 
-            <!-- 质量控制 -->
+            <!-- 质量 CV：插在 height 与 angle 之间，不垫底 -->
             <div>
-<div class="flex justify-between mb-1">
+                <div class="flex justify-between mb-1">
                     <label class="text-sm font-semibold text-gray-700">小球质量 (kg)</label>
                     <span id="valMass" class="text-sm text-blue-600 font-mono">5</span>
                 </div>
                 <input type="range" id="s-mass" min="1" max="20" value="5" step="1" class="w-full">
-</div>
+            </div>
+
+            <!-- 角度控制 priorityRank=3 -->
+            <div>
+                <div class="flex justify-between mb-1">
+                    <label class="text-sm font-semibold text-gray-700">发射角度 (度)</label>
+                    <span id="valAngle" class="text-sm text-blue-600 font-mono">45°</span>
+                </div>
+                <input type="range" id="s-angle" min="0" max="90" value="45" class="w-full">
+            </div>
         </div>
 
         <div class="p-4 border-t border-gray-200 bg-white grid grid-cols-2 gap-3">
@@ -868,8 +868,8 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
          * ═══════════════════════════════════════════════════════════ */
         const MODE_GOALS = {
             explore: {
-                hud: '试射：读落点，对比角/速/高',
-                side: '调角度、初速与高度，看落点怎么变。'
+                hud: '试射：读落点，对照侧栏参数',
+                side: '调节侧栏参数，发射后对照落点。'
             },
             challenge: {
                 hud: '限次命中本局靶距（打偏不换靶）',
