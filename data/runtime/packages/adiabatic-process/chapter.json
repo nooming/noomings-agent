@@ -53,21 +53,49 @@
       },
       {
         "id": "S1",
-        "label": "探究核心",
+        "label": "绝热功与内能",
         "group": "core",
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "PV^γ = const（γ=1.4）；W = ΔU = nCv ΔT（绝热，Cv=R/(γ-1)）"
+        "desc": "绝热过程 W ≈ ΔU = nCvΔT（γ=1.4）"
       },
       {
         "id": "I1",
-        "label": "无关/混淆控件",
+        "label": "活塞配重",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "混淆控件"
+        "desc": "仅改缸体/配重外观，不进功判据"
+      },
+      {
+        "id": "S2",
+        "label": "绝热与等温对照",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "同初态下绝热曲线与等温曲线形状不同"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 1,
+        "r": 20,
+        "desc": "活塞配重为混淆量，不进功判据"
+      },
+      {
+        "id": "C3",
+        "label": "功偏低或偏高",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 20,
+        "desc": "竞赛未落入 W* 带时的反馈 〔物理核心〕",
+        "constraintKind": "physics"
       }
     ],
     "links": [
@@ -110,6 +138,21 @@
         "s": "C1",
         "t": "R1",
         "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S_CV",
+        "t": "O1",
+        "tp": "method"
       }
     ]
   },
@@ -214,7 +257,7 @@
   "strategy": {
     "title": "过程台 · 绝热与等温",
     "sub": "绝热过程做出特定功",
-    "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打带]:::stratResult\nExplore --> Tune[单变量调参]\nChallenge --> Tune\nTune --> Fire[点击测试]\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| Tune\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察功 W?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打功带 W*]:::stratResult\nModeSelect -->|探究| Explore[探究对照绝热/等温]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·活塞配重| ProbeCV\nStrategySelect -->|单变量·初温| T0Strat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 W]\nTrap[多参盲调]\nT0Strat --> Tune[单变量调参]\nTrap --> Tune\nVStrat --> Tune[单变量调参]",
     "routes": [
       {
         "id": "main",
@@ -226,7 +269,7 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数",
+        "warn": "每次只改一个参数；沿绝热移动态点改 W",
         "score": 1,
         "weight": 1,
         "priorityRank": 1,
@@ -234,10 +277,13 @@
           "Start",
           "ModeSelect",
           "Explore",
+          "StrategySelect",
+          "VStrat",
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -250,6 +296,14 @@
           ],
           [
             "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "VStrat"
+          ],
+          [
+            "VStrat",
             "Tune"
           ],
           [
@@ -263,6 +317,92 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-T0",
+        "label": "单变量·初温",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数；T0 定曲线标度",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "StrategySelect",
+          "T0Strat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "T0Strat"
+          ],
+          [
+            "T0Strat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -279,9 +419,12 @@
         "warn": "同时拧多个滑条难归因",
         "score": 0.2,
         "weight": 0.2,
+        "tier": "suboptimal",
         "highlightNodes": [
           "Start",
           "ModeSelect",
+          "StrategySelect",
+          "Trap",
           "Tune",
           "Fire",
           "Observe"
@@ -292,33 +435,65 @@
             "ModeSelect"
           ],
           [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Tune"
+          ],
+          [
             "Tune",
             "Fire"
           ],
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_CV1",
+        "id": "confound_s_tag",
         "label": "试探·活塞配重",
         "mapsTo": [],
-        "warn": "拧对照量通常无增益，回到单变量主路径",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "tier": "suboptimal",
         "kind": "confoundProbe",
         "highlightNodes": [
           "Start",
-          "ModeSelect"
+          "ModeSelect",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
         ],
         "highlightEdges": [
           [
             "Start",
             "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": false
@@ -332,10 +507,12 @@
         "id": "KP1",
         "label": "过程台 · 绝热与等温",
         "formulas": [
-          "PV^γ = const（γ=1.4）"
+          "W ≈ nCv ΔT",
+          "PV^γ ≈ 常量"
         ],
         "mapsToKg": [
-          "S1"
+          "S1",
+          "S2"
         ]
       }
     ],
@@ -372,7 +549,8 @@
         "id": "CV1",
         "controlId": "s-tag",
         "label": "活塞配重",
-        "reason": "活塞缸体配重外观；不进功判据"
+        "reason": "活塞缸体配重外观；不进功判据",
+        "mapsToKg": "I1"
       }
     ],
     "inquiryFlow": [
@@ -418,7 +596,8 @@
   "inquiryProfile": "generic",
   "physicsModel": {
     "formulas": [
-      "PV^γ = const（γ=1.4）"
+      "W ≈ nCv ΔT",
+      "PV^γ ≈ 常量"
     ],
     "independentVariables": [
       "AV1",

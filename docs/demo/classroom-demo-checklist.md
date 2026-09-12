@@ -23,7 +23,7 @@
 | **必上** | 热学 | `demo-maxwell-speed-dist` | maxwell-speed-dist | pilot |
 | **必上** | 热学 | `demo-adiabatic-process` | adiabatic-process | pilot |
 
-演示口径：**力学五关 craft:gold**；**热学三关 craft:pilot**（非 gold，仍上架演示）。八关均已 `assertPublishReady` 通过（双模 + `explore_success`/`win` 分口径）。斜坡滚球概念较重，口播可标「进阶」但仍是正式上架。跳船 / 滑轮 / 热学三关以 **`chapter.json` 驱动路径摘要**，可不附带 `图谱.html`。
+演示口径：**力学五关 craft:gold**；**热学三关 craft:pilot**（非 gold，仍上架演示）。八关均已 `assertPublishReady` 通过（双模 + `explore_success`/`win` 分口径）。斜坡滚球概念较重，口播可标「进阶」但仍是正式上架。八关均有完整 `chapter.json` + Strategy-first `图谱.html`（路径摘要仍以 chapter 为准）。
 
 一键重跑（上架白名单、下架其它、写入课堂备注）：
 

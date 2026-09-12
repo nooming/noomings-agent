@@ -5,3 +5,7 @@
 滑条顺序：T → 容器容积(CV) → m。容器容积仅改分子云视觉密度，不进 v_p。
 
 竞赛：测前「待测」、不直播三量；测后 **v_p≈… + 偏低/偏高/已落入**。
+
+## 图谱 / chapter
+
+完整 `chapter.json`（inquiryScript + traceMap + strategy，含 per-AV 路线与 CV 旁路）。同目录附带 Strategy-first `图谱.html`（`../vendor/`）。

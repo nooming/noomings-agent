@@ -17,16 +17,26 @@
 html,body{margin:0;height:100%;background:var(--craft-bg);color:var(--craft-text);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
 #essence-app{display:flex;height:100vh;min-height:480px}
 #essence-stage{flex:1;position:relative;min-width:0;background:#0c0a08;overflow:hidden}
-#essence-stage canvas{display:block;width:100%;height:100%}
+#essence-stage #simCanvas{display:block;width:100%;height:100%}
 #essence-hud{position:absolute;left:16px;top:14px;z-index:2;pointer-events:none}
 .essence-title{font-size:15px;font-weight:700;letter-spacing:.02em;text-shadow:0 2px 12px rgba(0,0,0,.55)}
 .essence-sub,#goalMission{display:none!important}
 #stageGauge{
   position:absolute;right:14px;top:14px;z-index:2;pointer-events:none;
-  padding:10px 14px;border-radius:12px;background:rgba(0,0,0,.55);border:1px solid rgba(200,136,88,.35);
-  font-size:12px;color:var(--craft-muted);min-width:120px;
+  width:min(420px,54vw);max-width:calc(100% - 28px);
+  padding:14px 16px 16px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(28,22,16,.92),rgba(12,10,8,.94));
+  border:1px solid rgba(200,136,88,.35);
+  font-size:13px;color:var(--craft-muted);
+  box-shadow:0 10px 28px rgba(0,0,0,.35);
 }
-#stageGauge .g-val{font-size:18px;font-weight:700;color:#ffe0c2;font-family:ui-monospace,Consolas,monospace;margin-top:4px}
+#stageGauge .g-title{font-size:13px;letter-spacing:.02em;color:#c8b8a0}
+#stageGauge .g-val{font-size:20px;font-weight:700;color:#ffe0c2;font-family:ui-monospace,Consolas,monospace;margin-top:6px}
+#stageGauge .g-curve-cap{font-size:11px;margin-top:10px;letter-spacing:.02em;opacity:.92}
+#stageGauge #posCurve{
+  display:block;width:100%;height:260px;margin-top:6px;border-radius:8px;
+  background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);
+}
 #essence-bench{width:min(340px,38vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}
 .essence-scroll{padding:14px 14px 10px;overflow:auto;flex:1}
 .side-goal-cap{font-size:11px;color:var(--craft-muted);text-transform:uppercase;letter-spacing:.06em}
@@ -122,8 +132,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <div class="essence-title">阿特伍德 · 刚体滑轮</div>
     </div>
     <div id="stageGauge">
-      <div>滑轮转速示意</div>
+      <div class="g-title">角加速度示意</div>
       <div class="g-val" id="spinHint">静止</div>
+      <div class="g-curve-cap">位置 s(t) · m₁ 向下</div>
+      <canvas id="posCurve" width="388" height="260"></canvas>
     </div>
   </div>
   <aside id="essence-bench">
@@ -194,6 +206,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
   var animClock = 0;
   var trail = [];
   var dust = [];
+  var posSeries = [];
+  var posCurve = document.getElementById('posCurve');
+  var posCtx = posCurve ? posCurve.getContext('2d') : null;
   var settling = false;
   var settleT = 0;
   var pendingPhys = null;
@@ -281,12 +296,32 @@ button:disabled{opacity:.45;cursor:not-allowed}
     return el ? +el.value : 3;
   }
 
+  var posCssW = 388;
+  var posCssH = 260;
+
+  function resizePosCurve() {
+    if (!posCurve || !posCtx) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    // 先清掉内联尺寸，让 CSS width:100% 按父级重新布局，再取整 CSS 像素
+    posCurve.style.width = '';
+    posCurve.style.height = '260px';
+    var rect = posCurve.getBoundingClientRect();
+    posCssW = Math.max(1, Math.round(rect.width));
+    posCssH = Math.max(1, Math.round(rect.height || 260));
+    posCurve.style.width = posCssW + 'px';
+    posCurve.style.height = posCssH + 'px';
+    posCurve.width = Math.round(posCssW * dpr);
+    posCurve.height = Math.round(posCssH * dpr);
+    posCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
   function resize() {
     var r = canvas.parentElement.getBoundingClientRect();
     var dpr = Math.min(2, window.devicePixelRatio || 1);
     canvas.width = Math.max(320, r.width) * dpr;
     canvas.height = Math.max(240, r.height) * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    resizePosCurve();
   }
 
   function layout(w, h) {
@@ -326,18 +361,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
     }
     for (var gy = 24; gy < h * 0.72; gy += gStep) {
       ctx.beginPath(); ctx.moveTo(0, gy + 0.5); ctx.lineTo(w, gy + 0.5); ctx.stroke();
-    }
-
-    var cabX = w * 0.78, cabY = h * 0.1, cabW = w * 0.18, cabH = h * 0.38;
-    if (w > 420) {
-      ctx.fillStyle = 'rgba(18,14,10,0.72)';
-      roundRect(ctx, cabX, cabY, cabW, cabH, 6); ctx.fill();
-      ctx.strokeStyle = 'rgba(200,136,88,0.12)';
-      ctx.stroke();
-      for (var si = 0; si < 3; si++) {
-        ctx.fillStyle = 'rgba(60,48,36,0.55)';
-        roundRect(ctx, cabX + 10, cabY + 16 + si * 42, cabW - 20, 28, 4); ctx.fill();
-      }
     }
 
     var floorY = h * 0.78;
@@ -680,6 +703,172 @@ button:disabled{opacity:.45;cursor:not-allowed}
     }
   }
 
+  // 等比自适应：同一 px/单位 scale 映射 t 与 s，保留 ds/dt 视觉斜率；t=0 锚在左侧，右侧可留白
+  var POS_T_REF = 1.35;
+  var POS_S_REF = 0.55;
+
+  function niceStep(span, targetTicks) {
+    if (!(span > 0)) return 1;
+    var raw = span / Math.max(2, targetTicks);
+    var pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    var n = raw / pow;
+    var step = n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10;
+    return step * pow;
+  }
+
+  function formatTick(v, step) {
+    if (Math.abs(v) < 1e-9) return '0';
+    var absStep = Math.abs(step);
+    if (absStep >= 1) return String(Math.round(v * 1000) / 1000);
+    if (absStep >= 0.1) return v.toFixed(1);
+    if (absStep >= 0.01) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+
+  function drawPosCurve() {
+    if (!posCtx || !posCurve) return;
+    var w = posCssW;
+    var h = posCssH;
+    var padL = 42, padR = 16, padT = 16, padB = 28;
+    var plotW = Math.max(40, w - padL - padR);
+    var plotH = Math.max(40, h - padT - padB);
+    var i;
+
+    posCtx.clearRect(0, 0, w, h);
+    posCtx.fillStyle = 'rgba(0,0,0,0.2)';
+    posCtx.fillRect(0, 0, w, h);
+    posCtx.shadowBlur = 0;
+
+    var dataT = 0;
+    var dataS = 0;
+    for (i = 0; i < posSeries.length; i++) {
+      var p = posSeries[i];
+      if (p.t > dataT) dataT = p.t;
+      if (Math.abs(p.s) > dataS) dataS = Math.abs(p.s);
+    }
+    // 有数据：按轨迹+边距；无数据：用测量窗口参考，便于空图也有刻度
+    if (posSeries.length >= 2) {
+      dataT = Math.max(dataT * 1.08, 0.2);
+      dataS = Math.max(dataS * 1.15, 0.04);
+    } else {
+      dataT = POS_T_REF;
+      dataS = POS_S_REF;
+    }
+
+    // 统一缩放：px 对 t(s) 与 s(m) 相同，陡峭 a 仍更陡；t=0 固定在 plot 左缘，不水平居中
+    var scale = Math.min(plotW / dataT, plotH / (2 * dataS));
+    var x0 = padL;
+    var y0 = padT + plotH * 0.5;
+    var tMax = dataT;
+    var sMax = dataS;
+
+    function xOf(t) { return x0 + t * scale; }
+    function yOf(s) { return y0 - s * scale; }
+
+    // 坐标框（等比用到的区域外也可画满 plot，但刻度按物理窗）
+    posCtx.strokeStyle = 'rgba(160,144,120,0.4)';
+    posCtx.lineWidth = 1;
+    posCtx.beginPath();
+    posCtx.moveTo(padL, padT);
+    posCtx.lineTo(padL, padT + plotH);
+    posCtx.lineTo(padL + plotW, padT + plotH);
+    posCtx.stroke();
+
+    posCtx.beginPath();
+    posCtx.moveTo(xOf(0), yOf(0));
+    posCtx.lineTo(xOf(tMax), yOf(0));
+    posCtx.setLineDash([4, 4]);
+    posCtx.stroke();
+    posCtx.setLineDash([]);
+
+    var tStep = niceStep(tMax, 5);
+    var sStep = niceStep(sMax, 4);
+    posCtx.fillStyle = 'rgba(160,144,120,0.88)';
+    posCtx.font = '11px ui-monospace,Consolas,monospace';
+    posCtx.textBaseline = 'middle';
+
+    // s 轴刻度（左）
+    posCtx.textAlign = 'right';
+    for (var sv = 0; sv <= sMax + sStep * 0.01; sv += sStep) {
+      var ys = yOf(sv);
+      var yn = yOf(-sv);
+      if (ys >= padT - 1 && ys <= padT + plotH + 1) {
+        posCtx.beginPath();
+        posCtx.moveTo(padL, ys);
+        posCtx.lineTo(padL + 5, ys);
+        posCtx.strokeStyle = 'rgba(160,144,120,0.55)';
+        posCtx.stroke();
+        posCtx.fillText(formatTick(sv, sStep), padL - 5, ys);
+      }
+      if (sv > 0 && yn >= padT - 1 && yn <= padT + plotH + 1) {
+        posCtx.beginPath();
+        posCtx.moveTo(padL, yn);
+        posCtx.lineTo(padL + 5, yn);
+        posCtx.strokeStyle = 'rgba(160,144,120,0.55)';
+        posCtx.stroke();
+        posCtx.fillText(formatTick(-sv, sStep), padL - 5, yn);
+      }
+    }
+
+    // t 轴刻度（底）
+    posCtx.textAlign = 'center';
+    posCtx.textBaseline = 'top';
+    for (var tv = 0; tv <= tMax + tStep * 0.01; tv += tStep) {
+      var xt = xOf(tv);
+      if (xt < padL - 1 || xt > padL + plotW + 1) continue;
+      posCtx.beginPath();
+      posCtx.moveTo(xt, padT + plotH);
+      posCtx.lineTo(xt, padT + plotH - 5);
+      posCtx.strokeStyle = 'rgba(160,144,120,0.55)';
+      posCtx.stroke();
+      posCtx.fillText(formatTick(tv, tStep), xt, padT + plotH + 4);
+    }
+
+    posCtx.fillStyle = 'rgba(160,144,120,0.95)';
+    posCtx.font = '12px ui-monospace,Consolas,monospace';
+    posCtx.textAlign = 'left';
+    posCtx.textBaseline = 'alphabetic';
+    posCtx.fillText('s/m', 6, padT + 12);
+    posCtx.textAlign = 'right';
+    posCtx.fillText('t/s', w - 6, h - 6);
+
+    if (posSeries.length < 2) {
+      posCtx.fillStyle = 'rgba(160,144,120,0.75)';
+      posCtx.font = '13px "PingFang SC","Microsoft YaHei",sans-serif';
+      posCtx.textAlign = 'center';
+      posCtx.textBaseline = 'middle';
+      posCtx.fillText('释放后记录', padL + plotW / 2, padT + plotH / 2);
+      return;
+    }
+
+    posCtx.save();
+    posCtx.beginPath();
+    posCtx.rect(padL, padT, plotW, plotH);
+    posCtx.clip();
+
+    posCtx.strokeStyle = '#c88858';
+    posCtx.lineWidth = 2;
+    posCtx.lineJoin = 'round';
+    posCtx.beginPath();
+    for (i = 0; i < posSeries.length; i++) {
+      var pt = posSeries[i];
+      var x = xOf(pt.t);
+      var y = yOf(pt.s);
+      if (i === 0) posCtx.moveTo(x, y);
+      else posCtx.lineTo(x, y);
+    }
+    posCtx.stroke();
+
+    var last = posSeries[posSeries.length - 1];
+    var lx = Math.min(padL + plotW, Math.max(padL, xOf(last.t)));
+    var ly = Math.min(padT + plotH, Math.max(padT, yOf(last.s)));
+    posCtx.fillStyle = '#ffe0c2';
+    posCtx.beginPath();
+    posCtx.arc(lx, ly, 3, 0, Math.PI * 2);
+    posCtx.fill();
+    posCtx.restore();
+  }
+
   function updateSpinGauge() {
     var el = document.getElementById('spinHint');
     if (!el) return;
@@ -692,6 +881,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     } else {
       el.textContent = '静止';
     }
+    drawPosCurve();
   }
 
   function updateChallengeGauge() {
@@ -711,11 +901,18 @@ button:disabled{opacity:.45;cursor:not-allowed}
       sim.omega = -sim.v / R;
       sim.theta += sim.omega * dt;
       sim.t += dt;
+      if (!posSeries.length || sim.t - posSeries[posSeries.length - 1].t >= 0.02) {
+        posSeries.push({ t: sim.t, s: sim.y });
+        if (posSeries.length > 120) posSeries.shift();
+      }
       if (Math.abs(sim.y) >= 0.55 || sim.t >= 1.35) {
         running = false;
         settling = true;
         settleT = 0.28;
         pendingPhys = phys;
+        if (!posSeries.length || posSeries[posSeries.length - 1].t !== sim.t) {
+          posSeries.push({ t: sim.t, s: sim.y });
+        }
       }
     } else if (settling) {
       settleT -= dt;
@@ -803,6 +1000,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     settleT = 0;
     pendingPhys = null;
     trail = [];
+    posSeries = [];
     sim = { y: 0, v: 0, theta: 0, omega: 0, t: 0 };
     if (clearReadings) {
       lastA = null;
@@ -815,6 +1013,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
       document.getElementById('winIndicator').innerHTML = '';
     }
     document.getElementById('btn-release').disabled = false;
+    drawPosCurve();
   }
 
   function settleAfterMeasure(phys) {
@@ -917,6 +1116,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
     syncLabels();
     resetSim(false);
     running = true;
+    posSeries = [{ t: 0, s: 0 }];
     sessionEvidence.releaseCount += 1;
     measureAnim = 0.45;
     var box = document.getElementById('observeBox');

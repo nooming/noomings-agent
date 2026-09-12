@@ -4,26 +4,146 @@
     "title": "哪吒跳船 · 动量守恒",
     "sub": "跳船 · 动量守恒",
     "nodes": [
-      { "id": "P1", "label": "进入关卡", "group": "premise", "layer": "play", "level": 0, "r": 22, "desc": "开始跳船探究" },
-      { "id": "C1", "label": "模式选择", "group": "constraint", "layer": "play", "level": 1, "r": 22, "desc": "探究或竞赛", "constraintKind": "gameLimit" },
-      { "id": "O1", "label": "调节并起跳", "group": "operation", "layer": "play", "level": 2, "r": 22, "desc": "调节 θ、v相对（对起跳船 A）、m、起跳船 M 等后点击起跳" },
-      { "id": "C2", "label": "竞赛登船", "group": "constraint", "layer": "play", "level": 3, "r": 22, "desc": "竞赛模式下落点落在 B 船甲板", "constraintKind": "physics" },
-      { "id": "C3", "label": "探究见过登船与落水", "group": "constraint", "layer": "play", "level": 3, "r": 22, "desc": "探究模式下至少一次登船与一次落水", "constraintKind": "physics" },
-      { "id": "C4", "label": "竞赛剩余机会", "group": "constraint", "layer": "play", "level": 3, "r": 22, "desc": "竞赛剩余起跳次数>0", "constraintKind": "gameLimit" },
-      { "id": "R1", "label": "过关", "group": "result", "layer": "play", "level": 4, "r": 22, "desc": "竞赛登船或探究完成对照" },
-      { "id": "S1", "label": "水平动量守恒", "group": "core", "layer": "teach", "level": 0, "r": 22, "desc": "短过程忽略外力时系统水平动量为零" },
-      { "id": "S2", "label": "相对速度分配", "group": "method", "layer": "teach", "level": 0, "r": 22, "desc": "v对地 = v相对·M/(m+M)；船反冲 v′ = −v相对·m/(m+M)（v相对相对起跳船 A）" },
-      { "id": "I1", "label": "甲板摩擦系数 μ", "group": "irrelevant", "layer": "play", "level": 0, "r": 18, "desc": "混淆滑条：甲板 μ 仅视觉，不进动量" },
-      { "id": "I2", "label": "目标船质量", "group": "irrelevant", "layer": "play", "level": 0, "r": 18, "desc": "混淆滑条：仅缩放 B 船外观，不进动量与登船判定" }
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始跳船探究"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "探究或竞赛",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "O1",
+        "label": "调节并起跳",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调节 θ、v相对（对起跳船 A）、m、起跳船 M 等后点击起跳"
+      },
+      {
+        "id": "C2",
+        "label": "竞赛登船",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛模式下落点落在 B 船甲板",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C3",
+        "label": "探究见过登船与落水",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "探究模式下至少一次登船与一次落水",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "C4",
+        "label": "竞赛剩余机会",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛剩余起跳次数>0",
+        "constraintKind": "gameLimit"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛登船或探究完成对照"
+      },
+      {
+        "id": "S1",
+        "label": "水平动量守恒",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "短过程忽略外力时系统水平动量为零"
+      },
+      {
+        "id": "S2",
+        "label": "相对速度分配",
+        "group": "method",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "v对地 = v相对·M/(m+M)；船反冲 v′ = −v相对·m/(m+M)（v相对相对起跳船 A）"
+      },
+      {
+        "id": "I1",
+        "label": "甲板摩擦系数 μ",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "混淆滑条：甲板 μ 仅视觉，不进动量"
+      },
+      {
+        "id": "I2",
+        "label": "目标船质量",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "混淆滑条：仅缩放 B 船外观，不进动量与登船判定"
+      }
     ],
     "links": [
-      { "s": "P1", "t": "C1", "tp": "premise" },
-      { "s": "C1", "t": "O1", "tp": "premise" },
-      { "s": "O1", "t": "C2", "tp": "premise" },
-      { "s": "C2", "t": "R1", "tp": "core" },
-      { "s": "C3", "t": "R1", "tp": "core" },
-      { "s": "S1", "t": "O1", "tp": "verify" },
-      { "s": "S2", "t": "O1", "tp": "verify" }
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "C3",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      }
     ]
   },
   "dt": {
@@ -39,8 +159,18 @@
           "t": "decision",
           "d": "探究或竞赛",
           "children": [
-            { "_e": "是", "n": "探究", "t": "step", "d": "可调净空" },
-            { "_e": "否", "n": "竞赛", "t": "step", "d": "随机间距" }
+            {
+              "_e": "是",
+              "n": "探究",
+              "t": "step",
+              "d": "可调净空"
+            },
+            {
+              "_e": "否",
+              "n": "竞赛",
+              "t": "step",
+              "d": "随机间距"
+            }
           ]
         },
         {
@@ -53,8 +183,18 @@
               "t": "decision",
               "d": "甲板判定",
               "children": [
-                { "_e": "是", "n": "过关", "t": "result", "d": "win" },
-                { "_e": "否", "n": "未登船重试", "t": "retry", "d": "—" }
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "win"
+                },
+                {
+                  "_e": "否",
+                  "n": "未登船重试",
+                  "t": "retry",
+                  "d": "—"
+                }
               ]
             }
           ]
@@ -64,25 +204,65 @@
           "t": "decision",
           "d": "explore_success",
           "children": [
-            { "_e": "是", "n": "探究完成", "t": "result", "d": "explore_success" },
-            { "_e": "否", "n": "继续探究", "t": "retry", "d": "—" }
+            {
+              "_e": "是",
+              "n": "探究完成",
+              "t": "result",
+              "d": "explore_success"
+            },
+            {
+              "_e": "否",
+              "n": "继续探究",
+              "t": "retry",
+              "d": "—"
+            }
           ]
         }
       ]
     }
   },
-  "winSync": { "title": "过关", "sub": "竞赛登船或探究对照完成" },
+  "winSync": {
+    "title": "过关",
+    "sub": "竞赛登船或探究对照完成"
+  },
   "traceMap": {
     "controls": {
-      "s-angle": { "kgId": "O1", "role": "operation" },
-      "s-v-rel": { "kgId": "O1", "role": "operation" },
-      "s-mass-n": { "kgId": "O1", "role": "operation" },
-      "s-mass-b": { "kgId": "O1", "role": "operation" },
-      "s-dist": { "kgId": "O1", "role": "operation" },
-      "s-deck-mu": { "kgId": "I1", "role": "irrelevant" },
-      "s-mass-target": { "kgId": "I2", "role": "irrelevant" },
-      "modeSelect": { "kgId": "C1", "role": "operation" },
-      "btnLaunch": { "kgId": "O1", "role": "operation" }
+      "s-angle": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-v-rel": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass-n": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-mass-b": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-dist": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-deck-mu": {
+        "kgId": "I1",
+        "role": "irrelevant"
+      },
+      "s-mass-target": {
+        "kgId": "I2",
+        "role": "irrelevant"
+      },
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "btnLaunch": {
+        "kgId": "O1",
+        "role": "operation"
+      }
     },
     "legacyTypes": {}
   },
@@ -94,116 +274,324 @@
       {
         "id": "main",
         "label": "单变量·相对起跳船速度",
-        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
         "warn": "每次只改一个参数",
         "score": 1,
         "weight": 1,
         "priorityRank": 1,
-        "highlightNodes": ["Start", "Mode", "Explore", "Challenge", "StrategySelect", "VRelStrat", "Tune", "Launch", "Observe", "Win"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "Explore",
+          "Challenge",
+          "StrategySelect",
+          "VRelStrat",
+          "Tune",
+          "Launch",
+          "Observe",
+          "Win"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["Mode", "Explore"],
-          ["Explore", "StrategySelect"],
-          ["StrategySelect", "VRelStrat"],
-          ["VRelStrat", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"],
-          ["Observe", "Win"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "VRelStrat"
+          ],
+          [
+            "VRelStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
         ],
         "highlightFailureBranches": true
       },
       {
         "id": "main_s-angle",
         "label": "单变量·起跳角",
-        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
         "warn": "每次只改一个参数",
         "score": 0.85,
         "weight": 0.85,
         "priorityRank": 2,
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "AngleStrat", "Tune", "Launch", "Observe", "Win"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "AngleStrat",
+          "Tune",
+          "Launch",
+          "Observe",
+          "Win"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "AngleStrat"],
-          ["AngleStrat", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"],
-          ["Observe", "Win"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "AngleStrat"
+          ],
+          [
+            "AngleStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
         ],
         "highlightFailureBranches": true
       },
       {
         "id": "main_s-mass-n",
         "label": "单变量·人物质量",
-        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
         "warn": "每次只改一个参数",
         "score": 0.7,
         "weight": 0.7,
         "priorityRank": 3,
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "MassNStrat", "Tune", "Launch", "Observe", "Win"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "MassNStrat",
+          "Tune",
+          "Launch",
+          "Observe",
+          "Win"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "MassNStrat"],
-          ["MassNStrat", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"],
-          ["Observe", "Win"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "MassNStrat"
+          ],
+          [
+            "MassNStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
         ],
         "highlightFailureBranches": true
       },
       {
         "id": "main_s-mass-b",
         "label": "单变量·起跳船质量",
-        "mapsTo": ["P1", "O1", "C1", "C2", "R1"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
         "warn": "每次只改一个参数",
         "score": 0.55,
         "weight": 0.55,
         "priorityRank": 4,
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "MassBStrat", "Tune", "Launch", "Observe", "Win"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "MassBStrat",
+          "Tune",
+          "Launch",
+          "Observe",
+          "Win"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "MassBStrat"],
-          ["MassBStrat", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"],
-          ["Observe", "Win"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "MassBStrat"
+          ],
+          [
+            "MassBStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
         ],
         "highlightFailureBranches": true
       },
       {
         "id": "main_s-dist",
         "label": "单变量·目标净空",
-        "mapsTo": ["P1", "O1", "C1", "C3", "R1"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C3",
+          "R1"
+        ],
         "warn": "仅探究模式有效；竞赛间距随机",
         "score": 0.47,
         "weight": 0.47,
         "priorityRank": 5,
-        "highlightNodes": ["Start", "Mode", "Explore", "StrategySelect", "DistStrat", "Tune", "Launch", "Observe", "Win"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "Explore",
+          "StrategySelect",
+          "DistStrat",
+          "Tune",
+          "Launch",
+          "Observe",
+          "Win"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["Mode", "Explore"],
-          ["Explore", "StrategySelect"],
-          ["StrategySelect", "DistStrat"],
-          ["DistStrat", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"],
-          ["Observe", "Win"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "Mode",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "DistStrat"
+          ],
+          [
+            "DistStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ]
         ],
         "highlightFailureBranches": true
       },
       {
         "id": "trap",
         "label": "多参盲调",
-        "mapsTo": ["P1", "O1", "C1", "C2"],
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2"
+        ],
         "warn": "同时拧多个滑条难归因",
         "score": 0.2,
         "weight": 0.2,
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "Trap", "Tune", "Launch", "Observe"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "Trap",
+          "Tune",
+          "Launch",
+          "Observe"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "Trap"],
-          ["Trap", "Tune"],
-          ["Tune", "Launch"],
-          ["Launch", "Observe"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Launch"
+          ],
+          [
+            "Launch",
+            "Observe"
+          ]
         ],
         "highlightFailureBranches": true
       },
@@ -216,13 +604,35 @@
         "weight": 0.15,
         "tier": "suboptimal",
         "kind": "confoundProbe",
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "ProbeCV", "ObserveCV", "BackFromCV"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "ProbeCV"],
-          ["ProbeCV", "ObserveCV"],
-          ["ObserveCV", "BackFromCV"],
-          ["BackFromCV", "StrategySelect"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ]
         ],
         "highlightFailureBranches": false
       },
@@ -235,13 +645,35 @@
         "weight": 0.15,
         "tier": "suboptimal",
         "kind": "confoundProbe",
-        "highlightNodes": ["Start", "Mode", "StrategySelect", "ProbeCV2", "ObserveCV2", "BackFromCV2"],
+        "highlightNodes": [
+          "Start",
+          "Mode",
+          "StrategySelect",
+          "ProbeCV2",
+          "ObserveCV2",
+          "BackFromCV2"
+        ],
         "highlightEdges": [
-          ["Start", "Mode"],
-          ["StrategySelect", "ProbeCV2"],
-          ["ProbeCV2", "ObserveCV2"],
-          ["ObserveCV2", "BackFromCV2"],
-          ["BackFromCV2", "StrategySelect"]
+          [
+            "Start",
+            "Mode"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV2"
+          ],
+          [
+            "ProbeCV2",
+            "ObserveCV2"
+          ],
+          [
+            "ObserveCV2",
+            "BackFromCV2"
+          ],
+          [
+            "BackFromCV2",
+            "StrategySelect"
+          ]
         ],
         "highlightFailureBranches": false
       }
@@ -255,10 +687,13 @@
         "id": "KP1",
         "label": "跳船 · 动量守恒",
         "formulas": [
-          "m v_x + M v′_x = 0",
-          "v_x = v_相对 · M/(m+M) · cos θ"
+          "v_x ≈ v_rel · M/(m+M) · cosθ",
+          "v_boat ≈ −v_rel · m/(m+M)"
         ],
-        "mapsToKg": ["S1", "S2"]
+        "mapsToKg": [
+          "S1",
+          "S2"
+        ]
       }
     ],
     "adjustmentVariables": [
@@ -327,7 +762,16 @@
         "reason": "只缩放目标船 B 外观，不进动量、飞行与登船判定半宽"
       }
     ],
-    "inquiryFlow": ["KP1", "AV1", "AV2", "AV3", "AV4", "CV1", "CV2", "AV5"],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "CV1",
+      "CV2",
+      "AV5"
+    ],
     "narrative": {
       "intro": "跳船过程中系统水平动量近似守恒；用相对起跳船速度（对起跳船 A）与起跳船质量比决定对地速度与落点。",
       "steps": [
@@ -335,13 +779,22 @@
           "order": 1,
           "title": "自由探究",
           "body": "每次只改一项，对照登船与落水；探究可调目标净空。",
-          "mapsToKg": ["O1", "S1", "S2", "C3"]
+          "mapsToKg": [
+            "O1",
+            "S1",
+            "S2",
+            "C3"
+          ]
         },
         {
           "order": 2,
           "title": "竞赛登船",
           "body": "切换竞赛后间距本局锁定，限次起跳尝试登船；甲板摩擦系数与目标船质量不进动量。",
-          "mapsToKg": ["C1", "C2", "C4"]
+          "mapsToKg": [
+            "C1",
+            "C2",
+            "C4"
+          ]
         }
       ]
     },
@@ -359,14 +812,27 @@
   },
   "physicsModel": {
     "formulas": [
-      "v_x = v_相对 · M/(m+M) · cos θ",
-      "v′_船 = − v_相对 · m/(m+M)"
+      "v_x ≈ v_rel · M/(m+M) · cosθ",
+      "v_boat ≈ −v_rel · m/(m+M)"
     ],
-    "independentVariables": ["AV1", "AV2", "AV3", "AV4", "AV5"],
-    "confoundingVariables": ["CV1", "CV2"],
-    "dependentVariables": ["OV1"],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "AV5"
+    ],
+    "confoundingVariables": [
+      "CV1",
+      "CV2"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
     "core": {
-      "formulas": ["m v_x + M v′_x = 0"],
+      "formulas": [
+        "m v_x + M v′_x = 0"
+      ],
       "domain": "momentum",
       "winConditionSummary": "竞赛：落点在 B 船甲板；探究：explore_success 与 win 分离"
     }
@@ -376,15 +842,69 @@
     "subtitle": "跳船 · 动量守恒",
     "winCondition": "竞赛登船 emit win；探究 explore_success",
     "controls": [
-      { "id": "s-angle", "type": "range", "label": "起跳角", "mapsToKg": "O1", "role": "adjustment" },
-      { "id": "s-v-rel", "type": "range", "label": "相对起跳船速度", "mapsToKg": "O1", "role": "adjustment" },
-      { "id": "s-mass-n", "type": "range", "label": "人物质量", "mapsToKg": "O1", "role": "adjustment" },
-      { "id": "s-deck-mu", "type": "range", "label": "甲板摩擦系数 μ", "mapsToKg": "I1", "role": "confound" },
-      { "id": "s-mass-b", "type": "range", "label": "起跳船质量", "mapsToKg": "O1", "role": "adjustment" },
-      { "id": "s-mass-target", "type": "range", "label": "目标船质量", "mapsToKg": "I2", "role": "confound" },
-      { "id": "s-dist", "type": "range", "label": "目标净空", "mapsToKg": "O1", "role": "adjustment" },
-      { "id": "modeSelect", "type": "discrete", "label": "模式", "mapsToKg": "C1", "role": "adjustment" },
-      { "id": "btnLaunch", "type": "button", "label": "起跳", "mapsToKg": "O1", "role": "operation" }
+      {
+        "id": "s-angle",
+        "type": "range",
+        "label": "起跳角",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-v-rel",
+        "type": "range",
+        "label": "相对起跳船速度",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-mass-n",
+        "type": "range",
+        "label": "人物质量",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-deck-mu",
+        "type": "range",
+        "label": "甲板摩擦系数 μ",
+        "mapsToKg": "I1",
+        "role": "confound"
+      },
+      {
+        "id": "s-mass-b",
+        "type": "range",
+        "label": "起跳船质量",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "s-mass-target",
+        "type": "range",
+        "label": "目标船质量",
+        "mapsToKg": "I2",
+        "role": "confound"
+      },
+      {
+        "id": "s-dist",
+        "type": "range",
+        "label": "目标净空",
+        "mapsToKg": "O1",
+        "role": "adjustment"
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      },
+      {
+        "id": "btnLaunch",
+        "type": "button",
+        "label": "起跳",
+        "mapsToKg": "O1",
+        "role": "operation"
+      }
     ],
     "confoundingUi": [
       {
@@ -404,35 +924,114 @@
     ],
     "confoundingMustNotBePrimarySlider": true,
     "needsContinuousSim": true,
-    "layout": { "type": "canvas-panel", "canvasId": "gameCanvas", "panelId": "controlsPanel" }
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "gameCanvas",
+      "panelId": "controlsPanel"
+    }
   },
   "telemetrySpec": {
     "version": 1,
     "alignedWith": "traceMap",
     "exportEndpoint": "/api/trace/ingest",
     "events": [
-      { "type": "phase_change", "required": true, "description": "探究/竞赛切换" },
-      { "type": "tuning", "controlId": "s-angle", "kgId": "O1", "required": true },
-      { "type": "tuning", "controlId": "s-v-rel", "kgId": "O1", "required": true },
-      { "type": "tuning", "controlId": "s-mass-n", "kgId": "O1", "required": true },
-      { "type": "tuning", "controlId": "s-mass-b", "kgId": "O1", "required": true },
-      { "type": "tuning", "controlId": "s-dist", "kgId": "O1", "required": false, "description": "仅探究可调净空" },
-      { "type": "irrelevant_touch", "controlId": "s-deck-mu", "kgId": "I1", "required": false },
-      { "type": "irrelevant_touch", "controlId": "s-mass-target", "kgId": "I2", "required": false },
-      { "type": "action", "controlId": "btnLaunch", "kgId": "O1", "required": true },
-      { "type": "snapshot", "required": true },
-      { "type": "explore_success", "required": true },
-      { "type": "win", "required": true },
-      { "type": "attempts_exhausted", "required": true }
+      {
+        "type": "phase_change",
+        "required": true,
+        "description": "探究/竞赛切换"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-angle",
+        "kgId": "O1",
+        "required": true
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-v-rel",
+        "kgId": "O1",
+        "required": true
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-mass-n",
+        "kgId": "O1",
+        "required": true
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-mass-b",
+        "kgId": "O1",
+        "required": true
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-dist",
+        "kgId": "O1",
+        "required": false,
+        "description": "仅探究可调净空"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-deck-mu",
+        "kgId": "I1",
+        "required": false
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-mass-target",
+        "kgId": "I2",
+        "required": false
+      },
+      {
+        "type": "action",
+        "controlId": "btnLaunch",
+        "kgId": "O1",
+        "required": true
+      },
+      {
+        "type": "snapshot",
+        "required": true
+      },
+      {
+        "type": "explore_success",
+        "required": true
+      },
+      {
+        "type": "win",
+        "required": true
+      },
+      {
+        "type": "attempts_exhausted",
+        "required": true
+      }
     ],
     "dtCheckpoints": [
-      { "name": "模式选择?", "type": "decision", "desc": "探究或竞赛" },
-      { "name": "竞赛登船?", "type": "decision", "desc": "甲板判定" },
-      { "name": "探究登船且落水?", "type": "decision", "desc": "explore_success" },
-      { "name": "过关", "type": "result", "desc": "win 或 explore_success" }
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "探究或竞赛"
+      },
+      {
+        "name": "竞赛登船?",
+        "type": "decision",
+        "desc": "甲板判定"
+      },
+      {
+        "name": "探究登船且落水?",
+        "type": "decision",
+        "desc": "explore_success"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "win 或 explore_success"
+      }
     ],
     "paperNotes": "traceMap 上报；甲板 μ 与目标船质量记 irrelevant_touch，不计入主路径。",
     "adapterNote": "PlatformTraceAdapter"
   },
-  "meta": { "generationMode": "craft-port" }
+  "meta": {
+    "generationMode": "craft-port"
+  }
 }

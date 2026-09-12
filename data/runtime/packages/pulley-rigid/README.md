@@ -27,4 +27,4 @@ npx serve data/runtime/packages/pulley-rigid
 
 本包为 **craft:gold**（力学课堂五关）：完整 `chapter.json`（inquiryScript + traceMap + strategy）已对齐控件 id，路径摘要走 `/api/platform/strategy-path-summary`。
 
-**不附带** `图谱.html`（与热学三关同口径）。课堂不依赖 demo stub。
+同目录附带 Strategy-first `图谱.html`（读本地 `chapter.json`，vendor 为 `../vendor/`）。

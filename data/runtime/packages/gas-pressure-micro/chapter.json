@@ -53,21 +53,49 @@
       },
       {
         "id": "S1",
-        "label": "探究核心",
+        "label": "压强微观模型",
         "group": "core",
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "P = NkT / V"
+        "desc": "P ≈ NkT/V；N、T、V 均可改变压强"
       },
       {
         "id": "I1",
-        "label": "无关/混淆控件",
+        "label": "容器质量",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "混淆控件"
+        "desc": "仅改外观/示意质量，不进 P"
+      },
+      {
+        "id": "S2",
+        "label": "单变量对照",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "每次只改 N 或 T 或 V，观察 P 变化方向"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 1,
+        "r": 20,
+        "desc": "容器质量为混淆量，不进压强公式"
+      },
+      {
+        "id": "C3",
+        "label": "压强偏低或偏高",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 20,
+        "desc": "竞赛未落入目标带时的反馈 〔物理核心〕",
+        "constraintKind": "physics"
       }
     ],
     "links": [
@@ -110,6 +138,21 @@
         "s": "C1",
         "t": "R1",
         "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S_CV",
+        "t": "O1",
+        "tp": "method"
       }
     ]
   },
@@ -218,7 +261,7 @@
   "strategy": {
     "title": "气室 · 压强微观模型",
     "sub": "粒子碰壁 · N/T/V → P",
-    "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打带]:::stratResult\nExplore --> Tune[单变量调参]\nChallenge --> Tune\nTune --> Fire[点击测试]\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| Tune\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察压强?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打压强带]:::stratResult\nModeSelect -->|探究| Explore[探究对照压强微观]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·粒子数| NStrat\nStrategySelect -.->|试探·容器质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 P]\nTrap[多参盲调]\nNStrat --> Tune[单变量调参]\nTrap --> Tune\nTStrat --> Tune[单变量调参]\nVStrat --> Tune[单变量调参]",
     "routes": [
       {
         "id": "main",
@@ -230,7 +273,7 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数",
+        "warn": "每次只改一个参数；N↑通常抬升 P",
         "score": 1,
         "weight": 1,
         "priorityRank": 1,
@@ -238,10 +281,13 @@
           "Start",
           "ModeSelect",
           "Explore",
+          "StrategySelect",
+          "NStrat",
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -254,6 +300,14 @@
           ],
           [
             "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "NStrat"
+          ],
+          [
+            "NStrat",
             "Tune"
           ],
           [
@@ -267,6 +321,166 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-T",
+        "label": "单变量·温度",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数；T↑通常抬升 P",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "StrategySelect",
+          "TStrat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "TStrat"
+          ],
+          [
+            "TStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-V",
+        "label": "单变量·体积",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数；V↑通常降低 P",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "StrategySelect",
+          "VStrat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "VStrat"
+          ],
+          [
+            "VStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -283,9 +497,12 @@
         "warn": "同时拧多个滑条难归因",
         "score": 0.2,
         "weight": 0.2,
+        "tier": "suboptimal",
         "highlightNodes": [
           "Start",
           "ModeSelect",
+          "StrategySelect",
+          "Trap",
           "Tune",
           "Fire",
           "Observe"
@@ -296,33 +513,65 @@
             "ModeSelect"
           ],
           [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Tune"
+          ],
+          [
             "Tune",
             "Fire"
           ],
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_CV1",
+        "id": "confound_s_box_mass",
         "label": "试探·容器质量",
         "mapsTo": [],
-        "warn": "拧对照量通常无增益，回到单变量主路径",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "tier": "suboptimal",
         "kind": "confoundProbe",
         "highlightNodes": [
           "Start",
-          "ModeSelect"
+          "ModeSelect",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
         ],
         "highlightEdges": [
           [
             "Start",
             "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": false
@@ -336,10 +585,11 @@
         "id": "KP1",
         "label": "气室 · 压强微观模型",
         "formulas": [
-          "P = NkT / V"
+          "P ≈ NkT / V"
         ],
         "mapsToKg": [
-          "S1"
+          "S1",
+          "S2"
         ]
       }
     ],
@@ -389,7 +639,8 @@
         "id": "CV1",
         "controlId": "s-box-mass",
         "label": "容器质量",
-        "reason": "容器外观/质量示意；不进 P=NkT/V"
+        "reason": "容器外观/质量示意；不进 P=NkT/V",
+        "mapsToKg": "I1"
       }
     ],
     "inquiryFlow": [
@@ -435,7 +686,7 @@
   "inquiryProfile": "generic",
   "physicsModel": {
     "formulas": [
-      "P = NkT / V"
+      "P ≈ NkT / V"
     ],
     "independentVariables": [
       "AV1",

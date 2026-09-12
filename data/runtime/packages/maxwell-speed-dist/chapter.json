@@ -53,21 +53,49 @@
       },
       {
         "id": "S1",
-        "label": "探究核心",
+        "label": "最概然速率",
         "group": "core",
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "v_p = √(2kT/m)"
+        "desc": "v_p ≈ √(2kT/m)；T↑抬升，m↑压低"
       },
       {
         "id": "I1",
-        "label": "无关/混淆控件",
+        "label": "容器容积",
         "group": "irrelevant",
         "layer": "play",
         "level": 0,
         "r": 18,
-        "desc": "混淆控件"
+        "desc": "仅改分子云视觉密度，不进 v_p"
+      },
+      {
+        "id": "S2",
+        "label": "分布形状随参量",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "调 T、m 观察直方图/曲线峰位移动"
+      },
+      {
+        "id": "S_CV",
+        "label": "控制变量法",
+        "group": "method",
+        "layer": "teach",
+        "level": 1,
+        "r": 20,
+        "desc": "容器容积仅改视觉密度，不进 v_p"
+      },
+      {
+        "id": "C3",
+        "label": "特征速率偏低或偏高",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 20,
+        "desc": "竞赛未落入目标区间时的反馈 〔物理核心〕",
+        "constraintKind": "physics"
       }
     ],
     "links": [
@@ -110,6 +138,21 @@
         "s": "C1",
         "t": "R1",
         "tp": "core"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S_CV",
+        "t": "O1",
+        "tp": "method"
       }
     ]
   },
@@ -214,7 +257,7 @@
   "strategy": {
     "title": "分布台 · 麦克斯韦速率",
     "sub": "直方图随 T、m 移动",
-    "mermaid": "graph TD\nStart --> ModeSelect{选择模式?}:::stratCond\nModeSelect -->|探究| Explore[探究对照]:::stratCore\nModeSelect -->|竞赛| Challenge[限次打带]:::stratResult\nExplore --> Tune[单变量调参]\nChallenge --> Tune\nTune --> Fire[点击测试]\nFire --> Observe{观察读数?}:::stratCond\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|未达标| Tune\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察最概然速率?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打特征区间]:::stratResult\nModeSelect -->|探究| Explore[探究对照 v_p 随 T·m]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·分子质量| MStrat\nStrategySelect -.->|试探·容器容积| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nTune --> Fire[点击测试采样]\nTrap[多参盲调]\nMStrat --> Tune[单变量调参]\nTrap --> Tune\nTStrat --> Tune[单变量调参]",
     "routes": [
       {
         "id": "main",
@@ -226,7 +269,7 @@
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数",
+        "warn": "每次只改一个参数；T↑ → v_p↑",
         "score": 1,
         "weight": 1,
         "priorityRank": 1,
@@ -234,10 +277,13 @@
           "Start",
           "ModeSelect",
           "Explore",
+          "StrategySelect",
+          "TStrat",
           "Tune",
           "Fire",
           "Observe",
-          "Win"
+          "Win",
+          "Challenge"
         ],
         "highlightEdges": [
           [
@@ -250,6 +296,14 @@
           ],
           [
             "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "TStrat"
+          ],
+          [
+            "TStrat",
             "Tune"
           ],
           [
@@ -263,6 +317,92 @@
           [
             "Observe",
             "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-m",
+        "label": "单变量·分子质量",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数；m↑ → v_p↓",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "StrategySelect",
+          "MStrat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "MStrat"
+          ],
+          [
+            "MStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
@@ -279,9 +419,12 @@
         "warn": "同时拧多个滑条难归因",
         "score": 0.2,
         "weight": 0.2,
+        "tier": "suboptimal",
         "highlightNodes": [
           "Start",
           "ModeSelect",
+          "StrategySelect",
+          "Trap",
           "Tune",
           "Fire",
           "Observe"
@@ -292,33 +435,65 @@
             "ModeSelect"
           ],
           [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Tune"
+          ],
+          [
             "Tune",
             "Fire"
           ],
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": true
       },
       {
-        "id": "confound_CV1",
+        "id": "confound_s_vol",
         "label": "试探·容器容积",
         "mapsTo": [],
-        "warn": "拧对照量通常无增益，回到单变量主路径",
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
         "score": 0.15,
         "weight": 0.15,
         "tier": "suboptimal",
         "kind": "confoundProbe",
         "highlightNodes": [
           "Start",
-          "ModeSelect"
+          "ModeSelect",
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV"
         ],
         "highlightEdges": [
           [
             "Start",
             "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
           ]
         ],
         "highlightFailureBranches": false
@@ -332,10 +507,11 @@
         "id": "KP1",
         "label": "分布台 · 麦克斯韦速率",
         "formulas": [
-          "v_p = √(2kT/m)"
+          "v_p ≈ √(2kT/m)"
         ],
         "mapsToKg": [
-          "S1"
+          "S1",
+          "S2"
         ]
       }
     ],
@@ -372,7 +548,8 @@
         "id": "CV1",
         "controlId": "s-vol",
         "label": "容器容积",
-        "reason": "容器容积仅改分子云视觉密度；不进 v_p=√(2kT/m)"
+        "reason": "容器容积仅改分子云视觉密度；不进 v_p=√(2kT/m)",
+        "mapsToKg": "I1"
       }
     ],
     "inquiryFlow": [
@@ -418,7 +595,7 @@
   "inquiryProfile": "generic",
   "physicsModel": {
     "formulas": [
-      "v_p = √(2kT/m)"
+      "v_p ≈ √(2kT/m)"
     ],
     "independentVariables": [
       "AV1",

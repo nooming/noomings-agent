@@ -87,7 +87,7 @@
 
 - 课堂学生端 / 教师端只走 **`POST /api/platform/strategy-path-summary`**（真实会话 events + chapter）。
 - **`/api/demo/strategy-path-summary`** 仅给 `strategy-summary-demo.html` 合成轨迹试片；**不得**再作为 student-play 回退（旧回退会在文案后追加 ` · 演示`）。
-- 评分依赖各包 `chapter.json` 的 `inquiryScript` / `traceMap` / `strategy`；力学旗舰三关另有 `图谱.html`，跳船 / 滑轮 / 热学三关为 **chapter 驱动、无图谱页**（pilot 或 gold 均可）。
+- 评分依赖各包 `chapter.json` 的 `inquiryScript` / `traceMap` / `strategy`；课堂八关均附带 Strategy-first `图谱.html`（力学 gold / 热学 pilot），路径摘要仍以 chapter 为准。
 
 ## 运行真相源
 

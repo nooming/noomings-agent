@@ -24,4 +24,4 @@
 
 本包为 **craft:gold**（力学课堂五关）：提供完整 `chapter.json`（inquiryScript + traceMap + strategy），供平台路径摘要与 Agent B 使用。
 
-**不附带** `图谱.html` 可视化页（与热学三关同口径：chapter 驱动评分，图谱页非课堂必需）。勿回退到 `/api/demo/strategy-path-summary`。
+同目录附带 Strategy-first `图谱.html`（读本地 `chapter.json`，vendor 为 `../vendor/`）。勿回退到 `/api/demo/strategy-path-summary`。
