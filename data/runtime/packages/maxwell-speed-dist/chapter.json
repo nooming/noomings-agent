@@ -257,7 +257,7 @@
   "strategy": {
     "title": "分布台 · 麦克斯韦速率",
     "sub": "直方图随 T、m 移动",
-    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察最概然速率?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打特征区间]:::stratResult\nModeSelect -->|探究| Explore[探究对照 v_p 随 T·m]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·分子质量| MStrat\nStrategySelect -.->|试探·容器容积| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nTune --> Fire[点击测试采样]\nTrap[多参盲调]\nMStrat --> Tune[单变量调参]\nTrap --> Tune\nTStrat --> Tune[单变量调参]\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察最概然速率?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打特征区间]:::stratResult\nModeSelect -->|探究| Explore[探究对照 v_p 随 T·m]:::stratCore\nObserve -->|未达标| Tune\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·分子质量| MStrat\nStrategySelect -.->|试探·容器容积| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nTune --> Fire[点击测试采样]\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[试探·容器容积]:::stratInvalid\nMStrat[单变量·分子质量]\nTStrat[单变量·温度]\nMStrat --> Tune[单变量调参]\nTStrat --> Tune\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -320,7 +320,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -394,7 +394,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -442,7 +442,7 @@
           ],
           [
             "Trap",
-            "Tune"
+            "Fire"
           ],
           [
             "Tune",
@@ -454,7 +454,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",

@@ -15,10 +15,10 @@ const { loadAllSamples } = require('../lib/html-samples-manifest');
 const ROOT = path.resolve(__dirname, '../..');
 
 const DEFAULT_EVAL_IDS = new Set([
-  'multi-kp',
-  'series-parallel',
-  'heat-conduction',
-  'capacitor-confound-ui',
+  'ramp-rolling-collision',
+  'nezha-boat-jump',
+  'pulley-rigid',
+  'cyclotron-radius',
 ]);
 
 function ensureDir(dir) {

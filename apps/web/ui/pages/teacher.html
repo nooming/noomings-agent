@@ -65,6 +65,7 @@
       <div class="tool-link-row sessions-toolbar">
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="refreshTraces">刷新</button>
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="btnDownloadTracesZip" title="下载全部会话轨迹（不受当前筛选影响）">下载轨迹包</button>
+        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="btnDownloadSurveys" title="下载学习体验问卷 JSON（可按课堂码过滤框筛选）">学习体验问卷</button>
         <button type="button" class="edu-btn edu-btn-outline edu-btn-sm teacher-adv" id="btnUploadTracesZip" title="上传轨迹包 ZIP（或多选 sess-*.json；同名覆盖）">上传轨迹包</button>
         <input type="file" id="inputUploadTracesZip" accept=".zip,.json,application/zip,application/json" multiple hidden>
         <select id="filterGraph" class="sessions-select">
@@ -1865,6 +1866,37 @@ async function downloadAllTracesZip() {
     URL.revokeObjectURL(a.href);
   } catch (err) {
     alert(err.message || '下载失败');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function downloadSurveysJson() {
+  const btn = document.getElementById('btnDownloadSurveys');
+  if (btn) btn.disabled = true;
+  try {
+    const classCode = (document.getElementById('filterClassCode')?.value || '').trim();
+    const q = classCode ? `?classCode=${encodeURIComponent(classCode)}` : '';
+    const r = await fetch('/api/platform/surveys' + q, { credentials: 'same-origin' });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) {
+      alert(data.message || data.error || (r.status === 401 ? '需要教师登录' : '拉取问卷失败'));
+      return;
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = classCode
+      ? `surveys-${classCode}-${stamp}.json`
+      : `surveys-全部-${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if (!data.count) {
+      alert('当前还没有问卷提交（已下载空列表）。');
+    }
+  } catch (err) {
+    alert(err.message || '拉取问卷失败');
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -3780,6 +3812,7 @@ function bindSessionDetailDelegation() {
 
 document.getElementById('refreshTraces').addEventListener('click', loadSessionsData);
 document.getElementById('btnDownloadTracesZip')?.addEventListener('click', downloadAllTracesZip);
+document.getElementById('btnDownloadSurveys')?.addEventListener('click', downloadSurveysJson);
 document.getElementById('btnUploadTracesZip')?.addEventListener('click', pickUploadTracesPackage);
 document.getElementById('inputUploadTracesZip')?.addEventListener('change', e => {
   uploadTracesPackageFromFiles(e.target.files);

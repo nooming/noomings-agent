@@ -149,7 +149,7 @@ async function main() {
     console.log('Manual fine-tune:');
     console.log(`  1. Upload ${uploadPath} via provider dashboard or curl`);
     console.log('  2. Set FINETUNED_MODEL_ID=<model-id> in .env');
-    console.log('  3. npm run batch-html-dataset -- --id multi-kp --force  (repeat eval ids)');
+    console.log('  3. npm run batch-html-dataset -- --id ramp-rolling-collision --force  (repeat eval ids)');
     console.log('  4. npm run html-sft-eval');
     process.exit(err.status === 404 ? 0 : 1);
   }

@@ -74,12 +74,28 @@ function run() {
     inquiryScript: {
       summary: '两球碰撞',
       adjustmentVariables: [{ controlId: 's-v1', label: '初速度', symbol: 'v₁', type: 'range' }],
+      confoundingVariables: [{ controlId: 's-color', label: '球颜色', reason: '仅观感' }],
     },
-    traceMap: { controls: { 's-v1': { kgId: 'O1', role: 'operation' } } },
+    traceMap: {
+      controls: {
+        's-v1': { kgId: 'O1', role: 'operation' },
+        's-color': { kgId: 'I1', role: 'irrelevant' },
+      },
+    },
   }, { needsContinuousSim: true });
   assert(spec.needsContinuousSim === true, 'buildGameSpec needsContinuousSim');
   assert(spec.dataReadouts.length >= 2, 'dataReadouts for motion');
   assert(spec.layout?.canvasId === 'simCanvas', 'layout canvasId');
+  assert(spec.confoundingUi?.[0]?.uiStrategy === 'interactive_mid', 'CV interactive_mid default');
+  assert(/CV 不在末位/.test(spec.confoundingUi?.[0]?.domOrderNote || ''), 'CV domOrderNote');
+  assert(spec.controls.some(c => c.id === 's-color' && c.role === 'confounding'), 'CV in controls');
+  assert(spec.challengePostMeasureFeedback?.hitInBand === '已落入', 'post-measure pattern');
+  assert(spec.winAttributionMcq?.cvAsCorrectOption === false, 'CV not correct attribution');
+  assert(spec.htmlGuidelines.some(g => /插在 AV 之间|不垫底/.test(g)), 'CV placement guideline');
+
+  const craftBundle = require('../../../../packages/generate/export/llm-prompt-bundle');
+  assert(/interactive_mid|待测|已落入|craftAttr|--craft-bg/.test(craftBundle.HTMLGEN_SYSTEM),
+    'HTMLGEN_SYSTEM carries craft-gold patterns');
 
   console.log('html-post-validate-check: OK');
 }

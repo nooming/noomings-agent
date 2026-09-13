@@ -42,23 +42,15 @@ function run() {
     assert.ok(!/fonts\.googleapis\.com/.test(html), `${id}: must not hard-depend on Google Fonts`);
   }
 
-  const target = fs.readFileSync(path.join(pkgRoot, 'pendulum-target', 'game.html'), 'utf8');
-  assert.ok(target.includes('id="s-length"'), 'pendulum-target needs s-length');
-  assert.ok(
-    /hintKey:\s*['"]pendulum_(?:target|rush|hit)['"]/.test(target),
-    'pendulum-target win hint',
-  );
-
   const clock = fs.readFileSync(path.join(pkgRoot, 'pendulum-clock', 'game.html'), 'utf8');
   assert.ok(/endpoint\s*=\s*qs\.get\('ep'\)\s*\|\|\s*''/.test(clock), 'clock telemetry endpoint disabled');
   assert.ok(clock.includes("hintKey: 'pendulum_clock'"), 'clock win hint');
 
-  const cannon = fs.readFileSync(path.join(pkgRoot, 'projectile-cannon', 'game.html'), 'utf8');
+  const basic = fs.readFileSync(path.join(pkgRoot, 'projectile-basic', 'game.html'), 'utf8');
   assert.ok(
-    cannon.includes("hintKey: 'cannon_fort_hit'") || cannon.includes("hintKey: 'cannon_hit'"),
-    'cannon win hint',
+    /hintKey:\s*['"]hit_target['"]/.test(basic) || basic.includes("hintKey: 'hit_target'"),
+    'projectile-basic win hint',
   );
-  assert.ok(/interim:\s*interim|levelsCleared/.test(cannon), 'cannon win carries interim/levelsCleared');
 
   const events = [
     { type: 'phase_change', payload: { phase: 'explore' } },

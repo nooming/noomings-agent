@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
+<link rel="stylesheet" href="../_shared/craft-shell.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>斜坡滚球 · 碰撞与纯滚动</title>
@@ -12,10 +14,6 @@
             --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
             --font-display: var(--font-sans);
             --craft-accent:#0c8aad;
-            --craft-bg: #161412;
-            --craft-panel: #252018;
-            --craft-text: #f2ebe0;
-            --craft-muted: #9a8f7e;
             --scene-ink: #161412;
             --scene-mid: #2a2620;
             --scene-hi: #d4b896;
@@ -206,10 +204,11 @@
         .hud-bar {
             position: absolute;
             top: 16px;
-            left: 0;
-            width: 100%;
+            right: 0;
+            left: auto;
+            width: auto;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             padding: 0 24px;
             pointer-events: none;
             z-index: 10;
@@ -224,11 +223,6 @@
             background: rgba(0, 0, 0, 0.55);
             border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent);
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-        }
-        #modeLabel {
-            font-weight: 700;
-            color: var(--craft-accent);
-            letter-spacing: 0.04em;
         }
         .hud-sep {
             width: 1px;
@@ -253,14 +247,12 @@
             font-weight: 700;
         }
         #challengeStats {
-            display: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: var(--craft-text);
         }
-        #challengeStats.is-visible { display: flex; }
         #attemptsDisplay {
-            display: flex;
+            display: inline-flex;
             gap: 6px;
             align-items: center;
         }
@@ -339,20 +331,28 @@
             color: var(--craft-text);
         }
         .side-header {
-            padding: 12px 16px;
+            padding: 12px 14px;
             border-bottom: 1px solid color-mix(in srgb, var(--craft-accent) 30%, transparent);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             background: rgba(0, 0, 0, 0.28);
             flex-shrink: 0;
         }
-        .side-header h1 {
+        .side-header .bench-hd-text { flex: 1; min-width: 0; }
+        .side-header h1,
+        .side-header .bench-hd-title {
             margin: 0;
             font-size: 1.02rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             color: var(--scene-hi);
+        }
+        .side-header .bench-hd-sub {
+            margin: 2px 0 0;
+            font-size: 11px;
+            color: var(--craft-muted);
         }
         #modeSelect {
             background: rgba(0, 0, 0, 0.35);
@@ -379,24 +379,6 @@
         .side-body::-webkit-scrollbar-thumb {
             background: color-mix(in srgb, var(--craft-muted) 40%, transparent);
             border-radius: 3px;
-        }
-
-        .section-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--craft-accent);
-            letter-spacing: 0.08em;
-            margin: 0 0 4px;
-        }
-        #sideGoal {
-            margin: 0;
-            font-size: 12px;
-            line-height: 1.45;
-            color: var(--craft-text);
-            padding: 8px 10px;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.28);
-            border-left: 3px solid var(--craft-accent);
         }
 
         .param-card {
@@ -566,16 +548,6 @@
 
 
 /* === classroom-visual-p0 === */
-#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal,#sidePanel #sideGoal{
-  font-size:12px!important;line-height:1.45!important;
-}
-.side-goal-wrap,#sideGoalBox{
-  margin:0 0 8px;padding:6px 8px;border-radius:8px;
-  background:rgba(0,0,0,.28);border:1px solid color-mix(in srgb,var(--craft-accent,#0c8aad) 40%,transparent);
-}
-.side-goal-cap,.side-goal-wrap .side-goal-cap,#sideGoalBox .side-goal-cap{
-  font-size:10px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent,#0c8aad)!important;margin-bottom:2px;
-}
 #essence-hud #goalMission,.essence-sub#goalMission,#goalMission{display:none!important;}
 .,.cv-card.{
   margin-top:2px!important;padding:6px 8px!important;
@@ -607,7 +579,7 @@
   <div class="craft-card">
     <h2>工坊斜轨 · 滚球碰撞</h2>
     <p>入射球撞上静止的靶球后，靶球沿斜轨纯滚动爬升。调参观察：哪些量会改变它达到的高度？</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究模式可自由试；竞赛模式需把靶球停在目标高度附近（限次）。</p>
+    <p class="craft-intro-meta">探究≠竞赛；竞赛需把靶球停在目标高度附近，未命中扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -644,18 +616,20 @@
     <div id="canvasContainer">
         <canvas id="gameCanvas"></canvas>
 
+        <div class="craft-mode-pill" id="craftModePill" data-mode="explore">
+            <span id="modeLabel">探究模式</span>
+            <span id="challengeStats">
+                <span class="craft-mode-sep">|</span>
+                <span>剩余机会</span>
+                <div id="attemptsDisplay"></div>
+            </span>
+        </div>
+
         <div class="hud-bar">
             <div class="hud-chip">
-                <span id="modeLabel">探究模式</span>
-                <span class="hud-sep"></span>
                 <div class="hud-target">目标高度: <span id="hudTargetH">--</span> m</div>
                 <span class="hud-sep"></span>
                 <div class="hud-climb">当前 h: <span id="hudLiveH">--</span> m<span id="hudDeltaWrap" hidden> · Δ <span id="hudDelta">--</span> m</span></div>
-            </div>
-
-            <div id="challengeStats" class="hud-chip">
-                <span>剩余挑战次数:</span>
-                <div id="attemptsDisplay"></div>
             </div>
         </div>
 
@@ -670,7 +644,10 @@
 
     <div id="sidePanel">
         <div class="side-header">
-            <h1>斜轨工作台</h1>
+            <div class="bench-hd-text">
+                <h1 class="bench-hd-title">斜轨工作台</h1>
+                <div class="bench-hd-sub">碰撞 · 爬升高度</div>
+            </div>
             <select id="modeSelect" aria-label="探究阶段">
                 <option value="explore">自由探究</option>
                 <option value="challenge">竞赛</option>
@@ -678,8 +655,8 @@
         </div>
 
         <div class="side-body">
-            <div>
-                <div class="section-label side-goal-cap">当前目标</div>
+            <div class="side-goal-box">
+                <div class="side-goal-cap">当前目标</div>
                 <p id="sideGoal">调节侧栏参数，观察爬升高度；竞赛对准 HUD 目标。</p>
             </div>
 
@@ -969,7 +946,8 @@
             sAngle: document.getElementById('s-angle'), valAngle: document.getElementById('valAngle'),
             sRailTemp: document.getElementById('s-rail-temp'), valRailTemp: document.getElementById('valRailTemp'),
             btnLaunch: document.getElementById('btnLaunch'), btnReset: document.getElementById('btnReset'),
-            modeLabel: document.getElementById('modeLabel'), hudTargetH: document.getElementById('hudTargetH'),
+            modeLabel: document.getElementById('modeLabel'), craftModePill: document.getElementById('craftModePill'),
+            hudTargetH: document.getElementById('hudTargetH'),
             hudLiveH: document.getElementById('hudLiveH'),
             hudDelta: document.getElementById('hudDelta'),
             hudDeltaWrap: document.getElementById('hudDeltaWrap'),
@@ -1318,6 +1296,7 @@
             ui.modeSelect.addEventListener('change', e => {
                 state.mode = e.target.value;
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+                if (ui.craftModePill) ui.craftModePill.setAttribute('data-mode', state.mode);
                 if (state.challengeWinTimer) {
                     clearTimeout(state.challengeWinTimer);
                     state.challengeWinTimer = null;
@@ -1963,7 +1942,9 @@
   }
 })();
 </script>
-<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;var p=s.value==='challenge'?'challenge':'explore';try{if(window.__platformTraceSetPhase){window.__platformTraceSetPhase(p);window.__craftPhaseEmitted=p;return;}if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){window.PlatformTraceAdapter.setPhase(p);window.__craftPhaseEmitted=p;return;}}catch(e){}if(window.__craftPhaseEmitted===p)return;window.__craftPhaseEmitted=p;try{if(window.__emit)window.__emit('phase_change',{phase:p});else if(window.__traceEmit)window.__traceEmit('phase_change',{phase:p});}catch(e2){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>(function(){ if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase(); })();</script>
 
 <script>
 /* === attempts-exhausted-settle standalone === */

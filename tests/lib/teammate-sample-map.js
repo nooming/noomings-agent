@@ -9,22 +9,6 @@ module.exports = [
     tags: ['teammate', 'multi-av', 'confounding', 'craft:gold'],
   },
   {
-    id: 'pendulum-target',
-    src: '单摆.html',
-    topic: '单摆投靶',
-    knowledgeText: '调节摆长与摆角使脱钩后的摆锤命中矿车；质量与弹性晃动为混淆项。',
-    hint: '过关：摆锤命中下方目标车',
-    tags: ['teammate', 'multi-av', 'confounding', 'craft:gold'],
-  },
-  {
-    id: 'projectile-cannon',
-    src: '模拟大炮.html',
-    topic: '抛体大炮',
-    knowledgeText: '调节发射角、初速、重力、阻力与风速探究抛体命中；材料颜色为混淆控件。',
-    hint: '过关：炮弹命中靶心',
-    tags: ['teammate', 'multi-av', 'confounding', 'craft:gold'],
-  },
-  {
     id: 'projectile-basic',
     src: '斜抛游戏(1).html',
     topic: '斜抛',

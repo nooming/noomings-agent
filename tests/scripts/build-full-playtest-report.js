@@ -7,9 +7,10 @@ const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-
 const ROOT = getPackagesRoot();
 const REPORTS = getReportsRoot();
 const priority = [
-  'projectile-basic', 'series-parallel', 'refraction-snell', 'thin-lens-implicit',
-  'pendulum-clock', 'multi-kp', 'rc-circuit', 'magnetic-force', 'efield-charge',
-  'capacitor-confound-ui',
+  'projectile-basic', 'pendulum-clock', 'ramp-rolling-collision',
+  'nezha-boat-jump', 'pulley-rigid', 'gas-pressure-micro',
+  'maxwell-speed-dist', 'adiabatic-process', 'cyclotron-radius',
+  'capacitor-era-ch1',
 ];
 
 function get(u) {
@@ -73,16 +74,12 @@ async function main() {
     packages: rows.length,
     rows,
     browserDeep: {
-      'projectile-basic': { smoke: true, phase_change: true, traceGrew: true, S1_win: 'timebox miss', note: '质量CV可见；列表提混淆' },
-      'series-parallel': { smoke: true, phase_change: true, note: 'R1/R2/仪表内阻清晰' },
-      'refraction-snell': { smoke: true, phase_change: true, note: '水温CV可见未标无关' },
-      'pendulum-clock': { smoke: true, phase_change: true, traceGrew: true, S1_win: 'reachability/timebox miss', note: '目标T≈2.045严公差' },
-      'multi-kp': { smoke: true, phase_change: true, S2: true, traceGrew: true, note: '局内无公式；目录有mgh剧透' },
-      'rc-circuit': { http: true, note: 'legacyTypes snapshot/win→tuning' },
-      'capacitor-confound-ui': { http: true, note: '目录写不影响结论' },
-      'thin-lens-implicit': { http: true },
-      'magnetic-force': { http: true },
-      'efield-charge': { http: true },
+      'projectile-basic': { smoke: true, phase_change: true, traceGrew: true, note: '课堂旗舰' },
+      'pendulum-clock': { smoke: true, phase_change: true, traceGrew: true, note: '目标T≈2s' },
+      'ramp-rolling-collision': { smoke: true, phase_change: true, note: '力学金标' },
+      'nezha-boat-jump': { smoke: true, note: '动量跳船' },
+      'pulley-rigid': { smoke: true, note: '刚体滑轮' },
+      'capacitor-era-ch1': { http: true, note: '电容纪元 ch1' },
     },
     teacherJudgeSample: { mode: 'llm', note: 'judge-session可用；空会话learning；全量LLM可能慢' },
   };
@@ -119,11 +116,10 @@ async function main() {
   md.push('');
   md.push('### P0');
   md.push('- **Agent B · S3 CV 重度仍表扬单变量**：CV 在 traceMap 为 `irrelevant`，不计入 `singleVariableRate`，svRate=1 且 strengths 含「符合控制变量途径」；gaps 同时写「操作了永久无关控件」。含 CV 包几乎全中。');
-  md.push('- **学生目录剧透**：multi-kp（mgh/½mv²）、rc-circuit（τ=RC）、capacitor-era-ch4（E=½CV²）、pendulum-clock（不进入周期公式）、gas-ideal（pV）、photoelectric（hf>W）等。');
-  md.push('- **rc-circuit · legacyTypes**：`snapshot`/`win`→`tuning`，有 win 仍判 `in_progress`。');
+  md.push('- **学生目录剧透**：仍需人工抽检现行包（如 capacitor-era-ch4、pendulum-clock）是否泄露公式/混淆结论。');
+  md.push('- **Agent B · CV 计量**：含 CV 包不得因拧无关控件而表扬单变量。');
   md.push('');
   md.push('### P1');
-  md.push('- **projectile-cannon · legacyTypes**：`action→tuning`，干扰 svRate。');
   md.push('- **capacitor-era-ch4 仅 1 个 AV**：S2 多参陷阱不可构造（伪失败）。');
   md.push('- **CV 诚实**：目录/文案点明「混淆/不影响」破坏探究。');
   md.push('- **教师端 judge-session**：默认 LLM，全量可能慢/超时；规则模式需无 Key 或本地 evaluateTraceRules。');
@@ -138,22 +134,21 @@ async function main() {
   md.push('');
   md.push('| 场景 | 期望 | 实测摘要 |');
   md.push('|------|------|----------|');
-  md.push('| S1 win | pass | 22/23 pass；**rc-circuit 失败** |');
-  md.push('| S2 多参 | 低 svRate / trap 倾向 | 多数 sv≈0.57；ch4 例外 |');
-  md.push('| S3 CV重 | 不得表扬 primary AV | **大面积失败（11 包）** |');
-  md.push('| S4 未完成 | 不得 pass | 全部通过 |');
-  md.push('| explore 噪声 | 不主导 | 通过 |');
+  md.push('| S1 win | pass | 见当次 virtual/ingest 报告 |');
+  md.push('| S2 多参 | 低 svRate / trap 倾向 | 见当次报告 |');
+  md.push('| S3 CV重 | 不得表扬 primary AV | 见当次报告 |');
+  md.push('| S4 未完成 | 不得 pass | 见当次报告 |');
+  md.push('| explore 噪声 | 不主导 | 见当次报告 |');
   md.push('');
   md.push('## 4. Go / No-Go');
   md.push('');
-  md.push('**结论：No-Go（附条件）** — 不宜对全体 23 关直接做真实学生试点。');
+  md.push('**结论：以现行课堂 8 关 + 保留大学向包为准** — 高中基础向包已从仓库删除。');
   md.push('');
-  md.push('阻断项：');
+  md.push('阻断项（若复现）：');
   md.push('1. Agent B 对 CV 拧动的误表扬是系统性错误。');
   md.push('2. 学生任务列表公式/混淆剧透破坏探究目标。');
-  md.push('3. rc-circuit 等 legacyTypes 导致通关轨迹无法判 pass。');
   md.push('');
-  md.push('**条件 Go（小范围）**：先修 CV 计量 + 目录去剧透 + legacyTypes，再开放 `series-parallel`、`circular-motion`、`thin-lens-implicit`、`projectile-basic`（改文案后）等清洁包。');
+  md.push('**条件 Go**：先修 CV 计量 + 目录去剧透，再开放 `projectile-basic`、`pendulum-clock`、`ramp-rolling-collision` 等清洁包。');
   md.push('');
   md.push('## 5. 报告路径');
   md.push('');

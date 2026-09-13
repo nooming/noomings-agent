@@ -22,13 +22,6 @@ const RULES = {
       { match: id => /angle|角度|倾角/i.test(id), mono: 'non-monotone' },
     ],
   },
-  'projectile-cannon': {
-    note: '抛体大炮：同类斜抛启发式',
-    expect: [
-      { match: id => /speed|速度|v0|power|炮口/i.test(id), mono: 'monotone', maxRank: 2 },
-      { match: id => /angle|角度/i.test(id), mono: 'non-monotone' },
-    ],
-  },
 };
 
 function avKey(av) {

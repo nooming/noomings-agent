@@ -1,812 +1,64 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>加速舱 · 回旋半径</title>
-  <script src="vendor/three.min.js"></script>
-  <script src="vendor/OrbitControls.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family:var(--font-sans);
-            background: #f5f7fb;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-        #app {
-            max-width: 1100px;
-            width: 100%;
-            background: white;
-            border-radius: 28px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        /* 顶部提示条 */
-        .top-hint {
-            background: #eef3fe;
-            padding: 12px 20px;
-            font-size: 0.95rem;
-            color: #1e3a6f;
-            border-bottom: 1px solid #d0ddef;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .top-hint span {
-            background: #d9e5fc;
-            padding: 2px 12px;
-            border-radius: 30px;
-            font-weight: 500;
-        }
-        .top-hint i {
-            font-style: normal;
-            background: #ffffffb0;
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
-        /* 主布局：canvas + 侧栏 */
-        .main-layout {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-        }
-        #simCanvasArea {
-            flex: 2;
-            min-width: 340px;
-            background: #0b1a2f;
-            position: relative;
-            aspect-ratio: 4 / 3;
-            overflow: hidden;
-        }
-        #simCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: #0b1a2f;
-            touch-action: none;
-        }
-        #controlsPanel {
-            flex: 1;
-            min-width: 260px;
-            background: #ffffff;
-            padding: 20px 18px 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            border-left: 1px solid #e9edf4;
-        }
-        /* 控件样式 */
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .control-group label {
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #1f2a44;
-            display: flex;
-            justify-content: space-between;
-        }
-        .control-group label .val {
-            background: #f0f4fe;
-            padding: 0 12px;
-            border-radius: 30px;
-            font-weight: 600;
-            color: #0b2b5e;
-        }
-        input[type=range] {
-            width: 100%;
-            height: 6px;
-            -webkit-appearance: none;
-            background: #d9e2f0;
-            border-radius: 10px;
-            outline: none;
-            transition: background 0.2s;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: #2b5797;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,20,40,0.2);
-        }
-        input[type=range]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: #2b5797;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-        }
-        .readout-row {
-            display: flex;
-            justify-content: space-between;
-            background: #f6f9ff;
-            padding: 8px 14px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-            color: #1f3a5f;
-            border: 1px solid #e2eaf9;
-        }
-        .readout-row span:last-child {
-            font-weight: 600;
-            font-family: 'Courier New', monospace;
-        }
-        .button-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-        }
-        .btn {
-            background: #eef3fc;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 40px;
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: #1f3a6f;
-            cursor: pointer;
-            transition: all 0.15s;
-            flex: 1 0 auto;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            border: 1px solid transparent;
-        }
-        .btn-primary {
-            background: #1f4a8a;
-            color: white;
-            box-shadow: 0 4px 8px rgba(25, 70, 140, 0.2);
-        }
-        .btn-primary:hover {
-            background: #163d73;
-        }
-        .btn-outline {
-            background: white;
-            border: 1px solid #bccbe0;
-        }
-        .btn-outline:hover {
-            background: #f0f5ff;
-        }
-        .btn:active {
-            transform: scale(0.96);
-        }
-        .observe-area {
-            background: #f2f6fe;
-            border-radius: 20px;
-            padding: 12px 14px 14px;
-            margin-top: 6px;
-            border: 1px solid #dce5f5;
-            min-height: 78px;
-            height: auto;
-            overflow: visible;
-            max-width: 100%;
-            flex-shrink: 0;
-        }
-        .observe-area .hint-label {
-            font-weight: 500;
-            color: #1f3a6f;
-            font-size: 0.85rem;
-            letter-spacing: 0.3px;
-        }
-        .observe-area .feedback {
-            margin-top: 6px;
-            font-size: 0.92rem;
-            color: #1f2a44;
-            line-height: 1.45;
-            max-width: 100%;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-            white-space: normal;
-        }
-        .observe-area .feedback .win {
-            color: #1d7a3c;
-            font-weight: 600;
-            display: block;
-            overflow-wrap: anywhere;
-        }
-        .observe-area .feedback .fail {
-            color: #b13e3e;
-            display: block;
-            overflow-wrap: anywhere;
-        }
-        .observe-area .feedback .fail-main,
-        .observe-area .feedback .win-main {
-            display: block;
-            font-weight: 600;
-        }
-        .observe-area .feedback .fail-sub,
-        .observe-area .feedback .win-sub {
-            display: block;
-            margin-top: 2px;
-            font-size: 0.82rem;
-            font-weight: 500;
-            opacity: 0.92;
-            line-height: 1.35;
-        }
-        #feedbackMsg {
-            max-width: 100%;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-        }
-        .confound-note {
-            background: #f8faff;
-            border-radius: 16px;
-            padding: 10px 14px;
-            font-size: 0.8rem;
-            color: #4a5b7a;
-            border: 1px dashed #c8d6ed;
-            margin-top: 4px;
-        }
-        .confound-note strong {
-            color: #1f3a6f;
-        }
-        #winOverlay {
-            display: none;
-            background: #e3f0e8;
-            border-radius: 24px;
-            padding: 16px 18px;
-            margin-top: 8px;
-            border: 1px solid #b3d5c2;
-            text-align: center;
-        }
-        #winOverlay.show {
-            display: block;
-        }
-        #winOverlay h3 {
-            color: #146b3a;
-            margin-bottom: 4px;
-        }
-        /* 移动端适配 */
-        @media (max-width: 680px) {
-            .main-layout {
-                flex-direction: column;
-            }
-            #simCanvasArea {
-                aspect-ratio: 4 / 3;
-                min-width: unset;
-            }
-            #controlsPanel {
-                border-left: none;
-                border-top: 1px solid #e9edf4;
-            }
-        }
-    
-/* === essence-sidebar-shell already (auto) === */
-html, body { width:100%; height:100%; margin:0; padding:0 !important; overflow:hidden; }
-body { display:block !important; min-height:0 !important; align-items:stretch !important; justify-content:stretch !important; }
-#app {
-  max-width:none !important; width:100% !important; height:100% !important; min-height:0 !important;
-  border-radius:0 !important; box-shadow:none !important; margin:0 !important;
-  display:flex !important; flex-direction:column !important;
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>加速舱 · 回旋半径</title>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
+<link rel="stylesheet" href="../_shared/craft-shell.css">
+<style>
+:root {
+  --craft-accent: #40b8c8;
+  --craft-bg: #0a1216;
+  --craft-panel: #142228;
+  --craft-text: #e0eef0;
+  --craft-muted: #7898a0;
+  --scene-ink: #0a1216;
+  --scene-mid: #1e343c;
+  --scene-hi: #80d8e0;
+  --scene-glow: #30c8d8;
+  --scene-ok: #6fae8f;
 }
-.main-layout { flex:1 1 0; min-height:0; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; }
-#simCanvasArea {
-  /* desktop 也保底高度，避免 craft 壳 min-height:0 + aspect-ratio:auto 时 iframe 首帧塌成 0 */
-  flex:1 1 0 !important; min-width:0 !important; min-height:max(240px, 40vh) !important;
-  max-height:none !important; aspect-ratio:auto !important;
-}
-#controlsPanel {
-  flex:0 0 clamp(280px, 28vw, 340px) !important; width:clamp(280px, 28vw, 340px) !important;
-  min-width:0 !important; overflow-y:auto; max-height:100%;
-}
-@media (max-width:720px) {
-  .main-layout { flex-direction:column !important; }
-  #simCanvasArea { min-height:48vh !important; }
-  #controlsPanel {
-    flex:0 0 auto !important; width:100% !important; max-height:min(42vh,360px) !important;
-    border-left:none !important; border-top:1px solid #e2e8f0;
-  }
-}
-
-
-/* === dual-mode-shell (auto) === */
-#dual-mode-hud {
-  position:absolute; top:10px; left:10px; right:10px; z-index:8;
-  display:flex; justify-content:space-between; align-items:flex-start;
-  gap:8px; pointer-events:none;
-}
-#dual-mode-hud .dual-chip {
-  pointer-events:auto; display:inline-flex; align-items:center; gap:10px;
-  padding:8px 14px; border-radius:999px;
-  background:rgba(255,255,255,0.92); border:1px solid rgba(148,163,184,0.45);
-  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
-}
-#dual-mode-hud #modeLabel { font-weight:700; color:#2563eb; }
-#dual-mode-hud #timerDisplay { font-family:var(--font-mono); font-weight:600; color:#334155; }
-#challengeStats {
-  pointer-events:auto; display:none; align-items:center; gap:8px;
-  padding:8px 14px; border-radius:999px;
-  background:rgba(255,255,255,0.92); border:1px solid rgba(248,113,113,0.45);
-  box-shadow:0 4px 12px rgba(15,23,42,0.12); color:#1e293b; font-size:13px;
-}
-#challengeStats.is-visible { display:inline-flex; }
-#attemptsDisplay { font-weight:700; color:#dc2626; font-size:16px; }
-#essence-bench-hd, .dual-bench-hd {
-  display:flex; justify-content:space-between; align-items:center; gap:10px;
-  padding:12px 16px; border-bottom:1px solid #e2e8f0; background:#fff; flex-shrink:0;
-}
-#essence-bench-hd h1, .dual-bench-hd h1 {
-  margin:0; font-size:15px; font-weight:700; color:#1e293b; line-height:1.3;
-}
-#modeSelect {
-  border:1px solid #93c5fd; border-radius:999px; padding:4px 10px;
-  font-size:12px; font-weight:600; color:#1d4ed8; background:#eff6ff; cursor:pointer;
-}
-#essence-bench.dual-mode-ready { display:flex; flex-direction:column; }
-button.dual-disabled, .dual-disabled { opacity:0.45; pointer-events:none; cursor:not-allowed; }
-
-
-/* === craft-gold-shell === */
-:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#40b8c8;--craft-bg:#0a1216;--craft-panel:#142228;--craft-text:#e0eef0;--craft-muted:#7898a0;}
-html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
-  font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
-#essence-app,#app{background:var(--craft-bg)!important;}
-#essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
-#essence-bench,.control-panel,#controls-area,#bench,#controlsPanel{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
-#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
-#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
-#essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
-#essence-bench label,.slider-group label,.slabel,#controlsPanel .control-group label,#controlsPanel label{color:var(--craft-muted)!important;}
-#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#controlsPanel .btn,#controlsPanel button{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
-#controlsPanel .control-group label .val,#controlsPanel .val{
-  background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;
-}
-#controlsPanel #sideGoal,p#sideGoal{color:var(--craft-text)!important;}
-#modeSelect{
-  background:rgba(0,0,0,.35)!important;border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
-  color:var(--craft-text)!important;
-}
-.top-hint{
-  background:rgba(0,0,0,.32)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
-  color:var(--craft-text)!important;
-}
-.top-hint span,.top-hint i{
-  background:rgba(0,0,0,.35)!important;color:var(--craft-text)!important;
-}
-.app-header,.top-bar{background:rgba(0,0,0,.28)!important;color:var(--craft-text)!important;}
-.app-header h1,h1{color:var(--craft-accent)!important;}
-#craft-intro,#craft-win{
-  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
-}
-#craft-intro[hidden],#craft-win[hidden]{display:none!important;}
-
-.craft-card button:disabled{opacity:.45;cursor:not-allowed;filter:none;}
-.craft-evidence{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent);font-size:.88rem;line-height:1.55;color:var(--craft-text);}
-.craft-evidence strong{color:var(--craft-accent);font-weight:600;}
-.craft-attr{margin:0 0 12px;}
-.craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted);}
-.craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
-@media (max-width:420px){.craft-attr-options{grid-template-columns:1fr;}}
-.craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer;}
-.craft-attr input{margin-top:3px;accent-color:var(--craft-accent);}
-.craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted);}
-.craft-attr-hint[hidden]{display:none!important;}
-.craft-reveal{margin-top:4px;}
-.craft-reveal[hidden]{display:none!important;}
-.craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
-  border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
-.craft-actions{display:flex;gap:10px;margin-top:14px;}
-.craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
-.craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
-.craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
-
-.craft-card{
-  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
-  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
-}
-.craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
-.craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
-.craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
-  border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
-.craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
-#craft-gauge{display:none!important;}
-#craft-gauge strong{color:var(--craft-accent);font-family:var(--font-mono);font-size:16px;display:block;margin-top:2px;}
-#craft-cv{font-size:12px;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
-  border-radius:10px;padding:8px 10px;margin:8px 0;}
-.app,.card,.container{background:transparent!important;box-shadow:none!important;color:inherit!important;}
-.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
-
-
-/* === craft-sidebar-contrast === */
-.sub,.hint{color:var(--craft-text)!important;border-left-color:var(--craft-accent)!important;}
-#essence-bench .hint,
-#essence-bench .hint-msg,
-#essence-bench .hint-area,
-#essence-bench #hintMessage,
-#essence-bench #hintMsg,
-#essence-bench #observeText,
-#essence-bench #feedbackArea,
-#essence-bench .hint-bar,
-#essence-bench #hintBar,
-#proj-side .hint,
-#controls-area .hint-msg,
-#bench .hint,
-#bench .hint-msg{
-  background:rgba(0,0,0,.35)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
-  color:var(--craft-text)!important;
-}
-#essence-bench .confound-note,
-#controls-area .confound-note,
-#bench .confound-note{
-  background:rgba(0,0,0,.28)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
-  color:var(--craft-text)!important;
-}
-#essence-bench .hint-msg.win-msg,
-#essence-bench .hint.win-msg{
-  background:rgba(34,197,94,.22)!important;color:#bbf7d0!important;
-  border-color:rgba(34,197,94,.45)!important;
-}
-#essence-bench .hint-msg.fail-msg,
-#essence-bench .hint.fail-msg{
-  background:rgba(248,113,113,.22)!important;color:#fecaca!important;
-  border-color:rgba(248,113,113,.45)!important;
-}
-#sideGoal,p#sideGoal,#essence-bench #sideGoal,#proj-side #sideGoal{
-  color:var(--craft-text)!important;
-}
-#essence-bench .footer,
-#essence-bench .footer span,
-#essence-bench .text-sm,
-#essence-bench .observe-unit,
-#essence-bench .unit,
-#essence-bench .note{
-  color:var(--craft-muted)!important;
-}
-
-
-/* === craft-scene-tokens (cyclotron-radius) === */
-:root{
-  --craft-accent:#40b8c8;--craft-bg:#0a1216;--craft-panel:#142228;
-  --craft-text:#e0eef0;--craft-muted:#7898a0;
-  --scene-ink:#0a1216;--scene-mid:#1e343c;--scene-hi:#80d8e0;
-  --scene-glow:#30c8d8;--scene-metal:#6a7880;--scene-ok:#6fae8f;
-}
-#essence-app,#app{background:var(--scene-ink)!important;}
-#essence-stage,#stage{
+#essence-stage {
+  min-height: max(240px, 40vh);
   background:
-    radial-gradient(ellipse at 18% 12%,color-mix(in srgb,var(--scene-glow) 18%,transparent),transparent 42%),
-    radial-gradient(ellipse at 78% 8%,rgba(255,255,255,.04),transparent 38%),
-    linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 55%,var(--scene-ink)),var(--scene-ink))!important;
+    radial-gradient(ellipse at 18% 12%, color-mix(in srgb, var(--scene-glow) 18%, transparent), transparent 42%),
+    radial-gradient(ellipse at 78% 8%, rgba(255,255,255,.04), transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--scene-mid) 55%, var(--scene-ink)), var(--scene-ink));
 }
-#essence-bench,.control-panel,#controls-area,#bench{
-  background:linear-gradient(180deg,color-mix(in srgb,var(--scene-mid) 85%,#fff),var(--craft-panel) 45%,color-mix(in srgb,var(--scene-ink) 70%,var(--craft-panel)))!important;
-  border-left:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
-  box-shadow:-8px 0 28px rgba(0,0,0,.35)!important;
-  color:var(--craft-text)!important;
+#essence-stage canvas {
+  touch-action: none;
 }
-#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
-  background:rgba(0,0,0,.28)!important;
-  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+.slider-group .val {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  color: var(--craft-accent);
+  font-weight: 600;
 }
-#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
-#essence-hud .essence-title{
-  background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
-  color:var(--scene-hi)!important;letter-spacing:2px;
+/* dual-mode settle (JS-injected); keep thin until moved into craft-shell */
+#attempts-exhausted {
+  position: fixed; inset: 0; z-index: 12050;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px; background: rgba(6, 10, 18, 0.62); backdrop-filter: blur(3px);
 }
-#essence-hud .essence-sub{
-  background:rgba(0,0,0,.42)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 22%,transparent)!important;
-  color:var(--craft-muted)!important;
+#attempts-exhausted[hidden] { display: none !important; }
+#attempts-exhausted .craft-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+#attempts-exhausted .craft-actions button {
+  width: 100%; padding: 12px; border: none; border-radius: 12px;
+  cursor: pointer; font-size: 0.95rem; font-weight: 700;
+  background: var(--craft-accent); color: #0b1020;
 }
-#essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
-#essence-bench .value-tag,.slider-value,.sval{color:var(--scene-hi)!important;}
-#essence-bench input[type=range],.slider-group input[type=range],input[type=range]{
-  accent-color:var(--craft-accent);
+#attempts-exhausted .craft-btn-secondary {
+  background: transparent !important;
+  border: 1px solid color-mix(in srgb, var(--craft-accent) 45%, transparent) !important;
+  color: var(--craft-text) !important; font-weight: 600 !important;
 }
-#essence-bench input[type=range]::-webkit-slider-runnable-track,
-.slider-group input[type=range]::-webkit-slider-runnable-track{
-  height:6px;border-radius:3px;
-  background:linear-gradient(90deg,var(--scene-ink),var(--scene-mid));
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.65);
+#attempts-exhausted .craft-btn-ghost {
+  background: transparent !important; border: none !important;
+  color: var(--craft-muted) !important; font-weight: 600 !important;
+  padding: 8px !important; font-size: 0.88rem !important;
 }
-#essence-bench input[type=range]::-webkit-slider-thumb,
-.slider-group input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,var(--scene-hi),var(--craft-accent) 55%,color-mix(in srgb,var(--craft-accent) 50%,#000));
-  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
-  box-shadow:0 2px 5px rgba(0,0,0,.55);
-}
-#essence-bench .btn,button.btn,.pixel-btn,#btnLaunch,#btn-test,#btn-fire,#btnFire{
-  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,#000)!important;
-  color:#1a1208!important;font-weight:700!important;border-radius:6px!important;
-  box-shadow:0 3px 10px color-mix(in srgb,var(--craft-accent) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.35)!important;
-}
-.craft-card{
-  background:linear-gradient(170deg,var(--scene-mid),var(--craft-panel))!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 50%,transparent)!important;
-  border-radius:8px!important;
-  box-shadow:0 24px 70px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,var(--scene-hi) 25%,transparent)!important;
-}
-.craft-card h2{color:var(--scene-hi)!important;letter-spacing:3px;}
-.craft-card .formula{border-left-color:var(--craft-accent)!important;}
-.craft-card button{
-  background:linear-gradient(180deg,var(--scene-hi),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 70%,#000))!important;
-  color:#1a1208!important;border-radius:6px!important;
-}
-#essence-bench .observe-box,.observe-box{
-  background:rgba(0,0,0,.38)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
-  border-left:3px solid var(--craft-accent)!important;
-  border-radius:6px!important;
-}
-#essence-bench .observe-box .val,.observe-box .val{color:var(--scene-hi)!important;}
-#dual-mode-hud .dual-chip,#challengeStats{
-  background:rgba(0,0,0,.55)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
-  color:var(--craft-text)!important;border-radius:8px!important;
-}
-#dual-mode-hud #modeLabel{color:var(--scene-hi)!important;}
-#modeSelect{
-  background:rgba(0,0,0,.45)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
-  color:var(--scene-hi)!important;border-radius:6px!important;
-}
-/* === craft-hud-safezone: TL dual / TR essence / playfield y≥120 === */
-#essence-stage > #dual-mode-hud,
-#stage > #dual-mode-hud,
-#dual-mode-hud{
-  position:absolute!important;
-  top:10px!important;
-  left:10px!important;
-  right:auto!important;
-  width:auto!important;
-  max-width:min(360px,calc(100% - 24px))!important;
-  justify-content:flex-start!important;
-  align-items:flex-start!important;
-  z-index:12!important;
-}
-#essence-hud{
-  position:absolute!important;
-  top:10px!important;
-  right:12px!important;
-  left:auto!important;
-  max-width:min(240px,calc(100% - 24px))!important;
-  z-index:11!important;
-  align-items:flex-end!important;
-}
-
-/* === craft-bench-unify === */
-/* HUD: TL dual-mode only · TR essence / legacy gauge */
-#essence-stage > #dual-mode-hud,
-#stage > #dual-mode-hud,
-#dual-mode-hud{
-  position:absolute!important;
-  top:10px!important;
-  left:10px!important;
-  right:auto!important;
-  width:auto!important;
-  max-width:min(360px,calc(100% - 24px))!important;
-  justify-content:flex-start!important;
-  align-items:flex-start!important;
-  flex-wrap:wrap!important;
-  z-index:12!important;
-  pointer-events:none!important;
-}
-#dual-mode-hud .dual-chip,
-#dual-mode-hud #challengeStats,
-#challengeStats{pointer-events:auto!important;}
-#essence-hud{
-  position:absolute!important;
-  top:10px!important;
-  right:12px!important;
-  left:auto!important;
-  max-width:min(240px,calc(100% - 24px))!important;
-  z-index:11!important;
-  align-items:flex-end!important;
-  pointer-events:none!important;
-}
-/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
-#hud{
-  position:absolute!important;
-  inset:0!important;
-  top:0!important;left:0!important;right:0!important;bottom:0!important;
-  max-width:none!important;
-  display:block!important;
-  background:transparent!important;
-  pointer-events:none!important;
-  z-index:10!important;
-  gap:0!important;
-}
-#hud > #dual-mode-hud{
-  position:absolute!important;
-  top:10px!important;left:10px!important;right:auto!important;
-  max-width:min(360px,calc(100% - 24px))!important;
-}
-#hud > .hud-chip,
-#hud > .gauge,
-#hud > .hud-chip.gauge{
-  position:absolute!important;
-  top:10px!important;right:12px!important;left:auto!important;
-  align-items:flex-end!important;
-  max-width:min(240px,calc(100% - 24px))!important;
-  z-index:11!important;
-}
-#craft-gauge{display:none!important;}
-#dual-mode-hud #goalMission{display:none!important;}
-
-/* Slider track / thumb */
-#essence-bench input[type=range],
-.slider-group input[type=range],
-.slider-row input[type=range],
-#bench input[type=range],
-#controls-area input[type=range],
-input[type=range]{
-  -webkit-appearance:none;appearance:none;
-  width:100%;height:28px;margin:2px 0 8px;background:transparent;
-  accent-color:var(--craft-accent);
-}
-#essence-bench input[type=range]::-webkit-slider-runnable-track,
-.slider-group input[type=range]::-webkit-slider-runnable-track,
-.slider-row input[type=range]::-webkit-slider-runnable-track,
-#bench input[type=range]::-webkit-slider-runnable-track,
-input[type=range]::-webkit-slider-runnable-track{
-  height:6px;border-radius:999px;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--craft-bg,#0c1218) 80%,#000),color-mix(in srgb,var(--craft-panel,#162028) 70%,#fff));
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
-}
-#essence-bench input[type=range]::-webkit-slider-thumb,
-.slider-group input[type=range]::-webkit-slider-thumb,
-.slider-row input[type=range]::-webkit-slider-thumb,
-#bench input[type=range]::-webkit-slider-thumb,
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;
-  width:18px;height:18px;margin-top:-6px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--craft-accent) 55%,#fff),var(--craft-accent) 60%,color-mix(in srgb,var(--craft-accent) 55%,#000));
-  border:1px solid color-mix(in srgb,var(--craft-accent) 40%,#000);
-  box-shadow:0 2px 5px rgba(0,0,0,.45);
-  cursor:pointer;
-}
-
-/* Label + value badge */
-#essence-bench label,
-.slider-group label,
-.slider-row label,
-.slabel,
-#bench label{
-  color:var(--craft-muted)!important;
-  font-size:12px!important;
-  font-weight:600!important;
-  letter-spacing:.02em;
-}
-#essence-bench .value-badge,
-.slider-row .value-badge,
-.slider-row .value,
-.slider-group .value,
-.value-badge,
-.sval,
-.value-tag,
-#essence-bench .value{
-  display:inline-flex!important;align-items:center;justify-content:center;
-  min-width:52px;padding:2px 10px!important;border-radius:999px!important;
-  background:rgba(0,0,0,.35)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
-  color:var(--scene-hi,var(--craft-accent))!important;
-  font-family:var(--font-mono)!important;font-size:12px!important;font-weight:600!important;
-}
-
-/* Observe-box states: pending / measured / hit(ok) / miss */
-#essence-bench .observe-box,
-.observe-box,#observePanel{
-  background:rgba(0,0,0,.38)!important;
-  border:1px solid color-mix(in srgb,var(--craft-accent) 32%,transparent)!important;
-  border-left:3px solid color-mix(in srgb,var(--craft-muted) 70%,var(--craft-accent))!important;
-  border-radius:8px!important;
-  color:var(--craft-text)!important;
-  padding:12px 14px!important;
-}
-.observe-box.is-pending,.observe-box.pending,
-.observe-box[data-state="pending"]{
-  border-left-color:color-mix(in srgb,var(--craft-muted) 80%,transparent)!important;
-  opacity:.92;
-}
-.observe-box.is-measured,.observe-box.measured,
-.observe-box[data-state="measured"]{
-  border-left-color:var(--craft-accent)!important;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--craft-accent) 18%,transparent);
-}
-.observe-box.is-hit,.observe-box.hit,.observe-box.ok,.observe-box.win,
-.observe-box[data-state="hit"],.observe-box[data-state="ok"]{
-  border-left-color:var(--scene-ok,#6fae8f)!important;
-  background:rgba(34,197,94,.14)!important;
-  border-color:rgba(34,197,94,.35)!important;
-}
-.observe-box.is-miss,.observe-box.miss,.observe-box.fail,
-.observe-box[data-state="miss"],.observe-box[data-state="fail"]{
-  border-left-color:#f87171!important;
-  background:rgba(248,113,113,.14)!important;
-  border-color:rgba(248,113,113,.35)!important;
-}
-.observe-box .label,.observe-box .state,.observe-box .val,.observe-box .reading{
-  color:inherit;
-}
-.observe-box .state,.observe-box .reading,.observe-box .val{
-  font-family:var(--font-mono);
-  font-weight:700;
-}
-
-/* Primary action button */
-#essence-bench .btn,button.btn,.pixel-btn,
-#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn{
-  padding:11px 16px!important;
-  border-radius:10px!important;
-  font-weight:700!important;
-  letter-spacing:.02em;
-  transition:opacity .15s,filter .15s,transform .12s;
-}
-#essence-bench .btn:disabled,button.btn:disabled,.pixel-btn:disabled,
-#btnLaunch:disabled,#btn-test:disabled,#btn-fire:disabled,#btnFire:disabled,#btnTest:disabled,#fireBtn:disabled,
-button.dual-disabled,.dual-disabled,
-button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
-  opacity:.45!important;
-  cursor:not-allowed!important;
-  pointer-events:none!important;
-  filter:grayscale(.15);
-  transform:none!important;
-}
-
-/* De-emphasize confound / irrelevant zones */
-.confound-note,
-.irrelevant-area,
-.srow-irrelevant,
-.irrelevant-touch,
-#essence-bench .confound-note,
-#bench .confound-note,
-#controls-area .confound-note{
-  opacity:.7!important;
-  font-size:.8rem!important;
-  transform:scale(.98);
-  transform-origin:left top;
-  filter:saturate(.75);
-}
-.irrelevant-area button,
-.irrelevant-touch{
-  padding:3px 10px!important;
-  font-size:.75rem!important;
-  opacity:.75!important;
-}
-
-/* === attempts-exhausted-settle === */
-#attempts-exhausted{
-  position:fixed;inset:0;z-index:12050;display:flex;align-items:center;justify-content:center;
-  padding:18px;background:rgba(6,10,18,.62);backdrop-filter:blur(3px);
-}
-#attempts-exhausted[hidden]{display:none!important;}
-#attempts-exhausted .craft-card{
-  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
-  border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
-}
-#attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
-#attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
-#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
-#attempts-exhausted .craft-actions button{
-  width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
-  background:var(--craft-accent,#c9a227);color:#0b1020;
-}
-#attempts-exhausted .craft-btn-secondary{
-  background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent)!important;
-  color:var(--craft-text,#e8eefc)!important;font-weight:600!important;
-}
-#attempts-exhausted .craft-btn-ghost{
-  background:transparent!important;border:none!important;color:var(--craft-muted,#94a3b8)!important;
-  font-weight:600!important;padding:8px!important;font-size:.88rem!important;
-}
-
 </style>
 </head>
 <body>
@@ -815,7 +67,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>加速舱 · 回旋半径</h2>
     <p>提取口对不准——轨道半径跟 B、v 怎么走？调磁场与入射速度，看轨道半径怎么变。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛环带进入后固定，未命中只扣次数。</p>
+    <p class="craft-intro-meta">探究≠竞赛；竞赛环带进入后固定，未命中扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -823,6 +75,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>过关 · 本局对照</h2>
     <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <p id="craftEvidenceMeta" class="craft-evidence-meta" hidden></p>
     <div class="craft-attr" id="craftAttribution">
       <p class="craft-attr-label">就你这几发的对照来看，轨道半径主要跟着哪一项变？</p>
       <div class="craft-attr-options">
@@ -845,74 +98,61 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   </div>
 </div>
 
-
-<div id="app">
-    <!-- 顶部提示 -->
-    <div class="top-hint">
-        <span>⚡ 同位素束流舱</span>
-        <i id="goalMission">探究：自由发射，观察半径如何随 B、v 变化</i>
+<div id="essence-app">
+  <div id="essence-stage">
+    <div class="craft-mode-pill" id="craftModePill" data-mode="explore">
+      <span id="modeLabel">探究模式</span>
+      <span id="challengeStats">
+        <span class="craft-mode-sep">|</span>
+        <span>剩余机会</span>
+        <span id="attemptsDisplay">5</span>
+      </span>
+      <span id="timerDisplay" hidden aria-hidden="true">10:00</span>
     </div>
-
-    <!-- 主区域 -->
-    <div class="main-layout">
-        <div id="simCanvasArea" style="position:relative">
-            <div id="dual-mode-hud">
-              <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
-              <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
-            </div>
-            <canvas id="simCanvas"></canvas>
-        </div>
-        <div id="controlsPanel">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
-              <strong style="font-size:13px;color:var(--craft-text)">束流控制台</strong>
-              <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select>
-            </div>
-            <p id="sideGoal" style="margin:0 0 8px;font-size:12px;line-height:1.45;color:var(--craft-text)">调 B、v，看轨道半径怎么变。</p>
-            <!-- 调节变量：磁感应强度 -->
-            <div class="control-group">
-                <label>磁感应强度 B <span class="val" id="val-magnetic">1.0 T</span></label>
-                <input type="range" id="s-magnetic" min="0.1" max="2.0" step="0.1" value="1.0">
-            </div>
-            <!-- 调节变量：入射速度 -->
-            <div class="control-group">
-                <label>入射速度 v <span class="val" id="val-velocity">5.0 m/s</span></label>
-                <input type="range" id="s-velocity" min="1" max="10" step="0.5" value="5.0">
-            </div>
-            <div class="control-group">
-                <label>腔室气压 p <span class="val" id="val-pressure">1.0 atm</span></label>
-                <input type="range" id="s-chamber-p" min="0.2" max="2.0" step="0.1" value="1.0">
-            </div>
-
-            <!-- 实时读数 -->
-            <div class="readout-row">
-                <span>磁感应强度 B</span>
-                <span id="readout-B">1.0 T</span>
-            </div>
-            <div class="readout-row">
-                <span>入射速度 v</span>
-                <span id="readout-v">5.0 m/s</span>
-            </div>
-
-            <!-- 按钮组 -->
-            <div class="button-row">
-                <button class="btn btn-primary" id="btn-fire">🚀 发射</button>
-                <button class="btn btn-outline" id="btn-reset">↺ 复位</button>
-            </div>
-
-            <!-- 混淆变量说明 (仅教案区) -->
-            <!-- Observe 反馈区 -->
-            <div class="observe-area" id="observeArea">
-                <div class="hint-label">📋 观察反馈</div>
-                <div class="feedback" id="feedbackMsg">等待发射……</div>
-            </div>
-
-            <!-- 过关 UI (初始隐藏) -->
-            <div id="winOverlay">
-                <h3>✅ 束流对齐提取环</h3>
-                <p style="font-size:0.9rem; color:#1f4a3a;">r = <span id="winRadius"></span> m · <span id="winTargetBand">目标环带</span></p>
-            </div>
-        </div>
+    <div id="dual-mode-hud" hidden aria-hidden="true"></div>
+    <div id="dual-timer-chip" class="dual-chip" hidden aria-hidden="true"></div>
+    <canvas id="simCanvas"></canvas>
+  </div>
+  <aside id="essence-bench">
+    <div class="bench-hd">
+      <div class="bench-hd-text">
+        <div class="bench-hd-title">束流控制台</div>
+        <div class="bench-hd-sub">磁感应 · 入射速度</div>
+      </div>
+      <select id="modeSelect" aria-label="探究阶段">
+        <option value="explore">探究</option>
+        <option value="challenge">竞赛</option>
+      </select>
     </div>
+    <div class="essence-scroll" id="controlsPanel">
+      <div class="side-goal-box">
+        <div class="side-goal-cap">当前目标</div>
+        <p id="sideGoal">调 B、v，看轨道半径怎么变。</p>
+      </div>
+      <div class="slider-group">
+        <label for="s-magnetic">磁感应强度 B <span class="val" id="val-magnetic">1.0 T</span></label>
+        <input type="range" id="s-magnetic" min="0.1" max="2.0" step="0.1" value="1.0">
+      </div>
+      <div class="slider-group">
+        <label for="s-velocity">入射速度 v <span class="val" id="val-velocity">5.0 m/s</span></label>
+        <input type="range" id="s-velocity" min="1" max="10" step="0.5" value="5.0">
+      </div>
+      <div class="slider-group">
+        <label for="s-chamber-p">腔室气压 p <span class="val" id="val-pressure">1.0 atm</span></label>
+        <input type="range" id="s-chamber-p" min="0.2" max="2.0" step="0.1" value="1.0">
+      </div>
+      <div class="observe-box pending" id="observeBox">
+        <div><span class="val" id="rDisplay">—</span> <span style="font-size:12px;color:var(--craft-muted)">读数</span></div>
+        <div class="hint" id="feedbackMsg">调参后点发射</div>
+      </div>
+    </div>
+    <div class="essence-ft">
+      <div class="row-buttons">
+        <button type="button" id="btn-fire">发射</button>
+        <button type="button" id="btn-reset" class="secondary">复位</button>
+      </div>
+    </div>
+  </aside>
 </div>
 
 <!-- trace-adapter-hook -->
@@ -959,7 +199,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     let lastCamFitScale = 1;
 
     function syncRendererSize() {
-      const area = document.getElementById('simCanvasArea') || canvas.parentElement;
+      const area = document.getElementById('essence-stage') || document.getElementById('simCanvasArea') || canvas.parentElement;
       const cssW = Math.max(2, (area && area.clientWidth) || canvas.clientWidth || 640);
       const cssH = Math.max(2, (area && area.clientHeight) || canvas.clientHeight || 420);
       if (renderer && camera) {
@@ -977,7 +217,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       scale = Math.min(cssW, cssH) / 10;
     }
 
-    const canvasArea = document.getElementById('simCanvasArea');
+    const canvasArea = document.getElementById('essence-stage') || document.getElementById('simCanvasArea');
 
     const sMag = document.getElementById('s-magnetic');
     const sVel = document.getElementById('s-velocity');
@@ -985,13 +225,20 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     const valMag = document.getElementById('val-magnetic');
     const valVel = document.getElementById('val-velocity');
     const valPress = document.getElementById('val-pressure');
-    const readoutB = document.getElementById('readout-B');
-    const readoutV = document.getElementById('readout-v');
     const feedbackMsg = document.getElementById('feedbackMsg');
-    const winOverlay = document.getElementById('winOverlay');
-    const winRadiusSpan = document.getElementById('winRadius');
+    const rDisplay = document.getElementById('rDisplay');
+    const observeBox = document.getElementById('observeBox');
     const btnFire = document.getElementById('btn-fire');
     const btnReset = document.getElementById('btn-reset');
+
+    function setObserveState(state) {
+      if (!observeBox) return;
+      observeBox.classList.remove('pending', 'measured', 'ok', 'hit', 'fail', 'miss', 'measuring');
+      if (state) observeBox.classList.add(state);
+    }
+    function setObserveReading(text) {
+      if (rDisplay) rDisplay.textContent = text;
+    }
 
     // ---------- 物理常量 ----------
     const MASS = 1.0;      // kg (固定)
@@ -1051,19 +298,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
     function refreshCycloGoals() {
       const g = MODE_GOALS[playMode] || MODE_GOALS.explore;
-      const mission = document.getElementById('goalMission');
       const side = document.getElementById('sideGoal');
       if (playMode === 'challenge' && lockedBand) {
         const lo = lockedBand.min.toFixed(1);
         const hi = lockedBand.max.toFixed(1);
-        if (mission) mission.textContent = '急单提取环：' + lo + '–' + hi + ' m · 本局固定';
         if (side) side.textContent = '竞赛急单：把轨道半径调进 ' + lo + '–' + hi + ' m 提取环。环带已锁定，打偏不换环。';
       } else {
-        if (mission) mission.textContent = g.hud;
         if (side) side.textContent = g.side;
       }
-      const bandEl = document.getElementById('winTargetBand');
-      if (bandEl) bandEl.textContent = '目标 ' + TARGET_R_MIN.toFixed(1) + '~' + TARGET_R_MAX.toFixed(1) + ' m';
     }
 
     /** FixedChallenge：仅进入竞赛时锁定一次提取环带 */
@@ -1085,8 +327,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       syncUI();
       recalcPhysics();
       refreshCycloGoals();
-      feedbackMsg.innerHTML = '急单已锁定提取环（本局不变）';
-      winOverlay.classList.remove('show');
+      setObserveState('pending');
+      setObserveReading('—');
+      if (feedbackMsg) feedbackMsg.textContent = '急单已锁定提取环（本局不变）';
       drawStatic();
     }
 
@@ -1102,8 +345,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       syncUI();
       recalcPhysics();
       refreshCycloGoals();
-      feedbackMsg.innerHTML = '自由试调：发射后观察半径随 B、v 的变化。';
-      winOverlay.classList.remove('show');
+      setObserveState('pending');
+      setObserveReading('—');
+      if (feedbackMsg) feedbackMsg.textContent = '调参后点发射，观察半径随 B、v 的变化。';
       drawStatic();
     }
 
@@ -1259,8 +503,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         valMag.textContent = B.toFixed(1) + ' T';
         valVel.textContent = v.toFixed(1) + ' m/s';
         if (valPress) valPress.textContent = p.toFixed(1) + ' atm';
-        readoutB.textContent = B.toFixed(1) + ' T';
-        readoutV.textContent = v.toFixed(1) + ' m/s';
     }
 
     // 滑条事件绑定 (双向同步 + 埋点)
@@ -1275,7 +517,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         syncUI();
         recalcPhysics();
         drawStatic();
-        feedbackMsg.innerHTML = '调节中… 点「发射」后显示轨道半径';
+        setObserveState('pending');
+        setObserveReading('—');
+        if (feedbackMsg) feedbackMsg.textContent = '调节中… 点「发射」后显示轨道半径';
     }
     function emitTune(controlId, value) {
         if (window.__platformTraceControlsBound) return;
@@ -1606,37 +850,41 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     }
 
 
+    /** OrbitControls damping needs a live RAF; keep rendering even when particle is idle. */
+    function ensureRenderLoop() {
+        if (animId) return;
+        lastTime = performance.now();
+        animId = requestAnimationFrame(loop);
+    }
+
     if (!initThree()) {
       if (feedbackMsg) feedbackMsg.textContent = '3D engine missing: vendor/three.min.js';
     } else {
       resizeCanvas();
       draw();
+      ensureRenderLoop();
     }
 
     function startSim() {
         if (simRunning) return;
         simRunning = true;
         hasWon = false; // 重置过关状态
-        winOverlay.classList.remove('show');
+        /* win via craft-win */
         // 重置角度 (从0开始)
         angle = 0;
         recalcPhysics();
         syncUI();
         lastTime = performance.now();
-        if (animId) cancelAnimationFrame(animId);
-        animId = requestAnimationFrame(loop);
+        ensureRenderLoop();
     }
 
     function stopSim() {
+        // Pause particle physics only; do not cancel RAF (pre-fire / reset still need orbit).
         simRunning = false;
-        if (animId) {
-            cancelAnimationFrame(animId);
-            animId = null;
-        }
     }
 
     function ensureFeedbackVisible() {
-        const area = document.getElementById('observeArea');
+        const area = document.getElementById('observeBox') || document.getElementById('observeArea');
         const panel = document.getElementById('controlsPanel');
         if (panel && area) {
           const pr = panel.getBoundingClientRect();
@@ -1666,8 +914,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
         if (playMode === 'explore') {
             // 探究：只反馈半径，不要求命中固定环，不重抽目标
-            feedbackMsg.innerHTML = `<span class="win"><span class="win-main">当前 r=${r.toFixed(2)} m</span><span class="win-sub">继续对比不同 B、v</span></span>`;
-            winOverlay.classList.remove('show');
+            setObserveState('measured');
+            setObserveReading('r≈' + r.toFixed(2) + ' m');
+            if (feedbackMsg) feedbackMsg.textContent = 'r≈' + r.toFixed(2) + ' m · 再改一个量对照';
             emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: 'explore_observe' });
             try { if (window.__noteExploreSuccess) window.__noteExploreSuccess(typeof emit === 'function' ? emit : (window.__emit || null), (typeof controlsSnapshot !== 'undefined' ? controlsSnapshot : (typeof controls !== 'undefined' ? controls : {}))); } catch (_es) {}
             ensureFeedbackVisible();
@@ -1677,10 +926,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
         // 竞赛：命中本局锁定环带；失败不换环
         const winOk = (r >= TARGET_R_MIN && r <= TARGET_R_MAX);
+        const bandTxt = TARGET_R_MIN.toFixed(1) + '–' + TARGET_R_MAX.toFixed(1);
+        const measuredTxt = 'r≈' + r.toFixed(2) + ' m';
         if (winOk) {
-            feedbackMsg.innerHTML = `<span class="win"><span class="win-main">✅ 束流对齐提取环</span><span class="win-sub">r=${r.toFixed(2)} m · 环带 ${TARGET_R_MIN.toFixed(1)}–${TARGET_R_MAX.toFixed(1)} m</span></span>`;
-            winRadiusSpan.textContent = r.toFixed(2);
-            winOverlay.classList.add('show');
+            setObserveState('ok');
+            setObserveReading(measuredTxt);
+            if (feedbackMsg) {
+              feedbackMsg.textContent = (window.CraftFeedback
+                ? CraftFeedback.hitHint({ measured: measuredTxt, band: bandTxt })
+                : ('已落入 · ' + measuredTxt + '（目标 ' + bandTxt + '）'));
+            }
             if (!challengeWon) {
               // 先置位 + 侧栏；先转圆轨，再 emit/ShowWin（壳层会把 win 钩成立刻弹总结）
               challengeWon = true;
@@ -1705,10 +960,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             hasWon = true;
         } else {
             // FixedChallenge：失败不换环；偏大/偏小可区分
-            const sideTxt = r < TARGET_R_MIN ? '半径偏小（环内）' : '半径偏大（环外）';
+            const verdict = r < TARGET_R_MIN ? 'low' : 'high';
             const hintKey = r < TARGET_R_MIN ? 'r_low' : 'r_high';
-            feedbackMsg.innerHTML = `<span class="fail"><span class="fail-main">${sideTxt}</span><span class="fail-sub">r=${r.toFixed(2)} m · 环带 ${TARGET_R_MIN.toFixed(1)}–${TARGET_R_MAX.toFixed(1)} m</span></span>`;
-            winOverlay.classList.remove('show');
+            setObserveState('fail');
+            setObserveReading(measuredTxt);
+            if (feedbackMsg) {
+              feedbackMsg.textContent = (window.CraftFeedback
+                ? CraftFeedback.missHint({ verdict: verdict, measured: measuredTxt, band: bandTxt })
+                : ((verdict === 'low' ? '偏低' : '偏高') + ' · ' + measuredTxt + '（目标 ' + bandTxt + '）· 调参后再测'));
+            }
             emit('snapshot', { controls: controlsSnapshot, winOk: false, hintKey: hintKey });
             ensureFeedbackVisible();
             startSim();
@@ -1725,8 +985,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         recalcPhysics();
         syncUI();
         drawStatic();
-        feedbackMsg.innerHTML = '已复位，读数待测 · 点发射后显示半径';
-        winOverlay.classList.remove('show');
+        setObserveState('pending');
+        setObserveReading('—');
+        if (feedbackMsg) feedbackMsg.textContent = '已复位，读数待测 · 点发射后显示半径';
         hasWon = false;
     }
 
@@ -1741,7 +1002,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         syncUI();
         refreshCycloGoals();
         drawStatic();
-        feedbackMsg.innerHTML = '等待发射……';
+        setObserveState('pending');
+        setObserveReading('—');
+        if (feedbackMsg) feedbackMsg.textContent = '调参后点发射';
         // 窗口resize
         window.addEventListener('resize', () => {
             if (resizeCanvas()) afterCanvasResize();
@@ -1965,12 +1228,14 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     var label = $('modeLabel');
     var stats = $('challengeStats');
     var timerChip = $('dual-timer-chip');
+    var pill = $('craftModePill');
     if (label) label.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+    if (pill) pill.setAttribute('data-mode', state.mode);
     if (stats) {
       if (state.mode === 'challenge') stats.classList.add('is-visible');
       else stats.classList.remove('is-visible');
     }
-    if (timerChip) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
+    if (timerChip && !timerChip.hidden) timerChip.style.display = state.mode === 'explore' ? 'inline-flex' : 'none';
     if (state.mode === 'challenge') {
       stopTimer();
       state.attempts = MAX_ATTEMPTS;
@@ -2143,15 +1408,15 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     var bench = $('essence-bench') || $('controlsPanel');
     if (!stage) return false;
 
-    if (!$('dual-mode-hud')) {
+    if (!$('craftModePill') && !$('dual-mode-hud')) {
       var hud = document.createElement('div');
-      hud.id = 'dual-mode-hud';
+      hud.className = 'craft-mode-pill';
+      hud.id = 'craftModePill';
+      hud.setAttribute('data-mode', 'explore');
       hud.innerHTML =
-        '<div id="dual-timer-chip" class="dual-chip">' +
-          '<span id="modeLabel">探究模式</span><span style="width:1px;height:14px;background:#cbd5e1"></span>' +
-          '<span id="timerDisplay">10:00</span>' +
-        '</div>' +
-        '<div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>';
+        '<span id="modeLabel">探究模式</span>' +
+        '<span id="challengeStats"><span class="craft-mode-sep">|</span><span>剩余机会</span><span id="attemptsDisplay">5</span></span>' +
+        '<span id="timerDisplay" hidden>10:00</span>';
       stage.style.position = stage.style.position || 'relative';
       stage.appendChild(hud);
     }
@@ -2160,15 +1425,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       bench.classList.add('dual-mode-ready');
       var hd = document.createElement('div');
       hd.id = 'essence-bench-hd';
-      hd.className = 'dual-bench-hd';
+      hd.className = 'bench-hd dual-bench-hd';
       var title = '环境控制台';
       var tEl = stage.querySelector('.essence-title, h1');
       if (tEl) title = (tEl.textContent || title).trim() || title;
       hd.innerHTML =
-        '<h1>' + title.replace(/</g,'&lt;') + '</h1>' +
+        '<div class="bench-hd-text"><div class="bench-hd-title">' + title.replace(/</g,'&lt;') + '</div>' +
+        '<div class="bench-hd-sub">探究 · 竞赛</div></div>' +
         '<select id="modeSelect" aria-label="探究阶段">' +
-          '<option value="explore">自由探究</option>' +
-          '<option value="challenge">竞赛挑战</option>' +
+          '<option value="explore">探究</option>' +
+          '<option value="challenge">竞赛</option>' +
         '</select>';
       bench.insertBefore(hd, bench.firstChild);
     } else if (!$('modeSelect')) {
@@ -2177,7 +1443,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       if (chip && !$('modeSelect')) {
         var sel = document.createElement('select');
         sel.id = 'modeSelect';
-        sel.innerHTML = '<option value="explore">自由探究</option><option value="challenge">竞赛挑战</option>';
+        sel.innerHTML = '<option value="explore">探究</option><option value="challenge">竞赛</option>';
         chip.appendChild(sel);
       }
     }
@@ -2353,6 +1619,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   window.__eaNoteAvTune = noteAvTune;
   window.__eaNoteFire = noteFire;
 })();
+</script>
+
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>
+  if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase();
 </script>
 <script>
 /* === craft-gold-runtime === */

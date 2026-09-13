@@ -18,30 +18,17 @@ const SAMPLE_ROOT = path.join(ROOT, '样本html');
 /** packageId → sample relative folder (under 样本html/); keep aligned with tests/lib/yangben-sample-map.js */
 const MAP = {
   'ramp-rolling-collision': '斜坡滚球',
-  'gas-ideal': '理想气体',
-  'heat-conduction': '热传导',
   'gas-pressure-micro': '气体压强微观',
   'maxwell-speed-dist': '麦克斯韦速率分布',
   'adiabatic-process': '绝热过程',
-  'refraction-snell': '折射',
-  'series-parallel': '串并联电路',
-  'thin-lens-implicit': '透镜',
-  'transformer-turns': '变压器',
-  'rc-circuit': 'RC电路',
-  'photoelectric': '光电效应',
-  'magnetic-force': '安培力',
   'cyclotron-radius': '回旋加速器',
   'pendulum-clock': '钟表铺校时',
   'projectile-basic': '斜抛',
-  'projectile-cannon': '抛体大炮',
-  'circular-motion': '圆周运动',
-  'efield-charge': '电场',
-  'friction-incline': '斜面摩擦',
-  'momentum-collision': '动量碰撞',
   'nezha-boat-jump': '哪吒跳船',
   'pulley-rigid': '滑轮刚体',
-  'multi-kp': '机械能',
-  'pendulum-target': '单摆投靶',
+  'capacitor-era-ch1': '电容_介质与击穿',
+  'capacitor-era-ch2': '电容_串并联',
+  'capacitor-era-ch4': '电容_储能与充电',
 };
 
 function hash(file) {
@@ -100,6 +87,31 @@ function main() {
       fs.copyFileSync(src, target);
       console.log('SYNC', id, '→', path.relative(ROOT, target));
       synced += 1;
+    }
+  }
+
+  // Mirror packages/_shared → 样本html/_shared so relative ../_shared links work offline
+  const sharedSrc = path.join(PKG_ROOT, '_shared');
+  const sharedDst = path.join(SAMPLE_ROOT, '_shared');
+  if (fs.existsSync(sharedSrc)) {
+    fs.mkdirSync(sharedDst, { recursive: true });
+    for (const name of fs.readdirSync(sharedSrc)) {
+      const from = path.join(sharedSrc, name);
+      const to = path.join(sharedDst, name);
+      if (fs.statSync(from).isFile()) {
+        if (check) {
+          if (!fs.existsSync(to) || hash(from) !== hash(to)) {
+            console.log('DRIFT _shared', name);
+            drift += 1;
+          } else {
+            console.log('OK _shared/' + name);
+          }
+        } else {
+          fs.copyFileSync(from, to);
+          console.log('SYNC _shared/' + name);
+          synced += 1;
+        }
+      }
     }
   }
 

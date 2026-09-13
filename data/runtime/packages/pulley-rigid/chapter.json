@@ -236,7 +236,7 @@
   "strategy": {
     "title": "滑轮·刚体转动",
     "sub": "刚体转动 · I → α · a = Rα",
-    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察角加速度?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打角加速度带]:::stratResult\nModeSelect -->|探究| Explore[探究对照 α·盘/环]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·左侧质量| M1Strat\nStrategySelect -->|单变量·右侧质量| M2Strat\nStrategySelect -.->|试探·绳子粗细| ProbeCV\nStrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat\nStrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat\nStrategySelect -->|多参盲调| Trap\nTune --> Fire[释放测 α]\nM1Strat --> Tune\nM2Strat --> Tune\nPulleyMStrat --> Tune[单变量调参]\nShapeStrat --> Tune\nTrap --> Tune\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察角加速度?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打角加速度带]:::stratResult\nModeSelect -->|探究| Explore[探究对照 α·盘/环]:::stratCore\nObserve -->|未达标| Tune\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·左侧质量| M1Strat\nStrategySelect -->|单变量·右侧质量| M2Strat\nStrategySelect -.->|试探·绳子粗细| ProbeCV\nStrategySelect -->|单变量·滑轮质量·改I| PulleyMStrat\nStrategySelect -->|单变量·滑轮形状·盘环| ShapeStrat\nStrategySelect -->|多参盲调| Trap\nTune --> Fire[释放测 α]\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[试探·绳子粗细]:::stratInvalid\nM1Strat[单变量·左侧质量]\nM2Strat[单变量·右侧质量]\nPulleyMStrat[单变量·滑轮质量·改I]\nShapeStrat[单变量·滑轮形状·盘环]\nM1Strat --> Tune[单变量调参]\nM2Strat --> Tune\nPulleyMStrat --> Tune\nShapeStrat --> Tune\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main_s-pulley-m",
@@ -299,7 +299,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -365,7 +365,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -439,7 +439,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -513,7 +513,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -568,7 +568,7 @@
           ],
           [
             "Trap",
-            "Tune"
+            "Fire"
           ],
           [
             "Tune",
@@ -580,7 +580,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",

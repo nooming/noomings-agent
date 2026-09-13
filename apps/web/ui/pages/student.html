@@ -22,6 +22,9 @@
     <p class="hint">本机签到有效；清除浏览器数据或换设备后需重新进入课堂。</p>
     <p class="hint student-notice-actions">
       <button type="button" class="platform-session-link" id="showInquiryNoticeBtn">再看探究说明</button>
+      <span class="student-notice-sep" aria-hidden="true">·</span>
+      <a class="platform-session-link" id="openSurveyLink" href="/student-survey.html">学习体验问卷</a>
+      <span class="hint student-survey-state" id="surveyEntryHint" hidden></span>
     </p>
   </section>
 
@@ -294,6 +297,35 @@ bindCategoryTogglePersistence();
 
   showInquiryNotice({ force: false });
   window.PlatformInquiryNotice = { show: showInquiryNotice, FORCE_KEY };
+
+  (async function refreshSurveyEntryHint() {
+    const hint = document.getElementById('surveyEntryHint');
+    const link = document.getElementById('openSurveyLink');
+    if (!hint || !link) return;
+    const id = PlatformNav.getStudentIdentity();
+    const localKey = `platform-survey-submitted:${id.classCode}:${id.id}`;
+    const markDone = () => {
+      hint.hidden = false;
+      hint.textContent = '已提交';
+      link.setAttribute('aria-label', '学习体验问卷（已提交）');
+      link.classList.add('is-survey-done');
+    };
+    try {
+      const q = new URLSearchParams({
+        classCode: id.classCode,
+        studentId: id.id,
+        studentSession: id.studentSession,
+      });
+      const res = await fetch('/api/platform/survey/status?' + q.toString());
+      const data = await res.json();
+      if (data && data.submitted) {
+        try { localStorage.setItem(localKey, data.submittedAt || '1'); } catch { /* ignore */ }
+        markDone();
+        return;
+      }
+    } catch { /* ignore */ }
+    if (localStorage.getItem(localKey)) markDone();
+  })();
 })();
 </script>
 <style>
@@ -316,7 +348,10 @@ bindCategoryTogglePersistence();
   display: flex; gap: 8px; align-items: flex-start;
   font-size: 0.9rem; cursor: pointer;
 }
-.student-notice-actions { margin-top: 8px; }
+.student-notice-actions { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.student-notice-sep { opacity: 0.45; }
+.student-survey-state { margin: 0; color: var(--edu-muted, #64748b); font-size: 0.85rem; }
+#openSurveyLink.is-survey-done { opacity: 0.85; }
 .game-card-badge {
   display: inline-block; font-size: 0.72rem; font-weight: 600;
   padding: 1px 6px; border-radius: 4px; margin-right: 4px;

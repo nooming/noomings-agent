@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <link rel="stylesheet" href="../_shared/craft-tokens.css">
+<link rel="stylesheet" href="../_shared/craft-shell.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>靶场 · 斜抛</title>
@@ -28,7 +29,7 @@
         }
     
 /* === craft-gold-shell === */
-:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#6aaa78;--craft-bg:#0e1410;--craft-panel:#1a241c;--craft-text:#e4eee6;--craft-muted:#889a88;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#6aaa78;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -57,12 +58,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 #dual-mode-hud .text-gray-600{color:var(--craft-text)!important;}
 #dual-mode-hud .text-gray-500,
 #dual-mode-hud .text-gray-400{color:var(--craft-muted)!important;}
-#sideGoalBox > div{
-  background:rgba(0,0,0,.35)!important;
-  border-color:color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;
-}
-#sideGoalBox .text-blue-700{color:var(--craft-accent)!important;}
-#sideGoal,p#sideGoal,#proj-side #sideGoal{color:var(--craft-text)!important;}
 #craft-intro,#craft-win{
   position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,.72);backdrop-filter:blur(8px);
@@ -499,8 +494,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 
 /* === demo-visual-polish (classroom) === */
-#sideGoalBox .side-goal-cap{font-size:12px!important;font-weight:700!important;letter-spacing:.04em;color:var(--craft-accent)!important;}
-#sideGoal,p#sideGoal,#proj-side #sideGoal{font-size:14px!important;line-height:1.55!important;margin-top:6px!important;}
 #dual-mode-hud #goalMission,#goalMission{display:none!important;}
 .{
   margin-top:4px!important;padding:8px 10px!important;
@@ -533,7 +526,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>靶场 · 斜抛</h2>
     <p>靶场落点飘忽——侧栏各量各管哪一段？调节参数后发射，读落点怎么变。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；侧栏与顶部会写明当前要做什么。</p>
+    <p class="craft-intro-meta">探究≠竞赛；侧栏与顶部会写明当前目标；未命中扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -572,18 +565,19 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
         
         <!-- HUD Overlay -->
         <div class="absolute top-3 left-3 right-3 pointer-events-none z-10">
-            <div id="dual-mode-hud" class="glass-panel inline-flex flex-col gap-1 px-4 py-2 rounded-2xl pointer-events-auto max-w-[min(420px,calc(100%-8px))]">
-                <div id="hud-mode-row" class="flex items-center gap-3 flex-wrap">
-                    <span id="modeLabel" class="font-bold text-blue-600">探究模式</span>
-                    <span id="timerSep" class="w-px h-4 bg-gray-300 hidden sm:block"></span>
-                    <span id="timerDisplay" class="font-mono text-gray-700">10:00</span>
-                    <div id="challengeStats" class="hidden items-center gap-2 transition-opacity">
-                        <span class="text-gray-500 text-sm">剩余机会</span>
-                        <span id="attemptsDisplay" class="font-bold text-red-500 text-lg">6</span>
-                    </div>
-                </div>
-                <div id="goalMission" class="text-xs text-gray-700 leading-snug mt-1 max-w-[360px]">试射：读落点，对照侧栏参数</div>
+            <div class="craft-mode-pill" id="craftModePill" data-mode="explore">
+                <span id="modeLabel">探究模式</span>
+                <span id="challengeStats" class="hidden">
+                    <span class="craft-mode-sep">|</span>
+                    <span>剩余机会</span>
+                    <span id="attemptsDisplay">6</span>
+                </span>
+                <span id="timerDisplay" class="hidden">10:00</span>
             </div>
+            <div id="goalMission" class="hidden">试射：读落点，对照侧栏参数</div>
+            <div id="dual-mode-hud" class="hidden" aria-hidden="true"></div>
+            <span id="timerSep" class="hidden"></span>
+            <div id="hud-mode-row" class="hidden"></div>
         </div>
 
         <!-- 居中消息提示框 -->
@@ -595,23 +589,21 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     </div>
 
     <div id="proj-side" class="w-full md:w-80 md:max-w-[340px] h-[42vh] md:h-full glass-panel flex flex-col z-10 border-t md:border-t-0 md:border-l border-gray-200 min-h-0">
-        <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-white shrink-0">
-            <div>
-                <h1 class="text-base font-bold text-gray-800 leading-tight">靶场 · 斜抛</h1>
-                <p class="text-xs text-gray-500 mt-0.5">角度 · 速度 · 高度</p>
+        <div class="bench-hd shrink-0">
+            <div class="bench-hd-text">
+                <h1 class="bench-hd-title">靶场 · 斜抛</h1>
+                <p class="bench-hd-sub">角度 · 速度 · 高度</p>
             </div>
-            <div class="flex items-center space-x-2">
-                <select id="modeSelect" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 focus:outline-none focus:border-blue-500">
-                    <option value="explore">自由探究</option>
-                    <option value="challenge">竞赛</option>
-                </select>
-            </div>
+            <select id="modeSelect" aria-label="探究阶段">
+                <option value="explore">自由探究</option>
+                <option value="challenge">竞赛</option>
+            </select>
         </div>
 
-        <div id="sideGoalBox" class="px-4 pt-3 pb-1 shrink-0">
-            <div class="rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-2">
-                <div class="side-goal-cap text-blue-700 tracking-wide">当前目标</div>
-                <p id="sideGoal" class="mt-0.5 leading-relaxed" style="color:var(--craft-text)">调节侧栏参数，发射后对照落点。</p>
+        <div class="px-4 pt-3 pb-1 shrink-0">
+            <div class="side-goal-box">
+                <div class="side-goal-cap">当前目标</div>
+                <p id="sideGoal">调节侧栏参数，发射后对照落点。</p>
             </div>
         </div>
 
@@ -846,6 +838,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
             btnClear: document.getElementById('btnClear'),
             
             modeLabel: document.getElementById('modeLabel'),
+            craftModePill: document.getElementById('craftModePill'),
             timerDisplay: document.getElementById('timerDisplay'),
             challengeStats: document.getElementById('challengeStats'),
             attemptsDisplay: document.getElementById('attemptsDisplay'),
@@ -1066,6 +1059,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
                 }
                 state.mode = e.target.value;
                 ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+                if (ui.craftModePill) ui.craftModePill.setAttribute('data-mode', state.mode);
                 refreshModeGoals();
                 try {
                   var __p = state.mode === 'challenge' ? 'challenge' : 'explore';
@@ -1867,7 +1861,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   });
 })();
 </script>
-<script>/* __dualModeInitPhase */(function(){function sync(){var s=document.getElementById('modeSelect');if(!s)return;var p=s.value==='challenge'?'challenge':'explore';try{if(window.__platformTraceSetPhase){window.__platformTraceSetPhase(p);window.__craftPhaseEmitted=p;return;}if(window.PlatformTraceAdapter&&window.PlatformTraceAdapter.setPhase){window.PlatformTraceAdapter.setPhase(p);window.__craftPhaseEmitted=p;return;}}catch(e){}if(window.__craftPhaseEmitted===p)return;window.__craftPhaseEmitted=p;try{if(window.__emit)window.__emit('phase_change',{phase:p});else if(window.__traceEmit)window.__traceEmit('phase_change',{phase:p});}catch(e2){}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(sync,0);});else setTimeout(sync,0);})();</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>(function(){ if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase(); })();</script>
 
 <script>
 /* === craft-gold-runtime === */

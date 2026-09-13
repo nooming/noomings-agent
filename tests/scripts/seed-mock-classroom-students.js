@@ -16,12 +16,12 @@ const {
 
 const STUDENT_COUNT = 30;
 const CATALOGS = [
-  { catalogId: 'demo-capacitor-confound-ui', graphId: 'capacitor-confound-ui' },
+  { catalogId: 'demo-ramp-rolling-collision', graphId: 'ramp-rolling-collision' },
   { catalogId: 'demo-capacitor-era-ch1', graphId: 'capacitor-era-ch1' },
-  { catalogId: 'demo-multi-kp', graphId: 'multi-kp' },
+  { catalogId: 'demo-nezha-boat-jump', graphId: 'nezha-boat-jump' },
   { catalogId: 'demo-projectile-basic', graphId: 'projectile-basic' },
   { catalogId: 'demo-pendulum-clock', graphId: 'pendulum-clock' },
-  { catalogId: 'demo-heat-conduction', graphId: 'heat-conduction' },
+  { catalogId: 'demo-gas-pressure-micro', graphId: 'gas-pressure-micro' },
 ];
 
 const OUTCOMES = ['pass', 'exhausted_fail', 'incomplete'];

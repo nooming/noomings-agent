@@ -32,7 +32,7 @@
 
 | 老师/论文口径 | Parse 输出字段 | 说明 |
 |--------------|----------------|------|
-| 公式 | `inquiryScript.knowledgePoints[].formulas` | 多公式时拆多个 KP（`multi-kp`） |
+| 公式 | `inquiryScript.knowledgePoints[].formulas` | 多公式时拆多个 KP |
 | 混淆变量 | `inquiryScript.confoundingVariables` | `has-confounding` 样本必填 |
 | 输出变量 | `inquiryScript.outputVariables` | 因变量/可观测，非按钮 |
 | 调节量（方法节补充） | `inquiryScript.adjustmentVariables` | 与 traceMap 对齐；**Parse 必填**，不并入论文「三要素」正文 |

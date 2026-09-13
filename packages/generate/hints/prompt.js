@@ -155,7 +155,8 @@ function buildStrategyPromptHints(hints) {
   lines.push('- routes[].mapsTo 须引用本关 KG 已有 id；新增 play 叙事时同步扩展 KG');
   lines.push('- 闯关 operation 收敛 mapsTo 只引用现有 O1/O2/C*/R1；勿引用已合并或删除的多操作 id');
   lines.push('- 每条宏策略（含 irrelevant）须有一条 routes.warn 误区提示；≥2 条主策略时不得空 warn');
-  lines.push('- Observe 出边至少一条 label 含观察语（偏近/偏远/未命中/未进洞/出界/碰撞/偏转等）');
+  lines.push('- Observe 出边至少一条 label 含观察语（偏近/偏远/偏低/偏高/未命中/未进洞/出界/碰撞/偏转等）；竞赛测后文案对齐「实测 + 偏低|偏高|已落入」');
+  lines.push('- 图谱高亮：mode 双入口汇入共享 StrategySelect；勿把 StrategySelect 兄弟途径写进本 route highlight；ProbeCV spine 仅 confoundProbe；边标签匹配须归一化括号（（改 I）≈·改I）');
   lines.push('- coupled 模式下 :::stratInvalid 须挂在模式/环境控制无效分支（关/否），勿挂在开态有效分支');
 
   return lines.join('\n');
@@ -192,6 +193,9 @@ function formatGameHintsForPrompt(hints) {
   if (hints.modeToggleCount >= 1) {
 
     lines.push(`源码含模式开关（约 ${hints.modeToggleCount} 处信号）：strategy 须按源码文案建模分叉。`);
+    lines.push(
+      '双模 HTML 壳（若生成/改关 UI）：侧栏 .bench-hd（title+sub ‖ #modeSelect）→ .side-goal-box → 滑条 → 操作；舞台 .craft-mode-pill；包演示链 _shared/craft-tokens.css + craft-shell.css（单文件则内联）。',
+    );
 
   }
 

@@ -11,6 +11,9 @@ data/runtime/output/**
 # 迁服临时入库已结束，恢复忽略课堂轨迹
 data/runtime/platform/traces/*
 !data/runtime/platform/traces/.gitignore
+# 学生学习体验问卷（按课堂码分子目录）
+data/runtime/platform/surveys/*
+!data/runtime/platform/surveys/.gitignore
 # 课堂码运行时配置（可含演示用码；生产码用环境变量）
 data/runtime/platform/class-config.json
 # PCA/分析快照（大 JSON）；目录占位见 data/runtime/analysis/.gitignore

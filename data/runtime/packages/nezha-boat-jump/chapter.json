@@ -269,7 +269,7 @@
   "strategy": {
     "title": "哪吒跳船",
     "sub": "动量守恒",
-    "mermaid": "graph TD\nStart --> Mode{模式?}:::stratCond\nMode -->|探究| Explore\nMode -->|竞赛| Challenge\nExplore --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nStrategySelect -->|单变量·相对起跳船速度| VRelStrat\nStrategySelect -->|单变量·起跳角| AngleStrat\nStrategySelect -->|单变量·人物质量| MassNStrat\nStrategySelect -->|单变量·起跳船质量| MassBStrat\nStrategySelect -->|单变量·目标净空| DistStrat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·甲板摩擦系数| ProbeCV\nStrategySelect -.->|试探·目标船质量| ProbeCV2\nVRelStrat --> Tune --> Launch --> Observe{观察落点?}:::stratCond\nAngleStrat --> Tune\nMassNStrat --> Tune\nMassBStrat --> Tune\nDistStrat --> Tune\nTrap --> Tune\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nBackFromCV --> StrategySelect\nProbeCV2 --> ObserveCV2{有无增益?}:::stratCond\nObserveCV2 -->|无增益| BackFromCV2[回到主策略]:::stratCore\nBackFromCV2 --> StrategySelect\nObserve -->|登船/对照| Win[过关]:::stratResult\nObserve -->|未达标| StrategySelect\nTrap[多参盲调]\n",
+    "mermaid": "graph TD\nAdjustAngle --> Launch[起跳]\nAdjustDist --> Launch\nAdjustMassB --> Launch\nAdjustMassN --> Launch\nAdjustVRel --> Launch\nBackFromCV --> StrategySelect\nBackFromCV2 --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nLaunch --> Observe{观察落点?}:::stratCond\nMode -->|探究| Explore[自由探究]:::stratCore\nMode -->|竞赛| Challenge[竞赛挑战]:::stratResult\nObserve -->|未达标| AdjustVRel\nObserve -->|登船/对照| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveCV2 -->|无增益| BackFromCV2[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nProbeCV2 --> ObserveCV2{观察有无增益?}:::stratCond\nStart --> Mode{选择模式?}:::stratCond\nStrategySelect -->|单变量·相对起跳船速度| VRelStrat\nStrategySelect -->|单变量·起跳角| AngleStrat\nStrategySelect -->|单变量·人物质量| MassNStrat\nStrategySelect -->|单变量·起跳船质量| MassBStrat\nStrategySelect -->|单变量·目标净空| DistStrat\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·甲板摩擦系数| ProbeCV\nStrategySelect -.->|试探·目标船质量| ProbeCV2\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[试探·甲板摩擦系数]:::stratInvalid\nProbeCV2[试探·目标船质量]:::stratInvalid\nVRelStrat[单变量·相对起跳船速度]\nAngleStrat[单变量·起跳角]\nMassNStrat[单变量·人物质量]\nMassBStrat[单变量·起跳船质量]\nDistStrat[单变量·目标净空]\nVRelStrat --> AdjustVRel[调整相对速度]\nAngleStrat --> AdjustAngle[调整起跳角]\nMassNStrat --> AdjustMassN[调整人物质量]\nMassBStrat --> AdjustMassB[调整起跳船质量]\nDistStrat --> AdjustDist[调整目标净空]\nTrap --> Launch\n",
     "routes": [
       {
         "id": "main",
@@ -292,7 +292,7 @@
           "Challenge",
           "StrategySelect",
           "VRelStrat",
-          "Tune",
+          "AdjustVRel",
           "Launch",
           "Observe",
           "Win"
@@ -316,10 +316,10 @@
           ],
           [
             "VRelStrat",
-            "Tune"
+            "AdjustVRel"
           ],
           [
-            "Tune",
+            "AdjustVRel",
             "Launch"
           ],
           [
@@ -332,7 +332,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustVRel"
           ],
           [
             "Mode",
@@ -364,7 +364,7 @@
           "Mode",
           "StrategySelect",
           "AngleStrat",
-          "Tune",
+          "AdjustAngle",
           "Launch",
           "Observe",
           "Win",
@@ -382,10 +382,10 @@
           ],
           [
             "AngleStrat",
-            "Tune"
+            "AdjustAngle"
           ],
           [
-            "Tune",
+            "AdjustAngle",
             "Launch"
           ],
           [
@@ -398,7 +398,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustAngle"
           ],
           [
             "Mode",
@@ -438,7 +438,7 @@
           "Mode",
           "StrategySelect",
           "MassNStrat",
-          "Tune",
+          "AdjustMassN",
           "Launch",
           "Observe",
           "Win",
@@ -456,10 +456,10 @@
           ],
           [
             "MassNStrat",
-            "Tune"
+            "AdjustMassN"
           ],
           [
-            "Tune",
+            "AdjustMassN",
             "Launch"
           ],
           [
@@ -472,7 +472,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustMassN"
           ],
           [
             "Mode",
@@ -512,7 +512,7 @@
           "Mode",
           "StrategySelect",
           "MassBStrat",
-          "Tune",
+          "AdjustMassB",
           "Launch",
           "Observe",
           "Win",
@@ -530,10 +530,10 @@
           ],
           [
             "MassBStrat",
-            "Tune"
+            "AdjustMassB"
           ],
           [
-            "Tune",
+            "AdjustMassB",
             "Launch"
           ],
           [
@@ -546,7 +546,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustMassB"
           ],
           [
             "Mode",
@@ -587,7 +587,7 @@
           "Explore",
           "StrategySelect",
           "DistStrat",
-          "Tune",
+          "AdjustDist",
           "Launch",
           "Observe",
           "Win",
@@ -612,10 +612,10 @@
           ],
           [
             "DistStrat",
-            "Tune"
+            "AdjustDist"
           ],
           [
-            "Tune",
+            "AdjustDist",
             "Launch"
           ],
           [
@@ -628,7 +628,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustDist"
           ],
           [
             "Mode",
@@ -658,7 +658,6 @@
           "Mode",
           "StrategySelect",
           "Trap",
-          "Tune",
           "Launch",
           "Observe",
           "Explore",
@@ -675,10 +674,10 @@
           ],
           [
             "Trap",
-            "Tune"
+            "Launch"
           ],
           [
-            "Tune",
+            "Trap",
             "Launch"
           ],
           [
@@ -687,7 +686,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "AdjustVRel"
           ],
           [
             "Mode",

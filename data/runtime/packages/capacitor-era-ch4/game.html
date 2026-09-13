@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>储能台 · 充放电</title>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
+<!-- intentional: do NOT link craft-shell.css — full shell would wipe Tesla cyan HUD / cityscape.
+     Tokens + telemetry + feedback only; bench IA ported inline with Tesla overrides. -->
 <style>
 /* ===== css/base.css ===== */
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -11,6 +14,11 @@
   --top-chrome-h: 52px;
   --font-ui: 'Courier New', Consolas, monospace;
   --font-formula: 'Courier New', Consolas, monospace;
+  --craft-accent: #00c8ff;
+  --craft-bg: #040410;
+  --craft-panel: #081220;
+  --craft-text: #e6eef2;
+  --craft-muted: #8a9aa6;
 }
 body { background:#040410; overflow:hidden; width:100vw; height:100vh; font-family:var(--font-ui); user-select:none; cursor:default; }
 canvas { position:fixed; top:0; left:0; display:block; }
@@ -28,7 +36,8 @@ canvas { position:fixed; top:0; left:0; display:block; }
   -webkit-font-smoothing:antialiased;
 }
 
-/* ── Dialogue ── */
+/* ── Dialogue (cutscenes removed by request — keep DOM for residual refs, never show) ── */
+#dialogue, #dlg-ff-hint, #intro-title-wrap { display:none !important; }
 #dialogue {
   position:fixed; bottom:175px; left:50%; transform:translateX(-50%);
   width:min(620px,90vw); background:rgba(8,18,32,0.94);
@@ -44,10 +53,11 @@ canvas { position:fixed; top:0; left:0; display:block; }
 
 /* ── 控制面板基类（6 章共用） ── */
 .ctrl-panel {
-  position:fixed; top:var(--top-chrome-h, 52px); right:0; bottom:0; left:auto;
+  position:fixed; top:0; right:0; bottom:0; left:auto;
   transform:none; width:clamp(280px, 28vw, 320px);
   border-bottom:none; border-left:1px solid rgba(0,200,255,0.22); border-radius:0;
-  backdrop-filter:blur(10px); display:none; padding:14px 16px 18px;
+  /* opaque panel — no backdrop-filter (blurred stage glow was ghosting through header text) */
+  background:var(--craft-panel, #081220); backdrop-filter:none; display:none; padding:14px 16px 18px;
   z-index:56; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   box-sizing:border-box;
 }
@@ -188,6 +198,15 @@ body.victory-nav-ready #v-btn {
 
 #ch2-overload { background:rgba(255,60,0,0.12); border:1px solid rgba(255,80,0,0.38); border-radius:5px; padding:7px 12px; font-size:12px; color:#ff8860; margin-top:8px; display:none; }
 /* ── Map ── */
+/* Stage audio dock: canvas top-right, just left of side bench */
+#audio-dock {
+  position:fixed;
+  top:14px;
+  right:calc(var(--ctrl-panel-w, 0px) + 14px);
+  z-index:58;
+  display:flex; align-items:center; gap:8px;
+  pointer-events:auto;
+}
 #sfx-btn {
   position:static; flex-shrink:0;
   font-size:14px; line-height:1; cursor:pointer;
@@ -206,7 +225,7 @@ body.chapter-8 #sfx-btn:hover {
 }
 #audio-volume-wrap {
   flex-shrink:0; display:flex; align-items:center; gap:4px;
-  margin-left:auto; margin-right:6px; pointer-events:auto;
+  margin:0; pointer-events:auto;
 }
 #audio-volume {
   width:min(88px, 18vw); height:4px; cursor:pointer;
@@ -215,6 +234,9 @@ body.chapter-8 #sfx-btn:hover {
 }
 #audio-volume:hover { opacity:1; }
 body.chapter-8 #audio-volume { accent-color:rgba(232,194,112,0.80); }
+@media (max-width: 560px) {
+  #audio-dock { top:56px; right:14px; }
+}
 #map-btn {
   position:static; flex-shrink:0;
   font-size:10px; letter-spacing:4px;
@@ -359,7 +381,7 @@ body.chapter-8 #map-btn:hover {
 #controls4 {
   /* 宽度跟 .ctrl-panel，勿 width:100% 盖住舞台 */
   background:rgba(18,14,8,0.94);
-  border:1px solid rgba(255,190,30,0.28); padding:14px 20px 18px;
+  border:1px solid rgba(255,190,30,0.28); box-sizing:border-box; padding:14px 16px 18px;
 }
 #c4-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 #c4-readout { font-size:26px; font-weight:bold; color:#ffbe1e; text-shadow:0 0 14px rgba(255,190,30,0.6); letter-spacing:1px; min-width:100px; text-align:right; }
@@ -620,14 +642,45 @@ input[type=range].c6-slider::-webkit-slider-thumb { background:#a060ff; box-shad
 }
 #modeLabel{color:#2563eb;font-weight:700}
 #timerDisplay{font-family:var(--font-mono);font-weight:700;color:#0f172a}
-#challengeStats{display:none}
-#challengeStats.is-visible{display:inline-flex}
+#challengeStats{display:none!important}
+#challengeStats.is-visible{display:inline-flex!important}
+#dual-mode-hud .dual-chip[hidden],
+#dual-timer-chip[hidden],
+#timerDisplay[hidden],
+#dual-mode-hud[data-mode="explore"] #challengeStats,
+#dual-mode-hud[data-mode="explore"] #dual-timer-chip{
+  display:none!important;
+}
 #attemptsDisplay{color:#dc2626;font-weight:800}
 #modeSelect{
   border:1px solid #93c5fd;border-radius:999px;padding:4px 10px;font-size:12px;
   font-weight:600;color:#1d4ed8;background:#eff6ff;cursor:pointer;
 }
 .dual-bench-row{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%}
+/* craft IA (minimal): keep Tesla identity; align goal card + bench header */
+.bench-hd.dual-bench-row{margin-bottom:12px;padding-bottom:10px;border-bottom:none;width:100%}
+.bench-hd-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.bench-hd-title{font-size:13px;font-weight:700;letter-spacing:1px;line-height:1.3;color:var(--craft-accent,#00c8ff);text-shadow:none;-webkit-font-smoothing:antialiased}
+.bench-hd-sub{font-size:11px;line-height:1.35;color:var(--craft-muted,#8a9aa6);letter-spacing:.5px;text-shadow:none;opacity:1}
+.side-goal-box{
+  margin:0 0 12px;padding:8px 12px;border-radius:10px;
+  background:rgba(0,0,0,.35);
+  border:1px solid color-mix(in srgb, var(--craft-accent, #00c8ff) 45%, transparent);
+}
+.side-goal-box .side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--craft-accent, #00c8ff);margin:0}
+.side-goal-box #sideGoal{margin:6px 0 0;font-size:13px;line-height:1.55;color:rgba(200,230,255,.85)}
+/* side-goal is the goal card; keep #c4-energy-label as gameplay band readout */
+#dual-mode-hud.craft-mode-pill{
+  gap:8px;padding:6px 12px;border-radius:999px;
+  background:rgba(8,18,32,.92);border:1px solid rgba(0,200,255,.35);
+  box-shadow:0 8px 22px rgba(0,0,0,.4);color:#cfe9f5;font-weight:700;
+}
+#dual-mode-hud.craft-mode-pill #challengeStats{
+  padding:0;border:0;background:transparent;box-shadow:none;gap:6px;color:#cfe9f5;
+}
+#dual-mode-hud.craft-mode-pill .craft-mode-sep{opacity:.35;font-weight:500}
+#dual-mode-hud.craft-mode-pill #timerDisplay{display:none!important}
+#dual-mode-hud.craft-mode-pill #attemptsDisplay{color:#e6eef2;font-variant-numeric:tabular-nums}
 body.cap-dark #dual-mode-hud .dual-chip,body.cap-dark #challengeStats{
   background:rgba(8,18,32,.92);border-color:rgba(0,200,255,.35);color:#cfe9f5;
 }
@@ -639,15 +692,16 @@ body.cap-dark #modeSelect{
 body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
-/* === craft-gold-shell === */
-:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#d4a050;--craft-bg:#141008;--craft-panel:#241c10;--craft-text:#f0e8d4;--craft-muted:#a09070;}
+/* === craft overlay shell (Tesla accent — do not use gold platform tint) === */
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#00c8ff;--craft-bg:#040410;--craft-panel:#081220;--craft-text:#e6eef2;--craft-muted:#8a9aa6;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
 #essence-stage,#stage{background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.04),transparent 55%),var(--craft-bg)!important;}
-#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#fff),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
-#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:rgba(0,0,0,.25)!important;border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 30%,transparent)!important;}
-#essence-bench-hd h1,.bench-hd-title,.ctrl-hd{color:var(--craft-accent)!important;}
+#controls4.ctrl-panel,#essence-bench,.control-panel,#controls-area,#bench{background:linear-gradient(180deg,color-mix(in srgb,var(--craft-panel) 92%,#001828),var(--craft-panel))!important;border-left:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;color:var(--craft-text)!important;}
+#controls4 .bench-hd,#essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{background:transparent!important;border:none!important;border-bottom:none!important;border-radius:0!important;box-shadow:none!important;padding-left:0!important;padding-right:0!important;}
+#controls4 .bench-hd-title,#essence-bench-hd h1,.bench-hd-title,.essence-title{color:var(--craft-accent)!important;text-shadow:none!important;}
+#controls4 .bench-hd-sub,.bench-hd-sub{color:var(--craft-muted)!important;text-shadow:none!important;opacity:1!important;}
 #essence-bench .essence-scroll,#essence-bench .essence-ft,.bench-scroll,.ctrl-scroll,.ctrl-ft{background:transparent!important;color:var(--craft-text)!important;}
 #essence-bench label,.slider-group label,.slabel{color:var(--craft-muted)!important;}
 #essence-bench .btn,button.btn,.pixel-btn,#btnLaunch{background:var(--craft-accent)!important;border:none!important;color:#0b1020!important;font-weight:700!important;border-radius:12px!important;}
@@ -683,6 +737,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
 .craft-card p{margin:0 0 12px;line-height:1.65;color:var(--craft-text);font-size:.95rem;}
+.craft-intro-meta{margin:0 0 14px!important;font-size:12px;line-height:1.5;color:var(--craft-muted)!important;opacity:.9;}
 .craft-card .formula{font-family:var(--font-formula);font-size:1.05rem;color:#fff;background:rgba(0,0,0,.28);
   border-left:3px solid var(--craft-accent);padding:10px 12px;border-radius:8px;margin:10px 0 16px;}
 .craft-card button{width:100%;padding:12px;border:none;border-radius:12px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer;font-size:1rem;}
@@ -764,10 +819,16 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   color:var(--craft-text)!important;
 }
 #essence-bench-hd,.dual-bench-hd,.bench-hd,.ctrl-hd{
-  background:rgba(0,0,0,.28)!important;
-  border-bottom:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)!important;
+  background:transparent!important;
+  border:none!important;
+  border-bottom:none!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding-left:0!important;
+  padding-right:0!important;
 }
-#essence-bench-hd h1,.bench-hd-title,.ctrl-hd,.essence-title{color:var(--scene-hi)!important;}
+#essence-bench-hd h1,.bench-hd-title,.essence-title{color:var(--scene-hi)!important;text-shadow:none!important;}
+.bench-hd-sub{color:var(--craft-muted)!important;text-shadow:none!important;}
 #essence-hud .essence-title{
   background:rgba(0,0,0,.55)!important;border:1px solid color-mix(in srgb,var(--craft-accent) 40%,transparent)!important;
   color:var(--scene-hi)!important;letter-spacing:2px;
@@ -1097,11 +1158,11 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </head>
 <body class="cap-dark">
 
-<div id="craft-intro" hidden>
+<div id="craft-intro">
   <div class="craft-card">
     <h2>储能台 · 充放电</h2>
     <p>储能台读数要卡准——能量随 C、V 怎么涨？调电容与电压，看储能怎么变。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛进入后目标储能带本局固定，未命中只扣次数。</p>
+    <p class="craft-intro-meta">探究≠竞赛；竞赛目标储能带本局固定，未命中扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -1135,17 +1196,25 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
 <canvas id="c"></canvas>
 <div id="top-chrome">
-<div id="dual-mode-hud">
-  <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
-  <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
+<div id="dual-mode-hud" class="craft-mode-pill" data-mode="explore">
+  <span id="modeLabel">探究模式</span>
+  <span id="challengeStats">
+    <span class="craft-mode-sep">|</span>
+    <span>剩余机会</span>
+    <span id="attemptsDisplay">5</span>
+  </span>
+  <span id="timerDisplay" hidden aria-hidden="true">10:00</span>
+  <span id="dual-timer-chip" class="dual-chip" hidden aria-hidden="true"></span>
 </div>
 
   <div id="chapter-badge"></div>
+  <div id="map-btn" onclick="openMap()">地图</div>
+</div>
+<div id="audio-dock" aria-label="音量控制">
+  <button id="sfx-btn" type="button" aria-label="音效">🔊</button>
   <div id="audio-volume-wrap" title="拖动调节音量">
     <input type="range" id="audio-volume" min="0" max="100" value="100" aria-label="主音量" />
   </div>
-  <button id="sfx-btn" type="button" aria-label="音效">🔊</button>
-  <div id="map-btn" onclick="openMap()">地图</div>
 </div>
 <div id="intro-title-wrap">
   <div id="intro-sub"></div>
@@ -1176,8 +1245,17 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 
 <!-- Ch4 Controls -->
 <div id="controls4" class="ctrl-panel">
-<div class="dual-bench-row" style="margin-bottom:12px"><span style="color:rgba(0,200,255,.7);letter-spacing:2px;font-size:11px">阶段</span><select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛挑战</option></select></div>
-  <p id="sideGoal" style="margin:0 0 10px;font-size:12px;line-height:1.45;color:rgba(200,230,255,.78)">调 C、V，看储能怎么变。</p>
+  <div class="bench-hd dual-bench-row">
+    <div class="bench-hd-text">
+      <div class="bench-hd-title">电容纪元 · 储能</div>
+      <div class="bench-hd-sub">C · V · 储能</div>
+    </div>
+    <select id="modeSelect" aria-label="探究阶段"><option value="explore">探究</option><option value="challenge">竞赛</option></select>
+  </div>
+  <div class="side-goal-box">
+    <div class="side-goal-cap">当前目标</div>
+    <p id="sideGoal">调 C、V，看储能怎么变。</p>
+  </div>
   <div id="c4-top">
     <div>
       <div class="c-label" id="c4-energy-label" style="color:rgba(255,200,60,0.88);text-shadow:0 0 8px rgba(255,180,40,0.30)">目标储能：950 ~ 1150 J</div>
@@ -2455,8 +2533,21 @@ function drawFlash() {
 }
 
 // ── Capacitor ────────────────────────────────
+function getStageCenterX() {
+  // Keep --ctrl-panel-w fresh every frame so #audio-dock stays left of the side bench
+  if (typeof getCtrlPanelInset === 'function') getCtrlPanelInset();
+  let panelW = 0;
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--ctrl-panel-w');
+    panelW = parseFloat(raw) || 0;
+  } catch (e) {}
+  if (!(panelW > 0) || (typeof matchMedia === 'function' && matchMedia('(max-width: 560px)').matches)) {
+    return W / 2;
+  }
+  return (W - panelW) / 2;
+}
 function geom() {
-  const cx = W / 2;
+  const cx = typeof getStageCenterX === 'function' ? getStageCenterX() : W / 2;
   const nA = Math.min(1, areaCm2 / 300), nD = distMm / 10;
   const pw = 180 + nA * (Math.min(W * 0.52, 370) - 180), ph = 12;
   let gap = 26 + nD * 85;
@@ -2628,12 +2719,15 @@ const DLG = [
 
 
 function beginChapterIntro() {
-  phase = 'intro';
-  introTick = 0;
+  // Cutscenes removed by request — skip cinematic/dlg; enter playable bench
   dlgIdx = 0;
+  introTick = 0;
   clearChapterDialog();
   const introWrap = document.getElementById('intro-title-wrap');
   if (introWrap) introWrap.style.display = 'none';
+  const dlg = document.getElementById('dialogue');
+  if (dlg) dlg.style.display = 'none';
+  openPuzzle();
 }
 
 function setLine(idx) {
@@ -2698,6 +2792,7 @@ function openPuzzle() {
     if (c1c) c1c.style.display = ch === 1 ? 'block' : 'none';
     syncUI();
   }
+  if (typeof getCtrlPanelInset === 'function') getCtrlPanelInset();
   if ((ch === 0 || ch === 1) && typeof genCity === 'function') genCity();
 }
 
@@ -3374,6 +3469,11 @@ function drawSharedWorld(ctx, opts) {
 }
 
 function tickCanvasIntroAndDlg() {
+  // Cutscenes removed by request — never enter intro/dlg typewriter path
+  if (phase === 'intro' || phase === 'dlg') {
+    try { openPuzzle(); } catch (eSkip) {}
+    return;
+  }
   if ((phase === 'dlg' || phase === 'intro') && typeTarget && typeShown < typeTarget.length) {
     if (++typeTick >= TSPEED) { typeTick = 0; typeShown++; }
     document.getElementById('dlg-text').textContent = typeTarget.slice(0, typeShown);
@@ -3432,7 +3532,7 @@ function refreshCap4Goals() {
     if (side) side.textContent = '竞赛急单：限次把储能落入 ' + _cap4Locked.lo + '–' + _cap4Locked.hi + ' J（本局固定，打偏不换带）。';
     if (label) label.textContent = '急单储能：' + _cap4Locked.lo + ' ~ ' + _cap4Locked.hi + ' J · 本局固定';
   } else {
-    if (side) side.textContent = '调 C、V，看储能怎么变。';
+    if (side) side.textContent = '对照 950–1150 J：调 C、V，看储能怎么变。';
     if (label) label.textContent = '对照储能：950 ~ 1150 J';
   }
 }
@@ -3537,10 +3637,47 @@ function generateCh4Puzzle() {
       return;
     }
   }
-  // Hardcoded fallback: 400µF × 2200V → 968 J ✓, all 15 others outside [950,1150]
-  ch4Choices_C = [400, 800, 1600, 3000];
-  ch4Choices_V = [600, 1000, 1800, 2200];
-  ch4CorrectCI = 0; ch4CorrectVI = 3;
+  // Band-aware fallback (explore or challenge): find any (C,V) in [ELOW,EHIGH]
+  const cPoolFb = [400, 600, 800, 1000, 1200, 1500, 2000, 2500];
+  let fbC = 400, fbV = 2200, fbOk = false;
+  outerFb:
+  for (let ci = 0; ci < cPoolFb.length; ci++) {
+    const c = cPoolFb[ci];
+    for (let v = 400; v <= 3000; v += 100) {
+      const e = 0.5 * c * 1e-6 * v * v;
+      if (e >= ELOW && e <= EHIGH) { fbC = c; fbV = v; fbOk = true; break outerFb; }
+    }
+  }
+  if (!fbOk) {
+    // last-resort explore combo (only valid near 950–1150)
+    ch4Choices_C = [400, 800, 1600, 3000];
+    ch4Choices_V = [600, 1000, 1800, 2200];
+    ch4CorrectCI = 0; ch4CorrectVI = 3;
+    return;
+  }
+  const wCFb = cPoolFb.filter(c => {
+    if (c === fbC) return false;
+    const e = 0.5 * c * 1e-6 * fbV * fbV;
+    return e < ELOW - 80 || e > EHIGH + 80;
+  }).slice(0, 3);
+  while (wCFb.length < 3) {
+    const pad = [3000, 2500, 200, 100].find(x => x !== fbC && wCFb.indexOf(x) < 0);
+    if (pad == null) break;
+    wCFb.push(pad);
+  }
+  const wVFb = [];
+  for (let v = 400; v <= 3000 && wVFb.length < 3; v += 200) {
+    if (v === fbV) continue;
+    const e = 0.5 * fbC * 1e-6 * v * v;
+    if (e < ELOW - 80 || e > EHIGH + 80) wVFb.push(v);
+  }
+  while (wVFb.length < 3) wVFb.push(400 + wVFb.length * 200);
+  const ci = Math.floor(Math.random() * 4);
+  const vi = Math.floor(Math.random() * 4);
+  const cChoices = wCFb.slice(0, 3); cChoices.splice(ci, 0, fbC);
+  const vChoices = wVFb.slice(0, 3); vChoices.splice(vi, 0, fbV);
+  ch4Choices_C = cChoices; ch4Choices_V = vChoices;
+  ch4CorrectCI = ci; ch4CorrectVI = vi;
 }
 
 function buildCh4ChoiceGrid() {
@@ -3577,10 +3714,13 @@ let measuredE4 = null;
 
 function updateCh4Readout() {
   const ro = document.getElementById('c4-readout');
+  const msg = document.getElementById('c4-result-msg');
+  const CF = window.CraftFeedback;
   if (ch4SelCI < 0 || ch4SelVI < 0) { ro.textContent = '-- J'; ro.style.color = '#ffbe1e'; return; }
   if (measuredE4 == null) {
-    ro.textContent = '待测';
+    ro.textContent = CF ? CF.PENDING : '待测';
     ro.style.color = '#94a3b8';
+    if (msg && !msg.textContent) msg.textContent = (CF ? CF.PENDING : '待测') + ' · 选 C、V 后点「放电」';
     return;
   }
   const e = measuredE4;
@@ -3704,7 +3844,12 @@ function tickCh4Anim() {
         won = false;
         const m = document.getElementById('c4-result-msg');
         if (m) {
-          m.textContent = '储能落入对照带 · 继续对比 C、V';
+          const CF = window.CraftFeedback;
+          const eHit = measuredE4 != null ? measuredE4 : ch4CalcE(ch4SelCI, ch4SelVI);
+          const bandTxt = CH4_ELOW + '–' + CH4_EHIGH + ' J';
+          m.textContent = CF
+            ? CF.hitHint({ measured: Math.round(eHit) + ' J', band: bandTxt })
+            : ('已落入 · ' + Math.round(eHit) + ' J（目标 ' + bandTxt + '）');
           m.className = 'ok';
         }
       }
@@ -3732,11 +3877,18 @@ function tickCh4Anim() {
     document.getElementById('c4-discharge-btn').classList.remove('animating');
     const m = document.getElementById('c4-result-msg');
     const e = ch4CalcE(ch4SelCI, ch4SelVI);
+    const CF = window.CraftFeedback;
+    const bandTxt = CH4_ELOW + '–' + CH4_EHIGH + ' J';
+    const measuredTxt = Math.round(e) + ' J';
     if (ch4DischargeResult === 'low') {
-      m.textContent = `能量不足 ${e.toFixed(0)} J（需 950~1150 J）—— 门光渐暗，封印未解`;
+      m.textContent = CF
+        ? CF.missHint({ verdict: 'low', measured: measuredTxt, band: bandTxt })
+        : ('偏低 · ' + measuredTxt + '（目标 ' + bandTxt + '）');
       m.className = 'low';
     } else {
-      m.textContent = `能量过载 ${e.toFixed(0)} J —— 绝缘击穿！系统失效`;
+      m.textContent = CF
+        ? CF.missHint({ verdict: 'high', measured: measuredTxt, band: bandTxt })
+        : ('偏高 · ' + measuredTxt + '（目标 ' + bandTxt + '）');
       m.className = 'high';
     }
     ch4AnimState = 'idle';
@@ -3760,10 +3912,6 @@ function initCh4() {
   generateCh4Puzzle();
   document.getElementById('chapter-badge').textContent=CH_NAMES[4];
   syncCh4UI();
-  try {
-    var craftIntro = document.getElementById('craft-intro');
-    if (craftIntro) craftIntro.hidden = true;
-  } catch (eCi) {}
   openPuzzle();
   if (typeof Telemetry !== 'undefined') Telemetry.log('level_start', { puzzle: Telemetry.puzzleSpec(), init: Telemetry.snapshot() });
 }
@@ -5232,11 +5380,12 @@ window.startTransition = window.startTransition || function(){
   function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
   function stop(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
   function render(){
-    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),chip=$('dual-timer-chip');
+    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),chip=$('dual-timer-chip'),hud=$('dual-mode-hud');
     if(label) label.textContent=state.mode==='explore'?'探究模式':'竞赛模式';
+    if(hud) hud.setAttribute('data-mode', state.mode);
     if(stats){ if(state.mode==='challenge') stats.classList.add('is-visible'); else stats.classList.remove('is-visible'); }
     if(att) att.textContent=String(state.attempts);
-    if(chip) chip.style.display=state.mode==='explore'?'inline-flex':'none';
+    if(chip && !chip.hidden) chip.style.display=state.mode==='explore'?'inline-flex':'none';
     if(td) td.textContent=fmt(Math.max(0,state.timeLeft));
   }
   function startTimer(){
@@ -5597,7 +5746,14 @@ window.startTransition = window.startTransition || function(){
   var btn = document.getElementById('craftIntroBtn');
   var wbtn = document.getElementById('craftWinBtn');
   var bbtn = document.getElementById('craftBackBtn');
-  if (btn) btn.addEventListener('click', function(){ if(intro) intro.hidden = true; });
+  if (btn) btn.addEventListener('click', function(){
+    if (intro) intro.hidden = true;
+    try {
+      var dlg = document.getElementById('dialogue');
+      if (dlg) dlg.style.display = 'none';
+      if (typeof openPuzzle === 'function') openPuzzle();
+    } catch (eOpen) {}
+  });
   function setSettle(open){
     if (typeof window.__eaSetCraftSettleOpen === 'function') window.__eaSetCraftSettleOpen(open);
   }
@@ -6618,6 +6774,13 @@ window.startTransition = window.startTransition || function(){
     return false;
   };
 })();
+</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>
+  if (window.CraftTelemetry && typeof CraftTelemetry.initDualModePhase === 'function') {
+    CraftTelemetry.initDualModePhase();
+  }
 </script>
 </body>
 </html>

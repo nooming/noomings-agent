@@ -417,7 +417,8 @@ function dedupeInquiryFlow(flow, avs, cvs, kps) {
   for (const id of flow || []) {
     const s = String(id);
     if (seen.has(s)) continue;
-    // CV must not duplicate as AV step; keep CV once at end
+    // Keep unique KP/AV/CV/OV ids in encounter order (do not force CV to end —
+    // game DOM interleaving is owned by gameSpec.confoundingUi.domOrderNote).
     if (avIds.has(s) || kpIds.has(s) || cvIds.has(s) || /^OV/.test(s)) {
       seen.add(s);
       out.push(s);
@@ -426,8 +427,16 @@ function dedupeInquiryFlow(flow, avs, cvs, kps) {
   if (out.length < 2) {
     const fallback = [];
     if (kps?.[0]?.id) fallback.push(kps[0].id);
-    for (const a of (avs || []).slice(0, 4)) if (a?.id) fallback.push(a.id);
-    if (cvs?.[0]?.id) fallback.push(cvs[0].id);
+    const avList = (avs || []).slice(0, 4).filter(a => a?.id);
+    const mid = Math.max(1, Math.floor(avList.length / 2));
+    for (let i = 0; i < avList.length; i++) {
+      fallback.push(avList[i].id);
+      // Interleave first CV among AVs when synthesizing a sparse flow
+      if (i === mid - 1 && cvs?.[0]?.id && !fallback.includes(cvs[0].id)) {
+        fallback.push(cvs[0].id);
+      }
+    }
+    if (cvs?.[0]?.id && !fallback.includes(cvs[0].id)) fallback.push(cvs[0].id);
     return fallback.length >= 2 ? fallback : ['KP1', 'AV1'];
   }
   return out;

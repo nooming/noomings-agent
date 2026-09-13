@@ -1,19 +1,19 @@
-/** Legacy name: multi-kp + html-samples-* alias smoke (full coverage → packages-chapter-load) */
+/** Legacy name: html-samples-* alias smoke (full coverage → packages-chapter-load) */
 const fs = require('fs');
 const { loadChapterForGraph } = require('../../../../packages/platform/catalog');
 const { getPackageChapterPath } = require('../../../../packages/shared/data-paths');
 
 function htmlSamplesChapterLoadCheck() {
-  const chapterPath = getPackageChapterPath('multi-kp');
+  const chapterPath = getPackageChapterPath('projectile-basic');
   if (!fs.existsSync(chapterPath)) {
-    console.log('html-samples-chapter-load: SKIP (multi-kp chapter missing)');
+    console.log('html-samples-chapter-load: SKIP (projectile-basic chapter missing)');
     return;
   }
-  const chapter = loadChapterForGraph('multi-kp');
+  const chapter = loadChapterForGraph('projectile-basic');
   if (!chapter?.kg?.nodes?.length) {
-    throw new Error('loadChapterForGraph multi-kp failed');
+    throw new Error('loadChapterForGraph projectile-basic failed');
   }
-  const legacy = loadChapterForGraph('html-samples-multi-kp');
+  const legacy = loadChapterForGraph('html-samples-projectile-basic');
   if (!legacy?.kg?.nodes?.length) {
     throw new Error('legacy graphId alias failed');
   }

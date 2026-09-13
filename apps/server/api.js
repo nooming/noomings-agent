@@ -31,6 +31,9 @@ const {
   handleStudentJoin,
   handleClassConfigGet,
   handleClassConfigSet,
+  handleSurveyStatus,
+  handleSurveySubmit,
+  handleSurveyList,
 } = platform;
 
 const {
@@ -99,6 +102,19 @@ async function routeApi(req, res) {
   if (req.method === 'POST' && req.url === '/api/platform/class-config') {
     if (!requireTeacherAuth(req, res)) return true;
     await handleClassConfigSet(req, res);
+    return true;
+  }
+  if (req.method === 'GET' && (req.url === '/api/platform/survey/status' || req.url.startsWith('/api/platform/survey/status?'))) {
+    handleSurveyStatus(req, res);
+    return true;
+  }
+  if (req.method === 'POST' && req.url === '/api/platform/survey/submit') {
+    await handleSurveySubmit(req, res);
+    return true;
+  }
+  if (req.method === 'GET' && (req.url === '/api/platform/surveys' || req.url.startsWith('/api/platform/surveys?'))) {
+    if (!requireTeacherAuth(req, res)) return true;
+    handleSurveyList(req, res);
     return true;
   }
   if (req.method === 'POST' && req.url === '/api/platform/strategy-path-summary') {

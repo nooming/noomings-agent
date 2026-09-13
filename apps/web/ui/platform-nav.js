@@ -68,6 +68,7 @@
           method !== 'GET'
           || url.includes('/api/platform/traces')
           || url.includes('/api/platform/class-config')
+          || url.includes('/api/platform/surveys')
         );
         if (needsAuth) {
           const headers = new Headers(opts.headers || {});

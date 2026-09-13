@@ -5,6 +5,7 @@
 | `catalog.json` | 教师发布的探究任务（graphId + playUrl + 发布状态 + sampleTags / researchInclude） |
 | `traces/` | 学生游玩会话（本地 JSON，不提交 git）；按课堂码分子目录 `traces/{classCode}/sess-*.json`，缺省课堂码为 `_default` |
 | `traces/.traces-index.json` | 轻量学情索引（无 events；列表/统计读索引；点文件，导出 ZIP 会跳过） |
+| `surveys/` | 学生学习体验问卷（不提交 git）；`surveys/{classCode}/{studentId}.json`；当前 `instrumentId` = `learning-experience-v3`（较 v2 增 AI 披露态度题；`difficulty`：1=太简单，3=刚好，5=太难；勿跨版本混析） |
 | `class-config.json` | 可选：工作台写入的课堂码（不提交 git；生产优先用环境变量） |
 
 ## 页面入口
@@ -15,7 +16,8 @@
 | 教师工作台 | `/teacher.html` | 学情、发布任务、Agent 工具；可查看/修改课堂码 |
 | 教师登录 | `/teacher-login.html` | 教师通行码（`TEACHER_ACCESS_CODE`） |
 | 学生签到 | `/student-join.html` | 课堂码 + 学号 + 姓名（服务端校验后写入本机会话） |
-| 学生探究区 | `/student.html` | 已发布且 craft:gold/pilot 任务（draft 对学生隐藏）；观察包单独分组；每日知情说明可重开 |
+| 学生探究区 | `/student.html` | 已发布且 craft:gold/pilot 任务（draft 对学生隐藏）；观察包单独分组；每日知情说明可重开；入口「学习体验问卷」 |
+| 学习体验问卷 | `/student-survey.html` | 需有效学生会话；9 道 Likert + 2 道选填开放题；每课堂每学号仅一次 |
 | Agent A | `/teacher.html?tab=agents` | 图谱生成与设计（内嵌于教师工作台） |
 
 > **已弃用页面别名（仍重定向）**：`/generate.html` → `?tab=agents`；`/judge.html` → 教师工作台。Agent B 评判请在 **学情数据中心** 对学生会话操作。
@@ -32,6 +34,9 @@
 | POST | `/api/platform/set-published` | 上架 / 下架 |
 | POST | `/api/platform/student-join` | 学生进入课堂（校验课堂码+学号姓名，返回 `studentSession`） |
 | GET/POST | `/api/platform/class-config` | 教师查看/设置课堂码（需教师鉴权；env 锁定时 POST 409） |
+| GET | `/api/platform/survey/status` | 学生查询本课堂问卷是否已提交（需 `studentSession`） |
+| POST | `/api/platform/survey/submit` | 学生提交学习体验问卷（需会话；同课堂同学号 409） |
+| GET | `/api/platform/surveys` | 教师列出问卷（需鉴权；可选 `classCode`） |
 | POST | `/api/trace/ingest` | 学生轨迹上报（学号校验；可选 `classCode`/`studentSession`；同 sessionId 串行；同学号/IP 软配额；body 上限） |
 | GET | `/api/platform/traces/stats` | 学情统计（需教师鉴权；支持 `classCode` 过滤） |
 | GET | `/api/platform/traces/students` | 按学号聚合会话（需教师鉴权；支持 `classCode`） |
@@ -77,7 +82,7 @@
 
 ## 观察包（observe-only）
 
-`capacitor-era-ch1/ch2/ch4`、`capacitor-confound-ui` 等标为 **observe-only / 单阶段观察**：不要按竞赛作业口径把观察反馈假改成 `win`。catalog `sampleTags` 含 `observe-only`；默认 `researchInclude: false`（PCA 默认排除，可用 `--include-observe-only`）。
+`capacitor-era-ch1/ch2/ch4` 等标为 **observe-only / 单阶段观察**：不要按竞赛作业口径把观察反馈假改成 `win`。catalog `sampleTags` 含 `observe-only`；默认 `researchInclude: false`（PCA 默认排除，可用 `--include-observe-only`）。
 
 ## 发布门禁
 

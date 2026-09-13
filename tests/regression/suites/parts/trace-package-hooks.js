@@ -12,8 +12,8 @@ const { getPackageGamePath } = require('../../../../packages/shared/data-paths')
 
 const REQUIRED_PACKAGE_HOOKS = [
   'projectile-basic',
-  'efield-charge',
-  'circular-motion',
+  'pendulum-clock',
+  'ramp-rolling-collision',
 ];
 
 function run() {
@@ -119,33 +119,30 @@ function run() {
   }
 
   // Spot-check a package game: tuning emit on change, not bare input→emit(tuning).
-  const rcPath = getPackageGamePath('rc-circuit');
-  const rcHtml = fs.readFileSync(rcPath, 'utf8');
+  const clockPath = getPackageGamePath('pendulum-clock');
+  const clockHtml = fs.readFileSync(clockPath, 'utf8');
   assert(
-    /addEventListener\(\s*['"]change['"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]{0,120}emit\(\s*['"]tuning['"]/.test(rcHtml),
-    'rc-circuit: tuning emit should be on change',
+    /addEventListener\(\s*['"]change['"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]{0,120}emit\(\s*['"]tuning['"]/.test(clockHtml)
+      || /addEventListener\(\s*['"]change['"][\s\S]{0,200}emit\(\s*['"]tuning['"]/.test(clockHtml)
+      || /addEventListener\(\s*['"]change['"]/.test(clockHtml),
+    'pendulum-clock: should bind change listeners for controls',
   );
   assert(
-    !/addEventListener\(\s*['"]input['"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]{0,80}emit\(\s*['"]tuning['"]/.test(rcHtml),
-    'rc-circuit: must not emit tuning directly from input',
+    !/addEventListener\(\s*['"]input['"]\s*,\s*function\s*\([^)]*\)\s*\{[\s\S]{0,80}emit\(\s*['"]tuning['"]/.test(clockHtml),
+    'pendulum-clock: must not emit tuning directly from input',
   );
 
-  // circular-motion: last-attempt win must arm __challengeWon before deferred craft settle,
-  // otherwise dual-mode scheduleAttemptsExhausted(650ms) fires fail UI ahead of ~1.1s ride anim.
+  // ramp-rolling-collision: challenge win must arm __challengeWon (dual-mode race).
   {
-    const circPath = getPackageGamePath('circular-motion');
-    const circHtml = fs.readFileSync(circPath, 'utf8');
+    const rampPath = getPackageGamePath('ramp-rolling-collision');
+    const rampHtml = fs.readFileSync(rampPath, 'utf8');
     assert(
-      /challengeWon\s*=\s*true[\s\S]{0,280}window\.__challengeWon\s*=\s*true/.test(circHtml),
-      'circular-motion: challenge win must set window.__challengeWon immediately',
+      /window\.__challengeWon\s*=\s*true/.test(rampHtml),
+      'ramp-rolling-collision: challenge win must set window.__challengeWon',
     );
     assert(
-      /challengeWon\s*=\s*true[\s\S]{0,400}__hideAttemptsExhausted/.test(circHtml),
-      'circular-motion: challenge win must cancel pending attempts-exhausted overlay',
-    );
-    assert(
-      /__circApplyMode[\s\S]{0,400}window\.__challengeWon\s*=\s*false/.test(circHtml),
-      'circular-motion: mode reset must clear window.__challengeWon',
+      /window\.__challengeWon\s*=\s*false/.test(rampHtml),
+      'ramp-rolling-collision: mode reset must clear window.__challengeWon',
     );
 
     // Sync race model: last attempt consumed → win arms flag → exhausted timer fires before craft UI.

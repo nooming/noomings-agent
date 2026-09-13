@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c8aad">
+<title>学习体验问卷 · 物理探究教学平台</title>
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="shortcut icon" href="/icons/favicon.ico">
+<link rel="stylesheet" href="/static/ui/platform-shell.css">
+<style>
+.survey-hero { margin-bottom: 18px; }
+.survey-hero h1 { margin: 0 0 8px; font-size: 1.45rem; }
+.survey-hero p { margin: 0; color: var(--edu-muted, #475569); line-height: 1.55; }
+.survey-panel { max-width: 720px; }
+.survey-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 14px;
+  margin: 0 0 16px; font-size: 0.88rem; color: var(--edu-muted, #475569);
+}
+.survey-item {
+  margin: 0 0 18px; padding-bottom: 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+.survey-item:last-of-type { border-bottom: 0; padding-bottom: 0; }
+.survey-item h3 {
+  margin: 0 0 6px; font-size: 0.98rem; font-weight: 600; color: var(--edu-text, #0f172a);
+}
+.survey-item .survey-help {
+  margin: 0 0 10px; font-size: 0.82rem; color: var(--edu-muted, #64748b);
+}
+.survey-note {
+  margin: 0 0 14px; font-size: 0.82rem; color: var(--edu-muted, #64748b);
+  line-height: 1.5;
+}
+.likert-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.likert-option {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin: 0; padding: 8px 4px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--edu-muted, #475569);
+  text-align: center;
+}
+.likert-option:hover { border-color: var(--edu-student, #0c8aad); }
+.likert-option:has(input:checked) {
+  border-color: var(--edu-student, #0c8aad);
+  background: rgba(12, 138, 173, 0.08);
+  color: var(--edu-text, #0f172a);
+  font-weight: 600;
+}
+.likert-option input { accent-color: var(--edu-student, #0c8aad); }
+.likert-ends {
+  display: flex; justify-content: space-between;
+  margin-top: 6px; font-size: 0.75rem; color: var(--edu-muted, #94a3b8);
+}
+.survey-item textarea {
+  width: 100%; min-height: 72px; resize: vertical;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  font: inherit; line-height: 1.45;
+}
+.survey-item textarea:focus {
+  outline: none;
+  border-color: var(--edu-student, #0c8aad);
+  box-shadow: 0 0 0 3px rgba(12, 138, 173, 0.15);
+}
+.survey-actions {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  margin-top: 8px;
+}
+.survey-status {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 8px;
+  background: rgba(15, 118, 110, 0.08); color: #0f766e; font-size: 0.9rem;
+}
+.survey-status.is-error {
+  background: rgba(185, 28, 28, 0.08); color: #b91c1c;
+}
+.survey-status[hidden] { display: none !important; }
+@media (max-width: 560px) {
+  .likert-row { gap: 6px; }
+  .likert-option { font-size: 0.7rem; padding: 6px 2px; }
+}
+</style>
+</head>
+<body class="platform-page edu-shell">
+
+<div id="platformHeader"></div>
+
+<main class="platform-main">
+  <section class="platform-hero student-hero survey-hero">
+    <h1>学习体验问卷</h1>
+    <p>帮助我们了解本次物理探究课堂的体验。约 2 分钟，自愿填写；不影响成绩与任务进度。</p>
+  </section>
+
+  <section class="edu-panel survey-panel" id="surveyPanel">
+    <p class="survey-status" id="surveyBanner" hidden></p>
+    <p class="survey-meta" id="surveyMeta"></p>
+
+    <form id="surveyForm">
+      <div class="survey-item" data-key="goalsClarity">
+        <h3>1. 探究目标有多清晰？</h3>
+        <p class="survey-help">每个任务要探究什么、怎样算完成，对你来说清不清楚。</p>
+        <div class="likert-row" role="radiogroup" aria-label="探究目标清晰度"></div>
+        <div class="likert-ends"><span>很不清晰</span><span>很清晰</span></div>
+      </div>
+
+      <div class="survey-item" data-key="inquiryFeel">
+        <h3>2. 过程更像「探究」还是单纯「过关挑战」？</h3>
+        <p class="survey-help">1 = 完全像刷关，5 = 很像动手探究与思考。</p>
+        <div class="likert-row" role="radiogroup" aria-label="探究感"></div>
+        <div class="likert-ends"><span>更像刷关</span><span>更像探究</span></div>
+      </div>
+
+      <div class="survey-item" data-key="graphsHelp">
+        <h3>3. 侧栏目标与测量读数是否帮你看清进度与目标？</h3>
+        <p class="survey-help">指任务侧栏里的目标说明、当前读数/测量值等，是否让你知道做到哪、离目标还有多远。</p>
+        <div class="likert-row" role="radiogroup" aria-label="侧栏目标与读数是否有帮助"></div>
+        <div class="likert-ends"><span>几乎没帮助</span><span>很有帮助</span></div>
+      </div>
+
+      <div class="survey-item" data-key="engagement">
+        <h3>4. 你在任务中的投入程度如何？</h3>
+        <div class="likert-row" role="radiogroup" aria-label="投入程度"></div>
+        <div class="likert-ends"><span>很少投入</span><span>非常投入</span></div>
+      </div>
+
+      <div class="survey-item" data-key="difficulty">
+        <h3>5. 整体难度如何？</h3>
+        <p class="survey-help">1 = 太简单，3 = 刚好合适，5 = 太难。</p>
+        <div class="likert-row" role="radiogroup" aria-label="整体难度"></div>
+        <div class="likert-ends"><span>太简单</span><span>太难</span></div>
+      </div>
+
+      <div class="survey-item" data-key="satisfaction">
+        <h3>6. 整体满意度如何？</h3>
+        <div class="likert-row" role="radiogroup" aria-label="整体满意度"></div>
+        <div class="likert-ends"><span>很不满意</span><span>很满意</span></div>
+      </div>
+
+      <div class="survey-item" data-key="continueWillingness">
+        <h3>7. 是否愿意继续用这类探究任务学习？</h3>
+        <div class="likert-row" role="radiogroup" aria-label="继续意愿"></div>
+        <div class="likert-ends"><span>不愿意</span><span>很愿意</span></div>
+      </div>
+
+      <p class="survey-note">部分探究任务在设计中使用了 AI 辅助。</p>
+
+      <div class="survey-item" data-key="aiAssistFeel">
+        <h3>8. 得知后你的感受更接近？</h3>
+        <p class="survey-help">指得知「部分任务由 AI 辅助设计」之后。</p>
+        <div class="likert-row" role="radiogroup" aria-label="得知 AI 辅助后的感受"></div>
+        <div class="likert-ends"><span>担心质量/不信任</span><span>好奇/可以接受</span></div>
+      </div>
+
+      <div class="survey-item" data-key="aiDisclosePlay">
+        <h3>9. 若课前就说明「AI 辅助设计」，你还会认真玩吗？</h3>
+        <div class="likert-row" role="radiogroup" aria-label="课前披露后是否认真玩"></div>
+        <div class="likert-ends"><span>明显不愿</span><span>完全不影响</span></div>
+      </div>
+
+      <div class="survey-item">
+        <h3>10. 对你最有帮助的一点是什么？（选填）</h3>
+        <textarea id="helpfulOpen" name="helpfulOpen" maxlength="500" placeholder="例如：某个任务、某个图示、某段提示…"></textarea>
+      </div>
+
+      <div class="survey-item">
+        <h3>11. 还有什么建议或想吐槽的？（选填）</h3>
+        <textarea id="suggestionOpen" name="suggestionOpen" maxlength="500" placeholder="界面、节奏、难度、说明文字等都可以写"></textarea>
+      </div>
+
+      <div class="survey-actions">
+        <button type="submit" class="edu-btn edu-btn-primary" id="submitBtn">提交问卷</button>
+        <a class="edu-btn edu-btn-outline" href="/student.html">返回任务列表</a>
+      </div>
+    </form>
+  </section>
+</main>
+
+<script src="/static/ui/platform-nav.js"></script>
+<script>
+if (!PlatformNav.requireStudentSession()) { throw new Error('redirect_student_join'); }
+document.getElementById('platformHeader').innerHTML = PlatformNav.renderHeader('student');
+PlatformNav.bindHeaderActions(document);
+
+const identity = PlatformNav.getStudentIdentity();
+const LIKERT_LABELS = ['1', '2', '3', '4', '5'];
+const SUBMITTED_KEY = `platform-survey-submitted:${identity.classCode}:${identity.id}`;
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+function setBanner(msg, isError) {
+  const el = document.getElementById('surveyBanner');
+  if (!msg) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+  el.hidden = false;
+  el.textContent = msg;
+  el.classList.toggle('is-error', !!isError);
+}
+
+function markSubmitted(submittedAt) {
+  try { localStorage.setItem(SUBMITTED_KEY, submittedAt || new Date().toISOString()); } catch { /* ignore */ }
+  const form = document.getElementById('surveyForm');
+  form.querySelectorAll('input, textarea, button[type="submit"]').forEach((el) => {
+    el.disabled = true;
+  });
+  document.getElementById('submitBtn').textContent = '已提交';
+  setBanner(`已提交${submittedAt ? '（' + submittedAt.replace('T', ' ').slice(0, 19) + '）' : ''}。感谢你的反馈。`);
+}
+
+document.getElementById('surveyMeta').innerHTML =
+  `<span>课堂 ${esc(identity.classCode)}</span><span>${esc(identity.name)} · ${esc(identity.id)}</span>`;
+
+document.querySelectorAll('.survey-item[data-key]').forEach((item) => {
+  const key = item.dataset.key;
+  const row = item.querySelector('.likert-row');
+  row.innerHTML = LIKERT_LABELS.map((label) => `
+    <label class="likert-option">
+      <input type="radio" name="${esc(key)}" value="${label}" required>
+      <span>${label}</span>
+    </label>`).join('');
+});
+
+async function refreshStatus() {
+  const q = new URLSearchParams({
+    classCode: identity.classCode,
+    studentId: identity.id,
+    studentSession: identity.studentSession,
+  });
+  try {
+    const res = await fetch('/api/platform/survey/status?' + q.toString());
+    const data = await res.json();
+    if (data && data.submitted) {
+      markSubmitted(data.submittedAt);
+      return true;
+    }
+  } catch { /* ignore network; fall back to local */ }
+  const local = localStorage.getItem(SUBMITTED_KEY);
+  if (local) {
+    markSubmitted(local);
+    return true;
+  }
+  return false;
+}
+
+document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  setBanner('');
+  const form = e.currentTarget;
+  const answers = {
+    goalsClarity: Number(form.goalsClarity.value),
+    inquiryFeel: Number(form.inquiryFeel.value),
+    graphsHelp: Number(form.graphsHelp.value),
+    engagement: Number(form.engagement.value),
+    difficulty: Number(form.difficulty.value),
+    satisfaction: Number(form.satisfaction.value),
+    continueWillingness: Number(form.continueWillingness.value),
+    aiAssistFeel: Number(form.aiAssistFeel.value),
+    aiDisclosePlay: Number(form.aiDisclosePlay.value),
+    helpfulOpen: document.getElementById('helpfulOpen').value,
+    suggestionOpen: document.getElementById('suggestionOpen').value,
+  };
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  try {
+    const res = await fetch('/api/platform/survey/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        classCode: identity.classCode,
+        studentId: identity.id,
+        studentName: identity.name,
+        studentSession: identity.studentSession,
+        answers,
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 || (data && data.error === 'already_submitted')) {
+      markSubmitted(data.submittedAt);
+      return;
+    }
+    if (!res.ok || !data.ok) {
+      setBanner(data.message || data.error || '提交失败，请稍后重试', true);
+      btn.disabled = false;
+      btn.textContent = '提交问卷';
+      return;
+    }
+    markSubmitted(data.submittedAt);
+  } catch {
+    setBanner('网络异常，请检查服务后重试', true);
+    btn.disabled = false;
+    btn.textContent = '提交问卷';
+  }
+});
+
+refreshStatus();
+</script>
+</body>
+</html>

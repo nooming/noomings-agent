@@ -53,6 +53,7 @@ const STATIC_MAP = {
   '/student.html': path.join(UI_PAGES, 'student.html'),
   '/student-join.html': path.join(UI_PAGES, 'student-join.html'),
   '/student-play.html': path.join(UI_PAGES, 'student-play.html'),
+  '/student-survey.html': path.join(UI_PAGES, 'student-survey.html'),
   '/strategy-summary-demo.html': path.join(UI_PAGES, 'strategy-summary-demo.html'),
   '/graph.html': path.join(GRAPH_ROOT, 'graph.html'),
 };

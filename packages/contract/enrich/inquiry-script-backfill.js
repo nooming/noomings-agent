@@ -61,10 +61,15 @@ function buildInquiryFlow(knowledgePoints, adjustmentVariables, confoundingVaria
   if (Array.isArray(existingFlow) && existingFlow.length >= 2) return existingFlow;
   const flow = [];
   if (knowledgePoints[0]?.id) flow.push(knowledgePoints[0].id);
-  for (const av of adjustmentVariables.slice(0, 4)) {
-    if (av?.id) flow.push(av.id);
+  const avs = adjustmentVariables.slice(0, 4).filter(a => a?.id);
+  const cvId = confoundingVariables[0]?.id;
+  const mid = Math.max(1, Math.floor(avs.length / 2));
+  for (let i = 0; i < avs.length; i++) {
+    flow.push(avs[i].id);
+    // Mirror gold DOM interleaving when synthesizing flow (CV not forced last)
+    if (cvId && i === mid - 1) flow.push(cvId);
   }
-  if (confoundingVariables[0]?.id) flow.push(confoundingVariables[0].id);
+  if (cvId && !flow.includes(cvId)) flow.push(cvId);
   return flow.length >= 2 ? flow : ['KP1', 'AV1'];
 }
 

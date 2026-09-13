@@ -28,11 +28,8 @@ const DRY = process.argv.includes('--dry-run');
 /**
  * Default classroom demo: 5 mechanics + 3 thermo (8 total).
  * Thermo: gas-pressure-micro / maxwell-speed-dist / adiabatic-process
- *   (gas-ideal & heat-conduction unpublished; packages kept).
  * Mechanics five = craft:gold; thermo three = craft:pilot (still published).
- * Unpublished / deferred: cannon, pendulum-target, momentum, circular, friction,
- *   non mech/thermo.
- * ramp-rolling-collision replaces friction-incline (same incline line; avoid friction+rolling overlap).
+ * High-school foundational packages were removed from the repo (not deferred).
  */
 const WHITELIST = [
   'projectile-basic',
@@ -54,16 +51,8 @@ const KEEP_GOLD = new Set([
   'pulley-rigid',
 ]);
 
-/** Explicitly not on student catalog (kept as packages for self-study / later) */
-const DEFERRED = [
-  'projectile-cannon',
-  'pendulum-target',
-  'momentum-collision',
-  'circular-motion',
-  'friction-incline',
-  'gas-ideal',
-  'heat-conduction',
-];
+/** No longer shipped; kept empty for log clarity when re-running this script. */
+const DEFERRED = [];
 
 const CLASSROOM_LABEL = '力学与热学课堂';
 const CLASSROOM_CODE = DEV_DEFAULT_CLASS_CODE; // wuli2609
@@ -98,7 +87,7 @@ function ensureClassConfig() {
     classCode: code,
     label: CLASSROOM_LABEL,
     name: CLASSROOM_LABEL,
-    note: '默认上架 8 关（力学 basic/clock/ramp/nezha-boat-jump/pulley-rigid + 热学 micro/maxwell/adiabatic）；gas-ideal/heat 与 cannon/target/momentum/circular/friction 后置 unpublished；力学五关 craft:gold，热学三关 craft:pilot（仍上架演示）',
+    note: '默认上架 8 关（力学 basic/clock/ramp/nezha-boat-jump/pulley-rigid + 热学 micro/maxwell/adiabatic）；高中基础向包已从仓库删除；力学五关 craft:gold，热学三关 craft:pilot（仍上架演示）',
     updatedAt: new Date().toISOString(),
   };
 

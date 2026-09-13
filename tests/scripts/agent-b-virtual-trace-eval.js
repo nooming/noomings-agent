@@ -16,10 +16,10 @@ const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-
 
 const SAMPLE_IDS = [
   'projectile-basic',
-  'friction-incline',
-  'multi-kp',
+  'ramp-rolling-collision',
+  'pulley-rigid',
   'capacitor-era-ch1',
-  'circular-motion',
+  'cyclotron-radius',
 ];
 
 function loadChapter(id) {

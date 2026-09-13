@@ -10,7 +10,7 @@ const {
 
 function packagesChapterLoadCheck() {
   const { samples } = loadAllSamples();
-  assert(samples.length >= 23, `expected >= 23 packages samples, got ${samples.length}`);
+  assert(samples.length >= 12, `expected >= 12 packages samples, got ${samples.length}`);
 
   const missing = [];
   const unparseable = [];
@@ -46,7 +46,7 @@ function packagesChapterLoadCheck() {
   assert(unparseable.length === 0, `bad chapter for: ${unparseable.join(', ')}`);
 
   // Alias smoke
-  const alias = loadChapterForGraph('html-samples-multi-kp');
+  const alias = loadChapterForGraph('html-samples-projectile-basic');
   assert(alias?.kg?.nodes?.length, 'legacy html-samples-* graphId alias failed');
 
   console.log(`packages-chapter-load: OK (${ok.length}/${samples.length})`);

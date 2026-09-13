@@ -46,7 +46,7 @@
 | `projectile-basic` | 斜抛旗舰；组员源 `斜抛游戏(1).html` |
 | `ramp-rolling-collision` / 跳船 / 滑轮 | 力学课堂五关，`craft:gold` |
 | 热学三关（micro / maxwell / adiabatic） | 课堂 8 关仍上架，`craft:pilot`（非 gold） |
-| `pendulum-target` / `projectile-cannon` | P1 对齐工艺结构 |
+| `pendulum-clock` / `projectile-basic` | P1 对齐工艺结构 |
 | `capacitor-era-ch1` / `ch2` / `ch4` | 电容纪元拆章组员试点（`craft:pilot`） |
 
 `组员做的样本/` 须 **全量** 入库映射（见 `tests/lib/teammate-sample-map.js`，含斜抛）。整包 `capacitor-era` 仍仅展示。其余样本默认 `craft:draft`，有公式回放者可标 `craft:pilot`，分批升级。

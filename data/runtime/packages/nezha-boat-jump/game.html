@@ -5,77 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>哪吒跳船 · 动量守恒</title>
     <link rel="stylesheet" href="../_shared/craft-tokens.css">
+    <link rel="stylesheet" href="../_shared/craft-shell.css">
     <script src="vendor/three.min.js"></script>
     <script src="vendor/OrbitControls.js"></script>
     <style>
-        :root { --craft-accent:#e11d8f; --craft-bg:#120c12; --craft-panel:#221820; --craft-text:#f0e4ec; --craft-muted:#a08898; }
-        html,body{margin:0;height:100%;overflow:hidden;background:var(--craft-bg);color:var(--craft-text);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
-        #essence-app{display:flex;height:100vh;min-height:480px}
-        #essence-stage{flex:1;position:relative;min-width:0;overflow:hidden}
-        #gameCanvas{display:block;width:100%;height:100%}
-        #dual-mode-hud{position:absolute;top:10px;left:10px;right:10px;z-index:8;display:flex;justify-content:space-between;pointer-events:none;gap:8px}
-        .dual-chip,.hud-chip{pointer-events:auto;display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(225,29,143,.45);font-size:13px;color:#f8fafc}
-        #modeLabel{font-weight:700;color:var(--craft-accent)}
-        #timerDisplay{font-family:ui-monospace,Consolas,monospace;font-weight:600;color:#fbcfe8}
-        #challengeStats{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.88);border:1px solid rgba(248,113,113,.45);pointer-events:auto;font-size:13px}
-        #challengeStats.is-visible{display:inline-flex}
-        #attemptsDisplay{font-weight:800;color:#fda4af}
-        #messageBox{position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);padding:22px 28px;border-radius:14px;text-align:center;z-index:50;background:var(--craft-panel);border:1px solid rgba(225,29,143,.45);max-width:min(420px,90vw);display:none}
+        :root { --craft-accent:#e11d8f; }
+        html,body{overflow:hidden}
+        #messageBox{position:absolute;top:22%;left:50%;transform:translate(-50%,-50%);padding:22px 28px;border-radius:14px;text-align:center;z-index:50;background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);max-width:min(420px,90vw);display:none}
         #messageBox.is-open{display:block}
         #msgTitle{margin:0 0 8px;font-size:1.25rem;color:var(--craft-accent)}
         #msgDesc{margin:0 0 14px;color:var(--craft-muted);line-height:1.55;font-size:.95rem}
         #msgBtn{padding:10px 22px;border:none;border-radius:999px;background:var(--craft-accent);color:#0b1020;font-weight:700;cursor:pointer}
-        .orbit-hint{position:absolute;bottom:10px;left:10px;z-index:5;padding:7px 12px;border-radius:999px;background:rgba(8,12,22,.82);border:1px solid rgba(255,255,255,.22);font-size:12px;font-weight:600;color:#f8fafc;letter-spacing:.02em;pointer-events:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-        #essence-bench{width:min(340px,36vw);background:var(--craft-panel);border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;min-height:0}
-        .bench-hd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
-        .bench-hd h1{margin:0;font-size:15px;color:var(--craft-accent)}
-        #modeSelect{border:1px solid rgba(225,29,143,.45);border-radius:8px;padding:5px 8px;font-size:12px;background:#1a1018;color:var(--craft-text)}
-        .essence-scroll{flex:1;overflow:auto;padding:12px 14px}
-        .side-goal-cap{font-size:11px;color:var(--craft-muted);letter-spacing:.06em;text-transform:uppercase}
-        #sideGoal{margin:6px 0 12px;font-size:13px;line-height:1.55}
-        .slider-group{margin:10px 0}
-        .slider-group label{display:flex;justify-content:space-between;font-size:12px;color:var(--craft-muted);margin-bottom:4px}
-        .slider-group .value{font-family:ui-monospace,Consolas,monospace;color:var(--craft-accent);font-weight:600}
-        .slider-group .slider-note{font-size:11px;color:var(--craft-muted);opacity:.9;margin:-2px 0 6px;line-height:1.4}
-        .slider-group input{width:100%;accent-color:var(--craft-accent)}
-        .essence-ft{padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:8px}
-        .btn-row{display:flex;gap:8px}
-        button.btn{flex:1;padding:10px 12px;border:none;border-radius:10px;font-weight:700;cursor:pointer;background:var(--craft-accent);color:#0b1020}
-        button.btn.secondary{background:rgba(255,255,255,.08);color:var(--craft-text);font-weight:600}
-        button.btn:disabled{opacity:.45;cursor:not-allowed}
-        .observe-box{margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--craft-muted)}
-        .observe-box .val{font-size:18px;font-weight:700}
-        .observe-box .hint{font-size:12px;color:var(--craft-muted);margin-top:6px;line-height:1.45}
-        .observe-box.pending{border-left-color:var(--craft-muted)}
-        .observe-box.measured{border-left-color:var(--craft-accent)}
-        .observe-box.ok{border-left-color:#34d399;background:rgba(34,197,94,.12)}
-        .observe-box.fail{border-left-color:#f87171;background:rgba(248,113,113,.12)}
-        .html-label{position:absolute;font-size:11px;background:rgba(15,23,42,.9);padding:4px 8px;border-radius:6px;color:#fbcfe8;font-weight:700;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;border:1px solid rgba(225,29,143,.35)}
-        #craft-intro,#craft-win{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:20px}
-        #craft-intro[hidden],#craft-win[hidden]{display:none!important}
-        .craft-card{width:min(440px,92vw);background:var(--craft-panel);border:1px solid rgba(225,29,143,.45);border-radius:16px;padding:22px}
-        .craft-card h2{margin:0 0 10px;color:var(--craft-accent)}
-        .craft-card p{margin:0 0 10px;color:var(--craft-muted);line-height:1.55;font-size:.95rem}
-        .craft-card .formula{font-family:"Cambria Math",serif;padding:10px 12px;border-left:3px solid var(--craft-accent);background:rgba(0,0,0,.25);margin:10px 0}
-        .craft-evidence{margin:0 0 8px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(225,29,143,.32);font-size:.88rem;line-height:1.55;color:var(--craft-text)}
-        .craft-evidence strong{color:var(--craft-accent);font-weight:600}
-        .craft-evidence-meta{margin:0 0 12px;font-size:.78rem;line-height:1.4;color:var(--craft-muted)}
-        .craft-evidence-meta[hidden]{display:none!important}
-        .craft-attr{margin:0 0 12px}
-        .craft-attr-label{margin:0 0 8px;font-size:.9rem;color:var(--craft-muted)}
-        .craft-attr-options{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
-        @media(max-width:420px){.craft-attr-options{grid-template-columns:1fr}}
-        .craft-attr label{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:.86rem;line-height:1.4;color:var(--craft-text);cursor:pointer}
-        .craft-attr input{margin-top:3px;accent-color:var(--craft-accent)}
-        .craft-attr-hint{margin:8px 0 0;font-size:.78rem;line-height:1.45;color:var(--craft-muted)}
-        .craft-attr-hint[hidden]{display:none!important}
-        .craft-reveal{margin-top:4px}
-        .craft-reveal[hidden]{display:none!important}
-        .craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed rgba(225,29,143,.35);border-radius:10px;padding:8px 10px;margin:0 0 4px}
-        .craft-actions{display:flex;gap:8px;margin-top:14px}
-        .craft-btn-secondary{background:rgba(255,255,255,.08)!important;color:var(--craft-text)!important}
-        #craftWinBtn:disabled{opacity:.45;cursor:not-allowed}
-        @media(max-width:820px){#essence-app{flex-direction:column}#essence-bench{width:100%;max-height:42vh}#essence-stage{min-height:48vh}}
+        .orbit-hint{position:absolute;bottom:10px;left:10px;z-index:5;padding:7px 12px;border-radius:999px;background:rgba(8,12,22,.82);border:1px solid rgba(255,255,255,.22);font-size:12px;font-weight:600;color:#f8fafc;letter-spacing:.02em;pointer-events:none}
+        .html-label{position:absolute;font-size:11px;background:rgba(15,23,42,.9);padding:4px 8px;border-radius:6px;color:#fbcfe8;font-weight:700;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;border:1px solid color-mix(in srgb,var(--craft-accent) 35%,transparent)}
+        #craft-intro,#craft-win{z-index:200}
+        .essence-ft .btn-row{margin:0}
+        .essence-ft button.btn{width:100%;padding:10px 12px;border-radius:10px}
+        .essence-ft .row-buttons{margin:0}
     </style>
 </head>
 <body>
@@ -84,9 +30,8 @@
   <div class="craft-card">
     <h2>哪吒跳船 · 动量守恒</h2>
     <p>两船相连时，哪吒相对<strong>起跳船 A</strong>起跳——系统水平动量如何分配？调侧栏、点起跳，对照落点与 A 船反冲。</p>
-    <p style="font-size:12px">探究与竞赛目标不同；竞赛间距本局锁定，调参后点起跳，落点判定以侧栏读数为准。v<sub>相对</sub>是对起跳船 A 的相对速度，不是对地速度；M 是起跳船 A 质量。</p>
-    <div class="formula">m v<sub>对地</sub> + M v′<sub>船</sub> = 0（水平、忽略外力短过程）</div>
-    <button type="button" class="btn" id="craftIntroBtn">开始</button>
+    <p class="craft-intro-meta">探究≠竞赛；竞赛间距本局锁定，未命中扣次数。v<sub>相对</sub>相对起跳船 A，非对地；M 为起跳船质量。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
 <div id="craft-win" hidden>
@@ -108,6 +53,7 @@
       <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
     </div>
     <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula">m v<sub>对地</sub> + M v′<sub>船</sub> = 0（水平、忽略外力短过程）</div>
       <div class="formula">v<sub>对地</sub> = v<sub>相对</sub>·M/(m+M) · cos θ</div>
       <p id="craftWinText">相对起跳船速度在水平方向按起跳船质量比分配；反冲使 A 船后退，落点由对地速度与抛射角共同决定。</p>
       <p id="craftCv" class="craft-cv">甲板摩擦系数与目标船质量只改观感，不进动量与登船判定。</p>
@@ -123,15 +69,14 @@
   <div id="essence-stage">
     <div id="canvasContainer" style="position:absolute;inset:0">
       <canvas id="gameCanvas"></canvas>
-      <div id="dual-mode-hud">
-        <div class="dual-chip">
-          <span id="modeLabel">探究</span>
-          <span id="timerDisplay" style="display:none">—</span>
-        </div>
-        <div id="challengeStats">
+      <div class="craft-mode-pill" id="craftModePill" data-mode="explore">
+        <span id="modeLabel">探究模式</span>
+        <span id="challengeStats">
+          <span class="craft-mode-sep">|</span>
           <span>剩余机会</span>
           <span id="attemptsDisplay">5</span>
-        </div>
+        </span>
+        <span id="timerDisplay" style="display:none">—</span>
       </div>
       <div id="messageBox">
         <h2 id="msgTitle"></h2>
@@ -143,15 +88,20 @@
   </div>
   <aside id="essence-bench">
     <div class="bench-hd">
-      <h1>跳船控制台</h1>
-      <select id="modeSelect">
+      <div class="bench-hd-text">
+        <div class="bench-hd-title">跳船控制台</div>
+        <div class="bench-hd-sub">动量守恒 · 落点对照</div>
+      </div>
+      <select id="modeSelect" aria-label="探究阶段">
         <option value="explore">探究</option>
         <option value="challenge">竞赛</option>
       </select>
     </div>
     <div class="essence-scroll" id="controlsPanel">
-      <div class="side-goal-cap">当前目标</div>
-      <p id="sideGoal">每次只改一项条件，多次起跳，对照落点与起跳船 A 的后退。</p>
+      <div class="side-goal-box">
+        <div class="side-goal-cap">当前目标</div>
+        <p id="sideGoal">每次只改一项条件，多次起跳，对照落点与起跳船 A 的后退。</p>
+      </div>
       <div class="slider-group">
         <label for="s-angle">起跳角 θ <span class="value" id="val-angle">45°</span></label>
         <input type="range" id="s-angle" min="10" max="80" value="45">
@@ -249,6 +199,7 @@
             observeHint: document.getElementById('observeHint'),
             btnLaunch: document.getElementById('btnLaunch'), btnClear: document.getElementById('btnClear'),
             btnReset: document.getElementById('btnReset'), modeLabel: document.getElementById('modeLabel'),
+            craftModePill: document.getElementById('craftModePill'),
             timerDisplay: document.getElementById('timerDisplay'), challengeStats: document.getElementById('challengeStats'),
             attemptsDisplay: document.getElementById('attemptsDisplay'), msgBox: document.getElementById('messageBox'),
             msgTitle: document.getElementById('msgTitle'), msgDesc: document.getElementById('msgDesc'), msgBtn: document.getElementById('msgBtn'),
@@ -1039,7 +990,8 @@
 
             ui.modeSelect.addEventListener('change', e => {
                 state.mode = e.target.value;
-                ui.modeLabel.textContent = state.mode === 'explore' ? '探究' : '竞赛';
+                ui.modeLabel.textContent = state.mode === 'explore' ? '探究模式' : '竞赛模式';
+                if (ui.craftModePill) ui.craftModePill.setAttribute('data-mode', state.mode);
                 document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: state.mode } }));
                 traceEmit('phase_change', { phase: state.mode });
                 if (state.mode === 'challenge') {
@@ -1360,6 +1312,7 @@
 })();
 </script>
 <script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
 <script>(function(){ if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase(); })();</script>
 <script>
 (function(){

@@ -343,7 +343,7 @@
   "strategy": {
     "title": "工坊斜轨 · 碰撞与纯滚动",
     "sub": "斜坡滚球 · 高度探究",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustC[竞赛微调] --> FireC\nAdjustMass1 --> Fire\nAdjustMass2 --> Fire\nAdjustShape --> Fire\nAdjustSpeed --> Fire[发射]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：限次定高]:::stratResult\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nFireC[竞赛发射] --> ObserveC{竞赛观察?}:::stratCond\nModeChallenge --> FireC\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏高/冲出| Adjust[按观察单变量微调]\nObserve -->|偏低/不足| Adjust\nObserve -->|冲出| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|命中目标高度| Win\nObserveC -->|未命中| AdjustC\nObserveC -->|机会耗尽| Lose[机会耗尽]:::stratRetry\nObserveC -->|命中| WinC[过关]:::stratResult\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·初速度| SpeedRoute[单变量·初速度]\nStrategySelect -->|单变量·入射质量| Mass1Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·靶球质量| Mass2Route[控制变量：每次只改一项]\nStrategySelect -->|单变量·斜坡倾角| AngleRoute[单变量·倾角]\nStrategySelect -->|单变量·靶球形状| ShapeRoute[离散·形状]\nStrategySelect -->|多参盲调| Trap[多参盲调]\nStrategySelect -.->|试探·轨温| ProbeCV[试探·轨温]:::stratInvalid\nTrap --> Fire\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整倾角]\nMass1Route --> AdjustMass1[调整入射质量]\nMass2Route --> AdjustMass2[调整靶球质量]\nRetry --> Adjust\nShapeRoute --> AdjustShape[切换形状]\nSpeedRoute --> AdjustSpeed[调整初速度]\n",
+    "mermaid": "graph TD\nAdjust --> Fire\nAdjustAngle --> Fire\nAdjustMass1 --> Fire\nAdjustMass2 --> Fire\nAdjustShape --> Fire\nAdjustSpeed --> Fire[发射]\nEnv -->|竞赛模式| ModeChallenge[竞赛模式：限次定高]:::stratResult\nEnv -->|探究模式| ModeExplore[探究模式：自由调参]:::stratCore\nFire --> Observe{观察结果?}:::stratCond\nModeChallenge --> StrategySelect\nModeExplore --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏高/冲出| Adjust[按观察单变量微调]\nObserve -->|偏低/不足| Adjust\nObserve -->|冲出| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|命中目标高度| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -->|单变量·初速度| SpeedRoute\nStrategySelect -->|单变量·入射质量| Mass1Route\nStrategySelect -->|单变量·靶球质量| Mass2Route\nStrategySelect -->|单变量·斜坡倾角| AngleRoute\nStrategySelect -->|单变量·靶球形状| ShapeRoute\nStrategySelect -->|多参盲调| Trap\nStrategySelect -.->|试探·轨温| ProbeCV\nTrap --> Fire\nObserveCV -->|无增益| StrategySelect\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[试探·轨温]:::stratInvalid\nSpeedRoute[单变量·初速度]\nMass1Route[单变量·入射质量]\nMass2Route[单变量·靶球质量]\nAngleRoute[单变量·倾角]\nShapeRoute[单变量·靶球形状]\nAngleRoute --> AdjustAngle[调整倾角]\nMass1Route --> AdjustMass1[调整入射质量]\nMass2Route --> AdjustMass2[调整靶球质量]\nRetry --> Adjust\nShapeRoute --> AdjustShape[切换形状]\nSpeedRoute --> AdjustSpeed[调整初速度]\n",
     "routes": [
       {
         "id": "main",
@@ -371,8 +371,7 @@
           "Win",
           "Adjust",
           "Retry",
-          "ModeExplore",
-          "WinC"
+          "ModeExplore"
         ],
         "highlightEdges": [
           [
@@ -456,8 +455,7 @@
           "Win",
           "Adjust",
           "Retry",
-          "ModeExplore",
-          "WinC"
+          "ModeExplore"
         ],
         "highlightEdges": [
           [
@@ -534,14 +532,13 @@
           "StrategySelect",
           "Env",
           "ModeChallenge",
-          "AdjustMass1",
+          "AdjustMass2",
           "Fire",
           "Observe",
           "Win",
           "Adjust",
           "Retry",
           "ModeExplore",
-          "WinC",
           "Mass2Route"
         ],
         "highlightEdges": [
@@ -558,7 +555,7 @@
             "StrategySelect"
           ],
           [
-            "AdjustMass1",
+            "AdjustMass2",
             "Fire"
           ],
           [
@@ -622,8 +619,7 @@
           "Win",
           "Adjust",
           "Retry",
-          "ModeExplore",
-          "WinC"
+          "ModeExplore"
         ],
         "highlightEdges": [
           [
@@ -707,8 +703,7 @@
           "Win",
           "Adjust",
           "Retry",
-          "ModeExplore",
-          "WinC"
+          "ModeExplore"
         ],
         "highlightEdges": [
           [
@@ -853,7 +848,6 @@
           "StrategySelect",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV",
           "ModeChallenge"
         ],
         "highlightEdges": [
@@ -879,10 +873,6 @@
           ],
           [
             "ObserveCV",
-            "BackFromCV"
-          ],
-          [
-            "BackFromCV",
             "StrategySelect"
           ],
           [

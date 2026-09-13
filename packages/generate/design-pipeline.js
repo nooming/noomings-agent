@@ -24,7 +24,7 @@ const PARSE_SYSTEM = `你是物理教育探究设计助手。根据教师口语�
 }
 规则：
 - 调节变量：学生应主动调节且影响过关/结论
-- 混淆变量：看似相关但不影响核心判定；若有 controlId，勿与调节变量重复
+- 混淆变量：看似相关但不影响核心判定；若有 controlId，勿与调节变量重复；课堂默认做成可交互滑条（生成阶段插在 AV 中间、标签不剧透），reason 供教案/通关揭示用
 - controlId 用英文 id（s-angle、btn-fire），便于 HTML 生成
 - 至少 1 个 KP、1 个 AV；混淆变量可为空数组
 - 调节变量须含 symbol（物理符号）与 suggestedRange.unit（单位）

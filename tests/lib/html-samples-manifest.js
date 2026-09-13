@@ -2,7 +2,7 @@
 const fs = require('fs');
 const { getPackageManifestPath, getPackagesRoot } = require('../../packages/shared/data-paths');
 
-const EVAL_IDS = new Set(['multi-kp', 'series-parallel', 'heat-conduction', 'capacitor-confound-ui']);
+const EVAL_IDS = new Set([]);
 
 function loadAllSamples() {
   const file = getPackageManifestPath();

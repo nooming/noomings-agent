@@ -401,7 +401,7 @@ async function handleDemoStrategyPathSummary(req, res) {
   cors(res);
   try {
     const body = await readBody(req);
-    const packageId = String(body.packageId || 'capacitor-confound-ui').trim();
+    const packageId = String(body.packageId || 'capacitor-era-ch1').trim();
     const chapterPath = getPackageChapterPath(packageId);
     if (!fs.existsSync(chapterPath)) {
       res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });

@@ -89,8 +89,16 @@ const {
   setClassAccessCode,
   matchClassCode,
   deriveStudentSession,
+  verifyStudentSession,
   STUDENT_SESSION_TTL_MS,
 } = require('../../../packages/platform/class-access');
+const {
+  SURVEY_INSTRUMENT_ID,
+  normalizeAnswers,
+  findSurvey,
+  saveSurvey,
+  listSurveys,
+} = require('../../../packages/platform/survey-store');
 
 const LLM_OPTS = () => ({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -510,6 +518,136 @@ async function handleClassConfigSet(req, res) {
   }
 }
 
+/** Student learning-experience survey status (same class + student). */
+function handleSurveyStatus(req, res) {
+  cors(res);
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    const studentId = String(url.searchParams.get('studentId') || '').trim();
+    const classCode = String(url.searchParams.get('classCode') || '').trim();
+    const studentSession = String(url.searchParams.get('studentSession') || '').trim();
+    const idCheck = validateStudentId(studentId);
+    if (!idCheck.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: idCheck.error, message: idCheck.message }));
+      return;
+    }
+    if (!classCode) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'class_code_required', message: '缺少课堂码' }));
+      return;
+    }
+    if (!studentSession || !verifyStudentSession(studentSession, idCheck.studentId, classCode).ok) {
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'student_session_invalid', message: '学生会话无效，请重新进入课堂' }));
+      return;
+    }
+    const existing = findSurvey(classCode, idCheck.studentId);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: true,
+      instrumentId: SURVEY_INSTRUMENT_ID,
+      submitted: !!existing,
+      submittedAt: existing?.submittedAt || null,
+    }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
+
+/** Student submit learning-experience survey (one per class + student). */
+async function handleSurveySubmit(req, res) {
+  cors(res);
+  try {
+    const body = await readBody(req, 32 * 1024);
+    const idCheck = validateStudentId(body.studentId || body.studentNo);
+    if (!idCheck.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: idCheck.error, message: idCheck.message }));
+      return;
+    }
+    const nameCheck = validateStudentName(body.studentName || body.studentLabel);
+    if (!nameCheck.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: nameCheck.error, message: nameCheck.message }));
+      return;
+    }
+    const classCode = String(body.classCode || body.code || '').trim();
+    if (!classCode) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'class_code_required', message: '缺少课堂码' }));
+      return;
+    }
+    const studentSession = String(body.studentSession || '').trim();
+    if (!studentSession || !verifyStudentSession(studentSession, idCheck.studentId, classCode).ok) {
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ ok: false, error: 'student_session_invalid', message: '学生会话无效，请重新进入课堂' }));
+      return;
+    }
+    const existing = findSurvey(classCode, idCheck.studentId);
+    if (existing) {
+      res.writeHead(409, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: 'already_submitted',
+        message: '本课堂问卷已提交，无需重复填写',
+        submittedAt: existing.submittedAt,
+      }));
+      return;
+    }
+    const ans = normalizeAnswers(body.answers || body);
+    if (!ans.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(ans));
+      return;
+    }
+    const result = saveSurvey({
+      classCode,
+      studentId: idCheck.studentId,
+      studentName: nameCheck.studentName,
+      studentSession,
+      submittedAt: new Date().toISOString(),
+      answers: ans.answers,
+    });
+    if (!result.ok) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(result));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: true,
+      instrumentId: SURVEY_INSTRUMENT_ID,
+      submittedAt: result.record.submittedAt,
+      record: result.record,
+    }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
+
+/** Teacher list surveys (optional classCode filter). */
+function handleSurveyList(req, res) {
+  cors(res);
+  try {
+    const url = new URL(req.url, 'http://localhost');
+    const classCode = String(url.searchParams.get('classCode') || '').trim();
+    const items = listSurveys(classCode ? { classCode } : {});
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      ok: true,
+      instrumentId: SURVEY_INSTRUMENT_ID,
+      count: items.length,
+      items,
+    }));
+  } catch (e) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
+  }
+}
+
 module.exports = {
   handleJudge,
   handlePlatformJudgeSession,
@@ -529,4 +667,7 @@ module.exports = {
   handleStudentJoin,
   handleClassConfigGet,
   handleClassConfigSet,
+  handleSurveyStatus,
+  handleSurveySubmit,
+  handleSurveyList,
 };

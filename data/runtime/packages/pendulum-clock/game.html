@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
 <link rel="stylesheet" href="../_shared/craft-tokens.css">
+<link rel="stylesheet" href="../_shared/craft-shell.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>钟表铺·校时</title>
@@ -210,7 +211,7 @@ body.cap-dark #attemptsDisplay{color:#ff8a6a}
 
 
 /* === craft-gold-shell === */
-:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#c9973f;--craft-bg:#2c2218;--craft-panel:#3a2c1c;--craft-text:#e8eef5;--craft-muted:#9aa8b8;}
+:root{--font-sans:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;--font-mono:ui-monospace,"Cascadia Code",Consolas,monospace;--font-display:var(--font-sans);--font-formula:"Cambria Math","Times New Roman",serif;--craft-accent:#c9973f;}
 html,body{width:100%!important;height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;
   font-family:var(--font-sans)!important;background:var(--craft-bg)!important;color:var(--craft-text)!important;}
 #essence-app,#app{background:var(--craft-bg)!important;}
@@ -317,24 +318,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 }
 
 /* === craft-bench-unify === */
-/* HUD: TL dual-mode only · TR essence / legacy gauge */
-#essence-stage > #dual-mode-hud,
-#stage > #dual-mode-hud,
-#dual-mode-hud{
+/* HUD: TL craft-mode-pill · TR legacy gauge */
+#stage > .craft-mode-pill{
   position:absolute!important;
-  top:10px!important;
-  left:10px!important;
-  right:auto!important;
-  width:auto!important;
-  max-width:min(360px,calc(100% - 24px))!important;
-  justify-content:flex-start!important;
-  align-items:flex-start!important;
-  flex-wrap:wrap!important;
+  top:12px!important;
+  left:12px!important;
   z-index:12!important;
-  pointer-events:none!important;
 }
-#dual-mode-hud .dual-chip,
-#dual-mode-hud #challengeStats,
 #challengeStats{pointer-events:auto!important;}
 #essence-hud{
   position:absolute!important;
@@ -346,7 +336,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   align-items:flex-end!important;
   pointer-events:none!important;
 }
-/* Legacy #hud: stage overlay; dual stays TL, readout chips → TR */
+/* Legacy #hud: stage overlay; readout chips → TR */
 #hud{
   position:absolute!important;
   inset:0!important;
@@ -358,11 +348,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   z-index:10!important;
   gap:0!important;
 }
-#hud > #dual-mode-hud{
-  position:absolute!important;
-  top:10px!important;left:10px!important;right:auto!important;
-  max-width:min(360px,calc(100% - 24px))!important;
-}
 #hud > .hud-chip,
 #hud > .gauge,
 #hud > .hud-chip.gauge{
@@ -373,7 +358,6 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
   z-index:11!important;
 }
 #craft-gauge{display:none!important;}
-#dual-mode-hud #goalMission{display:none!important;}
 
 /* Slider track / thumb */
 #essence-bench input[type=range],
@@ -543,12 +527,6 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 
 /* === demo-visual-polish (classroom) === */
-#sideGoal,p#sideGoal{font-size:14px!important;line-height:1.55!important;margin:0 0 12px!important;}
-.side-goal-wrap{
-  margin:0 0 12px;padding:8px 10px;border-radius:10px;
-  background:rgba(0,0,0,.22);border:1px solid rgba(201,151,63,.35);
-}
-.side-goal-cap{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--brass-hi,#f0cf8a);margin-bottom:4px;}
 .,.srow.{
   margin-top:6px!important;padding:8px 10px!important;
   border:1px dashed rgba(201,151,63,.32)!important;border-radius:10px!important;
@@ -572,7 +550,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
   <div class="craft-card">
     <h2>钟表铺·校时</h2>
     <p>这座钟走得偏慢。调节侧栏参数，对照计时看周期怎么变。</p>
-    <p style="font-size:12px;color:var(--craft-muted)">探究与竞赛目标不同；竞赛目标进入后固定，校不准只扣次数。</p>
+    <p class="craft-intro-meta">探究≠竞赛；竞赛目标进入后固定，校不准扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
 </div>
@@ -608,10 +586,16 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="app">
   <div id="stage">
     <canvas id="c"></canvas>
-    <div id="hud"><div id="dual-mode-hud">
-  <div id="dual-timer-chip" class="dual-chip"><span id="modeLabel">探究模式</span><span style="opacity:.35">|</span><span id="timerDisplay">10:00</span></div>
-  <div id="challengeStats"><span>剩余机会</span><span id="attemptsDisplay">5</span></div>
-</div>
+    <div class="craft-mode-pill" id="craftModePill" data-mode="explore">
+      <span id="modeLabel">探究模式</span>
+      <span id="challengeStats">
+        <span class="craft-mode-sep">|</span>
+        <span>剩余机会</span>
+        <span id="attemptsDisplay">5</span>
+      </span>
+      <span id="timerDisplay" hidden>10:00</span>
+    </div>
+    <div id="hud">
       <div class="hud-chip gauge">
         <div class="hud-main">
           <span class="glabel">光电计时</span>
@@ -637,9 +621,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <select id="modeSelect" aria-label="探究阶段"><option value="explore">自由探究</option><option value="challenge">竞赛</option></select>
     </div>
     <div class="bench-scroll">
-      <div class="side-goal-wrap">
+      <div class="side-goal-box">
         <div class="side-goal-cap">当前目标</div>
-        <p id="sideGoal" style="margin:0;color:rgba(240,207,138,.92)">调节侧栏参数，对照计时看周期怎么变。</p>
+        <p id="sideGoal">调节侧栏参数，对照计时看周期怎么变。</p>
       </div>
       <div class="tband-wrap">
         <div class="tband-cap" id="tbandCap">周期尺 · <em>绿区 = 探究带</em></div>
@@ -1590,11 +1574,11 @@ syncUI();
   function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;}
   function stop(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
   function render(){
-    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),chip=$('dual-timer-chip');
+    var label=$('modeLabel'),stats=$('challengeStats'),att=$('attemptsDisplay'),td=$('timerDisplay'),pill=$('craftModePill');
     if(label) label.textContent=state.mode==='explore'?'探究模式':'竞赛模式';
+    if(pill) pill.setAttribute('data-mode', state.mode);
     if(stats){ if(state.mode==='challenge') stats.classList.add('is-visible'); else stats.classList.remove('is-visible'); }
     if(att) att.textContent=String(state.attempts);
-    if(chip) chip.style.display=state.mode==='explore'?'inline-flex':'none';
     if(td) td.textContent=fmt(Math.max(0,state.timeLeft));
   }
   function startTimer(){
@@ -2155,5 +2139,8 @@ syncUI();
   });
 })();
 </script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>(function(){ if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase(); })();</script>
 </body>
 </html>

@@ -17,7 +17,7 @@ const ROOT = path.resolve(__dirname, '../..');
 const TRAINING_V2 = path.join(getDatasetTrainingRoot(), 'v2-packages/summary.json');
 const TRAINING_V1 = path.join(getDatasetTrainingRoot(), 'v1/summary.json');
 
-const EVAL_IDS = ['multi-kp', 'series-parallel', 'heat-conduction', 'capacitor-confound-ui'];
+const EVAL_IDS = ['ramp-rolling-collision', 'nezha-boat-jump', 'pulley-rigid', 'cyclotron-radius'];
 
 function hasFlag(flag) {
   return process.argv.includes(flag);
@@ -93,7 +93,7 @@ function main() {
     console.log('  npm run export-training-jsonl');
     console.log('  npm run upload-html-finetune -- --dry-run');
     console.log('  npm run upload-html-finetune -- --poll');
-    console.log('  FINETUNED_MODEL_ID=... npm run batch-html-dataset -- --id multi-kp --force');
+    console.log('  FINETUNED_MODEL_ID=... npm run batch-html-dataset -- --id ramp-rolling-collision --force');
   }
 
   if (result.pass < result.total) process.exit(1);

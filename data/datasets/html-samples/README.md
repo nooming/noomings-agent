@@ -19,7 +19,7 @@
 
 ```bash
 npm run seed-sample-catalog
-npm run batch-html-dataset -- --id multi-kp --force
+npm run batch-html-dataset -- --id ramp-rolling-collision --force
 npm run export-training-jsonl          # → data/datasets/training/v2-packages
 npm run html-sft-eval
 npm run batch-graph-quality-eval

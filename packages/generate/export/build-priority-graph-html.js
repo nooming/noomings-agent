@@ -19,6 +19,7 @@ const VENDOR_COPY_README = [
   '',
   '**勿手改本目录。** 权威源：`apps/web/viewer/vendor/`。',
   '由导出 `syncOfflineVendor` 生成/覆盖，供同级各夹 `图谱.html` 引用 `../vendor/`。',
+  '图谱高亮契约在 packages/shared/strategy-mermaid-parse.js；与游戏壳 `_shared/craft-*` 无关。',
   '',
   '需更新库时：只改权威源，再重新导出图谱（或手动拷贝上述 JS 到本目录）。',
   '',
@@ -116,6 +117,13 @@ function assertGraphHtmlSane(graphHtml) {
   }
   if (!graphHtml.includes('__D3_SRC__') || !graphHtml.includes('__MATHJAX_SRC__')) {
     throw new Error('missing lazy vendor src hooks (__D3_SRC__ / __MATHJAX_SRC__)');
+  }
+  // Bundled strategy-mermaid-parse must carry recent gold highlight fixes
+  if (!graphHtml.includes('normalizeRouteLabelKey')) {
+    throw new Error('missing normalizeRouteLabelKey (paren label normalize)');
+  }
+  if (!/dual entry into shared StrategySelect|ProbeCV gap/i.test(graphHtml)) {
+    throw new Error('missing mode dual-entry / ProbeCV spine highlight helpers');
   }
 }
 

@@ -75,9 +75,13 @@ function run() {
 
   const spec = buildGameSpec(enriched, hints);
   assert(spec.controls.some(c => c.id === 's-angle'), 'gameSpec s-angle');
+  assert(spec.craftShell?.tokensInline === true, 'craftShell tokensInline');
+  assert(spec.winAttributionMcq?.required === true, 'winAttributionMcq required');
 
   const telem = buildTelemetrySpec(enriched);
   assert(telem.events.some(e => e.controlId === 's-angle'), 'telemetry tuning event');
+  assert(telem.events.some(e => e.type === 'phase_change'), 'telemetry phase_change');
+  assert(telem.craftTelemetry?.tokensPath, 'craftTelemetry tokensPath');
 
   console.log('inquiry-script-smoke: OK');
 }

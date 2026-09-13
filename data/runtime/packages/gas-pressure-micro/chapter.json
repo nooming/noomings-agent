@@ -261,7 +261,7 @@
   "strategy": {
     "title": "气室 · 压强微观模型",
     "sub": "粒子碰壁 · N/T/V → P",
-    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect{选择调参策略?}:::stratCond\nExplore --> StrategySelect\nFire --> Observe{观察压强?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打压强带]:::stratResult\nModeSelect -->|探究| Explore[探究对照压强微观]:::stratCore\nObserve -->|未达标| StrategySelect\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·粒子数| NStrat\nStrategySelect -.->|试探·容器质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 P]\nTrap[多参盲调]\nNStrat --> Tune[单变量调参]\nTrap --> Tune\nTStrat --> Tune[单变量调参]\nVStrat --> Tune[单变量调参]\n",
+    "mermaid": "graph TD\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察压强?}:::stratCond\nModeSelect -->|竞赛| Challenge[限次打压强带]:::stratResult\nModeSelect -->|探究| Explore[探究对照压强微观]:::stratCore\nObserve -->|未达标| Tune\nObserve -->|达标| Win[过关]:::stratResult\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·粒子数| NStrat\nStrategySelect -.->|试探·容器质量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·温度| TStrat\nStrategySelect -->|单变量·体积| VStrat\nTune --> Fire[点击测试读 P]\nStart([开始]):::stratStart\nTrap[多参盲调]\nProbeCV[试探·容器质量]:::stratInvalid\nNStrat[单变量·粒子数]\nTStrat[单变量·温度]\nVStrat[单变量·体积]\nNStrat --> Tune[单变量调参]\nTStrat --> Tune\nVStrat --> Tune\nTrap --> Fire\n",
     "routes": [
       {
         "id": "main",
@@ -324,7 +324,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -398,7 +398,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -472,7 +472,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",
@@ -520,7 +520,7 @@
           ],
           [
             "Trap",
-            "Tune"
+            "Fire"
           ],
           [
             "Tune",
@@ -532,7 +532,7 @@
           ],
           [
             "Observe",
-            "StrategySelect"
+            "Tune"
           ],
           [
             "ModeSelect",

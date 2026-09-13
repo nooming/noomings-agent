@@ -93,6 +93,48 @@ function validateGeneratedHtml(html, chapter, opts = {}) {
     warnings.push('instant_win_pattern');
   }
 
+  // Soft craft-gold classroom pattern checks (warnings only — do not fail legacy samples)
+  const hasCvControls = (chapter?.gameSpec?.controls || []).some(c => c.role === 'confounding')
+    || (chapter?.inquiryScript?.confoundingVariables || []).some(c => c.controlId);
+  if (hasCvControls) {
+    const spoilerOnKnob = /<(?:label|span)[^>]{0,120}>([^<]{0,80}(?:不影响|仅视觉|旁路|混淆变量)[^<]{0,40})<\/(?:label|span)>/i.test(text);
+    if (spoilerOnKnob) warnings.push('cv_spoiler_label_on_knob');
+  }
+
+  const hasPostMeasure = /已落入/.test(text) && /偏低/.test(text) && /偏高/.test(text);
+  const hasPendingMeasure = /待测/.test(text);
+  if (/modeSelect|challenge/.test(text) && (!hasPostMeasure || !hasPendingMeasure)) {
+    warnings.push('missing_challenge_post_measure_feedback');
+  }
+
+  const hasAttrMcq = /name=["']craftAttr["']|attribution/.test(text);
+  const hasCraftWin = /craft-win|craftWin|__craftShowWin/.test(text);
+  if ((hasCraftWin || /emit\s*\(\s*['"]win['"]/.test(text)) && !hasAttrMcq) {
+    warnings.push('missing_win_attribution_mcq');
+  }
+
+  const hasCraftTokens = /--craft-bg|--craft-panel|--craft-accent/.test(text)
+    || /craft-tokens\.css/.test(text);
+  if (!hasCraftTokens) {
+    warnings.push('missing_craft_tokens');
+  }
+
+  // Soft craft shell IA checks (warnings only)
+  const hasDualMode = /id=["']modeSelect["']|#modeSelect/.test(text);
+  if (hasDualMode) {
+    if (!/\bbench-hd\b/.test(text)) warnings.push('missing_bench_hd');
+    if (!/\bside-goal-box\b/.test(text)) warnings.push('missing_side_goal_box');
+    if (!/\bcraft-mode-pill\b/.test(text)) warnings.push('missing_craft_mode_pill');
+    const hasShellLink = /craft-shell\.css/.test(text);
+    const hasInlineShell = hasShellLink
+      || /\.bench-hd[\w.-]*\s*\{/.test(text)
+      || /\.side-goal-box\s*\{/.test(text)
+      || /\.craft-mode-pill\b[\w.#\s>-]*\{|#dual-mode-hud\.craft-mode-pill\s*\{/.test(text);
+    if (!hasInlineShell) {
+      warnings.push('missing_craft_shell_link_or_inline');
+    }
+  }
+
   return {
     ok: errors.length === 0,
     errors,
