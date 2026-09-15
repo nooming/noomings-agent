@@ -20,10 +20,12 @@
     return document.getElementById('modeDesign')?.checked;
   }
 
-  const PREVIEW_HINT_DESIGN = '生成后可打开独立预览；仅需离线包请用导出。';
-  const PREVIEW_HINT_ANALYZE = '生成后可「打开独立预览」；离线包请用「导出」。多关卡将自动拼合为多关图谱；单章追加请用「追加到多关图谱」。';
-  const ADVANCED_HINT_DESIGN = '留空将由 Agent A 根据知识点自动补全。';
-  const ADVANCED_HINT_ANALYZE = '留空将由 Agent A 根据源码自动推断。';
+  const MODE_HINT_DESIGN = '描述知识点，一键完成图谱 + 游戏 + 发布准备。';
+  const MODE_HINT_ANALYZE = '上传或加载 HTML，生成图谱；需要发布时再生成游戏。';
+  const PREVIEW_HINT_DESIGN = '完成后可打开独立预览；离线包请用「更多 → 导出」。';
+  const PREVIEW_HINT_ANALYZE = '生成后可「打开独立预览」；离线包请用「更多 → 导出」。下一步可点「生成游戏 HTML」以便发布。';
+  const ADVANCED_HINT_DESIGN = '留空将根据知识点自动补全。';
+  const ADVANCED_HINT_ANALYZE = '留空将根据源码自动推断。';
 
   function syncGenModeUi() {
     const design = isDesignMode();
@@ -38,20 +40,26 @@
       tab.classList.toggle('is-active', active);
       tab.setAttribute('aria-selected', active ? 'true' : 'false');
     });
+    const modeHint = document.getElementById('agentModeHint');
+    if (modeHint) {
+      modeHint.textContent = design ? MODE_HINT_DESIGN : MODE_HINT_ANALYZE;
+    }
     const goFull = document.getElementById('goDesignFull');
     const go = document.getElementById('go');
     if (goFull) goFull.style.display = design ? '' : 'none';
     if (go) {
-      go.style.display = '';
-      go.classList.toggle('edu-btn-primary', !design);
-      go.classList.toggle('edu-btn-outline', design);
-      go.textContent = design ? '仅生成图谱' : '生成图谱';
+      // Analyze only:「生成图谱」. Design rail is one-click full flow only.
+      go.style.display = design ? 'none' : '';
+      go.classList.add('edu-btn-primary');
+      go.classList.remove('edu-btn-outline');
+      go.textContent = '生成图谱';
     }
-    const appendPanel = document.getElementById('projectAppendPanel');
-    const saveToProject = document.getElementById('saveToProject');
+    const moreMenu = document.getElementById('agentMoreMenu');
     const generateGameHtml = document.getElementById('generateGameHtml');
-    if (appendPanel) appendPanel.style.display = design ? 'none' : '';
-    if (saveToProject) saveToProject.style.display = design ? 'none' : '';
+    if (moreMenu) {
+      moreMenu.style.display = design ? 'none' : '';
+      if (design) moreMenu.removeAttribute('open');
+    }
     if (generateGameHtml) generateGameHtml.style.display = design ? 'none' : '';
     const advancedHint = document.getElementById('advancedHint');
     if (advancedHint) {
@@ -153,7 +161,7 @@
       downloadHtmlFail: msg => '导出失败：' + msg,
       downloadReadyHintOk: AgentCopy.downloadReadyHintOk,
       downloadReadyHintQcFail: AgentCopy.downloadReadyHintQcFail,
-      previewHintText: AgentCopy.previewHintA,
+      previewHintText: isDesignMode() ? PREVIEW_HINT_DESIGN : PREVIEW_HINT_ANALYZE,
     };
   }
 
@@ -171,7 +179,6 @@
     if (promptBtn) promptBtn.disabled = !lastPromptBundle?.markdown;
     const htmlGenBtn = document.getElementById('generateGameHtml');
     if (htmlGenBtn) htmlGenBtn.disabled = !lastChapter;
-    setAgentMenuDisabled(document.getElementById('exportMenu'), !lastChapter);
   }
 
   function exportTitleForDownload() {
@@ -600,6 +607,9 @@
         statusLine += draftLink.fullUrl
           ? (draftLink.draftOnly ? UI_COPY.downloadReadyHintQcFail : UI_COPY.downloadReadyHintOk)
           : UI_COPY.downloadReadyHintQcFail;
+        if (!design) {
+          statusLine += ' · 下一步可生成游戏 HTML 以便发布';
+        }
       }
       if (st) st.textContent = statusLine;
       updateDownloadButtons();
@@ -632,7 +642,7 @@
         }
         return;
       }
-      if (st) st.textContent = '图谱已生成，DeepSeek 正在写游戏 HTML…（约 1–3 分钟）';
+      if (st) st.textContent = '图谱已生成，正在写游戏 HTML…（约 1–3 分钟）';
       const title = document.getElementById('title')?.value.trim()
         || graph.inquiryDraft?.title
         || graph.chapter?.kg?.title
@@ -669,7 +679,7 @@
   }
 
   function closeAgentMenus() {
-    document.getElementById('exportMenu')?.removeAttribute('open');
+    document.getElementById('agentMoreMenu')?.removeAttribute('open');
   }
 
   function bindEvents() {
@@ -683,6 +693,7 @@
       setGenMode(tab.dataset.mode);
     });
     syncGenModeUi();
+    updateDownloadButtons();
     loadAnalyzePackageOptions();
 
     global._sources = global._sources || [];
@@ -765,6 +776,7 @@
       }
       try {
         await navigator.clipboard.writeText(text);
+        closeAgentMenus();
         if (st) st.textContent = UI_COPY.copyPromptOk;
       } catch (e) {
         if (st) st.textContent = UI_COPY.copyPromptFail(e.message);
@@ -779,7 +791,7 @@
         return;
       }
       if (btn) btn.disabled = true;
-      if (st) st.textContent = 'DeepSeek 正在生成 HTML…（约 1–3 分钟）';
+      if (st) st.textContent = '正在生成游戏 HTML…（约 1–3 分钟）';
       try {
         const r = await fetch('/api/generate-game-html', {
           method: 'POST',
@@ -796,14 +808,13 @@
         if (!j.ok) throw new Error(j.error || 'generate failed');
         if (st) {
           st.textContent = j.playUrl
-            ? `HTML 已生成 · ${j.playUrl}`
-            : 'HTML 已生成（未落盘）';
+            ? `游戏 HTML 已生成 · ${j.playUrl}`
+            : '游戏 HTML 已生成（未落盘）';
         }
         if (j.playUrl) window.open(j.playUrl, '_blank');
       } catch (e) {
         if (st) st.textContent = 'HTML 生成失败：' + e.message;
       } finally {
-        if (btn) btn.disabled = false;
         updateDownloadButtons();
       }
     });
@@ -835,6 +846,7 @@
         }
         await loadProjectList();
         await refreshSlotNameList();
+        closeAgentMenus();
         alert(UI_COPY.projectSaved(j.slotName || '', j.replaced, j.viewUrl));
       } catch (e) {
         alert(UI_COPY.projectSaveFail(e.message));

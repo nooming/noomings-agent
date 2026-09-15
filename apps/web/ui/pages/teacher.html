@@ -22,9 +22,9 @@
       <button type="button" class="teacher-tab is-active" data-tab="sessions">课堂学情</button>
       <button type="button" class="teacher-tab" data-tab="catalog">任务上架</button>
       <button type="button" class="teacher-tab teacher-adv" data-tab="resources">资源管理</button>
-      <button type="button" class="teacher-tab teacher-adv" data-tab="agents">图谱工具</button>
+      <button type="button" class="teacher-tab teacher-adv" data-tab="agents">Agent 工具</button>
     </nav>
-    <label class="teacher-density-toggle" title="默认课堂演示简洁视图；打开后显示资源管理、图谱工具与工程细节">
+    <label class="teacher-density-toggle" title="默认课堂演示简洁视图；打开后显示资源管理、Agent 工具与工程细节">
       <input type="checkbox" id="teacherDensityFull">
       <span>显示高级选项</span>
     </label>
@@ -239,33 +239,28 @@
 
   <section class="teacher-panel" id="panel-agents">
     <div class="edu-panel agent-tool-shell" id="upload-panel">
-      <h3>分析源码 · 生成图谱</h3>
-      <p class="hint teacher-simple-only">上传或从探究包加载游戏源码，生成事理图谱。口语设计轨也可快速出图。</p>
-      <p class="hint teacher-adv">主路径：同学交付 HTML → 上传或从探究包一键分析 → 三步解析（物理模型 / 变量 / 优先级）→ 生成事理图谱。设计轨为辅，用于口语快速演示。</p>
+      <h3>Agent 工具</h3>
 
       <div class="agent-mode-radios" hidden aria-hidden="true">
         <input type="radio" name="genMode" id="modeAnalyze" value="analyze" checked>
         <input type="radio" name="genMode" id="modeDesign" value="design">
       </div>
-      <div class="agent-mode-tabs" role="tablist" aria-label="生成模式">
-        <button type="button" class="agent-mode-tab is-active" data-mode="analyze" role="tab" aria-selected="true">分析源码</button>
-        <button type="button" class="agent-mode-tab" data-mode="design" role="tab" aria-selected="false">设计图谱</button>
+      <p class="agent-mode-switch-label" id="agentModeSwitchLabel">选择模式</p>
+      <div class="agent-mode-tabs" role="tablist" aria-labelledby="agentModeSwitchLabel">
+        <button type="button" class="agent-mode-tab is-active" data-mode="analyze" role="tab" aria-selected="true" aria-controls="analyzePanel">分析源码</button>
+        <button type="button" class="agent-mode-tab" data-mode="design" role="tab" aria-selected="false" aria-controls="designPanel">设计探究包</button>
       </div>
+      <p class="hint agent-mode-hint" id="agentModeHint">上传或加载 HTML，生成图谱；需要发布时再生成游戏。</p>
 
       <div id="agentMainInput" class="agent-main-input agent-panel-inner">
         <div id="designPanel" class="agent-section" style="display:none">
           <label for="knowledgePoints">实验知识点（口语描述，必填）</label>
           <textarea id="knowledgePoints" rows="5" placeholder="例如：平抛运动，可调节发射角度和初速度，目标让小球落入筐中；忽略空气阻力…"></textarea>
-          <p class="agent-hint">推荐：点「一键：图谱 + 游戏 + 发布准备」自动完成全流程；仅需图谱时用「仅生成图谱」。</p>
         </div>
 
         <div id="analyzePanel" class="agent-section">
-          <label for="analyzePackageSelect">从探究包一键分析（可选）</label>
-          <div class="upload-row">
-            <select id="analyzePackageSelect"><option value="">— 或手动上传下方 —</option></select>
-            <button type="button" id="loadAnalyzePackage" class="edu-btn edu-btn-outline edu-btn-sm">加载 game.html</button>
-          </div>
-          <label>本关源码（可多选 / 文件夹）</label>
+          <label for="files">上传 HTML 源码</label>
+          <p class="agent-hint">可多选同一关的 html/css/js，或选整个文件夹。</p>
           <div class="upload-row">
             <input type="file" id="files" multiple>
             <input type="file" id="folder" webkitdirectory multiple hidden>
@@ -283,13 +278,23 @@
             <button type="button" id="toggleSingleLevel" class="agent-banner-link">改为仅生成单章</button>
           </div>
           <input type="checkbox" id="singleLevel" hidden aria-hidden="true">
+
+          <details class="agent-secondary-source">
+            <summary>从探究包加载</summary>
+            <div class="agent-secondary-source-body">
+              <div class="upload-row">
+                <select id="analyzePackageSelect"><option value="">— 请选择探究包 —</option></select>
+                <button type="button" id="loadAnalyzePackage" class="edu-btn edu-btn-outline edu-btn-sm">加载该包</button>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
 
       <details class="agent-advanced">
         <summary>补充信息（可选）</summary>
         <div class="agent-advanced-body">
-          <p class="agent-hint" id="advancedHint">留空将根据知识点自动补全。</p>
+          <p class="agent-hint" id="advancedHint">留空将根据源码自动推断。</p>
           <label for="title">本章标题（可选）</label>
           <input type="text" id="title" placeholder="留空则从源码命名">
 
@@ -301,39 +306,40 @@
         </div>
       </details>
 
-      <details id="projectAppendPanel" class="agent-advanced">
-        <summary>追加到多关图谱（可选）</summary>
-        <div class="agent-advanced-body">
-          <p class="agent-hint">将当前章节追加到已有多关图谱；同名关卡会覆盖。留空关卡名则用「本章标题」或生成结果标题。要发布请到「探究任务发布」。</p>
-          <label for="projectSelect">目标多关图谱</label>
-          <div class="upload-row">
-            <select id="projectSelect"><option value="">— 请选择或新建 —</option></select>
-            <button type="button" id="newProject" class="edu-btn edu-btn-outline edu-btn-sm">新建多关图谱</button>
-            <button type="button" id="refreshProjects" class="edu-btn edu-btn-outline edu-btn-sm">刷新列表</button>
-          </div>
-          <label for="slotName">关卡名称</label>
-          <input type="text" id="slotName" list="slotNameList" placeholder="例如：第一关、序章、Boss" maxlength="48">
-          <datalist id="slotNameList"></datalist>
-        </div>
-      </details>
-
       <div class="agent-action-bar">
         <button type="button" id="goDesignFull" class="edu-btn edu-btn-primary" style="display:none">一键：图谱 + 游戏 + 发布准备</button>
         <button type="button" id="go" class="edu-btn edu-btn-primary">生成图谱</button>
-        <button type="button" id="saveToProject" class="edu-btn edu-btn-outline edu-btn-sm" disabled>追加到多关图谱</button>
-        <details id="exportMenu" class="agent-menu is-disabled">
-          <summary class="edu-btn edu-btn-outline edu-btn-sm">导出</summary>
-          <div class="agent-menu-panel">
-            <button type="button" id="downloadHtml" class="edu-btn edu-btn-outline edu-btn-sm" disabled>下载预览 HTML</button>
-            <button type="button" id="copyPromptBundle" class="edu-btn edu-btn-outline edu-btn-sm" disabled>复制 LLM prompt 包</button>
-            <button type="button" id="generateGameHtml" class="edu-btn edu-btn-outline edu-btn-sm" disabled>DeepSeek 生成 HTML</button>
+        <button type="button" id="generateGameHtml" class="edu-btn edu-btn-outline" disabled>生成游戏 HTML</button>
+        <details id="agentMoreMenu" class="agent-menu">
+          <summary class="edu-btn edu-btn-outline edu-btn-sm">更多</summary>
+          <div class="agent-menu-panel agent-more-panel">
+            <div id="projectAppendPanel" class="agent-more-section">
+              <p class="agent-more-label">追加到多关图谱</p>
+              <p class="agent-hint">将当前章节追加到已有多关图谱；同名关卡会覆盖。留空关卡名则用「本章标题」或生成结果标题。</p>
+              <label for="projectSelect">目标多关图谱</label>
+              <div class="upload-row">
+                <select id="projectSelect"><option value="">— 请选择或新建 —</option></select>
+                <button type="button" id="newProject" class="edu-btn edu-btn-outline edu-btn-sm">新建</button>
+                <button type="button" id="refreshProjects" class="edu-btn edu-btn-outline edu-btn-sm">刷新</button>
+              </div>
+              <label for="slotName">关卡名称</label>
+              <input type="text" id="slotName" list="slotNameList" placeholder="例如：第一关、序章、Boss" maxlength="48">
+              <datalist id="slotNameList"></datalist>
+              <button type="button" id="saveToProject" class="edu-btn edu-btn-outline edu-btn-sm" disabled>追加到多关图谱</button>
+            </div>
+            <div class="agent-more-divider" role="separator"></div>
+            <div class="agent-more-section" id="exportMenu">
+              <p class="agent-more-label">导出</p>
+              <button type="button" id="downloadHtml" class="edu-btn edu-btn-outline edu-btn-sm" disabled>下载预览 HTML</button>
+              <button type="button" id="copyPromptBundle" class="edu-btn edu-btn-outline edu-btn-sm" disabled>复制 LLM prompt 包</button>
+            </div>
           </div>
         </details>
         <button type="button" id="goPublishTask" class="edu-btn edu-btn-primary edu-btn-sm" hidden>去发布任务</button>
         <a id="openSaved" class="agent-link" href="#" target="_blank" rel="noopener" style="display:none">打开独立预览</a>
       </div>
 
-      <p id="previewHint" class="agent-hint" style="display:none">生成后可「打开独立预览」；离线包请用「导出」。多关卡将自动拼合为多关图谱；单章追加请用「追加到多关图谱」。</p>
+      <p id="previewHint" class="agent-hint" style="display:none">生成后可「打开独立预览」；离线包请用「更多 → 导出」。下一步可点「生成游戏 HTML」以便发布。</p>
       <div id="status" class="agent-status"></div>
       <div id="report" class="agent-report" style="display:none"></div>
     </div>
@@ -418,19 +424,27 @@ function setGenModeEarly(mode) {
     tab.classList.toggle('is-active', active);
     tab.setAttribute('aria-selected', active ? 'true' : 'false');
   });
+  const modeHint = document.getElementById('agentModeHint');
+  if (modeHint) {
+    modeHint.textContent = design
+      ? '描述知识点，一键完成图谱 + 游戏 + 发布准备。'
+      : '上传或加载 HTML，生成图谱；需要发布时再生成游戏。';
+  }
   const goFull = document.getElementById('goDesignFull');
   const go = document.getElementById('go');
   if (goFull) goFull.style.display = design ? '' : 'none';
   if (go) {
-    go.classList.toggle('edu-btn-primary', !design);
-    go.classList.toggle('edu-btn-outline', design);
-    go.textContent = design ? '仅生成图谱' : '生成图谱';
+    go.style.display = design ? 'none' : '';
+    go.classList.add('edu-btn-primary');
+    go.classList.remove('edu-btn-outline');
+    go.textContent = '生成图谱';
   }
-  const appendPanel = document.getElementById('projectAppendPanel');
-  const saveToProject = document.getElementById('saveToProject');
+  const moreMenu = document.getElementById('agentMoreMenu');
   const generateGameHtml = document.getElementById('generateGameHtml');
-  if (appendPanel) appendPanel.style.display = design ? 'none' : '';
-  if (saveToProject) saveToProject.style.display = design ? 'none' : '';
+  if (moreMenu) {
+    moreMenu.style.display = design ? 'none' : '';
+    if (design) moreMenu.removeAttribute('open');
+  }
   if (generateGameHtml) generateGameHtml.style.display = design ? 'none' : '';
 }
 
