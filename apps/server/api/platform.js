@@ -182,6 +182,8 @@ async function handlePlatformJudgeSession(req, res, opts = {}) {
         sessionId: result.sessionId,
         terminalOutcome: result.terminalOutcome || undefined,
         abilityScore: result.abilityScore || undefined,
+        literacyProfile: result.literacyProfile || undefined,
+        timingFeatures: result.timingFeatures || undefined,
       }));
       return;
     }
@@ -203,6 +205,8 @@ async function handlePlatformJudgeSession(req, res, opts = {}) {
       terminalOutcome: result.terminalOutcome || undefined,
       // 仅回传给教师调用方；学生端不读此字段作展示
       abilityScore: result.abilityScore || undefined,
+      literacyProfile: result.literacyProfile || undefined,
+      timingFeatures: result.timingFeatures || undefined,
     }));
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });

@@ -177,6 +177,8 @@ function buildIndexEntry(record, relPath) {
     scoredPhase: record.strategyPathSummary?.scoredPhase || null,
     currentPhase: record.currentPhase || null,
     abilityScore: record.abilityScore || null,
+    literacyProfile: record.literacyProfile || null,
+    timingFeatures: record.timingFeatures || null,
     attemptsExhausted: record.attemptsExhausted === true,
     terminalOutcome,
   };
@@ -452,6 +454,15 @@ function enrichRecordMetrics(record, chapter) {
   record.variableAdjustCounts = metrics.variableAdjustCounts;
   record.currentPhase = metrics.currentPhase;
   record.sawPhaseChange = metrics.sawPhaseChange;
+  try {
+    const { computeTimingFeatures } = require('../judge/trace-timing');
+    const startedMs = record.startedAt ? Date.parse(record.startedAt) : NaN;
+    record.timingFeatures = computeTimingFeatures(record.events || [], {
+      sessionStartTs: Number.isFinite(startedMs) ? startedMs : null,
+    });
+  } catch (_) {
+    /* timing optional */
+  }
   return record;
 }
 
@@ -604,6 +615,8 @@ function readFilteredTraceRows({ graphId, catalogId, classCode } = {}) {
       currentPhase: entry.currentPhase || null,
       // 列表必须带 abilityScore，否则 loadStudents 重载会把内存中的有限总分冲成「—」
       abilityScore: entry.abilityScore || null,
+      literacyProfile: entry.literacyProfile || null,
+      timingFeatures: entry.timingFeatures || null,
       attemptsExhausted: entry.attemptsExhausted === true,
       terminalOutcome,
     });
@@ -791,6 +804,8 @@ function listTraceStudents({ graphId, catalogId, classCode, q, status, limit = 2
       strategyPathByPhase: row.strategyPathByPhase || null,
       scoredPhase: row.scoredPhase || row.strategyPathSummary?.scoredPhase || null,
       abilityScore: row.abilityScore || null,
+      literacyProfile: row.literacyProfile || null,
+      timingFeatures: row.timingFeatures || null,
       terminalOutcome: row.terminalOutcome || null,
     });
   }
@@ -850,6 +865,7 @@ function summarizeSessionEvents(session, chapter) {
     actionCounts: metrics.actionCounts,
     currentPhase: metrics.currentPhase,
     sawPhaseChange: metrics.sawPhaseChange,
+    timingFeatures: session?.timingFeatures || null,
   };
 }
 
@@ -932,6 +948,12 @@ function saveJudgeResult(sessionId, judgeResult, extras = {}) {
     record.abilityScore = extras.abilityScore;
     record.abilityScoreComputedAt = extras.abilityScore.computedAt
       || new Date().toISOString();
+  }
+  if (extras && extras.literacyProfile) {
+    record.literacyProfile = extras.literacyProfile;
+  }
+  if (extras && extras.timingFeatures) {
+    record.timingFeatures = extras.timingFeatures;
   }
   if (extras && extras.terminalOutcome) {
     record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, extras.terminalOutcome);

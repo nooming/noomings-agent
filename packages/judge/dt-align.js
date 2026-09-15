@@ -2,11 +2,29 @@
 
 const { alignFromGeneratedSnapshot, alignFromDecisionsOnly } = require('./dt-align-core');
 const { tracePathAlign } = require('./trace-path-align');
+const { computeTimingFeatures } = require('./trace-timing');
 const {
   filterEventsForChapter,
   normalizeTraceForChapter,
   snapshotPayloadFromEvent,
 } = require('./trace-normalize');
+
+function attachTimingToInquiryMetrics(inquiryPath, timingFeatures) {
+  if (!inquiryPath || !timingFeatures) return inquiryPath;
+  const metrics = { ...(inquiryPath.metrics || {}) };
+  metrics.timingFeatures = timingFeatures;
+  metrics.timingSummary = {
+    startupDelayMs: timingFeatures.startupDelayMs,
+    tuneActionGapMedianMs: timingFeatures.tuneActionGapMs?.median ?? null,
+    tuneActionGapN: timingFeatures.tuneActionGapMs?.n ?? 0,
+    tuneTuneGapMedianMs: timingFeatures.tuneTuneGapMs?.median ?? null,
+    tuneTuneGapN: timingFeatures.tuneTuneGapMs?.n ?? 0,
+    phaseExploreMs: timingFeatures.phaseDurationMs?.explore ?? 0,
+    phaseChallengeMs: timingFeatures.phaseDurationMs?.challenge ?? 0,
+    gapCapMs: timingFeatures.gapCapMs,
+  };
+  return { ...inquiryPath, metrics };
+}
 
 function summarizeTrace(trace, ch, chapter) {
   const { events } = chapter?.kg
@@ -67,9 +85,18 @@ function summarizeTrace(trace, ch, chapter) {
     return { ts: e.ts, type: e.type, payload: e.payload };
   });
 
-  const inquiryPath = chapter?.kg
+  let inquiryPath = chapter?.kg
     ? tracePathAlign(trace, chapter, ch)
     : null;
+
+  let timingFeatures = null;
+  try {
+    timingFeatures = computeTimingFeatures(events);
+  } catch (_) { /* optional */ }
+
+  if (inquiryPath && timingFeatures) {
+    inquiryPath = attachTimingToInquiryMetrics(inquiryPath, timingFeatures);
+  }
 
   return {
     eventCounts: types,
@@ -82,6 +109,7 @@ function summarizeTrace(trace, ch, chapter) {
     recent,
     inquiryPath,
     filteredEventCount: events.length,
+    timingFeatures: timingFeatures || undefined,
   };
 }
 

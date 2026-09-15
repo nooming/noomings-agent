@@ -2902,6 +2902,135 @@ button.linkish:hover {
   background: var(--edu-surface);
 }
 
+/* 右栏页签：画像 / 本局（样式贴近 agent-mode-tab） */
+.session-view-tabs {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 8px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 12px 18px 8px;
+  border-bottom: 1px solid var(--edu-border);
+  background: var(--edu-surface);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.session-view-tab {
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  border: 1px solid var(--edu-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--edu-surface);
+  color: var(--edu-muted);
+  cursor: pointer;
+  line-height: 1.3;
+  transition: color 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.session-view-tab:hover:not(:disabled):not(.is-active):not([aria-selected="true"]) {
+  color: var(--edu-text);
+  border-color: color-mix(in srgb, var(--edu-teacher) 40%, var(--edu-border));
+  background: var(--edu-surface);
+}
+
+.session-view-tab.is-active,
+.session-view-tab[aria-selected="true"] {
+  color: var(--edu-teacher);
+  background: color-mix(in srgb, var(--edu-surface) 88%, var(--edu-teacher) 12%);
+  border-color: color-mix(in srgb, var(--edu-teacher) 55%, transparent);
+  box-shadow: none;
+}
+
+.session-view-tab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--edu-teacher) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.session-view-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.session-view-panel[hidden] {
+  display: none !important;
+}
+
+#sessionPortraitEmpty {
+  margin: 18px;
+}
+
+/* 右栏阅读顺序：页签「画像」|「本局」分栏，不再纵向堆叠 */
+.session-right-column {
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  background: var(--edu-surface);
+}
+
+.session-right-block {
+  flex: 0 0 auto;
+  padding: 18px 18px 22px;
+  border-bottom: 1px solid var(--edu-border);
+  position: relative;
+}
+
+.session-right-block:last-child {
+  border-bottom: none;
+}
+
+/* 画像 / 选局 / 本局 / 评判：略增段间距，干净分隔不加字 */
+.session-right-block + .session-right-block {
+  margin-top: 2px;
+  padding-top: 20px;
+  box-shadow: inset 0 6px 8px -8px rgba(15, 40, 60, 0.08);
+}
+
+.session-right-column .cross-game-panel,
+.session-right-column .session-ability-panel,
+.session-right-column .session-judge-panel,
+.session-right-column .session-detail-panel {
+  margin-top: 0;
+  height: auto;
+  overflow: visible;
+  background: transparent;
+}
+
+.cross-game-head {
+  margin-bottom: 12px;
+}
+
+.cross-game-head .session-detail-title {
+  margin: 0 0 6px;
+}
+
+.session-pick-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.session-judge-panel h4 {
+  font-size: var(--text-base);
+  margin: 0 0 8px;
+  color: var(--edu-text);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--edu-border);
+}
+
+.session-judge-panel > .hint {
+  margin-bottom: 10px;
+}
+
 .student-list-panel {
   background: color-mix(in srgb, var(--edu-bg) 75%, var(--edu-surface));
   border-right: 1px solid var(--edu-border);
@@ -3102,14 +3231,16 @@ button.linkish:hover {
 }
 
 .session-ability-panel,
-.cross-game-panel {
-  margin-top: 4px;
+.cross-game-panel,
+.session-judge-panel {
+  margin-top: 0;
 }
 
 .session-ability-panel h4,
-.cross-game-panel h4 {
+.cross-game-panel h4,
+.session-judge-panel h4 {
   font-size: var(--text-base);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: var(--edu-text);
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -3118,8 +3249,10 @@ button.linkish:hover {
 }
 
 .session-ability-panel > .hint,
-.cross-game-panel > .hint {
-  margin-bottom: 10px;
+.cross-game-panel > .hint,
+.session-judge-panel > .hint {
+  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .session-ability-meta {
@@ -3173,6 +3306,297 @@ button.linkish:hover {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--edu-primary-dark);
+}
+
+.literacy-profile-block {
+  margin: 12px 0 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(15, 40, 60, 0.08);
+}
+
+/* 学生级四维：学情画像主视觉，去掉与本局块同级的顶部分隔感 */
+.literacy-profile-block.literacy-profile-student {
+  margin: 0 0 16px;
+  padding: 0;
+  border-top: none;
+}
+
+.literacy-profile-block.literacy-profile-student .session-section-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.literacy-agg-meta {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--edu-muted, #5b6b76);
+}
+
+/* 聚合/完整 disclaimer：默认折叠「说明」，悬停 title 也能看 */
+.literacy-note-fold {
+  margin: 0 0 10px;
+  padding: 0;
+  border: none;
+}
+
+.literacy-note-fold-summary {
+  cursor: pointer;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--edu-muted, #6b7c88);
+  list-style: none;
+}
+
+.literacy-note-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.literacy-note-fold-summary::before {
+  content: '▸ ';
+  color: var(--edu-muted, #8a9aa6);
+}
+
+.literacy-note-fold[open] > .literacy-note-fold-summary::before {
+  content: '▾ ';
+}
+
+.literacy-note-fold-body {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--edu-muted, #5b6b76);
+}
+
+.literacy-profile-block .session-section-label {
+  margin: 0 0 4px;
+}
+
+.literacy-disclaimer {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--edu-muted, #5b6b76);
+}
+
+.literacy-dim-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.literacy-dim-row {
+  margin: 0;
+  padding: 0;
+}
+
+.literacy-dim-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-bottom: 3px;
+}
+
+.literacy-dim-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--edu-ink, #1a1a1a);
+}
+
+.literacy-level {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(15, 40, 60, 0.06);
+  color: #3a4a55;
+}
+
+.literacy-level-strong {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.literacy-level-moderate {
+  background: rgba(10, 111, 140, 0.1);
+  color: #0a6f8c;
+}
+
+.literacy-level-weak {
+  background: rgba(180, 83, 9, 0.12);
+  color: #b45309;
+}
+
+.literacy-level-insufficient {
+  background: rgba(15, 40, 60, 0.05);
+  color: #6b7c88;
+}
+
+.literacy-evidence {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--edu-muted, #4a5a66);
+}
+
+/* 学生级四维依据：一行优先，过长省略（全文在 title） */
+.literacy-profile-student .literacy-evidence {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.literacy-tip {
+  color: var(--edu-muted, #5b6b76);
+}
+
+.literacy-evidence-audit {
+  margin: 2px 0 0;
+}
+
+.literacy-evidence-audit-summary {
+  cursor: pointer;
+  font-size: 11.5px;
+  color: var(--edu-muted, #5b6b76);
+  list-style: none;
+}
+
+.literacy-evidence-audit-summary::-webkit-details-marker {
+  display: none;
+}
+
+.literacy-evidence-kinds {
+  font-weight: 600;
+  color: #3a4a55;
+}
+
+.literacy-evidence-detail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--edu-muted, #4a5a66);
+}
+
+.attention-flags-summary {
+  margin: 4px 0 8px;
+  padding: 4px 8px;
+  border-left: 3px solid #b45309;
+  background: rgba(180, 83, 9, 0.06);
+  color: #7c4a03;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.badge-attention {
+  padding: 1px 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 2px;
+  line-height: 1.35;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  background: rgba(180, 83, 9, 0.12);
+  color: #9a3412;
+  border-color: rgba(180, 83, 9, 0.28);
+}
+
+.badge-attention-pass_weak_compare {
+  background: rgba(180, 83, 9, 0.12);
+  color: #9a3412;
+  border-color: rgba(180, 83, 9, 0.3);
+}
+
+.badge-attention-cv_bypass_heavy {
+  background: rgba(124, 58, 237, 0.1);
+  color: #6d28d9;
+  border-color: rgba(124, 58, 237, 0.25);
+}
+
+.badge-attention-explore_no_solid {
+  background: rgba(14, 116, 144, 0.1);
+  color: #0e7490;
+  border-color: rgba(14, 116, 144, 0.28);
+}
+
+
+/* 本局表现：次要可折叠 */
+.literacy-session-brief {
+  margin: 8px 0 6px;
+  padding: 0;
+  border: none;
+}
+
+.literacy-session-brief-summary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--edu-muted, #5b6b76);
+  list-style: none;
+}
+
+.literacy-session-brief-summary::-webkit-details-marker {
+  display: none;
+}
+
+.literacy-brief-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.literacy-brief-chip .literacy-dim-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--edu-muted, #5b6b76);
+}
+
+.literacy-session-brief-tip {
+  margin: 6px 0 8px;
+  font-size: 12px;
+}
+
+.literacy-session-brief-list {
+  margin-top: 4px;
+}
+
+.timing-features-block {
+  margin: 6px 0 10px;
+  padding: 0;
+  border: none;
+}
+
+.timing-features-summary {
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--edu-muted, #5b6b76);
+  list-style: none;
+}
+
+.timing-features-summary::-webkit-details-marker {
+  display: none;
+}
+
+.timing-features-detail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--edu-muted, #5b6b76);
 }
 
 .ability-bars {
@@ -3287,10 +3711,14 @@ button.linkish:hover {
 }
 
 .student-agg-meta {
-  margin: 0 0 6px;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: 0.78rem;
   line-height: 1.35;
   color: var(--edu-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .cross-game-panel .student-radar {
@@ -3299,6 +3727,67 @@ button.linkish:hover {
   align-items: center;
   gap: 16px 28px;
   margin-top: 4px;
+}
+
+/* 六维过程指标：四维下方、默认折叠，不与素养主叙事抢视觉 */
+.student-radar-fold {
+  margin: 10px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(15, 40, 60, 0.08);
+}
+
+.student-radar-fold-summary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--edu-muted, #5b6b76);
+}
+
+.student-radar-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.student-radar-fold-summary::before {
+  content: '▸';
+  display: inline-block;
+  width: 0.9em;
+  color: var(--edu-muted, #6b7c88);
+  transition: transform 0.12s ease;
+}
+
+.student-radar-fold[open] > .student-radar-fold-summary::before {
+  transform: rotate(90deg);
+}
+
+.student-radar-fold-title {
+  font-weight: 600;
+  color: var(--edu-ink, #2a3a44);
+}
+
+.student-radar-fold-meta {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--edu-muted, #5b6b76);
+}
+
+.student-radar-fold .radar-section-hint {
+  margin: 8px 0 6px;
+  font-size: 12px;
+}
+
+.student-radar-fold .student-radar {
+  margin-top: 8px;
+  opacity: 0.92;
+}
+
+.student-radar-fold .student-radar-svg {
+  max-width: 200px;
 }
 
 .student-radar-main {
@@ -3431,6 +3920,12 @@ button.linkish:hover {
   height: 100%;
   overflow-y: auto;
   background: var(--edu-surface);
+}
+
+.session-right-column > .session-detail-panel {
+  padding: 14px 18px 16px;
+  height: auto;
+  overflow: visible;
 }
 
 .session-detail-empty {
@@ -3664,6 +4159,11 @@ button.linkish:hover {
   }
   .student-list-panel { max-height: 280px; height: auto; }
   .session-detail-panel { height: auto; }
+  .session-right-column {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 640px) {

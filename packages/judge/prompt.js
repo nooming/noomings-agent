@@ -22,6 +22,7 @@ function buildSystemPrompt(body) {
 - **参数覆盖（metrics.parameterCoverage）**：表示**探究段（explore）调参广度**（曾试过哪些 AV）；与竞赛段策略分开看。勿因竞赛段只盯一个量就写「未探索×× / 参数覆盖仅一半」。
 - metrics.parameterCoverage < 1 且探究多次未收敛时：可在 suggestion 建议「固定已试参数、切换探索另一单参」，**禁止**建议同时调节两参数；若覆盖已高而竞赛仍未过关，应谈约束/收敛，而非指责探索失败。
 - 若 metrics/strategySegmentScore 含 strategySequence 与 switchKind：按换向类型叙述——focused_redirect=聚焦换向（先盯一个量再换方向，属合理）；explore_converge=探索收敛（早期混乱后收束到单变量）；thrash=散乱横跳（建议先聚焦）；stable=路径稳定。勿把「两个单变量之间的切换」说成多参盲调；陷阱仍是同一试次内同时拧多 AV。
+- **时间特征（metrics.timingFeatures / timingSummary）**：由事件 ts 衍生（启动延迟、调参↔动作间隔、连续 tuning 间隔、探究/竞赛段时长）。滑条多在 change 才记，细间隔偏粗；超长 gap 已封顶/剔除。时间仅作弱辅证，**不得**单独定 level；**禁止**把长间隔写成「在深度思考」。仅当短间隔+少对照+未达成时，可弱提示偏快出手/连拧未测；**有对照且后达成**时勿写成盲拧。
 - gaps 应优先描述多参混调、忽视观察反馈、无关控件等真实误区，而非「方法单一」「未试另一参数」。
 - 禁止泄题数值；不要重复解释 metrics 字段名。
 - **仅输出一个 JSON 对象**（不要 markdown、不要代码块、不要前后说明），格式如下：

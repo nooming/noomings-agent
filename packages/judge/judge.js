@@ -185,6 +185,94 @@ function applyPassWeakComparisonPolicy(result, summary) {
   return out;
 }
 
+/** 连拧未测：密 tuning、少 action（时间仅辅证，不改 level/verdict） */
+const TIMING_DENSE_TUNE_GAP = '连拧调参偏密、少实测，建议拧后先观察再测';
+/** 调参后过快出手且对照/达成弱 */
+const TIMING_RUSH_ACTION_GAP = '调参后偏快出手，观察反馈可能不足';
+
+function resolveTimingFeatures(summary) {
+  return summary?.timingFeatures
+    || summary?.inquiryPath?.metrics?.timingFeatures
+    || null;
+}
+
+/**
+ * 有效对照迹象：有对照且（可）后达成时，勿把短间隔误判为盲拧。
+ * 不改 ability 权重；仅门控 timing soft gaps。
+ */
+function hasAdequateContrastEvidence(summary) {
+  const m = summary?.inquiryPath?.metrics || {};
+  const av = m.avTunings;
+  const sv = m.singleVariableRate;
+  const hasR1 = !!summary?.inquiryPath?.pathSteps?.includes('R1');
+  if (typeof av === 'number' && av >= 2 && (typeof sv !== 'number' || sv >= 0.55)) return true;
+  if (hasR1 && typeof av === 'number' && av >= 2) return true;
+  return false;
+}
+
+/**
+ * 时间衍生软参与：最多补 1 条 gap，不单独定 level，不改 verdict。
+ * 路径 / AV / CV / 达成仍为主。
+ * 短间隔+少对照+未达成 → 偏快出手/连拧未测；有对照且已达成 → 不误判盲拧。
+ */
+function applyTimingSoftGaps(result, summary) {
+  const tf = resolveTimingFeatures(summary);
+  if (!tf || !result) return result;
+
+  // 有对照、后达成：勿把短间隔写成盲拧/连拧
+  if (isPassed(summary) && hasAdequateContrastEvidence(summary)) return result;
+
+  const counts = summary.eventCounts || {};
+  const tuneN = Number(counts.tuning || 0) || 0;
+  const actionN = Number(counts.action || 0) || 0;
+  const m = summary?.inquiryPath?.metrics || {};
+  const ttMed = tf.tuneTuneGapMs?.median;
+  const ttN = Number(tf.tuneTuneGapMs?.n || 0) || 0;
+  const taMed = tf.tuneActionGapMs?.median;
+  const taN = Number(tf.tuneActionGapMs?.n || 0) || 0;
+  const weakContrast = (typeof m.avTunings === 'number' && m.avTunings < 2)
+    || (typeof m.singleVariableRate === 'number' && m.singleVariableRate < 0.5)
+    || !summary?.inquiryPath?.pathSteps?.includes('R1');
+
+  let softGap = null;
+  // 1) 连拧未测：tuning 多、action 少，且相邻 tuning 间隔偏短（阈值略收紧）
+  if (tuneN >= 6 && actionN <= 1 && ttN >= 4 && ttMed != null && ttMed < 1800) {
+    softGap = TIMING_DENSE_TUNE_GAP;
+  } else if (
+    // 2) 短间隔 + 少对照 + 未达成 → 偏快出手
+    taN >= 3
+    && taMed != null
+    && taMed < 700
+    && !isPassed(summary)
+    && weakContrast
+  ) {
+    softGap = TIMING_RUSH_ACTION_GAP;
+  }
+
+  if (!softGap) return result;
+
+  const out = {
+    ...result,
+    strengths: [...(result.strengths || [])],
+    gaps: [...(result.gaps || [])],
+    teacherSummary: result.teacherSummary ? { ...result.teacherSummary } : undefined,
+  };
+
+  if (out.gaps.some(g => /连拧|偏快出手|观察反馈/.test(g))) return result;
+  if (out.gaps.length >= 2) return result; // 主 gaps 已满，时间不抢位
+
+  out.gaps.push(softGap);
+  out.gaps = out.gaps.slice(0, 2).map(s => truncateText(s, 30));
+
+  if (out.teacherSummary) {
+    out.teacherSummary.gaps = out.gaps;
+  }
+  if (out.comment && !/连拧|偏快出手/.test(out.comment)) {
+    out.comment = `${out.comment}；待改进：${truncateText(softGap, 30)}`;
+  }
+  return out;
+}
+
 function applySingleVariablePolicy(result, summary) {
   if (!isMainSingleVariableExploration(summary) || isPassed(summary)) {
     return result;
@@ -321,17 +409,20 @@ function ruleJudge(summary, chapter) {
     suggestion: truncateText(gaps[0] || gapFromHint('ok', chapter), 40),
   };
   const comment = `[规则模式] ${teacherSummary.summary}${gaps.length ? '；待改进：' + teacherSummary.gaps.join('；') : ''}`;
-  return applyPassWeakComparisonPolicy(
-    applyCvHeavyPolicy(applySingleVariablePolicy({
-      mode: 'rule',
-      verdict,
-      strengths: teacherSummary.strengths,
-      gaps: teacherSummary.gaps,
-      dtAlignment: align.dtPath,
-      inquiryPath: inquiryPath || undefined,
-      teacherSummary,
-      comment,
-    }, summary), summary),
+  return applyTimingSoftGaps(
+    applyPassWeakComparisonPolicy(
+      applyCvHeavyPolicy(applySingleVariablePolicy({
+        mode: 'rule',
+        verdict,
+        strengths: teacherSummary.strengths,
+        gaps: teacherSummary.gaps,
+        dtAlignment: align.dtPath,
+        inquiryPath: inquiryPath || undefined,
+        teacherSummary,
+        comment,
+      }, summary), summary),
+      summary,
+    ),
     summary,
   );
 }
@@ -381,8 +472,11 @@ function buildLlmJudgeResult(text, summary) {
       comment: truncateText(text, 200),
     };
   }
-  return applyPassWeakComparisonPolicy(
-    applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary),
+  return applyTimingSoftGaps(
+    applyPassWeakComparisonPolicy(
+      applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary),
+      summary,
+    ),
     summary,
   );
 }
@@ -431,9 +525,13 @@ module.exports = {
   applySingleVariablePolicy,
   applyCvHeavyPolicy,
   applyPassWeakComparisonPolicy,
+  applyTimingSoftGaps,
   isPassWithWeakComparison,
+  hasAdequateContrastEvidence,
   isMainSingleVariableExploration,
   isCvHeavyInquiry,
   isPassed,
   PASS_WEAK_COMPARE_GAP,
+  TIMING_DENSE_TUNE_GAP,
+  TIMING_RUSH_ACTION_GAP,
 };

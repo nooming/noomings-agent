@@ -1,6 +1,7 @@
 /**
  * Publish gate: playability + dual-mode explore_success before catalog publish.
  * Soft by default (warnings); set PLATFORM_PUBLISH_STRICT=1 to block.
+ * Manual craft checklist: docs/advisor/generation-craft-checklist.md
  */
 const fs = require('fs');
 const path = require('path');

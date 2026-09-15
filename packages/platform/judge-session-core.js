@@ -5,6 +5,8 @@
 const { judge } = require('../judge/judge');
 const { buildJudgeRequest, normalizeTrace } = require('../judge/game-trace');
 const { computeAbilityScore } = require('../judge/ability-score');
+const { computeLiteracyProfileFromSession } = require('../judge/literacy-mapping');
+const { computeTimingFeatures } = require('../judge/trace-timing');
 const {
   deriveTerminalOutcome,
   isTerminalSession,
@@ -68,6 +70,8 @@ async function judgeAndSaveSession(sessionId, opts = {}) {
       sessionId: session.sessionId,
       terminalOutcome: session.terminalOutcome,
       abilityScore: session.abilityScore || undefined,
+      literacyProfile: session.literacyProfile || undefined,
+      timingFeatures: session.timingFeatures || undefined,
       judgeResult: session.judgeResult || undefined,
     };
   }
@@ -85,6 +89,8 @@ async function judgeAndSaveSession(sessionId, opts = {}) {
       sessionId: session.sessionId,
       terminalOutcome: session.terminalOutcome || undefined,
       abilityScore: session.abilityScore || undefined,
+      literacyProfile: session.literacyProfile || undefined,
+      timingFeatures: session.timingFeatures || undefined,
       judgeResult: session.judgeResult || undefined,
     };
   }
@@ -135,11 +141,32 @@ async function judgeAndSaveSession(sessionId, opts = {}) {
     });
   } catch (_) { /* teacher lazy path remains as fallback */ }
 
+  let timingFeatures = null;
+  try {
+    const startedMs = session.startedAt ? Date.parse(session.startedAt) : NaN;
+    timingFeatures = computeTimingFeatures(
+      Array.isArray(session.events) ? session.events : [],
+      { sessionStartTs: Number.isFinite(startedMs) ? startedMs : null },
+    );
+  } catch (_) { /* optional */ }
+
+  let literacyProfile = null;
+  try {
+    literacyProfile = computeLiteracyProfileFromSession(session, {
+      abilityScore: abilityScore || session.abilityScore || null,
+      judgeResult: judgedPayload,
+      terminalOutcome,
+      timingFeatures: timingFeatures || session.timingFeatures || null,
+    });
+  } catch (_) { /* teacher UI can recompute */ }
+
   saveJudgeResult(
     session.sessionId,
     judgedPayload,
     {
       ...(abilityScore ? { abilityScore } : {}),
+      ...(literacyProfile ? { literacyProfile } : {}),
+      ...(timingFeatures ? { timingFeatures } : {}),
       terminalOutcome,
     },
   );
@@ -153,6 +180,8 @@ async function judgeAndSaveSession(sessionId, opts = {}) {
     judgedAt: judgedPayload.judgedAt,
     terminalOutcome,
     abilityScore: abilityScore || undefined,
+    literacyProfile: literacyProfile || undefined,
+    timingFeatures: timingFeatures || undefined,
   };
 }
 

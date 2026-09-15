@@ -16,7 +16,9 @@
 
 - [样本规格 sample-spec](./sample-spec.md)：轨迹、双模式、埋点与探究脚本字段
 - [精品验收表 sample-craft-rubric](./sample-craft-rubric.md)：主题视觉、intro/win、目标仪表、可验证 CV 等
+- [生成物抽检清单（绑 Craft）](./generation-craft-checklist.md)：物理/AV·CV/双模/win·explore_success/轨迹 id；与 gold/pilot/draft 关系
 - [过程性评价 · 教师半页说明](./process-assessment-teacher-note.md)：路径摘要 / 变量表 / strengths·gaps 怎么读；附录可选映射到观点·证据·论证（UI 不用 CER 品牌）
+- [过程检测对照表](./process-detectors.md)：strengths/gaps/Pe/需关注旗标 ↔ 可控实验子技能 ID；大学 AV/CV vs 中学 CVS
 
 ## 与代码的对应
 

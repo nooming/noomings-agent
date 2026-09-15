@@ -43,8 +43,8 @@
       </div>
 
       <h3>学生学情</h3>
-      <p class="hint teacher-simple-only">左侧选学生，右侧看本局过程与能力分；需要时可点「过程评判」。</p>
-      <p class="hint teacher-adv">学生游玩时自动上报操作。左侧选学生，右侧查看会话详情并做过程评判。</p>
+      <p class="hint teacher-simple-only">左侧选学生；右侧「画像」看近阶段解读，「本局」选局看过程与评判。</p>
+      <p class="hint teacher-adv">学生游玩时自动上报操作。右栏页签：「画像」为四维近阶段主块 + 可折叠六维过程指标；「本局」为时间轴选局 + 本局能力/过程依据与过程评判。</p>
 
       <div class="sessions-stats" id="sessionsStats">
         <div class="stat-card"><span class="stat-value" id="statStudents">—</span><span class="stat-label">学生</span></div>
@@ -96,21 +96,41 @@
             <li class="empty-state" style="padding:24px">加载中…</li>
           </ul>
         </div>
-        <div class="session-detail-panel" id="sessionDetail">
-          <div class="session-detail-empty">请从左侧选择学生</div>
+        <div class="session-right-column" id="sessionRightColumn">
+          <div class="session-view-tabs" role="tablist" aria-label="学情视图">
+            <button type="button" class="session-view-tab is-active" data-view="portrait" role="tab" aria-selected="true" aria-controls="sessionPortraitPanel" id="tabSessionPortrait">画像</button>
+            <button type="button" class="session-view-tab" data-view="session" role="tab" aria-selected="false" aria-controls="sessionRoundPanel" id="tabSessionRound">本局</button>
+          </div>
+
+          <div class="session-view-panel" id="sessionPortraitPanel" role="tabpanel" aria-labelledby="tabSessionPortrait">
+            <section class="session-right-block cross-game-panel" id="crossGamePanel" hidden>
+              <div id="crossGameHead" class="cross-game-head"></div>
+              <h4>学情画像</h4>
+              <p class="hint teacher-simple-only">近阶段四维解读；六维过程默认折叠。</p>
+              <p class="hint teacher-adv">四维近阶段聚合（众数优先、并列取更弱）；六维过程默认折叠，轨迹结构读数。换「本局」选局时本块相对稳定。</p>
+              <div id="crossGameSummary"></div>
+            </section>
+            <div class="session-detail-empty" id="sessionPortraitEmpty">请从左侧选择学生</div>
+          </div>
+
+          <div class="session-view-panel" id="sessionRoundPanel" role="tabpanel" aria-labelledby="tabSessionRound" hidden>
+            <section class="session-right-block session-detail-panel session-pick-panel" id="sessionDetail">
+              <div class="session-detail-empty">请从左侧选择学生</div>
+            </section>
+            <section class="session-right-block session-ability-panel" id="sessionAbilityPanel" hidden>
+              <h4>本局能力</h4>
+              <p class="hint teacher-simple-only">本局能力分与过程依据；换局刷新。</p>
+              <p class="hint teacher-adv">本局能力分与过程依据（任务 / 阶段 / 路径）。学生级四维见「画像」；此处可折叠本局快照。未终局不计综合分与前五维。</p>
+              <div id="sessionAbilitySummary"></div>
+            </section>
+            <section class="session-right-block session-judge-panel" id="sessionJudgePanel" hidden>
+              <h4>过程评判</h4>
+              <p class="hint teacher-simple-only">规则或 LLM：亮点 / 待改进 / 建议。</p>
+              <p class="hint teacher-adv">本局过程诊断（亮点 / 待改进 / 建议）；换局刷新。</p>
+              <div id="sessionJudgeSummary"></div>
+            </section>
+          </div>
         </div>
-      </div>
-      <div class="edu-panel session-ability-panel" id="sessionAbilityPanel" hidden>
-        <h4>本局能力</h4>
-        <p class="hint teacher-simple-only">当前这一局的能力分；换局会跟着刷新。</p>
-        <p class="hint teacher-adv">当前选中游玩会话的四维能力分与过程依据（任务 / 阶段 / 路径）；随左侧时间轴换局刷新。未终局局不计入下方学情画像综合分与前五维。</p>
-        <div id="sessionAbilitySummary"></div>
-      </div>
-      <div class="edu-panel cross-game-panel" id="crossGamePanel" hidden>
-        <h4>学情画像</h4>
-        <p class="hint teacher-simple-only">六维雷达：探究 / 竞赛结果与过程、效率、完成度。探究达成 ≠ 竞赛通关。</p>
-        <p class="hint teacher-adv">六维雷达（探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度）· v4：探究达成 ≠ 竞赛通关。综合分取各任务最近 1–2 局有限总分；探究/竞赛等维按维取最近有该维记录的终局（避免最近未探究导致空白）；完成度 = 终局/(终局+未终局)。一致性为门槛旁注（终局≥3且任务≥2），不占主六维。与左侧列表同源。</p>
-        <div id="crossGameSummary"></div>
       </div>
     </div>
   </section>
@@ -339,7 +359,7 @@
         <a id="openSaved" class="agent-link" href="#" target="_blank" rel="noopener" style="display:none">打开独立预览</a>
       </div>
 
-      <p id="previewHint" class="agent-hint" style="display:none">生成后可「打开独立预览」；离线包请用「更多 → 导出」。下一步可点「生成游戏 HTML」以便发布。</p>
+      <p id="previewHint" class="agent-hint" style="display:none">生成后可「打开独立预览」；离线包请用「更多 → 导出」。下一步可点「生成游戏 HTML」以便发布。抽检：docs/advisor/generation-craft-checklist.md（物理/AV·CV/双模/win·explore_success；Craft gold/pilot/draft）。</p>
       <div id="status" class="agent-status"></div>
       <div id="report" class="agent-report" style="display:none"></div>
     </div>
@@ -350,6 +370,8 @@
 <script src="/static/ui/catalog-badges.js"></script>
 <script src="/static/ui/graph-preview-url.js"></script>
 <script src="/static/ui/session-terminal.js"></script>
+<script src="/static/ui/literacy-mapping.js"></script>
+<script src="/static/ui/attention-flags.js"></script>
 <script>
 if (!PlatformNav.requireTeacherSession()) { throw new Error('redirect_teacher_login'); }
 PlatformNav.installTeacherFetchAuth();
@@ -587,6 +609,8 @@ let studentItems = [];
 let selectedStudentKey = null;
 let selectedSessionId = null;
 let selectedSessionIds = new Set();
+/** Right-column view tab: 'portrait' | 'session'. Keep across student switches. */
+let sessionViewTab = 'portrait';
 /** Per-student: whether non-terminal timeline rows are expanded. */
 const nonTerminalTimelineExpanded = new Map();
 /** Per-student: whether older-terminal fold is expanded. */
@@ -2249,10 +2273,11 @@ function incompleteTooMany(stats) {
 }
 
 /**
- * 六维雷达（主槽）：探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度。
+ * 六维过程指标（学生级次要槽，UI 默认折叠）：探究结果 / 竞赛结果 / 探究过程 / 竞赛过程 / 效率 / 完成度。
  * 综合分：各任务最近 1–2 局有限总分均值。
  * 探究/竞赛/效率：按维在终局有限总分候选中取非 null 最近 1–2 局再跨任务均分（0 计入）。
  * 完成度含未终局；一致性门槛旁注，不进主六维槽。
+ * 注意：轨迹结构读数，不等于素养测评；主叙事为四维学习表现解读。
  */
 function computeStudentRadarDims(student) {
   const agg = aggregateStudentAbilityByTask(student);
@@ -2480,6 +2505,7 @@ function studentAggBadgesHtml(student) {
     abilityScoreBadgeHtml(abilityTotal, { pending, title: '综合分（按任务均分·仅终局）' }),
     `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="竞赛结果档（达标/未完成/未达标）">${esc(res)}</span>`,
     incompleteBadgeHtml(student),
+    attentionFlagsBadgesHtml(computeStudentAttentionFlags(student)),
   ].filter(Boolean).join('');
 }
 
@@ -2493,12 +2519,20 @@ function studentAggMetaHtml(student) {
   const res = normalizeResultBandLabel(resultBand) || '未完成';
   const scoreTxt = abilityTotal != null ? String(abilityTotal) : '—';
   const taskN = agg?.taskScores?.length || 0;
-  const taskHint = taskN ? ` · ${taskN} 个任务` : '';
   const stats = countSessionTerminalStats(student);
-  const termHint = stats.totalN ? ` · 终局 ${stats.terminalN}/${stats.totalN}` : '';
   const completion = computeCompletionScore(student);
-  const compHint = completion != null ? ` · 完成度 ${completion}` : '';
-  return `<p class="hint student-agg-meta">学生汇总（${esc(scope)}·按任务均分${esc(taskHint)}${esc(termHint)}${esc(compHint)}；综合分仅终局）：综合分 ${esc(scoreTxt)} · 过程·${esc(proc)} · 竞赛结果·${esc(res)}</p>`;
+  const titleBits = [
+    `${scope}·按任务均分`,
+    taskN ? `${taskN} 个任务` : '',
+    stats.totalN ? `终局 ${stats.terminalN}/${stats.totalN}` : '',
+    completion != null ? `完成度 ${completion}` : '',
+    '综合分仅终局',
+    `过程·${proc}`,
+    `竞赛结果·${res}`,
+  ].filter(Boolean);
+  // 首屏短行；细则进 title，避免与左栏徽章重复占位
+  const short = `综合分 ${scoreTxt} · 过程${proc} · 竞赛${res}`;
+  return `<p class="hint student-agg-meta" title="${esc(titleBits.join(' · '))}">${esc(short)}</p>`;
 }
 
 function renderStudentList() {
@@ -2536,6 +2570,7 @@ function renderStudentList() {
         lastDetailRenderedStudentKey = null;
         document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">该学生暂无会话</div>';
         loadSessionAbilitySummary({ student });
+        loadSessionJudgeSummary({ student });
       }
       loadCrossGameSummary(student);
       const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
@@ -2563,6 +2598,7 @@ async function loadStudents(options = {}) {
     renderStudentList();
     document.getElementById('sessionDetail').innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
     loadSessionAbilitySummary(null);
+    loadSessionJudgeSummary(null);
     loadCrossGameSummary(null);
     return;
   }
@@ -2577,6 +2613,7 @@ async function loadStudents(options = {}) {
   } else if (!selectedSessionId) {
     const student = currentStudent();
     loadSessionAbilitySummary({ student });
+    loadSessionJudgeSummary({ student });
     loadCrossGameSummary(student);
   }
   const studentSessionIds = new Set(visibleSessionIdsForStudent(currentStudent()));
@@ -2631,9 +2668,13 @@ function renderAbilityRadarSvg(dims) {
     const missing = !Number.isFinite(Number(axes[i].value));
     return `<circle class="radar-dot${missing ? ' is-missing' : ''}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" />`;
   }).join('');
-  return `<svg class="student-radar-svg" viewBox="0 0 240 240" role="img" aria-label="六维学情雷达">${rings}${spokes}<polygon class="radar-area" points="${poly}" />${dots}${labelEls}</svg>`;
+  return `<svg class="student-radar-svg" viewBox="0 0 240 240" role="img" aria-label="六维过程指标">${rings}${spokes}<polygon class="radar-area" points="${poly}" />${dots}${labelEls}</svg>`;
 }
 
+/**
+ * 六维过程指标：放在四维下方，默认折叠；轨迹结构读数，不等于素养测评。
+ * 计算逻辑不变；文案避免「能力雷达」。
+ */
 function renderStudentRadarHtml(radar) {
   const d = radar?.dims || {};
   const compositeTxt = radarDimDisplay(radar?.composite);
@@ -2649,8 +2690,8 @@ function renderStudentRadarHtml(radar) {
     + `<span class="radar-legend-value">${esc(radarDimDisplay(v))}</span></li>`
   )).join('');
   const hints = [];
-  if (!radar?.repCount) hints.push('当前筛选下尚无终局有限能力分，过程/结果维仅作占位。');
-  hints.push('探究等维取最近有该维记录的局，避免最近未探究导致空白。');
+  if (!radar?.repCount) hints.push('当前筛选下尚无终局有限过程分，过程/结果维仅作占位。');
+  hints.push('各维取最近有该维记录的局，避免最近未探究导致空白。');
   if (radar?.consistencyEligible && Number.isFinite(d.consistency)) {
     hints.push(`一致性（门槛旁注，不占主六维）：${radarDimDisplay(d.consistency)}。`);
   } else {
@@ -2665,35 +2706,221 @@ function renderStudentRadarHtml(radar) {
   const hintHtml = hints.length
     ? `<p class="hint radar-hint">${hints.map(h => esc(h)).join(' ')}</p>`
     : '';
+  const summaryBits = [`综合分 ${compositeTxt}`];
   return `
-    <div class="student-radar">
-      <div class="student-radar-main">
-        <div class="student-radar-score" title="综合分（按任务均分·仅终局）">
-          <span class="student-radar-score-label">综合分</span>
-          <span class="student-radar-score-value">${esc(compositeTxt)}</span>
+    <details class="student-radar-fold">
+      <summary class="student-radar-fold-summary">
+        <span class="student-radar-fold-title">六维过程指标</span>
+        <span class="student-radar-fold-meta">${esc(summaryBits.join(' · '))}</span>
+      </summary>
+      <p class="hint radar-section-hint">轨迹结构读数，供核对；不等于素养测评。与综合分同源代表局（探究/竞赛结果与过程、效率、完成度）。</p>
+      <div class="student-radar">
+        <div class="student-radar-main">
+          <div class="student-radar-score" title="综合分（按任务均分·仅终局；过程指标）">
+            <span class="student-radar-score-label">综合分</span>
+            <span class="student-radar-score-value">${esc(compositeTxt)}</span>
+          </div>
+          ${renderAbilityRadarSvg(d)}
         </div>
-        ${renderAbilityRadarSvg(d)}
+        <ul class="student-radar-legend">${legend}</ul>
       </div>
-      <ul class="student-radar-legend">${legend}</ul>
-    </div>
-    ${hintHtml}`;
+      ${hintHtml}
+    </details>`;
+}
+
+/**
+ * 学生级四维：与综合分同源代表局（各任务最近 1–2 局终局有限总分），
+ * 无代表局时回退最近终局（最多 4）；再经 cautious_mode 聚合。
+ */
+function collectStudentLiteracySourceSessions(student) {
+  const agg = aggregateStudentAbilityByTask(student);
+  const reps = Array.isArray(agg.representativeSessions) ? agg.representativeSessions : [];
+  if (reps.length) {
+    const seen = new Set();
+    const uniq = [];
+    for (const s of sortSessionsNewestFirst(reps)) {
+      const id = s?.sessionId || s;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      uniq.push(s);
+    }
+    return uniq;
+  }
+  return sortSessionsNewestFirst(terminalSessionsOf(student)).slice(0, 4);
+}
+
+function computeStudentLiteracyProfile(student) {
+  const api = typeof LiteracyMapping !== 'undefined' ? LiteracyMapping : null;
+  const aggregate = api?.aggregateLiteracyProfiles;
+  const sources = collectStudentLiteracySourceSessions(student);
+  if (!sources.length) {
+    if (typeof aggregate === 'function') {
+      try { return aggregate([]); } catch (_) { /* fall through */ }
+    }
+    return {
+      scope: 'student',
+      disclaimer: '基于近阶段过程证据的表现倾向，非标准化测评。',
+      dimensions: [],
+      aggregation: { strategy: 'cautious_mode', sessionCount: 0 },
+    };
+  }
+  const profiles = sources.map((s) => resolveSessionLiteracyProfile(s) || s.literacyProfile).filter(Boolean);
+  if (typeof aggregate === 'function') {
+    try {
+      return aggregate(profiles.length ? profiles : sources);
+    } catch (_) { /* fall through */ }
+  }
+  return profiles[0] || null;
+}
+
+/** 需关注旗标：与画像同源代表局；编排告警非能力鉴定。 */
+function computeStudentAttentionFlags(student) {
+  const api = typeof AttentionFlags !== 'undefined' ? AttentionFlags : null;
+  if (!api || typeof api.detectStudentAttentionFlags !== 'function') {
+    return { flags: [], flagIds: [], disclaimer: '' };
+  }
+  const sources = collectStudentLiteracySourceSessions(student);
+  try {
+    return api.detectStudentAttentionFlags(sources);
+  } catch (_) {
+    return { flags: [], flagIds: [], disclaimer: api.DISCLAIMER || '' };
+  }
+}
+
+function attentionFlagsBadgesHtml(result) {
+  const flags = result?.flags || [];
+  if (!flags.length) return '';
+  return flags.map((f) => {
+    const title = `${f.title || f.label || ''}（${result?.disclaimer || '基于近阶段过程证据，非能力鉴定'}）`;
+    return `<span class="badge badge-attention badge-attention-${esc(f.id)}" title="${esc(title)}">${esc(f.shortLabel || f.label)}</span>`;
+  }).join('');
+}
+
+function buildAttentionFlagsSummaryHtml(result) {
+  const api = typeof AttentionFlags !== 'undefined' ? AttentionFlags : null;
+  const text = (api && typeof api.formatAttentionFlagsSummary === 'function')
+    ? api.formatAttentionFlagsSummary(result)
+    : '';
+  if (!text) return '';
+  const tip = result?.disclaimer || '基于近阶段/代表局过程证据的编排告警，非能力鉴定。';
+  return `<p class="hint attention-flags-summary" title="${esc(tip)}">${esc(text)}</p>`;
+}
+
+function literacyEvidenceAuditHtml(d) {
+  const detail = d?.evidenceDetail || d?.evidence || '';
+  const kinds = Array.isArray(d?.evidenceKinds) ? d.evidenceKinds : [];
+  const kindsLabel = d?.evidenceKindsLabel
+    || kinds.map((k) => {
+      const map = (typeof LiteracyMapping !== 'undefined' && LiteracyMapping.EVIDENCE_KIND_LABELS) || {};
+      return map[k] || k;
+    }).join(' · ');
+  const insufficient = d?.evidenceInsufficient === true || d?.level === 'insufficient';
+  const chips = kindsLabel
+    ? `<span class="literacy-evidence-kinds">${esc(kindsLabel)}</span>`
+    : (insufficient ? '<span class="literacy-evidence-kinds">证据不足</span>' : '');
+  if (!detail && !chips) return '';
+  return `<details class="literacy-evidence-audit">`
+    + `<summary class="literacy-evidence-audit-summary" title="${esc(detail)}">依据${chips ? ` · ${chips}` : ''}</summary>`
+    + `<p class="literacy-evidence-detail">${esc(detail || (insufficient ? '证据不足。' : ''))}</p>`
+    + `</details>`;
+}
+
+function buildStudentLiteracyBlock(profile, attentionResult) {
+  const title = '学习表现解读（近阶段）';
+  const fullDisclaimer = profile?.disclaimer
+    || '基于近阶段过程证据的表现倾向，非标准化测评。';
+  const attentionHtml = buildAttentionFlagsSummaryHtml(attentionResult);
+  if (!profile || !Array.isArray(profile.dimensions) || !profile.dimensions.length) {
+    return `<div class="literacy-profile-block literacy-profile-student">`
+      + `<h4 class="session-section-label">${title}</h4>`
+      + `<p class="hint literacy-disclaimer" title="${esc(fullDisclaimer)}">非标准化测评。</p>`
+      + attentionHtml
+      + '<p class="hint">暂无足够近阶段过程证据；待有终局会话后生成。</p></div>';
+  }
+  const rows = profile.dimensions.map((d) => {
+    const level = d.levelLabel || d.level || '证据不足';
+    const evidence = d.evidence || '';
+    return `<li class="literacy-dim-row">`
+      + `<div class="literacy-dim-head">`
+      + `<span class="literacy-dim-label">${esc(d.label || d.id)}</span>`
+      + `<span class="literacy-level ${literacyLevelClass(d.level)}">${esc(level)}</span>`
+      + `</div>`
+      + `<p class="literacy-evidence" title="${esc(d.evidenceDetail || evidence)}">${esc(evidence)}</p>`
+      + literacyEvidenceAuditHtml(d)
+      + `</li>`;
+  }).join('');
+  const n = Number(profile.aggregation?.sessionCount) || 0;
+  const strat = profile.aggregation?.strategyLabel
+    || '众数优先；并列取更弱档（谨慎）';
+  const noteBits = [fullDisclaimer];
+  if (n > 0) noteBits.push(`聚合 ${n} 局 · ${strat}`);
+  const noteTitle = noteBits.join(' ');
+  const noteFold = `<details class="literacy-note-fold">`
+    + `<summary class="literacy-note-fold-summary" title="${esc(noteTitle)}">说明</summary>`
+    + `<p class="hint literacy-note-fold-body">${esc(noteBits.join(' · '))}</p>`
+    + `</details>`;
+  return `<div class="literacy-profile-block literacy-profile-student">
+    <h4 class="session-section-label">${title}</h4>
+    <p class="hint literacy-disclaimer" title="${esc(noteTitle)}">非标准化测评。</p>
+    ${attentionHtml}
+    ${noteFold}
+    <ul class="literacy-dim-list">${rows}</ul>
+  </div>`;
+}
+
+/** Sync right-column「画像 / 本局」tab panels. Keeps selection across student switches. */
+function setSessionViewTab(view) {
+  sessionViewTab = view === 'session' ? 'session' : 'portrait';
+  document.querySelectorAll('.session-view-tab').forEach((tab) => {
+    const active = tab.dataset.view === sessionViewTab;
+    tab.classList.toggle('is-active', active);
+    tab.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  const portraitPanel = document.getElementById('sessionPortraitPanel');
+  const roundPanel = document.getElementById('sessionRoundPanel');
+  if (portraitPanel) portraitPanel.hidden = sessionViewTab !== 'portrait';
+  if (roundPanel) roundPanel.hidden = sessionViewTab !== 'session';
 }
 
 function loadCrossGameSummary(student) {
   const panel = document.getElementById('crossGamePanel');
   const box = document.getElementById('crossGameSummary');
+  const head = document.getElementById('crossGameHead');
+  const empty = document.getElementById('sessionPortraitEmpty');
   if (!panel || !box || !student) {
     if (panel) panel.hidden = true;
+    if (head) head.innerHTML = '';
+    if (box) box.innerHTML = '';
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent = '请从左侧选择学生';
+    }
     return;
   }
   const sessions = student.sessions || [];
   if (!sessions.length) {
     panel.hidden = true;
+    if (head) head.innerHTML = '';
+    box.innerHTML = '';
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent = '该学生暂无会话';
+    }
     return;
   }
   panel.hidden = false;
+  if (empty) empty.hidden = true;
+  // 画像区顶部：姓名 + 综合分汇总（不插在四维与六维之间）
+  if (head) {
+    const name = displayStudentName(student.studentKey, student.studentLabel, student.studentId);
+    head.innerHTML = `
+      <h3 class="session-detail-title">${esc(name)}</h3>
+      ${studentAggMetaHtml(student)}`;
+  }
+  const studentLiteracy = computeStudentLiteracyProfile(student);
+  const attentionFlags = computeStudentAttentionFlags(student);
   const radar = computeStudentRadarDims(student);
-  box.innerHTML = renderStudentRadarHtml(radar);
+  box.innerHTML = buildStudentLiteracyBlock(studentLiteracy, attentionFlags) + renderStudentRadarHtml(radar);
 }
 
 /** 无 phase_change 时不硬凑探究/竞赛双行；有分段时缺段在 path meta 注明「无操作」。 */
@@ -2741,7 +2968,150 @@ function buildAbilityProcessEvidenceBlock({
   </div>`;
 }
 
-/** 本局能力独立卡：四维条 + 过程依据；随选中会话刷新；未选学生隐藏；有学生无会话显示空态。 */
+function literacyLevelClass(level) {
+  if (level === 'strong') return 'literacy-level-strong';
+  if (level === 'moderate') return 'literacy-level-moderate';
+  if (level === 'weak') return 'literacy-level-weak';
+  return 'literacy-level-insufficient';
+}
+
+/** Prefer server literacyProfile; else compute instantly from ability/judge/path. */
+function resolveSessionLiteracyProfile(session, opts = {}) {
+  const api = typeof LiteracyMapping !== 'undefined' ? LiteracyMapping : null;
+  const compute = api?.computeLiteracyProfileFromSession || api?.computeLiteracyProfile;
+  if (typeof compute === 'function') {
+    try {
+      return compute(session, {
+        abilityScore: opts.ability || session?.abilityScore || null,
+        pathByPhase: opts.pathByPhase || null,
+        sawPhaseChange: opts.sawPhaseChange,
+        currentPhase: opts.currentPhase || session?.currentPhase || null,
+        timingFeatures: opts.timingFeatures || session?.timingFeatures || null,
+      });
+    } catch (_) { /* fall through */ }
+  }
+  return session?.literacyProfile || null;
+}
+
+function buildLiteracyProfileBlock(profile) {
+  if (!profile || !Array.isArray(profile.dimensions) || !profile.dimensions.length) {
+    return '<div class="literacy-profile-block"><h4 class="session-section-label">学习表现解读</h4>'
+      + '<p class="hint">暂无足够过程证据生成解读；打开详情或完成规则评判后可补充。</p></div>';
+  }
+  const rows = profile.dimensions.map((d) => {
+    const level = d.levelLabel || d.level || '证据不足';
+    const tip = d.id === 'reasoning' && d.level === 'insufficient'
+      ? '可点下方「规则评判」补充科学推理依据。'
+      : '';
+    const evidence = d.evidence || '';
+    return `<li class="literacy-dim-row">`
+      + `<div class="literacy-dim-head">`
+      + `<span class="literacy-dim-label">${esc(d.label || d.id)}</span>`
+      + `<span class="literacy-level ${literacyLevelClass(d.level)}">${esc(level)}</span>`
+      + `</div>`
+      + `<p class="literacy-evidence" title="${esc(d.evidenceDetail || evidence)}">${esc(evidence)}${tip ? ` <span class="literacy-tip">${esc(tip)}</span>` : ''}</p>`
+      + literacyEvidenceAuditHtml(d)
+      + `</li>`;
+  }).join('');
+  const disclaimer = profile.disclaimer
+    || '基于本局/近阶段过程证据的表现倾向，非标准化测评。';
+  return `<div class="literacy-profile-block">
+    <h4 class="session-section-label">学习表现解读</h4>
+    <p class="hint literacy-disclaimer" title="${esc(disclaimer)}">非标准化测评。</p>
+    <ul class="literacy-dim-list">${rows}</ul>
+  </div>`;
+}
+
+/**
+ * 本局四维降级：可折叠「本局表现」；主解读在上方学生级。
+ */
+function buildSessionLiteracyBrief(profile) {
+  if (!profile || !Array.isArray(profile.dimensions) || !profile.dimensions.length) {
+    return `<details class="literacy-session-brief">
+      <summary class="literacy-session-brief-summary">本局表现 · 暂无足够证据</summary>
+      <p class="hint">详见「画像」页签；本局尚无足够过程证据。</p>
+    </details>`;
+  }
+  const chips = profile.dimensions.map((d) => {
+    const level = d.levelLabel || d.level || '证据不足';
+    return `<span class="literacy-brief-chip"><span class="literacy-dim-label">${esc(d.label || d.id)}</span>`
+      + `<span class="literacy-level ${literacyLevelClass(d.level)}">${esc(level)}</span></span>`;
+  }).join('');
+  const firstEv = profile.dimensions.map((d) => d.evidence).find(Boolean) || '';
+  const tip = firstEv
+    ? `详见「画像」页签；本局依据：${firstEv}`
+    : '详见「画像」页签。';
+  const rows = profile.dimensions.map((d) => {
+    const level = d.levelLabel || d.level || '证据不足';
+    const hint = d.id === 'reasoning' && d.level === 'insufficient'
+      ? '可点下方「规则评判」补充科学推理依据。'
+      : '';
+    return `<li class="literacy-dim-row">`
+      + `<div class="literacy-dim-head">`
+      + `<span class="literacy-dim-label">${esc(d.label || d.id)}</span>`
+      + `<span class="literacy-level ${literacyLevelClass(d.level)}">${esc(level)}</span>`
+      + `</div>`
+      + `<p class="literacy-evidence" title="${esc(d.evidenceDetail || d.evidence || '')}">${esc(d.evidence || '')}${hint ? ` <span class="literacy-tip">${esc(hint)}</span>` : ''}</p>`
+      + literacyEvidenceAuditHtml(d)
+      + `</li>`;
+  }).join('');
+  return `<details class="literacy-session-brief">
+    <summary class="literacy-session-brief-summary">本局表现 · ${chips}</summary>
+    <p class="hint literacy-session-brief-tip">${esc(tip)}</p>
+    <ul class="literacy-dim-list literacy-session-brief-list">${rows}</ul>
+  </details>`;
+}
+
+/** 毫秒 → 短可读（秒/分） */
+function formatTimingMs(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n < 0) return '—';
+  if (n < 1000) return `${Math.round(n)}ms`;
+  const s = n / 1000;
+  if (s < 60) return `${s < 10 ? s.toFixed(1) : Math.round(s)}s`;
+  const m = Math.floor(s / 60);
+  const rem = Math.round(s % 60);
+  return rem ? `${m}分${rem}秒` : `${m}分`;
+}
+
+/**
+ * 本局时间特征一行摘要（可折叠细节）；挂在学习表现解读附近。
+ * 数据来自事件 ts 衍生；超长 gap 已封顶/剔除。
+ */
+function buildTimingFeaturesBlock(tf) {
+  if (!tf || typeof tf !== 'object') return '';
+  const start = tf.startupDelayMs;
+  const explore = tf.phaseDurationMs?.explore;
+  const challenge = tf.phaseDurationMs?.challenge;
+  const gap = tf.tuneActionGapMs;
+  const bits = [];
+  if (start != null && Number.isFinite(Number(start))) {
+    bits.push(`启动 ${formatTimingMs(start)}`);
+  }
+  if (explore != null || challenge != null) {
+    bits.push(`探究 ${formatTimingMs(explore || 0)} · 竞赛 ${formatTimingMs(challenge || 0)}`);
+  }
+  if (gap && gap.median != null && Number.isFinite(Number(gap.median))) {
+    bits.push(`调参↔动作中位 ${formatTimingMs(gap.median)}（n=${Number(gap.n) || 0}）`);
+  }
+  if (!bits.length) return '';
+  const tuneTune = tf.tuneTuneGapMs;
+  const detailBits = [];
+  if (tuneTune && tuneTune.median != null) {
+    detailBits.push(`连续调参中位 ${formatTimingMs(tuneTune.median)}（n=${Number(tuneTune.n) || 0}）`);
+  }
+  if (gap && Number(gap.capped) > 0) {
+    detailBits.push(`剔除超长间隔 ${gap.capped} 条`);
+  }
+  if (tf.gapCapMs) detailBits.push(`Δt 上限 ${formatTimingMs(tf.gapCapMs)}`);
+  detailBits.push('滑条多在松手记点，细间隔偏粗');
+  return `<details class="timing-features-block">
+    <summary class="timing-features-summary">时间特征 · ${esc(bits.join(' · '))}</summary>
+    <p class="hint timing-features-detail">${esc(detailBits.join('；'))}</p>
+  </details>`;
+}
+
+/** 本局能力独立卡：能力条 + 可折叠本局表现 + 过程依据；随选中会话刷新。 */
 function loadSessionAbilitySummary(opts) {
   const panel = document.getElementById('sessionAbilityPanel');
   const box = document.getElementById('sessionAbilitySummary');
@@ -2777,6 +3147,17 @@ function loadSessionAbilitySummary(opts) {
   const incompleteBanner = terminal
     ? ''
     : '<div class="session-ability-incomplete-banner" role="status">未终局 · 不计入综合分</div>';
+  const literacy = resolveSessionLiteracyProfile(session, {
+    ability,
+    pathByPhase,
+    sawPhaseChange: !!sawPhaseChange,
+    currentPhase: opts?.currentPhase || null,
+    timingFeatures: opts?.timingFeatures || session.timingFeatures || null,
+  });
+  const timing = opts?.timingFeatures
+    || session.timingFeatures
+    || literacy?.timingFeatures
+    || null;
   box.innerHTML = `
     ${incompleteBanner}
     ${buildAbilityScoreBlock(ability)}
@@ -2791,6 +3172,44 @@ function loadSessionAbilitySummary(opts) {
       hideTask: !!graphFilter,
       compact: !terminal,
     })}
+    ${buildSessionLiteracyBrief(literacy)}
+    ${buildTimingFeaturesBlock(timing)}
+  `;
+}
+
+/** 本局过程评判：放在本局能力之后。 */
+function loadSessionJudgeSummary(opts) {
+  const panel = document.getElementById('sessionJudgePanel');
+  const box = document.getElementById('sessionJudgeSummary');
+  if (!panel || !box) return;
+  const student = opts?.student || null;
+  const session = opts?.session || null;
+  if (!student) {
+    panel.hidden = true;
+    box.innerHTML = '';
+    return;
+  }
+  panel.hidden = false;
+  if (!session) {
+    box.innerHTML = '<p class="hint session-ability-empty">请选择一条游玩会话以进行过程评判</p>';
+    return;
+  }
+  const jr = opts?.judgeResult != null ? opts.judgeResult : session.judgeResult;
+  const summary = opts?.summary || {};
+  const judgeBlock = buildJudgeAreaHtml(jr, session, summary);
+  const modeBadge = opts?.modeBadge
+    || (jr?.mode === 'llm'
+      ? '<span class="hint">上次：LLM</span>'
+      : (jr ? '<span class="hint">上次：规则</span>' : '<span class="hint">默认规则评判（无需 API Key）</span>'));
+  const tuningBlock = opts?.tuningBlock || '';
+  box.innerHTML = `
+    <div class="session-actions">
+      <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新规则评判' : '规则评判'}</button>
+      <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="judgeLlmBtn">LLM 评判</button>
+      ${modeBadge}
+    </div>
+    <div id="judgeResult">${judgeBlock}</div>
+    ${tuningBlock ? `<details class="session-detail-section session-detail-tuning"><summary class="session-section-label">调参明细</summary>${tuningBlock}</details>` : ''}
   `;
 }
 
@@ -3098,6 +3517,7 @@ function applyPathRefreshResultToListSession(sess, r, { allowAbilityUpdate = fal
       sess.abilityScore = next;
     }
   }
+  if (r.literacyProfile) sess.literacyProfile = r.literacyProfile;
   return { applied: true, abilityUpdated };
 }
 
@@ -3419,16 +3839,22 @@ async function refreshTeacherPathSummary(session, reqId, opts = {}) {
     const exploreSum = normalizePathSummaryPayload(exploreData);
     const challengeSum = normalizePathSummaryPayload(challengeData);
     const abilityScore = challengeData?.abilityScore || exploreData?.abilityScore || null;
+    const literacyProfile = challengeData?.literacyProfile || exploreData?.literacyProfile || null;
+    const timingFeatures = challengeData?.timingFeatures || exploreData?.timingFeatures || null;
     // 冻结或非活跃会话：不把 API 返回的 abilityScore 写回 session
     if (allowAbilityUpdate && !frozen && abilityScore) {
       session.abilityScore = mergeAbilityScorePreferFinite(session.abilityScore, abilityScore);
     }
+    if (literacyProfile) session.literacyProfile = literacyProfile;
+    if (timingFeatures) session.timingFeatures = timingFeatures;
     if (!exploreSum && !challengeSum) {
       return {
         pathSummary: cachedByPhase.primary,
         pathByPhase: cachedByPhase,
         scoredPhase: cachedByPhase.primary?.scoredPhase || null,
         abilityScore: session.abilityScore || null,
+        literacyProfile: session.literacyProfile || null,
+        timingFeatures: session.timingFeatures || null,
         refreshed: false,
         abilityUpdated: false,
         error: challengeData?.error || exploreData?.error || 'path_summary_failed',
@@ -3440,6 +3866,8 @@ async function refreshTeacherPathSummary(session, reqId, opts = {}) {
       pathByPhase,
       scoredPhase: pathByPhase.primary?.scoredPhase || null,
       abilityScore: session.abilityScore || null,
+      literacyProfile: session.literacyProfile || null,
+      timingFeatures: session.timingFeatures || null,
       refreshed: true,
       abilityUpdated: allowAbilityUpdate && !frozen && !!abilityScore,
     };
@@ -3450,6 +3878,8 @@ async function refreshTeacherPathSummary(session, reqId, opts = {}) {
       pathByPhase: cachedByPhase,
       scoredPhase: cachedByPhase.primary?.scoredPhase || null,
       abilityScore: session.abilityScore || null,
+      literacyProfile: session.literacyProfile || null,
+      timingFeatures: session.timingFeatures || null,
       refreshed: false,
       abilityUpdated: false,
       error: err.message || 'path_summary_network_error',
@@ -3460,8 +3890,9 @@ async function refreshTeacherPathSummary(session, reqId, opts = {}) {
 async function loadSessionDetail(sessionId) {
   const prevStudentKey = lastDetailRenderedStudentKey;
   const panel = document.getElementById('sessionDetail');
+  const scrollRoot = document.getElementById('sessionRightColumn') || panel;
   const preserveScroll = !!(prevStudentKey && prevStudentKey === selectedStudentKey);
-  const savedScrollTop = preserveScroll ? panel.scrollTop : 0;
+  const savedScrollTop = preserveScroll ? scrollRoot.scrollTop : 0;
 
   selectedSessionId = sessionId;
   const reqId = ++detailRequestSeq;
@@ -3470,6 +3901,8 @@ async function loadSessionDetail(sessionId) {
     lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">请从左侧选择学生</div>';
     loadSessionAbilitySummary(null);
+    loadSessionJudgeSummary(null);
+    loadCrossGameSummary(null);
     return;
   }
   // 同学生切换会话时保留旧 DOM，避免加载占位把列表顶出视口
@@ -3484,6 +3917,8 @@ async function loadSessionDetail(sessionId) {
     lastDetailRenderedStudentKey = null;
     panel.innerHTML = '<div class="session-detail-empty">会话不存在</div>';
     loadSessionAbilitySummary({ student });
+    loadSessionJudgeSummary({ student });
+    loadCrossGameSummary(student);
     return;
   }
   const session = data.session;
@@ -3528,7 +3963,6 @@ async function loadSessionDetail(sessionId) {
   const sessionRows = buildSessionTimelineHtml(student, sessionId);
 
   const jr = session.judgeResult;
-  const judgeBlock = buildJudgeAreaHtml(jr, session, summary);
   const pathFailHint = (!pathRefresh.refreshed && pathRefresh.error)
     ? `<p class="hint session-path-error">路径摘要刷新失败：${esc(pathRefresh.error)}（已显示缓存或留空）</p>`
     : '';
@@ -3540,7 +3974,8 @@ async function loadSessionDetail(sessionId) {
     : (jr ? '<span class="hint">上次：规则</span>' : '<span class="hint">默认规则评判（无需 API Key）</span>');
 
   if (reqId !== detailRequestSeq) return;
-  // 任务 / 阶段 / 路径并入上方「本局能力」过程依据；详情不再重复裸文本
+  // 画像（学生级）与本局（会话级）分页签刷新；换局不改画像聚合来源
+  loadCrossGameSummary(student);
   loadSessionAbilitySummary({
     student,
     session,
@@ -3550,14 +3985,17 @@ async function loadSessionDetail(sessionId) {
     sawPhaseChange: !!summary.sawPhaseChange,
     pathByPhase: detailPathByPhase,
     pathFailHint,
+    timingFeatures: pathRefresh.timingFeatures || session.timingFeatures || summary.timingFeatures || null,
   });
-  loadCrossGameSummary(student);
-  const aggMeta = studentAggMetaHtml(student);
+  loadSessionJudgeSummary({
+    student,
+    session,
+    judgeResult: jr,
+    summary,
+    tuningBlock,
+    modeBadge,
+  });
   panel.innerHTML = `
-    <section class="session-detail-section session-detail-head">
-      <h3 class="session-detail-title">${esc(displayStudentName(student.studentKey, student.studentLabel, student.studentId))}</h3>
-      ${aggMeta}
-    </section>
     <section class="session-detail-section session-detail-play">
       <div class="session-list-head">
         <h4 class="session-section-label">游玩会话</h4>
@@ -3570,20 +4008,15 @@ async function loadSessionDetail(sessionId) {
           <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="deleteSelectedSessionsLocal" disabled>删除选中</button>
         </div>
       </div>
+      <p class="hint session-pick-hint teacher-simple-only">点一条会话查看本局。</p>
+      <p class="hint session-pick-hint teacher-adv">时间轴选局后查看本局证据与评判。</p>
       <div class="session-timeline">${sessionRows}</div>
-      <div class="session-actions">
-        <button type="button" class="edu-btn edu-btn-primary edu-btn-sm" id="judgeBtn">${jr ? '重新规则评判' : '规则评判'}</button>
-        <button type="button" class="edu-btn edu-btn-outline edu-btn-sm" id="judgeLlmBtn">LLM 评判</button>
-        ${modeBadge}
-      </div>
-      <div id="judgeResult">${judgeBlock}</div>
-    </section>
-    ${tuningBlock ? `<details class="session-detail-section session-detail-tuning"><summary class="session-section-label">调参明细</summary>${tuningBlock}</details>` : ''}`;
+    </section>`;
 
   syncSessionCheckboxes();
   updateSelectionUi();
   lastDetailRenderedStudentKey = selectedStudentKey;
-  panel.scrollTop = preserveScroll ? savedScrollTop : 0;
+  scrollRoot.scrollTop = preserveScroll ? savedScrollTop : 0;
   scrollSessionTimelineActiveIntoView(panel);
 
   // 后台限流：缺路径 / 过期能力分一并补刷（需 rescore 时允许落盘 abilityScore）
@@ -3608,6 +4041,7 @@ async function loadSessionDetail(sessionId) {
         sawPhaseChange: !!summary.sawPhaseChange,
         pathByPhase: prepareDetailPathByPhase(resolvePathSummariesByPhase(sel), !!summary.sawPhaseChange),
       });
+      loadCrossGameSummary(student);
     }
   }).catch(() => {});
 }
@@ -3706,6 +4140,7 @@ async function judgeSession(sessionId, mode = 'rules') {
       sess.judgeResult = jr;
       // 能力分以 judge 刚写入为准；勿走 merge（会冻住旧有限分）
       if (data.abilityScore) sess.abilityScore = data.abilityScore;
+      if (data.literacyProfile) sess.literacyProfile = data.literacyProfile;
     }
     syncSessionTimelineVerdict(sessionId, data.verdict);
     // 本局强制重算路径（explore+challenge POST）；能力分不让 path 回写覆盖
@@ -3735,6 +4170,12 @@ async function judgeSession(sessionId, mode = 'rules') {
           ability: sess2.abilityScore || data.abilityScore || null,
           pathByPhase: resolvePathSummariesByPhase(sess2),
         });
+        loadSessionJudgeSummary({
+          student: stu2,
+          session: sess2,
+          judgeResult: jr,
+        });
+        loadCrossGameSummary(stu2);
       }
       renderJudgeResult(jr);
     }
@@ -3754,11 +4195,18 @@ function esc(s) {
 }
 
 function bindSessionDetailDelegation() {
-  const panel = document.getElementById('sessionDetail');
+  const panel = document.getElementById('sessionRightColumn')
+    || document.getElementById('sessionDetail');
   if (!panel || panel.dataset.delegationBound) return;
   panel.dataset.delegationBound = '1';
 
   panel.addEventListener('click', async e => {
+    const viewTab = e.target.closest('.session-view-tab');
+    if (viewTab) {
+      e.preventDefault();
+      setSessionViewTab(viewTab.dataset.view);
+      return;
+    }
     if (e.target.closest('#deleteSelectedSessionsLocal')) {
       e.preventDefault();
       deleteSelectedTraces();
@@ -3832,6 +4280,7 @@ document.getElementById('inputUploadTracesZip')?.addEventListener('change', e =>
   uploadTracesPackageFromFiles(e.target.files);
 });
 bindSessionDetailDelegation();
+setSessionViewTab(sessionViewTab);
 document.getElementById('filterGraph').addEventListener('change', () => {
   writeStoredFilterGraph(document.getElementById('filterGraph').value);
   selectedStudentKey = null;

@@ -50,6 +50,7 @@ const {
   computeAbilityScore,
   ABILITY_SCORE_VERSION,
 } = require('../../../packages/judge/ability-score');
+const { computeLiteracyProfileFromSession } = require('../../../packages/judge/literacy-mapping');
 const { formatSummary, detectNearTies } = require('../../web/ui/strategy-path-summary');
 const { loadAdapter } = require('../../../packages/platform/adapters');
 const { generateGameHtml } = require('../../../packages/generate/html-codegen');
@@ -524,6 +525,20 @@ async function handleSessionStrategyPathSummary(req, res) {
         variableAdjustCounts: session.variableAdjustCounts,
         abilityScore: audience === 'teacher' ? (session.abilityScore || null) : undefined,
         abilityScoreVersion: audience === 'teacher' ? ABILITY_SCORE_VERSION : undefined,
+        literacyProfile: audience === 'teacher'
+          ? (() => {
+            try {
+              return session.literacyProfile
+                || computeLiteracyProfileFromSession(session, {
+                  timingFeatures: session.timingFeatures || null,
+                })
+                || null;
+            } catch (_) {
+              return session.literacyProfile || null;
+            }
+          })()
+          : undefined,
+        timingFeatures: audience === 'teacher' ? (session.timingFeatures || null) : undefined,
         source: 'session-events',
       }));
       return;
@@ -613,6 +628,13 @@ async function handleSessionStrategyPathSummary(req, res) {
         }
       }
     }
+    if (audience === 'teacher') {
+      try {
+        session.literacyProfile = computeLiteracyProfileFromSession(session, {
+          timingFeatures: session.timingFeatures || null,
+        });
+      } catch (_) { /* ignore; payload may still omit */ }
+    }
     saveTraceSession(session);
     const payload = {
       ok: true,
@@ -630,13 +652,15 @@ async function handleSessionStrategyPathSummary(req, res) {
       source: 'session-events',
       contract: {
         student: 'summary.text + summary.advice（不剧透最优；默认无分数；竞赛过关按竞赛段评分；不含能力总分展示）',
-        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段；explore/challenge 可分次请求；abilityScore 为平台能力总分 v2',
+        teacher: 'audience=teacher 或 showScore=true 可见吻合度与 teacherDetail；scoredPhase 标明评分段；explore/challenge 可分次请求；abilityScore 为平台能力总分；literacyProfile 为四维学习表现解读；timingFeatures 为基于事件 ts 的时间衍生特征',
       },
     };
     // 学生受众不附带能力总分，避免 student-play 误展示
     if (audience === 'teacher') {
       payload.abilityScore = session.abilityScore || null;
       payload.abilityScoreVersion = ABILITY_SCORE_VERSION;
+      payload.literacyProfile = session.literacyProfile || null;
+      payload.timingFeatures = session.timingFeatures || null;
     }
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(payload));

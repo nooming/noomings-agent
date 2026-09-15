@@ -2,6 +2,7 @@
 
 > 参考实现：[`/static/packages/pendulum-clock/game.html`](../../data/runtime/packages/pendulum-clock/game.html)  
 > 对照规格：[`sample-spec.md`](sample-spec.md)（轨迹与双模式）  
+> 生成后短抽检：[`generation-craft-checklist.md`](generation-craft-checklist.md)（物理/AV·CV/双模/win·explore_success；交叉引用 publish-gate）  
 > 用途：组员自检 + 负责人精品上架门禁。达不到「必达」的只收底稿（`craft:draft`），不进精品（`craft:gold`）。
 
 ## 为何以钟表铺为尺
