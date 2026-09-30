@@ -87,7 +87,7 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 .craft-reveal[hidden]{display:none!important;}
 .craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
-.craft-actions{display:flex;gap:10px;margin-top:14px;}
+.craft-actions{display:flex;gap:10px;margin-top:14px;position:sticky;bottom:0;background:var(--craft-panel);padding-top:10px;z-index:1;}
 .craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
 .craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
 .craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
@@ -474,12 +474,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 #attempts-exhausted[hidden]{display:none!important;}
 #attempts-exhausted .craft-card{
-  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  width:min(420px,92vw);max-height:min(92vh,720px);overflow:auto;background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 #attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
 #attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
-#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;position:sticky;bottom:0;background:var(--craft-panel,#121a2b);padding-top:10px;z-index:1;}
 #attempts-exhausted .craft-actions button{
   width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
   background:var(--craft-accent,#c9a227);color:#0b1020;

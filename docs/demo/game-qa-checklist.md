@@ -39,12 +39,12 @@
 - [ ] 探究 / 竞赛分口径齐全；适合开场演示
 - [ ] 侧栏标题与 intro 一致（靶场·斜抛）；过关走 craft，勿依赖浅色 legacy messageBox
 
-### `pendulum-clock`（单摆秒摆 · gold）
+### `pendulum-clock`（复摆校时 · gold）
 
-- [ ] AV：摆长、摆角；CV：质量
-- [ ] OV：周期 T / 摆幅；探究测量→反馈→精校闭环清楚
+- [ ] AV：锤位 d；CV：摆角 θ₀（小角度等时）
+- [ ] OV：周期 T / 等效摆长 L_eq；探究测量→反馈→精校闭环清楚
 - [ ] 包内或适配器有稳定 `phase_change`（本关观感标杆）
-- [ ] 目标字号可读（≥14px）；质量不抢主滑条叙事
+- [ ] 目标字号可读（≥14px）；摆角 CV 不抢锤位主滑条叙事
 
 ### `ramp-rolling-collision`（斜坡滚球 · gold）
 

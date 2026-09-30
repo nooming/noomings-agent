@@ -365,6 +365,8 @@ button.btn:disabled {
 #craft-win[hidden] { display: none !important; }
 .craft-card {
   width: min(440px, 92vw);
+  max-height: min(92vh, 720px);
+  overflow: auto;
   background: var(--craft-panel);
   border: 1px solid color-mix(in srgb, var(--craft-accent) 40%, transparent);
   border-radius: 14px;
@@ -414,6 +416,11 @@ button.btn:disabled {
   display: flex;
   gap: 8px;
   margin-top: 14px;
+  position: sticky;
+  bottom: 0;
+  background: var(--craft-panel);
+  padding-top: 10px;
+  z-index: 1;
 }
 .craft-actions button { flex: 1; }
 .craft-btn-secondary {

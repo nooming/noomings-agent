@@ -3,7 +3,7 @@ module.exports = [
   {
     id: 'pendulum-clock',
     src: 'pendulum_钟表铺校时 (1).html',
-    topic: '单摆秒摆',
+    topic: '复摆校时',
     knowledgeText: '调节摆长与摆角使周期接近 2.000s；摆锤质量为混淆变量（不进入周期公式）。',
     hint: '过关：T=2.000±0.005s 且摆角足够大',
     tags: ['teammate', 'multi-av', 'confounding', 'craft:gold'],

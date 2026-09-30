@@ -43,7 +43,7 @@
   padding: 18px; background: rgba(6, 10, 18, 0.62); backdrop-filter: blur(3px);
 }
 #attempts-exhausted[hidden] { display: none !important; }
-#attempts-exhausted .craft-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+#attempts-exhausted .craft-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; position: sticky; bottom: 0; background: var(--craft-panel); padding-top: 10px; z-index: 1; }
 #attempts-exhausted .craft-actions button {
   width: 100%; padding: 12px; border: none; border-radius: 12px;
   cursor: pointer; font-size: 0.95rem; font-weight: 700;

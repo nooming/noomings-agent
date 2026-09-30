@@ -171,6 +171,11 @@
             display: flex;
             gap: 10px;
             margin-top: 14px;
+            position: sticky;
+            bottom: 0;
+            background: var(--craft-panel);
+            padding-top: 10px;
+            z-index: 1;
         }
         .craft-actions button {
             flex: 1;
@@ -527,12 +532,12 @@
 }
 #attempts-exhausted[hidden]{display:none!important;}
 #attempts-exhausted .craft-card{
-  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  width:min(420px,92vw);max-height:min(92vh,720px);overflow:auto;background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 #attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
 #attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
-#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;position:sticky;bottom:0;background:var(--craft-panel,#121a2b);padding-top:10px;z-index:1;}
 #attempts-exhausted .craft-actions button{
   width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
   background:var(--craft-accent,#c9a227);color:#0b1020;

@@ -7,7 +7,7 @@ module.exports = [
   { id: 'projectile-basic', dir: '斜抛', game: '斜抛.html', topic: '斜抛' },
   { id: 'nezha-boat-jump', dir: '哪吒跳船', game: '哪吒跳船.html', topic: '哪吒跳船' },
   { id: 'pulley-rigid', dir: '滑轮刚体', game: '滑轮刚体.html', topic: '滑轮刚体' },
-  { id: 'pendulum-clock', dir: '钟表铺校时', game: '钟表铺校时.html', topic: '单摆秒摆' },
+  { id: 'pendulum-clock', dir: '钟表铺校时', game: '钟表铺校时.html', topic: '复摆校时' },
   { id: 'cyclotron-radius', dir: '回旋加速器', game: '回旋加速器.html', topic: '回旋加速器' },
   { id: 'capacitor-era-ch1', dir: '电容_介质与击穿', game: '电容_介质与击穿.html', topic: '电容·介质与击穿' },
   { id: 'capacitor-era-ch2', dir: '电容_串并联', game: '电容_串并联.html', topic: '电容·串并联' },

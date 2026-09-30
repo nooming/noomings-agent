@@ -247,13 +247,13 @@ html,body{width:100%!important;height:100%!important;margin:0!important;padding:
 .craft-reveal .sumrow .k{color:var(--craft-muted)}.craft-reveal .sumrow .v{color:var(--craft-text)}
 .craft-cv,#craft-cv{font-size:.8rem;color:var(--craft-muted);border:1px dashed color-mix(in srgb,var(--craft-accent) 35%,transparent);
   border-radius:10px;padding:8px 10px;margin:0 0 4px;line-height:1.45;}
-.craft-actions{display:flex;gap:10px;margin-top:14px;}
+.craft-actions{display:flex;gap:10px;margin-top:14px;position:sticky;bottom:0;background:var(--craft-panel);padding-top:10px;z-index:1;}
 .craft-actions button{flex:1;width:auto;padding:11px 10px;font-size:.95rem;}
 .craft-btn-secondary{background:transparent!important;border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent)!important;color:var(--craft-text)!important;font-weight:600!important;}
 .craft-btn-secondary:hover{filter:brightness(1.08);background:rgba(255,255,255,.04)!important;}
 
 .craft-card{
-  width:min(440px,92vw);background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
+  width:min(440px,92vw);max-height:min(92vh,720px);overflow:auto;background:var(--craft-panel);border:1px solid color-mix(in srgb,var(--craft-accent) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 .craft-card h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent);letter-spacing:1px;}
@@ -507,12 +507,12 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 }
 #attempts-exhausted[hidden]{display:none!important;}
 #attempts-exhausted .craft-card{
-  width:min(420px,92vw);background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
+  width:min(420px,92vw);max-height:min(92vh,720px);overflow:auto;background:var(--craft-panel,#121a2b);border:1px solid color-mix(in srgb,var(--craft-accent,#c9a227) 45%,transparent);
   border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
 #attempts-exhausted h2{margin:0 0 10px;font-size:1.25rem;color:var(--craft-accent,#e2b657);letter-spacing:1px;}
 #attempts-exhausted p{margin:0 0 14px;line-height:1.65;color:var(--craft-text,#e8eefc);font-size:.95rem;}
-#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+#attempts-exhausted .craft-actions{display:flex;flex-direction:column;gap:10px;margin-top:4px;position:sticky;bottom:0;background:var(--craft-panel,#121a2b);padding-top:10px;z-index:1;}
 #attempts-exhausted .craft-actions button{
   width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-size:.95rem;font-weight:700;
   background:var(--craft-accent,#c9a227);color:#0b1020;
@@ -549,7 +549,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 <div id="craft-intro">
   <div class="craft-card">
     <h2>钟表铺·校时</h2>
-    <p>这座钟走得偏慢。调节侧栏参数，对照计时看周期怎么变。</p>
+    <p>这座钟走得偏快。可调摆杆长度、锤位与锤质量；对照计时看周期怎么变。</p>
     <p class="craft-intro-meta">探究≠竞赛；竞赛目标进入后固定，校不准扣次数。</p>
     <button type="button" id="craftIntroBtn">开始探究</button>
   </div>
@@ -561,7 +561,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="craft-attr" id="craftAttribution">
       <p class="craft-attr-label">就你这几发的对照来看，周期主要跟着哪一项变？</p>
       <div class="craft-attr-options">
-        <label><input type="radio" name="craftAttr" value="s-len"> 主要是摆长</label>
+        <label><input type="radio" name="craftAttr" value="s-L"> 主要是杆长</label>
+        <label><input type="radio" name="craftAttr" value="s-d"> 主要是锤位</label>
+        <label><input type="radio" name="craftAttr" value="s-m"> 主要是锤质量</label>
         <label><input type="radio" name="craftAttr" value="s-angle"> 主要是摆角</label>
         <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
         <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
@@ -570,10 +572,9 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     </div>
     <div class="craft-reveal" id="craftReveal" hidden>
       <div id="craftWinRows"></div>
-      <div class="formula" id="craftWinFormula">T ≈ 2π√(L/g)</div>
-      <p id="craftWinText">对照光电计时，你摸清了摆长如何影响周期。</p>
+      <div class="formula" id="craftWinFormula">T = 2π√(L_eq/g)</div>
+      <p id="craftWinText" hidden></p>
       <div id="craftWinRules"></div>
-      <p id="craftCv" class="craft-cv">质量对小角度周期影响可忽略（旁路）。</p>
     </div>
     <div class="craft-actions">
       <button type="button" id="craftWinBtn" disabled>再玩一次</button>
@@ -623,7 +624,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <div class="bench-scroll">
       <div class="side-goal-box">
         <div class="side-goal-cap">当前目标</div>
-        <p id="sideGoal">调节侧栏参数，对照计时看周期怎么变。</p>
+        <p id="sideGoal">可调摆杆长度、锤位与锤质量；对照计时看周期怎么变。</p>
       </div>
       <div class="tband-wrap">
         <div class="tband-cap" id="tbandCap">周期尺 · <em>绿区 = 探究带</em></div>
@@ -632,30 +633,36 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
           <div class="needle" id="needle"></div>
         </div>
         <div class="tband-scale">
-          <span>1.85</span><span class="mid">2.00</span><span>2.45</span>
+          <span>1.30</span><span class="mid">2.00</span><span>3.00</span>
         </div>
       </div>
       <div class="srow">
-        <div class="slabel"><span>摆长 L</span><span class="sval" id="v-len"><input type="number" id="n-len" min="0.51" max="1.49" step="0.005" value="1.31" aria-label="摆长数值" style="width:64px;background:rgba(0,0,0,.18);border:1px solid rgba(56,189,248,.4);border-radius:999px;color:inherit;text-align:right;padding:1px 6px"> m</span><small>精调摆杆 · 可输入数值</small></div>
+        <div class="slabel"><span>杆长 L</span><span class="sval" id="v-L">1.20 m</span><small>支点到杆端</small></div>
         <div class="srow-track">
-          <input type="range" id="s-len" min="0.51" max="1.49" value="1.31" step="0.005">
+          <input type="range" id="s-L" min="0.90" max="2.20" value="1.20" step="0.01">
         </div>
       </div>
       <div class="srow">
-        <div class="slabel"><span>摆锤质量 m</span><span class="sval" id="v-mass">1.5 kg</span><small>黄铜配重</small></div>
+        <div class="slabel"><span>锤位 d</span><span class="sval" id="v-d">0.70 m</span><small>锤心到支点</small></div>
         <div class="srow-track">
-          <input type="range" id="s-mass" min="0.5" max="3" value="1.5" step="0.1">
+          <input type="range" id="s-d" min="0.45" max="1.20" value="0.70" step="0.005">
         </div>
       </div>
       <div class="srow">
-        <div class="slabel"><span>摆角 θ₀</span><span class="sval" id="v-angle">20°</span><small>释放摆幅</small></div>
+        <div class="slabel"><span>锤质量 M</span><span class="sval" id="v-m">1.5 kg</span><small>黄铜配重</small></div>
         <div class="srow-track">
-          <input type="range" id="s-angle" min="5" max="45" value="20" step="1">
+          <input type="range" id="s-m" min="0.4" max="3.0" value="1.5" step="0.1">
+        </div>
+      </div>
+      <div class="srow">
+        <div class="slabel"><span>摆角 θ₀</span><span class="sval" id="v-angle">5°</span><small>初始摆开角度</small></div>
+        <div class="srow-track">
+          <input type="range" id="s-angle" min="3" max="10" value="5" step="1">
         </div>
       </div>
     </div>
     <div class="bench-ft">
-      <div id="hint">走时偏慢 · 调参后对照光电计时</div>
+      <div id="hint">走时偏快 · 调参后对照光电计时</div>
       <div class="btn-measure" id="btn-measure">⏱ 启动计时 · 测一个周期</div>
     </div>
   </aside>
@@ -669,13 +676,13 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
     <h1>钟表铺<span class="amp">·</span>校时</h1>
     <div class="story">
       巷子深处的钟表铺打了烊，只剩你和这座祖父钟。<br>
-      它一天要<em>慢上三个多小时</em>，老师傅临走前只留下一句：<br>
+      它一天要<em>快上三个多小时</em>，老师傅临走前只留下一句：<br>
       <b>"毛病出在摆上。摆的周期对了，钟就准了。"</b>
     </div>
     <div class="task">先自由调参，摸清周期变化；再切竞赛接急单目标带（本局锁定，校偏不换题）。<br>
-· 摆杆是刻孔式的，摆长每 2 cm 一档<br>
+· 摆杆有质量；可调杆长、锤位与锤质量<br>
 · 工作台上有一台光电计时仪——每次实测一个周期<br>
-· 摆幅低于 15° 时，擒纵机构将无法维持摆动</div>
+· 记下每次实测周期，对照目标带再决定下一步怎么调</div>
     <div class="btn" id="btn-start">开 始 校 准</div>
   </div>
 </div>
@@ -701,12 +708,18 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
 </div>
 
 <script>
-/* ═══════════════ 物理与状态 ═══════════════ */
+/* ═══════════════ 物理与状态（小角度复摆） ═══════════════ */
 const G = 9.81;
+const M_ROD = 1.20;   // 均匀细杆质量（固定，kg）
+const D_MIN = 0.45;   // 锤位下限（m）
+const L_MIN = 0.90;   // 杆长下限（≥ D_MIN，避免 d 空区间）
+const L_MAX = 2.20;
 let T_TARGET = 2.000, T_HALF = 0.020;   // 探究较宽；竞赛进入时收紧并可能换目标
-const TH_MIN = 15;                          // 擒纵最小摆幅约束
 let playMode = 'explore';
-let L = 1.310, thetaDeg = 20, mass = 1.5;
+let L = 1.20;          // 摆杆长度（可调，m）
+let d = 0.70;          // 锤心到支点（m）；须 d ≤ L
+let M = 1.50;          // 锤质量（kg）
+let thetaDeg = 5;      // 摆角（无关变量 CV，仅影响画面幅度）
 let phase = 'intro';                        // intro | puzzle | win | end
 let won = false;
 let lastMeasT = null;      // 最近一次实测周期
@@ -714,14 +727,34 @@ let measStale = false;     // 测后参数被改动
 let measuring = false;
 let measureCount = 0;
 
-function period() {
-  const th = thetaDeg * Math.PI / 180;
-  return 2 * Math.PI * Math.sqrt(L / G) * (1 + th * th / 16);
+/** I_pivot、质心距、等效摆长、周期（θ 不进公式） */
+function compoundState(dBob, mBob, rodLen) {
+  const dd = (dBob == null ? d : dBob);
+  const mm = (mBob == null ? M : mBob);
+  const LL = (rodLen == null ? L : rodLen);
+  const I = (1 / 3) * M_ROD * LL * LL + mm * dd * dd;
+  const Mtot = M_ROD + mm;
+  const dcm = (M_ROD * LL / 2 + mm * dd) / Mtot;
+  const Leq = I / (Mtot * dcm);
+  const T = 2 * Math.PI * Math.sqrt(I / (Mtot * G * dcm));
+  return { I: I, dcm: dcm, Leq: Leq, T: T, Mtot: Mtot };
 }
+function period() { return compoundState().T; }
+function equivLen() { return compoundState().Leq; }
 function inTBand(T)  { return Math.abs(T - T_TARGET) <= T_HALF; }
-function thetaOk()   { return thetaDeg >= TH_MIN; }
-function winOk(T)    { return inTBand(T) && thetaOk(); }
+function winOk(T)    { return inTBand(T); }
 function dayErrSec(T){ return (2 / T - 1) * 86400; }  // >0 快，<0 慢
+
+/** 锤心须在杆上：更新 d 的 max=L；若 d>L 则钳到 L */
+function syncBobTravelLimits() {
+  var elD = document.getElementById('s-d');
+  var dMax = Math.max(D_MIN, +L.toFixed(3));
+  if (elD) { elD.max = String(dMax); }
+  if (d > L) {
+    d = +Math.min(L, Math.max(D_MIN, L)).toFixed(3);
+    if (elD) elD.value = String(d);
+  }
+}
 
 function fmtTargetBand() {
   return T_TARGET.toFixed(3) + ' ± ' + T_HALF.toFixed(3) + ' s';
@@ -733,29 +766,33 @@ function refreshClockGoals() {
   const cap = document.getElementById('tbandCap');
   if (hud) hud.textContent = fmtTargetBand();
   if (playMode === 'challenge') {
-    if (side) side.textContent = '竞赛急单：把周期校进 ' + fmtTargetBand() + '（本局锁定，校偏不换题）。摆幅仍须 ≥' + TH_MIN + '°。';
+    if (side) side.textContent = '竞赛急单：把周期校进 ' + fmtTargetBand() + '（本局锁定，校偏不换题）。可调杆长、锤位、锤质量与摆角，对照计时校进目标带。';
     if (sub) sub.textContent = '竞赛：T ≈ ' + T_TARGET.toFixed(3) + ' s · 严公差 · 本局固定';
     if (cap) cap.innerHTML = '周期尺 · <em>绿区 = 急单 ±' + Math.round(T_HALF * 1000) + ' ms</em>';
   } else {
-    if (side) side.textContent = '调节侧栏参数，对照计时看周期怎么变。';
+    if (side) side.textContent = '可调摆杆长度、锤位与锤质量；对照计时看周期怎么变。';
     if (sub) sub.textContent = '自由校时：对照计时看周期变化';
     if (cap) cap.innerHTML = '周期尺 · <em>绿区 = 探究带</em>';
   }
 }
 /** FixedChallenge：仅进入竞赛时锁定一次目标周期（与探究 2.000 不同） */
 function lockChallengePeriod() {
-  let next = 1.90 + Math.random() * 0.28;
-  if (Math.abs(next - 2.000) < 0.04) next = next > 2 ? 2.08 : 1.92;
+  // 复摆可达约 1.4–2.9 s，目标须落在可校准区间
+  let next = 1.72 + Math.random() * 0.30;
+  if (Math.abs(next - 2.000) < 0.03) next = next >= 2 ? 2.015 : 1.94;
   T_TARGET = Math.round(next * 1000) / 1000;
   T_HALF = 0.012;
-  L = 1.31; thetaDeg = 20; mass = 1.5;
+  L = 1.20; d = 0.70; M = 1.50; thetaDeg = 5;
   lastMeasT = null; measStale = false; won = false;
-  var elLen = document.getElementById('s-len');
+  var elL = document.getElementById('s-L');
+  var elD = document.getElementById('s-d');
+  var elM = document.getElementById('s-m');
   var elAng = document.getElementById('s-angle');
-  var elMass = document.getElementById('s-mass');
-  if (elLen) elLen.value = String(L);
+  if (elL) elL.value = String(L);
+  if (elD) elD.value = String(d);
+  if (elM) elM.value = String(M);
   if (elAng) elAng.value = String(thetaDeg);
-  if (elMass) elMass.value = String(mass);
+  syncBobTravelLimits();
   refreshClockGoals();
   if (typeof syncUI === 'function') syncUI();
 }
@@ -785,9 +822,9 @@ const Telemetry = (function () {
   let seq = 0;
 
   function snapshot() {
-    const T = period();
-    return { L: +L.toFixed(3), theta: thetaDeg, m: +mass.toFixed(1),
-      T: +T.toFixed(4), day_err_s: Math.round(dayErrSec(T)), phase: phase };
+    const st = compoundState();
+    return { L: +L.toFixed(2), d: +d.toFixed(3), M: +M.toFixed(2), theta: thetaDeg, L_eq: +st.Leq.toFixed(4),
+      T: +st.T.toFixed(4), day_err_s: Math.round(dayErrSec(st.T)), phase: phase };
   }
   function log(type, data) {
     const ev = Object.assign({ seq: seq++, rel_ms: Math.round(performance.now() - t0),
@@ -815,8 +852,8 @@ const Telemetry = (function () {
   window.addEventListener('pagehide', () => { log('page_hide', {}); flush(true); });
 
   // 滑块手势聚合：input 记微操作，change 提交一次调整
-  const VAR_OF = { 's-len': 'L', 's-angle': 'theta', 's-mass': 'm' };
-  const commit = { 's-len': 1.31, 's-angle': 20, 's-mass': 1.5 };
+  const VAR_OF = { 's-L': 'L', 's-d': 'd', 's-m': 'M', 's-angle': 'theta' };
+  const commit = { 's-L': 1.20, 's-d': 0.70, 's-m': 1.50, 's-angle': 5 };
   const gest = {};
   document.addEventListener('input', (e) => {
     const id = e.target && e.target.id;
@@ -838,13 +875,12 @@ const Telemetry = (function () {
     commit[id] = v; delete gest[id];
   }, true);
 
-  // 状态转变：T 带 / 胜利条件 / 擒纵约束阻挡
-  let _tbPrev = false, _winPrev = false, _blockPrev = false;
+  // 状态转变：T 带 / 胜利条件
+  let _tbPrev = false, _winPrev = false;
   function trackState() {
     const T = period();
-    const tb = inTBand(T), w = winOk(T), blocked = tb && !thetaOk();
+    const tb = inTBand(T), w = winOk(T);
     if (tb !== _tbPrev)   { log(tb ? 'enter_t_band' : 'leave_t_band', { after: snapshot() }); _tbPrev = tb; }
-    if (blocked !== _blockPrev) { log(blocked ? 'constraint_block' : 'constraint_clear', { after: snapshot() }); _blockPrev = blocked; }
     if (w !== _winPrev)   { log(w ? 'enter_win_band' : 'leave_win_band', { after: snapshot() }); _winPrev = w; }
   }
 
@@ -862,13 +898,6 @@ const Telemetry = (function () {
     a.download = session.session_id + '.jsonl';
     a.click(); URL.revokeObjectURL(a.href);
   }
-  document.addEventListener('DOMContentLoaded', () => {
-    const b = document.createElement('div');
-    b.textContent = '⬇ 实验数据';
-    b.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:30;font-size:10px;letter-spacing:1px;color:rgba(201,151,63,0.5);border:1px solid rgba(201,151,63,0.25);padding:4px 10px;border-radius:3px;cursor:pointer;user-select:none;background:rgba(20,13,6,0.6)';
-    b.onclick = exportData;
-    document.body.appendChild(b);
-  });
 
   log('session_start', { href: location.href });
   return { log, flush, snapshot, trackState, exportData, session };
@@ -1132,11 +1161,14 @@ function drawPendulum() {
   const { cx, pivotY } = CLK;
   const amp = thetaDeg * Math.PI / 180;
   const phi = reduceMotion ? amp * 0.6 : amp * Math.sin(swingPhase);
-  // 摆长映射：0.5–1.5 m → 130–320 px
+  // 杆长随 L；锤位 d 决定锤在杆上的位置；锤质量 M 轻微缩放锤的视觉大小
   const rodPx = 130 + (L - 0.5) * 190;
-  const bobR = 12 + Math.pow(mass, 0.72) * 8;   // 0.5→16.8, 3→29.7
-  const bx = cx + rodPx * Math.sin(phi);
-  const by = pivotY + rodPx * Math.cos(phi);
+  const bobAlong = Math.max(40, (d / Math.max(L, 1e-6)) * rodPx);
+  const bobR = 16 + Math.sqrt(Math.max(0.2, M) / 1.5) * 6;
+  const tipX = cx + rodPx * Math.sin(phi);
+  const tipY = pivotY + rodPx * Math.cos(phi);
+  const bx = cx + bobAlong * Math.sin(phi);
+  const by = pivotY + bobAlong * Math.cos(phi);
 
   // 地面摆影
   ctx2d.fillStyle = 'rgba(0,0,0,0.30)';
@@ -1144,12 +1176,15 @@ function drawPendulum() {
   ctx2d.ellipse(bx, DH * 0.72 + 130, bobR * 1.5, bobR * 0.32, 0, 0, 6.29);
   ctx2d.fill();
 
-  // 摆杆
-  const rodG = ctx2d.createLinearGradient(cx, pivotY, bx, by);
+  // 摆杆（有质量细杆，画到杆端）
+  const rodG = ctx2d.createLinearGradient(cx, pivotY, tipX, tipY);
   rodG.addColorStop(0, '#8a6a2e'); rodG.addColorStop(0.5, '#d9b365'); rodG.addColorStop(1, '#8a6a2e');
   ctx2d.strokeStyle = rodG; ctx2d.lineWidth = 4.5; ctx2d.lineCap = 'round';
-  ctx2d.beginPath(); ctx2d.moveTo(cx, pivotY); ctx2d.lineTo(bx, by); ctx2d.stroke();
-  // 摆锤（黄铜圆盘，大小∝质量）
+  ctx2d.beginPath(); ctx2d.moveTo(cx, pivotY); ctx2d.lineTo(tipX, tipY); ctx2d.stroke();
+  // 杆端小帽
+  ctx2d.fillStyle = '#a87826';
+  ctx2d.beginPath(); ctx2d.arc(tipX, tipY, 3.5, 0, 6.29); ctx2d.fill();
+  // 摆锤（黄铜圆盘，可沿杆滑动）
   const bobG = ctx2d.createRadialGradient(bx - bobR * 0.35, by - bobR * 0.4, bobR * 0.1, bx, by, bobR);
   bobG.addColorStop(0, '#f6dc9e'); bobG.addColorStop(0.45, '#cf9d43');
   bobG.addColorStop(0.85, '#8a6420'); bobG.addColorStop(1, '#5a3f10');
@@ -1160,10 +1195,11 @@ function drawPendulum() {
   // 摆锤高光弧
   ctx2d.strokeStyle = 'rgba(255,240,200,0.5)'; ctx2d.lineWidth = 2;
   ctx2d.beginPath(); ctx2d.arc(bx, by, bobR * 0.8, -2.4, -1.4); ctx2d.stroke();
-  // 校准螺母（锤下沿）
+  // 锁紧螺母（锤两侧暗示可滑动）
   ctx2d.save();
   ctx2d.translate(bx, by); ctx2d.rotate(phi);
   ctx2d.fillStyle = '#a87826';
+  ctx2d.fillRect(-7, -bobR - 10, 14, 7);
   ctx2d.fillRect(-5, bobR + 2, 10, 8);
   ctx2d.restore();
 }
@@ -1207,7 +1243,7 @@ function drawPlaque() {
   ctx2d.font = '13px "PingFang SC", sans-serif';
   if (won) {
     ctx2d.fillStyle = '#6fae8f';
-    ctx2d.fillText('✓ 走时精准 — 秒摆归位', x + 4, y + 160);
+    ctx2d.fillText('✓ 走时精准 — 复摆归位', x + 4, y + 160);
   } else if (lastMeasT === null) {
     ctx2d.fillStyle = 'rgba(255,157,69,0.75)';
     ctx2d.fillText('日误差：待测（启动光电计时）', x + 4, y + 160);
@@ -1246,23 +1282,22 @@ requestAnimationFrame(frame);
 
 /* ═══════════════ 控件与流程 ═══════════════ */
 const $ = id => document.getElementById(id);
-const sLen = $('s-len'), sAng = $('s-angle'), sMass = $('s-mass');
+const sL = $('s-L'), sD = $('s-d'), sM = $('s-m'), sAng = $('s-angle');
 
 function lockControls(lock) {
-  [sLen, sAng, sMass].forEach(s => s.disabled = lock);
-  var nLen = $('n-len'); if (nLen) nLen.disabled = lock;
+  [sL, sD, sM, sAng].forEach(s => { if (s) s.disabled = lock; });
 }
 
 function syncUI() {
-  var nLen = $('n-len');
-  if (nLen && document.activeElement !== nLen) nLen.value = L.toFixed(3);
-  else if (!nLen) $('v-len').textContent = L.toFixed(3) + ' m';
+  var vL = $('v-L'); if (vL) vL.textContent = L.toFixed(2) + ' m';
+  var vd = $('v-d'); if (vd) vd.textContent = d.toFixed(3) + ' m';
+  var vM = $('v-m'); if (vM) vM.textContent = M.toFixed(1) + ' kg';
   $('v-angle').textContent = thetaDeg + '\u00b0';
-  $('v-mass').textContent = mass.toFixed(1) + ' kg';
   const gT = $('g-T');
   const nd = $('needle');
   const dr = $('drift');
-  const lo = 1.85, hi = 2.45;
+  // 周期尺上下限：覆盖全参数范围 T≈1.41–2.89 s，并留边距
+  const lo = 1.30, hi = 3.00;
   const pct = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
   const bw = $('band-win');
   bw.style.left = pct(T_TARGET - T_HALF) + '%';
@@ -1283,7 +1318,7 @@ function syncUI() {
     nd.style.left = 'calc(' + pct(lastMeasT) + '% - 1px)';
     nd.classList.toggle('ok', won);
     nd.style.opacity = measStale ? 0.35 : 1;
-    dr.textContent = won ? '\u2713 秒摆归位' : fmtErr(dayErrSec(lastMeasT)) + (measStale ? '\u2005·\u2005已过期' : '');
+    dr.textContent = won ? '\u2713 复摆归位' : fmtErr(dayErrSec(lastMeasT)) + (measStale ? '\u2005·\u2005已过期' : '');
     dr.className = won ? 'ok' : '';
   }
   // 提示
@@ -1293,9 +1328,9 @@ function syncUI() {
   else if (measuring) hint.textContent = '光电门计时中\u2026\u2026';
   else if (lastMeasT === null) hint.textContent = '计时未启动 · 先点启动，再调参对照读数';
   else if (measStale) hint.textContent = '参数已改动\u2014\u2014读数过期，需重新计时确认';
-  else if (inTBand(lastMeasT) && !thetaOk()) hint.textContent = `周期已达标，但摆幅 ${thetaDeg}\u00b0 不足以驱动擒纵机构（需 \u2265 ${TH_MIN}\u00b0）`;
-  else if (lastMeasT > T_TARGET + T_HALF) hint.textContent = '实测偏慢 ' + Math.round((lastMeasT - T_TARGET) * 1000) + ' ms \u2014\u2014 想想什么决定周期';
+  else if (lastMeasT > T_TARGET + T_HALF) hint.textContent = '实测偏慢 ' + Math.round((lastMeasT - T_TARGET) * 1000) + ' ms \u2014\u2014 试着改参再对照计时';
   else if (lastMeasT < T_TARGET - T_HALF) hint.textContent = '实测偏快 ' + Math.round((T_TARGET - lastMeasT) * 1000) + ' ms';
+  else if (inTBand(lastMeasT)) hint.textContent = '周期已落入目标带 · 竞赛中计时确认即可过关';
   Telemetry.trackState();
 }
 
@@ -1318,7 +1353,7 @@ function startMeasure() {
     btn.classList.remove('busy');
     btn.textContent = '\u23f1 启动计时 · 测一个周期';
     Telemetry.log('measure_result', { n: measureCount, T: +T.toFixed(4),
-      in_band: inTBand(T), theta_ok: thetaOk(), after: Telemetry.snapshot() });
+      in_band: inTBand(T), after: Telemetry.snapshot() });
     if (playMode !== 'challenge') {
       try {
         var __esControls0 = window.__snapControls ? window.__snapControls() : {};
@@ -1356,21 +1391,19 @@ function tryShowWin() {
   Telemetry.log('win', { after: Telemetry.snapshot() });
   // 公式/规则写入 .craft-reveal（归因点选后才展示）；勿再开 #veil-win 抢戏
   try { $('veil-win').classList.remove('show'); } catch (eVeil) {}
-  const th = thetaDeg * Math.PI / 180;
+  const st = compoundState();
   const rowsHtml =
-    `<div class="sumrow"><span class="k">摆长 L</span><span class="v">${L.toFixed(3)} m</span></div>` +
-    `<div class="sumrow"><span class="k">摆角 θ₀</span><span class="v">${thetaDeg}°</span></div>` +
-    `<div class="sumrow"><span class="k">摆锤质量 m</span><span class="v">${mass.toFixed(1)} kg</span></div>` +
+    `<div class="sumrow"><span class="k">杆长 L</span><span class="v">${L.toFixed(2)} m</span></div>` +
+    `<div class="sumrow"><span class="k">锤位 d</span><span class="v">${d.toFixed(3)} m</span></div>` +
+    `<div class="sumrow"><span class="k">锤质量 M</span><span class="v">${M.toFixed(1)} kg</span></div>` +
+    `<div class="sumrow"><span class="k">等效摆长 L<sub>eq</sub></span><span class="v">${st.Leq.toFixed(3)} m</span></div>` +
+    `<div class="sumrow"><span class="k">摆角 θ₀</span><span class="v">${thetaDeg}°（不进公式）</span></div>` +
     `<div class="sumrow"><span class="k">周期 T</span><span class="v" style="color:var(--verdigris)">${T.toFixed(3)} s ✓</span></div>`;
-  const formulaTxt =
-    `T = 2π·√(L/g)·(1 + θ²/16)\n` +
-    `  = 2π × √(${L.toFixed(3)}/9.81) × (1 + ${th.toFixed(3)}²/16)\n` +
-    `  = ${T.toFixed(3)} s`;
+  const formulaTxt = 'T = 2π√(L_eq/g)\nL_eq 不是杆长，而是 I/(M_tot·d_cm)';
   const rulesHtml =
-    `<div class="rule"><b>T ∝ √L</b> —— 摆长是周期的主宰：调准秒摆，先调摆长</div>` +
-    `<div class="rule"><b>θ²/16</b> —— 摆角只带来二阶小修正，是精校的最后一颗螺丝</div>` +
-    `<div class="rule"><b>质量 m 不出现在公式里</b> —— 换多重的锤，周期都不变（伽利略在比萨早已知晓）</div>` +
-    `<div class="rule"><b>擒纵约束</b> —— 摆幅太小，机构无法补充能量，钟会停摆</div>`;
+    `<div class="rule">杆长与锤位都会改变 I 与质心</div>` +
+    `<div class="rule">锤质量只轻轻改变分布</div>` +
+    `<div class="rule">小角度摆角不进公式</div>`;
   const rowsEl = $('craftWinRows');
   if (rowsEl) rowsEl.innerHTML = rowsHtml;
   const formulaEl = $('craftWinFormula');
@@ -1378,7 +1411,9 @@ function tryShowWin() {
   const rulesEl = $('craftWinRules');
   if (rulesEl) rulesEl.innerHTML = rulesHtml;
   const textEl = $('craftWinText');
-  if (textEl) textEl.textContent = '对照光电计时，你摸清了摆长如何影响周期。';
+  if (textEl) { textEl.textContent = ''; textEl.hidden = true; }
+  const cvEl = $('craftCv');
+  if (cvEl) cvEl.hidden = true;
   // 兼容遗留 DOM（若仍存在）但不展示 veil
   try {
     if ($('sum-rows')) $('sum-rows').innerHTML = rowsHtml;
@@ -1392,32 +1427,23 @@ function tryShowWin() {
   }
   // Always surface craft-win overlay (emit alone may not open UI)
   if (typeof window.__craftShowWin === 'function') {
-    try { window.__craftShowWin('对照光电计时，你摸清了摆长如何影响周期。'); } catch (eCraft) {}
+    try { window.__craftShowWin(); } catch (eCraft) {}
   }
 }
 
 ['input'].forEach(ev => {
-  sLen.addEventListener(ev, function () { if (won || measuring) return; L = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
-  sAng.addEventListener(ev, function () { if (won || measuring) return; thetaDeg = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
-  sMass.addEventListener(ev, function () { if (won || measuring) return; mass = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
-});
-(function(){
-  var nLen=$('n-len'); if(!nLen||!sLen) return;
-  function apply(){
-    if(won||measuring) return;
-    var v=parseFloat(nLen.value), min=+sLen.min, max=+sLen.max, step=+sLen.step||0.005;
-    if(!isFinite(v)) v=+sLen.value;
-    v=Math.min(max,Math.max(min,v));
-    if(step>0){ var n=Math.round((v-min)/step); v=parseFloat((min+n*step).toFixed(3)); }
-    nLen.value=v.toFixed(3); sLen.value=String(v); L=v;
-    if(lastMeasT!==null) measStale=true;
-    sLen.dispatchEvent(new Event('input',{bubbles:true}));
-    sLen.dispatchEvent(new Event('change',{bubbles:true}));
+  if (sL) sL.addEventListener(ev, function () {
+    if (won || measuring) return;
+    L = +this.value;
+    syncBobTravelLimits();
+    if (lastMeasT !== null) measStale = true;
     syncUI();
-  }
-  nLen.addEventListener('change', apply);
-  nLen.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); apply(); nLen.blur(); } });
-})();
+  });
+  sD.addEventListener(ev, function () { if (won || measuring) return; d = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
+  if (sM) sM.addEventListener(ev, function () { if (won || measuring) return; M = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
+  sAng.addEventListener(ev, function () { if (won || measuring) return; thetaDeg = +this.value; if (lastMeasT !== null) measStale = true; syncUI(); });
+});
+syncBobTravelLimits();
 $('btn-measure').onclick = startMeasure;
 
 $('btn-start').onclick = () => {
@@ -1426,7 +1452,7 @@ $('btn-start').onclick = () => {
   phase = 'puzzle';
   resize();
   Telemetry.log('level_start', { init: Telemetry.snapshot(),
-    target: { T: T_TARGET, half_band: T_HALF, theta_min: TH_MIN } });
+    target: { T: T_TARGET, half_band: T_HALF } });
   syncUI();
 };
 $('btn-done').onclick = () => {
@@ -1798,7 +1824,7 @@ syncUI();
 /* === ea-minset-helper (pendulum-clock) === */
 (function(){
   if (window.__eaMinset) return; window.__eaMinset = true;
-  var AV_LABELS = {"s-len":"摆长","s-angle":"摆角"};
+  var AV_LABELS = {"s-L":"杆长","s-d":"锤位","s-m":"锤质量","s-angle":"摆角"};
   var READING_SEL = "#g-T, #craftGaugeVal, .gauge .gval";
   var READING_LABEL = "周期";
   var ACTION_LABEL = "操作";
@@ -1935,7 +1961,7 @@ syncUI();
         else if (t.closest('#c4-v-grid')) noteAvTune('c4-v');
       }, true);
     }
-    // 单摆主操作是 #btn-measure（div），须计入「操作」次数；勿漏记导致证据常为 0
+    // 复摆主操作是 #btn-measure（div），须计入「操作」次数；勿漏记导致证据常为 0
     var fireSel = '#btn-measure,#btnLaunch,#btn-test,#btn-fire,#btnFire,#btnTest,#fireBtn,#btn-run,#btnRun,#c4-discharge-btn,[data-action="fire"],[data-action="test"],[data-action="launch"]';
     document.addEventListener('click', function(ev){
       var t = ev.target;
