@@ -100,6 +100,7 @@ function analyzeCoupledTouches(events, chapter) {
 
 function isTrapRoute(route) {
   if (!route) return false;
+  if (route.kind === 'weakProbe' || /^弱相关[·•.]/.test(String(route.label || ''))) return false;
   if (route.id === 'trap' || route.warn === 'irrelevant') return true;
   return TRAP_ROUTE_RE.test(route.label || '') || TRAP_ROUTE_RE.test(route.id || '');
 }

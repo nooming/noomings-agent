@@ -313,6 +313,14 @@
       },
       "s-cable": {
         "kgId": "O3",
+        "role": "irrelevant"
+      },
+      "c4-v": {
+        "kgId": "O2",
+        "role": "operation"
+      },
+      "c4-c": {
+        "kgId": "O1",
         "role": "operation"
       }
     },
@@ -321,76 +329,48 @@
   "strategy": {
     "title": "电容实验三：储能与充电",
     "sub": "储能台 · 充放电",
-    "mermaid": "graph TD\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -.->|试探·音量| ProbeCV\nStrategySelect -->|单变量·馈线长度| Route_main\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nRoute_main[控制变量：只改馈线长度]\nTrap[多参盲调]\nRoute_main --> AdjustC\nProbeCV[试探·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n",
+    "mermaid": "graph TD\nStrategySelect -->|单变量·电压| VRoute\nStrategySelect -->|单变量·电容| CRoute\nStrategySelect -->|试探·馈线长度| ProbeCable\nVRoute[单变量·电压]\nCRoute[单变量·电容]\nVRoute --> AdjustV\nCRoute --> AdjustC\nAdjustV[调整电压 V]\nProbeCable[试探·馈线长度]:::stratInvalid\nProbeCable --> ObserveCable{观察有无增益?}:::stratCond\nObserveCable -->|无增益| BackFromCable[回到主策略]:::stratCore\nBackFromCable --> StrategySelect\nAdjust --> Fire\nAdjustBoth --> Fire3[放电]\nAdjustC --> Fire\nAdjustV --> Fire[放电]\nBackFromCV --> StrategySelect\nEnv -->|竞赛模式| ModeCha[竞赛模式：窄区间限次]:::stratCore\nEnv -->|探究模式| ModeExp[探究模式：宽区间无限制]:::stratCore\nFire --> Observe{观察储能?}:::stratCond\nFire3 --> Observe3{观察储能?}:::stratCond\nModeCha --> StrategySelect\nModeExp --> StrategySelect{选择调参策略?}:::stratCond\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|偏高| AdjustC[调整电容 C]\nObserve -->|偏低| AdjustV\nObserve -->|否| Retry[重试]:::stratRetry\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|达标| Win\nObserve3 -->|偏低或偏高| AdjustBoth\nObserve3 -->|否| Retry\nObserve3 -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> Env{选择模式?}:::stratCond\nStrategySelect -->|试探·音量| ProbeCV\nStrategySelect -->|多参盲调| Trap\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nProbeCV[试探·音量]\nTrap --> Fire3\nAdjustBoth[同时调多个参数]\n",
     "routes": [
       {
         "id": "main",
-        "label": "单变量·馈线长度",
+        "label": "单变量·电压",
         "mapsTo": [
           "P1",
-          "O1",
+          "O2",
           "C1",
           "C2",
           "R1"
         ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "warn": "每次只改电压，E=½CV² 里 V 以平方进入储能",
         "score": 1,
         "weight": 1,
         "priorityRank": 1,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
-          "Win",
           "Env",
+          "ModeExp",
           "ModeCha",
-          "Route_main",
-          "AdjustC",
+          "StrategySelect",
+          "VRoute",
+          "AdjustV",
           "Fire",
           "Observe",
           "Adjust",
-          "AdjustV",
+          "Win",
           "Retry"
         ],
         "highlightEdges": [
           [
-            "Route_main",
-            "AdjustC"
-          ],
-          [
-            "AdjustC",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "AdjustC"
-          ],
-          [
-            "Observe",
-            "Adjust"
-          ],
-          [
-            "Adjust",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "AdjustV"
-          ],
-          [
-            "AdjustV",
-            "Fire"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
             "Start",
             "Env"
+          ],
+          [
+            "Env",
+            "ModeExp"
+          ],
+          [
+            "ModeExp",
+            "StrategySelect"
           ],
           [
             "Env",
@@ -402,11 +382,127 @@
           ],
           [
             "StrategySelect",
-            "Route_main"
+            "VRoute"
+          ],
+          [
+            "VRoute",
+            "AdjustV"
+          ],
+          [
+            "AdjustV",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustV"
           ],
           [
             "Fire",
             "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_c",
+        "label": "单变量·电容",
+        "mapsTo": [
+          "P1",
+          "O1",
+          "C1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改电容，E 与 C 成正比",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExp",
+          "ModeCha",
+          "StrategySelect",
+          "CRoute",
+          "AdjustC",
+          "Fire",
+          "Observe",
+          "Adjust",
+          "Win",
+          "Retry"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExp"
+          ],
+          [
+            "ModeExp",
+            "StrategySelect"
+          ],
+          [
+            "Env",
+            "ModeCha"
+          ],
+          [
+            "ModeCha",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "CRoute"
+          ],
+          [
+            "CRoute",
+            "AdjustC"
+          ],
+          [
+            "AdjustC",
+            "Fire"
+          ],
+          [
+            "Observe",
+            "AdjustC"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Retry"
+          ],
+          [
+            "Observe",
+            "Adjust"
+          ],
+          [
+            "Adjust",
+            "Fire"
           ]
         ],
         "highlightFailureBranches": true
@@ -542,6 +638,65 @@
         "tier": "suboptimal",
         "kind": "confoundProbe",
         "highlightFailureBranches": false
+      },
+      {
+        "id": "confound_s_cable",
+        "label": "试探·馈线长度",
+        "mapsTo": [],
+        "warn": "馈线长度不进入 E=½CV²，不影响储能判定，应回到单变量·电压或单变量·电容",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false,
+        "highlightNodes": [
+          "Start",
+          "Env",
+          "ModeExp",
+          "ModeCha",
+          "StrategySelect",
+          "ProbeCable",
+          "ObserveCable",
+          "BackFromCable"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "Env"
+          ],
+          [
+            "Env",
+            "ModeExp"
+          ],
+          [
+            "ModeExp",
+            "StrategySelect"
+          ],
+          [
+            "Env",
+            "ModeCha"
+          ],
+          [
+            "ModeCha",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCable"
+          ],
+          [
+            "ProbeCable",
+            "ObserveCable"
+          ],
+          [
+            "ObserveCable",
+            "BackFromCable"
+          ],
+          [
+            "BackFromCable",
+            "StrategySelect"
+          ]
+        ]
       }
     ]
   },
@@ -566,16 +721,33 @@
     "adjustmentVariables": [
       {
         "id": "AV1",
-        "controlId": "s-cable",
-        "label": "馈线长度",
-        "type": "range",
+        "controlId": "c4-v",
+        "label": "电压",
+        "type": "discrete",
         "role": "primary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "本关仅馈线长度可调；响应形态依赖关卡脚本，标 unknown",
+        "mapsToKg": "O2",
+        "monotonicity": "monotone",
+        "affects": [
+          "C1"
+        ],
+        "notes": "E=½CV²，电压以平方进入储能，对是否落入目标区间更敏感",
         "priorityRank": 1,
-        "responseShape": "unknown"
+        "responseShape": "nonlinear-monotone"
+      },
+      {
+        "id": "AV2",
+        "controlId": "c4-c",
+        "label": "电容",
+        "type": "discrete",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "monotonicity": "monotone",
+        "affects": [
+          "C1"
+        ],
+        "notes": "E 与电容 C 成正比，可单独调节使储能落入目标区间",
+        "priorityRank": 2,
+        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [
@@ -584,12 +756,21 @@
         "controlId": "audio-volume",
         "label": "音量",
         "reason": "混淆/装饰控件：不参与核心过关归因"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "reason": "滑条只改长度读数，不进入 E=½CV²，不影响储能判定",
+        "mapsToKg": "O3"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
-      "CV1"
+      "AV2",
+      "CV1",
+      "CV2"
     ],
     "narrative": {
       "intro": "本关探究：储能公式 E = ½ C V²、电压平方效应",
@@ -606,18 +787,19 @@
         {
           "order": 2,
           "title": "识别调节变量",
-          "body": "可调节：选择模式、调节馈线长度 L；建议控制变量法，每次只改一项。",
+          "body": "可调节：电容 C、充电电压 V；建议控制变量法，每次只改一项。",
           "mapsToKg": [
-            "M1",
-            "O3"
+            "O1",
+            "O2"
           ]
         },
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "混淆项：音量调节（调节主音量，不影响实验参数与过关判定）",
+          "body": "混淆项：音量调节（不影响实验参数与过关判定）；馈线长度 L（只改读数，不进入 E=½CV²，不影响储能判定）",
           "mapsToKg": [
-            "I1"
+            "I1",
+            "O3"
           ]
         },
         {
@@ -658,10 +840,12 @@
       "C = [], ch4Choices_V = []"
     ],
     "independentVariables": [
-      "AV1"
+      "AV1",
+      "AV2"
     ],
     "confoundingVariables": [
-      "CV1"
+      "CV1",
+      "CV2"
     ],
     "dependentVariables": [
       "OV1",
@@ -687,19 +871,20 @@
     "knowledgeSummary": "电容实验三：储能与充电",
     "controls": [
       {
-        "id": "s-cable",
-        "type": "range",
-        "label": "馈线长度",
-        "symbol": "馈线长度",
-        "unit": null,
+        "id": "c4-v",
+        "type": "discrete",
+        "label": "电压",
+        "symbol": "V",
+        "mapsToKg": "O2",
+        "role": "adjustment"
+      },
+      {
+        "id": "c4-c",
+        "type": "discrete",
+        "label": "电容",
+        "symbol": "C",
         "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
+        "role": "adjustment"
       },
       {
         "id": "modeSelect",
@@ -714,6 +899,12 @@
         "controlId": "audio-volume",
         "label": "音量",
         "reason": "混淆/装饰控件：不参与核心过关归因",
+        "uiStrategy": "teach_only"
+      },
+      {
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "reason": "滑条只改长度读数，不进入 E=½CV²，不影响储能判定",
         "uiStrategy": "teach_only"
       }
     ],
@@ -742,6 +933,14 @@
       },
       "s-cable": {
         "kgId": "O3",
+        "role": "irrelevant"
+      },
+      "c4-v": {
+        "kgId": "O2",
+        "role": "operation"
+      },
+      "c4-c": {
+        "kgId": "O1",
         "role": "operation"
       }
     },
@@ -817,11 +1016,25 @@
         "description": "学生调节 modeSelect → KG M1"
       },
       {
-        "type": "tuning",
+        "type": "irrelevant_touch",
         "controlId": "s-cable",
         "kgId": "O3",
+        "required": false,
+        "description": "馈线长度不进入储能公式，触碰不计为调节变量"
+      },
+      {
+        "type": "tuning",
+        "controlId": "c4-v",
+        "kgId": "O2",
         "required": true,
-        "description": "学生调节 s-cable → KG O3"
+        "description": "学生选择充电电压 V → KG O2"
+      },
+      {
+        "type": "tuning",
+        "controlId": "c4-c",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生选择电容量 C → KG O1"
       }
     ],
     "dtCheckpoints": [

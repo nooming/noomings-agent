@@ -353,7 +353,7 @@
   "strategy": {
     "title": "回旋加速器 · 探究轨道半径",
     "sub": "加速舱 · 回旋半径",
-    "mermaid": "graph TD\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|单变量·腔室气压| Route_main_s_chamber_p\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nRoute_main_s_chamber_p[控制变量：只改腔室气压]\nTrap[多参盲调]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nRoute_main_s_chamber_p --> Adjust\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Retest\n",
+    "mermaid": "graph TD\nStrategySelect -->|试探·腔室气压| ProbeP\nProbeP[试探·腔室气压]:::stratInvalid\nProbeP --> ObserveP{观察有无增益?}:::stratCond\nObserveP -->|无增益| BackFromP[回到主策略]\nBackFromP --> StrategySelect\nBackFromCV --> ModeSelect\nFire1 --> Observe1{观察半径偏大/偏小?}:::stratCond\nFire2 --> Observe2{观察半径偏大/偏小?}:::stratCond\nModeSelect -->|竞赛模式| ChallengeCore[竞赛挑战：限次命中提取环]:::stratResult\nModeSelect -->|探究模式| ExploreCore[自由探究：观察半径变化]:::stratCore\nModeSelect -.->|试探·无关控件| ProbeCV[拧混淆·无关控件]:::stratInvalid\nObserve1 -->|否| Continue1[继续观察]\nObserve1 -->|是| Retry1[提示偏差]:::stratRetry\nObserve2 -->|否| CheckGoal{半径在目标环带?}:::stratCond\nObserve2 -->|是| Retry2[提示偏差]:::stratRetry\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -.->|试探·无关控件| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·速度| Tune1\nStrategySelect -->|单变量·磁场| Tune2\nTune1 --> Fire1[发射粒子]\nTune2 --> Fire2[发射粒子]\nExploreCore --> Tune1[调整B和v]\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nStart([开始]):::stratStart\nRetest[再测]\nStrategySelect{选择调参策略?}:::stratCond\nAdjust[按观察单变量微调]\nTrap[多参盲调]\nAdjust --> Retest\nChallengeCore --> Tune2[调整B和v]\nObserve -->|偏远/未命中| Adjust\nObserve -->|偏近/不足| Adjust\nObserve -->|达标| Win\nRetest --> Observe\nRetry1 --> Tune1\nRetry2 --> Tune2\nRetry3 --> Tune2\nTune1 --> Adjust\nTune2 --> Adjust\nCheckGoal -->|是| Win2[过关]:::stratResult\nContinue1 --> Win1[过关]:::stratResult\nCheckGoal -->|否| Retry3[未达标重试]:::stratRetry\nExploreCore --> StrategySelect\nTrap --> Retest\n",
     "routes": [
       {
         "id": "main",
@@ -495,75 +495,6 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "main_s-chamber-p",
-        "label": "单变量·腔室气压",
-        "mapsTo": [
-          "P1",
-          "O1",
-          "C1",
-          "C2",
-          "R1",
-          "I1"
-        ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.7,
-        "weight": 0.7,
-        "priorityRank": 3,
-        "highlightNodes": [
-          "Start",
-          "StrategySelect",
-          "Win",
-          "ChallengeCore",
-          "Win2",
-          "Win1",
-          "ModeSelect",
-          "ExploreCore",
-          "Route_main_s_chamber_p",
-          "Adjust",
-          "Retest",
-          "Observe"
-        ],
-        "highlightEdges": [
-          [
-            "Start",
-            "ModeSelect"
-          ],
-          [
-            "ModeSelect",
-            "ExploreCore"
-          ],
-          [
-            "ExploreCore",
-            "StrategySelect"
-          ],
-          [
-            "StrategySelect",
-            "Route_main_s_chamber_p"
-          ],
-          [
-            "Route_main_s_chamber_p",
-            "Adjust"
-          ],
-          [
-            "Adjust",
-            "Retest"
-          ],
-          [
-            "Retest",
-            "Observe"
-          ],
-          [
-            "Observe",
-            "Win"
-          ],
-          [
-            "Observe",
-            "Adjust"
-          ]
-        ],
-        "highlightFailureBranches": true
-      },
-      {
         "id": "trap",
         "label": "多参盲调",
         "mapsTo": [
@@ -670,6 +601,56 @@
         "tier": "suboptimal",
         "kind": "confoundProbe",
         "highlightFailureBranches": false
+      },
+      {
+        "id": "confound_s_chamber_p",
+        "label": "试探·腔室气压",
+        "mapsTo": [],
+        "warn": "腔室气压不进 r=mv/(qB)，试探无增益，应回到单变量·速度或单变量·磁场",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "ExploreCore",
+          "StrategySelect",
+          "ProbeP",
+          "ObserveP",
+          "BackFromP"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "ExploreCore"
+          ],
+          [
+            "ExploreCore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeP"
+          ],
+          [
+            "ProbeP",
+            "ObserveP"
+          ],
+          [
+            "ObserveP",
+            "BackFromP"
+          ],
+          [
+            "BackFromP",
+            "StrategySelect"
+          ]
+        ]
       }
     ]
   },
@@ -715,19 +696,6 @@
         "notes": "rank2：B 使 r∝1/B 非线性单调，主方程对偶量",
         "priorityRank": 2,
         "responseShape": "nonlinear-monotone"
-      },
-      {
-        "id": "AV3",
-        "controlId": "s-chamber-p",
-        "label": "腔室气压",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "monotone",
-        "affects": [],
-        "notes": "rank3：腔室气压不进 r 公式，近无效最低",
-        "priorityRank": 3,
-        "responseShape": "linear-approx"
       }
     ],
     "confoundingVariables": [
@@ -736,14 +704,21 @@
         "controlId": null,
         "label": "无关控件",
         "reason": "与过关判定无关的装饰或误导项"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-chamber-p",
+        "label": "腔室气压",
+        "reason": "不进 r=mv/(qB)，只改观感，不影响轨道半径与过关",
+        "mapsToKg": "I1"
       }
     ],
     "inquiryFlow": [
       "KP1",
       "AV1",
       "AV2",
-      "AV3",
-      "CV1"
+      "CV1",
+      "CV2"
     ],
     "narrative": {
       "intro": "本关探究：探究: 观察半径变化、竞赛: 限次命中环带",
@@ -770,9 +745,8 @@
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "混淆项：腔室气压p（腔室气压滑条，不影响轨道半径判定）；腔室气压p（腔室气压滑条，不影响轨道半径判定）",
+          "body": "混淆项：腔室气压 p（滑条不进 r=mv/(qB)，不影响轨道半径判定）",
           "mapsToKg": [
-            "I1",
             "I1"
           ]
         },
@@ -805,11 +779,11 @@
     ],
     "independentVariables": [
       "AV1",
-      "AV2",
-      "AV3"
+      "AV2"
     ],
     "confoundingVariables": [
-      "CV1"
+      "CV1",
+      "CV2"
     ],
     "dependentVariables": [
       "OV1"
@@ -862,21 +836,6 @@
         }
       },
       {
-        "id": "s-chamber-p",
-        "type": "range",
-        "label": "腔室气压",
-        "symbol": "腔室气压",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
         "id": "modeSelect",
         "type": "discrete",
         "label": "选择模式",
@@ -890,9 +849,15 @@
         "label": "无关控件",
         "reason": "与过关判定无关的装饰或误导项",
         "uiStrategy": "narrative_only"
+      },
+      {
+        "controlId": "s-chamber-p",
+        "label": "腔室气压",
+        "reason": "不进 r=mv/(qB)，只改观感，不影响轨道半径与过关",
+        "uiStrategy": "teach_only"
       }
     ],
-    "confoundingMustNotBePrimarySlider": false,
+    "confoundingMustNotBePrimarySlider": true,
     "constraints": [
       {
         "kgId": "C1",

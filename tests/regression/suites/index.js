@@ -44,6 +44,7 @@ const SUITES = {
     { name: 'strategy-route-highlight-audit', module: './parts/strategy-route-highlight-audit' },
     { name: 'strategy-sparse-highlight-seed', module: './parts/strategy-sparse-highlight-seed' },
     { name: 'strategy-confound-visual-repair', module: './parts/strategy-confound-visual-repair' },
+    { name: 'strategy-priority-weak-probe', module: './parts/strategy-priority-weak-probe' },
     { name: 'strategy-segment-score', module: './parts/strategy-segment-score' },
     { name: 'strategy-switch-awareness', module: './parts/strategy-switch-awareness' },
     { name: 'strategy-path-summary', module: './parts/strategy-path-summary' },

@@ -4,13 +4,20 @@
  * Browser + Node. Does not mutate chapter validation labels until applied to a display copy.
  */
 (function (root) {
+  /** Weak correlation: kind weakProbe, or label 弱相关·… — not a confound bypass. */
+  function isWeakProbeRoute(route) {
+    return route?.kind === 'weakProbe'
+      || /^弱相关[·•.]/.test(String(route?.label || ''));
+  }
+
   function isConfoundProbeRoute(route) {
+    if (isWeakProbeRoute(route)) return false;
     return route?.kind === 'confoundProbe'
       || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
-    if (isConfoundProbeRoute(route)) return false;
+    if (isConfoundProbeRoute(route) || isWeakProbeRoute(route)) return false;
     return route?.tier === 'suboptimal'
       || /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
@@ -21,9 +28,11 @@
       .replace(/\s*·\s*优先\d+\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*陷阱\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*旁路\s*·\s*[\d.]+$/u, '')
+      .replace(/\s*·\s*弱相关\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*优先\d+$/u, '')
       .replace(/\s*·\s*陷阱$/u, '')
       .replace(/\s*·\s*旁路$/u, '')
+      .replace(/\s*·\s*弱相关$/u, '')
       .trim();
   }
 
@@ -39,13 +48,31 @@
     return stripPriorityAnnotation(label).replace(/\s+/g, '');
   }
 
+  /** Preferred AV, then weak, then confound bypass, then trap. */
+  function prioritySortTier(meta) {
+    if (meta?.weak) return 2;
+    if (meta?.confound) return 3;
+    if (meta?.trap) return 4;
+    return 1;
+  }
+
   function routePriorityMeta(route) {
+    if (isWeakProbeRoute(route)) {
+      return {
+        rank: route?.priorityRank != null ? Number(route.priorityRank) : 80,
+        score: route?.score != null ? Number(route.score) : 0.5,
+        trap: false,
+        confound: false,
+        weak: true,
+      };
+    }
     if (isConfoundProbeRoute(route)) {
       return {
         rank: 98,
         score: route?.score != null ? Number(route.score) : 0.15,
         trap: false,
         confound: true,
+        weak: false,
       };
     }
     if (isTrapRoute(route)) {
@@ -54,25 +81,28 @@
         score: route?.score != null ? Number(route.score) : 0.2,
         trap: true,
         confound: false,
+        weak: false,
       };
     }
     const rank = route?.priorityRank != null ? Number(route.priorityRank) : 50;
     const score = route?.score != null
       ? Number(route.score)
       : (route?.weight != null ? Number(route.weight) : 0.75);
-    return { rank, score, trap: false, confound: false };
+    return { rank, score, trap: false, confound: false, weak: false };
   }
 
   function formatPriorityEdgeLabel(route) {
     const meta = routePriorityMeta(route);
     const short = shortDisplayLabel(route?.label || '');
     const score = (Number.isFinite(meta.score) ? meta.score : 0).toFixed(2);
+    if (meta.weak) return `${short} · 弱相关 · ${score}`;
     if (meta.confound) return `${short} · 旁路 · ${score}`;
     if (meta.trap) return `${short} · 陷阱 · ${score}`;
     return `${short} · 优先${meta.rank} · ${score}`;
   }
 
   function strokeWidthForMeta(meta) {
+    if (meta.weak) return 2;
     if (meta.confound) return 1.2;
     if (meta.trap) return 1.4;
     if (meta.rank <= 1) return 4.2;
@@ -82,6 +112,7 @@
   }
 
   function strokeColorForMeta(meta) {
+    if (meta.weak) return '#c2410c';
     if (meta.confound) return '#a16207';
     if (meta.trap) return '#dc2626';
     if (meta.rank <= 1) return '#0f766e';
@@ -147,8 +178,7 @@
       .sort((a, b) => {
         const ma = routePriorityMeta(a);
         const mb = routePriorityMeta(b);
-        // AV first, then confound bypass, then trap
-        const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+        const tier = prioritySortTier;
         if (tier(ma) !== tier(mb)) return tier(ma) - tier(mb);
         if (ma.rank !== mb.rank) return ma.rank - mb.rank;
         return String(a.label || '').localeCompare(String(b.label || ''), 'zh');
@@ -159,7 +189,7 @@
     const meta = routePriorityMeta(route);
     const newLabel = formatPriorityEdgeLabel(route);
     let s = String(line);
-    // Swap solid → dotted for trap / confound probe
+    // Dotted only for trap / confound. Weak stays solid.
     if (meta.trap || meta.confound) {
       s = s.replace(/-->/g, '-.->').replace(/-\.-\.->/g, '-.->');
     } else {
@@ -228,7 +258,7 @@
         const ib = ranked.indexOf(b.route);
         if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
       }
-      const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+      const tier = prioritySortTier;
       if (tier(a.meta) !== tier(b.meta)) return tier(a.meta) - tier(b.meta);
       if (a.meta.rank !== b.meta.rank) return a.meta.rank - b.meta.rank;
       return a.index - b.index;
@@ -283,6 +313,7 @@
 
   const api = {
     isTrapRoute,
+    isWeakProbeRoute,
     isConfoundProbeRoute,
     stripPriorityAnnotation,
     shortDisplayLabel,

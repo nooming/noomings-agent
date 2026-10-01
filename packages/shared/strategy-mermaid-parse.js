@@ -846,6 +846,7 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   
   function isConfoundProbeRouteLike(route) {
+    if (route?.kind === 'weakProbe' || /^弱相关[·•.]/.test(String(route?.label || ''))) return false;
     return route?.kind === 'confoundProbe'
       || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
@@ -874,6 +875,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       .replace(/\s*·\s*优先\d+(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*陷阱(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*旁路(?:\s*·\s*[\d.]+)?$/u, '')
+      .replace(/\s*·\s*弱相关(?:\s*·\s*[\d.]+)?$/u, '')
       // 「滑轮质量（改 I）」≈「滑轮质量·改I」；去掉分隔符后再比
       .replace(/[（(]([^）)]*)[）)]/g, '·$1')
       .replace(/[\/／]/g, '')

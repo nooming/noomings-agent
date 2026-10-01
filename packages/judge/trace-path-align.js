@@ -126,6 +126,7 @@ function buildPathSteps(events, chapter) {
 
 function isConfoundProbeRoute(r) {
   if (!r) return false;
+  if (r.kind === 'weakProbe' || /^弱相关[·•.]/.test(String(r.label || ''))) return false;
   if (r.kind === 'confoundProbe' || r.warn === 'irrelevant') return true;
   return /试探|旁路|confound|irrelevant/i.test(`${r.id || ''}${r.label || ''}`);
 }

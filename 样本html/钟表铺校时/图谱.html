@@ -54,15 +54,18 @@ body{background:var(--bg-body);color:var(--text-main);font-family:var(--font-ui)
 #legend-items .prio-line{height:0;flex:0 0 28px;border-top:3px solid #0f766e;}
 #legend-items .prio-line.mid{border-top-width:2.5px;border-top-color:#0369a1;}
 #legend-items .prio-line.low{border-top-width:2px;border-top-color:#64748b;}
+#legend-items .prio-line.weak{border-top-width:2px;border-top-color:#c2410c;}
 #legend-items .prio-line.trap{border-top:2px dashed #dc2626;}
 #legend-items .prio-line.confound{border-top:2px dashed #a16207;}
 #legend-items .route-btn .route-score{float:right;opacity:0.75;font-variant-numeric:tabular-nums;}
 #legend-items .route-btn.prio-1{border-left:3px solid #0f766e;}
 #legend-items .route-btn.prio-2{border-left:3px solid #0369a1;}
 #legend-items .route-btn.prio-3{border-left:3px solid #64748b;}
+#legend-items .route-btn.weak{border-left:3px solid #c2410c;}
 #strategy-mermaid svg path.prio-edge-high{stroke:#0f766e!important;stroke-width:4.2px!important;}
 #strategy-mermaid svg path.prio-edge-mid{stroke:#0369a1!important;stroke-width:3px!important;}
 #strategy-mermaid svg path.prio-edge-low{stroke:#64748b!important;stroke-width:2.2px!important;}
+#strategy-mermaid svg path.prio-edge-weak{stroke:#c2410c!important;stroke-width:2px!important;}
 #strategy-mermaid svg path.prio-edge-trap{stroke:#dc2626!important;stroke-width:1.5px!important;stroke-dasharray:7 5;}
 #strategy-mermaid svg path.prio-edge-confound{stroke:#a16207!important;stroke-width:1.3px!important;stroke-dasharray:7 5;}
 #tabs{background:var(--bg-header);border-bottom:1px solid var(--accent-dim);display:flex;flex-wrap:wrap;gap:2px;padding:7px 16px;flex-shrink:0;}
@@ -115,6 +118,7 @@ body{background:var(--bg-body);color:var(--text-main);font-family:var(--font-ui)
 #info .route-teach-sec p:last-child{margin-bottom:0;}
 #info .route-badge-cv{background:#a16207;}
 #info .route-badge-trap{background:#dc2626;}
+#info .route-badge-weak{background:#c2410c;}
 #info .route-teach-kg{margin-top:2px;}
 #info .route-teach-kg summary{cursor:pointer;font-size:11px;color:var(--text-muted);list-style:none;font-family:var(--font-ui);}
 #info .route-teach-kg summary::-webkit-details-marker{display:none;}
@@ -1101,6 +1105,7 @@ function isSuccessBranchEdge(edge, resultIds) {
 
   
   function isConfoundProbeRouteLike(route) {
+    if (route?.kind === 'weakProbe' || /^弱相关[·•.]/.test(String(route?.label || ''))) return false;
     return route?.kind === 'confoundProbe'
       || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
@@ -1129,6 +1134,7 @@ function isSuccessBranchEdge(edge, resultIds) {
       .replace(/\s*·\s*优先\d+(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*陷阱(?:\s*·\s*[\d.]+)?$/u, '')
       .replace(/\s*·\s*旁路(?:\s*·\s*[\d.]+)?$/u, '')
+      .replace(/\s*·\s*弱相关(?:\s*·\s*[\d.]+)?$/u, '')
       // 「滑轮质量（改 I）」≈「滑轮质量·改I」；去掉分隔符后再比
       .replace(/[（(]([^）)]*)[）)]/g, '·$1')
       .replace(/[\/／]/g, '')
@@ -1842,13 +1848,20 @@ function expandRouteHighlight(route, mermaidBody, opts) {
  * Browser + Node. Does not mutate chapter validation labels until applied to a display copy.
  */
 (function (root) {
+  /** Weak correlation: kind weakProbe, or label 弱相关·… — not a confound bypass. */
+  function isWeakProbeRoute(route) {
+    return route?.kind === 'weakProbe'
+      || /^弱相关[·•.]/.test(String(route?.label || ''));
+  }
+
   function isConfoundProbeRoute(route) {
+    if (isWeakProbeRoute(route)) return false;
     return route?.kind === 'confoundProbe'
       || /试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
   }
 
   function isTrapRoute(route) {
-    if (isConfoundProbeRoute(route)) return false;
+    if (isConfoundProbeRoute(route) || isWeakProbeRoute(route)) return false;
     return route?.tier === 'suboptimal'
       || /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`);
   }
@@ -1859,9 +1872,11 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       .replace(/\s*·\s*优先\d+\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*陷阱\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*旁路\s*·\s*[\d.]+$/u, '')
+      .replace(/\s*·\s*弱相关\s*·\s*[\d.]+$/u, '')
       .replace(/\s*·\s*优先\d+$/u, '')
       .replace(/\s*·\s*陷阱$/u, '')
       .replace(/\s*·\s*旁路$/u, '')
+      .replace(/\s*·\s*弱相关$/u, '')
       .trim();
   }
 
@@ -1877,13 +1892,31 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     return stripPriorityAnnotation(label).replace(/\s+/g, '');
   }
 
+  /** Preferred AV, then weak, then confound bypass, then trap. */
+  function prioritySortTier(meta) {
+    if (meta?.weak) return 2;
+    if (meta?.confound) return 3;
+    if (meta?.trap) return 4;
+    return 1;
+  }
+
   function routePriorityMeta(route) {
+    if (isWeakProbeRoute(route)) {
+      return {
+        rank: route?.priorityRank != null ? Number(route.priorityRank) : 80,
+        score: route?.score != null ? Number(route.score) : 0.5,
+        trap: false,
+        confound: false,
+        weak: true,
+      };
+    }
     if (isConfoundProbeRoute(route)) {
       return {
         rank: 98,
         score: route?.score != null ? Number(route.score) : 0.15,
         trap: false,
         confound: true,
+        weak: false,
       };
     }
     if (isTrapRoute(route)) {
@@ -1892,25 +1925,28 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         score: route?.score != null ? Number(route.score) : 0.2,
         trap: true,
         confound: false,
+        weak: false,
       };
     }
     const rank = route?.priorityRank != null ? Number(route.priorityRank) : 50;
     const score = route?.score != null
       ? Number(route.score)
       : (route?.weight != null ? Number(route.weight) : 0.75);
-    return { rank, score, trap: false, confound: false };
+    return { rank, score, trap: false, confound: false, weak: false };
   }
 
   function formatPriorityEdgeLabel(route) {
     const meta = routePriorityMeta(route);
     const short = shortDisplayLabel(route?.label || '');
     const score = (Number.isFinite(meta.score) ? meta.score : 0).toFixed(2);
+    if (meta.weak) return `${short} · 弱相关 · ${score}`;
     if (meta.confound) return `${short} · 旁路 · ${score}`;
     if (meta.trap) return `${short} · 陷阱 · ${score}`;
     return `${short} · 优先${meta.rank} · ${score}`;
   }
 
   function strokeWidthForMeta(meta) {
+    if (meta.weak) return 2;
     if (meta.confound) return 1.2;
     if (meta.trap) return 1.4;
     if (meta.rank <= 1) return 4.2;
@@ -1920,6 +1956,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
   }
 
   function strokeColorForMeta(meta) {
+    if (meta.weak) return '#c2410c';
     if (meta.confound) return '#a16207';
     if (meta.trap) return '#dc2626';
     if (meta.rank <= 1) return '#0f766e';
@@ -1985,8 +2022,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
       .sort((a, b) => {
         const ma = routePriorityMeta(a);
         const mb = routePriorityMeta(b);
-        // AV first, then confound bypass, then trap
-        const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+        const tier = prioritySortTier;
         if (tier(ma) !== tier(mb)) return tier(ma) - tier(mb);
         if (ma.rank !== mb.rank) return ma.rank - mb.rank;
         return String(a.label || '').localeCompare(String(b.label || ''), 'zh');
@@ -1997,7 +2033,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
     const meta = routePriorityMeta(route);
     const newLabel = formatPriorityEdgeLabel(route);
     let s = String(line);
-    // Swap solid → dotted for trap / confound probe
+    // Dotted only for trap / confound. Weak stays solid.
     if (meta.trap || meta.confound) {
       s = s.replace(/-->/g, '-.->').replace(/-\.-\.->/g, '-.->');
     } else {
@@ -2066,7 +2102,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
         const ib = ranked.indexOf(b.route);
         if (ia >= 0 && ib >= 0 && ia !== ib) return ia - ib;
       }
-      const tier = (m) => (m.confound ? 2 : (m.trap ? 3 : 1));
+      const tier = prioritySortTier;
       if (tier(a.meta) !== tier(b.meta)) return tier(a.meta) - tier(b.meta);
       if (a.meta.rank !== b.meta.rank) return a.meta.rank - b.meta.rank;
       return a.index - b.index;
@@ -2121,6 +2157,7 @@ function expandRouteHighlight(route, mermaidBody, opts) {
 
   const api = {
     isTrapRoute,
+    isWeakProbeRoute,
     isConfoundProbeRoute,
     stripPriorityAnnotation,
     shortDisplayLabel,
@@ -2206,6 +2243,7 @@ const GraphViewer = (function () {
     { cls: 'high', label: '高优（优先1）· 粗实线' },
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
+    { cls: 'weak', label: '弱相关 · 中实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
     { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
@@ -2501,7 +2539,8 @@ function resolveRouteVarContext(route) {
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
     .replace(/^试探(?:混淆)?[·•.]/, '')
-    .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
+    .replace(/^弱相关[·•.]/, '')
+    .replace(/\s*·\s*(优先\d+|陷阱|旁路|弱相关).*$/u, '')
     .trim();
 
   const avHit = avs.find(a => {
@@ -2547,6 +2586,10 @@ function buildRouteTeachingHtml(route) {
       : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
+  } else if (meta?.weak) {
+    badge = student
+      ? '<span class="i-badge route-badge-weak">弱相关</span>'
+      : `<span class="i-badge route-badge-weak">弱相关${score != null ? ` · 得分 ${score}` : ''}</span>`;
   } else if (meta && meta.rank <= 20) {
     badge = student
       ? '<span class="i-badge layer-play">探究途径</span>'
@@ -2574,6 +2617,9 @@ function buildRouteTeachingHtml(route) {
       const ctrl = cvHit?.controlId ? `（控件 ${escText(cvHit.controlId)}）` : '';
       adjustBlock = `<p>本路径试探的是<strong>${escText(cvName)}</strong>${ctrl}。它通常是装饰/无关量，用来对照「拧了有没有用」。</p>`;
     }
+  } else if (meta?.weak || route.kind === 'weakProbe') {
+    const name = shortLab || '该变量';
+    adjustBlock = `<p>本路径调节<strong>${escText(name)}</strong>。它有一点增益，但替不了主变量，看完应回到单变量主路径。</p>`;
   } else if (meta?.trap || /盲调|多参|trap/i.test(`${route.id || ''}${route.label || ''}`)) {
     adjustBlock = '<p>本路径会<strong>同时拧多个滑条</strong>，而不是每次只改一个变量。</p>';
   } else if (avHit) {
@@ -2591,6 +2637,8 @@ function buildRouteTeachingHtml(route) {
       whyBits.push('这是对照路径：用来检验某个控件是否真能帮你过关。');
     } else if (meta?.trap) {
       whyBits.push('同时拧多量时现象难归因；可对照「每次只改一项」的路径看看差异。');
+    } else if (meta?.weak) {
+      whyBits.push('这个量拧了会有一点变化，但通常靠它过不了关。');
     } else {
       whyBits.push('用控制变量法：固定其余，只改一项，观察结果是否跟着变。');
       if (avHit?.monotonicity) {
@@ -2605,6 +2653,9 @@ function buildRouteTeachingHtml(route) {
   } else if (meta?.trap) {
     whyBits.push(`陷阱得分约 <strong>${score ?? '0.20'}</strong>：效率低、难归因，图谱里用虚线警示。`);
     whyBits.push('分数越低越不建议作为常规探究顺序；对比高优实线路径即可。');
+  } else if (meta?.weak) {
+    whyBits.push(`弱相关得分约 <strong>${score ?? '0.50'}</strong>：有增益，但低于单变量主路径，图谱用中等实线标出。`);
+    whyBits.push('看完现象后回到优先实线，不要把它当成主策略。');
   } else {
     if (meta?.rank != null) {
       whyBits.push(`优先序 <strong>${meta.rank}</strong>：数字越小越建议先试（优先 1 通常是最有信息量的单变量）。`);
@@ -2636,6 +2687,10 @@ function buildRouteTeachingHtml(route) {
       : '误区：把混淆量当成「还没拧够的关键参数」反复试，会浪费发射次数、也学不到因果。');
   } else if (meta?.trap) {
     trapBits.push('误区：多滑条一起拧，现象变了却说不清是谁导致的；失败后也难复盘。');
+  } else if (meta?.weak) {
+    trapBits.push(student
+      ? '提示：这个量有一点用，但单靠它很难过关，记得换回主要变量。'
+      : '误区：把弱相关量当成主变量反复拧，会耽误真正能过关的单变量。');
   } else {
     trapBits.push(student
       ? '提示：还没看清这一变量的作用时，先不要同时改很多控件。'
@@ -2876,10 +2931,11 @@ function applyPriorityEdgeStyles() {
     const key = edgeKeyFromPathGroup(group);
     const meta = key && styleMap.get(key);
     pathsInEdgeGroup(group).forEach(pathEl => {
-      pathEl.classList.remove('prio-edge-high', 'prio-edge-mid', 'prio-edge-low', 'prio-edge-trap', 'prio-edge-confound');
+      pathEl.classList.remove('prio-edge-high', 'prio-edge-mid', 'prio-edge-low', 'prio-edge-weak', 'prio-edge-trap', 'prio-edge-confound');
       if (!meta) return;
       let cls = 'prio-edge-low';
-      if (meta.confound) cls = 'prio-edge-confound';
+      if (meta.weak) cls = 'prio-edge-weak';
+      else if (meta.confound) cls = 'prio-edge-confound';
       else if (meta.trap) cls = 'prio-edge-trap';
       else if (meta.rank <= 1) cls = 'prio-edge-high';
       else if (meta.rank === 2) cls = 'prio-edge-mid';
@@ -3325,9 +3381,11 @@ function updateLegend() {
     const routeBtns = ranked.map((r, i) => {
       const meta = prioApi?.routePriorityMeta ? prioApi.routePriorityMeta(r) : { rank: r.priorityRank, score: r.score, trap: false };
       const scoreTxt = meta?.score != null ? Number(meta.score).toFixed(2) : '';
-      const prioCls = meta?.confound
-        ? 'confound'
-        : (meta?.trap ? 'warn' : (meta?.rank <= 3 ? `prio-${meta.rank}` : ''));
+      const prioCls = meta?.weak
+        ? 'weak'
+        : meta?.confound
+          ? 'confound'
+          : (meta?.trap ? 'warn' : (meta?.rank <= 3 ? `prio-${meta.rank}` : ''));
       const label = prioApi?.formatPriorityEdgeLabel ? prioApi.formatPriorityEdgeLabel(r) : r.label;
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
@@ -3816,7 +3874,7 @@ function clearInfoPanel() {
 </script>
 <script>
 (function () {
-  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调杆长/锤位/锤质量/摆角 | O1 | operation | 调节杆长L、锤位d、锤质量M、摆角θ₀ |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究小角度复摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调杆长/锤位/锤质量/摆角","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调杆长L、锤位d、锤质量M，并可拧摆角θ₀（画面幅度）；锤心须在杆上 d≤L"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"小角度等时","group":"constraint","layer":"play","level":6,"r":22,"desc":"小角度下振幅不进周期公式；过关只看周期是否在目标带 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"复摆小角度公式 T = 2π√(I/(M_tot g d_cm)) = 2π√(L_eq/g)；杆长与锤位改变 I 与质心"},{"id":"S2","label":"杆长与锤位","group":"core","layer":"teach","level":0,"r":22,"desc":"有质量摆杆可调长度 + 可滑摆锤；杆长与锤位都会明显改变 I 与质心"},{"id":"S3","label":"小角度等时","group":"method","layer":"teach","level":0,"r":22,"desc":"振幅不进公式；拧摆角周期不变，摆角是无关变量（CV）"},{"id":"S4","label":"质量分布","group":"core","layer":"teach","level":0,"r":22,"desc":"锤质量弱相关：只改M会改变质量分布，周期只动一点，替不了调杆长/锤位；杆长与锤位都会明显改变 I 与质心；小角度摆角不进公式"},{"id":"S5","label":"等效摆长","group":"method","layer":"teach","level":0,"r":22,"desc":"L_eq = I/(M_tot d_cm)，形似单摆公式，但 L_eq 不是杆长"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"摆角为无关变量：影响画面幅度，不进入 period()，不进过关公式"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调杆长/锤位/锤质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调杆长/锤位/锤质量/摆角","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调杆长/锤位/锤质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"周期达标?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"（已取消最小摆幅约束）","children":[{"n":"调杆长/锤位/锤质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调杆长/锤位/锤质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","mermaid":"graph TD\nAdjustAngle --> Fire\nAdjustD --> Fire[启动计时]\nAdjustL --> Fire\nAdjustM --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nBackFromMass --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustD\nObserve -->|偏快| AdjustD\nObserve -->|偏慢| AdjustL\nObserve -->|偏快| AdjustL\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveMass -->|有增益但替不了主变量| BackFromMass[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nProbeMass --> ObserveMass{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|试探·摆角| AngleRoute\nStrategySelect -->|单变量·杆长| LRoute\nStrategySelect -->|单变量·锤位| DRoute\nStrategySelect -->|弱相关·锤质量| MassRoute\nStrategySelect -.->|试探·摆角CV| ProbeCV\nStrategySelect -.->|弱相关·锤质量| ProbeMass\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整摆角]\nLRoute --> AdjustL[调整杆长]\nDRoute --> AdjustD[调整锤位]\nMassRoute --> AdjustM[调整锤质量]\nProbeCV[试探·摆角]\nProbeMass[弱相关·锤质量]\nAngleRoute[试探·摆角]\nLRoute[单变量·杆长]\nDRoute[单变量·锤位]\nMassRoute[弱相关·锤质量]\nTrapRoute[多参盲调]\nTrapRoute --> Fire","routes":[{"id":"main_s-L","label":"单变量·杆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","LRoute","AdjustL","Fire","Observe","Retry","Win","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","LRoute"],["LRoute","AdjustL"],["AdjustL","Fire"],["Fire","Observe"],["Observe","AdjustL"],["Observe","Win"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-d","label":"单变量·锤位","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","DRoute","AdjustD","Fire","Observe","Retry","Win","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","DRoute"],["DRoute","AdjustD"],["AdjustD","Fire"],["Fire","Observe"],["Observe","AdjustD"],["Observe","Win"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","TrapRoute","Fire","Observe","Retry","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","TrapRoute"],["TrapRoute","Fire"],["Fire","Observe"],["Observe","Retry"],["Retry","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true,"tier":"suboptimal"},{"id":"confound_s_angle","label":"试探·摆角","mapsTo":[],"warn":"试探摆角通常无增益（小角度等时），应回到单变量·杆长或单变量·锤位主路径","score":0.2,"weight":0.2,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AngleRoute","AdjustAngle","Fire","Observe","Retry","ProbeCV","ObserveCV","BackFromCV","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","AngleRoute"],["AngleRoute","AdjustAngle"],["AdjustAngle","Fire"],["Fire","Observe"],["Observe","Retry"],["Retry","Fire"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false},{"id":"weak_s_m","label":"弱相关·锤质量","mapsTo":["S4"],"warn":"锤质量弱相关：有增益但替不了杆长/锤位，应回到单变量·杆长或单变量·锤位主路径","score":0.5,"weight":0.5,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","MassRoute","AdjustM","ProbeMass","ObserveMass","BackFromMass","Fire","Observe"],"highlightEdges":[["StrategySelect","MassRoute"],["MassRoute","AdjustM"],["AdjustM","Fire"],["Fire","Observe"],["StrategySelect","ProbeMass"],["ProbeMass","ObserveMass"],["ObserveMass","BackFromMass"],["BackFromMass","StrategySelect"]],"tier":"suboptimal","kind":"weakProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-d":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"s-L":{"kgId":"O1","role":"operation"},"s-m":{"kgId":"S4","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-d"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(I/(M_tot g d_cm))"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV0","controlId":"s-L","label":"杆长","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["T"],"notes":"可调杆长；默认 d、M 下约 L≈1.90 m 可进探究带；缩短时钳制 d≤L","priorityRank":1,"responseShape":"nonlinear-monotone"},{"id":"AV1","controlId":"s-d","label":"锤位","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["T"],"notes":"锤位可进带；须 d≤L；侧栏不显示 L_eq","priorityRank":2,"responseShape":"nonlinear-monotone"},{"id":"AV2","controlId":"s-m","label":"锤质量","type":"range","role":"secondary","mapsToKg":"S4","monotonicity":"weak","affects":["T"],"notes":"弱相关：默认 L、d 下扫全范围进不了探究带","priorityRank":3,"responseShape":"weak-nonlinear"}],"confoundingVariables":[{"id":"CV1","controlId":"s-angle","label":"摆角","reason":"小角度等时：振幅不进公式，仅影响画面摆动幅度"}],"inquiryFlow":["KP1","AV0","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要快上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"可调杆长、锤位与锤质量，摸清周期怎么变；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则改参再测，对照计时继续校。","mapsToKg":["C5","O1"]},{"order":4,"title":"过关","body":"周期在目标带，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"实测周期","symbol":"T","unit":"s","role":"primary","source":"measure"},{"id":"OV2","label":"等效摆长","symbol":"L_eq","unit":"m","role":"secondary","source":"derived"}],"domain":"pendulum"}};
+  const chapter = {"mapping":"| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调杆长/锤位/锤质量/杆质量/摆角 | O1 | operation | 调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀ |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |","kg":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","nodes":[{"id":"P1","label":"进入关卡","group":"premise","layer":"play","level":0,"r":22,"desc":"玩家进入钟表铺校时关卡，开始探究小角度复摆周期"},{"id":"C1","label":"模式选择","group":"constraint","layer":"play","level":1,"r":22,"desc":"玩家选择探究模式或竞赛模式，影响目标带宽度和机会次数 〔物理核心〕","constraintKind":"physics"},{"id":"C2","label":"探究模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"探究模式下目标带较宽(±0.020s)，自由调参观察周期变化 〔物理核心〕","constraintKind":"physics"},{"id":"C3","label":"竞赛模式","group":"constraint","layer":"play","level":2,"r":22,"desc":"竞赛模式下目标带收紧(±0.005s)，固定目标周期，限次挑战 〔物理核心〕","constraintKind":"physics"},{"id":"O1","label":"调杆长/锤位/锤质量/杆质量/摆角","group":"operation","layer":"play","level":3,"r":22,"desc":"玩家通过滑块调杆长L、锤位d、锤质量M、杆质量，并可拧摆角θ₀（画面幅度）；锤心须在杆上 d≤L"},{"id":"C4","label":"启动计时","group":"constraint","layer":"play","level":4,"r":22,"desc":"点击启动计时按钮，等待一个周期后获得实测周期值 〔物理核心〕","constraintKind":"physics"},{"id":"C5","label":"周期在目标带","group":"constraint","layer":"play","level":5,"r":22,"desc":"实测周期T是否落在目标带[T_TARGET-T_HALF, T_TARGET+T_HALF]内 〔物理核心〕","constraintKind":"physics"},{"id":"C6","label":"小角度等时","group":"constraint","layer":"play","level":6,"r":22,"desc":"小角度下振幅不进周期公式；过关只看周期是否在目标带 〔物理核心〕","constraintKind":"physics"},{"id":"R1","label":"过关","group":"result","layer":"play","level":7,"r":22,"desc":"周期在目标带，钟声归位，校准完成"},{"id":"C7","label":"参数改动·结果判定","group":"constraint","layer":"play","level":4,"r":22,"desc":"计时后若滑块被调节，读数标记为过期，需重新计时 〔物理核心〕（结果/边界约束）","constraintKind":"physics"},{"id":"C8","label":"竞赛机会耗尽","group":"constraint","layer":"play","level":5,"r":22,"desc":"竞赛模式下剩余机会为0时，无法继续尝试 〔物理核心〕","constraintKind":"physics"},{"id":"C9","label":"探究超时","group":"constraint","layer":"play","level":5,"r":22,"desc":"探究模式10分钟倒计时结束，自动切换至竞赛模式 〔物理核心〕","constraintKind":"physics"},{"id":"S1","label":"周期公式","group":"core","layer":"teach","level":0,"r":22,"desc":"复摆小角度公式 T = 2π√(I/(M_tot g d_cm)) = 2π√(L_eq/g)；杆长与锤位改变 I 与质心"},{"id":"S2","label":"杆长与锤位","group":"core","layer":"teach","level":0,"r":22,"desc":"有质量摆杆可调长度 + 可滑摆锤；杆长与锤位都会明显改变 I 与质心"},{"id":"S3","label":"小角度等时","group":"method","layer":"teach","level":0,"r":22,"desc":"振幅不进公式；拧摆角周期不变，摆角是无关变量（CV）"},{"id":"S4","label":"质量分布","group":"core","layer":"teach","level":0,"r":22,"desc":"杆质量与锤质量都进入 I 与质心；默认几何下单独扫全范围进不了目标带，替不了杆长和锤位"},{"id":"S5","label":"等效摆长","group":"method","layer":"teach","level":0,"r":22,"desc":"L_eq = I/(M_tot d_cm)，形似单摆公式，但 L_eq 不是杆长"},{"id":"I1","label":"无关/混淆控件","group":"irrelevant","layer":"play","level":0,"r":18,"desc":"摆角为无关变量：影响画面幅度，不进入 period()，不进过关公式"}],"links":[{"s":"P1","t":"C1","tp":"premise"},{"s":"C1","t":"C2","tp":"premise"},{"s":"C1","t":"C3","tp":"premise"},{"s":"C2","t":"O1","tp":"premise"},{"s":"C3","t":"O1","tp":"premise"},{"s":"O1","t":"C4","tp":"premise"},{"s":"C4","t":"C5","tp":"premise"},{"s":"C5","t":"C6","tp":"premise"},{"s":"C6","t":"R1","tp":"core"},{"s":"C4","t":"C7","tp":"premise"},{"s":"C3","t":"C8","tp":"premise"},{"s":"C2","t":"C9","tp":"premise"},{"s":"S1","t":"O1","tp":"verify"},{"s":"S2","t":"O1","tp":"verify"},{"s":"S3","t":"O1","tp":"verify"},{"s":"S4","t":"O1","tp":"verify"},{"s":"S5","t":"O1","tp":"verify"},{"s":"P1","t":"O1","tp":"premise"},{"s":"O1","t":"C1","tp":"premise"},{"s":"C1","t":"R1","tp":"core"}]},"dt":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","tree":{"n":"进入关卡","t":"root","d":"—","children":[{"n":"模式选择?","t":"decision","d":"环境/模式判定","children":[{"_e":"是","n":"探究模式","t":"step","d":"探究模式","children":[{"n":"探究超时?","t":"decision","d":"超时判定","children":[{"_e":"是","n":"失败重试","t":"retry","d":"模式切换","children":[]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]},{"_e":"否","n":"竞赛模式","t":"step","d":"竞赛模式","children":[{"n":"竞赛机会耗尽?","t":"decision","d":"失败判定","children":[{"_e":"是","n":"失败结束","t":"retry","d":"机会耗尽，无法继续，回到调杆长/锤位/锤质量/杆质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/杆质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀","children":[]}]},{"_e":"否","n":"继续","t":"step","d":"—"}]}]}]},{"n":"调杆长/锤位/锤质量/杆质量/摆角","t":"step","d":"操作","children":[{"n":"启动计时?","t":"decision","d":"测量触发","children":[{"_e":"否","n":"提示启动","t":"junction","d":"需点击启动计时按钮，回到调杆长/锤位/锤质量/杆质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/杆质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀","children":[]}]},{"_e":"是","n":"等待计时","t":"step","d":"计时中","children":[{"n":"参数已调优?","t":"decision","d":"读数过期","children":[{"_e":"是","n":"继续","t":"step","d":"—","children":[{"n":"周期在目标带?","t":"decision","d":"结果判定","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"周期未达标，调整后重试","children":[]},{"_e":"是","n":"周期达标?","t":"decision","d":"擒纵约束","children":[{"_e":"否","n":"未达标重试","t":"retry","d":"（已取消最小摆幅约束）","children":[{"n":"调杆长/锤位/锤质量/杆质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀","children":[]}]},{"_e":"是","n":"过关","t":"result","d":"校准完成"}]}]}]},{"_e":"否","n":"未达标重试","t":"retry","d":"参数已改动，需重新计时，回到调杆长/锤位/锤质量/杆质量/摆角后重试","children":[{"n":"调杆长/锤位/锤质量/杆质量/摆角","t":"step","d":"玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀","children":[]}]}]}]}]}]}]}},"winSync":{"title":"过关","sub":"钟声归位"},"strategy":{"title":"钟表铺·校时","sub":"钟表铺 · 校时","mermaid":"graph TD\nAdjustD --> Fire[启动计时]\nAdjustL --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nBackFromMass --> StrategySelect\nBackFromRod --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustD\nObserve -->|偏快| AdjustD\nObserve -->|偏慢| AdjustL\nObserve -->|偏快| AdjustL\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveMass -->|有增益但替不了主变量| BackFromMass[回到主策略]:::stratCore\nObserveRod -->|有增益但替不了主变量| BackFromRod[回到主策略]\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nProbeMass --> ObserveMass{观察有无增益?}:::stratCond\nProbeRod --> ObserveRod{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·杆长| LRoute\nStrategySelect -->|单变量·锤位| DRoute\nStrategySelect -->|试探·摆角| ProbeCV\nStrategySelect -->|弱相关·锤质量| ProbeMass\nStrategySelect -->|弱相关·杆质量| ProbeRod\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nLRoute --> AdjustL[调整杆长]\nDRoute --> AdjustD[调整锤位]\nProbeCV[试探·摆角]:::stratInvalid\nProbeMass[弱相关·锤质量]\nProbeRod[弱相关·杆质量]\nLRoute[单变量·杆长]\nDRoute[单变量·锤位]\nTrapRoute[多参盲调]\nTrapRoute --> Fire","routes":[{"id":"main_s-L","label":"单变量·杆长","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":1,"weight":1,"priorityRank":1,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","LRoute","AdjustL","Fire","Observe","Retry","Win","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","LRoute"],["LRoute","AdjustL"],["AdjustL","Fire"],["Fire","Observe"],["Observe","AdjustL"],["Observe","Win"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"main_s-d","label":"单变量·锤位","mapsTo":["P1","O1","C1","C2","R1"],"warn":"每次只改一个参数，避免多变量混调难归因","score":0.85,"weight":0.85,"priorityRank":2,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","DRoute","AdjustD","Fire","Observe","Retry","Win","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","DRoute"],["DRoute","AdjustD"],["AdjustD","Fire"],["Fire","Observe"],["Observe","AdjustD"],["Observe","Win"],["Observe","Retry"],["Retry","Fire"]],"highlightFailureBranches":true},{"id":"trap","label":"多参盲调","mapsTo":["P1","O1","C1","C2"],"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","TrapRoute","Fire","Observe","Retry","AutoChallenge","Challenge"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","TrapRoute"],["TrapRoute","Fire"],["Fire","Observe"],["Observe","Retry"],["Retry","Fire"]],"warn":"同时调节多个滑条效率低、难归因，不如每次只动一个变量","score":0.2,"weight":0.2,"highlightFailureBranches":true,"tier":"suboptimal"},{"id":"confound_s_angle","label":"试探·摆角","mapsTo":[],"warn":"试探摆角通常无增益（小角度等时），应回到单变量·杆长或单变量·锤位主路径","score":0.2,"weight":0.2,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AutoChallenge","Challenge","ProbeCV","ObserveCV","BackFromCV"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeCV"],["ProbeCV","ObserveCV"],["ObserveCV","BackFromCV"],["BackFromCV","StrategySelect"]],"tier":"suboptimal","kind":"confoundProbe","highlightFailureBranches":false},{"id":"weak_probe_s_m","label":"弱相关·锤质量","mapsTo":["S4"],"warn":"锤质量弱相关：有增益但替不了杆长/锤位，应回到单变量·杆长或单变量·锤位主路径","score":0.5,"weight":0.5,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AutoChallenge","Challenge","ProbeMass","ObserveMass","BackFromMass"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeMass"],["ProbeMass","ObserveMass"],["ObserveMass","BackFromMass"],["BackFromMass","StrategySelect"]],"tier":"suboptimal","kind":"weakProbe","highlightFailureBranches":false},{"id":"weak_probe_s_mrod","label":"弱相关·杆质量","mapsTo":["S4"],"warn":"杆质量弱相关：有增益但替不了杆长/锤位，应回到单变量·杆长或单变量·锤位主路径","score":0.5,"weight":0.5,"highlightNodes":["Start","ModeSelect","Explore","StrategySelect","AutoChallenge","Challenge","ProbeRod","ObserveRod","BackFromRod"],"highlightEdges":[["Start","ModeSelect"],["ModeSelect","Explore"],["Explore","StrategySelect"],["ModeSelect","AutoChallenge"],["AutoChallenge","StrategySelect"],["ModeSelect","Challenge"],["Challenge","StrategySelect"],["StrategySelect","ProbeRod"],["ProbeRod","ObserveRod"],["ObserveRod","BackFromRod"],["BackFromRod","StrategySelect"]],"tier":"suboptimal","kind":"weakProbe","highlightFailureBranches":false}]},"traceMap":{"controls":{"s-d":{"kgId":"O1","role":"operation"},"s-angle":{"kgId":"I1","role":"irrelevant"},"modeSelect":{"kgId":"C1","role":"operation"},"s-L":{"kgId":"O1","role":"operation"},"s-m":{"kgId":"S4","role":"operation"},"s-mrod":{"kgId":"S4","role":"operation"}},"legacyTypes":{"tuning":{"canonical":"tuning","control":"s-d"},"action":{"canonical":"action","control":"btn-measure"}}},"inquiryScript":{"summary":"钟表铺·校时","knowledgePoints":[{"id":"KP1","label":"钟表铺·校时","formulas":["T ≈ 2π√(I/(M_tot g d_cm))"],"mapsToKg":["S1"]}],"adjustmentVariables":[{"id":"AV0","controlId":"s-L","label":"杆长","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["T"],"notes":"可调杆长；默认 d、M 下约 L≈1.90 m 可进探究带；缩短时钳制 d≤L","priorityRank":1,"responseShape":"nonlinear-monotone"},{"id":"AV1","controlId":"s-d","label":"锤位","type":"range","role":"primary","mapsToKg":"O1","monotonicity":"monotone","affects":["T"],"notes":"锤位可进带；须 d≤L；侧栏不显示 L_eq","priorityRank":2,"responseShape":"nonlinear-monotone"},{"id":"AV2","controlId":"s-m","label":"锤质量","type":"range","role":"secondary","mapsToKg":"S4","monotonicity":"weak","affects":["T"],"notes":"弱相关：默认 L、d 下扫全范围进不了探究带","priorityRank":3,"responseShape":"weak-nonlinear"},{"id":"AV3","controlId":"s-mrod","label":"杆质量","type":"range","role":"secondary","mapsToKg":"S4","monotonicity":"weak","affects":["T"],"notes":"杆质量进 I 与质心；默认几何下单独扫全范围进不了目标带","priorityRank":4,"responseShape":"weak-nonlinear"}],"confoundingVariables":[{"id":"CV1","controlId":"s-angle","label":"摆角","reason":"小角度等时：振幅不进公式，仅影响画面摆动幅度"}],"inquiryFlow":["KP1","AV0","AV1","OV1"],"narrative":{"intro":"巷子深处的钟表铺打了烊，只剩你和这座祖父钟。它一天要快上三个多小时，老师傅临走前只留下一句：毛病出在摆上。摆的周期对了，钟就准了。","steps":[{"order":1,"title":"自由探究","body":"可调杆长、锤位、锤质量与杆质量，摸清周期怎么变；再切竞赛接急单目标带（本局锁定，校偏不换题）。","mapsToKg":["P1","C1","C2","O1"]},{"order":2,"title":"启动计时","body":"点击启动计时按钮，等待一个周期后获得实测周期值。","mapsToKg":["C4"]},{"order":3,"title":"观察与调整","body":"观察实测周期是否在目标带内，若偏快或偏慢则改参再测，对照计时继续校。","mapsToKg":["C5","O1"]},{"order":4,"title":"过关","body":"周期在目标带，钟声归位，校准完成。","mapsToKg":["R1"]}]},"outputVariables":[{"id":"OV1","label":"实测周期","symbol":"T","unit":"s","role":"primary","source":"measure"},{"id":"OV2","label":"等效摆长","symbol":"L_eq","unit":"m","role":"secondary","source":"derived"}],"domain":"pendulum"}};
   GraphViewer.init({
     kgChapters: [chapter.kg],
     dtChapters: [chapter.dt],

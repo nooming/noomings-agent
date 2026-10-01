@@ -341,6 +341,21 @@
         "notes": "弱相关：默认 L、d 下扫全范围进不了探究带",
         "priorityRank": 3,
         "responseShape": "weak-nonlinear"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-mrod",
+        "label": "杆质量",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "S4",
+        "monotonicity": "weak",
+        "affects": [
+          "T"
+        ],
+        "notes": "杆质量进 I 与质心；默认几何下单独扫全范围进不了目标带",
+        "priorityRank": 4,
+        "responseShape": "weak-nonlinear"
       }
     ],
     "confoundingVariables": [

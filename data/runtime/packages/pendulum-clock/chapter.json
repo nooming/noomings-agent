@@ -1,5 +1,5 @@
 {
-  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调杆长/锤位/锤质量/摆角 | O1 | operation | 调节杆长L、锤位d、锤质量M、摆角θ₀ |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |",
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 环境/模式判定 |\n| 是→探究模式 | C2 | constraint | 探究模式 |\n| 否→竞赛模式 | C3 | constraint | 竞赛模式 |\n| 调杆长/锤位/锤质量/杆质量/摆角 | O1 | operation | 调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀ |\n| 启动计时? | C4 | constraint | 测量触发 |\n| 是→等待计时 | step | junction | 计时中 |\n| 否→提示启动 | retry | skip retry | 重试 |\n| 周期在目标带? | C5 | constraint | 结果判定 |\n| 是→过关 | R1 | result | 胜利 |\n| 否→提示偏快/偏慢 | retry | skip retry | 重试 |\n| 计时中参数改动? | C7 | constraint | 读数过期 |\n| 是→提示重新计时 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 竞赛机会耗尽? | C8 | constraint | 失败判定 |\n| 是→失败结束 | retry | skip retry | 重试 |\n| 否→继续 | step | junction | 继续 |\n| 探究超时? | C9 | constraint | 超时判定 |\n| 是→自动切竞赛 | step | junction | 模式切换 |\n| 否→继续 | step | junction | 继续 |",
   "kg": {
     "title": "钟表铺·校时",
     "sub": "钟表铺 · 校时",
@@ -45,12 +45,12 @@
       },
       {
         "id": "O1",
-        "label": "调杆长/锤位/锤质量/摆角",
+        "label": "调杆长/锤位/锤质量/杆质量/摆角",
         "group": "operation",
         "layer": "play",
         "level": 3,
         "r": 22,
-        "desc": "玩家通过滑块调杆长L、锤位d、锤质量M，并可拧摆角θ₀（画面幅度）；锤心须在杆上 d≤L"
+        "desc": "玩家通过滑块调杆长L、锤位d、锤质量M、杆质量，并可拧摆角θ₀（画面幅度）；锤心须在杆上 d≤L"
       },
       {
         "id": "C4",
@@ -155,7 +155,7 @@
         "layer": "teach",
         "level": 0,
         "r": 22,
-        "desc": "锤质量弱相关：只改M会改变质量分布，周期只动一点，替不了调杆长/锤位；杆长与锤位都会明显改变 I 与质心；小角度摆角不进公式"
+        "desc": "杆质量与锤质量都进入 I 与质心；默认几何下单独扫全范围进不了目标带，替不了杆长和锤位"
       },
       {
         "id": "S5",
@@ -335,12 +335,12 @@
                       "_e": "是",
                       "n": "失败结束",
                       "t": "retry",
-                      "d": "机会耗尽，无法继续，回到调杆长/锤位/锤质量/摆角后重试",
+                      "d": "机会耗尽，无法继续，回到调杆长/锤位/锤质量/杆质量/摆角后重试",
                       "children": [
                         {
-                          "n": "调杆长/锤位/锤质量/摆角",
+                          "n": "调杆长/锤位/锤质量/杆质量/摆角",
                           "t": "step",
-                          "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀",
+                          "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀",
                           "children": []
                         }
                       ]
@@ -358,7 +358,7 @@
           ]
         },
         {
-          "n": "调杆长/锤位/锤质量/摆角",
+          "n": "调杆长/锤位/锤质量/杆质量/摆角",
           "t": "step",
           "d": "操作",
           "children": [
@@ -371,12 +371,12 @@
                   "_e": "否",
                   "n": "提示启动",
                   "t": "junction",
-                  "d": "需点击启动计时按钮，回到调杆长/锤位/锤质量/摆角后重试",
+                  "d": "需点击启动计时按钮，回到调杆长/锤位/锤质量/杆质量/摆角后重试",
                   "children": [
                     {
-                      "n": "调杆长/锤位/锤质量/摆角",
+                      "n": "调杆长/锤位/锤质量/杆质量/摆角",
                       "t": "step",
-                      "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀",
+                      "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀",
                       "children": []
                     }
                   ]
@@ -423,9 +423,9 @@
                                       "d": "（已取消最小摆幅约束）",
                                       "children": [
                                         {
-                                          "n": "调杆长/锤位/锤质量/摆角",
+                                          "n": "调杆长/锤位/锤质量/杆质量/摆角",
                                           "t": "step",
-                                          "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀",
+                                          "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀",
                                           "children": []
                                         }
                                       ]
@@ -446,12 +446,12 @@
                           "_e": "否",
                           "n": "未达标重试",
                           "t": "retry",
-                          "d": "参数已改动，需重新计时，回到调杆长/锤位/锤质量/摆角后重试",
+                          "d": "参数已改动，需重新计时，回到调杆长/锤位/锤质量/杆质量/摆角后重试",
                           "children": [
                             {
-                              "n": "调杆长/锤位/锤质量/摆角",
+                              "n": "调杆长/锤位/锤质量/杆质量/摆角",
                               "t": "step",
-                              "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、摆角θ₀",
+                              "d": "玩家通过滑块调节杆长L、锤位d、锤质量M、杆质量、摆角θ₀",
                               "children": []
                             }
                           ]
@@ -492,6 +492,10 @@
       "s-m": {
         "kgId": "S4",
         "role": "operation"
+      },
+      "s-mrod": {
+        "kgId": "S4",
+        "role": "operation"
       }
     },
     "legacyTypes": {
@@ -508,7 +512,7 @@
   "strategy": {
     "title": "钟表铺·校时",
     "sub": "钟表铺 · 校时",
-    "mermaid": "graph TD\nAdjustAngle --> Fire\nAdjustD --> Fire[启动计时]\nAdjustL --> Fire\nAdjustM --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nBackFromMass --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustD\nObserve -->|偏快| AdjustD\nObserve -->|偏慢| AdjustL\nObserve -->|偏快| AdjustL\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveMass -->|有增益但替不了主变量| BackFromMass[回到主策略]:::stratCore\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nProbeMass --> ObserveMass{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|试探·摆角| AngleRoute\nStrategySelect -->|单变量·杆长| LRoute\nStrategySelect -->|单变量·锤位| DRoute\nStrategySelect -->|弱相关·锤质量| MassRoute\nStrategySelect -.->|试探·摆角CV| ProbeCV\nStrategySelect -.->|弱相关·锤质量| ProbeMass\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nAngleRoute --> AdjustAngle[调整摆角]\nLRoute --> AdjustL[调整杆长]\nDRoute --> AdjustD[调整锤位]\nMassRoute --> AdjustM[调整锤质量]\nProbeCV[试探·摆角]\nProbeMass[弱相关·锤质量]\nAngleRoute[试探·摆角]\nLRoute[单变量·杆长]\nDRoute[单变量·锤位]\nMassRoute[弱相关·锤质量]\nTrapRoute[多参盲调]\nTrapRoute --> Fire",
+    "mermaid": "graph TD\nAdjustD --> Fire[启动计时]\nAdjustL --> Fire\nAutoChallenge --> StrategySelect\nBackFromCV --> StrategySelect\nBackFromMass --> StrategySelect\nBackFromRod --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect{选择调参策略?}:::stratCond\nFire --> Observe{观察周期?}:::stratCond\nModeSelect -->|探究模式| Explore[探究模式：宽目标带±0.020s]:::stratCore\nObserve -->|偏慢| AdjustD\nObserve -->|偏快| AdjustD\nObserve -->|偏慢| AdjustL\nObserve -->|偏快| AdjustL\nObserve -->|达标| Win[过关]:::stratResult\nObserve -->|参数改动| Retry[重新计时]:::stratRetry\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveMass -->|有增益但替不了主变量| BackFromMass[回到主策略]:::stratCore\nObserveRod -->|有增益但替不了主变量| BackFromRod[回到主策略]\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nProbeMass --> ObserveMass{观察有无增益?}:::stratCond\nProbeRod --> ObserveRod{观察有无增益?}:::stratCond\nRetry --> Fire\nStart --> ModeSelect{选择模式?}:::stratCond\nStrategySelect -->|单变量·杆长| LRoute\nStrategySelect -->|单变量·锤位| DRoute\nStrategySelect -->|试探·摆角| ProbeCV\nStrategySelect -->|弱相关·锤质量| ProbeMass\nStrategySelect -->|弱相关·杆质量| ProbeRod\nStrategySelect -->|多参盲调| TrapRoute\nModeSelect -->|探究超时| AutoChallenge[自动切竞赛]:::stratCore\nModeSelect -->|竞赛模式| Challenge[竞赛模式：窄目标带]:::stratCore\nModeSelect -->|竞赛机会耗尽| Fail[失败结束]:::stratRetry\nStart([开始]):::stratStart\nLRoute --> AdjustL[调整杆长]\nDRoute --> AdjustD[调整锤位]\nProbeCV[试探·摆角]:::stratInvalid\nProbeMass[弱相关·锤质量]\nProbeRod[弱相关·杆质量]\nLRoute[单变量·杆长]\nDRoute[单变量·锤位]\nTrapRoute[多参盲调]\nTrapRoute --> Fire",
     "routes": [
       {
         "id": "main_s-L",
@@ -783,16 +787,11 @@
           "ModeSelect",
           "Explore",
           "StrategySelect",
-          "AngleRoute",
-          "AdjustAngle",
-          "Fire",
-          "Observe",
-          "Retry",
+          "AutoChallenge",
+          "Challenge",
           "ProbeCV",
           "ObserveCV",
-          "BackFromCV",
-          "AutoChallenge",
-          "Challenge"
+          "BackFromCV"
         ],
         "highlightEdges": [
           [
@@ -825,30 +824,6 @@
           ],
           [
             "StrategySelect",
-            "AngleRoute"
-          ],
-          [
-            "AngleRoute",
-            "AdjustAngle"
-          ],
-          [
-            "AdjustAngle",
-            "Fire"
-          ],
-          [
-            "Fire",
-            "Observe"
-          ],
-          [
-            "Observe",
-            "Retry"
-          ],
-          [
-            "Retry",
-            "Fire"
-          ],
-          [
-            "StrategySelect",
             "ProbeCV"
           ],
           [
@@ -869,7 +844,7 @@
         "highlightFailureBranches": false
       },
       {
-        "id": "weak_s_m",
+        "id": "weak_probe_s_m",
         "label": "弱相关·锤质量",
         "mapsTo": [
           "S4"
@@ -882,30 +857,40 @@
           "ModeSelect",
           "Explore",
           "StrategySelect",
-          "MassRoute",
-          "AdjustM",
+          "AutoChallenge",
+          "Challenge",
           "ProbeMass",
           "ObserveMass",
-          "BackFromMass",
-          "Fire",
-          "Observe"
+          "BackFromMass"
         ],
         "highlightEdges": [
           [
-            "StrategySelect",
-            "MassRoute"
+            "Start",
+            "ModeSelect"
           ],
           [
-            "MassRoute",
-            "AdjustM"
+            "ModeSelect",
+            "Explore"
           ],
           [
-            "AdjustM",
-            "Fire"
+            "Explore",
+            "StrategySelect"
           ],
           [
-            "Fire",
-            "Observe"
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
           ],
           [
             "StrategySelect",
@@ -921,6 +906,76 @@
           ],
           [
             "BackFromMass",
+            "StrategySelect"
+          ]
+        ],
+        "tier": "suboptimal",
+        "kind": "weakProbe",
+        "highlightFailureBranches": false
+      },
+      {
+        "id": "weak_probe_s_mrod",
+        "label": "弱相关·杆质量",
+        "mapsTo": [
+          "S4"
+        ],
+        "warn": "杆质量弱相关：有增益但替不了杆长/锤位，应回到单变量·杆长或单变量·锤位主路径",
+        "score": 0.5,
+        "weight": 0.5,
+        "highlightNodes": [
+          "Start",
+          "ModeSelect",
+          "Explore",
+          "StrategySelect",
+          "AutoChallenge",
+          "Challenge",
+          "ProbeRod",
+          "ObserveRod",
+          "BackFromRod"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "AutoChallenge"
+          ],
+          [
+            "AutoChallenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeRod"
+          ],
+          [
+            "ProbeRod",
+            "ObserveRod"
+          ],
+          [
+            "ObserveRod",
+            "BackFromRod"
+          ],
+          [
+            "BackFromRod",
             "StrategySelect"
           ]
         ],
@@ -989,6 +1044,21 @@
         "notes": "弱相关：默认 L、d 下扫全范围进不了探究带",
         "priorityRank": 3,
         "responseShape": "weak-nonlinear"
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-mrod",
+        "label": "杆质量",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "S4",
+        "monotonicity": "weak",
+        "affects": [
+          "T"
+        ],
+        "notes": "杆质量进 I 与质心；默认几何下单独扫全范围进不了目标带",
+        "priorityRank": 4,
+        "responseShape": "weak-nonlinear"
       }
     ],
     "confoundingVariables": [
@@ -1011,7 +1081,7 @@
         {
           "order": 1,
           "title": "自由探究",
-          "body": "可调杆长、锤位与锤质量，摸清周期怎么变；再切竞赛接急单目标带（本局锁定，校偏不换题）。",
+          "body": "可调杆长、锤位、锤质量与杆质量，摸清周期怎么变；再切竞赛接急单目标带（本局锁定，校偏不换题）。",
           "mapsToKg": [
             "P1",
             "C1",
@@ -1145,6 +1215,21 @@
         }
       },
       {
+        "id": "s-mrod",
+        "type": "range",
+        "label": "杆质量",
+        "symbol": "m_rod",
+        "unit": "kg",
+        "mapsToKg": "S4",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0.4,
+          "max": 3,
+          "step": 0.1,
+          "unit": "kg"
+        }
+      },
+      {
         "id": "s-angle",
         "type": "range",
         "label": "摆角",
@@ -1173,7 +1258,7 @@
         "label": "摆角",
         "reason": "小角度等时：不参与核心过关归因",
         "uiStrategy": "teach_only",
-        "domOrderNote": "滑条顺序 杆长L → 锤位d → 锤质量M → θ(CV)；侧栏不显示 L_eq；d≤L"
+        "domOrderNote": "滑条顺序 杆长L → 锤位d → 锤质量M → 杆质量m → θ(CV)；侧栏不显示 L_eq；d≤L"
       }
     ],
     "confoundingMustNotBePrimarySlider": true,
@@ -1362,7 +1447,7 @@
       {
         "name": "失败结束",
         "type": "retry",
-        "desc": "机会耗尽，无法继续，回到调杆长/锤位/锤质量/摆角后重试"
+        "desc": "机会耗尽，无法继续，回到调杆长/锤位/锤质量/杆质量/摆角后重试"
       },
       {
         "name": "启动计时?",
@@ -1372,7 +1457,7 @@
       {
         "name": "提示启动",
         "type": "retry",
-        "desc": "需点击启动计时按钮，回到调杆长/锤位/锤质量/摆角后重试"
+        "desc": "需点击启动计时按钮，回到调杆长/锤位/锤质量/杆质量/摆角后重试"
       },
       {
         "name": "参数改动?",
@@ -1382,7 +1467,7 @@
       {
         "name": "提示重新计时",
         "type": "retry",
-        "desc": "参数已改动，需重新计时，回到调杆长/锤位/锤质量/摆角后重试"
+        "desc": "参数已改动，需重新计时，回到调杆长/锤位/锤质量/杆质量/摆角后重试"
       },
       {
         "name": "周期在目标带?",
@@ -1402,7 +1487,7 @@
       {
         "name": "提示摆幅",
         "type": "retry",
-        "desc": "摆幅不足，需增大摆角，回到调杆长/锤位/锤质量/摆角后重试"
+        "desc": "摆幅不足，需增大摆角，回到调杆长/锤位/锤质量/杆质量/摆角后重试"
       },
       {
         "name": "过关",

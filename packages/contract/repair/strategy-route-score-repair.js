@@ -32,7 +32,13 @@ function labelToAvRank(label, rankedAvs) {
   return hit?.priorityRank ?? null;
 }
 
+function isWeakProbeRoute(route) {
+  return route?.kind === 'weakProbe'
+    || /^弱相关[·•.]/.test(String(route?.label || ''));
+}
+
 function isTrapRoute(route) {
+  if (isWeakProbeRoute(route)) return false;
   return route?.tier === 'suboptimal'
     || /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`);
 }
@@ -41,6 +47,17 @@ function isTrapRoute(route) {
  * @returns {{ score: number, weight: number, priorityRank?: number }}
  */
 function computeRouteScoreFields(route, rankedAvs, indexAmongPreferred) {
+  if (isWeakProbeRoute(route)) {
+    const score = route?.score != null
+      ? Number(route.score)
+      : (route?.weight != null ? Number(route.weight) : 0.5);
+    const fields = {
+      score,
+      weight: route?.weight != null ? Number(route.weight) : score,
+    };
+    if (route?.priorityRank != null) fields.priorityRank = Number(route.priorityRank);
+    return fields;
+  }
   if (isTrapRoute(route)) {
     return { score: TRAP_SCORE, weight: TRAP_SCORE, priorityRank: 99 };
   }
@@ -93,6 +110,7 @@ function repairStrategyRouteScores(chapter, gameHints) {
   if (allSame) {
     let i = 0;
     finalRoutes = nextRoutes.map(r => {
+      if (isWeakProbeRoute(r)) return r;
       if (isTrapRoute(r) || r.warn === 'irrelevant') {
         return { ...r, score: TRAP_SCORE, weight: TRAP_SCORE };
       }

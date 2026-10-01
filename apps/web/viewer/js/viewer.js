@@ -63,6 +63,7 @@ const GraphViewer = (function () {
     { cls: 'high', label: '高优（优先1）· 粗实线' },
     { cls: 'mid', label: '次优 · 中实线' },
     { cls: 'low', label: '较低优 · 细实线' },
+    { cls: 'weak', label: '弱相关 · 中实线' },
     { cls: 'trap', label: '陷阱/盲调 · 虚线警示' },
     { cls: 'confound', label: '试探 · 虚线旁路' },
   ];
@@ -358,7 +359,8 @@ function resolveRouteVarContext(route) {
   const shortLab = label
     .replace(/^单变量[·•.]/, '')
     .replace(/^试探(?:混淆)?[·•.]/, '')
-    .replace(/\s*·\s*(优先\d+|陷阱|旁路).*$/u, '')
+    .replace(/^弱相关[·•.]/, '')
+    .replace(/\s*·\s*(优先\d+|陷阱|旁路|弱相关).*$/u, '')
     .trim();
 
   const avHit = avs.find(a => {
@@ -404,6 +406,10 @@ function buildRouteTeachingHtml(route) {
       : '<span class="i-badge route-badge-cv">试探 · 旁路</span>';
   } else if (meta?.trap) {
     badge = '<span class="i-badge route-badge-trap">典型误区 · 盲调</span>';
+  } else if (meta?.weak) {
+    badge = student
+      ? '<span class="i-badge route-badge-weak">弱相关</span>'
+      : `<span class="i-badge route-badge-weak">弱相关${score != null ? ` · 得分 ${score}` : ''}</span>`;
   } else if (meta && meta.rank <= 20) {
     badge = student
       ? '<span class="i-badge layer-play">探究途径</span>'
@@ -431,6 +437,9 @@ function buildRouteTeachingHtml(route) {
       const ctrl = cvHit?.controlId ? `（控件 ${escText(cvHit.controlId)}）` : '';
       adjustBlock = `<p>本路径试探的是<strong>${escText(cvName)}</strong>${ctrl}。它通常是装饰/无关量，用来对照「拧了有没有用」。</p>`;
     }
+  } else if (meta?.weak || route.kind === 'weakProbe') {
+    const name = shortLab || '该变量';
+    adjustBlock = `<p>本路径调节<strong>${escText(name)}</strong>。它有一点增益，但替不了主变量，看完应回到单变量主路径。</p>`;
   } else if (meta?.trap || /盲调|多参|trap/i.test(`${route.id || ''}${route.label || ''}`)) {
     adjustBlock = '<p>本路径会<strong>同时拧多个滑条</strong>，而不是每次只改一个变量。</p>';
   } else if (avHit) {
@@ -448,6 +457,8 @@ function buildRouteTeachingHtml(route) {
       whyBits.push('这是对照路径：用来检验某个控件是否真能帮你过关。');
     } else if (meta?.trap) {
       whyBits.push('同时拧多量时现象难归因；可对照「每次只改一项」的路径看看差异。');
+    } else if (meta?.weak) {
+      whyBits.push('这个量拧了会有一点变化，但通常靠它过不了关。');
     } else {
       whyBits.push('用控制变量法：固定其余，只改一项，观察结果是否跟着变。');
       if (avHit?.monotonicity) {
@@ -462,6 +473,9 @@ function buildRouteTeachingHtml(route) {
   } else if (meta?.trap) {
     whyBits.push(`陷阱得分约 <strong>${score ?? '0.20'}</strong>：效率低、难归因，图谱里用虚线警示。`);
     whyBits.push('分数越低越不建议作为常规探究顺序；对比高优实线路径即可。');
+  } else if (meta?.weak) {
+    whyBits.push(`弱相关得分约 <strong>${score ?? '0.50'}</strong>：有增益，但低于单变量主路径，图谱用中等实线标出。`);
+    whyBits.push('看完现象后回到优先实线，不要把它当成主策略。');
   } else {
     if (meta?.rank != null) {
       whyBits.push(`优先序 <strong>${meta.rank}</strong>：数字越小越建议先试（优先 1 通常是最有信息量的单变量）。`);
@@ -493,6 +507,10 @@ function buildRouteTeachingHtml(route) {
       : '误区：把混淆量当成「还没拧够的关键参数」反复试，会浪费发射次数、也学不到因果。');
   } else if (meta?.trap) {
     trapBits.push('误区：多滑条一起拧，现象变了却说不清是谁导致的；失败后也难复盘。');
+  } else if (meta?.weak) {
+    trapBits.push(student
+      ? '提示：这个量有一点用，但单靠它很难过关，记得换回主要变量。'
+      : '误区：把弱相关量当成主变量反复拧，会耽误真正能过关的单变量。');
   } else {
     trapBits.push(student
       ? '提示：还没看清这一变量的作用时，先不要同时改很多控件。'
@@ -733,10 +751,11 @@ function applyPriorityEdgeStyles() {
     const key = edgeKeyFromPathGroup(group);
     const meta = key && styleMap.get(key);
     pathsInEdgeGroup(group).forEach(pathEl => {
-      pathEl.classList.remove('prio-edge-high', 'prio-edge-mid', 'prio-edge-low', 'prio-edge-trap', 'prio-edge-confound');
+      pathEl.classList.remove('prio-edge-high', 'prio-edge-mid', 'prio-edge-low', 'prio-edge-weak', 'prio-edge-trap', 'prio-edge-confound');
       if (!meta) return;
       let cls = 'prio-edge-low';
-      if (meta.confound) cls = 'prio-edge-confound';
+      if (meta.weak) cls = 'prio-edge-weak';
+      else if (meta.confound) cls = 'prio-edge-confound';
       else if (meta.trap) cls = 'prio-edge-trap';
       else if (meta.rank <= 1) cls = 'prio-edge-high';
       else if (meta.rank === 2) cls = 'prio-edge-mid';
@@ -1182,9 +1201,11 @@ function updateLegend() {
     const routeBtns = ranked.map((r, i) => {
       const meta = prioApi?.routePriorityMeta ? prioApi.routePriorityMeta(r) : { rank: r.priorityRank, score: r.score, trap: false };
       const scoreTxt = meta?.score != null ? Number(meta.score).toFixed(2) : '';
-      const prioCls = meta?.confound
-        ? 'confound'
-        : (meta?.trap ? 'warn' : (meta?.rank <= 3 ? `prio-${meta.rank}` : ''));
+      const prioCls = meta?.weak
+        ? 'weak'
+        : meta?.confound
+          ? 'confound'
+          : (meta?.trap ? 'warn' : (meta?.rank <= 3 ? `prio-${meta.rank}` : ''));
       const label = prioApi?.formatPriorityEdgeLabel ? prioApi.formatPriorityEdgeLabel(r) : r.label;
       const studentSafeLabel = isStudentAudience()
         ? String(label || r.label || '')
