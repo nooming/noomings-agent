@@ -279,7 +279,7 @@
       },
       "s-cable": {
         "kgId": "O1",
-        "role": "operation"
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -295,7 +295,7 @@
   "strategy": {
     "title": "电容实验二：串并联配置",
     "sub": "串并联 · 电容台",
-    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveFB -->|达标| Win[过关]:::stratResult\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|单变量·馈线长度| Route_main_s_cable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nRoute_main_s_cable[控制变量：只改馈线长度]\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nRoute_main_s_cable --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
+    "mermaid": "graph TD\nAdjustT --> FireT[确认配置]\nBackFromCV --> StrategySelect\nFireT --> ObserveT{观察总电容?}:::stratCond\nModeOff --> StrategySelect\nModeOn --> StrategySelect{选择调参策略?}:::stratCond\nObserveCV -->|无增益| BackFromCV[回到主策略]:::stratCore\nObserveFB -->|未达标| AdjustFB\nObserveFB -->|达标| Win[过关]:::stratResult\nObserveT -->|未达标| AdjustT\nObserveT -->|观察| RetryT[重试]:::stratRetry\nObserveT -->|达标| Win\nProbeCV --> ObserveCV{观察有无增益?}:::stratCond\nRetestFB --> ObserveFB\nStart --> Env{模式选择?}:::stratCond\nStrategySelect -.->|试探·音量| ProbeCV\nStrategySelect -->|单变量·电容C1| Route_main\nStrategySelect -->|单变量·电容C2| Route_main_s_c2\nStrategySelect -->|单变量·电容C3| Route_main_s_c3\nStrategySelect -->|试探·馈线长度| ProbeCable\nStrategySelect -->|多参盲调| Trap\nEnv -->|探究模式| ModeOn[探究模式·目标500µF]:::stratCore\nStart([开始]):::stratStart\nObserveFB{观察结果偏高/偏低?}:::stratCond\nAdjustFB[单变量微调]\nRetestFB[再测]\nRoute_main[控制变量：只改电容C1]\nRoute_main_s_c2[控制变量：只改电容C2]\nRoute_main_s_c3[控制变量：只改电容C3]\nProbeCable[试探·馈线长度]:::stratInvalid\nProbeCable --> ObserveCable{观察有无增益?}:::stratCond\nObserveCable -->|无增益| BackFromCable[回到主策略]:::stratCore\nBackFromCable --> StrategySelect\nAdjustFB --> RetestFB\nRetryT --> AdjustT\nRoute_main --> AdjustFB\nRoute_main_s_c2 --> AdjustFB\nRoute_main_s_c3 --> AdjustFB\nEnv -->|竞赛模式| ModeOff[竞赛模式·目标随机锁定]:::stratResult\nProbeCV[试探·音量]\nTrap[多参盲调]\nTrap --> FireT\n",
     "routes": [
       {
         "id": "main",
@@ -496,30 +496,24 @@
         "highlightFailureBranches": true
       },
       {
-        "id": "main_s-cable",
-        "label": "单变量·馈线长度",
-        "mapsTo": [
-          "P1",
-          "O1",
-          "C1",
-          "C2",
-          "R1"
-        ],
-        "warn": "每次只改一个参数，避免多变量混调难归因",
-        "score": 0.55,
-        "weight": 0.55,
-        "priorityRank": 4,
+        "id": "confound_s_cable",
+        "label": "试探·馈线长度",
+        "mapsTo": [],
+        "warn": "馈线长度不进入串并联等效电容，不影响总电容判定，应回到单变量·电容C1、C2或C3",
+        "score": 0.15,
+        "weight": 0.15,
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "highlightFailureBranches": false,
         "highlightNodes": [
           "Start",
-          "StrategySelect",
-          "Win",
-          "ModeOff",
           "Env",
           "ModeOn",
-          "Route_main_s_cable",
-          "AdjustFB",
-          "RetestFB",
-          "ObserveFB"
+          "ModeOff",
+          "StrategySelect",
+          "ProbeCable",
+          "ObserveCable",
+          "BackFromCable"
         ],
         "highlightEdges": [
           [
@@ -535,31 +529,30 @@
             "StrategySelect"
           ],
           [
+            "Env",
+            "ModeOff"
+          ],
+          [
+            "ModeOff",
+            "StrategySelect"
+          ],
+          [
             "StrategySelect",
-            "Route_main_s_cable"
+            "ProbeCable"
           ],
           [
-            "Route_main_s_cable",
-            "AdjustFB"
+            "ProbeCable",
+            "ObserveCable"
           ],
           [
-            "AdjustFB",
-            "RetestFB"
+            "ObserveCable",
+            "BackFromCable"
           ],
           [
-            "RetestFB",
-            "ObserveFB"
-          ],
-          [
-            "ObserveFB",
-            "AdjustFB"
-          ],
-          [
-            "ObserveFB",
-            "Win"
+            "BackFromCable",
+            "StrategySelect"
           ]
-        ],
-        "highlightFailureBranches": true
+        ]
       },
       {
         "id": "trap",
@@ -737,19 +730,6 @@
         "notes": "rank3：串联支路电容，继续单变量",
         "priorityRank": 3,
         "responseShape": "nonlinear-monotone"
-      },
-      {
-        "id": "AV4",
-        "controlId": "s-cable",
-        "label": "馈线长度",
-        "type": "range",
-        "role": "secondary",
-        "mapsToKg": "O1",
-        "monotonicity": "unknown",
-        "affects": [],
-        "notes": "rank4：馈线长度多为外观/次级，对等效 C 贡献弱，最低",
-        "priorityRank": 4,
-        "responseShape": "unknown"
       }
     ],
     "confoundingVariables": [
@@ -758,6 +738,13 @@
         "controlId": "audio-volume",
         "label": "音量",
         "reason": "混淆/装饰控件：不参与核心过关归因"
+      },
+      {
+        "id": "CV2",
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "reason": "馈线长度不进入串并联公式，不改变总电容",
+        "mapsToKg": "I1"
       }
     ],
     "inquiryFlow": [
@@ -765,8 +752,8 @@
       "AV1",
       "AV2",
       "AV3",
-      "AV4",
-      "CV1"
+      "CV1",
+      "CV2"
     ],
     "narrative": {
       "intro": "本关探究：并联公式、串联公式",
@@ -795,7 +782,7 @@
         {
           "order": 3,
           "title": "识别混淆变量",
-          "body": "混淆项：音量（音频音量滑条，与电容实验无关）",
+          "body": "混淆项：音量（音频音量滑条，与电容实验无关）；馈线长度 L（只改读数，不进入串并联等效电容，不影响总电容判定）",
           "mapsToKg": [
             "I1"
           ]
@@ -840,11 +827,11 @@
     "independentVariables": [
       "AV1",
       "AV2",
-      "AV3",
-      "AV4"
+      "AV3"
     ],
     "confoundingVariables": [
-      "CV1"
+      "CV1",
+      "CV2"
     ],
     "dependentVariables": [
       "OV1",
@@ -915,21 +902,6 @@
         }
       },
       {
-        "id": "s-cable",
-        "type": "range",
-        "label": "馈线长度",
-        "symbol": "馈线长度",
-        "unit": null,
-        "mapsToKg": "O1",
-        "role": "adjustment",
-        "suggestedRange": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": ""
-        }
-      },
-      {
         "id": "modeSelect",
         "type": "discrete",
         "label": "模式选择",
@@ -942,6 +914,12 @@
         "controlId": "audio-volume",
         "label": "音量",
         "reason": "混淆/装饰控件：不参与核心过关归因",
+        "uiStrategy": "teach_only"
+      },
+      {
+        "controlId": "s-cable",
+        "label": "馈线长度",
+        "reason": "滑条只改长度读数，不进入串并联等效电容，不影响总电容判定",
         "uiStrategy": "teach_only"
       }
     ],
@@ -984,7 +962,7 @@
       },
       "s-cable": {
         "kgId": "O1",
-        "role": "operation"
+        "role": "irrelevant"
       },
       "modeSelect": {
         "kgId": "C1",
@@ -1092,11 +1070,11 @@
         "description": "学生调节 s-c3 → KG O1"
       },
       {
-        "type": "tuning",
+        "type": "irrelevant_touch",
         "controlId": "s-cable",
         "kgId": "O1",
-        "required": true,
-        "description": "学生调节 s-cable → KG O1"
+        "required": false,
+        "description": "馈线长度不进入串并联公式，触碰不计为调节变量"
       },
       {
         "type": "tuning",
