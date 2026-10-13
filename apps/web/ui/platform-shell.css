@@ -2415,6 +2415,136 @@ body.play-page {
   color: #f4fbfd;
 }
 
+.judge-primary {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--edu-border, #c8d8dc);
+  background: #f8fbfc;
+}
+
+.judge-primary-issue {
+  border-color: #e8b48a;
+  background: #fff8f2;
+}
+
+.judge-primary-positive {
+  border-color: #8fc4a8;
+  background: #f4fbf6;
+}
+
+.judge-primary-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--edu-primary);
+  margin-bottom: 4px;
+}
+
+.judge-primary-issue .judge-primary-label {
+  color: #b45309;
+}
+
+.judge-primary-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.judge-primary-hint {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--edu-muted, #5a6b72);
+  font-weight: 400;
+}
+
+.formative-assessment-block {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px dashed var(--edu-border, #c8d8dc);
+  background: #fafcfd;
+  font-size: 0.82rem;
+}
+
+.formative-evidence-warn {
+  margin: 0 0 8px;
+  color: #9a3412;
+  font-size: 0.8rem;
+}
+
+.formative-block-label {
+  display: inline-block;
+  font-weight: 600;
+  margin-right: 8px;
+  color: var(--edu-primary);
+  font-size: 0.75rem;
+}
+
+.formative-subskills {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.subskill-chip {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+}
+
+.subskill-adequate {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.subskill-emerging {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.subskill-absent {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.formative-diag-list {
+  margin: 0;
+  padding: 0 0 0 1em;
+  line-height: 1.5;
+}
+
+.formative-diag-list .diag-k {
+  display: inline-block;
+  min-width: 4.5em;
+  color: var(--edu-muted, #5a6b72);
+  font-size: 0.78rem;
+}
+
+.badge-primary-mis {
+  font-size: 0.68rem;
+  margin-right: 4px;
+}
+
+.badge-primary-issue {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+}
+
+.badge-primary-pos {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
 .judge-summary {
   margin: 0 0 10px;
   line-height: 1.55;
@@ -3210,6 +3340,36 @@ button.linkish:hover {
   padding: 1px 5px;
 }
 
+.badge-incomplete-kind {
+  font-size: 0.62rem;
+  padding: 1px 6px;
+  font-weight: 600;
+}
+
+.badge-incomplete-touch-only {
+  color: #64748b;
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.badge-incomplete-explore-dropout {
+  color: #0b766c;
+  background: rgba(11, 138, 128, 0.1);
+  border-color: rgba(11, 138, 128, 0.25);
+}
+
+.badge-incomplete-challenge-active {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.badge-incomplete-rich-unjudged {
+  color: #6b5400;
+  background: color-mix(in srgb, var(--edu-accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--edu-accent) 35%, transparent);
+}
+
 .badge-ability {
   display: inline-flex;
   align-items: center;
@@ -3228,6 +3388,22 @@ button.linkish:hover {
   border: 1px solid var(--edu-primary);
   box-shadow: inset 0 -2px 0 var(--edu-primary);
   white-space: nowrap;
+}
+
+.badge-ability-preview {
+  font-weight: 700;
+  background: rgba(11, 138, 128, 0.11);
+  color: #0b766c;
+  border: 1px dashed rgba(11, 138, 128, 0.42);
+  box-shadow: none;
+}
+
+.badge-ability-empty {
+  background: rgba(100, 116, 139, 0.07);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+  box-shadow: none;
+  font-weight: 500;
 }
 
 .session-ability-panel,

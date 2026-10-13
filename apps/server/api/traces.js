@@ -46,10 +46,12 @@ const {
 const { getPackageGamePath, getPackageChapterPath } = require('../../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../../packages/judge/strategy-segment-score');
 const { resolveStrategyPathScoreScope } = require('../../../packages/judge/trace-normalize');
+const { ABILITY_SCORE_VERSION } = require('../../../packages/judge/ability-score');
 const {
-  computeAbilityScore,
-  ABILITY_SCORE_VERSION,
-} = require('../../../packages/judge/ability-score');
+  computeSessionAbilityScore,
+  mergeAbilityScoreRecords,
+  sessionHasFiniteTerminalTotal,
+} = require('../../../packages/platform/session-ability-score');
 const { computeLiteracyProfileFromSession } = require('../../../packages/judge/literacy-mapping');
 const { formatSummary, detectNearTies } = require('../../web/ui/strategy-path-summary');
 const { loadAdapter } = require('../../../packages/platform/adapters');
@@ -449,6 +451,109 @@ async function handleDemoStrategyPathSummary(req, res) {
   }
 }
 
+function attachPathPayloadToSession(session, pathPayload, scoredPhase) {
+  session.strategyPathByPhase = session.strategyPathByPhase && typeof session.strategyPathByPhase === 'object'
+    ? session.strategyPathByPhase
+    : {};
+  if (scoredPhase === 'explore') {
+    session.strategyPathSummaryExplore = pathPayload;
+    session.strategyPathByPhase.explore = pathPayload;
+    const prevPhase = session.strategyPathSummary?.scoredPhase;
+    if (!session.strategyPathSummary || prevPhase === 'explore' || prevPhase === 'full') {
+      if (prevPhase !== 'challenge') session.strategyPathSummary = pathPayload;
+    }
+  } else if (scoredPhase === 'challenge') {
+    session.strategyPathByPhase.challenge = pathPayload;
+    session.strategyPathSummary = pathPayload;
+  } else {
+    session.strategyPathByPhase.full = pathPayload;
+    const prev = session.strategyPathSummary?.scoredPhase;
+    if (prev !== 'challenge' && prev !== 'explore') {
+      session.strategyPathSummary = pathPayload;
+    }
+  }
+}
+
+function scorePathSummaryForScope(allEvents, chapter, body, phaseScope) {
+  const audience = body.audience === 'teacher' ? 'teacher' : 'student';
+  const hintedMode = body.mode
+    || (phaseScope === 'challenge' ? 'compete' : 'explore');
+  const scope = resolveStrategyPathScoreScope(allEvents, {
+    phaseScope,
+    mode: hintedMode,
+  });
+  const mode = scope.mode;
+  const scoredPhase = scope.scoredPhase;
+  const events = scope.events;
+  const scoreResult = scoreTraceStrategy(events, chapter, { mode });
+  const nearTies = detectNearTies(scoreResult, chapter);
+  const sawModeSwitch = allEvents.some(e => e.type === 'phase_change' || e.type === 'mode');
+  const degradeReason = body.degradeReason
+    || (sawModeSwitch && body.strictModeAlign ? 'mode_switch' : null);
+  const summary = formatSummary(scoreResult, {
+    showScore: body.showScore != null ? !!body.showScore : audience === 'teacher',
+    audience,
+    nearTies,
+    alignmentOk: degradeReason ? false : true,
+    degradeReason,
+    scoredPhase,
+  });
+  const pathPayload = {
+    ...summary,
+    primaryStrategy: scoreResult.primaryStrategy,
+    score: scoreResult.score,
+    mode,
+    scoredPhase,
+    nearTies,
+    scoredAt: new Date().toISOString(),
+  };
+  return {
+    mode,
+    scoredPhase,
+    scoreResult,
+    nearTies,
+    summary,
+    pathPayload,
+  };
+}
+
+function persistTeacherAbilityIfNeeded(session, chapter, body, audience) {
+  if (audience !== 'teacher' || sessionHasFiniteTerminalTotal(session)) return;
+  try {
+    const pkgId = body.packageId
+      || session.packageId
+      || session.catalogId
+      || null;
+    const computed = computeSessionAbilityScore(session, chapter, {
+      graphId: body.graphId || session.graphId,
+      packageId: pkgId,
+    });
+    if (!sessionHasFiniteTerminalTotal(session)) {
+      session.abilityScore = mergeAbilityScoreRecords(session.abilityScore, computed);
+    }
+  } catch (abilityErr) {
+    if (!sessionHasFiniteTerminalTotal(session)) {
+      session.abilityScore = mergeAbilityScoreRecords(session.abilityScore, {
+        version: ABILITY_SCORE_VERSION,
+        total: null,
+        pending: true,
+        error: abilityErr.message || String(abilityErr),
+        computedAt: new Date().toISOString(),
+      });
+    }
+  }
+}
+
+function persistTeacherLiteracyIfNeeded(session, audience) {
+  if (audience !== 'teacher') return;
+  if (session.literacyProfile && session.judgeResult) return;
+  try {
+    session.literacyProfile = computeLiteracyProfileFromSession(session, {
+      timingFeatures: session.timingFeatures || null,
+    });
+  } catch (_) { /* ignore */ }
+}
+
 /** Score real student session events → non-spoiler path type summary. */
 async function handleSessionStrategyPathSummary(req, res) {
   cors(res);
@@ -480,6 +585,50 @@ async function handleSessionStrategyPathSummary(req, res) {
     enrichRecordMetrics(session, chapter);
     const allEvents = Array.isArray(session.events) ? session.events : [];
     const audience = body.audience === 'teacher' ? 'teacher' : 'student';
+
+    if (body.dualPhase === true && audience === 'teacher' && allEvents.length) {
+      const exploreScored = scorePathSummaryForScope(allEvents, chapter, body, 'explore');
+      attachPathPayloadToSession(session, exploreScored.pathPayload, exploreScored.scoredPhase);
+      const challengeScored = scorePathSummaryForScope(allEvents, chapter, body, 'challenge');
+      attachPathPayloadToSession(session, challengeScored.pathPayload, challengeScored.scoredPhase);
+      persistTeacherAbilityIfNeeded(session, chapter, body, audience);
+      persistTeacherLiteracyIfNeeded(session, audience);
+      saveTraceSession(session);
+      const payload = {
+        ok: true,
+        dualPhase: true,
+        sessionId: session.sessionId,
+        graphId,
+        explore: {
+          mode: exploreScored.mode,
+          scoredPhase: exploreScored.scoredPhase,
+          primaryStrategy: exploreScored.scoreResult.primaryStrategy,
+          score: exploreScored.scoreResult.score,
+          summary: exploreScored.summary,
+          nearTies: exploreScored.nearTies,
+        },
+        challenge: {
+          mode: challengeScored.mode,
+          scoredPhase: challengeScored.scoredPhase,
+          primaryStrategy: challengeScored.scoreResult.primaryStrategy,
+          score: challengeScored.scoreResult.score,
+          summary: challengeScored.summary,
+          nearTies: challengeScored.nearTies,
+        },
+        strategyPathSummaryExplore: session.strategyPathSummaryExplore || null,
+        strategyPathByPhase: session.strategyPathByPhase || null,
+        variableAdjustCounts: session.variableAdjustCounts,
+        source: 'session-events',
+        abilityScore: session.abilityScore || null,
+        abilityScoreVersion: ABILITY_SCORE_VERSION,
+        literacyProfile: session.literacyProfile || null,
+        timingFeatures: session.timingFeatures || null,
+      };
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(payload));
+      return;
+    }
+
     // 事件范围由服务端按 phase 决定，不单信 body.mode（对齐 Agent B：策略看竞赛段）
     const hintedMode = body.mode
       || (session.currentPhase === 'challenge' ? 'compete' : 'explore');
@@ -495,23 +644,15 @@ async function handleSessionStrategyPathSummary(req, res) {
         { primaryStrategy: null, score: null, breakdown: {} },
         { audience, showScore: false, alignmentOk: false, degradeReason: 'events_empty', scoredPhase },
       );
-      if (audience === 'teacher') {
-        const hasFiniteEmpty = !!(session.abilityScore
-          && Number(session.abilityScore.version) === Number(ABILITY_SCORE_VERSION)
-          && Number.isFinite(Number(session.abilityScore.total)));
-        if (!hasFiniteEmpty) {
-          try {
-            session.abilityScore = computeAbilityScore({
-              events: [],
-              chapter,
-              verdict: session.judgeResult?.verdict || null,
-              judged: !!session.judged || !!session.judgeResult,
-              packageId: body.packageId || session.packageId || session.catalogId || null,
-              graphId,
-            });
-            saveTraceSession(session);
-          } catch (_) { /* ignore */ }
-        }
+      if (audience === 'teacher' && !sessionHasFiniteTerminalTotal(session)) {
+        try {
+          const computed = computeSessionAbilityScore(session, chapter, {
+            graphId,
+            packageId: body.packageId || session.packageId || session.catalogId || null,
+          });
+          session.abilityScore = mergeAbilityScoreRecords(session.abilityScore, computed);
+          saveTraceSession(session);
+        } catch (_) { /* ignore */ }
       }
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({
@@ -557,7 +698,6 @@ async function handleSessionStrategyPathSummary(req, res) {
       degradeReason,
       scoredPhase,
     });
-    // Persist path summary：竞赛优先作 primary；探究段写入独立字段，避免并行请求互相覆盖
     const pathPayload = {
       ...summary,
       primaryStrategy: scoreResult.primaryStrategy,
@@ -567,74 +707,14 @@ async function handleSessionStrategyPathSummary(req, res) {
       nearTies,
       scoredAt: new Date().toISOString(),
     };
-    session.strategyPathByPhase = session.strategyPathByPhase && typeof session.strategyPathByPhase === 'object'
-      ? session.strategyPathByPhase
-      : {};
-    if (scoredPhase === 'explore') {
-      session.strategyPathSummaryExplore = pathPayload;
-      session.strategyPathByPhase.explore = pathPayload;
-      const prevPhase = session.strategyPathSummary?.scoredPhase;
-      if (!session.strategyPathSummary || prevPhase === 'explore' || prevPhase === 'full') {
-        // 无竞赛 primary 时可用探究段占位；已有 challenge 则不覆盖
-        if (prevPhase !== 'challenge') session.strategyPathSummary = pathPayload;
-      }
-    } else if (scoredPhase === 'challenge') {
-      session.strategyPathByPhase.challenge = pathPayload;
-      session.strategyPathSummary = pathPayload;
-    } else {
-      session.strategyPathByPhase.full = pathPayload;
-      // primary 优先级：challenge > explore > full（避免并行默认 full 冲掉探究段）
-      const prev = session.strategyPathSummary?.scoredPhase;
-      if (prev !== 'challenge' && prev !== 'explore') {
-        session.strategyPathSummary = pathPayload;
-      }
+    attachPathPayloadToSession(session, pathPayload, scoredPhase);
+    const shouldPersistAbility = audience !== 'teacher'
+      || scoredPhase === 'challenge'
+      || scoredPhase === 'full';
+    if (shouldPersistAbility) {
+      persistTeacherAbilityIfNeeded(session, chapter, body, audience);
     }
-    // 能力总分：仅缺失 / 非有限 total / 公式版本不符时懒重算。
-    // 已有当前版本有限总分时整段跳过（教师受众也绝不重算/落盘覆盖）。
-    const hasFiniteAbility = !!(session.abilityScore
-      && Number(session.abilityScore.version) === Number(ABILITY_SCORE_VERSION)
-      && Number.isFinite(Number(session.abilityScore.total)));
-    if (!hasFiniteAbility) {
-      try {
-        const pkgId = body.packageId
-          || session.packageId
-          || session.catalogId
-          || null;
-        const computed = computeAbilityScore({
-          events: allEvents,
-          chapter,
-          verdict: session.judgeResult?.verdict || session.verdict || null,
-          judged: !!session.judged || !!session.judgeResult,
-          packageId: pkgId,
-          graphId,
-        });
-        // 二次护栏：若并发间已有有限分，不落盘覆盖
-        const stillMissing = !session.abilityScore
-          || Number(session.abilityScore.version) !== Number(ABILITY_SCORE_VERSION)
-          || !Number.isFinite(Number(session.abilityScore.total));
-        if (stillMissing) session.abilityScore = computed;
-      } catch (abilityErr) {
-        // 不计分失败不影响路径摘要；勿覆盖已有有效分
-        if (!session.abilityScore
-          || Number(session.abilityScore.version) !== Number(ABILITY_SCORE_VERSION)
-          || !Number.isFinite(Number(session.abilityScore.total))) {
-          session.abilityScore = {
-            version: ABILITY_SCORE_VERSION,
-            total: null,
-            pending: true,
-            error: abilityErr.message || String(abilityErr),
-            computedAt: new Date().toISOString(),
-          };
-        }
-      }
-    }
-    if (audience === 'teacher') {
-      try {
-        session.literacyProfile = computeLiteracyProfileFromSession(session, {
-          timingFeatures: session.timingFeatures || null,
-        });
-      } catch (_) { /* ignore; payload may still omit */ }
-    }
+    persistTeacherLiteracyIfNeeded(session, audience);
     saveTraceSession(session);
     const payload = {
       ok: true,

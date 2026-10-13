@@ -19,10 +19,14 @@ const { getTracesRoot } = require('../../packages/platform/paths');
 const { getPackageChapterPath,
   getPackagesRoot,
   loadChapterForSample, getReportsRoot } = require('../../packages/shared/data-paths');
+const { ABILITY_SCORE_VERSION } = require('../../packages/judge/ability-score');
+const { loadChapterForGraph } = require('../../packages/platform/catalog');
 const {
-  ABILITY_SCORE_VERSION,
-  computeAbilityScore,
-} = require('../../packages/judge/ability-score');
+  computeSessionAbilityScore,
+  mergeAbilityScoreRecords,
+  stripPreviewFieldsFromAbility,
+} = require('../../packages/platform/session-ability-score');
+const { isTerminalSession } = require('../../packages/judge/session-terminal');
 
 const REPORT_PATH = path.join(getReportsRoot(),
   'ability-score-calibration.md',
@@ -667,17 +671,20 @@ function main() {
     }
 
     try {
-      const ability = computeAbilityScore({
-        events: Array.isArray(session.events) ? session.events : [],
-        chapter: loaded.chapter || {},
-        verdict: session.judgeResult?.verdict || session.verdict || null,
-        judged: !!(session.judged || session.judgeResult),
+      const chapter = loaded.chapter
+        || (session.graphId ? loadChapterForGraph(session.graphId) : null)
+        || {};
+      const computed = computeSessionAbilityScore(session, chapter, {
         packageId,
         graphId: session.graphId || null,
+        incompletePreview: false,
       });
+      let ability = mergeAbilityScoreRecords(session.abilityScore, computed);
+      if (isTerminalSession(session)) {
+        ability = stripPreviewFieldsFromAbility(ability);
+      }
       ability.inputsHash = inputsHash;
       ability.computedAt = ability.computedAt || new Date().toISOString();
-      // keep abilityScoreComputedAt mirror for quick grep / older readers
       session.abilityScore = ability;
       session.abilityScoreComputedAt = ability.computedAt;
 

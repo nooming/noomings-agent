@@ -71,7 +71,7 @@ function judgeSingleVariableCheck() {
   };
 
   const llmJson = '{"level":2,"summary":"仅调速度，未试角度","strengths":["单变量调节"],"gaps":["未尝试调节角度","方法单一"],"suggestion":"建议同时调节角度和速度"}';
-  const result = buildLlmJudgeResult(llmJson, summary);
+  const result = buildLlmJudgeResult(llmJson, summary, FIXTURE_CHAPTER);
 
   assert(result.verdict === 'in_progress', 'verdict lifted to in_progress');
   assert(result.teacherSummary.level >= 3, 'level at least 3');
@@ -86,7 +86,7 @@ function judgeSingleVariableCheck() {
     gaps: ['未探索角度参数'],
     teacherSummary: { level: 2, summary: '方法单一', strengths: [], gaps: ['未探索角度'], suggestion: '同时调两参' },
     comment: '方法单一',
-  }, summary);
+  }, summary, FIXTURE_CHAPTER);
   assert(policyOnly.verdict === 'in_progress', 'applySingleVariablePolicy lifts verdict');
   assert(verdictFromLevel(2, summary) === 'in_progress', 'verdictFromLevel respects main single var');
 

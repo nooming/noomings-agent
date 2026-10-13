@@ -182,11 +182,11 @@ async function main() {
     }
   });
 
-  // recount pending after
+  // recount pending after (recursive, same as listTraceFiles)
   let pendingAfter = 0;
-  for (const f of fs.readdirSync(root).filter((x) => x.endsWith('.json'))) {
+  for (const rel of listTraceFiles().files) {
     try {
-      const row = JSON.parse(fs.readFileSync(path.join(root, f), 'utf8'));
+      const row = JSON.parse(fs.readFileSync(path.join(root, rel), 'utf8'));
       if (isPending(row)) pendingAfter += 1;
     } catch { /* ignore */ }
   }

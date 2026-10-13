@@ -22,7 +22,10 @@ function computeRlReward(ctx = {}) {
 
   const ip = inquiryPath || {};
   const m = ip.metrics || {};
-  if (ip.strategyRouteGuess === 'main' && m.singleVariableRate != null && m.singleVariableRate >= 0.8) {
+  const mainLike = m.mainLikeRouteGuess === true
+    || ip.strategyRouteGuess === 'main'
+    || /^main[_-]/i.test(String(ip.strategyRouteGuess || ''));
+  if (mainLike && m.singleVariableRate != null && m.singleVariableRate >= 0.8) {
     reward += 0.5;
     breakdown.push({ key: 'single_var_main', value: 0.5 });
   }

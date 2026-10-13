@@ -1,6 +1,11 @@
 const { chatCompletion } = require('../shared/llm');
 const { summarizeTrace } = require('./dt-align');
 const { getSystem, buildUserPrompt } = require('./prompt');
+const { isMainLikeRouteGuess } = require('./strategy-route-kind');
+const {
+  attachFormativeAssessment,
+  mergeLlmJudgeWithRuleStable,
+} = require('./formative-bundle');
 
 const HINT_GAP_MESSAGES = {
   ok: '已接近或达到过关条件，可检查是否触发 win。',
@@ -37,13 +42,15 @@ function isCvHeavyInquiry(summary) {
   return false;
 }
 
-function isMainSingleVariableExploration(summary) {
+function isMainSingleVariableExploration(summary, chapter) {
   const ip = summary.inquiryPath;
   if (!ip) return false;
-  // CV 重度拧旁路：不得当作主推单变量成功
   if (isCvHeavyInquiry(summary)) return false;
   const rate = ip.metrics?.singleVariableRate;
-  return ip.strategyRouteGuess === 'main' && rate != null && rate >= 0.8;
+  if (rate == null || rate < 0.8) return false;
+  if (ip.metrics?.mainLikeRouteGuess === true) return true;
+  const routes = chapter?.strategy?.routes || [];
+  return isMainLikeRouteGuess(ip.strategyRouteGuess, routes);
 }
 
 const SINGLE_VAR_PRAISE_RE = /控制变量途径|坚持单参|主推控制变量|单参调节优于|符合主推/;
@@ -76,9 +83,9 @@ function parseJudgeJson(text) {
   }
 }
 
-function verdictFromLevel(level, summary) {
+function verdictFromLevel(level, summary, chapter) {
   if (isPassed(summary)) return 'pass';
-  if (isMainSingleVariableExploration(summary) && (level == null || level <= 2)) {
+  if (isMainSingleVariableExploration(summary, chapter) && (level == null || level <= 2)) {
     return 'in_progress';
   }
   if (level == null) return 'in_progress';
@@ -273,8 +280,8 @@ function applyTimingSoftGaps(result, summary) {
   return out;
 }
 
-function applySingleVariablePolicy(result, summary) {
-  if (!isMainSingleVariableExploration(summary) || isPassed(summary)) {
+function applySingleVariablePolicy(result, summary, chapter) {
+  if (!isMainSingleVariableExploration(summary, chapter) || isPassed(summary)) {
     return result;
   }
 
@@ -364,10 +371,12 @@ function ruleJudge(summary, chapter) {
     if (cvHeavy) {
       gaps.push('竞赛段偏重拧无关量，更像试探旁路。');
     }
-    if (route === 'main' && inquiryPath.pathSteps?.includes('R1') && !cvHeavy) {
+    const routes = chapter?.strategy?.routes || [];
+    const mainLike = isMainLikeRouteGuess(route, routes) || m.mainLikeRouteGuess === true;
+    if (mainLike && inquiryPath.pathSteps?.includes('R1') && !cvHeavy) {
       strengths.push(`与${ROUTE_LABELS.main}一致，已沿 O1→约束链→R1 收敛。`);
     }
-    if (route === 'main' && m.singleVariableRate != null && m.singleVariableRate >= 0.8 && !cvHeavy) {
+    if (mainLike && m.singleVariableRate != null && m.singleVariableRate >= 0.8 && !cvHeavy) {
       strengths.push('符合控制变量途径，坚持单参调节。');
     }
     if (m.singleVariableRate != null && m.singleVariableRate < 0.5 && !cvHeavy) {
@@ -395,7 +404,7 @@ function ruleJudge(summary, chapter) {
   let verdict = align.dtPath.includes('R1') || lastSnapshot?.winOk || summary.hasWinEvent
     ? 'pass'
     : brokenCount > 2 ? 'learning' : 'in_progress';
-  if (isMainSingleVariableExploration(summary) && verdict === 'learning') verdict = 'in_progress';
+  if (isMainSingleVariableExploration(summary, chapter) && verdict === 'learning') verdict = 'in_progress';
   const level = verdict === 'pass' ? 4 : verdict === 'learning' ? 2 : 3;
   // CV 重度时不要用「单变量表扬」作摘要首句
   const strengthsClean = cvHeavy
@@ -420,18 +429,18 @@ function ruleJudge(summary, chapter) {
         inquiryPath: inquiryPath || undefined,
         teacherSummary,
         comment,
-      }, summary), summary),
+      }, summary, chapter), summary),
       summary,
     ),
     summary,
   );
 }
 
-function buildLlmJudgeResult(text, summary) {
+function buildLlmJudgeResult(text, summary, chapter) {
   let result;
   const parsed = parseJudgeJson(text);
   if (parsed) {
-    const verdict = verdictFromLevel(parsed.level, summary);
+    const verdict = verdictFromLevel(parsed.level, summary, chapter);
     const teacherSummary = {
       level: parsed.level,
       summary: truncateText(parsed.summary, 40),
@@ -457,7 +466,7 @@ function buildLlmJudgeResult(text, summary) {
         : []);
     result = {
       mode: 'llm',
-      verdict: verdictFromLevel(null, summary),
+      verdict: verdictFromLevel(null, summary, chapter),
       strengths: [],
       gaps: fallbackGaps,
       dtAlignment: summary.align.dtPath,
@@ -474,7 +483,7 @@ function buildLlmJudgeResult(text, summary) {
   }
   return applyTimingSoftGaps(
     applyPassWeakComparisonPolicy(
-      applyCvHeavyPolicy(applySingleVariablePolicy(result, summary), summary),
+      applyCvHeavyPolicy(applySingleVariablePolicy(result, summary, chapter), summary),
       summary,
     ),
     summary,
@@ -490,11 +499,21 @@ async function judge(body, opts = {}) {
     || opts.forceRules === true
     || body.forceRules === true;
 
+  const primaryCtx = {
+    summary,
+    chapter: body.chapter,
+    events: summary.events || body.trace?.events || [],
+    abilityScore: body.abilityScore || null,
+  };
+
+  const skipFormative = opts.skipFormativeAttach === true || body.skipFormativeAttach === true;
+
   if (preferRules || !opts.apiKey) {
-    const result = ruleJudge(summary, body.chapter);
+    let result = ruleJudge(summary, body.chapter);
     if (!opts.apiKey && !preferRules) {
       result.comment = `[规则模式·无 Key] ${String(result.comment || '').replace(/^\[规则模式\]\s*/, '')}`;
     }
+    if (!skipFormative) result = attachFormativeAssessment(result, primaryCtx);
     return result;
   }
 
@@ -506,10 +525,13 @@ async function judge(body, opts = {}) {
       { role: 'system', content: system },
       { role: 'user', content: userPrompt },
     ]);
-    return buildLlmJudgeResult(text, summary);
+    const ruleStable = attachFormativeAssessment(ruleJudge(summary, body.chapter), primaryCtx);
+    const llmRhetoric = buildLlmJudgeResult(text, summary, body.chapter);
+    return mergeLlmJudgeWithRuleStable(llmRhetoric, ruleStable);
   } catch (err) {
-    const fallback = ruleJudge(summary, body.chapter);
+    let fallback = ruleJudge(summary, body.chapter);
     fallback.comment = `[LLM 失败，规则降级] ${fallback.comment} (${err.message})`;
+    if (!skipFormative) fallback = attachFormativeAssessment(fallback, primaryCtx);
     return fallback;
   }
 }
@@ -534,4 +556,5 @@ module.exports = {
   PASS_WEAK_COMPARE_GAP,
   TIMING_DENSE_TUNE_GAP,
   TIMING_RUSH_ACTION_GAP,
+  attachFormativeAssessment,
 };

@@ -737,22 +737,27 @@ function computeAbilityScore(input = {}) {
     && !challengeWon
     && !challengeAttemptsExhausted;
 
-  // 两端皆无有效过程试次且结果也空 → total null
-  let total = null;
-  if (!incompletePending) {
-    if (weighted != null) {
-      total = clamp(Math.round(weighted + (attr.aligned ? ATTRIBUTION_BONUS : 0)), 0, 100);
-    } else if (resultInfo.raw != null && eRaw == null && pe.raw == null && pc.raw == null) {
-      // 仅有竞赛结果、无过程：固定权重下只拿 R（+ 若有 Er）份额（不再 renorm 成满分）
-      const erPart = exploreResultInfo.raw != null && Number.isFinite(exploreResultInfo.raw)
-        ? weights.Er * exploreResultInfo.raw
-        : 0;
-      total = clamp(Math.round(weights.R * resultInfo.raw + erPart), 0, 100);
-    }
+  let shadowTotal = null;
+  if (weighted != null) {
+    shadowTotal = clamp(Math.round(weighted + (attr.aligned ? ATTRIBUTION_BONUS : 0)), 0, 100);
+  } else if (resultInfo.raw != null && eRaw == null && pe.raw == null && pc.raw == null) {
+    // 仅有竞赛结果、无过程：固定权重下只拿 R（+ 若有 Er）份额（不再 renorm 成满分）
+    const erPart = exploreResultInfo.raw != null && Number.isFinite(exploreResultInfo.raw)
+      ? weights.Er * exploreResultInfo.raw
+      : 0;
+    shadowTotal = clamp(Math.round(weights.R * resultInfo.raw + erPart), 0, 100);
   }
-  // 幸运一发总分软封顶（相对扎实一发拉开）
-  if (luckyOneShot && total != null) {
-    total = Math.min(total, LUCKY_ONESHOT_TOTAL_CAP);
+  if (luckyOneShot && shadowTotal != null) {
+    shadowTotal = Math.min(shadowTotal, LUCKY_ONESHOT_TOTAL_CAP);
+  }
+
+  // 未终局 pending：total 保持 null，影子分写入 previewTotal（不计班级综合）
+  let total = null;
+  let previewTotal = null;
+  if (!incompletePending) {
+    total = shadowTotal;
+  } else if (shadowTotal != null) {
+    previewTotal = shadowTotal;
   }
 
   const pending = incompletePending
@@ -792,6 +797,7 @@ function computeAbilityScore(input = {}) {
   return {
     version: ABILITY_SCORE_VERSION,
     total,
+    ...(previewTotal != null ? { previewTotal } : {}),
     pending,
     weights: { ...weights },
     parts: {

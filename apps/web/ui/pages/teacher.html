@@ -44,7 +44,7 @@
 
       <h3>学生学情</h3>
       <p class="hint teacher-simple-only">左侧选学生；右侧「画像」看近阶段解读，「本局」选局看过程与评判。</p>
-      <p class="hint teacher-adv">学生游玩时自动上报操作。右栏页签：「画像」为四维近阶段主块 + 可折叠六维过程指标；「本局」为时间轴选局 + 本局能力/过程依据与过程评判。</p>
+      <p class="hint teacher-adv">右栏：「画像」近阶段四维；「本局」先诊断后能力分与过程依据。</p>
 
       <div class="sessions-stats" id="sessionsStats">
         <div class="stat-card"><span class="stat-value" id="statStudents">—</span><span class="stat-label">学生</span></div>
@@ -117,17 +117,15 @@
             <section class="session-right-block session-detail-panel session-pick-panel" id="sessionDetail">
               <div class="session-detail-empty">请从左侧选择学生</div>
             </section>
-            <section class="session-right-block session-ability-panel" id="sessionAbilityPanel" hidden>
-              <h4>本局能力</h4>
-              <p class="hint teacher-simple-only">本局能力分与过程依据；换局刷新。</p>
-              <p class="hint teacher-adv">本局能力分与过程依据（任务 / 阶段 / 路径）。学生级四维见「画像」；此处可折叠本局快照。未终局不计综合分与前五维。</p>
-              <div id="sessionAbilitySummary"></div>
-            </section>
             <section class="session-right-block session-judge-panel" id="sessionJudgePanel" hidden>
-              <h4>过程评判</h4>
-              <p class="hint teacher-simple-only">规则或 LLM：亮点 / 待改进 / 建议。</p>
-              <p class="hint teacher-adv">本局过程诊断（亮点 / 待改进 / 建议）；换局刷新。</p>
+              <h4>本局诊断（优先）</h4>
+              <p class="hint">主错因、子技能与对照/归因诊断；规则评判为准，LLM 可润色话术。</p>
               <div id="sessionJudgeSummary"></div>
+            </section>
+            <section class="session-right-block session-ability-panel" id="sessionAbilityPanel" hidden>
+              <h4>本局能力（结构 / 综合分）</h4>
+              <p class="hint">v4 综合分与六维过程读数（辅助诊断）。未终局不计综合分。</p>
+              <div id="sessionAbilitySummary"></div>
             </section>
           </div>
         </div>
@@ -370,6 +368,7 @@
 <script src="/static/ui/catalog-badges.js"></script>
 <script src="/static/ui/graph-preview-url.js"></script>
 <script src="/static/ui/session-terminal.js"></script>
+<script src="/static/ui/incomplete-session.js"></script>
 <script src="/static/ui/literacy-mapping.js"></script>
 <script src="/static/ui/attention-flags.js"></script>
 <script>
@@ -1576,6 +1575,62 @@ function sessionPhaseShortLabel(phase) {
   return '进行中';
 }
 
+function subskillStateClass(state) {
+  if (state === 'adequate') return 'subskill-adequate';
+  if (state === 'emerging') return 'subskill-emerging';
+  return 'subskill-absent';
+}
+
+/** 形成性诊断：子技能 + 对照/双模/归因/证据（来自 judgeResult.formativeAssessment） */
+function buildFormativeDiagnosticsHtml(formative) {
+  if (!formative) return '';
+  const parts = [];
+  const ev = formative.diagnostics?.evidenceSufficiency;
+  if (ev && ev.level && ev.level !== 'ok') {
+    const rs = (ev.reasons || []).join('；');
+    parts.push(`<p class="formative-evidence-warn" title="${esc(rs)}">⚠ ${esc(ev.label || '证据不足')}${rs ? `：${esc(rs)}` : ''}</p>`);
+  }
+  const skills = formative.subskillProfile?.skills || [];
+  if (skills.length) {
+    const chips = skills.map((s) =>
+      `<span class="subskill-chip ${subskillStateClass(s.state)}" title="${esc(s.note || s.stateLabel || '')}">${esc(s.label)}·${esc(s.stateLabel || s.state)}</span>`,
+    ).join('');
+    parts.push(`<div class="formative-subskills"><span class="formative-block-label">子技能</span>${chips}</div>`);
+  }
+  const d = formative.diagnostics || {};
+  const rows = [];
+  if (d.contrastDepth?.label) rows.push(`<li><span class="diag-k">对照深度</span>${esc(d.contrastDepth.label)}</li>`);
+  if (d.dualModeCoherence?.label) rows.push(`<li><span class="diag-k">双模一致</span>${esc(d.dualModeCoherence.label)}</li>`);
+  if (d.attributionAlignment?.label) rows.push(`<li><span class="diag-k">解释一致</span>${esc(d.attributionAlignment.label)}</li>`);
+  if (d.cvProbe?.label) rows.push(`<li><span class="diag-k">混淆量</span>${esc(d.cvProbe.label)}</li>`);
+  if (rows.length) {
+    parts.push(`<ul class="formative-diag-list">${rows.join('')}</ul>`);
+  }
+  if (!parts.length) return '';
+  return `<div class="formative-assessment-block">${parts.join('')}</div>`;
+}
+
+const PRIMARY_MIS_SHORT = {
+  pass_weak_compare: '少对照',
+  cv_as_cause: 'CV当因',
+  multi_av_trap: '多参混调',
+  timing_blind_tune: '监测不足',
+  explore_no_solid: '无达成',
+  explore_converged: '已收敛',
+};
+
+function primaryMisconceptionBadgeHtml(session) {
+  const jr = session?.judgeResult;
+  const code = jr?.primaryMisconception?.code;
+  const short = jr?.primaryShortLabel
+    || PRIMARY_MIS_SHORT[code]
+    || (jr?.primaryMisconception?.kind === 'positive' ? '已收敛' : '');
+  if (!short) return '';
+  const full = jr?.primaryMisconception?.label || short;
+  const cls = jr?.primaryMisconception?.kind === 'positive' ? 'badge-primary-pos' : 'badge-primary-issue';
+  return `<span class="badge badge-primary-mis ${cls}" title="${esc(full)}">主·${esc(short)}</span>`;
+}
+
 /**
  * 评判卡：去重亮点/摘要；路径在能力卡已展示时降为短徽标；控制变量长提示折入 details。
  * opts.pathShownElsewhere（默认 true）：与能力卡过程依据共存时瘦路径文案。
@@ -1594,6 +1649,8 @@ function buildJudgeBlock(jr, opts = {}) {
   let strengths = (ts.strengths?.length ? ts.strengths : jr.strengths || []).slice(0, 2);
   const gaps = (ts.gaps?.length ? ts.gaps : jr.gaps || []).slice(0, 2);
   let suggestion = ts.suggestion || '';
+  const formative = jr.formativeAssessment || ts.formativeAssessment || null;
+  const primary = jr.primaryMisconception || ts.primaryMisconception || null;
 
   // 亮点与 summary 相同/高度重复 → 不渲染该亮点
   strengths = strengths.filter(s => !judgeTextsNearlySame(s, summary));
@@ -1628,6 +1685,14 @@ function buildJudgeBlock(jr, opts = {}) {
     ? `<span class="judge-level-badge">${esc(JUDGE_LEVEL_LABELS[level] || ('L' + level))}</span>`
     : '';
 
+  let primaryBlock = '';
+  if (primary && primary.label && primary.kind !== 'none') {
+    const primaryClass = primary.kind === 'positive' ? 'judge-primary-positive' : 'judge-primary-issue';
+    const primaryTitle = primary.kind === 'positive' ? '主结论' : '主错因';
+    primaryBlock = `<div class="judge-primary ${primaryClass}"><span class="judge-primary-label">${esc(primaryTitle)}</span><p class="judge-primary-text">${esc(primary.label)}</p>${primary.hint ? `<p class="judge-primary-hint">${esc(primary.hint)}</p>` : ''}</div>`;
+  }
+  const formativeBlock = buildFormativeDiagnosticsHtml(formative);
+
   let bullets = '';
   if (strengths.length) {
     bullets += `<div class="judge-list-block"><span class="judge-list-label">亮点</span><ul class="judge-list">${strengths.map(s => `<li>${esc(s)}</li>`).join('')}</ul></div>`;
@@ -1652,6 +1717,8 @@ function buildJudgeBlock(jr, opts = {}) {
     </div>
     ${pathHint}
     ${mainRouteDetails}
+    ${primaryBlock}
+    ${formativeBlock}
     ${summary ? `<p class="judge-summary">${esc(summary)}</p>` : ''}
     ${bullets}
     ${suggestion ? `<p class="judge-suggestion"><strong>建议：</strong>${esc(suggestion)}</p>` : ''}
@@ -1660,10 +1727,42 @@ function buildJudgeBlock(jr, opts = {}) {
 }
 
 /** 未终局详情评判区：一行级摘要；完整评判卡收入「展开评语」。 */
+function sessionIncompleteKind(session) {
+  if (session?.incompleteKind) return session.incompleteKind;
+  if (typeof IncompleteSession !== 'undefined' && IncompleteSession.inferIncompleteKindClient) {
+    return IncompleteSession.inferIncompleteKindClient(session);
+  }
+  return 'rich_unjudged';
+}
+
+function incompleteKindBadgeHtml(session) {
+  if (!session || isTerminalSessionRow(session)) return '';
+  const kind = sessionIncompleteKind(session);
+  const label = (typeof IncompleteSession !== 'undefined' && IncompleteSession.incompleteKindLabelZh)
+    ? IncompleteSession.incompleteKindLabelZh(kind)
+    : '未完成';
+  const cls = `badge-incomplete-kind badge-incomplete-${kind.replace(/_/g, '-')}`;
+  const eligible = session.previewEligible === true;
+  const eligibleHint = session.previewEligible === false
+    ? ' · 过程过少，暂无参考分'
+    : (eligible ? ' · 可有参考分（若已 preview 评判）' : '');
+  const titles = {
+    touch_only: `未终局：事件很少，近似点开即走；不计综合分${eligibleHint}`,
+    explore_dropout: `未终局：有探究参与但未竞赛终局；不计综合分${eligibleHint}`,
+    challenge_active: `未终局：竞赛段有操作但未通关/用尽；不计综合分${eligibleHint}`,
+    rich_unjudged: `未终局：有一定过程；不计综合分${eligibleHint}`,
+  };
+  return `<span class="badge badge-band ${cls}" title="${esc(titles[kind] || titles.rich_unjudged)}">${esc(label)}</span>`;
+}
+
 function buildIncompleteJudgeArea(jr, session, summary) {
   const phase = sessionPhaseShortLabel(summary?.currentPhase || session?.currentPhase || null);
   const n = session?.eventCount ?? summary?.total ?? summary?.eventCount ?? 0;
-  const line = `未完成 · ${phase} · ${n}事件 · 不计入综合分`;
+  const kindLabel = (typeof IncompleteSession !== 'undefined' && IncompleteSession.incompleteKindLabelZh)
+    ? IncompleteSession.incompleteKindLabelZh(sessionIncompleteKind(session))
+    : '未完成';
+  const previewNote = jr?.judgePreview ? ' · 已规则预览（不计分）' : '';
+  const line = `未完成 · ${kindLabel} · ${phase} · ${n}事件 · 不计入综合分${previewNote}`;
   const full = jr ? buildJudgeBlock(jr, { pathShownElsewhere: true, bare: true }) : '';
   return `<div class="judge-result-box judge-result-incomplete">
     <p class="judge-incomplete-line">${esc(line)}</p>
@@ -2029,6 +2128,7 @@ function isFiniteAbilityTotal(v) {
   return Number.isFinite(Number(v));
 }
 
+/** 与 packages/platform/session-ability-score.mergeAbilityScoreRecords 保持同步 */
 function mergeAbilityScorePreferFinite(existing, incoming) {
   if (!incoming) return existing || null;
   if (!existing) return incoming;
@@ -2040,12 +2140,10 @@ function mergeAbilityScorePreferFinite(existing, incoming) {
   const exCurrent = Number.isFinite(exVer) && exVer === exp;
   const inCurrent = Number.isFinite(inVer) && inVer === exp;
 
-  // Freeze: 当前版本有限总分 → 保持整个 existing 对象
   if (exFinite && exCurrent) {
     if (inFinite && Number.isFinite(inVer) && inVer > exVer) return incoming;
     return existing;
   }
-  // 有限但版本落后：允许当前版本有限分替换
   if (exFinite && inFinite && inCurrent && (!Number.isFinite(exVer) || inVer > exVer)) {
     return incoming;
   }
@@ -2054,7 +2152,31 @@ function mergeAbilityScorePreferFinite(existing, incoming) {
   if (inFinite && !exFinite) return incoming;
   if (inCurrent && !exCurrent) return incoming;
   if (exCurrent && !inCurrent) return existing;
-  return existing;
+
+  const exPrev = isFiniteAbilityTotal(existing.previewTotal);
+  const inPrev = isFiniteAbilityTotal(incoming.previewTotal);
+  if (existing.preview && !incoming.preview) {
+    return {
+      ...incoming,
+      preview: true,
+      pending: true,
+      total: null,
+      previewTotal: inPrev ? incoming.previewTotal : existing.previewTotal,
+      previewNote: existing.previewNote || incoming.previewNote,
+      previewRevision: existing.previewRevision ?? incoming.previewRevision,
+      bands: { ...(incoming.bands || {}), result: '未完成' },
+    };
+  }
+  if (inPrev && !exPrev) return incoming;
+  if (exPrev && !inPrev) return existing;
+  if (inPrev && exPrev) {
+    return Number(incoming.previewTotal) >= Number(existing.previewTotal)
+      ? incoming
+      : existing;
+  }
+  const exAt = Date.parse(existing.computedAt || '') || 0;
+  const inAt = Date.parse(incoming.computedAt || '') || 0;
+  return inAt >= exAt ? incoming : existing;
 }
 
 function sessionHasCurrentAbilityTotal(session) {
@@ -2124,9 +2246,8 @@ function terminalSessionsOf(student) {
 }
 
 /**
- * 方案 B：按任务聚合能力分。
+ * 方案 B：按任务聚合能力分（逻辑同源 packages/platform/student-ability-aggregate.js）。
  * 每任务取最近 1–2 局当前版本有限 total 的均值；学生综合分 = 任务均分（四舍五入整数）。
- * 范围：当前筛选下的可见终局 sessions（过关或机会用尽；与列表同源）。
  */
 function aggregateStudentAbilityByTask(student) {
   const sessions = terminalSessionsOf(student);
@@ -2152,6 +2273,36 @@ function aggregateStudentAbilityByTask(student) {
     ? Math.round(taskScores.reduce((a, t) => a + t.score, 0) / taskScores.length)
     : null;
   return { taskScores, representativeSessions, composite };
+}
+
+function sessionPreviewAbilityTotal(session) {
+  return resolveSessionPreviewTotal(session, sessionAbilityScore(session));
+}
+
+/** 无终局综合分时：按任务对未终局 preview 参考分做同样 1–2 局均值再任务均分（仅展示，不计排名）。 */
+function aggregateStudentPreviewAbilityByTask(student) {
+  const sessions = student?.sessions || [];
+  const byTask = new Map();
+  for (const s of sessions) {
+    if (isTerminalSessionRow(s)) continue;
+    if (sessionPreviewAbilityTotal(s) == null) continue;
+    const key = sessionTaskKey(s);
+    if (!byTask.has(key)) byTask.set(key, []);
+    byTask.get(key).push(s);
+  }
+  const taskScores = [];
+  for (const [, list] of byTask) {
+    const scored = sortSessionsNewestFirst(list)
+      .filter(s => sessionPreviewAbilityTotal(s) != null);
+    if (!scored.length) continue;
+    const reps = scored.slice(0, 2);
+    const vals = reps.map(s => sessionPreviewAbilityTotal(s));
+    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+    taskScores.push({ score: mean, sessions: reps });
+  }
+  return taskScores.length
+    ? Math.round(taskScores.reduce((a, t) => a + t.score, 0) / taskScores.length)
+    : null;
 }
 
 /** 代表局过程档：全同取该档；多数票（>半）取多数；否则「部分清楚」。 */
@@ -2247,11 +2398,15 @@ function countSessionTerminalStats(student) {
   const sessions = Array.isArray(student?.sessions) ? student.sessions : [];
   let terminalN = 0;
   let incompleteN = 0;
+  let touchOnlyN = 0;
   for (const s of sessions) {
     if (isTerminalSessionRow(s)) terminalN += 1;
-    else incompleteN += 1;
+    else {
+      incompleteN += 1;
+      if (sessionIncompleteKind(s) === 'touch_only') touchOnlyN += 1;
+    }
   }
-  return { terminalN, incompleteN, totalN: terminalN + incompleteN };
+  return { terminalN, incompleteN, touchOnlyN, totalN: terminalN + incompleteN };
 }
 
 /**
@@ -2263,12 +2418,12 @@ function computeCompletionScore(student) {
   return Math.round(100 * terminalN / (terminalN + incompleteN));
 }
 
-/** 未终局过多：incomplete≥5，或 incomplete/total≥50% 且 incomplete≥3。 */
+/** 未终局过多：以「点开即走」为主计数，避免探究未完误报。 */
 function incompleteTooMany(stats) {
-  const incompleteN = Number(stats?.incompleteN) || 0;
+  const touchOnlyN = Number(stats?.touchOnlyN ?? stats?.incompleteN) || 0;
   const totalN = Number(stats?.totalN) || 0;
-  if (incompleteN >= 5) return true;
-  if (totalN > 0 && incompleteN / totalN >= 0.5 && incompleteN >= 3) return true;
+  if (touchOnlyN >= 5) return true;
+  if (totalN > 0 && touchOnlyN / totalN >= 0.5 && touchOnlyN >= 3) return true;
   return false;
 }
 
@@ -2478,11 +2633,34 @@ function resultBandClass(band) {
   return '';
 }
 
-function abilityScoreBadgeHtml(total, { pending = false, title = '能力总分' } = {}) {
+/** 未终局参考分：仅认存盘 previewTotal（与 v4 shadowTotal 同源）。 */
+function resolveSessionPreviewTotal(session, ability) {
+  const a = ability || sessionAbilityScore(session);
+  if (!a || !isFiniteAbilityTotal(a.previewTotal)) return null;
+  return Math.round(Number(a.previewTotal));
+}
+
+function abilityScoreBadgeHtml(total, {
+  pending = false,
+  previewTotal = null,
+  previewMode = false,
+  title = '能力总分',
+} = {}) {
+  const previewTitle = `${title} · 未终局参考分，不计入班级综合`;
   // pending 不得盖住已有有限总分；null 不得因 Number(null)===0 显示成 0
   if (isFiniteAbilityTotal(total)) {
     const n = Math.round(Number(total));
     return `<span class="badge badge-ability" title="${esc(title)}">${n}</span>`;
+  }
+  if (isFiniteAbilityTotal(previewTotal)) {
+    const n = Math.round(Number(previewTotal));
+    return `<span class="badge badge-ability badge-ability-preview" title="${esc(previewTitle)}">${n}</span>`;
+  }
+  if (previewMode) {
+    const emptyHint = pending
+      ? '未终局且暂无参考分（过程过少或未评判）'
+      : '暂无参考综合分';
+    return `<span class="badge badge-ability badge-ability-empty" title="${esc(title)}：${esc(emptyHint)}">—</span>`;
   }
   const suffix = pending || total == null ? '（未完成）' : '';
   return `<span class="badge badge-ability" title="${esc(title)}${suffix}">—</span>`;
@@ -2491,8 +2669,8 @@ function abilityScoreBadgeHtml(total, { pending = false, title = '能力总分' 
 function incompleteBadgeHtml(student) {
   const stats = countSessionTerminalStats(student);
   if (!incompleteTooMany(stats)) return '';
-  const n = stats.incompleteN;
-  return `<span class="badge badge-band badge-incomplete" title="未终局会话偏多（${n}/${stats.totalN}）；不计入综合分与前五维">未×${n}</span>`;
+  const n = stats.touchOnlyN ?? stats.incompleteN;
+  return `<span class="badge badge-band badge-incomplete" title="点开即走类未终局偏多（${n}/${stats.totalN}）；不计入综合分与前五维">即走×${n}</span>`;
 }
 
 function studentAggBadgesHtml(student) {
@@ -2500,9 +2678,20 @@ function studentAggBadgesHtml(student) {
   if (!sessions.length) return '';
   const { resultBand, abilityTotal, effectiveSession } = aggregateStudentBands(student);
   const res = normalizeResultBandLabel(resultBand) || '未完成';
-  const pending = !!sessionAbilityScore(effectiveSession)?.pending && abilityTotal == null;
+  const previewComposite = abilityTotal == null ? aggregateStudentPreviewAbilityByTask(student) : null;
+  const showPreviewComposite = abilityTotal == null && previewComposite != null;
+  const pending = !showPreviewComposite
+    && !!sessionAbilityScore(effectiveSession)?.pending
+    && abilityTotal == null;
   return [
-    abilityScoreBadgeHtml(abilityTotal, { pending, title: '综合分（按任务均分·仅终局）' }),
+    abilityScoreBadgeHtml(abilityTotal, {
+      pending,
+      previewTotal: previewComposite,
+      previewMode: abilityTotal == null,
+      title: showPreviewComposite
+        ? '参考综合（未终局·按任务均分，不计入排名）'
+        : '综合分（按任务均分·仅终局）',
+    }),
     `<span class="badge badge-band badge-result ${resultBandClass(res)}" title="竞赛结果档（达标/未完成/未达标）">${esc(res)}</span>`,
     incompleteBadgeHtml(student),
     attentionFlagsBadgesHtml(computeStudentAttentionFlags(student)),
@@ -2513,11 +2702,14 @@ function studentAggMetaHtml(student) {
   const sessions = student?.sessions || [];
   if (!sessions.length) return '';
   const { processBand, resultBand, abilityTotal, agg } = aggregateStudentBands(student);
+  const previewComposite = abilityTotal == null ? aggregateStudentPreviewAbilityByTask(student) : null;
   const graphId = document.getElementById('filterGraph')?.value;
   const scope = graphId ? '当前任务' : '当前筛选';
   const proc = processBand || '未评估';
   const res = normalizeResultBandLabel(resultBand) || '未完成';
-  const scoreTxt = abilityTotal != null ? String(abilityTotal) : '—';
+  const scoreTxt = abilityTotal != null
+    ? String(abilityTotal)
+    : (previewComposite != null ? String(previewComposite) : '—');
   const taskN = agg?.taskScores?.length || 0;
   const stats = countSessionTerminalStats(student);
   const completion = computeCompletionScore(student);
@@ -2526,7 +2718,7 @@ function studentAggMetaHtml(student) {
     taskN ? `${taskN} 个任务` : '',
     stats.totalN ? `终局 ${stats.terminalN}/${stats.totalN}` : '',
     completion != null ? `完成度 ${completion}` : '',
-    '综合分仅终局',
+    previewComposite != null ? '参考综合仅未终局' : '综合分仅终局',
     `过程·${proc}`,
     `竞赛结果·${res}`,
   ].filter(Boolean);
@@ -3177,7 +3369,6 @@ function loadSessionAbilitySummary(opts) {
   `;
 }
 
-/** 本局过程评判：放在本局能力之后。 */
 function loadSessionJudgeSummary(opts) {
   const panel = document.getElementById('sessionJudgePanel');
   const box = document.getElementById('sessionJudgeSummary');
@@ -3324,6 +3515,10 @@ function pathTypeBadgesHtml(session) {
 }
 
 function sessionRowVerdictBadgeHtml(session) {
+  if (session?.judgeResult?.judgePreview || session?.judgeResult?.mode === 'rule_preview') {
+    const v = session.verdict || session.judgeResult?.verdict || 'in_progress';
+    return `<span class="badge badge-verdict ${verdictClass(v)}" title="未终局规则预览，不计综合分">预览·${esc(verdictLabel(v))}</span>`;
+  }
   if (session?.judged) {
     return `<span class="badge badge-verdict ${verdictClass(session.verdict)}">${esc(verdictLabel(session.verdict))}</span>`;
   }
@@ -3341,7 +3536,8 @@ function sessionRowBadgesHtml(session) {
   const proc = mapSessionProcessBand(session);
   const resBand = mapSessionResultBand(session);
   const quality = sessionQualityBadgesHtml(session);
-  return `<span class="session-row-badges">${scoreHtml}`
+  const primaryBadge = primaryMisconceptionBadgeHtml(session);
+  return `<span class="session-row-badges">${primaryBadge}${scoreHtml}`
     + `<span class="badge badge-band badge-process ${processBandClass(proc)}" title="过程档">${esc(proc)}</span>`
     + `<span class="badge badge-band badge-result ${resultBandClass(resBand)}" title="竞赛结果档">${esc(resBand)}</span>`
     + quality
@@ -3357,7 +3553,7 @@ function sessionQualityBadgesHtml(session) {
   } else if (term === 'exhausted_fail') {
     parts.push('<span class="badge badge-quality" title="终局：次数用尽">终局·尽</span>');
   } else if (term === 'incomplete') {
-    parts.push('<span class="badge badge-quality" title="终局标记：未完成">终局·未完</span>');
+    parts.push(incompleteKindBadgeHtml(session));
   }
   const scored = session?.scoredPhase || session?.strategyPathSummary?.scoredPhase || null;
   const byPhase = session?.strategyPathByPhase;
@@ -3537,7 +3733,12 @@ function buildAbilityScoreBlock(ability) {
   if (!ability || Number(ability.version) !== Number(expectedAbilityScoreVersion())) {
     return '<p class="hint session-ability-empty">能力总分将在打开详情后自动计算</p>';
   }
-  const totalTxt = (ability.pending || ability.total == null) ? '—' : String(Math.round(ability.total));
+  let totalTxt = '—';
+  if (isFiniteAbilityTotal(ability.total)) {
+    totalTxt = String(Math.round(ability.total));
+  } else if (isFiniteAbilityTotal(ability.previewTotal) && (ability.preview || ability.pending)) {
+    totalTxt = String(Math.round(Number(ability.previewTotal)));
+  }
   const p = ability.parts || {};
   const fmt = (part, maxW) => {
     const raw = part?.raw;
@@ -3784,14 +3985,15 @@ function normalizePathSummaryPayload(data) {
   };
 }
 
-async function fetchTeacherPathSummaryOnce(session, phaseScope) {
+async function fetchTeacherPathSummaryOnce(session, phaseScope, opts = {}) {
   const body = {
     sessionId: session.sessionId,
     graphId: session.graphId,
     packageId: session.packageId || session.catalogId || undefined,
     audience: 'teacher',
   };
-  if (phaseScope) body.phaseScope = phaseScope;
+  if (opts.dualPhase) body.dualPhase = true;
+  else if (phaseScope) body.phaseScope = phaseScope;
   const r = await fetch('/api/platform/strategy-path-summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3829,18 +4031,29 @@ async function refreshTeacherPathSummary(session, reqId, opts = {}) {
     : !!(session?.sessionId && session.sessionId === selectedSessionId);
   const frozen = sessionAbilityScoreFrozen(session);
   try {
-    // 并行双 scope：探究段 + 竞赛段（无竞赛操作时服务端回退 full）
-    const [exploreData, challengeData] = await Promise.all([
-      fetchTeacherPathSummaryOnce(session, 'explore'),
-      fetchTeacherPathSummaryOnce(session, 'challenge'),
-    ]);
+    let dualData = await fetchTeacherPathSummaryOnce(session, null, { dualPhase: true });
     if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
 
-    const exploreSum = normalizePathSummaryPayload(exploreData);
-    const challengeSum = normalizePathSummaryPayload(challengeData);
-    const abilityScore = challengeData?.abilityScore || exploreData?.abilityScore || null;
-    const literacyProfile = challengeData?.literacyProfile || exploreData?.literacyProfile || null;
-    const timingFeatures = challengeData?.timingFeatures || exploreData?.timingFeatures || null;
+    let exploreData = null;
+    let challengeData = null;
+    if (dualData?.dualPhase) {
+      exploreData = { ok: true, ...dualData.explore, abilityScore: dualData.abilityScore };
+      challengeData = { ok: true, ...dualData.challenge, abilityScore: dualData.abilityScore };
+    } else {
+      const [exploreRes, challengeRes] = await Promise.all([
+        fetchTeacherPathSummaryOnce(session, 'explore'),
+        fetchTeacherPathSummaryOnce(session, 'challenge'),
+      ]);
+      if (reqId != null && reqId !== detailRequestSeq) return { aborted: true };
+      exploreData = exploreRes;
+      challengeData = challengeRes;
+      dualData = { abilityScore: challengeRes?.abilityScore || exploreRes?.abilityScore };
+    }
+    const exploreSum = exploreData ? normalizePathSummaryPayload(exploreData) : null;
+    const challengeSum = challengeData ? normalizePathSummaryPayload(challengeData) : null;
+    const abilityScore = dualData?.abilityScore || challengeData?.abilityScore || exploreData?.abilityScore || null;
+    const literacyProfile = dualData?.literacyProfile || challengeData?.literacyProfile || exploreData?.literacyProfile || null;
+    const timingFeatures = dualData?.timingFeatures || challengeData?.timingFeatures || exploreData?.timingFeatures || null;
     // 冻结或非活跃会话：不把 API 返回的 abilityScore 写回 session
     if (allowAbilityUpdate && !frozen && abilityScore) {
       session.abilityScore = mergeAbilityScorePreferFinite(session.abilityScore, abilityScore);

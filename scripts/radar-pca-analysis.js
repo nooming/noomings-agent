@@ -28,11 +28,19 @@ const { getTracesRoot } = require('../packages/platform/paths');
 const { loadChapterForGraph, getCatalogItem, readCatalog } = require('../packages/platform/catalog');
 const { isResearchInclude } = require('../packages/platform/catalog-visibility');
 const { loadChapterForSample, getReportsRoot } = require('../packages/shared/data-paths');
-const { computeAbilityScore } = require('../packages/judge/ability-score');
+const { computeSessionAbilityScore } = require('../packages/platform/session-ability-score');
 const {
   deriveTerminalOutcome,
   isTerminalSession,
 } = require('../packages/judge/session-terminal');
+const {
+  aggregateStudentAbilityByTask,
+  sessionFiniteAbilityTotal,
+  sessionTaskKey,
+  sortSessionsNewestFirst,
+  terminalSessionsOf,
+  isTerminalSessionRow,
+} = require('../packages/platform/student-ability-aggregate');
 
 const ABILITY_SCORE_VERSION = 4;
 /** Enter main PCA matrix when ≥ this many main-6 dims are finite (pre-impute). */
@@ -98,30 +106,6 @@ function sessionAbilityScore(session) {
   return a;
 }
 
-function sessionTaskKey(session) {
-  return String(
-    session?.catalogId
-    || session?.graphId
-    || session?.packageId
-    || session?.taskCode
-    || 'unknown',
-  );
-}
-
-function sessionFiniteAbilityTotal(session) {
-  const a = sessionAbilityScore(session);
-  if (!a || a.pending || !isFiniteAbilityTotal(a.total)) return null;
-  return Number(a.total);
-}
-
-function sortSessionsNewestFirst(sessions) {
-  return (Array.isArray(sessions) ? sessions.slice() : []).sort((a, b) => {
-    const ta = String(a?.updatedAt || a?.startedAt || '');
-    const tb = String(b?.updatedAt || b?.startedAt || '');
-    return tb.localeCompare(ta);
-  });
-}
-
 function normalizeSessionForTerminal(session) {
   return {
     ...session,
@@ -134,46 +118,8 @@ function normalizeSessionForTerminal(session) {
   };
 }
 
-function isTerminalSessionRow(session) {
-  return isTerminalSession(normalizeSessionForTerminal(session));
-}
-
 function terminalOutcomeOf(session) {
   return deriveTerminalOutcome(normalizeSessionForTerminal(session));
-}
-
-function terminalSessionsOf(student) {
-  return (Array.isArray(student?.sessions) ? student.sessions : []).filter(isTerminalSessionRow);
-}
-
-/**
- * Task-level totals — aligned with teacher.html:
- * per task, mean of newest 1–2 terminal sessions with finite ability total.
- */
-function aggregateStudentAbilityByTask(student) {
-  const sessions = terminalSessionsOf(student);
-  const byTask = new Map();
-  for (const s of sessions) {
-    const key = sessionTaskKey(s);
-    if (!byTask.has(key)) byTask.set(key, []);
-    byTask.get(key).push(s);
-  }
-  const taskScores = [];
-  const representativeSessions = [];
-  for (const [, list] of byTask) {
-    const scored = sortSessionsNewestFirst(list)
-      .filter(s => sessionFiniteAbilityTotal(s) != null);
-    if (!scored.length) continue;
-    const reps = scored.slice(0, 2);
-    const vals = reps.map(s => sessionFiniteAbilityTotal(s));
-    const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
-    taskScores.push({ score: mean, sessions: reps });
-    representativeSessions.push(...reps);
-  }
-  const composite = taskScores.length
-    ? Math.round(taskScores.reduce((a, t) => a + t.score, 0) / taskScores.length)
-    : null;
-  return { taskScores, representativeSessions, composite };
 }
 
 function meanFinite(nums) {
@@ -1006,18 +952,10 @@ function ensureAbilityScoreOnSession(session, stats) {
     return session;
   }
   try {
-    const abilityScore = computeAbilityScore({
-      events,
-      chapter,
-      verdict: session.verdict || session.judgeResult?.verdict || null,
-      judged: !!session.judgeResult,
-      packageId: session.packageId || session.catalogId || null,
+    const abilityScore = computeSessionAbilityScore(session, chapter, {
       graphId: session.graphId || null,
-      attemptsExhausted: session.attemptsExhausted === true
-        || terminalOutcomeOf(session) === 'exhausted_fail',
+      packageId: session.packageId || session.catalogId || null,
       terminalOutcome: terminalOutcomeOf(session),
-      exploreScore: session.strategyPathSummaryExplore || session.strategyPathByPhase?.explore || null,
-      challengeScore: session.strategyPathSummary || session.strategyPathByPhase?.challenge || null,
     });
     session.abilityScore = abilityScore;
     stats.rescored += 1;

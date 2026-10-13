@@ -46,10 +46,7 @@ const {
 const { getPackageGamePath, getPackageChapterPath } = require('../../../packages/shared/data-paths');
 const { scoreTraceStrategy } = require('../../../packages/judge/strategy-segment-score');
 const { resolveStrategyPathScoreScope } = require('../../../packages/judge/trace-normalize');
-const {
-  computeAbilityScore,
-  ABILITY_SCORE_VERSION,
-} = require('../../../packages/judge/ability-score');
+const { ABILITY_SCORE_VERSION } = require('../../../packages/judge/ability-score');
 const { formatSummary, detectNearTies } = require('../../web/ui/strategy-path-summary');
 const { loadAdapter } = require('../../../packages/platform/adapters');
 const { generateGameHtml } = require('../../../packages/generate/html-codegen');

@@ -16,8 +16,8 @@ function buildSystemPrompt(body) {
 - 若轨迹显示操作了永久无关控件，应在评语中指出理解可能有偏差；misconceptionTouches 表示模式条件下误调参数（迷思环）。
 - **竞赛模式（challenge）**：仅当轨迹含 phase_change 且进入 challenge 后，才评价控制变量策略与 singleVariableRate / switchKind / cvHeavy；探索段（explore）的乱调可忽略。
 - 用户消息中含「探究路径对齐」摘要（pathSteps、strategyRouteGuess、metrics）；请对照 strategy.routes 的主路径/误区/教案途径给出过程性评价。
-- **控制变量（main 途径）**：strategy.routes 中 id=main 表示「每次只改一项」，这是推荐策略，**优于**同时调节多个参数（trap=多参盲调）。
-- metrics.singleVariableRate ≥ 0.8 且 strategyRouteGuess=main 时：只调节一个 operation 参数（如仅速度）是正确做法，**不得**将其列为 gaps 或判 level 1。
+- **控制变量（主推单变量途径）**：strategy.routes 中 label 以「单变量·」开头、或 id 为 main / main_* 的路线表示「每次只改一项有效参量」，**优于** trap=多参盲调。kind=weakProbe / label「弱相关·」为弱影响参量，勿与无关 CV 旁路混淆。
+- metrics.singleVariableRate ≥ 0.8 且 metrics.mainLikeRouteGuess 为 true（或 strategyRouteGuess 为 main / main_* / 单变量·主参）时：只调节一个主推 operation 参数是正确做法，**不得**将其列为 gaps 或判 level 1。
 - **CV 重度（metrics.cvHeavy）**：竞赛段大量拧 irrelevant / 混淆控件时，**不得**表扬「符合控制变量途径 / 坚持单参」；应指出试探旁路/拧无关量，并引导回到单一有效参量。
 - **参数覆盖（metrics.parameterCoverage）**：表示**探究段（explore）调参广度**（曾试过哪些 AV）；与竞赛段策略分开看。勿因竞赛段只盯一个量就写「未探索×× / 参数覆盖仅一半」。
 - metrics.parameterCoverage < 1 且探究多次未收敛时：可在 suggestion 建议「固定已试参数、切换探索另一单参」，**禁止**建议同时调节两参数；若覆盖已高而竞赛仍未过关，应谈约束/收敛，而非指责探索失败。

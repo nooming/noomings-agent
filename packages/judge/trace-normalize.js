@@ -30,8 +30,26 @@ function getLegacyTypeMap(chapter) {
   return { ...(chapter?.traceMap?.legacyTypes || {}) };
 }
 
-function normalizeOneEvent(e, legacyMap) {
-  if (!e?.type || IMMUTABLE_EVENT_TYPES.has(e.type)) return e;
+function getLegacyControlMap(chapter) {
+  return { ...(chapter?.traceMap?.legacyControls || {}) };
+}
+
+function remapLegacyControl(chapter, control) {
+  if (!control) return control;
+  const map = getLegacyControlMap(chapter);
+  return map[control] || control;
+}
+
+function normalizeOneEvent(e, legacyMap, chapter) {
+  if (!e?.type || IMMUTABLE_EVENT_TYPES.has(e.type)) {
+    if (chapter && e?.payload?.control) {
+      const mapped = remapLegacyControl(chapter, e.payload.control);
+      if (mapped !== e.payload.control) {
+        return { ...e, payload: { ...e.payload, control: mapped } };
+      }
+    }
+    return e;
+  }
 
   const rule = legacyMap[e.type];
   if (rule) {
@@ -65,6 +83,12 @@ function normalizeOneEvent(e, legacyMap) {
       payload: { control, value: e.payload?.value, ...e.payload },
     };
   }
+  if (chapter && e?.payload?.control) {
+    const mapped = remapLegacyControl(chapter, e.payload.control);
+    if (mapped !== e.payload.control) {
+      return { ...e, payload: { ...e.payload, control: mapped } };
+    }
+  }
   return e;
 }
 
@@ -76,13 +100,16 @@ function normalizeTraceEvents(trace, chapter) {
   const events = trace?.events || [];
   const legacyMap = getLegacyTypeMap(chapter);
   let legacyAliasesApplied = 0;
+  let legacyControlsApplied = 0;
   const out = events.map(e => {
-    const before = e.type;
-    const norm = normalizeOneEvent(e, legacyMap);
-    if (norm.type !== before) legacyAliasesApplied += 1;
+    const beforeType = e.type;
+    const beforeControl = e.payload?.control;
+    const norm = normalizeOneEvent(e, legacyMap, chapter);
+    if (norm.type !== beforeType) legacyAliasesApplied += 1;
+    if (beforeControl && norm.payload?.control !== beforeControl) legacyControlsApplied += 1;
     return norm;
   });
-  return { events: out, meta: { legacyAliasesApplied } };
+  return { events: out, meta: { legacyAliasesApplied, legacyControlsApplied } };
 }
 
 /**

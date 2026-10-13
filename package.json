@@ -51,6 +51,8 @@
     "repair-quality-surgical": "node tests/scripts/repair-quality-surgical.js",
     "repair-narrative-surgical": "node tests/scripts/repair-narrative-surgical.js",
     "batch-judge-eval": "node tests/demos/batch-judge-eval.js",
+    "batch-judge-traces": "node tests/scripts/batch-judge-pending-traces.js --force",
+    "batch-judge-traces:pending": "node tests/scripts/batch-judge-pending-traces.js",
     "migrate:packages": "node tests/scripts/migrate-packages-layout.js",
     "archive:manual-html": "node tests/scripts/archive-manual-html-backups.js",
     "seed-html-samples": "node tests/scripts/seed-html-samples.js",

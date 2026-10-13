@@ -16,6 +16,8 @@
 | `explore_lucky` | 探究幸运一发 / 未扎实 | Er=`lucky` 或 raw 中低；有探究试次但无 solid | literacy 探究维一般/待加强；需关注 **有探究无达成** |
 | `timing_rush` / `timing_dense` | 偏快出手 / 连拧未测 | soft gaps：调参↔动作过短且少对照未达成；密 tuning 少 action | `judge.js` `applyTimingSoftGaps`；`trace-timing.js`；literacy 辅证句 |
 
+> 主错因、子技能剖面、形成性诊断：见 [formative-assessment-layer.md](./formative-assessment-layer.md)（`judgeResult.primaryMisconception` + `formativeAssessment`）。
+
 ## 需关注旗标 ↔ 子技能
 
 | 教师端旗标 | flag id | 子技能 ID | 触发要点（摘要） |

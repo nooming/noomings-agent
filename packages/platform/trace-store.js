@@ -9,8 +9,32 @@ const {
 const { cloneTraceEvents } = require('./trace-win-fields');
 const {
   deriveTerminalOutcome,
+  isTerminalSession,
   mergeTerminalOutcome,
 } = require('../judge/session-terminal');
+const { shouldRunIncompletePreview } = require('../judge/incomplete-session');
+const { loadChapterForGraph } = require('./catalog');
+
+function slimAbilityScoreForIndex(abilityScore) {
+  if (!abilityScore || typeof abilityScore !== 'object') return null;
+  const bands = abilityScore.bands;
+  return {
+    version: abilityScore.version,
+    total: abilityScore.total ?? null,
+    previewTotal: abilityScore.previewTotal ?? null,
+    preview: abilityScore.preview === true ? true : undefined,
+    previewNote: abilityScore.previewNote || undefined,
+    previewRevision: abilityScore.previewRevision ?? undefined,
+    pending: abilityScore.pending ?? undefined,
+    computedAt: abilityScore.computedAt || undefined,
+    bands: bands ? {
+      result: bands.result,
+      process: bands.process,
+      challengeResult: bands.challengeResult,
+      exploreResult: bands.exploreResult,
+    } : undefined,
+  };
+}
 const { validateStudentId } = require('./student-identity');
 
 /** Per-sessionId serial queue — avoids concurrent RMW clobbering the same JSON. */
@@ -176,11 +200,21 @@ function buildIndexEntry(record, relPath) {
     strategyPathByPhase: record.strategyPathByPhase || null,
     scoredPhase: record.strategyPathSummary?.scoredPhase || null,
     currentPhase: record.currentPhase || null,
-    abilityScore: record.abilityScore || null,
+    abilityScore: slimAbilityScoreForIndex(record.abilityScore),
     literacyProfile: record.literacyProfile || null,
     timingFeatures: record.timingFeatures || null,
     attemptsExhausted: record.attemptsExhausted === true,
     terminalOutcome,
+    incompleteKind: record.incompleteKind || null,
+    previewEligible: (() => {
+      if (isTerminalSession(record)) return false;
+      try {
+        const chapter = record.graphId ? loadChapterForGraph(record.graphId) : null;
+        return !!(chapter && shouldRunIncompletePreview(record, chapter));
+      } catch {
+        return null;
+      }
+    })(),
   };
 }
 
@@ -954,6 +988,9 @@ function saveJudgeResult(sessionId, judgeResult, extras = {}) {
   }
   if (extras && extras.timingFeatures) {
     record.timingFeatures = extras.timingFeatures;
+  }
+  if (extras && extras.incompleteKind) {
+    record.incompleteKind = extras.incompleteKind;
   }
   if (extras && extras.terminalOutcome) {
     record.terminalOutcome = mergeTerminalOutcome(record.terminalOutcome, extras.terminalOutcome);

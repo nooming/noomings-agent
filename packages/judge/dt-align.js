@@ -110,6 +110,7 @@ function summarizeTrace(trace, ch, chapter) {
     inquiryPath,
     filteredEventCount: events.length,
     timingFeatures: timingFeatures || undefined,
+    events,
   };
 }
 

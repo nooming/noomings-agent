@@ -52,6 +52,11 @@ const {
   scoreTraceStrategy,
   detectPlayMode,
 } = require('./strategy-segment-score');
+const {
+  isConfoundProbeRoute,
+  isMainLikeRouteGuess,
+  isWeakProbeRoute,
+} = require('./strategy-route-kind');
 
 function collectTouchedKgIds(events, chapter) {
   const touched = new Set();
@@ -124,13 +129,6 @@ function buildPathSteps(events, chapter) {
   return { pathSteps: steps, align, lastPayload: payload };
 }
 
-function isConfoundProbeRoute(r) {
-  if (!r) return false;
-  if (r.kind === 'weakProbe' || /^弱相关[·•.]/.test(String(r.label || ''))) return false;
-  if (r.kind === 'confoundProbe' || r.warn === 'irrelevant') return true;
-  return /试探|旁路|confound|irrelevant/i.test(`${r.id || ''}${r.label || ''}`);
-}
-
 function guessStrategyRoute(touchedIds, irrelevantCount, misconceptionCount, strategy, opts = {}) {
   const routes = strategy?.routes || [];
   if (!routes.length) {
@@ -148,9 +146,9 @@ function guessStrategyRoute(touchedIds, irrelevantCount, misconceptionCount, str
     }
     if (r.warn === 'irrelevant' && irrelevantCount > 0) score += 3;
     if (isTrapRoute(r) && misconceptionCount > 0) score += 3;
-    if (r.id === 'main' && touchedIds.has('R1')) score += 2;
-    // CV 重度时不得因「AV 自身单参」抬主路径
-    if (r.id === 'main' && singleVariableRate != null && singleVariableRate >= 0.8 && !cvHeavy) {
+    const mainLike = r.id === 'main' || /^main[_-]/i.test(String(r.id || ''));
+    if (mainLike && !isWeakProbeRoute(r) && touchedIds.has('R1')) score += 2;
+    if (mainLike && !isWeakProbeRoute(r) && singleVariableRate != null && singleVariableRate >= 0.8 && !cvHeavy) {
       score += 2;
     }
     if (singleVariableRate != null && singleVariableRate < 0.5 && isTrapRoute(r)) score += 2;
@@ -247,8 +245,8 @@ function metricSingleVariableRate(events, chapter, cvStats = null) {
     bursts += 1;
     i = j;
   }
-  const burstScore = bursts ? 1 : 1;
-  let rate = Math.max(0, Math.min(1, burstScore * (1 - mixPenalty * 0.5)));
+  const burstFactor = bursts <= 1 ? 1 : Math.max(0.55, 1 - (bursts - 1) * 0.08);
+  let rate = Math.max(0, Math.min(1, burstFactor * (1 - mixPenalty * 0.5)));
 
   // CV 重度：压低 singleVariableRate，避免 S3 看起来像 S1
   if (cv.cvHeavy) {
@@ -420,6 +418,7 @@ function tracePathAlign(trace, chapter, ch) {
       cvRatio: cvStats.cvRatio,
       cvOverAv: cvStats.cvOverAv,
       cvHeavy: cvStats.cvHeavy,
+      mainLikeRouteGuess: isMainLikeRouteGuess(strategyRouteGuess, chapter?.strategy?.routes || []),
     },
     align,
     normalizeMeta: meta,

@@ -19,6 +19,13 @@
  */
 
 const { isTrapRoute } = require('./coupled-invalid');
+const {
+  segmentLabelForControl,
+  findRouteForSegmentLabel,
+  defaultScoreForSegmentLabel,
+  isBypassSegmentLabel,
+  isWeakSegmentLabel,
+} = require('./strategy-route-kind');
 
 const MODE = {
   explore: {
@@ -108,18 +115,8 @@ function listCvControls(chapter) {
     .map(([id]) => id);
 }
 
-function avLabelForControl(chapter, controlId) {
-  const avs = chapter?.inquiryScript?.adjustmentVariables || [];
-  const hit = avs.find(a => a.controlId === controlId);
-  if (hit?.label) return `单变量·${hit.label}`;
-  return `单变量·${controlId}`;
-}
-
 function findRouteByLabel(routes, label) {
-  if (!label || !routes?.length) return null;
-  const exact = routes.find(r => String(r.label || '').trim() === label);
-  if (exact) return exact;
-  return routes.find(r => String(r.label || '').includes(label.replace(/^单变量·/, ''))) || null;
+  return findRouteForSegmentLabel(routes, label);
 }
 
 function routeScoreOf(route, fallback) {
@@ -222,9 +219,8 @@ function classifySegment(tunings, chapter) {
   if (!touchedAv.size && !touchedCv.size) return LABEL.empty;
   if (touchedAv.size >= 2) return LABEL.trap;
   if (touchedAv.size === 1) {
-    // 主路径仍标 AV；夹杂 CV 由外层 cv 记账，不改标签成混淆
     const only = [...touchedAv][0];
-    return avLabelForControl(chapter, only);
+    return segmentLabelForControl(chapter, only);
   }
   if (otherOps >= 2) return LABEL.trap;
   return LABEL.empty;
@@ -235,9 +231,9 @@ function countMeaningfulSwitches(segmentLabels) {
   let prev = null;
   for (const lab of segmentLabels) {
     if (!lab || lab === LABEL.empty) continue;
-    if (lab === LABEL.confound) continue; // CV 旁路不算策略切换
+    if (isBypassSegmentLabel(lab)) continue;
     if (prev && prev !== lab) n += 1;
-    if (lab !== LABEL.confound) prev = lab;
+    if (!isBypassSegmentLabel(lab)) prev = lab;
   }
   return n;
 }
@@ -254,7 +250,7 @@ function buildStrategySequence(segmentLabels) {
   const seq = [];
   for (const lab of segmentLabels) {
     if (!lab || lab === LABEL.empty) continue;
-    const bypass = lab === LABEL.confound;
+    const bypass = isBypassSegmentLabel(lab);
     if (seq.length && seq[seq.length - 1].label === lab) {
       seq[seq.length - 1].count += 1;
     } else {
@@ -383,12 +379,16 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
     } else if (seg.label === LABEL.confound) {
       s = 0.3;
       w = C.confoundWeight;
+    } else if (isWeakSegmentLabel(seg.label)) {
+      const route = findRouteByLabel(routes, seg.label);
+      s = routeScoreOf(route, defaultScoreForSegmentLabel(seg.label));
+      w = C.confoundWeight;
     } else if (seg.label === LABEL.trap) {
       s = trapScore;
       w = 1;
     } else {
       const route = findRouteByLabel(routes, seg.label);
-      s = routeScoreOf(route, 0.75);
+      s = routeScoreOf(route, defaultScoreForSegmentLabel(seg.label));
       w = 1;
     }
     weighted += s * w;
@@ -436,11 +436,26 @@ function scoreStrategySegments(segments, chapter, opts = {}) {
   const cvPen = cvOver ? C.cvOverPenalty * Math.min(1.5, cvRatio + 0.5) : 0;
   const cvBonus = cvProbe ? C.cvProbeBonus : 0;
 
-  // 禁止抬 CV 成高优单变量：主策略不得是 CV 标签
+  // 禁止把 CV 标签抬成高优单变量（含 route 长标签与 AV 短标签对齐）
   let cvRaised = false;
   if (dom.label && /质量|厚度|音量|外观|无关/.test(dom.label)) {
-    const avLabs = (chapter?.inquiryScript?.adjustmentVariables || []).map(a => `单变量·${a.label}`);
-    if (!avLabs.includes(dom.label)) cvRaised = true;
+    const avs = chapter?.inquiryScript?.adjustmentVariables || [];
+    const normalizeSeg = (s) => String(s)
+      .replace(/^(单变量·|弱相关·)/, '')
+      .replace(/（[^）]*）/g, '')
+      .trim();
+    const domCore = normalizeSeg(dom.label);
+    const inAv = avs.some((a) => {
+      if (!a?.label) return false;
+      const core = normalizeSeg(a.label);
+      if (dom.label === `单变量·${a.label}` || dom.label === `弱相关·${a.label}`) return true;
+      if (domCore === core) return true;
+      if (dom.label.includes(a.label)) return true;
+      const route = findRouteByLabel(routes, dom.label);
+      if (route && /^单变量·/.test(String(route.label || ''))) return true;
+      return false;
+    });
+    if (!inAv) cvRaised = true;
   }
 
   let score = base + mainBonus - switchPen - cvPen + cvBonus + convergeBonus;
