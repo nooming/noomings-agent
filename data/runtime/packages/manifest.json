@@ -315,6 +315,42 @@
       "htmlOrigin": "teammate"
     },
     {
+      "id": "relativistic-collision-1d",
+      "topic": "相对论碰撞",
+      "knowledgeText": "一维对心 · ΣE、Σp 守恒 · 对照经典弹性碰撞",
+      "hint": "过关：竞赛模式相对论 v₂/c 落入本局锁定带",
+      "tags": [
+        "generate",
+        "multi-av",
+        "confounding",
+        "craft:pilot"
+      ],
+      "expected": {
+        "formulasContain": [
+          "γ",
+          "E",
+          "p"
+        ],
+        "adjustmentLabelsContain": [
+          "质量",
+          "初速"
+        ],
+        "outputLabelsContain": [
+          "v₂"
+        ],
+        "confoundingMin": 1,
+        "minAdjustmentVars": 3,
+        "minOutputVars": 1
+      },
+      "judgeExpect": {
+        "goodTrace": "pass",
+        "trapTrace": "in_progress",
+        "singleVarMain": "in_progress"
+      },
+      "demoCatalog": true,
+      "htmlOrigin": "agent"
+    },
+    {
       "id": "pulley-rigid",
       "topic": "滑轮刚体",
       "knowledgeText": "滑轮·刚体转动 · I 进入 a=(m₁−m₂)g/(m₁+m₂+I/R²)",

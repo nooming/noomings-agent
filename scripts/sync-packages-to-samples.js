@@ -14,79 +14,65 @@ const crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const PKG_ROOT = path.join(ROOT, 'data/runtime/packages');
 const SAMPLE_ROOT = path.join(ROOT, '样本html');
-
-/** packageId → sample relative folder (under 样本html/); keep aligned with tests/lib/yangben-sample-map.js */
-const MAP = {
-  'ramp-rolling-collision': '斜坡滚球',
-  'gas-pressure-micro': '气体压强微观',
-  'maxwell-speed-dist': '麦克斯韦速率分布',
-  'adiabatic-process': '绝热过程',
-  'cyclotron-radius': '回旋加速器',
-  'pendulum-clock': '钟表铺校时',
-  'projectile-basic': '斜抛',
-  'nezha-boat-jump': '哪吒跳船',
-  'pulley-rigid': '滑轮刚体',
-  'capacitor-era-ch1': '电容_介质与击穿',
-  'capacitor-era-ch2': '电容_串并联',
-  'capacitor-era-ch4': '电容_储能与充电',
-};
+const YANG_MAP = require('../tests/lib/yangben-sample-map');
 
 function hash(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
+function syncOneFile(src, target, check, label) {
+  if (!fs.existsSync(src)) return { status: 'MISSING_PKG' };
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  if (!fs.existsSync(target)) {
+    if (check) return { status: 'DRIFT', detail: 'missing sample ' + label };
+    fs.copyFileSync(src, target);
+    return { status: 'CREATE', target };
+  }
+  if (hash(src) === hash(target)) return { status: 'OK' };
+  if (check) return { status: 'DRIFT', detail: label };
+  fs.copyFileSync(src, target);
+  return { status: 'SYNC', target };
+}
+
 function main() {
   const check = process.argv.includes('--check');
-  const all = process.argv.includes('--all');
-  const ids = all || check ? Object.keys(MAP) : Object.keys(MAP);
+  const ids = YANG_MAP.map((e) => e.id);
   let drift = 0;
   let synced = 0;
   let missing = 0;
 
-  for (const id of ids) {
-    const sampleDir = MAP[id];
-    const src = path.join(PKG_ROOT, id, 'game.html');
-    const dstDir = path.join(SAMPLE_ROOT, sampleDir);
-    const dst = path.join(dstDir, 'game.html');
-    // Some samples use <topic>.html instead of game.html
-    let target = dst;
-    if (!fs.existsSync(dst) && fs.existsSync(dstDir)) {
-      const alts = fs.readdirSync(dstDir).filter((f) => f.endsWith('.html') && f !== '图谱.html');
-      if (alts.length === 1) target = path.join(dstDir, alts[0]);
-    }
-    if (!fs.existsSync(src)) {
+  for (const entry of YANG_MAP) {
+    const { id, dir, game } = entry;
+    const srcGame = path.join(PKG_ROOT, id, 'game.html');
+    const dstDir = path.join(SAMPLE_ROOT, dir);
+    const targetGame = path.join(dstDir, game);
+    const srcGraph = path.join(PKG_ROOT, id, '图谱.html');
+    const targetGraph = path.join(dstDir, '图谱.html');
+
+    const g = syncOneFile(srcGame, targetGame, check, id + ' game');
+    if (g.status === 'MISSING_PKG') {
       console.log('MISSING_PKG', id);
       missing += 1;
       continue;
     }
-    if (!fs.existsSync(path.dirname(target))) {
-      console.log('MISSING_SAMPLE_DIR', id, sampleDir);
-      missing += 1;
-      continue;
-    }
-    if (!fs.existsSync(target)) {
-      if (check) {
-        console.log('DRIFT missing sample', id, '→', path.relative(ROOT, target));
-        drift += 1;
-      } else {
-        fs.copyFileSync(src, target);
-        console.log('CREATE', id, '→', path.relative(ROOT, target));
-        synced += 1;
-      }
-      continue;
-    }
-    const same = hash(src) === hash(target);
-    if (same) {
-      console.log('OK', id);
-      continue;
-    }
-    if (check) {
-      console.log('DRIFT', id, path.relative(ROOT, target));
+    if (g.status === 'OK') console.log('OK', id);
+    else if (g.status === 'DRIFT') {
+      console.log('DRIFT', id, g.detail || path.relative(ROOT, targetGame));
       drift += 1;
     } else {
-      fs.copyFileSync(src, target);
-      console.log('SYNC', id, '→', path.relative(ROOT, target));
+      console.log(g.status.toUpperCase(), id, '→', path.relative(ROOT, g.target));
       synced += 1;
+    }
+
+    if (fs.existsSync(srcGraph)) {
+      const gr = syncOneFile(srcGraph, targetGraph, check, id + ' 图谱');
+      if (gr.status === 'DRIFT') {
+        console.log('DRIFT', id, '图谱.html');
+        drift += 1;
+      } else if (gr.status === 'CREATE' || gr.status === 'SYNC') {
+        console.log(gr.status.toUpperCase(), id, '图谱 →', path.relative(ROOT, gr.target));
+        synced += 1;
+      } else if (gr.status === 'OK') console.log('OK', id, '图谱');
     }
   }
 
@@ -115,7 +101,7 @@ function main() {
     }
   }
 
-  console.log(JSON.stringify({ check, synced, drift, missing }, null, 2));
+  console.log(JSON.stringify({ check, synced, drift, missing, ids: ids.length }, null, 2));
   if (check && drift) process.exit(1);
 }
 

@@ -28,8 +28,13 @@ function buildControlVarLabel(_gameHints) {
   return MAIN_METHOD_LABEL;
 }
 
+const { orderedPlayPathIds } = require('../contract/graph/play-graph');
+
 function defaultMapsTo(chapter) {
   const nodes = chapter?.kg?.nodes || [];
+  const links = chapter?.kg?.links || [];
+  const path = orderedPlayPathIds(nodes, links);
+  if (path.length >= 2) return path;
   const play = nodes.filter(n => n.layer === 'play');
   const ids = ['P1'];
   const o = play.find(n => n.group === 'operation');

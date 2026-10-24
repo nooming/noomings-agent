@@ -1,0 +1,1439 @@
+{
+  "mapping": "| DT 节点 | KG id | KG type | 备注 |\n| --- | --- | --- | --- |\n| 进入关卡 | P1 | premise | play 起点 |\n| 模式选择? | C1 | constraint | 探究/竞赛 模式判定 |\n| 调节并碰撞测量 | O1 | operation | m、u 调参后测量 |\n| v₂/c 落入目标带? | C2 | constraint | 竞赛判定 |\n| 过关 | R1 | result | 命中锁定带 |",
+  "kg": {
+    "title": "相对论碰撞 · 一维对心",
+    "sub": "ΣE、Σp 守恒 · 对照经典",
+    "nodes": [
+      {
+        "id": "P1",
+        "label": "进入关卡",
+        "group": "premise",
+        "layer": "play",
+        "level": 0,
+        "r": 22,
+        "desc": "开始探究或竞赛"
+      },
+      {
+        "id": "C1",
+        "label": "模式选择",
+        "group": "constraint",
+        "layer": "play",
+        "level": 1,
+        "r": 22,
+        "desc": "探究或竞赛",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "O1",
+        "label": "调节并碰撞测量",
+        "group": "operation",
+        "layer": "play",
+        "level": 2,
+        "r": 22,
+        "desc": "调 m、u 后点碰撞"
+      },
+      {
+        "id": "C2",
+        "label": "S₁ v₂/c 落入目标带",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 22,
+        "desc": "竞赛判定（S₁ 主读数）",
+        "constraintKind": "physics"
+      },
+      {
+        "id": "R1",
+        "label": "过关",
+        "group": "result",
+        "layer": "play",
+        "level": 4,
+        "r": 22,
+        "desc": "竞赛模式下 v₂/c 落入锁定带"
+      },
+      {
+        "id": "S1",
+        "label": "相对论碰撞守恒",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 22,
+        "desc": "E=γmc², p=γmv；勿用经典式当 u 很大"
+      },
+      {
+        "id": "I1",
+        "label": "2号相对1号 β",
+        "group": "core",
+        "layer": "teach",
+        "level": 0,
+        "r": 20,
+        "desc": "洛伦兹速度变换 u=(u′+β)/(1+u′β)；S₁ 求碰撞，主读数 v₂/c"
+      },
+      {
+        "id": "I2",
+        "label": "1号·2号间距",
+        "group": "irrelevant",
+        "layer": "play",
+        "level": 0,
+        "r": 18,
+        "desc": "控制台间距读数（km）；是否影响 S₁ 内碰撞与 v₂/c 由测量对照判定"
+      },
+      {
+        "id": "S2",
+        "label": "单变量对照",
+        "group": "core",
+        "layer": "teach",
+        "level": 1,
+        "r": 22,
+        "desc": "每次只改 m 或 u 之一"
+      },
+      {
+        "id": "S_CV",
+        "label": "双系读数",
+        "group": "method",
+        "layer": "teach",
+        "level": 1,
+        "r": 20,
+        "desc": "S₁ 内 ΣE、Σp 求末态；S₂ 的 u′、v′ 由变换得到"
+      },
+      {
+        "id": "C3",
+        "label": "v₂/c 偏离目标带",
+        "group": "constraint",
+        "layer": "play",
+        "level": 3,
+        "r": 20,
+        "desc": "竞赛未命中反馈",
+        "constraintKind": "physics"
+      }
+    ],
+    "links": [
+      {
+        "s": "P1",
+        "t": "C1",
+        "tp": "premise"
+      },
+      {
+        "s": "C1",
+        "t": "O1",
+        "tp": "premise"
+      },
+      {
+        "s": "O1",
+        "t": "C2",
+        "tp": "premise"
+      },
+      {
+        "s": "C2",
+        "t": "R1",
+        "tp": "core"
+      },
+      {
+        "s": "S1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "C2",
+        "t": "C3",
+        "tp": "method"
+      },
+      {
+        "s": "S2",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S_CV",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "I1",
+        "t": "O1",
+        "tp": "verify"
+      },
+      {
+        "s": "S1",
+        "t": "I1",
+        "tp": "core"
+      }
+    ]
+  },
+  "dt": {
+    "title": "相对论碰撞 · 一维对心",
+    "sub": "ΣE、Σp 守恒",
+    "tree": {
+      "n": "进入关卡",
+      "t": "root",
+      "d": "开始",
+      "children": [
+        {
+          "n": "模式选择?",
+          "t": "decision",
+          "d": "探究或竞赛",
+          "children": [
+            {
+              "_e": "否",
+              "n": "探究模式",
+              "t": "step",
+              "d": "自由探究"
+            },
+            {
+              "_e": "是",
+              "n": "竞赛模式",
+              "t": "step",
+              "d": "限次挑战"
+            }
+          ]
+        },
+        {
+          "n": "调节并碰撞测量",
+          "t": "step",
+          "d": "调参后测量",
+          "children": [
+            {
+              "n": "命中目标带?",
+              "t": "decision",
+              "d": "竞赛判定",
+              "children": [
+                {
+                  "_e": "是",
+                  "n": "过关",
+                  "t": "result",
+                  "d": "v₂/c 落入锁定带"
+                },
+                {
+                  "_e": "否",
+                  "n": "未达标重试",
+                  "t": "retry",
+                  "d": "调整后重试",
+                  "children": [
+                    {
+                      "n": "调节并碰撞测量",
+                      "t": "step",
+                      "d": "重试",
+                      "children": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "winSync": {
+    "title": "过关 · 相对论碰撞",
+    "sub": "相对论碰撞 · 一维对心"
+  },
+  "traceMap": {
+    "controls": {
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "s-m1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-m2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-u1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-u2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-v-lab": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-ship-gap": {
+        "kgId": "I2",
+        "role": "irrelevant"
+      }
+    },
+    "legacyTypes": {
+      "tuning": {
+        "canonical": "tuning",
+        "control": "s-m1"
+      },
+      "action": {
+        "canonical": "action",
+        "control": "btn-collide"
+      }
+    }
+  },
+  "strategy": {
+    "title": "相对论碰撞 · 一维对心",
+    "sub": "ΣE、Σp 守恒",
+    "mermaid": "graph TD\nStart --> ModeSelect\nBackFromCV --> StrategySelect\nChallenge --> StrategySelect\nExplore --> StrategySelect\nFire --> Observe\nModeSelect -->|竞赛| Challenge\nModeSelect -->|探究| Explore\nObserve -->|未达标| Tune\nObserve -->|达标| Win\nObserveCV -->|无增益| BackFromCV\nProbeCV --> ObserveCV\nStrategySelect -->|单变量·静止质量 m₁| M1Strat\nStrategySelect -->|单变量·静止质量 m₂| M2Strat\nStrategySelect -.->|试探·1号·2号间距| ProbeCV\nStrategySelect -->|多参盲调| Trap\nStrategySelect -->|单变量·S₂ 见 u₁′/c| U1Strat\nStrategySelect -->|单变量·S₂ 见 u₂′/c| U2Strat\nStrategySelect -->|单变量·2号相对1号 β/c| VLabStrat\nStart([开始]):::stratStart\nStrategySelect{选择调参策略?}:::stratCond\nModeSelect{选择模式?}:::stratCond\nFire[点击碰撞测量]\nObserve{观察 v₂/c?}:::stratCond\nExplore[探究对照 v₂/c]:::stratCore\nChallenge[限次打 v₂/c 带]:::stratResult\nWin[过关]:::stratResult\nBackFromCV[回到主策略]:::stratCore\nObserveCV{观察有无增益?}:::stratCond\nProbeCV[试探·1号·2号间距]:::stratInvalid\nTrap[多参盲调]\nTune[单变量调参]\nM1Strat[单变量·静止质量 m₁]\nM2Strat[单变量·静止质量 m₂]\nU1Strat[单变量·S₂ 见 u₁′/c]\nU2Strat[单变量·S₂ 见 u₂′/c]\nVLabStrat[单变量·2号相对1号 β/c]\nM1Strat --> Tune\nM2Strat --> Tune\nTrap --> Tune\nTune --> Fire\nU1Strat --> Tune\nU2Strat --> Tune\nVLabStrat --> Tune",
+    "routes": [
+      {
+        "id": "main",
+        "label": "单变量·静止质量 m₁",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 1,
+        "weight": 1,
+        "priorityRank": 1,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Explore",
+          "M1Strat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Challenge"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "M1Strat"
+          ],
+          [
+            "M1Strat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-v-lab",
+        "label": "单变量·2号相对1号 β/c",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.85,
+        "weight": 0.85,
+        "priorityRank": 2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Challenge",
+          "VLabStrat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "VLabStrat"
+          ],
+          [
+            "VLabStrat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-u1",
+        "label": "单变量·S₂ 见 u₁′/c",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.7,
+        "weight": 0.7,
+        "priorityRank": 3,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Challenge",
+          "U1Strat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "U1Strat"
+          ],
+          [
+            "U1Strat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-m2",
+        "label": "单变量·静止质量 m₂",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.55,
+        "weight": 0.55,
+        "priorityRank": 4,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Challenge",
+          "M2Strat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "M2Strat"
+          ],
+          [
+            "M2Strat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "main_s-u2",
+        "label": "单变量·S₂ 见 u₂′/c",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2",
+          "R1"
+        ],
+        "warn": "每次只改一个参数，避免多变量混调难归因",
+        "score": 0.47,
+        "weight": 0.47,
+        "priorityRank": 5,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Challenge",
+          "U2Strat",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Win",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "ModeSelect",
+            "Challenge"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "StrategySelect",
+            "U2Strat"
+          ],
+          [
+            "U2Strat",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Win"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "trap",
+        "label": "多参盲调",
+        "mapsTo": [
+          "P1",
+          "C1",
+          "O1",
+          "C2"
+        ],
+        "warn": "同时调节多个滑条效率低、难归因，不如每次只动一个变量",
+        "score": 0.2,
+        "weight": 0.2,
+        "highlightNodes": [
+          "Start",
+          "StrategySelect",
+          "ModeSelect",
+          "Trap",
+          "Tune",
+          "Fire",
+          "Observe",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "Trap"
+          ],
+          [
+            "Trap",
+            "Tune"
+          ],
+          [
+            "Tune",
+            "Fire"
+          ],
+          [
+            "Fire",
+            "Observe"
+          ],
+          [
+            "Observe",
+            "Tune"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": true
+      },
+      {
+        "id": "confound_s_ship_gap",
+        "label": "试探·1号·2号间距",
+        "tier": "suboptimal",
+        "kind": "confoundProbe",
+        "mapsTo": [],
+        "warn": "试探旁路通常无增益，应回到单变量主路径；勿抬成高优策略",
+        "score": 0.15,
+        "weight": 0.15,
+        "highlightNodes": [
+          "StrategySelect",
+          "ProbeCV",
+          "ObserveCV",
+          "BackFromCV",
+          "Start",
+          "ModeSelect",
+          "Explore"
+        ],
+        "highlightEdges": [
+          [
+            "Start",
+            "ModeSelect"
+          ],
+          [
+            "StrategySelect",
+            "ProbeCV"
+          ],
+          [
+            "ProbeCV",
+            "ObserveCV"
+          ],
+          [
+            "ObserveCV",
+            "BackFromCV"
+          ],
+          [
+            "BackFromCV",
+            "StrategySelect"
+          ],
+          [
+            "Challenge",
+            "StrategySelect"
+          ],
+          [
+            "ModeSelect",
+            "Explore"
+          ],
+          [
+            "Explore",
+            "StrategySelect"
+          ]
+        ],
+        "highlightFailureBranches": false
+      }
+    ]
+  },
+  "inquiryScript": {
+    "summary": "相对论碰撞 · 一维对心",
+    "knowledgePoints": [
+      {
+        "id": "KP1",
+        "label": "相对论碰撞守恒",
+        "formulas": [
+          "E = γmc²"
+        ],
+        "mapsToKg": [
+          "S1",
+          "S2"
+        ]
+      }
+    ],
+    "adjustmentVariables": [
+      {
+        "id": "AV1",
+        "controlId": "s-m1",
+        "label": "静止质量 m₁",
+        "symbol": "m₁",
+        "type": "range",
+        "role": "primary",
+        "mapsToKg": "O1",
+        "responseShape": "nonlinear-monotone",
+        "monotonicity": "unknown",
+        "affects": [
+          "v2Rel"
+        ],
+        "notes": "rank1：质量比影响末态分配",
+        "priorityRank": 1
+      },
+      {
+        "id": "AV2",
+        "controlId": "s-m2",
+        "label": "静止质量 m₂",
+        "symbol": "m₂",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "responseShape": "nonlinear-monotone",
+        "monotonicity": "unknown",
+        "affects": [
+          "v2Rel"
+        ],
+        "notes": "rank4：与 m₁ 共同决定惯性",
+        "priorityRank": 4
+      },
+      {
+        "id": "AV3",
+        "controlId": "s-u1",
+        "label": "S₂ 见 u₁′/c",
+        "symbol": "u₁′",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "responseShape": "nonlinear-monotone",
+        "monotonicity": "monotone",
+        "affects": [
+          "v2Rel"
+        ],
+        "notes": "rank3：S₂ 入射初速，经 β 变换进 S₁",
+        "priorityRank": 3
+      },
+      {
+        "id": "AV4",
+        "controlId": "s-u2",
+        "label": "S₂ 见 u₂′/c",
+        "symbol": "u₂′",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "O1",
+        "responseShape": "unknown",
+        "monotonicity": "unknown",
+        "affects": [
+          "v2Rel"
+        ],
+        "notes": "rank5：靶体 S₂ 初速，效应常弱于 u₁′",
+        "priorityRank": 5
+      },
+      {
+        "id": "AV5",
+        "controlId": "s-v-lab",
+        "label": "2号相对1号 β/c",
+        "symbol": "β",
+        "type": "range",
+        "role": "secondary",
+        "mapsToKg": "I1",
+        "responseShape": "nonlinear-monotone",
+        "monotonicity": "monotone",
+        "affects": [
+          "v2Rel"
+        ],
+        "notes": "rank2：主读数 v₂/c（S₁）下 β 改 S₁ 初态，单变量效应明显",
+        "priorityRank": 2
+      }
+    ],
+    "confoundingVariables": [
+      {
+        "id": "CV1",
+        "controlId": "s-ship-gap",
+        "label": "1号·2号间距",
+        "reason": "间距（km）为控制台读数；学生需测量对照其与 v₂/c 的关系",
+        "mapsToKg": "I2"
+      }
+    ],
+    "inquiryFlow": [
+      "KP1",
+      "AV1",
+      "AV5",
+      "AV3",
+      "OV1"
+    ],
+    "narrative": {
+      "intro": "S₁ 摄像 · S₂ 控制台 · 主读数 v₂/c（S₁）· ΣE/Σp",
+      "steps": [
+        {
+          "order": 1,
+          "title": "自由探究",
+          "body": "左屏 S₁ 摄像；主读数 v₂/c 在 S₁ 中读。右为 S₂ 控制台，调参后碰撞测量，单变量对照主读数与遥测。",
+          "mapsToKg": [
+            "O1",
+            "S1"
+          ]
+        },
+        {
+          "order": 2,
+          "title": "竞赛挑战",
+          "body": "将 S₁ 相对论 v₂/c 打入本局锁定带。",
+          "mapsToKg": [
+            "C2",
+            "R1"
+          ]
+        }
+      ]
+    },
+    "outputVariables": [
+      {
+        "id": "OV1",
+        "label": "S₁ 相对论 v₂/c",
+        "symbol": "v₂/c",
+        "mapsToKg": "C2",
+        "notes": "竞赛过关主读数（S₁ 实验舱系）",
+        "role": "primary",
+        "source": "observe"
+      }
+    ],
+    "domain": "relativity"
+  },
+  "inquiryProfile": "generic",
+  "physicsModel": {
+    "formulas": [
+      "E = γmc²"
+    ],
+    "independentVariables": [
+      "AV1",
+      "AV2",
+      "AV3",
+      "AV4",
+      "AV5"
+    ],
+    "confoundingVariables": [
+      "CV1"
+    ],
+    "dependentVariables": [
+      "OV1"
+    ],
+    "core": {
+      "formulas": [
+        "E = γmc²"
+      ],
+      "constants": [],
+      "updateLoopSummary": "源码含 requestAnimationFrame / 定时更新循环，逐帧更新位置与碰撞判定",
+      "winConditionSummary": "竞赛模式下 S₁ 的 v₂/c 落入锁定带",
+      "domain": "relativity"
+    }
+  },
+  "gameSpec": {
+    "title": "相对论碰撞 · 一维对心",
+    "subtitle": "ΣE、Σp 守恒 · 对照经典",
+    "winCondition": "竞赛模式下 S₁ 的 v₂/c 落入锁定带",
+    "knowledgeSummary": "相对论碰撞 · 双飞船观测",
+    "controls": [
+      {
+        "id": "s-m1",
+        "type": "range",
+        "label": "静止质量 m₁",
+        "symbol": "m₁",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0.5,
+          "max": 5,
+          "step": 0.1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-v-lab",
+        "type": "range",
+        "label": "2号相对1号 β/c",
+        "symbol": "β",
+        "unit": null,
+        "mapsToKg": "I1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": -0.75,
+          "max": 0.75,
+          "step": 0.05,
+          "unit": ""
+        },
+        "placement": "interleaved_not_last",
+        "spoilerLabels": false
+      },
+      {
+        "id": "s-m2",
+        "type": "range",
+        "label": "静止质量 m₂",
+        "symbol": "m₂",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": 0.5,
+          "max": 5,
+          "step": 0.1,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-ship-gap",
+        "type": "range",
+        "label": "1号·2号间距",
+        "symbol": "d",
+        "unit": "km",
+        "mapsToKg": "I2",
+        "role": "confounding",
+        "suggestedRange": {
+          "min": 100,
+          "max": 3000,
+          "step": 50,
+          "unit": "km"
+        },
+        "placement": "interleaved_not_last",
+        "spoilerLabels": false
+      },
+      {
+        "id": "s-u1",
+        "type": "range",
+        "label": "S₂ 见 u₁′/c",
+        "symbol": "u₁′",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": -0.88,
+          "max": 0.88,
+          "step": 0.02,
+          "unit": ""
+        }
+      },
+      {
+        "id": "s-u2",
+        "type": "range",
+        "label": "S₂ 见 u₂′/c",
+        "symbol": "u₂′",
+        "unit": null,
+        "mapsToKg": "O1",
+        "role": "adjustment",
+        "suggestedRange": {
+          "min": -0.88,
+          "max": 0.88,
+          "step": 0.02,
+          "unit": ""
+        }
+      },
+      {
+        "id": "modeSelect",
+        "type": "discrete",
+        "label": "模式选择",
+        "mapsToKg": "C1",
+        "role": "adjustment"
+      },
+      {
+        "id": "btn-collide",
+        "type": "button",
+        "label": "碰撞 · 测量",
+        "mapsToKg": "O1",
+        "role": "action"
+      }
+    ],
+    "confoundingUi": [
+      {
+        "controlId": "s-ship-gap",
+        "label": "1号·2号间距",
+        "reason": "两艘飞船间距（100–3000 km）；是否改变 v₂/c 由本课测量判定",
+        "uiStrategy": "interactive_mid",
+        "placement": "interleaved_not_last",
+        "spoilerLabels": false,
+        "visualOnly": true,
+        "domOrderNote": "顺序：s-m1 → β → s-m2 → 间距(CV) → u₁′ → u₂′"
+      }
+    ],
+    "confoundingMustNotBePrimarySlider": true,
+    "constraints": [
+      {
+        "kgId": "C1",
+        "label": "模式选择",
+        "desc": "探究或竞赛"
+      },
+      {
+        "kgId": "C2",
+        "label": "S₁ v₂/c 落入目标带",
+        "desc": "竞赛判定（2号观测）"
+      },
+      {
+        "kgId": "C3",
+        "label": "v₂/c 偏离目标带",
+        "desc": "竞赛未命中反馈"
+      }
+    ],
+    "observeFeedbackLoop": true,
+    "challengePostMeasureFeedback": {
+      "pendingLabel": "待测",
+      "missLow": "偏低",
+      "missHigh": "偏高",
+      "hitInBand": "已落入",
+      "allowDomainVariants": [
+        "偏慢",
+        "偏快",
+        "偏近",
+        "偏远"
+      ],
+      "includeMeasuredValue": true
+    },
+    "winAttributionMcq": {
+      "required": true,
+      "includeAvOptions": true,
+      "includeMixedUnsure": true,
+      "cvAsCorrectOption": false,
+      "revealCvAfterChoice": true
+    },
+    "craftShell": {
+      "tokensInline": true,
+      "dualModeSelectId": "modeSelect",
+      "preferCraftTelemetryHelpers": true,
+      "sharedContract": "data/runtime/packages/_shared/README.md",
+      "tokensCss": "data/runtime/packages/_shared/craft-tokens.css",
+      "shellCss": "data/runtime/packages/_shared/craft-shell.css",
+      "tokenNames": [
+        "--craft-bg",
+        "--craft-panel",
+        "--craft-accent",
+        "--craft-text",
+        "--craft-muted",
+        "--craft-radius",
+        "--craft-radius-sm"
+      ],
+      "requireSharedLinksOrInline": true,
+      "shellClasses": [
+        "essence-app",
+        "essence-bench",
+        "essence-scroll",
+        "essence-ft",
+        "bench-hd",
+        "bench-hd-text",
+        "bench-hd-title",
+        "bench-hd-sub",
+        "side-goal-box",
+        "side-goal-cap",
+        "craft-mode-pill",
+        "slider-group",
+        "observe-box",
+        "craft-card",
+        "craft-intro-meta",
+        "craft-attr"
+      ],
+      "benchOrder": [
+        "bench-hd",
+        "side-goal-box",
+        "sliders",
+        "actions",
+        "observe"
+      ],
+      "benchHeader": {
+        "className": "bench-hd",
+        "titleClass": "bench-hd-title",
+        "subtitleClass": "bench-hd-sub",
+        "modeSelectInHeader": true,
+        "deprecateBareModeRow": true
+      },
+      "sideGoal": {
+        "wrapClass": "side-goal-box",
+        "capClass": "side-goal-cap",
+        "capText": "当前目标",
+        "goalId": "sideGoal"
+      },
+      "modePill": {
+        "className": "craft-mode-pill",
+        "id": "craftModePill",
+        "exploreText": "探究模式",
+        "challengeText": "竞赛模式 | 剩余机会 N",
+        "hideTimer": true,
+        "avoidCoveringUniqueHuds": true
+      },
+      "feedbackHelper": "CraftFeedback",
+      "winTitle": "过关 · 本局对照",
+      "introTemplate": "A",
+      "intro": {
+        "wrapId": "craft-intro",
+        "cardClass": "craft-card",
+        "metaClass": "craft-intro-meta",
+        "buttonId": "craftIntroBtn",
+        "buttonText": "开始探究",
+        "noFormula": true,
+        "structure": [
+          "h2 title",
+          "p hook",
+          "p.craft-intro-meta",
+          "button#craftIntroBtn"
+        ]
+      }
+    },
+    "traceMapExpected": {
+      "modeSelect": {
+        "kgId": "C1",
+        "role": "operation"
+      },
+      "s-m1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-m2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-u1": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-u2": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-v-lab": {
+        "kgId": "O1",
+        "role": "operation"
+      },
+      "s-ship-gap": {
+        "kgId": "I2",
+        "role": "irrelevant"
+      }
+    },
+    "simHints": {
+      "type": "collision",
+      "needsContinuousSim": true
+    },
+    "needsContinuousSim": true,
+    "layout": {
+      "type": "canvas-panel",
+      "canvasId": "simCanvas",
+      "panelId": "controlsPanel"
+    },
+    "simLoop": {
+      "driver": "raf",
+      "maxDtMs": 50,
+      "methods": [
+        "update",
+        "draw"
+      ]
+    },
+    "dataReadouts": [
+      {
+        "label": "s-m1",
+        "symbol": "s-m1",
+        "unit": "",
+        "source": "state.s-m1"
+      },
+      {
+        "label": "s-v-lab",
+        "symbol": "s-v-lab",
+        "unit": "",
+        "source": "state.s-v-lab"
+      },
+      {
+        "label": "s-m2",
+        "symbol": "s-m2",
+        "unit": "",
+        "source": "state.s-m2"
+      },
+      {
+        "label": "长度",
+        "symbol": "长度",
+        "unit": "",
+        "source": "state.s-ship-gap"
+      },
+      {
+        "label": "s-u1",
+        "symbol": "s-u1",
+        "unit": "",
+        "source": "state.s-u1"
+      },
+      {
+        "label": "s-u2",
+        "symbol": "s-u2",
+        "unit": "",
+        "source": "state.s-u2"
+      }
+    ],
+    "uiRequirements": [
+      "每个 range 控件须有数值显示（滑条与数字双向同步）",
+      "canvas 主仿真区 + 控件侧栏/下方布局（#simCanvas + #controlsPanel 或等效）",
+      "发射/测试按钮 + 复位按钮",
+      "Observe 区显示测试/发射结果，支持 retry",
+      "竞赛测后反馈：测前目标量显示「待测」（勿拖动中直播答案）；测后文案含实测值 + 偏低/偏高/已落入",
+      "通关 overlay：本局证据 + 归因 MCQ（仅主 AV / mixed / unsure；CV 不得作为正确选项；可选作干扰项）+ 选后才揭示 CV 旁路说明",
+      "视觉：内联 craft 色板（--craft-bg/#0e1418 --craft-panel/#162028 --craft-accent 可换色 --craft-text --craft-muted --craft-radius/12px）；包演示对齐 _shared/craft-shell.css（.bench-hd → .side-goal-box → sliders → actions → observe；舞台 .craft-mode-pill）",
+      "运动类须实时显示 ≥2 个物理量读数",
+      "须 RAF 驱动连续动画，dt 限幅 ≤50ms"
+    ],
+    "htmlGuidelines": [
+      "单文件 HTML，内联 CSS/JS，无外部依赖（生成物勿依赖 ../_shared；把 craft token 与 craft-shell 关键规则内联：.bench-hd / .side-goal-box / .craft-mode-pill；契约见 data/runtime/packages/_shared/README.md）",
+      "包目录演示：链 ../_shared/craft-tokens.css + craft-shell.css；侧栏 IA 固定 .bench-hd（title+sub ‖ #modeSelect）→ .side-goal-box（当前目标）→ 滑条 → 操作；舞台 .craft-mode-pill（探究模式 / 竞赛模式 | 剩余机会 N），勿盖住关卡专属 HUD",
+      "每个 adjustment / confounding control 须有唯一 id，与 traceMapExpected / gameSpec.controls 一致",
+      "CV：有 controlId 时做 interactive_mid 滑条（插在 AV 之间、不垫底）；标签只写物理量名，禁止「不影响判定/仅视觉」剧透；测后/通关卡再揭示旁路",
+      "teach_only / narrative_only 仅用于无控件或纯教案说明的 CV",
+      "含发射/测试按钮时 id 与 gameSpec.controls 中 type=button 一致",
+      "竞赛 Observe：测前「待测」→ 测后「实测 … · 偏低|偏高|已落入」（CraftFeedback 口径）",
+      "通关 craft-win 标题「过关 · 本局对照」：证据摘要 + attribution MCQ（CV 非正确项）+ 选后揭示 #craftCv；须选归因才可关闭/再玩",
+      "Intro Template A（#craft-intro）：h2 关名·主题 + 1 段现象钩子 + p.craft-intro-meta（探究≠竞赛/本局锁定/扣次数）+ button#craftIntroBtn「开始探究」；intro 禁止 .formula / 方程块（公式只放 craft-win 揭示或图谱）",
+      "双模 #modeSelect：explore / challenge；phase_change 与 explore_success / win 口径分离；优先 CraftTelemetry.initDualModePhase()",
+      "过关时显示 winSync.title 或等效文案",
+      "页面顶部一行提示：「调节参数后点击发射/测试」",
+      "竞赛通关必须 emit snapshot(winOk,hintKey) 与 emit win；探究达成用 explore_success，勿用 win；归因后可再 snapshot 含 attribution",
+      "运动类须 requestAnimationFrame + update/draw 分离 + dt 限幅，禁止调参即过关"
+    ]
+  },
+  "telemetrySpec": {
+    "version": 1,
+    "alignedWith": "traceMap",
+    "exportEndpoint": "/api/trace/ingest",
+    "events": [
+      {
+        "type": "tuning",
+        "controlId": "modeSelect",
+        "kgId": "C1",
+        "required": true,
+        "description": "学生调节 modeSelect → KG C1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-m1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-m1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-m2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-m2 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-u1",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-u1 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-u2",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-u2 → KG O1"
+      },
+      {
+        "type": "tuning",
+        "controlId": "s-v-lab",
+        "kgId": "O1",
+        "required": true,
+        "description": "学生调节 s-v-lab（β）→ 教学 I1 / 操作 O1"
+      },
+      {
+        "type": "irrelevant_touch",
+        "controlId": "s-ship-gap",
+        "kgId": "I2",
+        "required": false,
+        "description": "无关控件触碰 s-ship-gap（仅起始间距）"
+      },
+      {
+        "type": "tuning",
+        "canonical": "tuning",
+        "control": "s-m1",
+        "required": true
+      },
+      {
+        "type": "action",
+        "canonical": "action",
+        "control": "btn-collide",
+        "required": false
+      },
+      {
+        "type": "explore_success",
+        "required": false,
+        "description": "探究模式达成（命中/对照里程碑）。payload 可含 winOk、hintKey、controls；不计为竞赛通关【主口径】"
+      },
+      {
+        "type": "win",
+        "required": false,
+        "description": "竞赛模式通关。仅 challenge 段应 emit；探究达成请用 explore_success"
+      },
+      {
+        "type": "phase_change",
+        "required": false,
+        "description": "双模切换。payload.phase = explore | challenge；优先 CraftTelemetry.initDualModePhase() 或等价"
+      },
+      {
+        "type": "snapshot",
+        "required": false,
+        "description": "发射/测后/归因。可含 controls、winOk、hintKey；通关归因后可带 attribution（主 AV id / mixed / unsure；勿把 CV 当正确归因）"
+      }
+    ],
+    "dtCheckpoints": [
+      {
+        "name": "模式选择?",
+        "type": "decision",
+        "desc": "探究或竞赛"
+      },
+      {
+        "name": "命中目标带?",
+        "type": "decision",
+        "desc": "竞赛判定"
+      },
+      {
+        "name": "过关",
+        "type": "result",
+        "desc": "v₂/c 落入锁定带"
+      },
+      {
+        "name": "未达标重试",
+        "type": "retry",
+        "desc": "调整后重试"
+      }
+    ],
+    "paperNotes": "按事理图谱 traceMap 上报：每次滑条/按钮操作记录 controlId、值、时间戳。\nsnapshot 事件在「发射/测试/提交」时记录各 control 当前值；通关归因后再发可含 attribution。\n探究达成（主）：emit('explore_success', { winOk: true, hintKey, … })；勿用 win 冒充竞赛结果。\n竞赛通关：emit('snapshot', { winOk: true, … }) + emit('win', { winOk: true })；仅 challenge。\n双模：#modeSelect 变更时 emit phase_change；包目录可挂 packages/_shared/craft-telemetry.js。\ndeprecated：探究段 emit win 仅兼容旧轨迹；新产品禁止再用 win 表示探究达成。\n判分：探究结果认 explore_success（兼容旧轨迹探究段 win/winOk）；竞赛结果只认竞赛段 win/winOk，不认 explore_success。\n评判时将轨迹节点映射到 KG play 链（P1→O1→C*→R1）与 strategy routes。\n混淆变量触碰记 irrelevant_touch，不计入主探究路径得分；CV 滑条可交互但不进归因正确项。",
+    "craftTelemetry": {
+      "sharedPath": "data/runtime/packages/_shared/craft-telemetry.js",
+      "tokensPath": "data/runtime/packages/_shared/craft-tokens.css",
+      "shellPath": "data/runtime/packages/_shared/craft-shell.css",
+      "feedbackPath": "data/runtime/packages/_shared/craft-feedback.js",
+      "contractReadme": "data/runtime/packages/_shared/README.md",
+      "generatedHtml": "inline craft CSS variables + shell patterns (.bench-hd, .side-goal-box, .craft-mode-pill); optional comment pointing at CraftTelemetry / CraftFeedback helpers",
+      "shellIa": {
+        "benchHeader": ".bench-hd (title + sub ‖ #modeSelect)",
+        "sideGoal": ".side-goal-box > .side-goal-cap + #sideGoal",
+        "modePill": ".craft-mode-pill (探究模式 / 竞赛模式 | 剩余机会 N)",
+        "benchOrder": [
+          "bench-hd",
+          "side-goal-box",
+          "sliders",
+          "actions",
+          "observe"
+        ]
+      }
+    },
+    "adapterNote": "后期可在 HTML 中嵌入 trace-adapter-lite.js；本期仅规格文档化。ingest 不白名单过滤类型，explore_success / attribution snapshot 会原样落盘。"
+  },
+  "meta": {
+    "generationMode": "analyze"
+  }
+}

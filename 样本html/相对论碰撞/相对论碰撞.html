@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>相对论碰撞 · 双飞船观测</title>
+<link rel="stylesheet" href="../_shared/craft-tokens.css">
+<link rel="stylesheet" href="../_shared/craft-shell.css">
+<style>
+:root{
+  --craft-accent:#9eb4d4;
+  --obs-teal:#6ec4b8;
+  --lab-violet:#a89cc8;
+  --ink:#0a0e16;
+  --panel-deep:#121824;
+  --gauge-hi:#e8edf5;
+  --gauge-ok:#7bc9a8;
+  --gauge-warn:#e8b86d;
+  --gauge-bad:#e8928a;
+}
+#essence-stage{
+  background:radial-gradient(120% 90% at 50% 0%,#141c2a 0%,#0a0e16 55%,#060810 100%);
+}
+.class-warn{color:var(--gauge-bad);font-size:12px;margin-top:8px;line-height:1.45}
+.readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:12px}
+.readout-grid .lab{color:var(--craft-muted);font-size:10px;letter-spacing:0.04em}
+.readout-grid .num{font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}
+.frame-note{
+  margin:0 0 8px;padding:0;font-size:12px;line-height:1.5;color:var(--craft-muted);
+  border:none;background:transparent;
+}
+.frame-note strong{color:var(--craft-text);font-weight:600}
+#essence-stage #craftModePill{
+  left:auto;right:14px;top:14px;z-index:6;
+  max-width:min(220px,calc(50% - 20px));
+  text-align:right;justify-content:flex-end;
+}
+#stageHud{
+  position:absolute;left:14px;top:14px;z-index:5;pointer-events:none;
+  max-width:min(360px,calc(100% - 240px));
+  padding:10px 14px 9px;border-radius:14px;
+  background:rgba(12,16,26,0.88);
+  border:1px solid rgba(158,180,212,0.22);
+  box-shadow:0 8px 28px rgba(0,0,0,0.35);
+  backdrop-filter:blur(6px);
+}
+.stage-hud-title{font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--obs-teal);text-transform:none;margin:0 0 4px}
+.stage-hud-main{margin:0;font-size:13px;font-weight:600;color:var(--gauge-hi);line-height:1.35}
+.stage-hud-sub{margin:4px 0 0;font-size:11px;color:var(--craft-muted);line-height:1.45}
+.stage-hud-feed{margin:6px 0 0;font-size:10px;color:var(--craft-muted);line-height:1.4;opacity:0.92}
+#essence-bench{
+  border-left:1px solid rgba(255,255,255,0.07);
+  background:linear-gradient(180deg,var(--panel-deep) 0%,#0e121a 100%);
+}
+.bench-hd-sub{font-size:12px;color:var(--craft-muted);line-height:1.45}
+.gauge-hero{
+  margin:0 0 12px;padding:14px 14px 12px;border-radius:12px;
+  background:linear-gradient(145deg,rgba(22,28,40,0.95) 0%,rgba(14,18,28,0.98) 100%);
+  border:1px solid rgba(158,180,212,0.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.gauge-hero-cap{font-size:10px;font-weight:600;letter-spacing:0.12em;color:var(--craft-muted);margin:0 0 6px}
+.gauge-hero-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gauge-hero-val{
+  font-family:"Courier New",Consolas,monospace;font-size:32px;font-weight:700;
+  color:var(--gauge-hi);line-height:1;text-shadow:0 0 24px rgba(158,180,212,0.15);
+  font-variant-numeric:tabular-nums;
+}
+.gauge-hero-val.ok{color:var(--gauge-ok);text-shadow:0 0 20px rgba(123,201,168,0.35)}
+.gauge-hero-val.low,.gauge-hero-val.high{color:var(--gauge-warn)}
+.gauge-hero-unit{font-size:13px;color:var(--lab-violet);font-weight:600}
+.gauge-hero-band{font-size:11px;color:var(--craft-muted);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)}
+.gauge-hero-sub{font-size:11px;color:var(--craft-muted);margin-top:6px;line-height:1.45}
+.telemetry-fold{margin-top:4px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);overflow:hidden}
+.telemetry-fold summary{
+  cursor:pointer;padding:8px 10px;font-size:11px;font-weight:600;color:var(--craft-muted);
+  background:rgba(0,0,0,0.2);list-style:none;
+}
+.telemetry-fold summary::-webkit-details-marker{display:none}
+.telemetry-fold summary::after{content:"▾";float:right;opacity:0.5;font-size:10px}
+.telemetry-fold[open] summary::after{content:"▴"}
+.telemetry-fold .readout-sub{padding:0 10px 10px}
+.observe-box{padding-top:0}
+.observe-box .hint{font-size:12px;line-height:1.45}
+.slider-group label{font-size:12px}
+#craftModePill{
+  background:rgba(12,16,26,0.85)!important;
+  border:1px solid rgba(158,180,212,0.2)!important;
+  backdrop-filter:blur(4px);
+}
+</style>
+</head>
+<body>
+
+<div id="craft-intro">
+  <div class="craft-card">
+    <h2>相对论碰撞 · 双飞船观测</h2>
+    <p>左屏为<strong>1 号飞船 S₁</strong>实验舱<strong>固定摄像</strong>实况；你在<strong>2 号飞船 S₂</strong>看监视器。碰撞在 S₁ 内按 Σ(γm₀c²)、Σ(γm₀v) 求解；<strong>主读数 v₂/c 为 S₁ 中碰后 2 号车速度</strong>（与左屏同系，c=1）。</p>
+    <p class="craft-intro-meta">探究：单变量对照主读数与遥测。竞赛：将主读数打入本局锁定带。</p>
+    <button type="button" id="craftIntroBtn">开始探究</button>
+  </div>
+</div>
+<div id="craft-win" hidden>
+  <div class="craft-card">
+    <h2>过关 · 本局对照</h2>
+    <p id="craftEvidenceLine" class="craft-evidence">本局证据将自动填入</p>
+    <p id="craftEvidenceMeta" class="craft-evidence-meta" hidden></p>
+    <div class="craft-attr" id="craftAttribution">
+      <p class="craft-attr-label">就本局几次测量对照，主读数 v₂/c 的变化主要跟着哪一项？</p>
+      <div class="craft-attr-options">
+        <label><input type="radio" name="craftAttr" value="s-m1"> 主要是 m₁</label>
+        <label><input type="radio" name="craftAttr" value="s-m2"> 主要是 m₂</label>
+        <label><input type="radio" name="craftAttr" value="s-u1"> 主要是 u₁′/c</label>
+        <label><input type="radio" name="craftAttr" value="s-u2"> 主要是 u₂′/c</label>
+        <label><input type="radio" name="craftAttr" value="s-v-lab"> 主要是 β/c</label>
+        <label><input type="radio" name="craftAttr" value="s-ship-gap"> 主要是 1 号·2 号间距</label>
+        <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
+        <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
+      </div>
+      <p id="craftAttrHint" class="craft-attr-hint" hidden></p>
+    </div>
+    <div class="craft-reveal" id="craftReveal" hidden>
+      <div class="formula" id="craftWinFormula">S₁：ΣE = Σγm₀c²　Σp = Σγm₀v　｜　S₂：u′=(u−β)/(1−uβ)</div>
+      <p id="craftWinText">碰后在 1 号系 S₁ 用相对论弹性守恒求 v；2 号系 S₂ 的 v′ 由洛伦兹速度变换得到。勿用经典弹性或 u′≈u−β 代替。</p>
+      <p id="craftCv" class="craft-cv">主读数 v₂/c 在 S₁，与左屏同系。S₂ 的 u′、β 经洛伦兹变换定 S₁ 初态再碰撞；v₂′/c 为 S₂ 备查。1 号·2 号间距不进 S₁ 碰撞式，只改监视器视差。</p>
+    </div>
+    <div class="craft-actions">
+      <button type="button" id="craftWinBtn" disabled>再玩一次</button>
+      <button type="button" id="craftBackBtn" class="craft-btn-secondary">返回列表</button>
+    </div>
+  </div>
+</div>
+<div id="essence-app">
+  <div id="essence-stage">
+    <canvas id="simCanvas"></canvas>
+    <div class="craft-mode-pill" id="craftModePill" data-mode="explore">探究模式</div>
+    <div id="stageHud">
+      <p class="stage-hud-title">2 号 · 监视 1 号 S₁ 实验舱摄像</p>
+      <p class="stage-hud-main" id="stageHudMain">β/c = 0.30 · 你在此看监视器</p>
+      <p class="stage-hud-sub">左屏 = S₁ 固定机位 · 右侧 = S₂ 控制台</p>
+      <p class="stage-hud-feed">上方横窗 · 外域星野 · 下方长轨与碰撞</p>
+    </div>
+  </div>
+  <aside id="essence-bench">
+    <div class="bench-hd">
+      <div class="bench-hd-text">
+        <div class="bench-hd-title">控制台 · S₂</div>
+        <div class="bench-hd-sub">调参后点「碰撞 · 测量」</div>
+      </div>
+      <select id="modeSelect" aria-label="探究阶段">
+        <option value="explore">探究</option>
+        <option value="challenge">竞赛</option>
+      </select>
+    </div>
+    <div class="essence-scroll" id="controlsPanel">
+      <div class="side-goal-box">
+        <div class="side-goal-cap">当前目标</div>
+        <p class="frame-note" id="frameNote"><strong>参照系</strong>：主读数 <strong>v₂/c</strong> 在 S₁ 中读（与左屏一致）。右侧滑条为 S₂ 控制台读数（u′、β、m 等），按课内约定参与 S₁ 内计算。</p>
+        <p id="sideGoal">调参 → 碰撞测量 → 对照主读数、遥测与守恒。</p>
+      </div>
+      <div class="gauge-hero" id="gaugeHero">
+        <p class="gauge-hero-cap">主读数 · v₂/c（S₁）</p>
+        <div class="gauge-hero-row">
+          <span class="gauge-hero-val" id="heroV2">—</span>
+          <span class="gauge-hero-unit">无量纲</span>
+        </div>
+        <div class="gauge-hero-band" id="heroBand" hidden></div>
+        <p class="gauge-hero-sub" id="heroSub">尚未测量</p>
+      </div>
+      <div class="slider-group">
+        <label for="s-m1">静止质量 m₁ <span id="m1Val">1.0</span></label>
+        <input type="range" id="s-m1" min="0.5" max="5" step="0.1" value="1.0">
+      </div>
+      <div class="slider-group">
+        <label for="s-v-lab" title="S₂ 相对 S₁ 的 β/c（控制台读数）">2 号相对 1 号 · β/c <span id="vLabVal">0.30</span></label>
+        <input type="range" id="s-v-lab" min="-0.75" max="0.75" step="0.05" value="0.30" title="S₂ 相对 S₁ 的 β/c">
+      </div>
+      <div class="slider-group">
+        <label for="s-m2">静止质量 m₂ <span id="m2Val">1.0</span></label>
+        <input type="range" id="s-m2" min="0.5" max="5" step="0.1" value="1.0">
+      </div>
+      <div class="slider-group">
+        <label for="s-ship-gap">1 号·2 号间距 / km <span id="shipGapVal">800</span></label>
+        <input type="range" id="s-ship-gap" min="100" max="3000" step="50" value="800" title="1 号与 2 号飞船间距（km）">
+      </div>
+      <div class="slider-group">
+        <label for="s-u1">S₂ 见 u₁′/c <span id="u1Val">0.55</span></label>
+        <input type="range" id="s-u1" min="-0.88" max="0.88" step="0.02" value="0.55">
+      </div>
+      <div class="slider-group">
+        <label for="s-u2">S₂ 见 u₂′/c <span id="u2Val">-0.05</span></label>
+        <input type="range" id="s-u2" min="-0.88" max="0.88" step="0.02" value="-0.05">
+      </div>
+      <div class="observe-box" id="observeBox">
+        <div class="readout-grid">
+          <div><span class="lab">v₂′/c（备查）</span><br><span class="num" id="v2RelDisplay">—</span></div>
+          <div><span class="lab">v₁′/c</span><br><span class="num" id="v1RelDisplay">—</span></div>
+        </div>
+        <details class="telemetry-fold" open>
+          <summary>遥测 · 守恒 · S₂ 变换 · 经典对照</summary>
+          <div class="readout-grid readout-sub">
+            <div><span class="lab">S₁ v₂/c</span><br><span class="num" id="v2S1Display">—</span></div>
+            <div><span class="lab">S₁ v₁/c</span><br><span class="num" id="v1S1Display">—</span></div>
+            <div><span class="lab">经典 v₂/c</span><br><span class="num" id="v2ClDisplay">—</span></div>
+            <div><span class="lab">守恒残差</span><br><span class="num" id="consDisplay">—</span></div>
+            <div><span class="lab">γ₁</span><br><span class="num" id="g1RelDisplay">—</span></div>
+            <div><span class="lab">γ₂</span><br><span class="num" id="g2RelDisplay">—</span></div>
+          </div>
+        </details>
+        <div class="hint" id="hintMessage">调参后点碰撞测量</div>
+        <div class="class-warn" id="classWarn" hidden></div>
+        <div id="winIndicator"></div>
+      </div>
+      <div class="attempts" id="attemptsLine"></div>
+    </div>
+    <div class="essence-ft">
+      <div class="row-buttons">
+        <button type="button" id="btn-collide">碰撞 · 测量</button>
+        <button type="button" id="btn-reset" class="secondary">重置</button>
+      </div>
+    </div>
+  </aside>
+</div>
+<script>
+(function(){
+  var canvas = document.getElementById('simCanvas');
+  var ctx = canvas.getContext('2d');
+  var mode = 'explore';
+  var attempts = 6;
+  var bandLo = 0.15, bandHi = 0.25;
+  var FLASH_DUR = 0.24;
+  var MIN_POST_TIME = 0.55;
+  var POST_MAX = 11;
+  var MAX_SIM_TIME = 14;
+  var APPROACH_X1 = 0.20;
+  var TRACK_WORLD_MULT = 3.6;
+  var CAM_ZOOM_MIN = 0.38;
+  var CAM_ZOOM_MAX = 1.05;
+  var anim = { t: 0, phase: 'idle', v1: 0, v2: 0, u1: 0, u2: 0, x1: APPROACH_X1, x2: 0.36,
+    cx1: 0, cx2: 0, camCenter: 0, camZoom: 1, flashT: 0, simT: 0, contactT: 0, contacted: false, settled: false };
+
+  var APPROACH_GAP = 0.16;
+
+  var SHIP_GAP_KM_MIN = 100;
+  var SHIP_GAP_KM_MAX = 3000;
+
+  function readInterShipDistKm() {
+    var el = document.getElementById('s-ship-gap');
+    var km = el ? +el.value : 800;
+    return Math.max(SHIP_GAP_KM_MIN, Math.min(SHIP_GAP_KM_MAX, km));
+  }
+
+  /** 0–1，只用于舷窗视差，不进物理 */
+  function readInterShipDist01() {
+    var km = readInterShipDistKm();
+    return (km - SHIP_GAP_KM_MIN) / (SHIP_GAP_KM_MAX - SHIP_GAP_KM_MIN);
+  }
+
+  /** 间距越大，β / 相机引起的背景视差越强 */
+  function interShipParallaxGain() {
+    return 0.22 + 1.28 * readInterShipDist01();
+  }
+
+  function applyApproachFromGap() {
+    anim.x1 = APPROACH_X1;
+    anim.x2 = APPROACH_X1 + APPROACH_GAP;
+  }
+
+  function trackGeom() {
+    var w = canvas.width / (window.devicePixelRatio || 1);
+    var bx = Math.max(48, w * 0.06);
+    var bw = w - bx * 2;
+    return { w: w, bx: bx, bw: bw };
+  }
+
+  function trackWorldLen(bw) {
+    return bw * TRACK_WORLD_MULT;
+  }
+
+  /** 舷窗：以 m₁、m₂ 包围盒居中，必要时缩小以两车同屏 */
+  function cameraM2Bias() {
+    if (anim.contacted || anim.phase === 'hold') return 0.56;
+    if (anim.phase === 'run') return 0.2;
+    return 0.16;
+  }
+
+  function cameraFitTarget(w1, w2, bw, trackLen) {
+    var left = Math.min(anim.cx1 - w1 * 0.55, anim.cx2 - w2 * 0.55);
+    var right = Math.max(anim.cx1 + w1 * 0.55, anim.cx2 + w2 * 0.55);
+    var pad = Math.max(52, bw * 0.13);
+    left -= pad;
+    right += pad;
+    var span = right - left;
+    var minSpan = bw * 0.44;
+    if (span < minSpan) {
+      var mid = (anim.cx1 + anim.cx2) * 0.5;
+      left = mid - minSpan * 0.5;
+      right = mid + minSpan * 0.5;
+      span = minSpan;
+    }
+    var zoom = bw / span;
+    zoom = Math.max(CAM_ZOOM_MIN, Math.min(CAM_ZOOM_MAX, zoom));
+    var viewW = bw / zoom;
+    var half = viewW * 0.5;
+    var boxCenter = (left + right) * 0.5;
+    var center = boxCenter + (anim.cx2 - boxCenter) * cameraM2Bias();
+    if (center - half > left) center = left + half;
+    if (center + half < right) center = right - half;
+    if (trackLen <= viewW + 1) center = trackLen * 0.5;
+    else center = Math.max(half, Math.min(trackLen - half, center));
+    return { center: center, zoom: zoom };
+  }
+
+  function snapCamera(w1, w2, bw, trackLen) {
+    var t = cameraFitTarget(w1, w2, bw, trackLen);
+    anim.camCenter = t.center;
+    anim.camZoom = t.zoom;
+  }
+
+  function tickCamera(dt, w1, w2, bw, trackLen) {
+    var t = cameraFitTarget(w1, w2, bw, trackLen);
+    if (anim.phase === 'idle') {
+      anim.camCenter = t.center;
+      anim.camZoom = t.zoom;
+      return;
+    }
+    var k = Math.min(1, dt * 6.5);
+    anim.camCenter += (t.center - anim.camCenter) * k;
+    anim.camZoom += (t.zoom - anim.camZoom) * k;
+  }
+
+  /** 等比缩放（绕轨道高度 pivot），避免只 scaleX 时车体被横向压扁 */
+  function applyWorldCamera(bx, bw, railY) {
+    ctx.translate(bx + bw * 0.5, railY);
+    ctx.scale(anim.camZoom, anim.camZoom);
+    ctx.translate(-anim.camCenter, -railY);
+  }
+
+  function gliderWidth(mass) {
+    return 46 + mass * 6;
+  }
+
+  function trackSpeedPx(bw) {
+    return bw * 0.72;
+  }
+
+  function gapBetween(cx1, cx2, w1, w2) {
+    return (cx2 - w2 / 2) - (cx1 + w1 / 2);
+  }
+
+  function clampGliderCx(cx, w, trackLen) {
+    var pad = 8;
+    var lo = w / 2 + pad;
+    var hi = trackLen - w / 2 - pad;
+    return Math.max(lo, Math.min(hi, cx));
+  }
+
+  function syncAnimFractions(trackLen) {
+    if (trackLen > 1e-6) {
+      anim.x1 = anim.cx1 / trackLen;
+      anim.x2 = anim.cx2 / trackLen;
+    }
+  }
+
+  /** 在**当前**接触界面消除间隙/轻微穿模，不把两车拉到轨道几何中心 */
+  function sealContactGap(w1, w2, trackLen) {
+    var right1 = anim.cx1 + w1 / 2;
+    var left2 = anim.cx2 - w2 / 2;
+    var gap = left2 - right1;
+    if (gap < -0.001) {
+      var iface = (right1 + left2) / 2;
+      anim.cx1 = iface - w1 / 2;
+      anim.cx2 = iface + w2 / 2;
+    }
+    syncAnimFractions(trackLen);
+  }
+
+  function applyContactOutcome(w1, w2, trackLen) {
+    sealContactGap(w1, w2, trackLen);
+    anim.contacted = true;
+    anim.contactT = 0;
+    anim.flashT = FLASH_DUR;
+    if (!anim.settled) {
+      anim.settled = true;
+      document.getElementById('observeBox').classList.remove('measuring');
+      testing = false;
+      settleCollision();
+    }
+  }
+
+  function integrateGliders(dt, speed, w1, w2, trackLen) {
+    var ncx1 = anim.cx1 + anim.v1 * speed * dt;
+    var ncx2 = anim.cx2 + anim.v2 * speed * dt;
+    ncx1 = clampGliderCx(ncx1, w1, trackLen);
+    ncx2 = clampGliderCx(ncx2, w2, trackLen);
+    var pad = 8.5;
+    if (ncx1 <= w1 / 2 + pad && anim.v1 < 0) anim.v1 = 0;
+    if (ncx1 >= trackLen - w1 / 2 - pad && anim.v1 > 0) anim.v1 = 0;
+    if (ncx2 <= w2 / 2 + pad && anim.v2 < 0) anim.v2 = 0;
+    if (ncx2 >= trackLen - w2 / 2 - pad && anim.v2 > 0) anim.v2 = 0;
+    anim.cx1 = ncx1;
+    anim.cx2 = ncx2;
+    if (anim.contacted) sealContactGap(w1, w2, trackLen);
+    else syncAnimFractions(trackLen);
+  }
+
+  function tryApproachContact(dt, speed, w1, w2, trackLen) {
+    var gap0 = gapBetween(anim.cx1, anim.cx2, w1, w2);
+    if (gap0 <= 0) {
+      applyContactOutcome(w1, w2, trackLen);
+      return;
+    }
+    var trial1 = anim.cx1 + anim.v1 * speed * dt;
+    var trial2 = anim.cx2 + anim.v2 * speed * dt;
+    var gap1 = gapBetween(trial1, trial2, w1, w2);
+    if (gap1 > 0) {
+      anim.cx1 = trial1;
+      anim.cx2 = trial2;
+      syncAnimFractions(trackLen);
+      return;
+    }
+    var denom = gap0 - gap1;
+    var f = denom > 1e-8 ? Math.max(0, Math.min(1, gap0 / denom)) : 1;
+    var touch1 = anim.cx1 + anim.v1 * speed * dt * f;
+    var touch2 = anim.cx2 + anim.v2 * speed * dt * f;
+    anim.cx1 = touch1;
+    anim.cx2 = touch2;
+    applyContactOutcome(w1, w2, trackLen);
+    var rest = dt * (1 - f);
+    if (rest > 1e-6) integrateGliders(rest, speed, w1, w2, trackLen);
+  }
+
+  function postCollisionDone(w1, w2, trackLen) {
+    if (!anim.contacted || anim.contactT < MIN_POST_TIME) return false;
+    if (anim.contactT >= POST_MAX) return true;
+    var pad = 8.5;
+    var v1Stop = Math.abs(anim.v1) < 1e-5;
+    var v2Stop = Math.abs(anim.v2) < 1e-5;
+    var atLeft1 = anim.cx1 <= w1 / 2 + pad + 1;
+    var atRight1 = anim.cx1 >= trackLen - w1 / 2 - pad - 1;
+    var atLeft2 = anim.cx2 <= w2 / 2 + pad + 1;
+    var atRight2 = anim.cx2 >= trackLen - w2 / 2 - pad - 1;
+    if (v1Stop && v2Stop) return true;
+    if (v1Stop && (atLeft1 || atRight1) && v2Stop && (atLeft2 || atRight2)) return true;
+    if (v1Stop && (atLeft1 || atRight1) && anim.contactT > 2.2) return true;
+    if (v2Stop && (atLeft2 || atRight2) && anim.contactT > 2.2) return true;
+    return false;
+  }
+
+  function finishContactAtRest(w1, w2, trackLen) {
+    anim.cx1 = trackLen * anim.x1;
+    anim.cx2 = trackLen * anim.x2;
+    anim.contacted = true;
+    anim.contactT = MIN_POST_TIME;
+    anim.flashT = FLASH_DUR * 0.5;
+    if (!anim.settled) {
+      anim.settled = true;
+      document.getElementById('observeBox').classList.remove('measuring');
+      testing = false;
+      settleCollision();
+    }
+    anim.phase = 'hold';
+  }
+
+  function abortSimNoMeet() {
+    testing = false;
+    anim.settled = false;
+    anim.phase = 'idle';
+    resetApproachLayout();
+    document.getElementById('observeBox').classList.remove('measuring');
+    document.getElementById('hintMessage').textContent = 'S₁ 内两车相对接近速度不足，无法相遇；请调 S₂ 的 u₁′、u₂′ 或 β';
+    MEASURE_READOUT_IDS.forEach(function(id){
+      document.getElementById(id).textContent = mode === 'challenge' ? '待测' : '—';
+    });
+  }
+  var sceneT = 0;
+  var motes = [];
+  for (var mi = 0; mi < 28; mi++) {
+    motes.push({
+      x: Math.random(), y: Math.random() * 0.7,
+      r: 0.6 + Math.random() * 1.4,
+      a: 0.05 + Math.random() * 0.08,
+      vx: 0.012 + Math.random() * 0.02,
+      ph: Math.random() * 6.28
+    });
+  }
+  var testing = false;
+  var lastV2Rel = null;
+  var MEASURE_READOUT_IDS = ['v2RelDisplay','v1RelDisplay','v2S1Display','v1S1Display','v2ClDisplay','consDisplay','g1RelDisplay','g2RelDisplay'];
+
+  var AV_LABELS = { 's-m1': 'm₁', 's-m2': 'm₂', 's-u1': 'u₁′/c', 's-u2': 'u₂′/c', 's-v-lab': 'β/c' };
+  var sessionEvidence = {
+    tuneCounts: { 's-m1': 0, 's-m2': 0, 's-u1': 0, 's-u2': 0, 's-v-lab': 0 },
+    testCount: 0,
+    lastV2: null,
+    attribution: null,
+    evidenceSummary: ''
+  };
+  window.__sessionEvidence = sessionEvidence;
+
+  function gamma(b) {
+    if (Math.abs(b) >= 0.9999) return 1e6;
+    return 1 / Math.sqrt(1 - b * b);
+  }
+  function pRel(m, b) { return m * gamma(b) * b; }
+  function eRel(m, b) { return m * gamma(b); }
+
+  function solveBetaFromP(m, pTarget) {
+    if (Math.abs(pTarget) < 1e-10) return 0;
+    var lo = -0.9999, hi = 0.9999;
+    for (var i = 0; i < 90; i++) {
+      var mid = (lo + hi) * 0.5;
+      var pm = pRel(m, mid);
+      if (pm < pTarget) lo = mid; else hi = mid;
+    }
+    return (lo + hi) * 0.5;
+  }
+
+  /** S₁ 内 gap 收缩：u₂−u₁<0（与动画「无法相遇」判据一致） */
+  function s1GapClosing(u1, u2) {
+    return u2 - u1 < -1e-4;
+  }
+
+  /** 碰后应分离：(u₂−u₁)(v₂−v₁)<0；排除近初态伪根（守恒在粗网格上仍≈成立） */
+  function relElasticPostOk(u1, u2, v1, v2) {
+    if (Math.abs(v1 - u1) + Math.abs(v2 - u2) < 0.002) return false;
+    if (!s1GapClosing(u1, u2)) return true;
+    return (u2 - u1) * (v2 - v1) < -1e-6;
+  }
+
+  function solveRelElastic(m1, m2, u1, u2) {
+    var p0 = pRel(m1, u1) + pRel(m2, u2);
+    var e0 = eRel(m1, u1) + eRel(m2, u2);
+    var bestAny = { err: 1e9, v1: u1, v2: u2 };
+    var bestPost = { err: 1e9, v1: u1, v2: u2 };
+    for (var k = -999; k <= 999; k++) {
+      var v1 = k / 1000;
+      var p1 = pRel(m1, v1);
+      var v2 = solveBetaFromP(m2, p0 - p1);
+      if (!Number.isFinite(v2) || Math.abs(v2) >= 0.9999) continue;
+      var e1 = eRel(m1, v1) + eRel(m2, v2);
+      var err = Math.abs(e1 - e0) + Math.abs(pRel(m1, v1) + pRel(m2, v2) - p0);
+      if (err < bestAny.err) bestAny = { err: err, v1: v1, v2: v2 };
+      if (!relElasticPostOk(u1, u2, v1, v2)) continue;
+      if (err < bestPost.err) bestPost = { err: err, v1: v1, v2: v2 };
+    }
+    if (bestPost.err < 0.02) return bestPost;
+    return bestAny;
+  }
+
+  function classicElastic(m1, m2, u1, u2) {
+    var v1 = ((m1 - m2) * u1 + 2 * m2 * u2) / (m1 + m2);
+    var v2 = ((m2 - m1) * u2 + 2 * m1 * u1) / (m1 + m2);
+    return { v1: v1, v2: v2 };
+  }
+
+  function clampVel(b) {
+    return Math.max(-0.9995, Math.min(0.9995, b));
+  }
+
+  /** S₂ 读 u′，S₁ 相对 S₂ 以 +β 沿 +x 运动 → S₁ 中速度 u */
+  function velS2ToS1(uPrime, beta) {
+    uPrime = clampVel(uPrime);
+    beta = clampVel(beta);
+    var den = 1 + uPrime * beta;
+    if (Math.abs(den) < 1e-8) return 0;
+    return clampVel((uPrime + beta) / den);
+  }
+
+  /** S₁ 中 u → S₂ 观测 u′（S₂ 相对 S₁ 为 −β，等价于上式互逆） */
+  function velS1ToS2(u, beta) {
+    u = clampVel(u);
+    beta = clampVel(beta);
+    var den = 1 - u * beta;
+    if (Math.abs(den) < 1e-8) return 0;
+    return clampVel((u - beta) / den);
+  }
+
+  function readParams() {
+    var m1 = +document.getElementById('s-m1').value;
+    var m2 = +document.getElementById('s-m2').value;
+    var beta = +document.getElementById('s-v-lab').value;
+    var u1p = +document.getElementById('s-u1').value;
+    var u2p = +document.getElementById('s-u2').value;
+    var u1 = velS2ToS1(u1p, beta);
+    var u2 = velS2ToS1(u2p, beta);
+    return {
+      m1: m1, m2: m2, beta: beta,
+      u1p: u1p, u2p: u2p,
+      u1: u1, u2: u2,
+      vLab: beta
+    };
+  }
+
+  function noteAvTune(controlId) {
+    if (!sessionEvidence.tuneCounts.hasOwnProperty(controlId)) return;
+    sessionEvidence.tuneCounts[controlId] += 1;
+  }
+
+  function dominantAv() {
+    var bestId = null, bestN = 0;
+    Object.keys(sessionEvidence.tuneCounts).forEach(function (id) {
+      var n = sessionEvidence.tuneCounts[id];
+      if (n > bestN) { bestN = n; bestId = id; }
+    });
+    return bestId ? { id: bestId, label: AV_LABELS[bestId] || bestId, count: bestN } : null;
+  }
+  window.__relDominantAv = dominantAv;
+
+  function buildEvidenceSummary(v2) {
+    var dom = dominantAv();
+    var mainTxt = dom && dom.count > 0 ? (dom.label + '×' + dom.count) : '未集中调节';
+    var vTxt = Number.isFinite(v2) ? ('v₂/c≈' + v2.toFixed(3)) : '入带';
+    if (mode === 'challenge') {
+      return '竞赛证据：主调 ' + mainTxt + ' · ' + vTxt
+        + ' · 目标带 ' + bandLo.toFixed(3) + '–' + bandHi.toFixed(3)
+        + ' · 测量 ' + sessionEvidence.testCount + ' 次';
+    }
+    return '探究证据：' + vTxt + ' · 主调节 ' + mainTxt + ' · 测量 ' + sessionEvidence.testCount + ' 次';
+  }
+
+  function resize() {
+    var r = canvas.parentElement.getBoundingClientRect();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(320, r.width) * dpr;
+    canvas.height = Math.max(240, r.height) * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function roundRect(x, y, w, h, r) {
+    var rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  /** 居中横向舷窗（玻璃区 + 框宽），星星只画在窗内 */
+  function centerStarWindowRect(w, h) {
+    var winW = Math.min(w * 0.82, w - 32);
+    var winH = Math.max(52, Math.min(h * 0.2, 96));
+    var frame = Math.max(8, Math.round(winH * 0.14));
+    return {
+      x: (w - winW) / 2,
+      y: Math.max(72, h * 0.2),
+      w: winW,
+      h: winH,
+      r: 6,
+      frame: frame
+    };
+  }
+
+  function drawStarsInWindow(glass, beta, px) {
+    var drift = (sceneT * (10 + beta * 70 * px)) % (glass.w + 40);
+    var sky = ctx.createLinearGradient(0, glass.y, 0, glass.y + glass.h);
+    sky.addColorStop(0, '#040810');
+    sky.addColorStop(0.5, '#0a1220');
+    sky.addColorStop(1, '#0e1828');
+    ctx.fillStyle = sky;
+    roundRect(glass.x, glass.y, glass.w, glass.h, Math.max(2, glass.r - 2));
+    ctx.fill();
+    for (var k = 0; k < motes.length; k++) {
+      var m = motes[k];
+      var sx = glass.x + ((m.x * glass.w + drift * (0.4 + m.r * 0.06)) % (glass.w + 20)) - 10;
+      var sy = glass.y + 6 + m.y * (glass.h - 12);
+      var tw = 0.5 + 0.5 * Math.sin(sceneT * 1.7 + m.ph);
+      ctx.globalAlpha = Math.min(1, (0.12 + m.a * 5) * tw);
+      var rad = Math.max(0.65, m.r * 1.15);
+      ctx.fillStyle = m.r > 1.25 ? '#f0f4ff' : '#c8d8f0';
+      ctx.beginPath();
+      ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.22;
+    var glint = ctx.createLinearGradient(glass.x, glass.y, glass.x + glass.w * 0.35, glass.y + glass.h);
+    glint.addColorStop(0, 'rgba(255,255,255,0.35)');
+    glint.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = glint;
+    roundRect(glass.x, glass.y, glass.w, glass.h, Math.max(2, glass.r - 2));
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawHorizontalStarWindow(w, h, beta, px) {
+    var win = centerStarWindowRect(w, h);
+    var f = win.frame;
+    var outer = {
+      x: win.x - f,
+      y: win.y - f,
+      w: win.w + f * 2,
+      h: win.h + f * 2,
+      r: win.r + 4
+    };
+    var glass = {
+      x: win.x,
+      y: win.y,
+      w: win.w,
+      h: win.h,
+      r: win.r
+    };
+
+    ctx.save();
+    var sh = ctx.createLinearGradient(outer.x, outer.y, outer.x, outer.y + outer.h);
+    sh.addColorStop(0, '#3d4658');
+    sh.addColorStop(0.45, '#252d3c');
+    sh.addColorStop(1, '#151a24');
+    ctx.fillStyle = sh;
+    roundRect(outer.x, outer.y, outer.w, outer.h, outer.r);
+    ctx.fill();
+    ctx.strokeStyle = '#0a0c10';
+    ctx.lineWidth = 2;
+    roundRect(outer.x, outer.y, outer.w, outer.h, outer.r);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(110,196,184,0.55)';
+    ctx.lineWidth = 2;
+    roundRect(win.x - 2, win.y - 2, win.w + 4, win.h + 4, win.r + 1);
+    ctx.stroke();
+
+    roundRect(glass.x, glass.y, glass.w, glass.h, glass.r);
+    ctx.clip();
+    drawStarsInWindow(glass, beta, px);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,210,230,0.35)';
+    ctx.lineWidth = 1;
+    roundRect(glass.x + 0.5, glass.y + 0.5, glass.w - 1, glass.h - 1, glass.r);
+    ctx.stroke();
+    var rivetR = 2.5;
+    [[outer.x + 10, outer.y + 10], [outer.x + outer.w - 10, outer.y + 10],
+      [outer.x + 10, outer.y + outer.h - 10], [outer.x + outer.w - 10, outer.y + outer.h - 10]].forEach(function (p) {
+      ctx.fillStyle = '#5a6478';
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], rivetR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.arc(p[0] - 0.6, p[1] - 0.6, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.font = '600 10px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(190,200,220,0.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText('舷窗 · 外域', outer.x + 14, outer.y + outer.h - 8);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(126,196,184,0.85)';
+    ctx.fillText('β/c=' + beta.toFixed(2), outer.x + outer.w - 14, outer.y + outer.h - 8);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
+  function drawLab(w, h, beta, parallaxGain) {
+    var vLab = beta;
+    var px = parallaxGain == null ? 1 : parallaxGain;
+    var wall = ctx.createLinearGradient(0, 0, 0, h);
+    wall.addColorStop(0, '#161c28');
+    wall.addColorStop(0.55, '#101620');
+    wall.addColorStop(1, '#0a0e14');
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    var seam0 = (sceneT * (10 + vLab * 70 * px)) % 96;
+    for (var x = -96 + seam0; x < w + 20; x += 96) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h * 0.78);
+      ctx.stroke();
+    }
+    var floorY = h * 0.78;
+    ctx.strokeStyle = 'rgba(158,180,212,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(0, floorY);
+    ctx.lineTo(w, floorY);
+    ctx.stroke();
+    var floor = ctx.createLinearGradient(0, floorY, 0, h);
+    floor.addColorStop(0, '#141a24');
+    floor.addColorStop(1, '#0a0e14');
+    ctx.fillStyle = floor;
+    ctx.fillRect(0, floorY, w, h - floorY);
+
+    var flick = 0.96 + 0.04 * Math.sin(sceneT * 1.8);
+    var lx = w * 0.58, ly = 14;
+    var glow = ctx.createRadialGradient(lx, ly + 16, 6, lx, ly + 32, Math.max(200, w * 0.42));
+    glow.addColorStop(0, 'rgba(180,200,230,' + (0.1 * flick) + ')');
+    glow.addColorStop(0.5, 'rgba(90,110,150,' + (0.035 * flick) + ')');
+    glow.addColorStop(1, 'rgba(40,50,70,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, w, h);
+
+    for (var k = 0; k < motes.length; k++) {
+      var m = motes[k];
+      m.x += (m.vx + beta * 0.1 * px) * 0.016;
+      m.y += Math.sin(sceneT + m.ph) * 0.0003;
+      if (m.x > 1.05) { m.x = -0.05; m.y = Math.random() * 0.65; }
+    }
+  }
+
+  function portholeRect(w, h) {
+    return { x: w * 0.02, y: h * 0.02, w: w * 0.96, h: h * 0.96, r: 10 };
+  }
+
+  function drawShip2CockpitShell(w, h) {
+    var bg = ctx.createRadialGradient(w * 0.5, h * 0.48, w * 0.12, w * 0.5, h * 0.5, w * 0.78);
+    bg.addColorStop(0, '#121820');
+    bg.addColorStop(1, '#060810');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+    var vig = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.62);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.28)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawSceneCaption(w, h, pr) {
+    ctx.save();
+    ctx.font = '600 11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(210,220,240,0.82)';
+    ctx.fillText('S₁ 实验舱 · 固定摄像', pr.x + 10, pr.y + 16);
+    ctx.font = '500 10px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(158,180,212,0.65)';
+    ctx.fillText('2 号监视器', pr.x + 10, pr.y + 30);
+    ctx.restore();
+  }
+
+  function drawGlider(cx, railY, bodyW, mass, accentHi, accentMid, accentLo, label, vel) {
+    var massNorm = Math.max(0.5, Math.min(5, mass));
+    var bodyH = 24 + massNorm * 1.15;
+    var top = railY - bodyH - 2;
+    var plates = Math.max(1, Math.min(5, Math.round(massNorm)));
+    var shadowW = bodyW * (0.48 + massNorm * 0.04);
+    ctx.fillStyle = 'rgba(0,0,0,' + (0.26 + massNorm * 0.018) + ')';
+    ctx.beginPath();
+    ctx.ellipse(cx + 6, railY + 14, shadowW, 4 + massNorm * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (var pi = plates - 1; pi >= 0; pi--) {
+      var pw = bodyW * (0.72 - pi * 0.06);
+      var py = top - 7 - pi * 6;
+      var pg = ctx.createLinearGradient(cx - pw / 2, py, cx + pw / 2, py);
+      pg.addColorStop(0, accentLo);
+      pg.addColorStop(0.45, accentHi);
+      pg.addColorStop(1, accentLo);
+      ctx.fillStyle = pg;
+      roundRect(cx - pw / 2, py, pw, 6, 1.5);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    }
+
+    var g = ctx.createLinearGradient(cx - bodyW / 2, top, cx + bodyW / 2, top);
+    g.addColorStop(0, accentLo);
+    g.addColorStop(0.35, accentHi);
+    g.addColorStop(0.7, accentMid);
+    g.addColorStop(1, accentLo);
+    ctx.fillStyle = g;
+    roundRect(cx - bodyW / 2, top, bodyW, bodyH, 4);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(cx - bodyW * 0.28, top + 5);
+    ctx.lineTo(cx - bodyW * 0.05, top + 5);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(8,6,16,0.45)';
+    ctx.font = '600 11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, cx, top + 18);
+    var beta = Math.max(-0.9999, Math.min(0.9999, vel));
+    var gammaShow = gamma(beta);
+    ctx.font = '500 9px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.58)';
+    ctx.fillText('m\u2080=' + massNorm.toFixed(1), cx, top + bodyH + 10);
+    ctx.fillStyle = 'rgba(190,230,255,0.92)';
+    ctx.fillText('\u03b3=' + gammaShow.toFixed(2), cx, top + bodyH + 21);
+    ctx.textAlign = 'left';
+
+    var wheelY = railY - 3;
+    var wheelR = 3.6 + massNorm * 0.22;
+    ctx.fillStyle = '#1a1628';
+    ctx.beginPath();
+    ctx.arc(cx - bodyW * 0.28, wheelY, wheelR, 0, Math.PI * 2);
+    ctx.arc(cx + bodyW * 0.28, wheelY, wheelR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = accentMid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx - bodyW * 0.28, wheelY, wheelR, 0, Math.PI * 2);
+    ctx.arc(cx + bodyW * 0.28, wheelY, wheelR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    var showVel = anim.phase === 'idle' || anim.phase === 'run' || anim.phase === 'hold';
+    if (Math.abs(vel) > 0.03 && showVel) {
+      var dir = vel > 0 ? 1 : -1;
+      var len = (18 + Math.min(52, Math.abs(vel) * 72)) * (0.82 + massNorm * 0.06);
+      var ay = top + bodyH * 0.42;
+      var ax = cx + dir * (bodyW * 0.5 + 6);
+      ctx.strokeStyle = accentHi;
+      ctx.fillStyle = accentHi;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax + dir * len, ay);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(ax + dir * len, ay);
+      ctx.lineTo(ax + dir * (len - 8), ay - 4.5);
+      ctx.lineTo(ax + dir * (len - 8), ay + 4.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function draw(dt) {
+    var w = canvas.width / (window.devicePixelRatio || 1);
+    var h = canvas.height / (window.devicePixelRatio || 1);
+    var p = readParams();
+    sceneT += dt;
+    ctx.clearRect(0, 0, w, h);
+    drawShip2CockpitShell(w, h);
+    var pr = portholeRect(w, h);
+    ctx.save();
+    roundRect(pr.x, pr.y, pr.w, pr.h, pr.r);
+    ctx.clip();
+    var tg = trackGeom();
+    var bx = tg.bx;
+    var bw = tg.bw;
+    var trackLen = trackWorldLen(bw);
+    if (anim.phase === 'idle') {
+      anim.cx1 = trackLen * anim.x1;
+      anim.cx2 = trackLen * anim.x2;
+    }
+
+    var w1 = gliderWidth(p.m1);
+    var w2 = gliderWidth(p.m2);
+    var by = h * 0.58;
+    var railH = 14;
+    var x1, x2;
+    var dispU1 = p.u1;
+    var dispU2 = p.u2;
+    if (anim.phase === 'run') {
+      anim.simT += dt;
+      var speed = trackSpeedPx(bw);
+      dispU1 = anim.v1;
+      dispU2 = anim.v2;
+      if (anim.flashT > 0) anim.flashT = Math.max(0, anim.flashT - dt);
+      if (!anim.contacted) {
+        tryApproachContact(dt, speed, w1, w2, trackLen);
+        if (!anim.contacted) {
+          if (anim.simT > 0.45 && (anim.v2 - anim.v1) >= -1e-5) abortSimNoMeet();
+          else if (anim.simT > MAX_SIM_TIME) abortSimNoMeet();
+        }
+      } else {
+        anim.contactT += dt;
+        integrateGliders(dt, speed, w1, w2, trackLen);
+        if (postCollisionDone(w1, w2, trackLen)) anim.phase = 'hold';
+      }
+      x1 = anim.cx1;
+      x2 = anim.cx2;
+    } else if (anim.phase === 'hold') {
+      if (anim.flashT > 0) anim.flashT = Math.max(0, anim.flashT - dt);
+      x1 = anim.cx1;
+      x2 = anim.cx2;
+      dispU1 = anim.v1;
+      dispU2 = anim.v2;
+    } else {
+      x1 = trackLen * anim.x1;
+      x2 = trackLen * anim.x2;
+    }
+
+    tickCamera(dt, w1, w2, bw, trackLen);
+    var pxGain = interShipParallaxGain();
+    var labPan = pxGain * (-p.beta * w * 0.045 - anim.camCenter * 0.1);
+    ctx.translate(labPan, 0);
+    drawLab(w, h, p.beta, pxGain);
+
+    var tableTop = by + 8;
+    var tableH = Math.min(150, h * 0.28);
+
+    ctx.save();
+    applyWorldCamera(bx, bw, by - railH + 2);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(-8, tableTop + tableH - 6, trackLen + 16, 18);
+
+    var topG = ctx.createLinearGradient(0, tableTop, 0, tableTop + tableH);
+    topG.addColorStop(0, '#2c3140');
+    topG.addColorStop(0.15, '#3a4154');
+    topG.addColorStop(1, '#1a1e2a');
+    ctx.fillStyle = topG;
+    roundRect(-10, tableTop, trackLen + 20, tableH, 6);
+    ctx.fill();
+    ctx.font = '600 11px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(200,208,224,0.75)';
+    ctx.fillText('S₁ · 长轨实验台', trackLen / 2, tableTop - 10);
+    ctx.textAlign = 'left';
+    ctx.strokeStyle = 'rgba(158,180,212,0.28)';
+    ctx.lineWidth = 1.2;
+    roundRect(-14, tableTop - 4, trackLen + 28, tableH + 8, 8);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(200,190,230,0.16)';
+    ctx.lineWidth = 1;
+    roundRect(-4, tableTop + 6, trackLen + 8, tableH - 14, 4);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    var hole = 22;
+    for (var hx = 16; hx < trackLen - 8; hx += hole) {
+      for (var hy = tableTop + 22; hy < tableTop + tableH - 16; hy += hole) {
+        ctx.beginPath();
+        ctx.arc(hx, hy, 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    var legCount = Math.max(4, Math.round(trackLen / (bw * 0.85)));
+    for (var leg = 0; leg < legCount; leg++) {
+      var lx = 24 + (trackLen - 48) * leg / Math.max(1, legCount - 1);
+      var lg = ctx.createLinearGradient(lx - 5, 0, lx + 5, 0);
+      lg.addColorStop(0, '#12151c');
+      lg.addColorStop(0.5, '#3a4254');
+      lg.addColorStop(1, '#12151c');
+      ctx.fillStyle = lg;
+      ctx.fillRect(lx - 5, tableTop + tableH - 4, 10, Math.max(28, h - tableTop - tableH - 8));
+      ctx.fillStyle = '#8a7a4a';
+      ctx.beginPath();
+      ctx.arc(lx, tableTop + 10, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    var railG = ctx.createLinearGradient(0, by - railH, 0, by + 4);
+    railG.addColorStop(0, '#e4e0f2');
+    railG.addColorStop(0.35, '#8d86a8');
+    railG.addColorStop(0.7, '#4a445c');
+    railG.addColorStop(1, '#1c1828');
+    ctx.fillStyle = railG;
+    roundRect(0, by - railH, trackLen, railH + 4, 3);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(6, by - railH + 3, trackLen - 12, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(8, by - 4, trackLen - 16, 2);
+
+    ctx.strokeStyle = 'rgba(20,16,32,0.55)';
+    ctx.fillStyle = 'rgba(20,16,32,0.55)';
+    ctx.lineWidth = 1;
+    ctx.font = '9px "Courier New",monospace';
+    ctx.textAlign = 'center';
+    var tickN = Math.round(20 * TRACK_WORLD_MULT);
+    for (var ti = 0; ti <= tickN; ti++) {
+      var tx = (trackLen * ti) / tickN;
+      var major = ti % 5 === 0;
+      ctx.beginPath();
+      ctx.moveTo(tx, by + 2);
+      ctx.lineTo(tx, by + (major ? 10 : 6));
+      ctx.stroke();
+      if (major) ctx.fillText(String(Math.round(ti * 5 * TRACK_WORLD_MULT / tickN)), tx, by + 20);
+    }
+    ctx.textAlign = 'left';
+
+    function bumper(x, flip) {
+      ctx.save();
+      ctx.translate(x, by - railH - 2);
+      if (flip) ctx.scale(-1, 1);
+      var bg = ctx.createLinearGradient(0, -18, 18, 8);
+      bg.addColorStop(0, '#f0d48a');
+      bg.addColorStop(0.55, '#b8893a');
+      bg.addColorStop(1, '#6a4a16');
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.moveTo(0, -16);
+      ctx.lineTo(16, -10);
+      ctx.lineTo(16, 8);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    bumper(0, false);
+    bumper(trackLen, true);
+
+    drawGlider(x1, by - railH + 2, w1, p.m1, '#e8ecf4', '#a8b4cc', '#4a5568', 'm₁', dispU1);
+    drawGlider(x2, by - railH + 2, w2, p.m2, '#dceee8', '#7eb8a8', '#3d6b5e', 'm₂', dispU2);
+
+    if (anim.flashT > 0 && (anim.phase === 'run' || anim.phase === 'hold')) {
+      var flash = Math.min(1, anim.flashT / FLASH_DUR);
+      if (flash > 0) {
+        var fx = (x1 + x2) / 2;
+        var fy = by - railH - 16;
+        var rg = ctx.createRadialGradient(fx, fy, 2, fx, fy, 26 + (1 - flash) * 18);
+        rg.addColorStop(0, 'rgba(255,236,190,' + (0.85 * flash) + ')');
+        rg.addColorStop(0.4, 'rgba(255,180,90,' + (0.35 * flash) + ')');
+        rg.addColorStop(1, 'rgba(255,160,60,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(fx, fy, 28 + (1 - flash) * 16, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    ctx.restore();
+    drawSceneCaption(w, h, pr);
+    ctx.save();
+    ctx.translate(labPan, 0);
+    drawHorizontalStarWindow(w, h, p.beta, pxGain);
+    ctx.restore();
+  }
+
+  var last = 0;
+  function loop(ts) {
+    var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+    last = ts;
+    draw(dt);
+    requestAnimationFrame(loop);
+  }
+
+  function syncLabels() {
+    document.getElementById('m1Val').textContent = (+document.getElementById('s-m1').value).toFixed(1);
+    document.getElementById('m2Val').textContent = (+document.getElementById('s-m2').value).toFixed(1);
+    document.getElementById('u1Val').textContent = (+document.getElementById('s-u1').value).toFixed(2);
+    document.getElementById('u2Val').textContent = (+document.getElementById('s-u2').value).toFixed(2);
+    var sg = document.getElementById('shipGapVal');
+    if (sg) sg.textContent = String(Math.round(readInterShipDistKm()));
+    var betaTxt = (+document.getElementById('s-v-lab').value).toFixed(2);
+    document.getElementById('vLabVal').textContent = betaTxt;
+    var hudMain = document.getElementById('stageHudMain');
+    if (hudMain) hudMain.textContent = 'β/c = ' + betaTxt + ' · S₁ 摄像实况（你在 S₂ 看）';
+  }
+
+  function syncHeroGauge(text, state) {
+    var hero = document.getElementById('heroV2');
+    var sub = document.getElementById('heroSub');
+    if (hero) {
+      hero.textContent = text;
+      hero.classList.remove('ok', 'low', 'high');
+      if (state) hero.classList.add(state);
+    }
+    return { hero: hero, sub: sub };
+  }
+
+  function refreshHeroBand() {
+    var bandEl = document.getElementById('heroBand');
+    if (!bandEl) return;
+    if (mode === 'challenge') {
+      bandEl.hidden = false;
+      bandEl.textContent = '竞赛目标带 · ' + bandLo.toFixed(3) + ' – ' + bandHi.toFixed(3);
+    } else {
+      bandEl.hidden = true;
+      bandEl.textContent = '';
+    }
+  }
+
+  function lockBand() {
+    var beta = Math.round((Math.random() * 1.5 - 0.75) / 0.05) * 0.05;
+    var m1 = Math.round((0.8 + Math.random() * 3.2) * 10) / 10;
+    var m2 = Math.round((0.6 + Math.random() * 3.0) * 10) / 10;
+    var u1p = Math.round((Math.random() * 1.36 - 0.48) / 0.02) * 0.02;
+    var u2p = Math.round((Math.random() * 1.0 - 0.35) / 0.02) * 0.02;
+    var u1 = velS2ToS1(u1p, beta);
+    var u2 = velS2ToS1(u2p, beta);
+    var r = solveRelElastic(m1, m2, u1, u2);
+    var mid = r.v2;
+    var half = Math.max(0.04, Math.min(0.08, 0.12 * (1 - Math.abs(mid))));
+    bandLo = mid - half;
+    bandHi = mid + half;
+    if (bandLo < -0.95) { bandLo = -0.95; bandHi = bandLo + 2 * half; }
+    if (bandHi > 0.95) { bandHi = 0.95; bandLo = bandHi - 2 * half; }
+  }
+
+  function refreshGoals() {
+    var side = document.getElementById('sideGoal');
+    var att = document.getElementById('attemptsLine');
+    var pill = document.getElementById('craftModePill');
+    if (mode === 'explore') {
+      side.textContent = '探究：单变量对照主读数 v₂/c 与遥测。';
+      att.textContent = '';
+      if (pill) { pill.textContent = '探究模式'; pill.setAttribute('data-mode', 'explore'); }
+    } else {
+      side.textContent = '竞赛：将主读数 v₂/c 打入锁定带。';
+      att.textContent = '剩余机会 ' + attempts;
+      if (pill) { pill.textContent = '竞赛模式 | 剩余 ' + attempts; pill.setAttribute('data-mode', 'challenge'); }
+    }
+    refreshHeroBand();
+  }
+
+  function onMode() {
+    var s = document.getElementById('modeSelect');
+    var next = s.value === 'challenge' ? 'challenge' : 'explore';
+    if (next !== mode) {
+      mode = next;
+      try {
+        if (window.__craftPhaseEmitted !== mode) {
+          window.__craftPhaseEmitted = mode;
+          if (window.__emit) window.__emit('phase_change', { phase: mode });
+          if (window.__platformTraceSetPhase) window.__platformTraceSetPhase(mode);
+        }
+      } catch (e) {}
+      document.dispatchEvent(new CustomEvent('dual-mode-change', { detail: { mode: mode } }));
+      if (mode === 'challenge') {
+        attempts = 6; lockBand(); window.__legacyWinEmitted = false; window.__challengeWon = false;
+        clearReadouts();
+        document.getElementById('winIndicator').innerHTML = '';
+      }
+      refreshGoals();
+      refreshHeroBand();
+    }
+  }
+
+  function clearReadouts() {
+    lastV2Rel = null;
+    var pending = mode === 'challenge' ? '待测' : '—';
+    MEASURE_READOUT_IDS.forEach(function(id){
+      document.getElementById(id).textContent = pending;
+    });
+    var g = syncHeroGauge(pending, null);
+    if (g.sub) g.sub.textContent = mode === 'challenge' ? '竞赛：测前不显示答案' : '尚未测量';
+    document.getElementById('classWarn').hidden = true;
+    document.getElementById('hintMessage').textContent = '调参后点碰撞测量';
+    refreshHeroBand();
+  }
+
+  function settleCollision() {
+    var p = readParams();
+    var rel = solveRelElastic(p.m1, p.m2, p.u1, p.u2);
+    var cl = classicElastic(p.m1, p.m2, p.u1, p.u2);
+    var p0 = pRel(p.m1, p.u1) + pRel(p.m2, p.u2);
+    var e0 = eRel(p.m1, p.u1) + eRel(p.m2, p.u2);
+    var p1 = pRel(p.m1, rel.v1) + pRel(p.m2, rel.v2);
+    var e1 = eRel(p.m1, rel.v1) + eRel(p.m2, rel.v2);
+    var res = Math.abs(p1 - p0) + Math.abs(e1 - e0);
+    var v1p = velS1ToS2(rel.v1, p.beta);
+    var v2p = velS1ToS2(rel.v2, p.beta);
+    var v2s1 = rel.v2;
+    lastV2Rel = v2s1;
+    sessionEvidence.lastV2 = v2s1;
+    anim.v1 = rel.v1;
+    anim.v2 = rel.v2;
+
+    var v2txt = v2s1.toFixed(4);
+    document.getElementById('v2RelDisplay').textContent = v2p.toFixed(4);
+    document.getElementById('v1RelDisplay').textContent = v1p.toFixed(4);
+    var heroState = null;
+    if (mode === 'challenge') {
+      if (v2s1 >= bandLo && v2s1 <= bandHi) heroState = 'ok';
+      else heroState = v2s1 < bandLo ? 'low' : 'high';
+    }
+    var g = syncHeroGauge(v2txt, heroState);
+    if (g.sub) {
+      var s2Line = 'S₂ 见 v₂′/c≈' + v2p.toFixed(3);
+      g.sub.textContent = mode === 'explore'
+        ? (s2Line + ' · β/c=' + p.beta.toFixed(2) + ' · 可单变量再测')
+        : (s2Line + ' · β/c=' + p.beta.toFixed(2));
+    }
+    document.getElementById('v2S1Display').textContent = v2txt;
+    document.getElementById('v1S1Display').textContent = rel.v1.toFixed(4);
+    document.getElementById('v2ClDisplay').textContent = cl.v2.toFixed(4);
+    document.getElementById('consDisplay').textContent = res < 0.02 ? '≈0' : res.toExponential(1);
+    document.getElementById('g1RelDisplay').textContent = gamma(rel.v1).toFixed(3);
+    document.getElementById('g2RelDisplay').textContent = gamma(rel.v2).toFixed(3);
+    var cw = document.getElementById('classWarn');
+    var naiveV2p = cl.v2 - p.beta;
+    var warnClassic = Math.abs(cl.v2) > 1 || Math.abs(cl.v1) > 1;
+    var warnNaive = Math.abs(naiveV2p - v2p) > 0.08 && Math.abs(v2p) < 0.98;
+    if (warnClassic || warnNaive) {
+      cw.hidden = false;
+      cw.textContent = warnClassic
+        ? 'S₁ 经典弹性给出 |v/c|>1；相对论 S₁、S₂ 末速仍 ≤1。'
+        : ('勿用 u′≈u−β 猜 S₂ 的 v₂′：洛伦兹 v₂′≈' + v2p.toFixed(3) + '，错式≈' + naiveV2p.toFixed(3) + '；主读数 S₁ v₂/c=' + v2s1.toFixed(3) + '。');
+    } else cw.hidden = true;
+
+    var controls = window.__snapControls ? window.__snapControls() : {};
+    var hint = document.getElementById('hintMessage');
+    var winInd = document.getElementById('winIndicator');
+    winInd.innerHTML = '';
+
+    if (mode === 'explore') {
+      hint.textContent = 'S₁ v₂/c≈' + v2s1.toFixed(3) + ' · S₂ v₂′/c≈' + v2p.toFixed(3) + ' · 改一个量再测';
+      if (window.__emit) {
+        window.__emit('snapshot', { controls: controls, winOk: false, hintKey: 'explore_observe', v2Rel: v2p, v2Classic: cl.v2, v2S1: v2s1, beta: p.beta });
+        if (window.__noteExploreSuccess) window.__noteExploreSuccess(window.__emit, controls);
+      }
+      return;
+    }
+    if (attempts <= 0 || window.__challengeWon) return;
+    attempts -= 1;
+    refreshGoals();
+    var ok = v2s1 >= bandLo && v2s1 <= bandHi;
+    if (window.__emit) window.__emit('snapshot', { controls: controls, winOk: ok, hintKey: ok ? 'win' : 'miss', v2Rel: v2p, v2S1: v2s1, beta: p.beta });
+    var bandTxt = bandLo.toFixed(3) + '–' + bandHi.toFixed(3);
+    if (ok) {
+      hint.textContent = (window.CraftFeedback
+        ? CraftFeedback.hitHint({ measured: 'v₂/c≈' + v2s1.toFixed(3), band: bandTxt })
+        : ('已落入 · S₁ v₂/c≈' + v2s1.toFixed(3) + '（目标 ' + bandTxt + '）'));
+      window.__challengeWon = true;
+      setTimeout(function() {
+        if (mode !== 'challenge' || !window.__challengeWon) return;
+        try { window.__legacyWinEmitted = true; } catch (e) {}
+        if (window.__emit) window.__emit('win', { winOk: true });
+        winInd.innerHTML = '<span class="pass-badge">过关 · 主读数 v₂/c 入带</span>';
+        if (typeof window.__craftShowWin === 'function') {
+          window.__craftShowWin({
+            evidenceSummary: buildEvidenceSummary(v2s1),
+            physicsMeta: 'S₁ ΣE、Σp 守恒 · v₂/c 已入带 · S₂ v₂′/c≈' + v2p.toFixed(3) + ' · β/c=' + p.beta.toFixed(2)
+          });
+        }
+      }, 950);
+    } else {
+      hint.textContent = (window.CraftFeedback
+        ? CraftFeedback.missHint({ verdict: v2s1 < bandLo ? 'low' : 'high', measured: 'v₂/c≈' + v2s1.toFixed(3), band: bandTxt })
+        : ((v2s1 < bandLo ? '偏低' : '偏高') + ' · S₁ v₂/c≈' + v2s1.toFixed(3) + '（目标 ' + bandTxt + '）'));
+      if (attempts <= 0 && !window.__challengeWon) {
+        try {
+          if (window.__emit) {
+            window.__emit('attempts_exhausted', { attempts: 0, mode: 'challenge' });
+            window.__emit('snapshot', { controls: controls, winOk: false, attemptsExhausted: true, hintKey: 'attempts_exhausted' });
+          }
+        } catch (eEx) {}
+        hint.textContent = '机会用尽 · 可切探究后再开竞赛';
+      }
+    }
+  }
+
+  function resetApproachLayout() {
+    applyApproachFromGap();
+  }
+
+  function doCollide() {
+    if (testing) return;
+    if (mode === 'challenge' && (attempts <= 0 || window.__challengeWon)) return;
+    syncLabels();
+    resetApproachLayout();
+    var p = readParams();
+    var tg = trackGeom();
+    var w1 = gliderWidth(p.m1);
+    var w2 = gliderWidth(p.m2);
+    anim.u1 = p.u1;
+    anim.u2 = p.u2;
+    anim.v1 = p.u1;
+    anim.v2 = p.u2;
+    var trackLen = trackWorldLen(tg.bw);
+    anim.cx1 = trackLen * anim.x1;
+    anim.cx2 = trackLen * anim.x2;
+    snapCamera(w1, w2, tg.bw, trackLen);
+    anim.phase = 'run';
+    anim.simT = 0;
+    anim.flashT = 0;
+    anim.contactT = 0;
+    anim.contacted = false;
+    anim.settled = false;
+    testing = true;
+    sessionEvidence.testCount += 1;
+    var box = document.getElementById('observeBox');
+    box.classList.add('measuring');
+    document.getElementById('hintMessage').textContent = '碰撞中…';
+    MEASURE_READOUT_IDS.forEach(function(id){
+      document.getElementById(id).textContent = '···';
+    });
+    if (Math.abs(p.u1) < 1e-4 && Math.abs(p.u2) < 1e-4) {
+      finishContactAtRest(w1, w2, trackWorldLen(tg.bw));
+    }
+  }
+
+  window.__relCollisionReset = function() {
+    document.getElementById('s-m1').value = 1;
+    document.getElementById('s-m2').value = 1;
+    document.getElementById('s-u1').value = 0.55;
+    document.getElementById('s-u2').value = -0.05;
+    document.getElementById('s-v-lab').value = 0.3;
+    document.getElementById('s-ship-gap').value = 800;
+    anim.phase = 'idle';
+    anim.t = 0;
+    resetApproachLayout();
+    anim.settled = false;
+    clearReadouts();
+    document.getElementById('winIndicator').innerHTML = '';
+    document.getElementById('observeBox').classList.remove('measuring');
+    testing = false;
+    attempts = 6; syncLabels(); refreshGoals();
+  };
+
+  window.__exploreAvTouched = window.__exploreAvTouched || Object.create(null);
+  var IRRELEVANT_IDS = { 's-ship-gap': 1 };
+  ['s-m1','s-v-lab','s-m2','s-ship-gap','s-u1','s-u2'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('input', function(){
+      syncLabels();
+      if (testing) {
+        testing = false;
+        anim.settled = false;
+        document.getElementById('observeBox').classList.remove('measuring');
+      }
+      anim.phase = 'idle';
+      resetApproachLayout();
+      if (!IRRELEVANT_IDS[id]) {
+        if (mode === 'challenge' && !window.__challengeWon) clearReadouts();
+        else if (mode === 'explore') {
+          clearReadouts();
+          document.getElementById('hintMessage').textContent = '参量已变 · 请再点碰撞测量';
+        }
+      }
+      if (AV_LABELS.hasOwnProperty(id)) window.__exploreAvTouched[id] = 1;
+    });
+    el.addEventListener('change', function(){
+      if (!IRRELEVANT_IDS[id] && AV_LABELS.hasOwnProperty(id)) noteAvTune(id);
+      if (IRRELEVANT_IDS[id] && window.__emit) {
+        window.__emit('irrelevant_touch', { controlId: id, value: el.value });
+      }
+    });
+  });
+  document.getElementById('modeSelect').addEventListener('change', onMode);
+  document.getElementById('btn-collide').addEventListener('click', doCollide);
+  document.getElementById('btn-reset').addEventListener('click', function(){ window.__relCollisionReset(); });
+  window.addEventListener('resize', resize);
+  resize(); syncLabels(); lockBand(); refreshGoals();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+<script>
+(function(){
+  function emit(type, payload) {
+    try { if (window.PlatformTraceAdapter) { window.PlatformTraceAdapter.record(type, payload || {}); return; } } catch (e) {}
+    try { if (window.parent && window.parent !== window && window.parent.PlatformTraceAdapter) { window.parent.PlatformTraceAdapter.record(type, payload || {}); } } catch (e) {}
+  }
+  function snapControls() {
+    var o = {};
+    document.querySelectorAll('input[type="range"],input[type="number"],select').forEach(function(el){
+      var id = el.id || el.name; if (id) o[id] = el.value;
+    });
+    return o;
+  }
+  window.__emit = emit;
+  window.__snapControls = snapControls;
+  document.addEventListener('DOMContentLoaded', function(){
+    emit('puzzle_open', {});
+    document.querySelectorAll('input[type="range"],input[type="number"]').forEach(function(el){
+      el.addEventListener('change', function(){
+        emit('tuning', { control: el.id || 'slider', value: el.value });
+      });
+    });
+    document.querySelectorAll('button,[role="button"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        emit('action', { control: el.id || (el.textContent||'').trim().slice(0,24) || 'button' });
+      });
+    });
+  });
+})();
+</script>
+<script src="../_shared/craft-telemetry.js"></script>
+<script src="../_shared/craft-feedback.js"></script>
+<script>
+(function () {
+  if (window.CraftTelemetry) window.CraftTelemetry.initDualModePhase();
+})();
+</script>
+<script>
+(function(){
+  if (window.__noteExploreSuccess) return;
+  window.__noteExploreSuccess = function(emitFn, controls) {
+    try {
+      var g = window.__exploreSuccessGate || (window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false });
+      g.n += 1;
+      var c = controls || {};
+      Object.keys(c).forEach(function(k){ g.keys[k] = 1; });
+      var touched = window.__exploreAvTouched || {};
+      var avN = ['s-m1','s-m2','s-u1','s-u2','s-v-lab'].filter(function(id){ return !!touched[id]; }).length;
+      if (g.done || g.n < 3 || avN < 2) return;
+      g.done = true;
+      var emit = emitFn || window.__emit;
+      if (typeof emit === 'function') emit('explore_success', { winOk: true, hintKey: 'explore_contrast', controls: c });
+    } catch (e) {}
+  };
+  document.addEventListener('dual-mode-change', function(ev) {
+    try {
+      if (ev && ev.detail && ev.detail.mode === 'explore') {
+        window.__exploreSuccessGate = { n: 0, keys: Object.create(null), done: false };
+        window.__exploreAvTouched = Object.create(null);
+      }
+    } catch (e) {}
+  });
+})();
+</script>
+<script>
+(function(){
+  var intro = document.getElementById('craft-intro');
+  var win = document.getElementById('craft-win');
+  var btn = document.getElementById('craftIntroBtn');
+  var wbtn = document.getElementById('craftWinBtn');
+  var back = document.getElementById('craftBackBtn');
+
+  function setCraftSettleOpen(open) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'craft-settle', open: !!open }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function updateAttrHint(selected) {
+    var hintEl = document.getElementById('craftAttrHint');
+    if (!hintEl) return;
+    var dom = typeof window.__relDominantAv === 'function' ? window.__relDominantAv() : null;
+    if (!dom || dom.count <= 0 || !selected || selected === 'mixed' || selected === 'unsure' || selected === dom.id) {
+      hintEl.hidden = true; hintEl.textContent = ''; return;
+    }
+    hintEl.hidden = false;
+    hintEl.textContent = '本局证据主调是' + dom.label + '；若答物理上谁更灵敏可另说——此处问的是本局对照';
+  }
+
+  function setCraftRevealVisible(visible) {
+    var reveal = document.getElementById('craftReveal');
+    if (reveal) reveal.hidden = !visible;
+  }
+
+  function resetWinAttributionUi() {
+    var se = window.__sessionEvidence;
+    if (se) se.attribution = null;
+    document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) { el.checked = false; });
+    if (wbtn) wbtn.disabled = true;
+    setCraftRevealVisible(false);
+    updateAttrHint(null);
+  }
+
+  function emitAttributionSnapshot() {
+    var se = window.__sessionEvidence;
+    if (!window.__emit || !se || !se.attribution) return;
+    var c = window.__snapControls ? window.__snapControls() : {};
+    window.__emit('snapshot', {
+      controls: c, winOk: true,
+      attribution: se.attribution,
+      evidenceSummary: se.evidenceSummary
+    });
+  }
+
+  if (btn) btn.addEventListener('click', function(){ if (intro) intro.hidden = true; });
+  window.__craftShowWin = function(payload){
+    var se = window.__sessionEvidence || {};
+    var summary = (payload && typeof payload === 'object' && payload.evidenceSummary)
+      || (typeof payload === 'string' ? payload : '')
+      || se.evidenceSummary
+      || '本局已命中目标带。';
+    se.evidenceSummary = summary;
+    var line = document.getElementById('craftEvidenceLine');
+    if (line) line.innerHTML = '<strong>本局证据</strong>　' + summary;
+    var meta = document.getElementById('craftEvidenceMeta');
+    if (meta) {
+      var metaTxt = payload && typeof payload === 'object' ? (payload.physicsMeta || '') : '';
+      if (metaTxt) { meta.hidden = false; meta.textContent = metaTxt; }
+      else { meta.hidden = true; meta.textContent = ''; }
+    }
+    resetWinAttributionUi();
+    if (win) win.hidden = false;
+    window.__craftWinOpen = true;
+    setCraftSettleOpen(true);
+  };
+  if (wbtn) wbtn.addEventListener('click', function(){
+    if (wbtn.disabled) return;
+    if (win) win.hidden = true;
+    window.__craftWinOpen = false;
+    setCraftSettleOpen(false);
+    window.__legacyWinEmitted = false;
+    window.__challengeWon = false;
+    var ms = document.getElementById('modeSelect');
+    if (ms) { ms.value = 'explore'; ms.dispatchEvent(new Event('change')); }
+    if (typeof window.__relCollisionReset === 'function') window.__relCollisionReset();
+  });
+  if (back) back.addEventListener('click', function(){
+    try { if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'craft-back' }, '*'); } catch (e) {}
+  });
+  document.querySelectorAll('input[name="craftAttr"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+      if (!el.checked) return;
+      var se = window.__sessionEvidence || (window.__sessionEvidence = {});
+      se.attribution = el.value;
+      setCraftRevealVisible(true);
+      updateAttrHint(el.value);
+      if (wbtn) wbtn.disabled = false;
+      emitAttributionSnapshot();
+    });
+  });
+})();
+</script>
+</body>
+</html>

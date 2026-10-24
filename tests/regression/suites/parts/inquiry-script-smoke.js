@@ -83,6 +83,23 @@ function run() {
   assert(telem.events.some(e => e.type === 'phase_change'), 'telemetry phase_change');
   assert(telem.craftTelemetry?.tokensPath, 'craftTelemetry tokensPath');
 
+  const badCvChapter = enrichChapterContract(miniChapter(), hints, []);
+  badCvChapter.inquiryScript.confoundingVariables = [{
+    id: 'CV1', controlId: 's-glow', label: '轨道光晕', reason: '只改视觉',
+  }];
+  const badCv = validateInquiryScript(badCvChapter, hints);
+  assert(!badCv.ok, 'decorative CV should fail inquiryCvProfessional');
+  assert(badCv.errors.some(e => /inquiryCvProfessional|光效|装饰/.test(e)), 'decorative CV error message');
+
+  const modelOnlyChapter = enrichChapterContract(miniChapter(), hints, []);
+  modelOnlyChapter.inquiryScript.confoundingVariables = [{
+    id: 'CV1', controlId: 's-offset-y', label: '横向对心偏差 δ',
+    reason: '理想一维对心模型：仅改横向对准外观',
+  }];
+  const modelOnly = validateInquiryScript(modelOnlyChapter, hints);
+  assert(!modelOnly.ok, 'model-only CV should fail inquiryCvProfessional');
+  assert(modelOnly.errors.some(e => /理想化|真实/.test(e)), 'model-only CV error message');
+
   console.log('inquiry-script-smoke: OK');
 }
 

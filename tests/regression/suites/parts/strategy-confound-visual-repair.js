@@ -144,6 +144,47 @@ function run() {
   assert(/试探(?:混淆)?·音量/.test(modeFixed.strategy.mermaid), 'CV uses real label 音量');
   assert(modeFixed.strategy.routes.some(r => r.kind === 'confoundProbe' && /音量/.test(r.label)), 'confoundProbe route');
 
+  const DUP_ROUTES = {
+    inquiryScript: {
+      confoundingVariables: [
+        { id: 'CV1', controlId: 's-ship-gap', label: '1号·2号间距' },
+      ],
+    },
+    strategy: {
+      mermaid: `graph TD
+Start --> StrategySelect{选择?}
+StrategySelect -.->|试探·1号2号间距| ProbeCV
+StrategySelect -.->|试探·无关控件| ProbeCV2
+ProbeCV --> ObserveCV --> BackFromCV --> StrategySelect
+`,
+      routes: [
+        {
+          id: 'confound_s_ship_gap',
+          label: '试探·1号·2号间距',
+          kind: 'confoundProbe',
+          score: 0.39,
+          priorityRank: 6,
+          highlightNodes: ['StrategySelect', 'ProbeCV', 'ObserveCV', 'BackFromCV'],
+          highlightEdges: [],
+        },
+        {
+          id: 'confound_CV1',
+          label: '试探·无关控件',
+          kind: 'confoundProbe',
+          score: 0.35,
+          highlightNodes: ['StrategySelect', 'ProbeCV', 'ObserveCV', 'BackFromCV'],
+          highlightEdges: [],
+        },
+      ],
+    },
+  };
+  const dupFixed = repairStrategyConfoundVisual(DUP_ROUTES);
+  const dupProbes = dupFixed.strategy.routes.filter(r => r.kind === 'confoundProbe' || /试探/.test(r.label || ''));
+  assert(dupProbes.length === 1, `dup confound collapsed to 1 got ${dupProbes.length}`);
+  assert(!dupFixed.strategy.routes.some(r => r.id === 'confound_CV1'), 'generic confound_CV1 removed');
+  assert(dupProbes[0].priorityRank == null, 'no priorityRank on surviving confound');
+  assert(!/试探·无关控件/.test(dupFixed.strategy.mermaid), 'generic confound mermaid edge removed');
+
   console.log('strategy-confound-visual-repair-check: ok');
 }
 

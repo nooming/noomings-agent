@@ -13,7 +13,13 @@ const SCORE_BY_RANK = {
   4: 0.55,
 };
 const TRAP_SCORE = 0.2;
+const CONFOUND_PROBE_SCORE = 0.15;
 const DEFAULT_PREFERRED = 0.75;
+
+function isConfoundProbeRoute(route) {
+  return route?.kind === 'confoundProbe'
+    || /^试探(?:混淆)?[·•.]/.test(String(route?.label || ''));
+}
 
 function scoreForPriorityRank(rank) {
   const r = Number(rank);
@@ -39,6 +45,7 @@ function isWeakProbeRoute(route) {
 
 function isTrapRoute(route) {
   if (isWeakProbeRoute(route)) return false;
+  if (isConfoundProbeRoute(route)) return false;
   return route?.tier === 'suboptimal'
     || /trap|盲调|多参|多滑/i.test(`${route?.id || ''}${route?.label || ''}`);
 }
@@ -47,6 +54,12 @@ function isTrapRoute(route) {
  * @returns {{ score: number, weight: number, priorityRank?: number }}
  */
 function computeRouteScoreFields(route, rankedAvs, indexAmongPreferred) {
+  if (isConfoundProbeRoute(route)) {
+    const score = route?.score != null
+      ? Math.min(Number(route.score), CONFOUND_PROBE_SCORE)
+      : CONFOUND_PROBE_SCORE;
+    return { score, weight: score };
+  }
   if (isWeakProbeRoute(route)) {
     const score = route?.score != null
       ? Number(route.score)

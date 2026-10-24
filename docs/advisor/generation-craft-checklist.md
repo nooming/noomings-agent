@@ -11,7 +11,7 @@
 | # | 项 | 说明 |
 |---|----|------|
 | 1 | **物理模型** | 公式 / 调节量(AV) / 混淆量(CV) / 输出量与 `inquiryScript`·`physicsModel` 一致；CV 不进 win 公式 |
-| 2 | **AV · CV** | ≥2 AV 稳定 controlId；≥1 可操作 CV（标签中性）；角色与 `traceMap` 对齐 |
+| 2 | **AV · CV** | ≥2 AV；≥1 CV（**真实 setup 下亦无关**，非仅理想模型忽略的自由度）；`reason` 可核对；`inquiryCvProfessional` 过；`traceMap` 对齐 |
 | 3 | **双模** | `#modeSelect` explore/challenge；`phase_change` 可采集 |
 | 4 | **win · explore_success** | 竞赛通关只 `win`；探究达成只 `explore_success`；勿混用 |
 | 5 | **轨迹 id** | 控件 id 与 chapter `traceMap.controls` 一致；可在教师端见事件 |

@@ -1,20 +1,23 @@
 {
   "id": "cyclotron-radius",
-  "title": "回旋加速器",
-  "analyzedAt": "2026-07-30T07:47:02.255Z",
+  "title": "回旋加速器 · 探究轨道半径",
+  "craft": "pilot",
+  "topic": "相对论碰撞",
+  "knowledgeText": "ΣE、Σp 守恒",
+  "enrichedAt": "2026-10-24T08:05:41.252Z",
   "validation": {
     "ok": true,
     "errors": []
   },
   "quality": {
-    "ok": true,
-    "errors": [],
+    "ok": false,
+    "errors": [
+      "quality: strategy needs >=5 distinct macro strategy routes, got 3",
+      "quality: strategy.routes (main): spine has Observe but expanded highlight lacks Observe→Adjust→Fire feedback loop",
+      "inquiry: CV「无关控件」不宜为纯装饰/光效/主题类；选用教案语境下可信物理量，并在 reason 写明为何在真实 setup 下亦不影响核心结论（sample-spec §4.1）"
+    ],
     "warnings": [
-      "strategy.routes[0] (main): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
-      "strategy.routes[1] (main_s-magnetic): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
-      "strategy.routes[2] (main_s-chamber-p): mapsTo 含 result 时 highlightNodes 宜含 stratResult/过关节点（ChallengeCore, Win2, Win1）",
-      "quality: KG play chain must reach env constraint before operation from P1",
-      "inquiry: adjustmentVariable s-chamber-p not in traceMap as operation"
+      "quality: KG play chain must reach env constraint before operation from P1"
     ],
     "checklist": {
       "nodeCount": true,
@@ -27,8 +30,9 @@
       "strategyRoutes": true,
       "strategyPerAvRoutes": true,
       "strategyObserveAdjustCvar": true,
-      "strategyMacroPaths": true,
+      "strategyMacroPaths": false,
       "strategyFeedbackLoop": true,
+      "strategyFeedbackDomainOnly": true,
       "strategyRouteIsolation": true,
       "strategyMentalBackbone": true,
       "dtFeedbackToOperation": true,
@@ -48,7 +52,7 @@
       "optionalToggleNotConstraint": true,
       "dtOutcomeOriented": true,
       "chapterScope": true,
-      "routeFeedbackLoopHighlighted": true,
+      "routeFeedbackLoopHighlighted": false,
       "inquiryKnowledgePoints": true,
       "inquiryAdjustmentVars": true,
       "inquiryFormulas": true,
@@ -63,48 +67,17 @@
       "inquiryO1Label": true,
       "inquiryNarrativeNoHollow": true,
       "inquiryConfoundingNotOperation": true,
+      "inquiryCvProfessional": false,
       "inquiryOutputNotOperation": true,
       "physicsModel": true,
       "gameSpec": true,
       "telemetrySpec": true,
       "inquiryRouteScores": true,
-      "inquiryScript": true,
+      "inquiryScript": false,
       "strategyRouteScores": true
     },
-    "score": 98,
-    "total": 53,
-    "passed": 52
-  },
-  "analyzeSteps": [
-    {
-      "id": "physics_model",
-      "label": "剥离物理模型",
-      "status": "done",
-      "summary": "2 条公式 · 源码含 requestAnimationFram…"
-    },
-    {
-      "id": "variables",
-      "label": "确定变量",
-      "status": "done",
-      "summary": "AV×3 CV×1 OV×2"
-    },
-    {
-      "id": "priority",
-      "label": "单变量优先级",
-      "status": "done",
-      "summary": "初速度(rank=1, monotone) ｜ s-magnetic(rank=2, unknown) ｜ s-chamber-p(rank=3, unknown)"
-    },
-    {
-      "id": "graph",
-      "label": "生成事理图谱",
-      "status": "pending",
-      "summary": "等待 LLM 生成 DT/KG/strategy"
-    }
-  ],
-  "repairedAt": "2026-07-30T09:35:24.181Z",
-  "repair": "macro-select-fix",
-  "narrativeSurgicalAt": "2026-07-30T10:43:11.853Z",
-  "narrativeBaseline": "narrative-v2",
-  "narrativeCleanBefore": 1,
-  "narrativeCleanAfter": 1
+    "score": 91,
+    "total": 55,
+    "passed": 50
+  }
 }

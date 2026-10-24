@@ -15,6 +15,10 @@ const MACRO_TOPICS = {
     name: '热学',
     topics: ['热传导', '理想气体', '气体压强微观', '麦克斯韦速率分布', '绝热过程'],
   },
+  'macro-relativity': {
+    name: '相对论',
+    topics: ['相对论', '相对论碰撞', '相对论动力学', '洛伦兹变换'],
+  },
   'macro-other': {
     name: '近代与其它',
     topics: ['流体力学', '放射性', '光电效应'],

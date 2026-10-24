@@ -5,6 +5,12 @@ const {
   isCrossDomainOutputPollution,
   HOLLOW_OP_RE,
 } = require('../repair/inquiry-script-sanitize');
+
+/** 纯装饰/光效类 CV — 与 sample-spec §4.1 一致，quality 门禁 */
+const DECORATIVE_CV_LABEL_RE = /(?:光晕|亮度|色调|主题色|主题|皮肤|滤镜|壁纸|背景色|装饰|好看|漂亮|\bglow\b|\bhue\b|\btheme\b|\bskin\b|cosmetic|fancy)/i;
+/** 仅在理想化模型里「忽略自由度」的量 — 真实实验里往往有关，不宜作 CV */
+const MODEL_ONLY_CV_LABEL_RE = /横向.{0,8}(偏差|偏移|对准)|对心偏差|偏心|lateral|offset-y|s-offset/i;
+const MODEL_ONLY_CV_REASON_RE = /仅改.{0,8}(横向|对准|外观)|理想.{0,12}(一维|对心).{0,20}(不进|不参与|忽略)/i;
 const { routesNeedScoreRepair } = require('../repair/strategy-route-score-repair');
 
 function hasFormulas(knowledgePoints) {
@@ -136,12 +142,33 @@ function validateInquiryScript(chapter, gameHints) {
   }
 
   checklist.inquiryConfoundingNotOperation = true;
+  checklist.inquiryCvProfessional = true;
   for (const conf of cv) {
     if (conf.controlId && opControlIds.has(conf.controlId)) {
       errors.push(`inquiry: confounding ${conf.controlId} must not be traceMap operation`);
       checklist.inquiryConfoundingNotOperation = false;
     }
+    const reason = String(conf.reason || '').trim();
+    const cvBlob = [conf.label, reason, conf.symbol, conf.controlId].filter(Boolean).join(' ');
+    if (DECORATIVE_CV_LABEL_RE.test(cvBlob)) {
+      checklist.inquiryCvProfessional = false;
+      errors.push(
+        `inquiry: CV「${conf.label || conf.controlId}」不宜为纯装饰/光效/主题类；`
+        + '选用教案语境下可信物理量，并在 reason 写明为何在真实 setup 下亦不影响核心结论（sample-spec §4.1）',
+      );
+    }
+    if (MODEL_ONLY_CV_LABEL_RE.test(cvBlob) || MODEL_ONLY_CV_REASON_RE.test(reason)) {
+      checklist.inquiryCvProfessional = false;
+      errors.push(
+        `inquiry: CV「${conf.label || conf.controlId}」不能仅在理想化模型里被忽略（如横向对准在真实非对心碰撞中有影响）；`
+        + '应选用在真实实验/setup 下亦不影响核心结论的量（如固定底座质量、中性体不受的环境场等）',
+      );
+    }
+    if (reason && reason.length < 10 && !/模型|守恒|公式|两体|实验室|不进|无关|ideal/i.test(reason)) {
+      warnings.push(`inquiry: CV「${conf.label || conf.controlId}」reason 宜写清为何在真实 setup 下亦不影响核心结论`);
+    }
   }
+  if (cv.length === 0) checklist.inquiryCvProfessional = true;
 
   checklist.inquiryOutputNotOperation = true;
   for (const output of ov) {

@@ -14,8 +14,11 @@ const MISCONCEPTION_NODE_RE = /CheckMisconception|InvalidMisconception/;
 const MISCONCEPTION_LINE_RE = /CheckMisconception|InvalidMisconception|条件下误操作|是否误调无效参数|关态误调无效参数/;
 
 function listConfoundingVariables(chapter) {
-  const cvs = chapter?.inquiryScript?.confoundingVariables || [];
-  return cvs.filter(c => c && (c.label || c.controlId));
+  const raw = chapter?.inquiryScript?.confoundingVariables || [];
+  const cvs = raw.filter(c => c && (c.label || c.controlId));
+  const withControl = cvs.filter(c => String(c.controlId || '').trim());
+  if (withControl.length) return withControl;
+  return cvs.filter(c => !/^无关控件$/i.test(String(c.label || '').trim()));
 }
 
 function shortCvLabel(cv) {
@@ -25,6 +28,70 @@ function shortCvLabel(cv) {
 
 function confoundRouteLabel(cv) {
   return `试探·${shortCvLabel(cv)}`;
+}
+
+function confoundRouteIdForCv(cv) {
+  return `confound_${cv.controlId || cv.id || 'cv1'}`.replace(/[^A-Za-z0-9_]/g, '_');
+}
+
+function isConfoundProbeRouteEntry(route) {
+  return route?.kind === 'confoundProbe' || CONFOUND_LABEL_RE.test(route?.label || '');
+}
+
+/** Legacy LLM id + generic traceMap label — duplicates confound_{controlId}. */
+function isGenericConfoundProbeRoute(route) {
+  if (!isConfoundProbeRouteEntry(route)) return false;
+  const id = String(route.id || '');
+  const label = String(route.label || '');
+  if (/^confound_CV\d+$/i.test(id) && /试探(?:混淆)?[·•.]?\s*无关控件\s*$/.test(label)) return true;
+  if (/试探(?:混淆)?[·•.]?\s*无关控件\s*$/.test(label) && !/单变量/.test(label)) return true;
+  return false;
+}
+
+/**
+ * One CV → one confoundProbe route (confound_{controlId}, 试探·{量名}).
+ * Drop stale confound_CV* /「试探·无关控件」 when a named route already exists.
+ */
+function dedupeConfoundProbeRoutes(routes, cvs) {
+  const list = Array.isArray(routes) ? [...routes] : [];
+  const cvList = Array.isArray(cvs) ? cvs.filter(c => c && (c.label || c.controlId)) : [];
+  const probes = list.filter(isConfoundProbeRouteEntry);
+  if (probes.length <= 1 || !cvList.length) return list;
+
+  const canonicalIds = new Set(cvList.map(confoundRouteIdForCv));
+  const specific = probes.filter(r => !isGenericConfoundProbeRoute(r));
+  const generic = probes.filter(r => isGenericConfoundProbeRoute(r));
+
+  let dropIds = new Set();
+  if (cvList.length === 1 && specific.length >= 1 && generic.length >= 1) {
+    dropIds = new Set(generic.map(r => r.id));
+  } else if (cvList.length === 1 && specific.length === 0 && generic.length === 1) {
+    return list;
+  } else if (generic.length >= 1 && specific.length >= cvList.length) {
+    dropIds = new Set(generic.map(r => r.id));
+  } else {
+    for (const g of generic) {
+      if (canonicalIds.has(g.id)) continue;
+      if (specific.some(s => canonicalIds.has(s.id))) dropIds.add(g.id);
+    }
+  }
+
+  if (!dropIds.size) return list;
+  return list.filter(r => !dropIds.has(r.id));
+}
+
+/** Remove |试探·无关控件| mermaid edges when a specific 试探·{量名} edge remains. */
+function scrubDuplicateGenericConfoundMermaid(mermaid) {
+  let mm = String(mermaid || '').replace(/\r\n/g, '\n');
+  const edges = parseStrategyMermaidEdges(mm);
+  const confound = edges.filter(e => CONFOUND_LABEL_RE.test(e.label || ''));
+  const hasSpecific = confound.some(e => !/无关控件/.test(e.label || ''));
+  const hasGeneric = confound.some(e => /无关控件/.test(e.label || ''));
+  if (!hasSpecific || !hasGeneric) return mm;
+  return mm.split('\n').filter(line => {
+    if (!/[-.]?->/.test(line)) return true;
+    return !/试探(?:混淆)?[·•.]?\s*无关控件/.test(line);
+  }).join('\n');
 }
 
 function primaryStrategySelectId(mermaid) {
@@ -176,18 +243,21 @@ function buildConfoundProbeRoute(cv, selectId, mermaid) {
   };
 }
 
-function ensureConfoundProbeRoute(routes, probeRoute) {
+function ensureConfoundProbeRoute(routes, probeRoute, cvs) {
   const list = Array.isArray(routes) ? [...routes] : [];
-  const idx = list.findIndex(r =>
-    r.kind === 'confoundProbe'
-    || CONFOUND_LABEL_RE.test(r.label || '')
-    || r.id === probeRoute.id,
-  );
+  let idx = list.findIndex(r => r.id === probeRoute.id);
+  if (idx < 0) {
+    idx = list.findIndex(r =>
+      r.kind === 'confoundProbe'
+      || CONFOUND_LABEL_RE.test(r.label || ''),
+    );
+  }
   if (idx >= 0) {
     const prev = list[idx];
     list[idx] = {
       ...prev,
       ...probeRoute,
+      kind: 'confoundProbe',
       highlightNodes: (probeRoute.highlightNodes?.length >= (prev.highlightNodes || []).length)
         ? probeRoute.highlightNodes
         : (prev.highlightNodes || probeRoute.highlightNodes),
@@ -195,12 +265,11 @@ function ensureConfoundProbeRoute(routes, probeRoute) {
         ? probeRoute.highlightEdges
         : (prev.highlightEdges || probeRoute.highlightEdges),
     };
-    // Drop accidental priorityRank on confound routes
     delete list[idx].priorityRank;
-    return list;
+    return dedupeConfoundProbeRoutes(list, cvs);
   }
-  list.push(probeRoute);
-  return list;
+  list.push({ ...probeRoute, kind: 'confoundProbe' });
+  return dedupeConfoundProbeRoutes(list, cvs);
 }
 
 /**
@@ -291,10 +360,12 @@ function repairStrategyConfoundVisual(chapter) {
   // CV probe supersedes duplicate 条件下误操作 / ModeOff 迷思环
   mermaid = stripRedundantMisconceptionLoop(mermaid);
   mermaid = removeOrphanConfoundBranch(mermaid);
+  mermaid = scrubDuplicateGenericConfoundMermaid(mermaid);
   mermaid = injectConfoundMermaidBranch(mermaid, primary);
   const selectId = primaryStrategySelectId(mermaid);
   const probeRoute = buildConfoundProbeRoute(primary, selectId, mermaid);
-  let routes = ensureConfoundProbeRoute(chapter.strategy.routes, probeRoute);
+  let routes = ensureConfoundProbeRoute(chapter.strategy.routes, probeRoute, cvs);
+  routes = dedupeConfoundProbeRoutes(routes, cvs);
   routes = stripConfoundPriorityRanks(routes);
   routes = scrubMisconceptionFromRoutes(routes, keepModeOff);
   // Drop ProbeCV bleed from AV routes
@@ -324,6 +395,8 @@ module.exports = {
   CONFOUND_PROBE_SCORE,
   listConfoundingVariables,
   confoundRouteLabel,
+  confoundRouteIdForCv,
+  dedupeConfoundProbeRoutes,
   injectConfoundMermaidBranch,
   buildConfoundProbeRoute,
   repairStrategyConfoundVisual,

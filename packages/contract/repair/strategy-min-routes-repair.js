@@ -104,6 +104,8 @@ function repairMinStrategyRoutes(chapter, gameHints) {
   let mermaid = normalizeMermaidLegacyLabels(chapter.strategy.mermaid || '');
   const routesIn = Array.isArray(chapter.strategy.routes) ? chapter.strategy.routes : [];
   for (const r of routesIn) {
+    // Per-AV routes keep distinct StrategySelect |单变量·{量}| edges for graph scoring.
+    if (/单变量·/.test(String(r.label || ''))) continue;
     if (LEGACY_MAIN_LABEL_RE.test(r.label || '')) {
       mermaid = syncMermaidSelectLabels(mermaid, r.label, MAIN_METHOD_LABEL);
     }

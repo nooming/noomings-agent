@@ -16,4 +16,5 @@ module.exports = [
   { id: 'maxwell-speed-dist', dir: '麦克斯韦速率分布', game: '麦克斯韦速率分布.html', topic: '麦克斯韦速率分布' },
   { id: 'adiabatic-process', dir: '绝热过程', game: '绝热过程.html', topic: '绝热过程' },
   { id: 'ramp-rolling-collision', dir: '斜坡滚球', game: 'game.html', topic: '碰撞与纯滚动' },
+  { id: 'relativistic-collision-1d', dir: '相对论碰撞', game: '相对论碰撞.html', topic: '相对论碰撞·双飞船' },
 ];

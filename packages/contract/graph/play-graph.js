@@ -73,6 +73,18 @@ function orderedPlayPathIds(nodes, links) {
     adj.set(k, vals);
   }
 
+  function pickSpineNext(fromId, nexts) {
+    if (!nexts.length) return null;
+    if (nexts.length === 1) return nexts[0];
+    const resultNext = nexts.find(id => playNodes.find(n => n.id === id)?.group === 'result');
+    if (resultNext) return resultNext;
+    const coreNext = nexts.find(id => {
+      const l = (links || []).find(x => x.s === fromId && x.t === id);
+      return l && l.tp === 'core';
+    });
+    return coreNext || nexts[0];
+  }
+
   const path = [];
   let cur = p1.id;
   const seen = new Set();
@@ -82,7 +94,7 @@ function orderedPlayPathIds(nodes, links) {
     const node = playNodes.find(n => n.id === cur);
     if (node?.group === 'result') break;
     const nexts = adj.get(cur) || [];
-    cur = nexts[0] || null;
+    cur = pickSpineNext(cur, nexts);
   }
   return path;
 }

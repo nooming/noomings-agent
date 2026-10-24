@@ -15,6 +15,20 @@ const CATALOG = getCatalogPath();
 
 const DEMO_ITEMS = [
   {
+    id: 'demo-relativistic-collision-1d',
+    title: '相对论碰撞 · relativistic-collision-1d',
+    description: '实验室系 S 内一维对心：调节 m、u，用 ΣE、Σp 求 v₂/c；对照经典弹性，竞赛打入锁定带。',
+    graphId: 'relativistic-collision-1d',
+    playUrl: packagePlayUrl('relativistic-collision-1d'),
+    published: true,
+    featured: false,
+    categoryId: 'macro-relativity',
+    topicKey: '相对论碰撞',
+    source: 'html-sample',
+    sampleTags: ['generate', 'multi-av', 'confounding', 'craft:pilot'],
+    researchInclude: true,
+  },
+  {
     id: 'demo-ramp-rolling-collision',
     title: '【样本集】斜坡滚球碰撞',
     description: 'ramp-rolling-collision：碰撞后纯滚动爬升高度探究',

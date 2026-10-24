@@ -1176,7 +1176,7 @@ button.is-playing,.btn.is-playing,.pixel-btn.is-playing{
       <div class="craft-attr-options">
         <label><input type="radio" name="craftAttr" value="s-area"> 主要是极板面积 A</label>
         <label><input type="radio" name="craftAttr" value="s-dist"> 主要是极板间距 d</label>
-        <label><input type="radio" name="craftAttr" value="s-thickness"> 主要是介质厚度</label>
+        <label><input type="radio" name="craftAttr" value="s-thickness"> 主要是极板厚度</label>
         <label><input type="radio" name="craftAttr" value="mixed"> 多参一起在变，说不清</label>
         <label><input type="radio" name="craftAttr" value="unsure"> 还不确定</label>
       </div>
@@ -5969,7 +5969,7 @@ window.startTransition = window.startTransition || function(){
 /* === ea-minset-helper (capacitor-era-ch1) === */
 (function(){
   if (window.__eaMinset) return; window.__eaMinset = true;
-  var AV_LABELS = {"s-area":"极板面积","s-dist":"极距","s-thickness":"介质厚度"};
+  var AV_LABELS = {"s-area":"极板面积","s-dist":"极距","s-thickness":"极板厚度"};
   var READING_SEL = "#craftGaugeVal, .observe-box .state, .observe-value, #hud-dist, #g-T, .gauge .gval, #c4-readout, #obs-rtotal, #obs-current";
   var READING_LABEL = "电容读数";
   var ACTION_LABEL = "操作";
