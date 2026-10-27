@@ -60,10 +60,16 @@ function computeSessionAbilityScore(session, chapter, opts = {}) {
       session?.terminalOutcome,
       deriveTerminalOutcome(session),
     );
-  const incompletePreview = opts.incompletePreview === true
+  const looksPreview = sessionLooksPreview(session);
+  const judgePreviewFlag = !!(
+    session?.judgeResult?.judgePreview || session?.judgeResult?.mode === 'rule_preview'
+  );
+  const incompletePreview = looksPreview && (
+    opts.incompletePreview === true
+    || judgePreviewFlag
     || (opts.incompletePreview !== false
-      && sessionLooksPreview(session)
-      && !isTerminalSession({ ...session, terminalOutcome }));
+      && !isTerminalSession({ ...session, terminalOutcome }))
+  );
 
   let verdict = opts.verdict;
   if (verdict === undefined) {

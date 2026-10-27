@@ -105,4 +105,4 @@ function run() {
   console.log('formative-bundle-check: OK');
 }
 
-run();
+module.exports = { run };

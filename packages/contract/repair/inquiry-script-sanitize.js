@@ -5,6 +5,8 @@
  */
 
 const HOLLOW_OP_RE = /^(?:调参操作|调参|调节|操作|Tune|Adjust)(?:\s*[×xX]\s*\d+)?$/i;
+/** 与 validate-inquiry-script §4.1 一致：sanitize 阶段剔除纯装饰类 CV */
+const DECORATIVE_CV_LABEL_RE = /(?:光晕|亮度|色调|主题色|主题|皮肤|滤镜|壁纸|背景色|装饰|好看|漂亮|\bglow\b|\bhue\b|\btheme\b|\bskin\b|cosmetic|fancy)/i;
 const PROJECTILE_OV_RE = /射程|最大高度/;
 /** HTML/script pollution — allow physics comparisons like E > Ebd, reject tags/script. */
 const HTML_JUNK_RE = /<\/?[a-zA-Z!]|Error\s*\(|Failed to load|function\s*\(|=>\s*reject|lang\s*=|position\s*:\s*fixed|requestAnimationFrame/i;
@@ -39,6 +41,13 @@ function isCleanFormula(text) {
   if (!physicsEq.test(s)) return false;
   if (!/[A-Za-zα-ωΑ-Ωε₀εᵣθ]/.test(s)) return false;
   return true;
+}
+
+function stripDecorativeConfounds(cvs) {
+  return (cvs || []).filter((conf) => {
+    const blob = [conf.label, conf.reason, conf.symbol, conf.controlId].filter(Boolean).join(' ');
+    return !DECORATIVE_CV_LABEL_RE.test(blob);
+  });
 }
 
 function sanitizeFormulaList(list) {
@@ -577,7 +586,7 @@ function sanitizeInquiryScriptChapter(chapter, gameHints) {
     outputVariables = buildOutputVariablesForChapter(result, gameHints);
   }
 
-  const confoundingVariables = existing.confoundingVariables || [];
+  const confoundingVariables = stripDecorativeConfounds(existing.confoundingVariables || []);
   const inquiryFlow = dedupeInquiryFlow(
     existing.inquiryFlow,
     adjustmentVariables,

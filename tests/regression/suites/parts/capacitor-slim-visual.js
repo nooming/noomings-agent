@@ -81,6 +81,7 @@ function run() {
     const bp = declsFor(baseStyle, panelSel);
     const sp = declsFor(slimStyle, panelSel);
     for (const key of Object.keys(bp)) {
+      if (key.startsWith('/*') || key.startsWith('*')) continue;
       if (['display', 'opacity', 'pointer-events'].includes(key)) continue;
       if (bp[key] !== sp[key]) {
         // allow missing if selector was only in media query we narrowed
