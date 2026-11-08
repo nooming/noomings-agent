@@ -82,6 +82,8 @@ const {
   IMPORT_ZIP_MAX_BYTES,
   INGEST_MAX_BYTES,
   extractBearerToken,
+  isTeacherAuthorized,
+  isProductionRuntime,
 } = require('../api-shared');
 const {
   getClassAccessCode,
@@ -139,6 +141,18 @@ async function handleTraceIngest(req, res) {
 
     const classCodeRaw = String(body.classCode || '').trim();
     const configuredClass = getClassAccessCode();
+    const teacherAuthorized = isTeacherAuthorized(req);
+
+    if (!configuredClass && !teacherAuthorized && isProductionRuntime()) {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: 'class_access_not_configured',
+        message: '生产环境未配置课堂码，学生轨迹上报已关闭',
+      }));
+      return;
+    }
+
     if (classCodeRaw && configuredClass) {
       const classCheck = matchClassCode(classCodeRaw);
       if (!classCheck.ok) {
@@ -153,9 +167,9 @@ async function handleTraceIngest(req, res) {
       body.classCode = classCheck.classCode;
     }
 
-    const studentSession = String(
-      body.studentSession || extractBearerToken(req) || '',
-    ).trim();
+    const bodyStudentSession = String(body.studentSession || '').trim();
+    const studentSession = bodyStudentSession
+      || (teacherAuthorized ? '' : extractBearerToken(req));
     const studentId = String(body.studentId || body.studentNo || '').trim();
     if (studentSession) {
       if (!studentId || !body.classCode) {
@@ -177,6 +191,16 @@ async function handleTraceIngest(req, res) {
         }));
         return;
       }
+    } else if (configuredClass && !teacherAuthorized) {
+      // A configured classroom is a boundary, not an optional hint. Without a
+      // teacher token every ingest must carry the server-issued student session.
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        ok: false,
+        error: 'student_session_required',
+        message: '请先通过课堂码签到后再上报轨迹',
+      }));
+      return;
     }
 
     const item = getCatalogItem(body.catalogId);
@@ -565,11 +589,50 @@ async function handleSessionStrategyPathSummary(req, res) {
       res.end(JSON.stringify({ ok: false, error: 'sessionId_required' }));
       return;
     }
+
+    const teacherAuthorized = isTeacherAuthorized(req);
+    const configuredClass = getClassAccessCode();
+    if (!teacherAuthorized) {
+      // Dev without a configured classroom keeps the old open behavior; once a
+      // class code exists, a session must prove ownership (prevents IDOR and
+      // prevents students from requesting audience=teacher).
+      if (configuredClass || isProductionRuntime()) {
+        const classCode = String(body.classCode || '').trim();
+        const studentId = String(body.studentId || '').trim();
+        const studentSession = String(body.studentSession || '').trim();
+        if (!studentSession || !studentId || !classCode) {
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            ok: false,
+            error: 'student_session_required',
+            message: '路径摘要需要有效学生会话',
+          }));
+          return;
+        }
+        const ver = verifyStudentSession(studentSession, studentId, classCode);
+        if (!ver.ok) {
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            ok: false,
+            error: ver.expired ? 'student_session_expired' : 'student_session_invalid',
+          }));
+          return;
+        }
+      }
+    }
+
     const session = getTraceSession(sessionId);
     if (!session) {
       res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ ok: false, error: 'session_not_found' }));
       return;
+    }
+    if (!teacherAuthorized && configuredClass) {
+      if (!session.studentId || String(session.studentId) !== String(body.studentId || '').trim()) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'session_forbidden' }));
+        return;
+      }
     }
     const graphId = body.graphId || session.graphId;
     let chapter = loadChapterForGraph(graphId);
@@ -584,7 +647,8 @@ async function handleSessionStrategyPathSummary(req, res) {
     }
     enrichRecordMetrics(session, chapter);
     const allEvents = Array.isArray(session.events) ? session.events : [];
-    const audience = body.audience === 'teacher' ? 'teacher' : 'student';
+    // Only a teacher token may request teacher details / ability scores.
+    const audience = teacherAuthorized && body.audience === 'teacher' ? 'teacher' : 'student';
 
     if (body.dualPhase === true && audience === 'teacher' && allEvents.length) {
       const exploreScored = scorePathSummaryForScope(allEvents, chapter, body, 'explore');

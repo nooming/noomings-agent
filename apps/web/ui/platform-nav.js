@@ -63,13 +63,24 @@
       const method = String(opts.method || 'GET').toUpperCase();
       const url = typeof input === 'string' ? input : (input && input.url) || '';
       if (typeof url === 'string' && url.includes('/api/')) {
+        let sameOrigin = true;
+        try {
+          sameOrigin = new URL(url, global.location.href).origin === global.location.origin;
+        } catch (_) { sameOrigin = false; }
+        if (!sameOrigin) return orig(input, opts);
         const isSafeMethod = method === 'HEAD' || method === 'OPTIONS';
-        const needsAuth = !isSafeMethod && (
-          method !== 'GET'
-          || url.includes('/api/platform/traces')
-          || url.includes('/api/platform/class-config')
-          || url.includes('/api/platform/surveys')
-        );
+        const teacherGetPrefixes = [
+          '/api/platform/traces',
+          '/api/platform/class-config',
+          '/api/platform/surveys',
+          '/api/generated-graphs',
+          '/api/game-pages',
+          '/api/platform/catalog/all',
+          '/api/platform/publish-pairs',
+          '/api/platform/package-source',
+        ];
+        const needsAuth = !isSafeMethod
+          || teacherGetPrefixes.some((prefix) => url.includes(prefix));
         if (needsAuth) {
           const headers = new Headers(opts.headers || {});
           if (!headers.has('Authorization')) {
@@ -78,7 +89,13 @@
           opts.headers = headers;
         }
       }
-      return orig(input, opts);
+      return orig(input, opts).then((res) => {
+        if (res && res.status === 401 && url.includes('/api/')) {
+          clearTeacherSession();
+          location.replace('/teacher-login.html?expired=1');
+        }
+        return res;
+      });
     };
     global.__platformTeacherFetchInstalled = true;
   }

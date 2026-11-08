@@ -8,7 +8,7 @@
 | [`classroom-demo-checklist.md`](./classroom-demo-checklist.md) | 课堂码、发布白名单、学生可见 8 关、学情流程 |
 | [`thermo-three.md`](./thermo-three.md) | 热学三关公式 / AV·CV·OV 设计要点（极短） |
 
-历史审计 / 视觉快照（勿当现行白名单）：[`_archive/mechanics-thermo-level-audit.md`](./_archive/mechanics-thermo-level-audit.md)、[`_archive/mechanics-thermo-visual-notes.md`](./_archive/mechanics-thermo-visual-notes.md)。热学开测长表已并入本文，原稿归档：[`_archive/thermo-three-qa.md`](./_archive/thermo-three-qa.md)。
+历史审计 / 视觉快照已清理；热学开测长表已并入本文，无需再查旧稿。
 
 现行 **8 关**：力学 `projectile-basic` · `pendulum-clock` · `ramp-rolling-collision` · `nezha-boat-jump` · `pulley-rigid`（**craft:gold**）；热学 `gas-pressure-micro` · `maxwell-speed-dist` · `adiabatic-process`（**craft:pilot**，非 gold，仍上架演示）。
 

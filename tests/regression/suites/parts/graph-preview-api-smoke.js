@@ -9,7 +9,7 @@ async function run() {
     return;
   }
 
-  const url = `${BASE}/api/graph-preview?graphId=${encodeURIComponent('half-life')}`;
+  const url = `${BASE}/api/graph-preview?graphId=${encodeURIComponent('projectile-basic')}`;
   let res;
   try {
     res = await fetch(url);
@@ -32,7 +32,7 @@ async function run() {
   assert(body.ok === true, 'payload ok');
   assert(Array.isArray(body.kgChapters) && body.kgChapters.length >= 1, 'kgChapters');
 
-  const legacy = await fetch(`${BASE}/api/graph-preview?graphId=${encodeURIComponent('html-samples-half-life')}`);
+  const legacy = await fetch(`${BASE}/api/graph-preview?graphId=${encodeURIComponent('html-samples-projectile-basic')}`);
   const legacyBody = await legacy.json();
   assert(legacyBody.ok === true, 'legacy graphId alias');
 

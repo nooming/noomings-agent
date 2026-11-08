@@ -141,10 +141,12 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'GET' && req.url === '/api/generated-graphs') {
+    if (!requireTeacherAuth(req, res)) return true;
     handleGeneratedGraphsIndex(req, res);
     return true;
   }
   if (req.method === 'GET' && req.url === '/api/game-pages') {
+    if (!requireTeacherAuth(req, res)) return true;
     handleGamePagesIndex(req, res);
     return true;
   }
@@ -182,6 +184,7 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'GET' && req.url === '/api/platform/catalog/all') {
+    if (!requireTeacherAuth(req, res)) return true;
     handlePlatformCatalog(req, res, false);
     return true;
   }
@@ -201,6 +204,7 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'GET' && req.url === '/api/platform/publish-pairs') {
+    if (!requireTeacherAuth(req, res)) return true;
     handlePlatformPublishPairs(req, res);
     return true;
   }
@@ -280,6 +284,7 @@ async function routeApi(req, res) {
     return true;
   }
   if (req.method === 'GET' && req.url.startsWith('/api/platform/package-source')) {
+    if (!requireTeacherAuth(req, res)) return true;
     handlePlatformPackageSource(req, res);
     return true;
   }

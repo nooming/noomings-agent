@@ -1,4 +1,5 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { assert } = require('../../../lib/assert');
 const { getTracesRoot } = require('../../../../packages/platform/paths');
@@ -14,6 +15,10 @@ const {
 } = require('../../../../packages/platform/trace-store');
 
 function run() {
+  const previousRoot = process.env.AGENT_TRACES_ROOT;
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-traces-zip-'));
+  process.env.AGENT_TRACES_ROOT = tempRoot;
+  try {
   assert(safeSessTraceBasename('sess-abc-1.json') === 'sess-abc-1.json', 'accept flat sess json');
   assert(safeSessTraceBasename('nested/sess-abc-1.json') === 'sess-abc-1.json', 'accept nested basename');
   assert(safeSessTraceBasename('../sess-abc-1.json') === null, 'reject traversal');
@@ -81,6 +86,11 @@ function run() {
   } finally {
     deleteTraceSessions([sessionId]);
     if (fs.existsSync(flatSeed)) fs.unlinkSync(flatSeed);
+  }
+  } finally {
+    if (previousRoot === undefined) delete process.env.AGENT_TRACES_ROOT;
+    else process.env.AGENT_TRACES_ROOT = previousRoot;
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 }
 

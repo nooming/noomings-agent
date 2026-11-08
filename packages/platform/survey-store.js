@@ -108,7 +108,6 @@ function saveSurvey(record) {
     classCode: record.classCode,
     studentId: record.studentId,
     studentName: record.studentName,
-    studentSession: record.studentSession || '',
     submittedAt: record.submittedAt || new Date().toISOString(),
     answers: record.answers,
   };

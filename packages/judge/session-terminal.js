@@ -12,9 +12,22 @@ const TERMINAL_OUTCOMES = Object.freeze({
   INCOMPLETE: 'incomplete',
 });
 
+/**
+ * A mid-campaign win is progress, not a terminal pass. Multi-level games emit
+ * { interim: true } or { final: false } on their intermediate win/snapshot.
+ */
+function isInterimWinPayload(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  if (payload.final === true) return false;
+  return payload.interim === true || payload.final === false;
+}
+
 function eventsHaveWin(events) {
   return (Array.isArray(events) ? events : []).some(
-    (e) => e?.type === 'win' || (e?.type === 'snapshot' && e?.payload?.winOk),
+    (e) => (
+      (e?.type === 'win' || (e?.type === 'snapshot' && e?.payload?.winOk))
+      && !isInterimWinPayload(e?.payload)
+    ),
   );
 }
 
@@ -85,6 +98,7 @@ function mergeTerminalOutcome(prev, next) {
 
 module.exports = {
   TERMINAL_OUTCOMES,
+  isInterimWinPayload,
   eventsHaveWin,
   eventsHaveAttemptsExhausted,
   deriveTerminalOutcome,

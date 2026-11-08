@@ -17,7 +17,10 @@ const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-
 const ROOT = getPackagesRoot();
 const DO_INGEST = process.argv.includes('--ingest');
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
-const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || 'teach2609';
+const { loadEnv } = require('../../packages/shared/load-env');
+const { getAgentDir } = require('../../packages/shared/paths');
+loadEnv(getAgentDir());
+const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || process.env.PLATFORM_TEACHER_PASS || 'teach2609';
 
 function listPackageIds() {
   return fs
@@ -329,6 +332,7 @@ async function ingestAndJudge(pkgId, caseRow, chapter, token) {
   const built = synth(chapter, pkgId);
   if (!built.events) return null;
   const catalogId = `demo-${pkgId}`;
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const ingest = await httpJson('POST', '/api/trace/ingest', {
     catalogId,
     graphId: pkgId,
@@ -337,12 +341,11 @@ async function ingestAndJudge(pkgId, caseRow, chapter, token) {
     events: built.events,
     ch: 0,
     game: catalogId,
-  });
+  }, headers);
   if (!ingest.json?.ok) {
     return { ingestOk: false, ingest };
   }
   const sessionId = ingest.json.sessionId;
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const judged = await httpJson(
     'POST',
     '/api/platform/judge-session',

@@ -13,8 +13,7 @@
    ```
 4. 样本 chapter/HTML 若缺失：
    ```bash
-   npm run archive:manual-html
-   npm run batch-html-dataset -- --dry-run
+      npm run batch-html-dataset -- --dry-run
    npm run seed-platform-demo
    ```
 

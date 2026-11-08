@@ -33,10 +33,6 @@ function getGamesLegacyRoot() {
   return resolveWithFallback('data/games/legacy');
 }
 
-function getManualBackupsRoot() {
-  return resolveWithFallback('data/games/manual-backups');
-}
-
 function getGamesGeneratedRoot() {
   return resolveWithFallback('data/games/generated', 'data/samples/generated');
 }
@@ -78,8 +74,24 @@ function getRuntimePlatformRoot() {
   return resolveWithFallback('data/runtime/platform', 'data/platform');
 }
 
+const INVALID_PACKAGE_DIR = '__invalid_package_id__';
+
+/** Package ids are single path segments; reject traversal and Windows path syntax. */
+function normalizePackageId(packageId) {
+  const id = String(packageId || '').trim();
+  if (!id || id === '.' || id === '..') return null;
+  if (id.includes('\0') || id.includes('/') || id.includes('\\')) return null;
+  if (path.basename(id) !== id) return null;
+  return id;
+}
+
+function isSafePackageId(packageId) {
+  return normalizePackageId(packageId) != null;
+}
+
 function getPackageDir(packageId) {
-  return path.join(getPackagesRoot(), String(packageId || '').trim());
+  const id = normalizePackageId(packageId);
+  return path.join(getPackagesRoot(), id || INVALID_PACKAGE_DIR);
 }
 
 function getPackageGamePath(packageId) {
@@ -200,7 +212,6 @@ module.exports = {
   getSharedRoot,
   getGamesPresetRoot,
   getGamesLegacyRoot,
-  getManualBackupsRoot,
   getGamesGeneratedRoot,
   getDatasetHtmlSamplesRoot,
   getDatasetDesignSamplesRoot,
@@ -219,5 +230,7 @@ module.exports = {
   loadMetaForSample,
   getRuntimePlatformRoot,
   getHtmlSampleChapterPath,
+  normalizePackageId,
+  isSafePackageId,
   resolveRepoRelative,
 };

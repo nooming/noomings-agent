@@ -65,6 +65,7 @@ function miniChapter() {
 
 function run() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-bundle-persist-'));
+  try {
   const sources = [{ path: 'stub.html', content: MULTI_SLIDER_HTML }];
   const hints = extractGameHints(sources);
   const enriched = enrichChapterContract(miniChapter(), hints, sources);
@@ -101,8 +102,10 @@ function run() {
   const v = validateChapter(roundTrip);
   assert(v.ok, `round-trip validate failed: ${v.errors.join('; ')}`);
 
-  fs.rmSync(root, { recursive: true, force: true });
   console.log('bundle-persist-check: ok');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 }
 
 module.exports = { run };

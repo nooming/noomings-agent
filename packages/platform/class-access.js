@@ -9,7 +9,10 @@ const { getPlatformRoot } = require('./paths');
 
 const DEV_DEFAULT_CLASS_CODE = 'wuli2609';
 const STUDENT_SESSION_TTL_MS = Number(process.env.STUDENT_SESSION_TTL_MS) || (12 * 60 * 60 * 1000);
-const HMAC_KEY = 'platform-student-session-v1';
+/** Prefer a deployment secret; fallback preserves already-issued local sessions. */
+const HMAC_KEY = String(
+  process.env.STUDENT_SESSION_SECRET || process.env.SESSION_SECRET || 'platform-student-session-v1',
+);
 
 function getClassConfigPath() {
   return path.join(getPlatformRoot(), 'class-config.json');

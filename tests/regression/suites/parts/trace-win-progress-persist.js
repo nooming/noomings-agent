@@ -1,6 +1,9 @@
 /**
  * Win progress fields (interim/final/levelsCleared/level) must survive ingest → disk.
  */
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { assert } = require('../../../lib/assert');
 const {
   cloneTraceEvents,
@@ -9,6 +12,10 @@ const {
 const { ingestTrace, getTraceSession, deleteTraceSessions } = require('../../../../packages/platform/trace-store');
 
 function run() {
+  const previousRoot = process.env.AGENT_TRACES_ROOT;
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-traces-win-'));
+  process.env.AGENT_TRACES_ROOT = tempRoot;
+  try {
   const winPayload = {
     winOk: true,
     interim: true,
@@ -69,6 +76,11 @@ function run() {
   } catch (_) { /* ignore */ }
 
   console.log('trace-win-progress-persist: OK', { persisted: present });
+  } finally {
+    if (previousRoot === undefined) delete process.env.AGENT_TRACES_ROOT;
+    else process.env.AGENT_TRACES_ROOT = previousRoot;
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
 }
 
 module.exports = { run };

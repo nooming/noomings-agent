@@ -236,7 +236,16 @@ async function judgeAndSaveSession(sessionId, opts = {}) {
     }, { incompletePreview: true });
   }
 
-  const force = opts.force === true;
+  let force = opts.force === true;
+  const hadPreviewJudge = !!(
+    session.judgeResult?.judgePreview
+    || session.judgeResult?.mode === 'rule_preview'
+    || session.abilityScore?.preview
+  );
+  // A leave preview becomes stale once the student later reaches a terminal
+  // state (e.g. returns from a tab switch and wins). Rejudge instead of
+  // returning "already_judged" with the old incomplete preview.
+  if (!force && hadPreviewJudge && isTerminalSession(session)) force = true;
   if (!force && (session.judged || session.judgeResult)) {
     if (sessionNeedsPreviewRescore(session)) {
       return executeJudgeAndPersist(session, {

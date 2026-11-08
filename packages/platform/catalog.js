@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getCatalogPath, getPlatformRoot } = require('./paths');
-const { getPackagesRoot } = require('../shared/data-paths');
+const { getPackagesRoot, getPackageDir } = require('../shared/data-paths');
 const { resolvePackageId } = require('../shared/package-layout');
 const { inferTopicFromCatalogItem, topicToMacroId } = require('./category-macros');
 const {
@@ -45,12 +45,12 @@ function getCatalogItem(id) {
 function loadChapterForGraph(graphId) {
   if (!graphId) return null;
   const packageId = resolvePackageId(graphId);
-  const root = getPackagesRoot();
-  const single = path.join(root, packageId, 'chapter.json');
+  const dir = getPackageDir(packageId);
+  const single = path.join(dir, 'chapter.json');
   if (fs.existsSync(single)) {
     return JSON.parse(fs.readFileSync(single, 'utf8'));
   }
-  const project = path.join(root, packageId, 'chapters.json');
+  const project = path.join(dir, 'chapters.json');
   if (fs.existsSync(project)) {
     const chapters = JSON.parse(fs.readFileSync(project, 'utf8'));
     return Array.isArray(chapters) ? chapters[0] : chapters;

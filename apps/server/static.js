@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const {
   getRepoRoot,
   getAgentDir,
@@ -32,6 +33,29 @@ const PRESET_ROOT = getGamesPresetRoot();
 const LEGACY_ROOT = getGamesLegacyRoot();
 const GENERATED_ROOT = getGamesGeneratedRoot();
 const HTML_SAMPLES_ROOT = getDatasetHtmlSamplesRoot();
+
+/**
+ * Every HTTP-visible asset root. Keep this list narrow: serving the repository
+ * root (or AGENT_DIR) would expose .env, runtime traces, source and tests.
+ */
+const UI_ROOT = path.join(AGENT_DIR, 'apps/web/ui');
+const ICONS_ROOT = path.join(AGENT_DIR, 'apps/web/icons');
+const GENERATE_EXPORT_ROOT = path.join(AGENT_DIR, 'packages/generate/export');
+const STATIC_ASSET_ROOTS = Object.freeze([
+  UI_ROOT,
+  ICONS_ROOT,
+  VIEWER_ROOT,
+  GRAPH_ROOT,
+  PACKAGES_ROOT,
+  OUTPUT_ROOT,
+  SHARED_ROOT,
+  PRESET_ROOT,
+  LEGACY_ROOT,
+  GENERATED_ROOT,
+  HTML_SAMPLES_ROOT,
+  GENERATE_EXPORT_ROOT,
+  ...(GAMES_ROOT ? [GAMES_ROOT] : []),
+].map((root) => path.resolve(root)));
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -194,27 +218,33 @@ function resolveAssetFile(url) {
   return null;
 }
 
-function isPathAllowed(file) {
+/** Resolve symlinks as far as possible; non-existent paths fall back to a resolved parent + basename. */
+function canonicalPath(file) {
   const resolved = path.resolve(file);
-  const allowed = [
-    REPO_ROOT,
-    AGENT_DIR,
-    path.join(AGENT_DIR, 'packages'),
-    VIEWER_ROOT,
-    GRAPH_ROOT,
-    PACKAGES_ROOT,
-    OUTPUT_ROOT,
-    SHARED_ROOT,
-    PRESET_ROOT,
-    LEGACY_ROOT,
-    GENERATED_ROOT,
-    HTML_SAMPLES_ROOT,
-  ];
-  if (GAMES_ROOT) allowed.push(GAMES_ROOT);
-  return allowed.some(root => {
-    const r = path.resolve(root);
-    return resolved === r || resolved.startsWith(r + path.sep);
+  try {
+    return fs.realpathSync(resolved);
+  } catch {
+    try {
+      return path.join(fs.realpathSync(path.dirname(resolved)), path.basename(resolved));
+    } catch {
+      return resolved;
+    }
+  }
+}
+
+function isPathAllowed(file) {
+  const resolved = canonicalPath(file);
+  return STATIC_ASSET_ROOTS.some((root) => {
+    const canonicalRoot = canonicalPath(root);
+    return resolved === canonicalRoot || resolved.startsWith(canonicalRoot + path.sep);
   });
+}
+
+/** Reject encoded/raw traversal before path.join can normalize it away. */
+function hasTraversalSegment(urlPath) {
+  const raw = String(urlPath || '');
+  if (raw.includes('\0')) return true;
+  return raw.split(/[\\/]+/).some((segment) => segment === '..');
 }
 
 /** Long-cache immutable vendor JS: /static/.../vendor/*.js and packages/vendor. */
@@ -235,8 +265,75 @@ function contentHeaders(url, file) {
   return headers;
 }
 
+function etagFor(stat) {
+  return `"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+}
+
+function isCompressible(file) {
+  return /\.(?:html|js|css|json|svg|webmanifest)$/i.test(file);
+}
+
+/** Shared GET file sender: conditional ETag, revalidation and gzip for text assets. */
+function sendFile(req, res, file, url) {
+  fs.stat(file, (statErr, stat) => {
+    if (statErr || !stat.isFile()) {
+      res.writeHead(404);
+      res.end('Not found');
+      return;
+    }
+    const etag = etagFor(stat);
+    const headers = contentHeaders(url, file);
+    headers.ETag = etag;
+    if (headers['Cache-Control'] == null) {
+      headers['Cache-Control'] = /\.html$/i.test(file)
+        ? 'no-cache'
+        : 'public, max-age=300, must-revalidate';
+    }
+    if (isCompressible(file)) headers.Vary = 'Accept-Encoding';
+    const inm = req.headers['if-none-match'];
+    if (inm && String(inm).split(',').map((s) => s.trim()).includes(etag)) {
+      res.writeHead(304, headers);
+      res.end();
+      return;
+    }
+
+    fs.readFile(file, (readErr, data) => {
+      if (readErr) {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+      const acceptsGzip = /\bgzip\b/i.test(String(req.headers['accept-encoding'] || ''));
+      if (!acceptsGzip || !isCompressible(file) || data.length < 1024) {
+        headers['Content-Length'] = String(data.length);
+        res.writeHead(200, headers);
+        res.end(data);
+        return;
+      }
+      zlib.gzip(data, (gzipErr, gz) => {
+        if (gzipErr) {
+          headers['Content-Length'] = String(data.length);
+          res.writeHead(200, headers);
+          res.end(data);
+          return;
+        }
+        headers['Content-Encoding'] = 'gzip';
+        headers['Vary'] = 'Accept-Encoding';
+        headers['Content-Length'] = String(gz.length);
+        res.writeHead(200, headers);
+        res.end(gz);
+      });
+    });
+  });
+}
+
 function serveAsset(req, res) {
   const url = decodeUrlPath(req.url);
+  if (hasTraversalSegment(url)) {
+    res.writeHead(400);
+    res.end('Bad request');
+    return true;
+  }
   const file = resolveAssetFile(url);
   if (!file) return false;
   if (!isPathAllowed(file)) {
@@ -244,15 +341,7 @@ function serveAsset(req, res) {
     res.end('Forbidden');
     return true;
   }
-  fs.readFile(file, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('Not found');
-      return;
-    }
-    res.writeHead(200, contentHeaders(url, file));
-    res.end(data);
-  });
+  sendFile(req, res, file, url);
   return true;
 }
 
@@ -271,15 +360,7 @@ function serveStatic(req, res) {
     res.end('Not found');
     return;
   }
-  fs.readFile(file, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end('Not found');
-      return;
-    }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  });
+  sendFile(req, res, file, url);
 }
 
 function cors(res) {
@@ -292,10 +373,14 @@ module.exports = {
   REPO_ROOT,
   OUTPUT_ROOT: PACKAGES_ROOT,
   PACKAGES_ROOT,
+  STATIC_ASSET_ROOTS,
   STATIC_MAP,
   cors,
   serveAsset,
   serveStatic,
   decodeUrlPath,
+  hasTraversalSegment,
+  canonicalPath,
+  isPathAllowed,
   resolveAssetFile,
 };

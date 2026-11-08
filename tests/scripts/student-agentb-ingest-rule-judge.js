@@ -10,6 +10,10 @@ const { getPackagesRoot, getReportsRoot } = require('../../packages/shared/data-
 
 const ROOT = getPackagesRoot();
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
+const { loadEnv } = require('../../packages/shared/load-env');
+const { getAgentDir } = require('../../packages/shared/paths');
+loadEnv(getAgentDir());
+const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || process.env.PLATFORM_TEACHER_PASS || 'teach2609';
 
 // reuse synth helpers by requiring sibling patterns inline (minimal)
 function listPackageIds() {
@@ -116,13 +120,17 @@ function synthS4(c) {
   });
 }
 
-function httpJson(method, urlPath, body) {
+function httpJson(method, urlPath, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlPath, BASE);
     const data = body != null ? JSON.stringify(body) : null;
     const req = http.request({
       hostname: u.hostname, port: u.port, path: u.pathname + u.search, method,
-      headers: { 'Content-Type': 'application/json', ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {}),
+        ...headers,
+      },
     }, res => {
       let raw = '';
       res.on('data', c => (raw += c));
@@ -138,6 +146,11 @@ function httpJson(method, urlPath, body) {
 }
 
 async function main() {
+  const login = await httpJson('POST', '/api/platform/teacher-login', { code: TEACHER_CODE });
+  if (login.status !== 200 || !login.json?.token) {
+    throw new Error(`teacher-login failed: ${login.status} ${JSON.stringify(login.json || {})}`);
+  }
+  const auth = { Authorization: `Bearer ${login.json.token}` };
   const ids = listPackageIds();
   const rows = [];
   for (const id of ids) {
@@ -163,7 +176,7 @@ async function main() {
         events,
         ch: 0,
         game: catalogId,
-      });
+      }, auth);
       const judge = evaluateTraceRules({ ch: 0, trace: { events }, chapter });
       out.sessions[kind] = {
         ingestOk: !!ingest.json?.ok,

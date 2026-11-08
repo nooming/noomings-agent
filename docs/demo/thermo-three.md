@@ -2,7 +2,7 @@
 
 > 关卡回归检查见 [`game-qa-checklist.md`](./game-qa-checklist.md)。  
 > 课堂上架见 [`classroom-demo-checklist.md`](./classroom-demo-checklist.md)。  
-> 替换计划 / 开测长表 / 旧设计卡全文：[`_archive/`](./_archive/)（`thermo-three-plan` · `thermo-three-qa` · `thermo-three-design`）。  
+> 本文是热学三关的现行设计要点；旧的替换计划 / 开测长表已清理。  
 > **Craft**：三关为 **`craft:pilot`（非 gold）**，仍在课堂 8 关白名单上架演示；力学五关为 gold。
 
 CV 与主参同栏；文案**不出现**「次要 / 旁路 / 不进判定」。CV **不进** win。

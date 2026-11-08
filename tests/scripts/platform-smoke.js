@@ -4,6 +4,9 @@
  */
 const http = require('http');
 const { URL } = require('url');
+const { loadEnv } = require('../../packages/shared/load-env');
+const { getAgentDir } = require('../../packages/shared/paths');
+loadEnv(getAgentDir());
 
 const BASE = process.env.AGENT_BASE || 'http://localhost:3001';
 const TEACHER_CODE = process.env.TEACHER_ACCESS_CODE || process.env.PLATFORM_TEACHER_PASS || 'teach2609';
@@ -81,7 +84,7 @@ async function main() {
   if (!item) throw new Error('catalog empty (no student-visible items)');
   steps.push(`catalog n=${catalog.json.items.length} pick=${item.id}`);
 
-  const sessionId = `smoke-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const sessionId = `sess-smoke-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const ingest = await req('POST', '/api/trace/ingest', {
     body: {
       sessionId,
@@ -168,6 +171,14 @@ async function main() {
       throw new Error('ingested session classCode mismatch');
     }
     steps.push('teacher-traces');
+  }
+
+  if (token) {
+    const cleanup = await req('POST', '/api/platform/traces/delete', {
+      body: { sessionIds: [sessionId] },
+      token,
+    });
+    steps.push(cleanup.status === 200 ? 'cleanup' : `cleanup-skipped-${cleanup.status}`);
   }
 
   console.log(JSON.stringify({ ok: true, steps }, null, 2));

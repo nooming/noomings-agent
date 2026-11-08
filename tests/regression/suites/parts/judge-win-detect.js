@@ -1,6 +1,7 @@
 const { assert } = require('../../../lib/assert');
 const { summarizeTrace } = require('../../../../packages/judge/dt-align');
 const { ruleJudge, isPassed, verdictFromLevel } = require('../../../../packages/judge/judge');
+const { deriveTerminalOutcome } = require('../../../../packages/judge/session-terminal');
 
 const FIXTURE_CHAPTER = {
   kg: {
@@ -67,6 +68,17 @@ function judgeWinDetectCheck() {
   const failSummary = summarizeTrace(noWinTrace, 0, FIXTURE_CHAPTER);
   assert(!isPassed(failSummary), 'not passed without win');
   assert(ruleJudge(failSummary, FIXTURE_CHAPTER).verdict === 'in_progress', 'ruleJudge in_progress when not won');
+
+  const interimTrace = {
+    events: [
+      ...baseEvents(),
+      { ts: 30, type: 'win', payload: { winOk: true, interim: true, final: false }, ch: 0 },
+    ],
+  };
+  const interimSummary = summarizeTrace(interimTrace, 0, FIXTURE_CHAPTER);
+  assert(!isPassed(interimSummary), 'interim win is not a terminal pass');
+  assert(ruleJudge(interimSummary, FIXTURE_CHAPTER).verdict !== 'pass', 'ruleJudge not pass on interim win');
+  assert(deriveTerminalOutcome({ events: interimTrace.events }) === 'incomplete', 'interim win stays incomplete');
 
   console.log('judge-win-detect-check: OK');
 }

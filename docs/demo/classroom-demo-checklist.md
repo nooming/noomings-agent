@@ -8,7 +8,7 @@
 
 学生可见收窄为 **8 关**：力学 5 + 热学 3。以下包 **已删除**（勿再引用或重新上架）：`projectile-cannon`、`pendulum-target`、`momentum-collision`、`circular-motion`、`friction-incline`，以及旧热学 **`gas-ideal` / `heat-conduction`**（已由 micro/maxwell/adiabatic 替换）。另删：`multi-kp`、`series-parallel`、`refraction-snell`、`thin-lens-implicit`、`magnetic-force`、`transformer-turns`、`photoelectric`、`capacitor-confound-ui`、`efield-charge`、`rc-circuit`。
 
-热学设计要点：[`thermo-three.md`](./thermo-three.md)。关卡回归：[`game-qa-checklist.md`](./game-qa-checklist.md)。旧口播 / 过程稿见 [`_archive/`](./_archive/)。演示文档索引见 [`README.md`](./README.md)。
+热学设计要点：[`thermo-three.md`](./thermo-three.md)。关卡回归：[`game-qa-checklist.md`](./game-qa-checklist.md)。演示文档索引见 [`README.md`](./README.md)。
 
 ### 对学生可见的 catalog id
 

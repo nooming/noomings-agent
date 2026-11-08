@@ -21,14 +21,3 @@ npm run sync:packages-samples
 ```
 
 CI 会跑 drift check。共享壳约定见 [`data/runtime/packages/_shared/README.md`](../../data/runtime/packages/_shared/README.md)。
-
-## 归档（`_archive/`）
-
-历史快照与过程稿，**勿再按此演示 / 开测**：
-
-- [`_archive/thermo-three-plan.md`](./_archive/thermo-three-plan.md) — 热学三关替换计划（已落地）
-- [`_archive/thermo-three-design.md`](./_archive/thermo-three-design.md) — 热学设计卡全文（摘要见 [`thermo-three.md`](./thermo-three.md)）
-- [`_archive/thermo-three-qa.md`](./_archive/thermo-three-qa.md) — 热学开测长表（检查项已并入 [`game-qa-checklist.md`](./game-qa-checklist.md)）
-- [`_archive/thermo-pilot-note.md`](./_archive/thermo-pilot-note.md) — 旧热学口播（gas-ideal / heat-conduction）
-- [`_archive/mechanics-thermo-level-audit.md`](./_archive/mechanics-thermo-level-audit.md) — 关卡审计快照
-- [`_archive/mechanics-thermo-visual-notes.md`](./_archive/mechanics-thermo-visual-notes.md) — 视觉笔记快照

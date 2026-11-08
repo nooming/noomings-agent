@@ -20,6 +20,7 @@
  */
 
 const { scoreTraceStrategy } = require('./strategy-segment-score');
+const { isInterimWinPayload } = require('./session-terminal');
 const {
   filterEventsByChallengePhase,
   filterEventsByExplorePhase,
@@ -69,8 +70,15 @@ function countOps(events) {
 }
 
 /** 竞赛通关：仅 win / snapshot.winOk；不认 explore_success */
+function hasAnyWin(events) {
+  return (events || []).some(e =>
+    e.type === 'win' || (e.type === 'snapshot' && e.payload?.winOk));
+}
+
 function hasWin(events) {
-  return (events || []).some(e => e.type === 'win' || (e.type === 'snapshot' && e.payload?.winOk));
+  return (events || []).some(e =>
+    (e.type === 'win' || (e.type === 'snapshot' && e.payload?.winOk))
+    && !isInterimWinPayload(e.payload));
 }
 
 /**
@@ -180,7 +188,9 @@ function detectMultiLevelProgress(events, opts = {}) {
 
 function computeResultRaw(events, opts = {}) {
   const verdict = opts.verdict || null;
-  const won = hasWin(events) || verdict === 'pass';
+  // Interim wins are progress, not a terminal pass; keep them for the
+  // multi-level result row (R = cleared/total) without marking the session pass.
+  const won = hasAnyWin(events) || verdict === 'pass';
   const exhausted = !!opts.attemptsExhausted || hasAttemptsExhausted(events);
 
   const progress = detectMultiLevelProgress(events, opts);

@@ -14,6 +14,8 @@ function getCategoriesPath() {
 }
 
 function getTracesRoot() {
+  const override = String(process.env.AGENT_TRACES_ROOT || '').trim();
+  if (override) return path.resolve(override);
   return path.join(getPlatformRoot(), 'traces');
 }
 

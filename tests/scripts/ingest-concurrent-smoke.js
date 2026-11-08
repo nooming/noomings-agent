@@ -4,14 +4,18 @@
  *
  *   node tests/scripts/ingest-concurrent-smoke.js
  */
+const fs = require('fs');
 const http = require('http');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const { URL } = require('url');
 
 const PORT = Number(process.env.AGENT_PORT_SMOKE) || 3017;
+const TEST_TEACHER_CODE = 'smoke-teacher-code';
+const TEST_CLASS_CODE = 'smoke-class-code';
 
-function req(base, method, urlPath, body) {
+function req(base, method, urlPath, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlPath, base);
     const payload = Buffer.from(JSON.stringify(body), 'utf8');
@@ -20,7 +24,11 @@ function req(base, method, urlPath, body) {
       hostname: u.hostname,
       port: u.port,
       path: u.pathname,
-      headers: { 'Content-Type': 'application/json', 'Content-Length': payload.length },
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': payload.length,
+        ...headers,
+      },
     }, (res) => {
       const chunks = [];
       res.on('data', (c) => chunks.push(c));
@@ -54,8 +62,13 @@ function waitHealth(base, ms = 15000) {
   });
 }
 
-async function runAgainst(base) {
-  const sessionId = `conc-${Date.now()}`;
+async function runAgainst(base, teacherCode) {
+  const login = await req(base, 'POST', '/api/platform/teacher-login', { code: teacherCode });
+  if (login.status !== 200 || !login.json?.token) {
+    throw new Error(`teacher-login failed: ${login.status} ${login.raw}`);
+  }
+  const auth = { Authorization: `Bearer ${login.json.token}` };
+  const sessionId = `sess-conc-${Date.now()}`;
   const n = 12;
   const jobs = [];
   for (let i = 0; i < n; i += 1) {
@@ -66,7 +79,7 @@ async function runAgainst(base) {
       catalogId: 'demo-projectile-basic',
       graphId: 'projectile-basic',
       events: [{ type: 'tuning', t: Date.now() + i, payload: { control: `c${i}`, value: i } }],
-    }));
+    }, auth));
   }
   const results = await Promise.all(jobs);
   const bad = results.filter((r) => r.status !== 200 || !r.json?.ok);
@@ -78,19 +91,30 @@ async function runAgainst(base) {
 
 async function main() {
   if (process.env.AGENT_BASE) {
-    await runAgainst(process.env.AGENT_BASE);
+    await runAgainst(process.env.AGENT_BASE, process.env.TEACHER_ACCESS_CODE || 'teach2609');
     return;
   }
+  const teacherCode = process.env.TEACHER_ACCESS_CODE || TEST_TEACHER_CODE;
+  const classCode = process.env.CLASS_ACCESS_CODE || TEST_CLASS_CODE;
+  const tracesRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-smoke-traces-'));
   const child = spawn(process.execPath, [path.join(__dirname, '../../server.js')], {
-    env: { ...process.env, AGENT_PORT: String(PORT), PORT: String(PORT) },
+    env: {
+      ...process.env,
+      AGENT_PORT: String(PORT),
+      PORT: String(PORT),
+      TEACHER_ACCESS_CODE: teacherCode,
+      CLASS_ACCESS_CODE: classCode,
+      AGENT_TRACES_ROOT: tracesRoot,
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const base = `http://127.0.0.1:${PORT}`;
   try {
     await waitHealth(base);
-    await runAgainst(base);
+    await runAgainst(base, teacherCode);
   } finally {
     child.kill('SIGTERM');
+    try { fs.rmSync(tracesRoot, { recursive: true, force: true }); } catch (_) { /* Windows may still hold a handle */ }
   }
 }
 

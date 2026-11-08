@@ -10,11 +10,16 @@ const INGEST_MAX_BYTES = 512 * 1024;
 /** Soft quotas (per sliding window). */
 const INGEST_STUDENT_LIMIT = 120;
 const INGEST_IP_LIMIT = 300;
+const JOIN_IP_LIMIT = 120;
 const INGEST_WINDOW_MS = 60 * 1000;
 
 const TEACHER_TOKEN_TTL_MS = Number(process.env.TEACHER_TOKEN_TTL_MS) || (8 * 60 * 60 * 1000);
 const TEACHER_LOGIN_MAX_FAILS = Number(process.env.TEACHER_LOGIN_MAX_FAILS) || 8;
 const TEACHER_LOGIN_LOCK_MS = Number(process.env.TEACHER_LOGIN_LOCK_MS) || (15 * 60 * 1000);
+/** Prefer a deployment secret; the fallback keeps old local tokens working. */
+const TEACHER_HMAC_KEY = String(
+  process.env.TEACHER_SESSION_SECRET || process.env.SESSION_SECRET || 'platform-teacher-v1',
+);
 
 /** @type {Map<string, { fails: number, lockedUntil: number }>} */
 const loginFailState = new Map();
@@ -51,7 +56,7 @@ function assertTeacherCodeConfigured(res) {
 
 function deriveTeacherToken(code, issuedAt = Date.now()) {
   const payload = `${String(code)}|${issuedAt}`;
-  const sig = crypto.createHmac('sha256', 'platform-teacher-v1').update(payload).digest('hex');
+  const sig = crypto.createHmac('sha256', TEACHER_HMAC_KEY).update(payload).digest('hex');
   return `${issuedAt}.${sig}`;
 }
 
@@ -60,14 +65,14 @@ function verifyTeacherToken(token, code) {
   const dot = raw.indexOf('.');
   // Legacy tokens (pre-TTL): full HMAC of code only
   if (dot < 0) {
-    const legacy = crypto.createHmac('sha256', 'platform-teacher-v1').update(String(code)).digest('hex');
+    const legacy = crypto.createHmac('sha256', TEACHER_HMAC_KEY).update(String(code)).digest('hex');
     return safeEqualStr(raw, legacy) ? { ok: true, legacy: true } : { ok: false };
   }
   const issuedAt = Number(raw.slice(0, dot));
   const sig = raw.slice(dot + 1);
   if (!Number.isFinite(issuedAt) || !sig) return { ok: false };
   if (Date.now() - issuedAt > TEACHER_TOKEN_TTL_MS) return { ok: false, expired: true };
-  const expected = crypto.createHmac('sha256', 'platform-teacher-v1')
+  const expected = crypto.createHmac('sha256', TEACHER_HMAC_KEY)
     .update(`${String(code)}|${issuedAt}`)
     .digest('hex');
   if (!safeEqualStr(sig, expected)) return { ok: false };
@@ -120,6 +125,13 @@ function recordLoginFailure(req) {
 
 function clearLoginFailures(req) {
   loginFailState.delete(loginKey(req));
+}
+
+/** Non-writing teacher-token check for mixed public/teacher routes. */
+function isTeacherAuthorized(req) {
+  const code = getTeacherAccessCode();
+  if (!code) return false;
+  return verifyTeacherToken(extractBearerToken(req), code).ok;
 }
 
 /** When TEACHER_ACCESS_CODE is set (or production requires it), mutating/teacher routes need Bearer. */
@@ -275,6 +287,11 @@ function bumpBucket(key, limit) {
   return { ok: true };
 }
 
+/** Soft quota for student join / class-code attempts. */
+function checkJoinQuota(req) {
+  return bumpBucket(`join:${clientIp(req)}`, JOIN_IP_LIMIT);
+}
+
 /** Soft quota by studentId + IP for ingest. */
 function checkIngestQuota(req, body) {
   const ip = clientIp(req);
@@ -298,6 +315,7 @@ module.exports = {
   getTeacherAccessCode,
   deriveTeacherToken,
   verifyTeacherToken,
+  isTeacherAuthorized,
   requireTeacherAuth,
   handleTeacherLogin,
   assertTeacherCodeConfigured,
@@ -306,6 +324,7 @@ module.exports = {
   readRawBody,
   parseMultipartFiles,
   checkIngestQuota,
+  checkJoinQuota,
   extractBearerToken,
   clientIp,
   IMPORT_ZIP_MAX_BYTES,

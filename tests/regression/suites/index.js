@@ -1,6 +1,7 @@
 const SUITES = {
   contract: [
     { name: 'trace-contract', module: './parts/trace-contract' },
+    { name: 'security-boundaries', module: './parts/security-boundaries' },
     { name: 'trace-phase-metrics', module: './parts/trace-phase-metrics' },
     { name: 'judge-cv-heavy', module: './parts/judge-cv-heavy' },
     { name: 'judge-single-variable', module: './parts/judge-single-variable' },
@@ -40,7 +41,6 @@ const SUITES = {
     { name: 'unpassable-levels-audit', module: './parts/unpassable-levels-audit' },
     { name: 'graph-preview-url', module: './parts/graph-preview-url' },
     { name: 'graph-preview-api-smoke', module: './parts/graph-preview-api-smoke' },
-    { name: 'manual-backups', module: './parts/manual-backups' },
   ],
   strategy: [
     { name: 'strategy-mermaid-sanitize', module: './parts/strategy-mermaid-sanitize' },

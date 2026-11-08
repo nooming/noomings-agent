@@ -7,6 +7,7 @@
 | `traces/.traces-index.json` | 轻量学情索引（无 events；列表/统计读索引；点文件，导出 ZIP 会跳过） |
 | `surveys/` | 学生学习体验问卷（不提交 git）；`surveys/{classCode}/{studentId}.json`；当前 `instrumentId` = `learning-experience-v3`（较 v2 增 AI 披露态度题；`difficulty`：1=太简单，3=刚好，5=太难；勿跨版本混析） |
 | `class-config.json` | 可选：工作台写入的课堂码（不提交 git；生产优先用环境变量） |
+| `AGENT_TRACES_ROOT` | 可选：覆盖 traces 根目录（测试/隔离环境用；生产默认 `data/runtime/platform/traces`） |
 
 ## 页面入口
 
@@ -37,7 +38,7 @@
 | GET | `/api/platform/survey/status` | 学生查询本课堂问卷是否已提交（需 `studentSession`） |
 | POST | `/api/platform/survey/submit` | 学生提交学习体验问卷（需会话；同课堂同学号 409） |
 | GET | `/api/platform/surveys` | 教师列出问卷（需鉴权；可选 `classCode`） |
-| POST | `/api/trace/ingest` | 学生轨迹上报（学号校验；可选 `classCode`/`studentSession`；同 sessionId 串行；同学号/IP 软配额；body 上限） |
+| POST | `/api/trace/ingest` | 学生轨迹上报（学号校验；配置课堂码后必须携带有效 `studentSession`，教师 Bearer 可用于离线批量注入；同 sessionId 串行；同学号/IP 软配额；body 上限） |
 | GET | `/api/platform/traces/stats` | 学情统计（需教师鉴权；支持 `classCode` 过滤） |
 | GET | `/api/platform/traces/students` | 按学号聚合会话（需教师鉴权；支持 `classCode`） |
 | GET | `/api/platform/traces/classroom` | 课堂看板（需教师鉴权；支持 `classCode`） |
@@ -98,7 +99,6 @@
 
 - **探究包 HTML**：`data/runtime/packages/*/game.html`（运行真相源）
 - **样本 HTML**：`样本html/`（编辑镜像）；单向同步：`node scripts/sync-packages-to-samples.js`（`--check` 漂移检查）
-- 一次性 patch 脚本已归档至 `_archive/scripts/`（只读）
 
 ## 部署清单
 

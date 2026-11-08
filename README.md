@@ -28,7 +28,6 @@ Windows 也可双击 `start-agent.bat`。
 | **探究包** | `data/runtime/packages/`（真相源）；编辑镜像 `样本html/` |
 | **Agent A / B** | `packages/generate/` · `packages/judge/` · 结构见 [docs/structure.md](docs/structure.md) |
 | **论文** | [docs/paper/](docs/paper/README.md) |
-| **归档** | [`_archive/`](_archive/README.md)（只读）；演示过程稿 [docs/demo/_archive/](docs/demo/_archive/) |
 
 心智模型与勿碰项：[docs/structure.md](docs/structure.md)。
 
@@ -36,7 +35,7 @@ Windows 也可双击 `start-agent.bat`。
 
 | 内容 | 路径 |
 |------|------|
-| 样本 HTML（**单向镜像**，非真相源；份数见目录） | `样本html/`（见 `样本html/清单.md`；改完须同步 packages） |
+| 样本 HTML（**单向镜像**，非真相源；份数见目录） | `样本html/`（见 `样本html/清单.md`；改 packages 后运行 `npm run sync:packages-samples` 覆盖镜像） |
 | 运行时探究包 + 图谱（**真相源**） | `data/runtime/packages/` |
 | 平台 catalog（任务列表） | `data/runtime/platform/catalog.json` |
 | 平台运维 / 埋点 / 部署清单 | [`data/runtime/platform/README.md`](data/runtime/platform/README.md) |
@@ -51,7 +50,6 @@ Windows 也可双击 `start-agent.bat`。
 | 目录与 URL 对照 | `docs/DATA_LAYOUT.md` |
 | 回归 / fixtures | `docs/TESTING.md` |
 | docs 总索引 | [`docs/README.md`](docs/README.md) |
-| 一次性脚本归档（只读） | [`_archive/README.md`](_archive/README.md) |
 
 ## 检查与冒烟
 

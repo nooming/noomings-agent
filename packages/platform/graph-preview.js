@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { getPackagesRoot } = require('../shared/data-paths');
+const { getPackageDir } = require('../shared/data-paths');
 const { resolvePackageId } = require('../shared/package-layout');
 
 function tabMeta(c, i) {
@@ -79,8 +79,7 @@ function loadGraphPreviewPayload(graphId) {
   if (!id) return { ok: false, error: 'graphId_required' };
 
   const packageId = resolvePackageId(id);
-  const root = getPackagesRoot();
-  const dir = path.join(root, packageId);
+  const dir = getPackageDir(packageId);
   const chaptersPath = path.join(dir, 'chapters.json');
   const chapterPath = path.join(dir, 'chapter.json');
   const metaPath = path.join(dir, 'meta.json');

@@ -17,7 +17,7 @@
 | **Agent A 生成落盘** | 优先 `data/runtime/packages/`；HTML 草稿亦可 `data/games/generated/` |
 | **Agent B fixtures** | `tests/fixtures/judge-fixtures.json` |
 | **论文 / 离线分析** | 报告 `data/runtime/analysis/reports/`；写作材料 `docs/paper/`（非本布局真相源） |
-| **归档** | 根 `_archive/`；演示过程稿 `docs/demo/_archive/` |
+| **历史报告** | `data/runtime/analysis/reports/`（只保留现行/论文引用报告） |
 
 ## 三区（`data/runtime/`）
 
@@ -31,10 +31,9 @@
 
 | 磁盘路径 | 内容 |
 |----------|------|
-| `样本html/` | **单向镜像**（中文夹名；游戏 HTML + `图谱.html`）。改完须同步到 packages；运行时不以此处为真相源 |
+| `样本html/` | **单向镜像**（中文夹名；游戏 HTML + `图谱.html`）。真相源是 packages；改 packages 后运行 `npm run sync:packages-samples` 覆盖镜像，不要反向覆盖 packages |
 | `apps/web/icons/` | 站点 favicon / PWA / 首页彩蛋图；HTTP 仍为 `/icons/*` |
 | `data/games/legacy/` | 历史样本 HTML（design-samples 引用；HTTP `/static/legacy-samples/`） |
-| `data/games/manual-backups/` | 人工 HTML 原件归档（不挂载 HTTP） |
 | `data/games/generated/` | Agent A API 生成的 HTML（新探究包优先落 packages） |
 | `data/datasets/html-samples/` | **批跑兼容残留**：`manifest*.json`、`catalog-demo.json`（镜像 / 演示子集）。**已删除** `chapters/`；训练与评判读 packages |
 | `tests/fixtures/judge-fixtures.json` | Agent B 离线评判 fixtures（`chapterRef`: bundle 或 `packageId`） |

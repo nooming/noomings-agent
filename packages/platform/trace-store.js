@@ -42,14 +42,18 @@ const sessionWriteQueues = new Map();
 
 /** sess-*.json basename (same charset as deleteTraceSessions). */
 const SESS_TRACE_FILE_RE = /^sess-[a-zA-Z0-9-]+\.json$/;
-const SESSION_ID_RE = /^sess-[a-zA-Z0-9-]+$/;
+const SESSION_ID_RE = /^sess-[a-zA-Z0-9-]{1,120}$/;
 const INDEX_FILENAME = '.traces-index.json';
 const DEFAULT_CLASS_DIR = '_default';
 const INDEX_VERSION = 1;
 
 /** Process-local index cache (Zeabur typically single instance). */
 let indexCache = null;
+let indexCacheRoot = null;
 let tracesBootstrapped = false;
+/** Coalesce the large index rewrite; the in-memory cache stays current for reads. */
+const INDEX_WRITE_DEBOUNCE_MS = 250;
+let indexWriteTimer = null;
 
 function enqueueSessionWrite(sessionId, fn) {
   const key = String(sessionId || '');
@@ -84,13 +88,24 @@ function sanitizeClassDir(classCode) {
   return safe || DEFAULT_CLASS_DIR;
 }
 
-function indexFilePath() {
-  return path.join(getTracesRoot(), INDEX_FILENAME);
+function indexFilePath(root = getTracesRoot()) {
+  return path.join(root, INDEX_FILENAME);
 }
 
 function relPathForSession(sessionId, classCode) {
   const dir = sanitizeClassDir(classCode);
   return `${dir}/${sessionId}.json`.replace(/\\/g, '/');
+}
+
+/** Resolve a relative trace path and prove it stays under the traces root. */
+function resolveTracePath(relPath) {
+  const root = path.resolve(getTracesRoot());
+  const parts = String(relPath || '').replace(/\\/g, '/').split('/').filter(Boolean);
+  if (!parts.length || parts.some((part) => part === '..' || part === '.')) return null;
+  const full = path.resolve(root, ...parts);
+  const rel = path.relative(root, full);
+  if (!rel || rel.startsWith('..') || path.isAbsolute(rel)) return null;
+  return full;
 }
 
 function collectSessionFiles(root) {
@@ -146,11 +161,14 @@ function migrateLegacyFlatSessions() {
     } catch {
       continue;
     }
-    const rel = relPathForSession(
-      record.sessionId || name.replace(/\.json$/i, ''),
-      record.classCode,
-    );
-    const dest = path.join(root, ...rel.split('/'));
+    const fallbackId = name.replace(/\.json$/i, '');
+    const sessionId = SESSION_ID_RE.test(String(record.sessionId || ''))
+      ? String(record.sessionId)
+      : fallbackId;
+    if (!SESSION_ID_RE.test(sessionId)) continue;
+    const rel = relPathForSession(sessionId, record.classCode);
+    const dest = resolveTracePath(rel);
+    if (!dest) continue;
     if (path.resolve(dest) === path.resolve(full)) continue;
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     if (fs.existsSync(dest)) {
@@ -218,10 +236,39 @@ function buildIndexEntry(record, relPath) {
   };
 }
 
-function writeIndexToDisk(index) {
-  const root = getTracesRoot();
+function clearIndexWriteTimer() {
+  if (indexWriteTimer) {
+    clearTimeout(indexWriteTimer);
+    indexWriteTimer = null;
+  }
+}
+
+function scheduleIndexWrite() {
+  if (indexWriteTimer) return;
+  const root = path.resolve(getTracesRoot());
+  indexWriteTimer = setTimeout(() => {
+    indexWriteTimer = null;
+    // Tests can swap AGENT_TRACES_ROOT; never write one root's cache into another.
+    if (path.resolve(getTracesRoot()) !== root) return;
+    try {
+      writeIndexToDisk(getIndex(), root);
+    } catch { /* next write / rebuild will repair */ }
+  }, INDEX_WRITE_DEBOUNCE_MS);
+}
+
+function flushIndexNow() {
+  clearIndexWriteTimer();
+  if (!indexCache) return;
+  const currentRoot = path.resolve(getTracesRoot());
+  if (indexCacheRoot && currentRoot !== indexCacheRoot) return;
+  writeIndexToDisk(indexCache, indexCacheRoot || currentRoot);
+}
+
+function writeIndexToDisk(index, rootOverride) {
+  clearIndexWriteTimer();
+  const root = path.resolve(rootOverride || getTracesRoot());
   fs.mkdirSync(root, { recursive: true });
-  const finalPath = indexFilePath();
+  const finalPath = indexFilePath(root);
   const tmpPath = `${finalPath}.${process.pid}.${Date.now()}.tmp`;
   const payload = {
     version: INDEX_VERSION,
@@ -240,6 +287,7 @@ function writeIndexToDisk(index) {
     }
   }
   indexCache = payload;
+  indexCacheRoot = root;
   return indexCache;
 }
 
@@ -269,6 +317,7 @@ function loadIndexFromDisk() {
       updatedAt: data.updatedAt || null,
       sessions: data.sessions || {},
     };
+    indexCacheRoot = path.resolve(getTracesRoot());
     return indexCache;
   } catch {
     return null;
@@ -277,6 +326,10 @@ function loadIndexFromDisk() {
 
 function getIndex() {
   ensureTracesRoot();
+  if (indexCache && indexCacheRoot && path.resolve(getTracesRoot()) !== indexCacheRoot) {
+    indexCache = null;
+    indexCacheRoot = null;
+  }
   if (indexCache) return indexCache;
   const loaded = loadIndexFromDisk();
   if (loaded) return loaded;
@@ -287,7 +340,7 @@ function upsertIndexEntry(record, relPath) {
   const index = getIndex();
   if (!record?.sessionId) return;
   index.sessions[record.sessionId] = buildIndexEntry(record, relPath);
-  writeIndexToDisk(index);
+  scheduleIndexWrite();
 }
 
 function removeIndexEntry(sessionId) {
@@ -295,7 +348,7 @@ function removeIndexEntry(sessionId) {
   const id = String(sessionId || '');
   if (!id || !index.sessions[id]) return;
   delete index.sessions[id];
-  writeIndexToDisk(index);
+  writeIndexToDisk(index, indexCacheRoot || getTracesRoot());
 }
 
 /**
@@ -304,31 +357,39 @@ function removeIndexEntry(sessionId) {
 function resolveSessionFile(sessionId) {
   ensureTracesRoot();
   const id = String(sessionId || '');
-  if (!id) return null;
+  if (!SESSION_ID_RE.test(id)) return null;
   const index = getIndex();
   const entry = index.sessions?.[id];
   if (entry?.relPath) {
-    const full = path.join(getTracesRoot(), ...entry.relPath.split('/'));
-    if (fs.existsSync(full)) return full;
+    const full = resolveTracePath(entry.relPath);
+    if (full && fs.existsSync(full)) return full;
   }
-  const flat = path.join(getTracesRoot(), `${id}.json`);
-  if (fs.existsSync(flat)) return flat;
+  const flat = resolveTracePath(`${id}.json`);
+  if (flat && fs.existsSync(flat)) return flat;
   const files = collectSessionFiles(getTracesRoot());
   const hit = files.find(f => path.basename(f.full) === `${id}.json`);
   return hit ? hit.full : null;
 }
 
 function sessionPath(sessionId, classCode) {
-  const existing = resolveSessionFile(sessionId);
+  const id = String(sessionId || '');
+  if (!SESSION_ID_RE.test(id)) return null;
+  const existing = resolveSessionFile(id);
   if (existing) return existing;
-  return path.join(getTracesRoot(), ...relPathForSession(sessionId, classCode).split('/'));
+  return resolveTracePath(relPathForSession(id, classCode));
 }
 
 function writeSessionAtomic(sessionId, record) {
   ensureTracesRoot();
   const id = String(sessionId || record?.sessionId || '');
+  if (!SESSION_ID_RE.test(id)) {
+    throw new Error('invalid_session_id');
+  }
   const relPath = relPathForSession(id, record?.classCode);
-  const finalPath = path.join(getTracesRoot(), ...relPath.split('/'));
+  const finalPath = resolveTracePath(relPath);
+  if (!finalPath) {
+    throw new Error('invalid_session_path');
+  }
   fs.mkdirSync(path.dirname(finalPath), { recursive: true });
 
   const prevRel = getIndex().sessions?.[id]?.relPath || null;
@@ -347,8 +408,8 @@ function writeSessionAtomic(sessionId, record) {
   }
 
   if (prevRel && prevRel !== relPath) {
-    const oldFull = path.join(getTracesRoot(), ...prevRel.split('/'));
-    if (path.resolve(oldFull) !== path.resolve(finalPath) && fs.existsSync(oldFull)) {
+    const oldFull = resolveTracePath(prevRel);
+    if (oldFull && path.resolve(oldFull) !== path.resolve(finalPath) && fs.existsSync(oldFull)) {
       try { fs.unlinkSync(oldFull); } catch { /* ignore */ }
     }
   }
@@ -501,6 +562,13 @@ function enrichRecordMetrics(record, chapter) {
 }
 
 function ingestTrace(body) {
+  if (!body || typeof body !== 'object') {
+    return { ok: false, error: 'invalid_body' };
+  }
+  const requestedSessionId = body.sessionId ? String(body.sessionId).trim() : '';
+  if (requestedSessionId && !SESSION_ID_RE.test(requestedSessionId)) {
+    return { ok: false, error: 'invalid_session_id' };
+  }
   ensureTracesRoot();
   const catalogId = String(body.catalogId || body.gameId || '').trim();
   const graphId = String(body.graphId || '').trim();
@@ -610,8 +678,12 @@ function ingestTrace(body) {
 
 /** Queued ingest — same result shape as ingestTrace; serializes by sessionId. */
 function ingestTraceQueued(body) {
-  const existingId = body && body.sessionId ? String(body.sessionId) : makeSessionId();
-  const payload = body && body.sessionId ? body : { ...body, sessionId: existingId };
+  const requestedId = body && body.sessionId ? String(body.sessionId) : '';
+  if (requestedId && !SESSION_ID_RE.test(requestedId)) {
+    return Promise.resolve({ ok: false, error: 'invalid_session_id' });
+  }
+  const existingId = requestedId || makeSessionId();
+  const payload = requestedId ? body : { ...body, sessionId: existingId };
   return enqueueSessionWrite(existingId, () => ingestTrace(payload));
 }
 
@@ -663,6 +735,22 @@ function studentGroupKey(row) {
   const label = String(row.studentLabel || '匿名学生').trim() || '匿名学生';
   if (label !== '匿名学生') return label;
   return `匿名 · ${String(row.sessionId || '').slice(-6)}`;
+}
+
+/** Teacher list only needs display fields; full teacherDetail is loaded by detail API. */
+function slimPathSummaryForList(summary) {
+  if (!summary || typeof summary !== 'object') return summary || null;
+  const { teacherDetail, ...rest } = summary;
+  return rest;
+}
+
+function slimPathByPhaseForList(byPhase) {
+  if (!byPhase || typeof byPhase !== 'object') return byPhase || null;
+  const out = {};
+  for (const key of ['explore', 'challenge', 'full', 'primary']) {
+    if (byPhase[key]) out[key] = slimPathSummaryForList(byPhase[key]);
+  }
+  return out;
 }
 
 function listTraces({ graphId, catalogId, classCode, limit = 50 } = {}) {
@@ -833,9 +921,9 @@ function listTraceStudents({ graphId, catalogId, classCode, q, status, limit = 2
       verdict,
       gaps,
       ch: row.ch,
-      strategyPathSummary: row.strategyPathSummary || null,
-      strategyPathSummaryExplore: row.strategyPathSummaryExplore || null,
-      strategyPathByPhase: row.strategyPathByPhase || null,
+      strategyPathSummary: slimPathSummaryForList(row.strategyPathSummary),
+      strategyPathSummaryExplore: slimPathSummaryForList(row.strategyPathSummaryExplore),
+      strategyPathByPhase: slimPathByPhaseForList(row.strategyPathByPhase),
       scoredPhase: row.scoredPhase || row.strategyPathSummary?.scoredPhase || null,
       abilityScore: row.abilityScore || null,
       literacyProfile: row.literacyProfile || null,
@@ -961,7 +1049,12 @@ function getStudentTraceSummary(studentLabel) {
 function getTraceSession(sessionId) {
   const file = resolveSessionFile(sessionId);
   if (!file || !fs.existsSync(file)) return null;
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
+  try {
+    const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return record && typeof record === 'object' ? record : null;
+  } catch {
+    return null;
+  }
 }
 
 function saveTraceSession(record) {
@@ -1481,6 +1574,12 @@ function importAllTracesZip(zipBuffer) {
   return result;
 }
 
+if (typeof process !== 'undefined' && typeof process.once === 'function') {
+  process.once('beforeExit', () => {
+    try { flushIndexNow(); } catch { /* best-effort final flush */ }
+  });
+}
+
 module.exports = {
   ingestTrace,
   ingestTraceQueued,
@@ -1508,6 +1607,8 @@ module.exports = {
   safeSessTraceBasename,
   sanitizeClassDir,
   rebuildTracesIndex,
+  flushIndexNow,
   resolveSessionFile,
   DEFAULT_CLASS_DIR,
+  SESSION_ID_RE,
 };

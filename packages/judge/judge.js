@@ -1,5 +1,6 @@
 const { chatCompletion } = require('../shared/llm');
 const { summarizeTrace } = require('./dt-align');
+const { isInterimWinPayload } = require('./session-terminal');
 const { getSystem, buildUserPrompt } = require('./prompt');
 const { isMainLikeRouteGuess } = require('./strategy-route-kind');
 const {
@@ -28,9 +29,13 @@ function gapFromHint(hintKey, chapter) {
 const ROUTE_LABELS = { main: '主推途径 M', trap: '误区途径 T', teach: '教案途径 L' };
 
 function isPassed(summary) {
-  return summary.align?.dtPath?.includes('R1')
-    || summary.lastSnapshot?.winOk
-    || summary.hasWinEvent;
+  const last = summary.lastSnapshot;
+  const lastIsInterim = isInterimWinPayload(last);
+  if (!lastIsInterim && (
+    summary.align?.dtPath?.includes('R1')
+    || last?.winOk
+  )) return true;
+  return summary.hasWinEvent === true;
 }
 
 function isCvHeavyInquiry(summary) {
@@ -401,7 +406,7 @@ function ruleJudge(summary, chapter) {
     }
   }
 
-  let verdict = align.dtPath.includes('R1') || lastSnapshot?.winOk || summary.hasWinEvent
+  let verdict = isPassed(summary)
     ? 'pass'
     : brokenCount > 2 ? 'learning' : 'in_progress';
   if (isMainSingleVariableExploration(summary, chapter) && verdict === 'learning') verdict = 'in_progress';

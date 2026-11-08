@@ -235,6 +235,9 @@ async function boot() {
       mode: 'rules',
       reason: reason || 'leave',
     };
+    if (traceCfg.studentId) payload.studentId = traceCfg.studentId;
+    if (traceCfg.classCode) payload.classCode = traceCfg.classCode;
+    if (traceCfg.studentSession) payload.studentSession = traceCfg.studentSession;
     if (x.terminalOutcome) payload.terminalOutcome = x.terminalOutcome;
     if (x.attemptsExhausted) payload.attemptsExhausted = true;
     const body = JSON.stringify(payload);
@@ -267,14 +270,18 @@ async function boot() {
       new Promise((resolve) => setTimeout(() => resolve({ ok: false, timedOut: true }), timeoutMs)),
     ]);
   }
-  function requestAutoJudgeOnLeave() {
+  async function requestAutoJudgeOnLeave() {
     if (leaveJudgeSent) return;
     const sid = (typeof PlatformTraceAdapter.getSessionId === 'function'
       ? PlatformTraceAdapter.getSessionId()
       : null) || traceSessionId;
     if (!sid) return;
     leaveJudgeSent = true;
-    requestAutoJudgeForSession(sid, 'leave');
+    // The adapter batches events; make the leave tip land after the pending batch.
+    try {
+      await PlatformTraceAdapter.flushPending?.(800);
+    } catch (_) { /* best-effort */ }
+    await requestAutoJudgeForSession(sid, 'leave');
   }
 
   /**
@@ -386,13 +393,13 @@ async function boot() {
     beginPlatformTraceNewRound(detail).catch(() => {});
   };
 
-  window.addEventListener('message', (ev) => {
+  window.addEventListener('message', async (ev) => {
     const data = ev && ev.data;
     if (!data || typeof data !== 'object') return;
     // craft-back：pilot/热学等包过关面板「返回列表」；与 gold 包的 platform-navigate 等价
     if (data.type === 'craft-back'
         || (data.type === 'platform-navigate' && data.to === 'student-list')) {
-      requestAutoJudgeOnLeave();
+      await requestAutoJudgeOnLeave();
       location.href = '/student.html';
       return;
     }
@@ -456,6 +463,9 @@ async function boot() {
           sessionId: sid,
           graphId: item.graphId,
           packageId: pkgGuess,
+          studentId: traceCfg.studentId,
+          classCode: traceCfg.classCode,
+          studentSession: traceCfg.studentSession,
           mode: currentPhase === 'challenge' ? 'compete' : 'explore',
           // 提示偏好；服务端仍按 phase_change 过滤事件，不单信 mode
           phaseScope: currentPhase === 'challenge' ? 'challenge' : undefined,
@@ -622,8 +632,10 @@ async function boot() {
     statusEl.textContent = '已导出会话信息（完整轨迹已由平台自动记录，教师可在学情中心查看）';
   });
 
-  document.querySelector('a.play-fab-item[href="/student.html"]')?.addEventListener('click', () => {
-    requestAutoJudgeOnLeave();
+  document.querySelector('a.play-fab-item[href="/student.html"]')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await requestAutoJudgeOnLeave();
+    location.href = '/student.html';
   });
 
   setFabMenuOpen(false);
@@ -633,7 +645,13 @@ async function boot() {
     requestAutoJudgeOnLeave();
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') requestAutoJudgeOnLeave();
+    if (document.visibilityState === 'hidden') {
+      // Tab switch is not "leave": flush queued events, but do not mark the
+      // session incomplete or consume the one-shot leave judge.
+      try { PlatformTraceAdapter.flushPending?.(); } catch (_) { /* ignore */ }
+    } else {
+      leaveJudgeSent = false;
+    }
   });
 }
 

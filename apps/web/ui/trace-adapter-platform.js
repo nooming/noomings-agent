@@ -1,11 +1,19 @@
 (function (global) {
   const ENDPOINT = '/api/trace/ingest';
   const DEFAULT_FLUSH_TIMEOUT_MS = 2500;
+  /** Batch window / cap: one POST carries several UI events, not one request per click. */
+  const FLUSH_INTERVAL_MS = 400;
+  const MAX_BUFFERED_EVENTS = 20;
   let sessionId = null;
   let config = {};
   let adapterConfig = null;
   /** @type {Set<Promise<unknown>>} */
   const pendingPosts = new Set();
+  /** @type {Array<object>} */
+  let eventBuffer = [];
+  /** @type {Array<(value?: unknown) => void>} */
+  let bufferWaiters = [];
+  let flushTimer = null;
 
   function now() { return Date.now(); }
 
@@ -60,10 +68,13 @@
     if (tipOutcome) payload.terminalOutcome = tipOutcome;
     if (tipExhausted) payload.attemptsExhausted = true;
 
+    const body = JSON.stringify(payload);
     const p = fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body,
+      // keepalive is valuable on unload, but browsers cap its body size.
+      keepalive: body.length < 60 * 1024,
     })
       .then(r => r.json())
       .then(data => {
@@ -83,6 +94,59 @@
     return p;
   }
 
+  function scheduleFlush() {
+    if (flushTimer) return;
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flushBuffer();
+    }, FLUSH_INTERVAL_MS);
+  }
+
+  /**
+   * Send queued events (and optional terminal tip/extras) as one ingest request.
+   * @param {{ terminalOutcome?: string, attemptsExhausted?: boolean, extraEvents?: object[] }} [extras]
+   */
+  function flushBuffer(extras) {
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    const queued = eventBuffer;
+    eventBuffer = [];
+    const waiters = bufferWaiters;
+    bufferWaiters = [];
+    const list = [
+      ...queued,
+      ...(Array.isArray(extras?.extraEvents) ? extras.extraEvents : []),
+    ];
+    const tipOutcome = extras?.terminalOutcome || null;
+    const tipExhausted = extras?.attemptsExhausted === true || tipOutcome === 'exhausted_fail';
+    if (!list.length && !tipOutcome && !tipExhausted) {
+      waiters.forEach((resolve) => resolve(null));
+      return Promise.resolve(null);
+    }
+    const p = postEvents(list, { terminalOutcome: tipOutcome, attemptsExhausted: tipExhausted });
+    waiters.forEach((resolve) => {
+      p.then((value) => resolve(value), () => resolve(null));
+    });
+    return p;
+  }
+
+  function enqueueEvent(event) {
+    return new Promise((resolve) => {
+      eventBuffer.push(event);
+      bufferWaiters.push(resolve);
+      if (eventBuffer.length >= MAX_BUFFERED_EVENTS) flushBuffer();
+      else scheduleFlush();
+    });
+  }
+
+  function shouldFlushNow(type, payload) {
+    if (type === 'win' || type === 'explore_success' || type === 'attempts_exhausted') return true;
+    return type === 'snapshot'
+      && (payload?.winOk === true || payload?.attemptsExhausted === true || payload?.final === true);
+  }
+
   function record(type, payload) {
     // Full shallow copy — no type allowlist (explore_success / win / snapshot all ingest).
     // Do not strip win progress fields (interim / final / levelsCleared / level / levelIndex / winOk / hintKey).
@@ -95,24 +159,32 @@
       }
       p.controls = mapped;
     }
-    return postEvents([{ ts: now(), type, payload: p, ch: config.ch ?? 0 }]);
+    const pending = enqueueEvent({ ts: now(), type, payload: p, ch: config.ch ?? 0 });
+    // Terminal/progress events must not wait for the batch timer; ordinary
+    // tuning/action events can be coalesced.
+    if (shouldFlushNow(type, p)) flushBuffer();
+    return pending;
   }
 
   /** Await a single record ingest (best-effort; rejects swallowed inside postEvents). */
-  function recordAndWait(type, payload) {
-    return Promise.resolve(record(type, payload));
+  async function recordAndWait(type, payload) {
+    const recorded = record(type, payload);
+    await flushBuffer();
+    return recorded;
   }
 
   /**
-   * Wait for in-flight ingest POSTs (optionally timed out).
+   * Wait for queued events and in-flight ingest POSTs (optionally timed out).
    * @param {number} [timeoutMs]
    */
   function flushPending(timeoutMs) {
-    if (!pendingPosts.size) {
+    const buffered = eventBuffer.length > 0;
+    const flushP = buffered ? flushBuffer() : Promise.resolve(null);
+    if (!pendingPosts.size && !buffered) {
       return Promise.resolve({ flushed: true, timedOut: false, pending: 0 });
     }
     const pending = pendingPosts.size;
-    const all = Promise.all([...pendingPosts]).then(() => ({
+    const all = Promise.all([...pendingPosts, flushP]).then(() => ({
       flushed: true,
       timedOut: false,
       pending,
@@ -140,7 +212,7 @@
     const emitEvents = o.emitEvents !== false;
 
     if (outcome === 'exhausted_fail') {
-      const events = emitEvents ? [
+      const extraEvents = emitEvents ? [
         {
           ts: now(),
           type: 'attempts_exhausted',
@@ -155,13 +227,17 @@
         },
       ] : [];
       await withTimeout(
-        postEvents(events, { terminalOutcome: 'exhausted_fail', attemptsExhausted: true }),
+        flushBuffer({
+          terminalOutcome: 'exhausted_fail',
+          attemptsExhausted: true,
+          extraEvents,
+        }),
         timeoutMs,
       );
     } else if (outcome === 'pass') {
-      // Win events should already be in-flight from the game; tip + flush is enough.
+      // Win events should already be queued by the game; flush them with the tip.
       await withTimeout(
-        postEvents([], { terminalOutcome: 'pass' }),
+        flushBuffer({ terminalOutcome: 'pass' }),
         timeoutMs,
       );
     }
@@ -226,10 +302,15 @@
   }
 
   async function start(cfg) {
-    config = cfg || {};
-    const nextId = cfg.sessionId || sessionId || newSessionId();
-    // Mid-page re-start with a new id (new round): clear phase so setPhase re-emits.
-    if (sessionId && nextId !== sessionId) lastPhase = null;
+    const nextConfig = cfg || {};
+    const nextId = nextConfig.sessionId || sessionId || newSessionId();
+    // Never let events queued for the old round leak into the next session.
+    if (sessionId && nextId !== sessionId) {
+      await flushBuffer();
+      await flushPending(DEFAULT_FLUSH_TIMEOUT_MS);
+      lastPhase = null;
+    }
+    config = nextConfig;
     sessionId = nextId;
     adapterConfig = cfg.adapter || (cfg.catalogId ? await loadAdapter(cfg.catalogId) : null);
     if (!cfg.skipPuzzleOpen) record('puzzle_open', {});
@@ -290,6 +371,13 @@
       exportedAt: new Date().toISOString(),
       note: 'Use platform ingest session; this is a partial export from client buffer only',
     };
+  }
+
+  if (typeof global.addEventListener === 'function') {
+    global.addEventListener('pagehide', () => {
+      // Best-effort last flush; the play shell's auto-judge path sends the tip.
+      flushBuffer();
+    });
   }
 
   global.PlatformTraceAdapter = {

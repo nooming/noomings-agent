@@ -73,8 +73,10 @@ const {
   readRawBody,
   parseMultipartFiles,
   checkIngestQuota,
+  checkJoinQuota,
   IMPORT_ZIP_MAX_BYTES,
   INGEST_MAX_BYTES,
+  isTeacherAuthorized,
 } = require('../api-shared');
 const {
   validateStudentId,
@@ -133,6 +135,37 @@ async function handlePlatformJudgeSession(req, res, opts = {}) {
       res.end(JSON.stringify({ ok: false, error: 'sessionId_required' }));
       return;
     }
+
+    if (opts.leaveAuto === true && !isTeacherAuthorized(req)) {
+      const classCode = String(body.classCode || '').trim();
+      const studentId = String(body.studentId || '').trim();
+      const studentSession = String(body.studentSession || '').trim();
+      if (!studentSession || !studentId || !classCode) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: 'student_session_required',
+          message: '自动评判需要有效学生会话',
+        }));
+        return;
+      }
+      const ver = verifyStudentSession(studentSession, studentId, classCode);
+      if (!ver.ok) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          ok: false,
+          error: ver.expired ? 'student_session_expired' : 'student_session_invalid',
+        }));
+        return;
+      }
+      const owned = getTraceSession(String(body.sessionId));
+      if (!owned || String(owned.studentId || '') !== studentId) {
+        res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: false, error: 'session_forbidden' }));
+        return;
+      }
+    }
+
     const reasonLc = String(body.reason || '').toLowerCase();
     const isLeave = opts.leaveAuto === true || reasonLc === 'leave';
     const tipOutcomeRaw = body.terminalOutcome != null ? String(body.terminalOutcome) : '';
@@ -419,6 +452,15 @@ function handlePlatformAdapter(req, res) {
 async function handleStudentJoin(req, res) {
   cors(res);
   try {
+    const quota = checkJoinQuota(req);
+    if (!quota.ok) {
+      res.writeHead(429, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Retry-After': String(Math.ceil((quota.retryAfterMs || 0) / 1000) || 60),
+      });
+      res.end(JSON.stringify({ ok: false, error: 'join_rate_limited' }));
+      return;
+    }
     const body = await readBody(req, 8 * 1024);
     const idCheck = validateStudentId(body.studentId || body.studentNo);
     if (!idCheck.ok) {

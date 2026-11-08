@@ -1,6 +1,7 @@
 /** 从轨迹 snapshot 与评判 JSON 中的 KG 对齐 DT 路径 */
 
 const { alignFromGeneratedSnapshot, alignFromDecisionsOnly } = require('./dt-align-core');
+const { isInterimWinPayload } = require('./session-terminal');
 const { tracePathAlign } = require('./trace-path-align');
 const { computeTimingFeatures } = require('./trace-timing');
 const {
@@ -39,7 +40,7 @@ function summarizeTrace(trace, ch, chapter) {
   for (const e of events) {
     types[e.type] = (types[e.type] || 0) + 1;
     const snap = snapshotPayloadFromEvent(e);
-    if (e.type === 'win') hasWinEvent = true;
+    if (e.type === 'win' && !isInterimWinPayload(e.payload)) hasWinEvent = true;
     if (e.type === 'snapshot' && e.payload?.bd) brokenCount++;
     if (snap?.bd) brokenCount++;
     if (e.type === 'win_attempt') winAttempts++;
