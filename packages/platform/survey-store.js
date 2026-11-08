@@ -26,6 +26,8 @@ const LIKERT_KEYS = [
 const OPEN_KEYS = ['helpfulOpen', 'suggestionOpen'];
 
 function getSurveysRoot() {
+  const override = String(process.env.AGENT_SURVEYS_ROOT || '').trim();
+  if (override) return path.resolve(override);
   return path.join(getPlatformRoot(), 'surveys');
 }
 

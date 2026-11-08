@@ -7,7 +7,8 @@
 | `traces/.traces-index.json` | 轻量学情索引（无 events；列表/统计读索引；点文件，导出 ZIP 会跳过） |
 | `surveys/` | 学生学习体验问卷（不提交 git）；`surveys/{classCode}/{studentId}.json`；当前 `instrumentId` = `learning-experience-v3`（较 v2 增 AI 披露态度题；`difficulty`：1=太简单，3=刚好，5=太难；勿跨版本混析） |
 | `class-config.json` | 可选：工作台写入的课堂码（不提交 git；生产优先用环境变量） |
-| `AGENT_TRACES_ROOT` | 可选：覆盖 traces 根目录（测试/隔离环境用；生产默认 `data/runtime/platform/traces`） |
+| `AGENT_TRACES_ROOT` | 可选：覆盖 traces 根目录（生产默认 `data/runtime/platform/traces`；容器挂载到 `/src/...` 等非默认路径时使用） |
+| `AGENT_SURVEYS_ROOT` | 可选：覆盖 surveys 根目录（生产默认 `data/runtime/platform/surveys`） |
 
 ## 页面入口
 
